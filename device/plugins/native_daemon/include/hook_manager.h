@@ -186,6 +186,7 @@ public:
     void SetNmdInfo(std::pair<uint32_t, uint32_t>);
     void SetGwpFd(uint32_t fd);
     void SetMemLeakFd(uint32_t fd);
+    int CreateMemLeakFile();
     void FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                             std::shared_ptr<HookRecord>& hookRecord);
     std::string simplifiedNmd_;
@@ -198,7 +199,7 @@ private:
     bool printMallocNmd_ = false;
     unsigned long long traceMask_ = 0;
     bool saMode_ = false;
-    void DumpMemLeakInfo(uint8_t* data);
+    void DumpMemLeakInfo();
     bool CheckProcess();
     unsigned long long ConvertTagToMask() const;
     bool CheckProcessName();
@@ -246,9 +247,9 @@ private:
     void FlushPendingRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx);
     bool ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& hookCtx, uint8_t* buffer,
         uint32_t totalAvail, uint32_t& offset, uint64_t& readfileSize);
-    void CreateMemLeakFile();
     std::string GetMemLeakFileName(MemLeakFormat format);
     void UpdateFreezeExcludedPid(bool isAdd, int32_t targetPid, int32_t profilerPid);
+    bool CloseMemLeakTempFile();
 
     std::shared_ptr<HookService> hookService_;
     std::shared_ptr<CommandPoller> commandPoller_;
@@ -280,6 +281,7 @@ private:
     uint32_t gwpFd_ = 0;
     MemLeakFormat memLeakFormat_ = MemLeakFormat::TYPE_DISABLE;
     uint32_t memLeakFd_ = 0;
+    int tempMemLeakFd_ = -1;
     uint32_t memLeakLimit_ = 0;
     std::string memLeakFileName_;
     std::string fileCacheDir_ = "/data/log/hiprofiler/";

@@ -141,7 +141,7 @@ enum MemLeakFormat : uint32_t {
     TYPE_SNAPSHOT = 2,  // A JSON-based format
     TYPE_DISABLE = 0xFFFFFFFF,
 };
-constexpr uint32_t MEM_LEAK_LIMIT_DEFAULT = 100;
+constexpr uint32_t MEM_LEAK_LIMIT_DEFAULT = UINT32_MAX;
 
 constexpr uint32_t SNAPSHOT_REQUEST_CMD = 0xADD50001;
 constexpr uint32_t ALIVE_ADDR_SNAPSHOT_MARKER = 0xADD50002;

@@ -17,6 +17,7 @@
 
 #include <fcntl.h>
 #include <limits>
+#include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cstdlib>
@@ -68,6 +69,9 @@ constexpr mode_t FILE_CACHE_MODE = S_IRUSR | S_IWUSR;
 const std::string FILE_CACHE_TEMPLATE = "native_hook_cache_XXXXXX";
 constexpr uint64_t ALL_NESTED_MASK_TYPE = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
     ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROFILER;
+const std::string MEM_LEAK_FILE_PERFIX = "memleak-native-orphansnapshot-";
+const std::string MEM_LEAK_FILE_SUFFIX = ".txt";
+const std::string MEM_LEAK_FILE_PATH = "/data/local/tmp/";
 #ifndef __aarch64__
 constexpr uint32_t MAX_MAP_BUFFER_SIZE = 2147479552;
 #endif
@@ -988,28 +992,29 @@ void HookManager::UpdateFreezeExcludedPid(bool isAdd, int32_t targetPid, int32_t
     }
 }
 
-void HookManager::CreateMemLeakFile()
+int HookManager::CreateMemLeakFile()
 {
     constexpr int FILE_MODE = 0644;
-    int fileFd = open(memLeakFileName_.c_str(), O_CREAT | O_RDWR, FILE_MODE);
+    std::string tempPath = fileCacheDir_ + memLeakFileName_;
+    int fileFd = open(tempPath.c_str(), O_CREAT | O_RDWR, FILE_MODE);
     if (fileFd < 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "Create memLeak file failed!");
-        return;
+        return fileFd;
     }
-    fdsan_exchange_owner_tag(fileFd, 0, FD_TAG);
-    memLeakFd_ = fileFd;
-    PROFILER_LOG_INFO(LOG_CORE, "Create memLeak file success. fd: %d, type: %d, filename: %s",
-        memLeakFd_, memLeakFormat_, memLeakFileName_.c_str());
+    tempMemLeakFd_ = fileFd;
+    PROFILER_LOG_INFO(LOG_CORE, "Create tempMemLeak file success. fd: %d, type: %d, filename: %s",
+        tempMemLeakFd_, memLeakFormat_, memLeakFileName_.c_str());
+    return fileFd;
 }
 
 std::string HookManager::GetMemLeakFileName(MemLeakFormat format)
 {
-    const std::string DEFAULT_PATH = "/data/local/tmp/";
-    const std::string suffix = ".txt";
     int pidValue = hookConfig_.pid();
     std::string processName = hookConfig_.process_name();
     COMMON::IsProcessExist(processName, pidValue);
-    return DEFAULT_PATH + "memleak-native-orphansnapshot-" + std::to_string(pidValue) + suffix;
+    // startmode, pid is unknown, set default value 0
+    pidValue = hookConfig_.startup_mode() ? 0 : hookConfig_.pid();
+    return MEM_LEAK_FILE_PERFIX + std::to_string(pidValue) + MEM_LEAK_FILE_SUFFIX;
 }
 
 bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& config)
@@ -1078,7 +1083,8 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     }
     if (hookConfig_.native_orphansnapshots_enable()) {
         memLeakFileName_ = GetMemLeakFileName(memLeakFormat_);
-        std::remove(memLeakFileName_.c_str());
+        std::string finalFileName = MEM_LEAK_FILE_PATH + memLeakFileName_;
+        std::remove(finalFileName.c_str());
     }
 
     UpdateAsyncFlagConfig();
@@ -1211,25 +1217,36 @@ void HookManager::DumpNmdInfo(const char* nmdResult)
     PROFILER_LOG_INFO(LOG_CORE, "Data successfully written to nmd file");
 }
 
-void HookManager::DumpMemLeakInfo(uint8_t* data)
+void HookManager::DumpMemLeakInfo()
 {
-    if (data == nullptr || !hookConfig_.native_orphansnapshots_enable()) {
+    PROFILER_LOG_INFO(LOG_CORE, "DumpMemLeakInfo start");
+    if (!hookConfig_.native_orphansnapshots_enable()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo disabled");
         return;
     }
-    // sa mode has send fd
-    if (!saMode_) {
-        CreateMemLeakFile();
-    }
-    std::string result = reinterpret_cast<char*>(data);
-    if (memLeakFd_ <= 0) {
+    if (tempMemLeakFd_ < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo tmpMemLeakFd_ err");
         return;
     }
-    lseek(memLeakFd_, 0, SEEK_END);
-    write(memLeakFd_, result.c_str(), result.size());
-    if (!saMode_) {
-        fdsan_close_with_tag(memLeakFd_, FD_TAG);
-        memLeakFd_ = 0;
+    if (saMode_ && memLeakFd_ > 0) {
+        lseek(tempMemLeakFd_, 0, SEEK_SET);
+        struct stat statBuf;
+        if (fstat(tempMemLeakFd_, &statBuf) == 0) {
+            off_t offset = 0;
+            ssize_t total = sendfile(static_cast<int>(memLeakFd_), tempMemLeakFd_, &offset, statBuf.st_size);
+            if (total != statBuf.st_size) {
+                PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo sendfile failed, expected %zd, wrote %zd",
+                                   static_cast<ssize_t>(statBuf.st_size), total);
+            }
+            fsync(static_cast<int>(memLeakFd_));
+        }
+    } else {
+        std::string finalPath = MEM_LEAK_FILE_PATH + memLeakFileName_;
+        if (!COMMON::CopyFileFast(tempMemLeakFd_, finalPath)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "HandleMemLeakDone CopyFileFast failed");
+        }
     }
+    CloseMemLeakTempFile();
 }
 
 void HookManager::CollectGwpAsanFrames(std::unordered_map<uintptr_t, DfxFrame>& frameMap, uint8_t* allocDataPtr,
@@ -1342,7 +1359,7 @@ bool HookManager::TakeDataHandler(const std::shared_ptr<HookManagerCtx>& hookCtx
     }
 
     if (type == MEM_LEAK_MSG) {
-        DumpMemLeakInfo(rawStack->data);
+        DumpMemLeakInfo();
         return true;
     }
 
@@ -1626,6 +1643,26 @@ void HookManager::CloseResource()
         close(gwpFd_);
         gwpFd_ = 0;
     }
+    CloseMemLeakTempFile();
+}
+
+bool HookManager::CloseMemLeakTempFile()
+{
+    if (memLeakFd_ > 0) {
+        close(memLeakFd_);
+        memLeakFd_ = -1;
+    }
+    if (tempMemLeakFd_ <= 0) {
+        return true;
+    }
+    close(tempMemLeakFd_);
+    tempMemLeakFd_ = -1;
+    std::string tempPath = fileCacheDir_ + memLeakFileName_;
+    if (unlink(tempPath.data()) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "memLeak temp file unlink failed, filename: %s", tempPath.c_str());
+        return false;
+    }
+    return true;
 }
 
 bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,

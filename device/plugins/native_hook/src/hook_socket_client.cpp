@@ -296,6 +296,15 @@ void HookSocketClient::PrepareWriters(SocketContext &context)
     stackWriterList_.push_back(stackWriter);
 }
 
+void HookSocketClient::ReceiveMemLeakFd(SocketContext &context)
+{
+    if (config_->memLeakFormat == MemLeakFormat::TYPE_DISABLE) {
+        return;
+    }
+    memLeakRecvFd_ = context.ReceiveFileDiscriptor();
+    PROFILER_LOG_INFO(LOG_CORE, "ReceiveMemLeakFd fd=%d", memLeakRecvFd_);
+}
+
 void HookSocketClient::SendOptionalReports()
 {
     HandleCommonConfig();
@@ -338,6 +347,7 @@ bool HookSocketClient::ApplyClientConfig(SocketContext &context, const ClientCon
     *config_ = clientConfig;
     LogReceivedConfig();
     PrepareWriters(context);
+    ReceiveMemLeakFd(context);
     SendOptionalReports();
     return ParseTargetMapsIfNeeded();
 }
@@ -368,23 +378,27 @@ bool HookSocketClient::GetAndSendMemLeakInfo()
     std::string data;
     if (!memLeakDetector.GetMemLeakInfo(static_cast<int>(config_->memLeakFormat),
         static_cast<size_t>(config_->memLeakLimit), data)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::GetMemLeakInfo failed!");
+        PROFILER_LOG_ERROR(LOG_CORE, "GetAndSendMemLeakInfo GetMemLeakInfo failed");
         return false;
     }
-    PROFILER_LOG_INFO(LOG_CORE, "HookSocketClient::GetMemLeakInfo success!");
+    
+    // 直接写入接收到的 fd
+    if (memLeakRecvFd_ > 0) {
+        ssize_t written = write(memLeakRecvFd_, data.c_str(), data.size());
+        PROFILER_LOG_INFO(LOG_CORE, "GetAndSendMemLeakInfo wrote %zd bytes to fd %d", written, memLeakRecvFd_);
+        close(memLeakRecvFd_);
+        memLeakRecvFd_ = -1;
+    }
+    
+    // 发送完成通知
     StackRawData rawdata = {{{{0}}}};
     rawdata.type = MEM_LEAK_MSG;
     if (!stackWriterList_[0]) {
         return false;
     }
-    bool ret = stackWriterList_[0]->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
-                                                            reinterpret_cast<int8_t *>(data.data()), data.size() + 1,
-                                                            std::bind(&HookSocketClient::PeerIsConnected, this));
-    if (!ret) {
-        DisableHook();
-        return false;
-    }
+    stackWriterList_[0]->WriteTimeout(&rawdata, sizeof(BaseStackRawData));
     stackWriterList_[0]->Flush();
+    PROFILER_LOG_INFO(LOG_CORE, "GetAndSendMemLeakInfo sent MEM_LEAK_MSG notification");
     return true;
 }
 
