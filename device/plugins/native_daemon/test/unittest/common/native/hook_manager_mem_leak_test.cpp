@@ -14,8 +14,11 @@
  */
 
 #include <gtest/gtest.h>
+#include <cstdio>
 #include <fstream>
 #include <sstream>
+#include <cerrno>
+#include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -627,5 +630,45 @@ HWTEST_F(HookManagerMemLeakTest, GetClientConfigExt_DefaultFormat, TestSize.Leve
 
     // Default should be TYPE_DISABLE when not enabled
     EXPECT_EQ(clientConfig.memLeakFormat, MemLeakFormat::TYPE_DISABLE);
+}
+
+/*
+ * @tc.name: HandleMemLeakDone_CleansTempFile
+ * @tc.desc: test socket mem leak done handles fd content before cleanup.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, HandleMemLeakDone_CleansTempFile, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_native_orphansnapshots_enable(true);
+    config.set_pid(TEST_PID);
+    hookManager_->SetHookConfig(config);
+    hookManager_->SetMemLeakFormat(static_cast<uint32_t>(MemLeakFormat::TYPE_SNAPSHOT));
+    const std::string tempDir = "/data/local/tmp/memleak_test_cache/";
+    if (mkdir(tempDir.c_str(), 0755) != 0) {
+        ASSERT_EQ(errno, EEXIST) << strerror(errno);
+    }
+    hookManager_->fileCacheDir_ = tempDir;
+    hookManager_->memLeakFileName_ = "memleak-native-orphansnapshot-test.txt";
+
+    int fd = hookManager_->CreateMemLeakFile();
+    ASSERT_GE(fd, 0);
+    EXPECT_FALSE(hookManager_->memLeakDumpDone_.load());
+    int clientFd = dup(fd);
+    ASSERT_GE(clientFd, 0);
+    const char* content = "mem-leak-content";
+    ssize_t writeSize = write(clientFd, content, strlen(content));
+    ASSERT_EQ(writeSize, static_cast<ssize_t>(strlen(content)));
+    ASSERT_EQ(close(clientFd), 0);
+
+    EXPECT_TRUE(hookManager_->HandleMemLeakDone());
+    EXPECT_TRUE(hookManager_->memLeakDumpDone_.load());
+    EXPECT_EQ(hookManager_->tempMemLeakFd_, -1);
+    std::ifstream result("/data/local/tmp/memleak-native-orphansnapshot-test.txt");
+    std::stringstream buffer;
+    buffer << result.rdbuf();
+    EXPECT_EQ(buffer.str(), content);
+    remove("/data/local/tmp/memleak-native-orphansnapshot-test.txt");
+    rmdir(tempDir.c_str());
 }
 } // namespace

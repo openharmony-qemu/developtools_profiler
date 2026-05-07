@@ -124,6 +124,51 @@ bool SendInitialFileCacheFds(SocketContext &context, HookManager& hookMgr, int32
     }
     return true;
 }
+
+bool SendMemLeakFd(SocketContext &context, HookManager& hookMgr, const ClientConfig& clientConfig)
+{
+    if (clientConfig.memLeakFormat == MemLeakFormat::TYPE_DISABLE) {
+        return true;
+    }
+    int fd = hookMgr.CreateMemLeakFile();
+    if (fd < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "SendMemLeakFd invalid fd");
+        return false;
+    }
+    bool ret = context.SendFileDescriptor(fd);
+    PROFILER_LOG_INFO(LOG_CORE, "SendMemLeakFd sent fd %d", fd);
+    return ret;
+}
+
+int32_t FindPidBySocket(int socketFd)
+{
+    std::lock_guard<std::mutex> lock(g_pidFdMtx);
+    for (const auto& item : g_pidFds) {
+        if (item.second == socketFd) {
+            return item.first;
+        }
+    }
+    return -1;
+}
+
+bool HandleMemLeakDoneBySocket(SocketContext &context)
+{
+    int32_t pid = FindPidBySocket(context.GetSocketHandle());
+    if (pid <= 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc mem leak done without pid");
+        return true;
+    }
+    std::lock_guard<std::mutex> guard(g_mtx);
+    auto iter = g_pidCtx.find(pid);
+    if (iter == g_pidCtx.end() || iter->second == nullptr || iter->second->hookMgr == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc mem leak done without hook manager");
+        return true;
+    }
+    if (!iter->second->hookMgr->HandleMemLeakDone()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc mem leak done failed");
+    }
+    return true;
+}
 }
 
 NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, true)
@@ -955,6 +1000,9 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         return false;
     }
     int peerConfig = *const_cast<int *>(reinterpret_cast<const int *>(buf));
+    if (static_cast<uint32_t>(peerConfig) == MEM_LEAK_DONE_CMD) {
+        return HandleMemLeakDoneBySocket(context);
+    }
     if (peerConfig == -1) {
         return false;
     }
@@ -994,6 +1042,10 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
             return false;
         }
         iter->second->hookMgr->SetPid(peerConfig);
+        {
+            std::lock_guard<std::mutex> socketLock(g_pidFdMtx);
+            g_pidFds[static_cast<pid_t>(peerConfig)] = context.GetSocketHandle();
+        }
         PROFILER_LOG_INFO(LOG_CORE,
             "ProtocolProc, receive message from hook client, and send hook config to process %d, name: %s",
             peerConfig, bundleName.c_str());
@@ -1005,11 +1057,13 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         }
         clientConfig.isSaMode = true;
         if (!context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig), sizeof(clientConfig))) {
+            CloseSocketFd(static_cast<pid_t>(peerConfig));
             return false;
         }
         if (clientConfig.enableFileCacheMode) {
             if (!SendInitialFileCacheFds(context, *(iter->second->hookMgr), peerConfig, bundleName)) {
                 PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc send initial file cache fds failed");
+                CloseSocketFd(static_cast<pid_t>(peerConfig));
                 return false;
             }
         } else {
@@ -1036,14 +1090,15 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         } else if (clientConfig.asyncStackEnable) {
             PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: uniqueTableBlock_ is nullptr for pid=%d", peerConfig);
         }
+        if (!SendMemLeakFd(context, *(iter->second->hookMgr), clientConfig)) {
+            CloseSocketFd(static_cast<pid_t>(peerConfig));
+            return false;
+        }
         iter->second->hookMgr->ResetStartupParam();
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: send config failed");
         return false;
     }
-    std::unique_lock<std::mutex> socketLock(g_pidFdMtx);
-    g_pidFds[static_cast<pid_t>(peerConfig)] = context.GetSocketHandle();
-    socketLock.unlock();
     return true;
 }
 

@@ -20,7 +20,10 @@
 #include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <cerrno>
+#include <chrono>
 #include <cstdlib>
+#include <thread>
 #include <unordered_set>
 #include <unordered_map>
 #include "async_stack.h"
@@ -52,6 +55,8 @@ constexpr uint32_t PAGE_BYTES = 4096;
 constexpr uint32_t SHMEM_DRAIN_POLL_MS = 10;
 constexpr uint32_t SHMEM_DRAIN_QUIET_ROUNDS = 3;
 constexpr uint32_t SHMEM_DRAIN_TIMEOUT_MS = 5000;
+constexpr uint32_t MEM_LEAK_DONE_POLL_MS = 10;
+constexpr uint32_t MEM_LEAK_DONE_TIMEOUT_MS = 5000;
 std::shared_ptr<Writer> g_buffWriter;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
@@ -79,6 +84,35 @@ uint32_t GetUniqueStackTableSizeWithDefault(const NativeHookConfig& config)
 {
     uint32_t currSize = config.unique_stack_table_size() * ONE_MEGABYTE;
     return NormalizeUniqueStackTableSize(currSize);
+}
+
+bool CopyFdContent(int destFd, int srcFd)
+{
+    if (lseek(srcFd, 0, SEEK_SET) < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CopyFdContent lseek failed errno=%d", errno);
+        return false;
+    }
+    struct stat statBuf;
+    if (fstat(srcFd, &statBuf) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CopyFdContent fstat failed errno=%d", errno);
+        return false;
+    }
+    off_t offset = 0;
+    while (offset < statBuf.st_size) {
+        ssize_t copied = sendfile(destFd, srcFd, &offset, static_cast<size_t>(statBuf.st_size - offset));
+        if (copied < 0 && errno == EINTR) {
+            continue;
+        }
+        if (copied <= 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "CopyFdContent sendfile failed errno=%d", errno);
+            return false;
+        }
+    }
+    if (fsync(destFd) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CopyFdContent fsync failed errno=%d", errno);
+        return false;
+    }
+    return true;
 }
 static thread_local std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> g_rawDataArray = {};
 static thread_local uint32_t g_rawStackCount = 0;
@@ -996,12 +1030,13 @@ int HookManager::CreateMemLeakFile()
 {
     constexpr int FILE_MODE = 0644;
     std::string tempPath = fileCacheDir_ + memLeakFileName_;
-    int fileFd = open(tempPath.c_str(), O_CREAT | O_RDWR, FILE_MODE);
+    int fileFd = open(tempPath.c_str(), O_CREAT | O_RDWR | O_TRUNC, FILE_MODE);
     if (fileFd < 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "Create memLeak file failed!");
         return fileFd;
     }
     tempMemLeakFd_ = fileFd;
+    memLeakDumpDone_ = false;
     PROFILER_LOG_INFO(LOG_CORE, "Create tempMemLeak file success. fd: %d, type: %d, filename: %s",
         tempMemLeakFd_, memLeakFormat_, memLeakFileName_.c_str());
     return fileFd;
@@ -1222,23 +1257,17 @@ void HookManager::DumpMemLeakInfo()
     PROFILER_LOG_INFO(LOG_CORE, "DumpMemLeakInfo start");
     if (!hookConfig_.native_orphansnapshots_enable()) {
         PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo disabled");
+        memLeakDumpDone_ = true;
         return;
     }
     if (tempMemLeakFd_ < 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo tmpMemLeakFd_ err");
+        memLeakDumpDone_ = true;
         return;
     }
-    if (saMode_ && memLeakFd_ > 0) {
-        lseek(tempMemLeakFd_, 0, SEEK_SET);
-        struct stat statBuf;
-        if (fstat(tempMemLeakFd_, &statBuf) == 0) {
-            off_t offset = 0;
-            ssize_t total = sendfile(static_cast<int>(memLeakFd_), tempMemLeakFd_, &offset, statBuf.st_size);
-            if (total != statBuf.st_size) {
-                PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo sendfile failed, expected %zd, wrote %zd",
-                                   static_cast<ssize_t>(statBuf.st_size), total);
-            }
-            fsync(static_cast<int>(memLeakFd_));
+    if (saMode_ && memLeakFd_ >= 0) {
+        if (!CopyFdContent(static_cast<int>(memLeakFd_), tempMemLeakFd_)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo CopyFdContent failed");
         }
     } else {
         std::string finalPath = MEM_LEAK_FILE_PATH + memLeakFileName_;
@@ -1247,6 +1276,32 @@ void HookManager::DumpMemLeakInfo()
         }
     }
     CloseMemLeakTempFile();
+    memLeakDumpDone_ = true;
+}
+
+bool HookManager::HandleMemLeakDone()
+{
+    if (memLeakDumpDone_.load()) {
+        return true;
+    }
+    DumpMemLeakInfo();
+    return memLeakDumpDone_.load();
+}
+
+void HookManager::WaitMemLeakDoneIfNeeded()
+{
+    if (!hookConfig_.native_orphansnapshots_enable() || memLeakDumpDone_.load()) {
+        return;
+    }
+    uint32_t waitedMs = 0;
+    while (!memLeakDumpDone_.load() && waitedMs < MEM_LEAK_DONE_TIMEOUT_MS) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(MEM_LEAK_DONE_POLL_MS));
+        waitedMs += MEM_LEAK_DONE_POLL_MS;
+    }
+    if (!memLeakDumpDone_.load()) {
+        PROFILER_LOG_WARN(LOG_CORE, "WaitMemLeakDoneIfNeeded timeout");
+        memLeakDumpDone_ = true;
+    }
 }
 
 void HookManager::CollectGwpAsanFrames(std::unordered_map<uintptr_t, DfxFrame>& frameMap, uint8_t* allocDataPtr,
@@ -1629,6 +1684,7 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
             uniqueTableBlock_ = nullptr;
         }
     }
+    WaitMemLeakDoneIfNeeded();
     CloseResource();
     return true;
 }
@@ -1648,11 +1704,11 @@ void HookManager::CloseResource()
 
 bool HookManager::CloseMemLeakTempFile()
 {
-    if (memLeakFd_ > 0) {
+    if (memLeakFd_ >= 0) {
         close(memLeakFd_);
         memLeakFd_ = -1;
     }
-    if (tempMemLeakFd_ <= 0) {
+    if (tempMemLeakFd_ < 0) {
         return true;
     }
     close(tempMemLeakFd_);
@@ -1694,6 +1750,7 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
     for (const auto& item : hookCtx_) {
         WaitFinalSnapshotIfNeeded(item);
         StopTargetProcess(item);
+        WaitMemLeakDoneIfNeeded();
         if (!FinalizeStoppedContext(item)) {
             return false;
         }
