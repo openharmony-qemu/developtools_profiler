@@ -31,6 +31,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cerrno>
 #include <iostream>
 
 extern "C" {
@@ -309,7 +310,9 @@ void HookSocketClient::SendOptionalReports()
 {
     HandleCommonConfig();
     if (config_->onlyMemLeak) {
-        GetAndSendMemLeakInfo();
+        if (!GetAndSendMemLeakInfo()) {
+            PROFILER_LOG_ERROR(LOG_CORE, "SendOptionalReports mem leak report failed");
+        }
     }
     if (config_->allocatorSamplingEnable) {
 #ifdef OHOS_ENABLE_SAMPLER
@@ -370,7 +373,7 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
 
 bool HookSocketClient::GetAndSendMemLeakInfo()
 {
-    if ((config_->memLeakFormat == MemLeakFormat::TYPE_DISABLE) || (stackWriterList_.size() == 0)) {
+    if (config_->memLeakFormat == MemLeakFormat::TYPE_DISABLE) {
         return false;
     }
 
@@ -381,25 +384,48 @@ bool HookSocketClient::GetAndSendMemLeakInfo()
         PROFILER_LOG_ERROR(LOG_CORE, "GetAndSendMemLeakInfo GetMemLeakInfo failed");
         return false;
     }
-    
-    // 直接写入接收到的 fd
-    if (memLeakRecvFd_ > 0) {
-        ssize_t written = write(memLeakRecvFd_, data.c_str(), data.size());
-        PROFILER_LOG_INFO(LOG_CORE, "GetAndSendMemLeakInfo wrote %zd bytes to fd %d", written, memLeakRecvFd_);
-        close(memLeakRecvFd_);
-        memLeakRecvFd_ = -1;
-    }
-    
-    // 发送完成通知
-    StackRawData rawdata = {{{{0}}}};
-    rawdata.type = MEM_LEAK_MSG;
-    if (!stackWriterList_[0]) {
+    return WriteMemLeakInfo(data) && SendMemLeakDone();
+}
+
+bool HookSocketClient::WriteMemLeakInfo(const std::string& data)
+{
+    if (memLeakRecvFd_ < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "WriteMemLeakInfo invalid fd %d", memLeakRecvFd_);
         return false;
     }
-    stackWriterList_[0]->WriteTimeout(&rawdata, sizeof(BaseStackRawData));
-    stackWriterList_[0]->Flush();
-    PROFILER_LOG_INFO(LOG_CORE, "GetAndSendMemLeakInfo sent MEM_LEAK_MSG notification");
+    size_t writtenSize = 0;
+    while (writtenSize < data.size()) {
+        ssize_t written = write(memLeakRecvFd_, data.data() + writtenSize, data.size() - writtenSize);
+        if (written < 0 && errno == EINTR) {
+            continue;
+        }
+        if (written <= 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "WriteMemLeakInfo write failed, errno=%d", errno);
+            close(memLeakRecvFd_);
+            memLeakRecvFd_ = -1;
+            return false;
+        }
+        writtenSize += static_cast<size_t>(written);
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "WriteMemLeakInfo wrote %zu bytes to fd %d", writtenSize, memLeakRecvFd_);
+    if (fsync(memLeakRecvFd_) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "WriteMemLeakInfo fsync failed, errno=%d", errno);
+    }
+    close(memLeakRecvFd_);
+    memLeakRecvFd_ = -1;
     return true;
+}
+
+bool HookSocketClient::SendMemLeakDone()
+{
+    if (unixSocketClient_ == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "SendMemLeakDone socket missing");
+        return false;
+    }
+    uint32_t cmd = MEM_LEAK_DONE_CMD;
+    bool ret = unixSocketClient_->SendHookConfig(reinterpret_cast<uint8_t*>(&cmd), sizeof(cmd));
+    PROFILER_LOG_INFO(LOG_CORE, "SendMemLeakDone result %d", ret);
+    return ret;
 }
 
 bool HookSocketClient::SendStack(const void* data, size_t size)

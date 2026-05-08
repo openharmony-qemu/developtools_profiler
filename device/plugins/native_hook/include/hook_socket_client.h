@@ -70,6 +70,8 @@ private:
     void SendOptionalReports();
     bool ParseTargetMapsIfNeeded();
     bool GetAndSendMemLeakInfo();
+    bool WriteMemLeakInfo(const std::string& data);
+    bool SendMemLeakDone();
     void SetAsyncStack();
 
 private:

@@ -16,6 +16,7 @@
 #ifndef HOOK_MANAGER_H
 #define HOOK_MANAGER_H
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <string>
@@ -187,6 +188,8 @@ public:
     void SetGwpFd(uint32_t fd);
     void SetMemLeakFd(uint32_t fd);
     int CreateMemLeakFile();
+    bool HandleMemLeakDone();
+    void WaitMemLeakDoneIfNeeded();
     void FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                             std::shared_ptr<HookRecord>& hookRecord);
     std::string simplifiedNmd_;
@@ -285,6 +288,7 @@ private:
     uint32_t memLeakLimit_ = 0;
     std::string memLeakFileName_;
     std::string fileCacheDir_ = "/data/log/hiprofiler/";
+    std::atomic_bool memLeakDumpDone_ {true};
 };
 }
 #endif // AGENT_MANAGER_H

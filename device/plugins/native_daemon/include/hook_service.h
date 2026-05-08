@@ -45,6 +45,7 @@ private:
     bool SendAsyncStackFd(SocketContext &context);
     bool SendMemLeakFd(SocketContext &context);
     void SaveSocketFd(SocketContext &context, pid_t pid);
+    bool HandleControlCommand(uint32_t cmd);
     void ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf);
     bool SendFileCacheFd(SocketContext &context, int32_t pid, uint16_t fileIndex);
     bool SendInitialFileCacheFds(SocketContext &context, int32_t pid, const std::string& name);
