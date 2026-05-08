@@ -506,6 +506,8 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.gwpAsanHoldTime = gwpAsanHoldTime_;
     clientConfig.gwpAsanMaxEntries = gwpAsanMaxEntries_;
     clientConfig.gwpAsanMaxStackDepth = gwpAsanMaxStackDepth_;
+    clientConfig.asyncNestingDepth = hookConfig_.async_nesting_depth();
+    clientConfig.asyncTaskStackDepth = hookConfig_.async_task_stack_depth();
     GetClientConfigExt(clientConfig);
 }
 
@@ -1829,6 +1831,8 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
 void HookManager::SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
     hookConfig_.set_native_orphansnapshots_enable(config->nativeOrphanSnapshotsEnable_);
+    hookConfig_.set_async_nesting_depth(config->asyncNestingDepth_);
+    hookConfig_.set_async_task_stack_depth(config->asyncTaskStackDepth_);
     SetMemLeakFormat(config->memLeakFormat_);
     memLeakLimit_ = config->memLeakLimit_;
     largestSize_ = config->largestSize_;

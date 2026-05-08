@@ -922,4 +922,44 @@ HWTEST_F(HookManagerExtTest, GetClientConfigGwpAsan, TestSize.Level0)
     EXPECT_EQ(clientConfig.gwpAsanMaxEntries, 128);
     EXPECT_EQ(clientConfig.gwpAsanMaxStackDepth, 32);
 }
+
+/*
+* @tc.name: SetHookConfigAsyncStackDepth
+* @tc.desc: test SetHookConfig with async nesting depth and task stack depth from SaConfig.
+* @tc.type: FUNC
+*/
+HWTEST_F(HookManagerExtTest, SetHookConfigAsyncStackDepth, TestSize.Level0)
+{
+    auto saConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
+    saConfig->pid_ = TEST_PID;
+    saConfig->asyncNestingDepth_ = 8;
+    saConfig->asyncTaskStackDepth_ = 16;
+
+    hookManager_->SetHookConfig(saConfig);
+
+    const auto& config = hookManager_->GetHookConfig();
+    EXPECT_EQ(config.async_nesting_depth(), 8);
+    EXPECT_EQ(config.async_task_stack_depth(), 16);
+}
+
+/*
+* @tc.name: GetClientConfigAsyncStackDepth
+* @tc.desc: test GetClientConfig includes async nesting depth and task stack depth.
+* @tc.type: FUNC
+*/
+HWTEST_F(HookManagerExtTest, GetClientConfigAsyncStackDepth, TestSize.Level0)
+{
+    auto saConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
+    saConfig->pid_ = TEST_PID;
+    saConfig->asyncNestingDepth_ = 10;
+    saConfig->asyncTaskStackDepth_ = 20;
+
+    hookManager_->SetHookConfig(saConfig);
+
+    ClientConfig clientConfig;
+    hookManager_->GetClientConfig(clientConfig);
+
+    EXPECT_EQ(clientConfig.asyncNestingDepth, 10);
+    EXPECT_EQ(clientConfig.asyncTaskStackDepth, 20);
+}
 } // namespace
