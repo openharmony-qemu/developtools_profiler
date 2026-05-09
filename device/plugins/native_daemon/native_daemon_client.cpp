@@ -161,6 +161,8 @@ int32_t main(int32_t argc, char* argv[])
             printf("    --memLeakLimit                      -mll : mem leak limit, default: 0\n");
             printf("    --nmdPid                            -np : nmd pid, default: 0\n");
             printf("    --nmdType                           -nt : nmd type, default: 0\n");
+            printf("    --asyncNestingDepth                 -and : async nesting depth, default: 0\n");
+            printf("    --asyncTaskStackDepth               -atsd : async task stack depth, default: 0\n");
             return 0;
         }
 
@@ -308,6 +310,12 @@ int32_t main(int32_t argc, char* argv[])
             config->extendProcesses_ = true;
         } else if ((arg == "--traceMask") || (arg == "-tm")) {
             config->traceMask_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
+        } else if ((arg == "--asyncNestingDepth") || (arg == "-and")) {
+            config->asyncNestingDepth_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
+        } else if ((arg == "--asyncTaskStackDepth") || (arg == "-atsd")) {
+            config->asyncTaskStackDepth_ =
                 i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
         } else {
             printf("error arg: %s\n", arg.c_str());

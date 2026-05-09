@@ -290,6 +290,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         memLeakFormat = MemLeakFormat::TYPE_DISABLE;
         memLeakLimit = MEM_LEAK_LIMIT_DEFAULT;
         onlyMemLeak = false;
+        asyncNestingDepth = 0;
+        asyncTaskStackDepth = 0;
     }
 
     std::string ToString()
@@ -366,6 +368,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     uint32_t memLeakLimit = 0;
     MemLeakFormat memLeakFormat = MemLeakFormat::TYPE_DISABLE;
     bool onlyMemLeak = false;
+    uint32_t asyncNestingDepth = 0;
+    uint32_t asyncTaskStackDepth = 0;
 };
 
 struct alignas(8) HookCacheFileMsg {

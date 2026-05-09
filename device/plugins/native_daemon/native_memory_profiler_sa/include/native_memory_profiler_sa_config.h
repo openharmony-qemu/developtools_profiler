@@ -93,6 +93,8 @@ public:
     bool nativeOrphanSnapshotsEnable_{false};
     uint32_t memLeakFormat_{INVALID_FORMAT};
     uint32_t memLeakLimit_{0};
+    uint32_t asyncNestingDepth_{0};
+    uint32_t asyncTaskStackDepth_{0};
 };
 } // namespace OHOS::Developtools::NativeDaemon
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_H

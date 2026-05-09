@@ -81,12 +81,18 @@ void FpStackBuilder::FillNestedIps(std::vector<CallFrame>& callFrames,
         }
         callFrames.emplace_back(StripPac(pc, 0));
     }
+    uint32_t asyncTaskStackDepth = hookConfig_->async_task_stack_depth();
     for (const auto& asyncPcs : nestedAsyncPcs) {
+        size_t count = 0;
         for (auto pc : asyncPcs) {
             if (pc == 0) {
                 break;
             }
+            if (asyncTaskStackDepth > 0 && count >= asyncTaskStackDepth) {
+                break;
+            }
             callFrames.emplace_back(StripPac(pc, 0));
+            count++;
         }
     }
 }
