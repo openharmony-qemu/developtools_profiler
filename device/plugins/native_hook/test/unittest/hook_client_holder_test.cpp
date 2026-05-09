@@ -25,6 +25,7 @@ using namespace OHOS::Developtools::NativeDaemon;
 
 namespace {
 constexpr unsigned int WAIT_THREAD_TIME = 3;
+constexpr size_t FIRST_RANGE_INDEX = 0;
 class HookClientHolderTest : public ::testing::Test {
 public:
     static void SetUpTestCase()
@@ -38,7 +39,11 @@ public:
         sleep(WAIT_THREAD_TIME);
     }
     void SetUp() override {}
-    void TearDown() override {}
+    void TearDown() override
+    {
+        g_clientConfig.targetSoName = "";
+        g_targetLibRange.clear();
+    }
 };
 
 /**
@@ -112,7 +117,7 @@ HWTEST_F(HookClientHolderTest, MultipleHoldersTest, TestSize.Level0)
 HWTEST_F(HookClientHolderTest, UpdateThreadNameTest, TestSize.Level0)
 {
     std::shared_ptr<HookSocketClient> hookClient = std::make_shared<HookSocketClient>(
-        g_hookPid.load(), &g_clientConfig, &g_targetedRange, &g_sharedMemCount);
+        g_hookPid.load(), &g_clientConfig, &g_targetLibRange, &g_sharedMemCount);
     HookClientHolder holder1(hookClient);
     EXPECT_TRUE(holder1.IsValid());
     EXPECT_FALSE(holder1.UpdateThreadName());
@@ -210,7 +215,7 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_ProtExec, TestSize.Level0
 
 /**
  * @tc.name: SendMmapFileRawDataTest_MapFixed_TargetSo
- * @tc.desc: Flags include MAP_FIXED + target SO (triggers targetedRange update)
+ * @tc.desc: Flags include MAP_FIXED + target SO (triggers target range update)
  * @tc.type: FUNC
  */
 HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_TargetSo, TestSize.Level0)
@@ -219,7 +224,7 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_TargetSo, TestSi
     g_clientConfig.filterSize = 1;
     g_clientConfig.targetSoName = "libtarget.so";
     g_hookPid.store(9012);
-    g_targetedRange.store({0, 0});
+    g_targetLibRange.clear();
 
     StackRawData rawdata = RawDataBuilder()
            .SetAddr(reinterpret_cast<void*>(0x3000)) // addr=0x3000
@@ -239,11 +244,48 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_TargetSo, TestSi
     EXPECT_TRUE(holder.IsValid());
     holder.SendMmapFileRawData(PROT_READ, MAP_FIXED, 0, filePath, rawdata);
 
-    Range updatedRange = g_targetedRange.load();
     uint64_t expectedStart = reinterpret_cast<uint64_t>(rawdata.addr);
     uint64_t expectedEnd = expectedStart + rawdata.mallocSize;
-    EXPECT_EQ(updatedRange.start, expectedStart);
-    EXPECT_EQ(updatedRange.end, expectedEnd);
+    ASSERT_EQ(g_targetLibRange.size(), 1);
+    EXPECT_EQ(g_targetLibRange[FIRST_RANGE_INDEX].first, expectedStart);
+    EXPECT_EQ(g_targetLibRange[FIRST_RANGE_INDEX].second, expectedEnd);
+}
+
+/**
+ * @tc.name: SendMmapFileRawDataTest_MapFixed_TargetSoList
+ * @tc.desc: Flags include MAP_FIXED + target SO list.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_TargetSoList, TestSize.Level0)
+{
+    g_hookReady = true;
+    g_clientConfig.filterSize = 1;
+    g_clientConfig.targetSoName = "libfirst.so, libtarget.so";
+    g_hookPid.store(9013);
+    g_targetLibRange.clear();
+
+    StackRawData rawdata = RawDataBuilder()
+           .SetAddr(reinterpret_cast<void*>(0x3000))
+           .SetSize(0x5000)
+           .SetProcessInfo()
+           .SetTimestamp()
+           .Build();
+    const char* filePath = "/usr/lib/libtarget.so";
+
+    std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
+    g_hookClient = mockClient;
+    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+        .Times(1);
+
+    HookClientHolder holder(g_hookClient);
+    EXPECT_TRUE(holder.IsValid());
+    holder.SendMmapFileRawData(PROT_READ, MAP_FIXED, 0, filePath, rawdata);
+
+    uint64_t expectedStart = reinterpret_cast<uint64_t>(rawdata.addr);
+    uint64_t expectedEnd = expectedStart + rawdata.mallocSize;
+    ASSERT_EQ(g_targetLibRange.size(), 1);
+    EXPECT_EQ(g_targetLibRange[FIRST_RANGE_INDEX].first, expectedStart);
+    EXPECT_EQ(g_targetLibRange[FIRST_RANGE_INDEX].second, expectedEnd);
 }
 
 /**
@@ -257,7 +299,7 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_ExpandStart, Tes
     g_clientConfig.targetSoName = "libtarget.so";
     g_hookPid.store(1111);
     // 初始range：start=0x4000, end=0x8000
-    g_targetedRange.store({0x4000, 0x8000});
+    g_targetLibRange = {{0x4000, 0x8000}};
 
     StackRawData rawdata = RawDataBuilder()
            .SetAddr(reinterpret_cast<void*>(0x2000)) // 新start更小
@@ -277,9 +319,9 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_ExpandStart, Tes
     holder.SendMmapFileRawData(PROT_READ, MAP_FIXED, 0, filePath, rawdata);
 
     // 验证range更新：start=0x2000, end=0x8000
-    Range updatedRange = g_targetedRange.load();
-    EXPECT_EQ(updatedRange.start, 0x2000);
-    EXPECT_EQ(updatedRange.end, 0x8000);
+    ASSERT_EQ(g_targetLibRange.size(), 1);
+    EXPECT_EQ(g_targetLibRange[FIRST_RANGE_INDEX].first, 0x2000);
+    EXPECT_EQ(g_targetLibRange[FIRST_RANGE_INDEX].second, 0x8000);
 }
 
 /**
@@ -293,7 +335,7 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_ExpandEnd, TestS
     g_clientConfig.targetSoName = "libtarget.so";
     g_hookPid.store(2222);
     // start=0x3000, end=0x5000
-    g_targetedRange.store({0x3000, 0x5000});
+    g_targetLibRange = {{0x3000, 0x5000}};
 
     StackRawData rawdata = RawDataBuilder()
            .SetAddr(reinterpret_cast<void*>(0x3000))
@@ -313,9 +355,9 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_ExpandEnd, TestS
     holder.SendMmapFileRawData(PROT_READ, MAP_FIXED, 0, filePath, rawdata);
 
     // start=0x3000, end=0x7000
-    Range updatedRange = g_targetedRange.load();
-    EXPECT_EQ(updatedRange.start, 0x3000);
-    EXPECT_EQ(updatedRange.end, 0x7000);
+    ASSERT_EQ(g_targetLibRange.size(), 1);
+    EXPECT_EQ(g_targetLibRange[FIRST_RANGE_INDEX].first, 0x3000);
+    EXPECT_EQ(g_targetLibRange[FIRST_RANGE_INDEX].second, 0x7000);
 }
 
 /**

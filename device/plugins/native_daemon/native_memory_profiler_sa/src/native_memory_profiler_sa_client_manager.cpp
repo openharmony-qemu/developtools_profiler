@@ -343,17 +343,8 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
     std::shared_ptr<NativeMemoryProfilerSaConfig> nConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
     CHECK_NOTNULL(nConfig, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
     nConfig->pid_ = static_cast<int32_t>(pid);
-    nConfig->duration_ = duration;
-    nConfig->largestSize_ = config.largestSize;
-    nConfig->secondLargestSize_ = config.secondLargestSize;
-    nConfig->maxGrowthSize_ = config.maxGrowthSize;
-    nConfig->sampleInterval_ = config.sampleSize;
-    nConfig->shareMemorySize_ = CALL_STACK_SMS;
-    nConfig->statisticsInterval_ = FIVE_MINUTES;
-    nConfig->jsStackReport_ = true;
-    nConfig->maxJsStackDepth_ = JS_STACK_DEPS;
-    nConfig->asyncStackEnable_ = config.asyncStackEnable;
-    nConfig->asyncFlag_ = config.asyncFlag;
+    CHECK_TRUE(ParseSimplifiedConfig(nConfig, config, duration) == RET_OK,
+        RET_ERR, "NativeMemoryProfilerSaClientManager: Parse simplified config failed");
     return InvokeWithProxy([fd, &nConfig](NativeMemoryProfilerSaProxy& proxy) {
         return proxy.DumpData(fd, nConfig);
     });
@@ -400,18 +391,8 @@ int32_t NativeMemoryProfilerSaClientManager::StartMemProfiler(uint32_t duration,
         static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG), "Invalid sampleSize: %zu", config.sampleSize);
 
     std::shared_ptr<NativeMemoryProfilerSaConfig> nConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
-    nConfig->duration_ = duration;
-    nConfig->largestSize_ = config.largestSize;
-    nConfig->secondLargestSize_ = config.secondLargestSize;
-    nConfig->maxGrowthSize_ = config.maxGrowthSize;
-    nConfig->sampleInterval_ = config.sampleSize;
-    nConfig->shareMemorySize_ = CALL_STACK_SMS;
-    nConfig->statisticsInterval_ = FIVE_MINUTES;
-    nConfig->jsStackReport_ = true;
-    nConfig->maxJsStackDepth_ = JS_STACK_DEPS;
-    nConfig->mallocDisable_ = false;
-    nConfig->mmapDisable_ = false;
-    nConfig->memtraceEnable_ = false;
+    CHECK_TRUE(ParseSimplifiedConfig(nConfig, config, duration) == RET_OK,
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG), "Parse simplified config failed");
     return StartByType(static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_NATIVE), nConfig, callback);
 }
 
@@ -539,6 +520,30 @@ int32_t NativeMemoryProfilerSaClientManager::ParseNormalConfig(
     config->sampleInterval_ = inputConfig->sampleInterval;
     config->filterSize_ = static_cast<int32_t>(inputConfig->filterSize);
     config->statisticsInterval_ = inputConfig->statisticsInterval;
+    return RET_OK;
+}
+
+int32_t NativeMemoryProfilerSaClientManager::ParseSimplifiedConfig(
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config, const SimplifiedMemConfig& inputConfig, uint32_t duration)
+{
+    if (config == nullptr) {
+        return RET_ERR;
+    }
+    config->duration_ = duration;
+    config->largestSize_ = inputConfig.largestSize;
+    config->secondLargestSize_ = inputConfig.secondLargestSize;
+    config->maxGrowthSize_ = inputConfig.maxGrowthSize;
+    config->sampleInterval_ = inputConfig.sampleSize;
+    config->shareMemorySize_ = CALL_STACK_SMS;
+    config->statisticsInterval_ = FIVE_MINUTES;
+    config->jsStackReport_ = true;
+    config->maxJsStackDepth_ = JS_STACK_DEPS;
+    config->mallocDisable_ = false;
+    config->mmapDisable_ = false;
+    config->memtraceEnable_ = false;
+    config->asyncStackEnable_ = inputConfig.asyncStackEnable;
+    config->asyncFlag_ = inputConfig.asyncFlag;
+    config->targetSoName_ = inputConfig.targetSoName;
     return RET_OK;
 }
 

@@ -25,11 +25,15 @@ extern "C" {
 
 bool IsLegalSoName(const char *fileName);
 bool IsFilterLibrary(const std::string& filePath, const std::vector<std::string>& filterLibList);
+bool IsTargetLibrary(const std::string& filePath, const std::string& targetLibs);
+void UpdateTargetLibraryRange(std::vector<std::pair<uint64_t, uint64_t>>& targetLibRange,
+                              uint64_t soStart, uint64_t soEnd);
 void ParseEvent(const std::string& filePath, std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange,
                 const NameData& curRawData);
 bool ParseSelfMaps(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange,
                    const std::vector<std::string>& filterLibList);
-bool ParseTargetedMaps(std::atomic<Range>& targetedRange, std::string targetedLib);
+bool ParseTargetedMaps(std::vector<std::pair<uint64_t, uint64_t>>& targetLibRange,
+                       const std::string& targetLibs);
 bool GetRuntimeStackRange(const uintptr_t stackPtr, uintptr_t& stackBottom, uintptr_t& stackTop, bool isMainThread);
 
 #ifdef __cplusplus

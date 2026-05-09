@@ -22,6 +22,8 @@
 #include <cstdint>
 #include <mutex>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 #include "musl_malloc_dispatch.h"
 #include "hook_common.h"
 #include "hook_socket_client.h"
@@ -42,7 +44,7 @@ extern std::atomic<bool> g_isPidChanged;
 extern ClientConfig g_clientConfig;
 extern std::mutex g_usableSizeMapMutex;
 extern std::unordered_map<size_t, size_t> g_mallocUsableSizeMap;
-extern std::atomic<Range> g_targetedRange;
+extern std::vector<std::pair<uint64_t, uint64_t>> g_targetLibRange;
 extern std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
 extern std::recursive_timed_mutex g_FilterMapMutex;
 extern std::shared_ptr<HookSocketClient> g_hookClient;

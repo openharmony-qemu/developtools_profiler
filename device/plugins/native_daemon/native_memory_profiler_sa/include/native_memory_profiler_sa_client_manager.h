@@ -92,6 +92,8 @@ private:
     static bool CheckConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     static int32_t ParseResType(int32_t type, std::shared_ptr<NativeMemoryProfilerSaConfig> config);
     static int32_t ParseNormalConfig(std::shared_ptr<NativeMemoryProfilerSaConfig> config, MemAPIConfig* inputConfig);
+    static int32_t ParseSimplifiedConfig(std::shared_ptr<NativeMemoryProfilerSaConfig> config,
+        const SimplifiedMemConfig& inputConfig, uint32_t duration);
     static ResProfilerErrorCode CheckInputConfig(int type, MemAPIConfig* inputConfig);
     static int32_t GetMemProfilerUseCountToday();
     static bool UpdateMemProfilerUserCount();

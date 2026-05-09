@@ -20,12 +20,16 @@
 #include "service_base.h"
 #include "stack_writer.h"
 
+#include <utility>
+#include <vector>
+
 class UnixSocketClient;
 class Sampling;
 
 class HookSocketClient : public ServiceBase {
 public:
-    HookSocketClient(int pid, ClientConfig* config, std::atomic<Range>* targetedRange = nullptr,
+    HookSocketClient(int pid, ClientConfig* config,
+                    std::vector<std::pair<uint64_t, uint64_t>>* targetLibRange = nullptr,
                     std::atomic<int>* memCount = nullptr, void (*disableHookCallback)() = nullptr);
     ~HookSocketClient();
     bool Connect(const std::string addrname);
@@ -83,7 +87,7 @@ private:
     int nmdType_ = -1;
     ClientConfig *config_ = nullptr;
     Sampling *sampler_ = nullptr;
-    std::atomic<Range>* targetedRange_ = nullptr;
+    std::vector<std::pair<uint64_t, uint64_t>>* targetLibRange_ = nullptr;
     std::atomic<int>* sharedMemCount_ = nullptr;
     std::vector<std::shared_ptr<StackWriter>> stackWriterList_;
     void (*disableHookCallback_)(){nullptr};

@@ -428,4 +428,27 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartProfilerByTypeInvalidArgT
         static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_RESOURCE_TYPE_INVALID_ARG));
 }
 
+/**
+ * @tc.name: ParseSimplifiedConfigTargetSoNameTest
+ * @tc.desc: ParseSimplifiedConfig should copy target so names from simplified config.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseSimplifiedConfigTargetSoNameTest, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(config, nullptr);
+
+    SimplifiedMemConfig inputConfig;
+    inputConfig.sampleSize = 512;
+    inputConfig.asyncStackEnable = true;
+    inputConfig.asyncFlag = 7;
+    inputConfig.targetSoName = "liba.so, libb.so";
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseSimplifiedConfig(config, inputConfig, 10), RET_OK);
+    EXPECT_TRUE(config->asyncStackEnable_);
+    EXPECT_EQ(config->asyncFlag_, inputConfig.asyncFlag);
+    EXPECT_EQ(config->targetSoName_, inputConfig.targetSoName);
+}
+
 #endif // NATIVE_MEMORY_PROFILER_SA_CLINET_MANAGER_TEST_H

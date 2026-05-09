@@ -72,7 +72,7 @@ std::atomic<bool> g_isPidChanged = false;
 std::unordered_map<size_t, size_t> g_mallocUsableSizeMap;
 std::shared_ptr<AddressHandler> g_addrHandler = nullptr;
 std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
-std::atomic<Range> g_targetedRange;
+std::vector<std::pair<uint64_t, uint64_t>> g_targetLibRange;
 std::shared_ptr<HookSocketClient> g_hookClient {nullptr};
 std::atomic<int> g_sharedMemCount = 1;
 
@@ -235,7 +235,7 @@ void* MallocHookStart(void* disableHookCallback)
     } else {
         g_clientConfig.Reset();
         g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_clientConfig,
-                                                          &g_targetedRange, &g_sharedMemCount,
+                                                          &g_targetLibRange, &g_sharedMemCount,
                                                           reinterpret_cast<void (*)()>(disableHookCallback));
         if (g_hookClient->GetConnectState()) {
             g_addrHandler = std::make_shared<LowAddrHandler>();
@@ -358,8 +358,13 @@ bool FilterStandardSoIp(uint64_t ip)
 
 bool CheckTargetLibIp(uint64_t ip)
 {
-    auto range = g_targetedRange.load();
-    return (ip >= range.start && ip < range.end);
+    std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
+    for (auto [soBegin, soEnd]: g_targetLibRange) {
+        if (ip >= soBegin && ip < soEnd) {
+            return true;
+        }
+    }
+    return false;
 }
 
 #if defined(__aarch64__)
@@ -1087,11 +1092,13 @@ int __attribute__((noinline)) hook_munmap(int(*fn)(void*, size_t), void* addr, s
 
     if (!g_clientConfig.targetSoName.empty()) {
         uint64_t addrval = reinterpret_cast<uint64_t>(addr);
-        auto range = g_targetedRange.load();
-        if (addrval < range.end && addrval >= range.start) {
-            range.end = 0;
-            range.start = 0;
-            g_targetedRange.store(range);
+        std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
+        for (auto& range : g_targetLibRange) {
+            if (addrval < range.second && addrval >= range.first) {
+                range.first = 0;
+                range.second = 0;
+                break;
+            }
         }
     }
 
