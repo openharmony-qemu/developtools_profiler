@@ -17,6 +17,7 @@ group("hiprofiler_targets") {
   if (!is_emulator) {
     deps = [
       "cmds:hiprofiler_cmd",
+      "base:libstack_common",
       "plugins/api:hiprofiler_plugins",
       "plugins/cpu_plugin:cpudataplugin",
       "plugins/diskio_plugin:diskiodataplugin",

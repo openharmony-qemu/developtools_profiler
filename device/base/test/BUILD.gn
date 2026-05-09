@@ -24,13 +24,20 @@ config("module_private_config") {
 
 ohos_unittest("hiprofiler_base_ut") {
   module_out_path = module_output_path
-  deps = [ "../:hiprofiler_base" ]
-  configs = [ ":module_private_config" ]
+  deps = [
+    "../:hiprofiler_base",
+    "../:libstack_common",
+  ]
+  configs = [
+    ":module_private_config",
+    "../:stack_common_public",
+  ]
   sources = [
     "unittest/common_test.cpp",
     "unittest/epoll_event_poller_test.cpp",
     "unittest/schedule_task_manager_test.cpp",
     "unittest/semaphore_test.cpp",
+    "unittest/stack_common_unittest.cpp",
   ]
   cflags = [
     "-Wno-inconsistent-missing-override",
@@ -39,6 +46,7 @@ ohos_unittest("hiprofiler_base_ut") {
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
+    "faultloggerd:libunwinder",
     "googletest:gtest",
     "hisysevent:libhisysevent",
   ]

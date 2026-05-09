@@ -71,6 +71,7 @@ ohos_shared_library("libmemory_profiler") {
     "./include",
     "./src",
     "../../base/include",
+    "${OHOS_PROFILER_DIR}/device/base/stack_common",
     "../api/include",
     "../api/src",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
@@ -131,6 +132,7 @@ ohos_shared_library("libmemory_profiler") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_encoder",
+    "../../base:libstack_common",
     "../../base:hiprofiler_base",
   ]
 

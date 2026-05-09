@@ -16,6 +16,7 @@
 
 #include "virtual_thread.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <iostream>
 #include <sstream>
@@ -27,6 +28,7 @@
 #include "symbols_file.h"
 #include "utilities.h"
 #include "virtual_runtime.h"
+#include "stack_map_query.h"
 namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
@@ -56,35 +58,14 @@ const std::shared_ptr<DfxMap> VirtualThread::FindMapByAddr(uint64_t addr) const
     if (maps_->size() == 0) {
         return nullptr;
     }
-    if (maps_->front()->begin > addr) {
+    auto r = OHOS::Developtools::StackCommon::LookupMapByAddrContiguous(*maps_, addr);
+    if (!r.ok) {
         return nullptr;
     }
-    if (maps_->back()->end <= addr) {
-        return nullptr;
+    if (r.sortedPosition > 0) {
+        (*maps_)[r.mapVectorIndex]->prevMap = (*maps_)[r.sortedPosition - 1];
     }
-    constexpr int two {2};
-    std::size_t left {0};
-    std::size_t right {maps_->size()};
-    std::size_t mid = (right - left) / two + left;
-    while (left < right) {
-        if (addr < (*maps_)[mid]->end) {
-            right = mid;
-            mid = (right - left) / two + left;
-            continue;
-        }
-        if (addr >= (*maps_)[mid]->end) {
-            left = mid + 1;
-            mid = (right - left) / two + left;
-            continue;
-        }
-    }
-    if (addr >= (*maps_)[left]->begin and addr < (*maps_)[left]->end) {
-        if (left > 0) {
-            (*maps_)[left]->prevMap = (*maps_)[left - 1];
-        }
-        return (*maps_)[left];
-    }
-    return nullptr;
+    return (*maps_)[r.mapVectorIndex];
 }
 VirtualThread::VirtualThread(pid_t pid,
                              pid_t tid,
@@ -114,20 +95,15 @@ std::string VirtualThread::ReadThreadName(pid_t tid)
 
 const std::shared_ptr<DfxMap> VirtualThread::FindMapByFileInfo(const std::string name, uint64_t offset) const
 {
-    for (auto map : *maps_) {
-        if (name != map->name) {
-            continue;
-        }
-        // check begin and length
-        if (offset >= map->offset && (offset - map->offset) < (map->end - map->begin)) {
-            HLOGMMM("found fileoffset 0x%" PRIx64 " in map (0x%" PRIx64 " - 0x%" PRIx64
-                    " pageoffset 0x%" PRIx64 ")  from %s",
-                    offset, map->begin, map->end, map->offset, map->name.c_str());
-            return map;
-        }
+    auto map = OHOS::Developtools::StackCommon::FindMapByFileOffset(*maps_, name, offset);
+    if (map != nullptr) {
+        HLOGMMM("found fileoffset 0x%" PRIx64 " in map (0x%" PRIx64 " - 0x%" PRIx64
+                " pageoffset 0x%" PRIx64 ")  from %s",
+                offset, map->begin, map->end, map->offset, map->name.c_str());
+    } else {
+        HLOGM("NOT found offset 0x%" PRIx64 " in maps %zu ", offset, maps_->size());
     }
-    HLOGM("NOT found offset 0x%" PRIx64 " in maps %zu ", offset, maps_->size());
-    return nullptr;
+    return map;
 }
 
 SymbolsFile *VirtualThread::FindSymbolsFileByMap(std::shared_ptr<DfxMap> inMap) const
@@ -237,33 +213,26 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
         if (virtualruntime_->IsArktsMap(memMapItem)) {
             virtualruntime_->arktsMapTree_[memMapItem->begin] = memMapItem;
         }
-        if (!update) {
-            virtualruntime_->FillMapsCache(tempMapName, memMapItem);
-            bool updateNormalSymbol = true;
-            if (memMapItem->name.find(".hap") != std::string::npos && (memMapItem->prots & PROT_EXEC)) {
-                memMapItem->prevMap = prevMap;
-                HLOGD("update hap(%s) symbols", memMapItem->name.c_str());
-                updateNormalSymbol = !virtualruntime_->UpdateHapSymbols(memMapItem);
+        if (update) {
+            if (virtualruntime_->IsSymbolExist(memMapItem->name)) {
+                continue;
             }
-            if (updateNormalSymbol) {
-                virtualruntime_->UpdateSymbols(memMapItem->name, memMapItem);
-            }
-            prevMap = memMapItem;
-        } else if (!virtualruntime_->IsSymbolExist(memMapItem->name)) {
             virtualruntime_->FillMapsCache(tempMapName, memMapItem);
             mapsAdded = true;
             tempMap.push_back(memMapItem);
-            bool updateNormalSymbol = true;
-            if (memMapItem->name.find(".hap") != std::string::npos && (memMapItem->prots & PROT_EXEC)) {
-                memMapItem->prevMap = prevMap;
-                HLOGD("update hap(%s) symbols", memMapItem->name.c_str());
-                updateNormalSymbol = !virtualruntime_->UpdateHapSymbols(memMapItem);
-            }
-            if (updateNormalSymbol) {
-                virtualruntime_->UpdateSymbols(memMapItem->name, memMapItem);
-            }
-            prevMap = memMapItem;
+        } else {
+            virtualruntime_->FillMapsCache(tempMapName, memMapItem);
         }
+        bool updateNormalSymbol = true;
+        if (memMapItem->name.find(".hap") != std::string::npos && (memMapItem->prots & PROT_EXEC)) {
+            memMapItem->prevMap = prevMap;
+            HLOGD("update hap(%s) symbols", memMapItem->name.c_str());
+            updateNormalSymbol = !virtualruntime_->UpdateHapSymbols(memMapItem);
+        }
+        if (updateNormalSymbol) {
+            virtualruntime_->UpdateSymbols(memMapItem->name, memMapItem);
+        }
+        prevMap = memMapItem;
     }
 
     // Find if there are duplicate mapping intervals, and if there are, overwrite the old data with the new data.
@@ -294,20 +263,7 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
 
 void VirtualThread::SortMaps()
 {
-    for (size_t currPos = 1; currPos < maps_->size(); ++currPos) {
-        int targetPos = static_cast<int>(currPos - 1);
-        while (targetPos >= 0 && (*maps_)[currPos]->end < (*maps_)[targetPos]->end) {
-            --targetPos;
-        }
-        if (targetPos < static_cast<int>(currPos - 1)) {
-            auto target = (*maps_)[currPos];
-            for (size_t k = currPos - 1; k > static_cast<size_t>(targetPos); --k) {
-                (*maps_)[k + 1] = (*maps_)[k];
-            }
-            (*maps_)[targetPos + 1] = target;
-        }
-    }
-    return;
+    OHOS::Developtools::StackCommon::SortSharedMapsByEndAscending(*maps_);
 }
 
 void VirtualThread::CreateMapItem(const std::string filename, uint64_t begin, uint64_t len,

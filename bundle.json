@@ -149,6 +149,26 @@
         },
         {
           "header": {
+            "header_base": "//developtools/profiler/device/base/stack_common",
+            "header_files": [
+              "stack_map_query.h",
+              "kernel_map_lookup.h"
+            ]
+          },
+          "name": "//developtools/profiler/device/base:libstack_common"
+        },
+        {
+          "header": {
+            "header_base": "//developtools/profiler/device/base/stack_common",
+            "header_files": [
+              "stack_map_query.h",
+              "kernel_map_lookup.h"
+            ]
+          },
+          "name": "//developtools/profiler/device/base:stack_common_static"
+        },
+        {
+          "header": {
             "header_base": "//developtools/profiler/hidebug/interfaces/cj",
             "header_files": []
           },
