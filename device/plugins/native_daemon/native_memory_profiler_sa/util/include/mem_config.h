@@ -16,6 +16,7 @@
 #ifndef MEM_CONFIG_H
 #define MEM_CONFIG_H
 
+#include <string>
 #include <sys/types.h>
 
 namespace OHOS {
@@ -65,6 +66,7 @@ struct SimplifiedMemConfig {
     size_t sampleSize = 0;
     bool asyncStackEnable = false;
     uint64_t asyncFlag = 0;
+    std::string targetSoName;
 };
 
 struct MemAPIConfig {

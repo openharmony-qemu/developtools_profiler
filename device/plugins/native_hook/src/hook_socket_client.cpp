@@ -94,9 +94,10 @@ static void NmdWriteStat(void *arg, const char *buf)
 }
 
 HookSocketClient::HookSocketClient(int pid, ClientConfig *config,
-                                   std::atomic<Range>* targetedRange, std::atomic<int>* memCount,
+                                   std::vector<std::pair<uint64_t, uint64_t>>* targetLibRange,
+                                   std::atomic<int>* memCount,
                                    void (*disableHookCallback)())
-    : pid_(pid), config_(config), targetedRange_(targetedRange),
+    : pid_(pid), config_(config), targetLibRange_(targetLibRange),
       sharedMemCount_(memCount), disableHookCallback_(disableHookCallback)
 {
     g_disableHook = true;
@@ -338,7 +339,8 @@ bool HookSocketClient::ParseTargetMapsIfNeeded()
     if (config_->targetSoName.empty()) {
         return true;
     }
-    if (ParseTargetedMaps(*targetedRange_, config_->targetSoName)) {
+    std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
+    if (targetLibRange_ != nullptr && ParseTargetedMaps(*targetLibRange_, config_->targetSoName)) {
         return true;
     }
     PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc ParseTargetedMaps failed!");

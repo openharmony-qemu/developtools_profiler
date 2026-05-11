@@ -15,6 +15,7 @@
 
 #include "runtime_stack_range.h"
 
+#include <algorithm>
 #include <array>
 #include <csignal>
 #include <cstring>
@@ -100,6 +101,34 @@ static bool MatchFilterLib(const std::string& filePath, const std::string& filte
     return !filterLib.empty() && filePath.find(filterLib) != std::string::npos;
 }
 
+static std::string TrimTargetLib(const std::string& targetLib)
+{
+    size_t first = targetLib.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos) {
+        return "";
+    }
+    size_t last = targetLib.find_last_not_of(" \t\r\n");
+    return targetLib.substr(first, last - first + 1);
+}
+
+static std::vector<std::string> SplitTargetLibs(const std::string& targetLibs)
+{
+    std::vector<std::string> libs;
+    size_t start = 0;
+    while (start <= targetLibs.size()) {
+        size_t end = targetLibs.find(',', start);
+        std::string lib = TrimTargetLib(targetLibs.substr(start, end - start));
+        if (!lib.empty()) {
+            libs.emplace_back(lib);
+        }
+        if (end == std::string::npos) {
+            break;
+        }
+        start = end + 1;
+    }
+    return libs;
+}
+
 bool IsLegalSoName(const char *fileName)
 {
     if (fileName == nullptr) {
@@ -133,6 +162,17 @@ bool IsFilterLibrary(const std::string& filePath, const std::vector<std::string>
     return false;
 }
 
+bool IsTargetLibrary(const std::string& filePath, const std::string& targetLibs)
+{
+    std::vector<std::string> libs = SplitTargetLibs(targetLibs);
+    for (const auto& targetLib : libs) {
+        if (MatchFilterLib(filePath, targetLib)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 static void GetStandardLibraryRange(std::string& line, bool targeted = false)
 {
     line.resize(strlen(line.c_str()));
@@ -160,16 +200,18 @@ static void GetStandardLibraryRange(std::string& line, bool targeted = false)
     }
 }
 
-bool ParseTargetedMaps(std::atomic<Range>& targetedRange, std::string targetedLib)
+bool ParseTargetedMaps(std::vector<std::pair<uint64_t, uint64_t>>& targetLibRange,
+                       const std::string& targetLibs)
 {
     FILE* fp = fopen("/proc/self/maps", "r");
     bool ret = false;
     if (fp == nullptr) {
         return ret;
     }
+    g_targetLib.clear();
     char mapInfo[256] = {0}; // 256: map info size
     while (fgets(mapInfo, sizeof(mapInfo), fp) != nullptr) {
-        if (strstr(mapInfo, targetedLib.c_str()) != nullptr) {
+        if (IsTargetLibrary(mapInfo, targetLibs)) {
             std::string lineStr = mapInfo;
             GetStandardLibraryRange(lineStr, true);
             ret = true;
@@ -178,13 +220,25 @@ bool ParseTargetedMaps(std::atomic<Range>& targetedRange, std::string targetedLi
     if (fclose(fp) != 0) {
         printf("fclose failed.\n");
     }
-    auto range = targetedRange.load();
+    targetLibRange.clear();
     for (const auto& [soName, stdLibrary]: g_targetLib) {
-        range.start = stdLibrary.soBegin_;
-        range.end = stdLibrary.soEnd_;
+        targetLibRange.emplace_back(stdLibrary.soBegin_, stdLibrary.soEnd_);
     }
-    targetedRange.store(range);
     return ret;
+}
+
+void UpdateTargetLibraryRange(std::vector<std::pair<uint64_t, uint64_t>>& targetLibRange,
+                              uint64_t soStart, uint64_t soEnd)
+{
+    for (auto& range : targetLibRange) {
+        if (soStart > range.second || soEnd < range.first) {
+            continue;
+        }
+        range.first = std::min(range.first, soStart);
+        range.second = std::max(range.second, soEnd);
+        return;
+    }
+    targetLibRange.emplace_back(soStart, soEnd);
 }
 
 bool GetRuntimeStackRange(const uintptr_t stackPtr, uintptr_t& stackBottom, uintptr_t& stackTop, bool isMainThread)
