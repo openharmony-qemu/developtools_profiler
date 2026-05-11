@@ -168,14 +168,6 @@ ohos_shared_library("libmemory_profiler") {
     defines += [ "HAVE_HILOG" ]
     external_deps += [ "hilog:libhilog" ]
   }
-
-  # Enable forward Control Flow Integrity (CFI)
-  sanitize = {
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-  }
-
   shlib_type = "sa"
   version_script = "libmemory_profiler.versionscript"
   use_exceptions = true
