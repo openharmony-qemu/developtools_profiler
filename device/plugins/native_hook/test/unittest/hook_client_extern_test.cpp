@@ -19,6 +19,7 @@
 #include <sys/mman.h>
 #include <sys/prctl.h>
 #include <unistd.h>
+#include <algorithm>
 #include "hook_client.h"
 #include "hook_socket_client_mock.h"
 #include "musl_preinit_common.h"
@@ -98,6 +99,32 @@ HWTEST_F(HookClientExternTest, HookMallocTest, TestSize.Level0)
     EXPECT_EQ(sizeVec, expectedsizeVec);
 }
 
+/**
+ * @tc.name: DropTargetSoUnmatchedMallocTest
+ * @tc.desc: Test target so unmatched malloc event is not sent.
+ * @tc.type: FUNC
+ */
+#ifdef __aarch64__
+HWTEST_F(HookClientExternTest, DropTargetSoUnmatchedMallocTest, TestSize.Level0)
+{
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    StartMock(typeVec, sizeVec);
+    g_clientConfig.fpunwind = true;
+    g_clientConfig.asyncStackEnable = false;
+    g_clientConfig.responseLibraryMode = false;
+    g_clientConfig.maxStackDepth = 30;
+    g_clientConfig.targetSoName = "libmissing_target.so";
+    g_targetLibRange.clear();
+
+    void* mallocBlack = ohos_malloc_hook_malloc(SIZE);
+    EXPECT_NE(mallocBlack, nullptr);
+    EXPECT_EQ(std::count(typeVec.begin(), typeVec.end(), MALLOC_MSG), 0);
+
+    g_clientConfig.targetSoName = "";
+    ohos_malloc_hook_free(mallocBlack);
+}
+#endif
 
 /**
  * @tc.name: native hook

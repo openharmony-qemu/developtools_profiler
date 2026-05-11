@@ -101,7 +101,7 @@ HookSocketClient::HookSocketClient(int pid, ClientConfig *config,
       sharedMemCount_(memCount), disableHookCallback_(disableHookCallback)
 {
     g_disableHook = true;
-    int sharedMemCount = (config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
+    int sharedMemCount = (config_ != nullptr && config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
     smbFds_.reserve(sharedMemCount);
     eventFds_.reserve(sharedMemCount);
     stackWriterList_.reserve(sharedMemCount);
@@ -336,6 +336,9 @@ void HookSocketClient::SendOptionalReports()
 
 bool HookSocketClient::ParseTargetMapsIfNeeded()
 {
+    if (config_ == nullptr) {
+        return false;
+    }
     if (config_->targetSoName.empty()) {
         return true;
     }
@@ -349,6 +352,9 @@ bool HookSocketClient::ParseTargetMapsIfNeeded()
 
 bool HookSocketClient::ApplyClientConfig(SocketContext &context, const ClientConfig& clientConfig)
 {
+    if (config_ == nullptr) {
+        return false;
+    }
     *config_ = clientConfig;
     LogReceivedConfig();
     PrepareWriters(context);
@@ -359,17 +365,32 @@ bool HookSocketClient::ApplyClientConfig(SocketContext &context, const ClientCon
 
 bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size)
 {
+    if (buf == nullptr) {
+        return false;
+    }
     if (size == sizeof(HookCacheFileMsg) && config_ != nullptr && config_->enableFileCacheMode) {
-        HookCacheFileMsg cacheFileMsg = *reinterpret_cast<HookCacheFileMsg *>(const_cast<int8_t*>(buf));
+        HookCacheFileMsg cacheFileMsg;
+        if (memcpy_s(&cacheFileMsg, sizeof(cacheFileMsg), buf, size) != EOK) {
+            return false;
+        }
         return HandleFileCacheMsg(context, cacheFileMsg);
     }
     if (size == sizeof(uint32_t)) {
-        return HandleControlCommand(*reinterpret_cast<const uint32_t*>(buf));
+        uint32_t cmd = 0;
+        if (memcpy_s(&cmd, sizeof(cmd), buf, size) != EOK) {
+            return false;
+        }
+        return HandleControlCommand(cmd);
     }
-    if (size != sizeof(ClientConfig)) {
+    if (size != sizeof(ClientConfigIpc)) {
         return true;
     }
-    ClientConfig clientConfig = *reinterpret_cast<ClientConfig *>(const_cast<int8_t*>(buf));
+    ClientConfigIpc clientConfigIpc;
+    if (memcpy_s(&clientConfigIpc, sizeof(clientConfigIpc), buf, size) != EOK) {
+        return false;
+    }
+    ClientConfig clientConfig;
+    ConvertClientConfigFromIpc(clientConfigIpc, clientConfig);
     return ApplyClientConfig(context, clientConfig);
 }
 

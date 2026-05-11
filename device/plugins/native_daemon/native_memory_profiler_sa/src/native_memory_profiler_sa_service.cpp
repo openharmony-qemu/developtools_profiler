@@ -1056,7 +1056,9 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
             clientConfig.freeEventOnlyAddrEnable = true;
         }
         clientConfig.isSaMode = true;
-        if (!context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig), sizeof(clientConfig))) {
+        ClientConfigIpc clientConfigIpc;
+        if (!ConvertClientConfigToIpc(clientConfig, clientConfigIpc) ||
+            !context.SendHookConfig(reinterpret_cast<const uint8_t *>(&clientConfigIpc), sizeof(clientConfigIpc))) {
             CloseSocketFd(static_cast<pid_t>(peerConfig));
             return false;
         }
