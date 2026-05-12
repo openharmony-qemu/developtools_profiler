@@ -14,12 +14,15 @@
  */
 
 #include <gtest/gtest.h>
+#include <atomic>
+#include <chrono>
 #include <cstdio>
 #include <fstream>
 #include <sstream>
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
+#include <thread>
 #include <unistd.h>
 #include <sys/stat.h>
 #include "hook_socket_client.h"
@@ -72,9 +75,36 @@ public:
 
     void TearDown() override
     {
-        hookManager_->CloseResource();
-        hookManager_ = nullptr;
-        commandPoller_ = nullptr;
+        if (hookManager_) {
+            hookManager_->CloseResource();
+            hookManager_->SetCommandPoller(nullptr);
+            hookManager_ = nullptr;
+        }
+        
+        if (commandPoller_) {
+            std::atomic<bool> cleanupDone{false};
+            auto pollerToClean = std::move(commandPoller_);
+            
+            std::thread cleanupThread([&cleanupDone, poller = std::move(pollerToClean)]() mutable {
+                poller.reset();
+                cleanupDone.store(true);
+            });
+            
+            auto startTime = std::chrono::steady_clock::now();
+            while (!cleanupDone.load()) {
+                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::steady_clock::now() - startTime).count();
+                if (elapsed >= 5000) {
+                    cleanupThread.detach();
+                    break;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+            
+            if (cleanupDone.load() && cleanupThread.joinable()) {
+                cleanupThread.join();
+            }
+        }
     }
 
 protected:
