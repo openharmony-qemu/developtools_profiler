@@ -16,6 +16,7 @@
 #include "socket_context.h"
 
 #include <cerrno>
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -29,6 +30,7 @@ namespace {
 const int PROTO_SIZE_MAX = 1024 * 1024;
 const int MEMORY_BLOCK_UNIT = 4096;
 const int HEARTBEAT_MSG = -1;
+const int POLL_TIMEOUT_MS = 100; // poll timeout for checking socketHandle_ status
 
 bool SendAll(int socketHandle, const uint8_t* data, size_t len)
 {
@@ -140,43 +142,64 @@ void* SocketContext::UnixSocketRecv(void* pp, void (*callback)())
 
     CHECK_TRUE(pssr->socketHandle_ != -1, nullptr, "UnixSocketRecv pssr->socketHandle_ ==-1");
     while (pssr->socketHandle_ >= 0) {
-        if (!ReceiveData(pssr->socketHandle_, buf.data(), head_size)) {
+        // Use poll to wait for data with timeout, allowing periodic socketHandle_ check
+        struct pollfd pfd;
+        pfd.fd = pssr->socketHandle_;
+        pfd.events = POLLIN;
+        pfd.revents = 0;
+        int pollRet = poll(&pfd, 1, POLL_TIMEOUT_MS);
+        if (pollRet < 0) {
+            PROFILER_LOG_DEBUG(LOG_CORE, "====== IPC LOST CONNECT (poll error) ======");
+            break;
+        } else if (pollRet == 0) {
+            // Timeout, continue loop to check socketHandle_ status
+            continue;
+        }
+        // Check for hangup or error
+        if (pfd.revents & (POLLHUP | POLLERR | POLLNVAL)) {
             PROFILER_LOG_DEBUG(LOG_CORE, "====== IPC LOST CONNECT ======");
             break;
         }
-        if (pph->protoSize > bufferSize) {
-            if (pph->protoSize > PROTO_SIZE_MAX) {
-                PROFILER_LOG_ERROR(LOG_CORE, "buffer size out of range %d/%d", pph->protoSize, PROTO_SIZE_MAX);
+        // Socket has data, proceed with receive
+        if (pfd.revents & POLLIN) {
+            if (!ReceiveData(pssr->socketHandle_, buf.data(), head_size)) {
+                PROFILER_LOG_DEBUG(LOG_CORE, "====== IPC LOST CONNECT ======");
                 break;
             }
-            bufferSize = (pph->protoSize / MEMORY_BLOCK_UNIT + 1) * MEMORY_BLOCK_UNIT;
-            buf.resize(bufferSize);
-            pph = (struct ProtocolHead*)buf.data();
-        }
-        if (pph->protoSize < head_size) {
-            PROFILER_LOG_ERROR(LOG_CORE, "pph->protoSize is less than head_size!");
-            break;
-        }
-        if (!ReceiveData(pssr->socketHandle_, buf.data() + head_size, pph->protoSize - head_size)) {
-            PROFILER_LOG_DEBUG(LOG_CORE, "====== IPC LOST CONNECT ======");
-            break;
-        }
-        switch (pph->protoType & PROTOCOL_TYPE_FILTER) {
-            case PROTOCOL_TYPE_RAW: {
-                pssr->RawProtocolProc(pph->protoType & (~PROTOCOL_TYPE_FILTER), pph->datas, pph->protoSize - head_size);
-                break;
-            }
-            case PROTOCOL_TYPE_PROTOBUF:
-                if (pssr->serviceBase_ != nullptr) {
-                    pssr->serviceBase_->ProtocolProc(*pssr, pph->protoType & (~PROTOCOL_TYPE_FILTER), pph->datas,
-                                                     pph->protoSize - head_size);
+            if (pph->protoSize > bufferSize) {
+                if (pph->protoSize > PROTO_SIZE_MAX) {
+                    PROFILER_LOG_ERROR(LOG_CORE, "buffer size out of range %d/%d", pph->protoSize, PROTO_SIZE_MAX);
+                    break;
                 }
+                bufferSize = (pph->protoSize / MEMORY_BLOCK_UNIT + 1) * MEMORY_BLOCK_UNIT;
+                buf.resize(bufferSize);
+                pph = (struct ProtocolHead*)buf.data();
+            }
+            if (pph->protoSize < head_size) {
+                PROFILER_LOG_ERROR(LOG_CORE, "pph->protoSize is less than head_size!");
                 break;
-            default:
-                PROFILER_LOG_ERROR(LOG_CORE, "unknown protocol %d", pph->protoType);
+            }
+            if (!ReceiveData(pssr->socketHandle_, buf.data() + head_size, pph->protoSize - head_size)) {
+                PROFILER_LOG_DEBUG(LOG_CORE, "====== IPC LOST CONNECT ======");
                 break;
-        }
-    }
+            }
+            switch (pph->protoType & PROTOCOL_TYPE_FILTER) {
+                case PROTOCOL_TYPE_RAW: {
+                    pssr->RawProtocolProc(pph->protoType & (~PROTOCOL_TYPE_FILTER), pph->datas, pph->protoSize - head_size);
+                    break;
+                }
+                case PROTOCOL_TYPE_PROTOBUF:
+                    if (pssr->serviceBase_ != nullptr) {
+                        pssr->serviceBase_->ProtocolProc(*pssr, pph->protoType & (~PROTOCOL_TYPE_FILTER), pph->datas,
+                                                         pph->protoSize - head_size);
+                    }
+                    break;
+                default:
+                    PROFILER_LOG_ERROR(LOG_CORE, "unknown protocol %d", pph->protoType);
+                    break;
+            }
+        } // end of if (pfd.revents & POLLIN)
+    } // end of while
     if (callback) {
         callback();
     }
