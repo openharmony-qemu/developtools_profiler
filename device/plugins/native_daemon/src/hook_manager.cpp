@@ -886,7 +886,8 @@ void HookManager::CreateNoQueueDataHandler(const std::shared_ptr<HookManagerCtx>
 bool HookManager::CreateQueueDataHandler(const std::shared_ptr<HookManagerCtx>& ctx, int sharedMemCount)
 {
     clockid_t pluginDataClockId = COMMON::GetClockId(hookConfig_.clock());
-    ctx->stackData = std::make_shared<StackDataRepeater>(STACK_DATA_SIZE);
+    int stackSize = (hookConfig_.fp_unwind() ? STACK_DATA_SIZE : STACK_DATA_SIZE_DWARF);
+    ctx->stackData = std::make_shared<StackDataRepeater>(static_cast<size_t>(stackSize));
     CHECK_TRUE(ctx->stackData != nullptr, false, "Create StackDataRepeater FAIL");
     ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookConfig_, pluginDataClockId,
         fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);

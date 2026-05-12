@@ -40,6 +40,7 @@ namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
 constexpr int STACK_DATA_SIZE = 400000;
+constexpr int STACK_DATA_SIZE_DWARF = 40000;
 constexpr int SPEED_UP_THRESHOLD = STACK_DATA_SIZE / 2;
 constexpr int SLOW_DOWN_THRESHOLD = STACK_DATA_SIZE / 4;
 constexpr int32_t MIN_STACK_DEPTH = 6;
