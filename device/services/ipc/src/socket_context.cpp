@@ -15,6 +15,7 @@
 
 #include "socket_context.h"
 
+#include <cerrno>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -28,6 +29,30 @@ namespace {
 const int PROTO_SIZE_MAX = 1024 * 1024;
 const int MEMORY_BLOCK_UNIT = 4096;
 const int HEARTBEAT_MSG = -1;
+
+bool SendAll(int socketHandle, const uint8_t* data, size_t len)
+{
+    if (socketHandle < 0 || data == nullptr) {
+        return false;
+    }
+    size_t sentBytes = 0;
+    while (sentBytes < len) {
+        ssize_t ret = send(socketHandle, data + sentBytes, len - sentBytes, 0);
+        if (ret > 0) {
+            sentBytes += static_cast<size_t>(ret);
+            continue;
+        }
+        if (ret < 0 && (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)) {
+            continue;
+        }
+        const int bufSize = 256;
+        char buf[bufSize] = {0};
+        strerror_r(errno, buf, bufSize);
+        PROFILER_LOG_ERROR(LOG_CORE, "send hook config failed, errno=%d %s", errno, buf);
+        return false;
+    }
+    return true;
+}
 } // namespace
 
 SocketContext::SocketContext()
@@ -212,11 +237,11 @@ bool SocketContext::SendHookConfig(const uint8_t* config, size_t len)
     struct ProtocolHead phead;
     phead.protoType = PROTOCOL_TYPE_PROTOBUF;
     phead.protoSize = len + sizeof(struct ProtocolHead);
-    if (send(socketHandle_, reinterpret_cast<int8_t*>(&phead), sizeof(struct ProtocolHead), 0) == -1) {
+    if (!SendAll(socketHandle_, reinterpret_cast<const uint8_t*>(&phead), sizeof(struct ProtocolHead))) {
         PROFILER_LOG_ERROR(LOG_CORE, "send head information error!");
         return false;
     }
-    if (send(socketHandle_, config, len, 0) == -1) {
+    if (!SendAll(socketHandle_, config, len)) {
         PROFILER_LOG_ERROR(LOG_CORE, "send config data error!");
         return false;
     }

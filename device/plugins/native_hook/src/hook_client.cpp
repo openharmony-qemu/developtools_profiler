@@ -502,6 +502,11 @@ static bool inline __attribute__((always_inline)) CollectAsyncStackInfo(AsyncSta
     return true;
 }
 
+static bool inline __attribute__((always_inline)) ShouldDropTargetSoStack(const StackParam& param)
+{
+    return !g_clientConfig.targetSoName.empty() && param.fpStackDepth <= 0;
+}
+
 static void inline __attribute__((always_inline)) CollectFpStackInfo(StackRawData& rawdata, StackParam& param)
 {
 #ifdef __aarch64__
@@ -524,6 +529,9 @@ static bool inline __attribute__((always_inline)) CollectStackInfoWithAsyncData(
             return CollectAsyncStackInfo(asyncData);
         } else {
             CollectFpStackInfo(rawdata, param);
+            if (ShouldDropTargetSoStack(param)) {
+                return false;
+            }
         }
 #endif
     } else {
@@ -539,8 +547,11 @@ static bool inline __attribute__((always_inline)) CollectStackInfo(StackRawData&
     }
     if (g_clientConfig.fpunwind && param.needFpunwind) {
 #ifdef __aarch64__
-        param.fpStackDepth = FpUnwind(g_clientConfig.maxStackDepth, rawdata.ip);
+        CollectFpStackInfo(rawdata, param);
         rawdata.jsChainId = getJsChainId();
+        if (ShouldDropTargetSoStack(param)) {
+            return false;
+        }
 #endif
     } else {
         param.stackSize = GetStackSize(param.stackPtr, rawdata);

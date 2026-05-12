@@ -323,7 +323,9 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     SaveSocketFd(context, static_cast<pid_t>(peerConfig));
     PROFILER_LOG_DEBUG(LOG_CORE, "ProtocolProc, receive message from hook client, and send hook config to process %d",
                        peerConfig);
-    if (!context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig_), sizeof(clientConfig_))) {
+    ClientConfigIpc clientConfigIpc;
+    if (!ConvertClientConfigToIpc(clientConfig_, clientConfigIpc) ||
+        !context.SendHookConfig(reinterpret_cast<const uint8_t *>(&clientConfigIpc), sizeof(clientConfigIpc))) {
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc send client config failed");
         CloseSocketFd(static_cast<pid_t>(peerConfig));
         return false;
