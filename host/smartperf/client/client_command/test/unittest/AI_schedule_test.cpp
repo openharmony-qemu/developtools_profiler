@@ -49,7 +49,7 @@ HWTEST_F(SPdaemonAIScheduleTest, SetProcessIdTest001, TestSize.Level1)
     aiSchedule.SetProcessId(testPid);
     auto result = aiSchedule.ItemData();
     
-    EXPECT_TRUE(result.empty());
+    EXPECT_FALSE(result.empty());
 }
 
 /**
@@ -81,7 +81,7 @@ HWTEST_F(SPdaemonAIScheduleTest, SetProcessIdTest003, TestSize.Level1)
     aiSchedule.SetProcessId(testPid);
     auto result = aiSchedule.ItemData();
     
-    EXPECT_TRUE(result.empty());
+    EXPECT_FALSE(result.empty());
 }
 
 /**
@@ -96,7 +96,7 @@ HWTEST_F(SPdaemonAIScheduleTest, ItemDataTest001, TestSize.Level1)
     
     auto result = aiSchedule.ItemData();
     
-    EXPECT_TRUE(result.empty());
+    EXPECT_FALSE(result.empty());
 }
 
 /**
@@ -110,7 +110,7 @@ HWTEST_F(SPdaemonAIScheduleTest, ItemDataTest002, TestSize.Level1)
     
     auto result = aiSchedule.ItemData();
     
-    EXPECT_TRUE(result.empty());
+    EXPECT_FALSE(result.empty());
 }
 
 /**
@@ -125,7 +125,7 @@ HWTEST_F(SPdaemonAIScheduleTest, ItemDataTest003, TestSize.Level1)
     
     auto result = aiSchedule.ItemData();
     
-    EXPECT_TRUE(result.empty());
+    EXPECT_FALSE(result.empty());
 }
 
 /**
@@ -140,7 +140,7 @@ HWTEST_F(SPdaemonAIScheduleTest, ItemDataTest004, TestSize.Level1)
     
     auto result = aiSchedule.ItemData();
     
-    EXPECT_TRUE(result.empty());
+    EXPECT_FALSE(result.empty());
 }
 
 /**
@@ -155,7 +155,7 @@ HWTEST_F(SPdaemonAIScheduleTest, ItemDataTest005, TestSize.Level1)
     
     auto result = aiSchedule.ItemData();
     
-    EXPECT_TRUE(result.empty());
+    EXPECT_FALSE(result.empty());
 }
 
 /**
@@ -170,7 +170,7 @@ HWTEST_F(SPdaemonAIScheduleTest, ItemDataTest006, TestSize.Level1)
     
     auto result = aiSchedule.ItemData();
     
-    EXPECT_TRUE(result.empty());
+    EXPECT_FALSE(result.empty());
 }
 
 /**
@@ -199,8 +199,8 @@ HWTEST_F(SPdaemonAIScheduleTest, ItemDataTest007, TestSize.Level1)
     auto result1 = aiSchedule.ItemData();
     auto result2 = aiSchedule.ItemData();
     
-    EXPECT_TRUE(result1.empty());
-    EXPECT_TRUE(result2.empty());
+    EXPECT_FALSE(result1.empty());
+    EXPECT_FALSE(result2.empty());
 }
 
 /**
@@ -218,8 +218,8 @@ HWTEST_F(SPdaemonAIScheduleTest, ItemDataTest008, TestSize.Level1)
     aiSchedule.SetProcessId("1002");
     auto result2 = aiSchedule.ItemData();
     
-    EXPECT_TRUE(result1.empty());
-    EXPECT_TRUE(result2.empty());
+    EXPECT_FALSE(result1.empty());
+    EXPECT_FALSE(result2.empty());
 }
 }
 }

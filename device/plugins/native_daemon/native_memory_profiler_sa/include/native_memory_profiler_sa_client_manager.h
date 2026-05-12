@@ -76,6 +76,7 @@ public:
     static int32_t Start(int fd, pid_t pid, uint32_t duration, MemSaConfig& saConfig);
     static int32_t Start(int fd, pid_t pid, MemLeakConfig& memLeakConfig);
     using ProfilingCallback = std::function<void(int32_t, const std::string&)>;
+    static int32_t StartMemProfiler(uint32_t duration, SimplifiedMemConfig& config, ProfilingCallback callback);
     static int32_t StartProfilerByType(int32_t type, MemAPIConfig *inputConfig, ProfilingCallback callback);
     static void SetProfilingCallback(ProfilingCallback callback);
     static int32_t GetGwpAsan(int fd, pid_t pid, GwpAsanConfig& config);
@@ -83,12 +84,16 @@ public:
     static int32_t Prepare();
     
 private:
+    static int32_t StartByType(int32_t type, std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+        ProfilingCallback callback);
     static int32_t OnDemandStart(OHOS::sptr<OHOS::ISystemAbilityManager> sam,
         OHOS::sptr<OHOS::IRemoteObject> &remoteObject);
     static int32_t CheckStatus();
     static bool CheckConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     static int32_t ParseResType(int32_t type, std::shared_ptr<NativeMemoryProfilerSaConfig> config);
     static int32_t ParseNormalConfig(std::shared_ptr<NativeMemoryProfilerSaConfig> config, MemAPIConfig* inputConfig);
+    static int32_t ParseSimplifiedConfig(std::shared_ptr<NativeMemoryProfilerSaConfig> config,
+        const SimplifiedMemConfig& inputConfig, uint32_t duration);
     static ResProfilerErrorCode CheckInputConfig(int type, MemAPIConfig* inputConfig);
     static int32_t GetMemProfilerUseCountToday();
     static bool UpdateMemProfilerUserCount();

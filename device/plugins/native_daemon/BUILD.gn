@@ -61,8 +61,10 @@ ohos_prebuilt_etc("hiprofiler_daemon.cfg") {
 }
 
 ohos_shared_library("libmemory_profiler") {
+  configs = [ ":cflags_config" ]
   public_configs = [
     ":hook_config",
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
   ]
 
   include_dirs = [
@@ -74,7 +76,6 @@ ohos_shared_library("libmemory_profiler") {
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/services/ipc/include",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
-    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
   ]
 
   include_dirs += [
@@ -116,7 +117,6 @@ ohos_shared_library("libmemory_profiler") {
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_death_recipient.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_service.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_stub.cpp",
-    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_lazyload_callback.cpp",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_helper.cpp",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_writer.cpp",
   ]
@@ -169,6 +169,7 @@ ohos_shared_library("libmemory_profiler") {
     external_deps += [ "hilog:libhilog" ]
   }
   shlib_type = "sa"
+  version_script = "libmemory_profiler.versionscript"
   use_exceptions = true
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
@@ -183,32 +184,8 @@ ohos_executable("native_daemon") {
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
   ]
   sources = [
-    "../api/src/buffer_writer.cpp",
-    "../api/src/command_poller.cpp",
-    "../api/src/writer_adapter.cpp",
-    "src/debug_logger.cpp",
-    "src/dwarf_encoding.cpp",
-    "src/get_thread_id.cpp",
-    "src/hook_manager.cpp",
-    "src/hook_record.cpp",
-    "src/hook_record_factory.cpp",
-    "src/hook_service.cpp",
-    "src/hook_standalone.cpp",
     "src/main.cpp",
-    "src/register.cpp",
-    "src/smo_map_global.cpp",
-    "src/stack_builder.cpp",
-    "src/stack_data_repeater.cpp",
-    "src/stack_preprocess.cpp",
-    "src/symbols_file.cpp",
-    "src/utilities.cpp",
-    "src/virtual_runtime.cpp",
-    "src/virtual_thread.cpp",
   ]
-
-  if (is_ohos) {
-    sources += [ "./src/call_stack.cpp" ]
-  }
 
   include_dirs = [
     "./include",
@@ -227,17 +204,6 @@ ohos_executable("native_daemon") {
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
   ]
 
-  sources += [
-    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_config.cpp",
-    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_callback_proxy.cpp",
-    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_callback_stub.cpp",
-    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_death_recipient.cpp",
-    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_service.cpp",
-    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_stub.cpp",
-    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_helper.cpp",
-    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_writer.cpp",
-  ]
-
   deps = [
     ":hiprofiler_daemon.cfg",
     "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service:network_profiler_service",
@@ -249,6 +215,7 @@ ohos_executable("native_daemon") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_encoder",
     "../../base:hiprofiler_base",
+    ":libmemory_profiler",
   ]
 
   if (hiprofiler_use_libunwind) {

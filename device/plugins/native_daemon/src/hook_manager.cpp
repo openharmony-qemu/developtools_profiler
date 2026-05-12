@@ -20,7 +20,10 @@
 #include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <cerrno>
+#include <chrono>
 #include <cstdlib>
+#include <thread>
 #include <unordered_set>
 #include <unordered_map>
 #include "async_stack.h"
@@ -40,11 +43,20 @@
 #include "hook_record.h"
 #include "hook_record_factory.h"
 #include "unique_stack_table.h"
+#include "app_mgr_interface.h"
+#include "app_mgr_proxy.h"
+#include "iservice_registry.h"
+#include "system_ability_definition.h"
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
 constexpr int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
 constexpr uint32_t PAGE_BYTES = 4096;
+constexpr uint32_t SHMEM_DRAIN_POLL_MS = 10;
+constexpr uint32_t SHMEM_DRAIN_QUIET_ROUNDS = 3;
+constexpr uint32_t SHMEM_DRAIN_TIMEOUT_MS = 5000;
+constexpr uint32_t MEM_LEAK_DONE_POLL_MS = 10;
+constexpr uint32_t MEM_LEAK_DONE_TIMEOUT_MS = 5000;
 std::shared_ptr<Writer> g_buffWriter;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
@@ -73,8 +85,41 @@ uint32_t GetUniqueStackTableSizeWithDefault(const NativeHookConfig& config)
     uint32_t currSize = config.unique_stack_table_size() * ONE_MEGABYTE;
     return NormalizeUniqueStackTableSize(currSize);
 }
+
+bool CopyFdContent(int destFd, int srcFd)
+{
+    if (lseek(srcFd, 0, SEEK_SET) < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CopyFdContent lseek failed errno=%d", errno);
+        return false;
+    }
+    struct stat statBuf;
+    if (fstat(srcFd, &statBuf) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CopyFdContent fstat failed errno=%d", errno);
+        return false;
+    }
+    off_t offset = 0;
+    while (offset < statBuf.st_size) {
+        ssize_t copied = sendfile(destFd, srcFd, &offset, static_cast<size_t>(statBuf.st_size - offset));
+        if (copied < 0 && errno == EINTR) {
+            continue;
+        }
+        if (copied <= 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "CopyFdContent sendfile failed errno=%d", errno);
+            return false;
+        }
+    }
+    if (fsync(destFd) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CopyFdContent fsync failed errno=%d", errno);
+        return false;
+    }
+    return true;
+}
 static thread_local std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> g_rawDataArray = {};
 static thread_local uint32_t g_rawStackCount = 0;
+}
+
+HookManager::HookManager()
+{
 }
 
 HookManager::~HookManager()
@@ -270,6 +315,7 @@ unsigned long long HookManager::ConvertTagToMask() const
         {TAG_RES_FD_DUP, RES_FD_DUP},
         {TAG_RES_FD_ALL, RES_FD_MASK},
         {TAG_RES_THREAD_PTHREAD, RES_THREAD_PTHREAD},
+        {TAG_RES_ARKTS_STATIC_HEAP, RES_ARKTS_STATIC_HEAP},
         {TAG_RES_THREAD_ALL, RES_THREAD_MASK},
         {TAG_RES_ARKTS_HEAP_MASK, RES_ARKTS_HEAP_MASK},
         {TAG_RES_JS_HEAP_MASK, RES_JS_HEAP_MASK},
@@ -494,6 +540,8 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.gwpAsanHoldTime = gwpAsanHoldTime_;
     clientConfig.gwpAsanMaxEntries = gwpAsanMaxEntries_;
     clientConfig.gwpAsanMaxStackDepth = gwpAsanMaxStackDepth_;
+    clientConfig.asyncNestingDepth = hookConfig_.async_nesting_depth();
+    clientConfig.asyncTaskStackDepth = hookConfig_.async_task_stack_depth();
     GetClientConfigExt(clientConfig);
 }
 
@@ -589,17 +637,20 @@ std::shared_ptr<HookManager::HookManagerCtx> HookManager::FindHookContext(int32_
 
 void HookManager::HandleReadyCacheFile(const std::shared_ptr<HookManagerCtx>& ctx)
 {
+    if (ctx == nullptr || ctx->GetFdQueueSize() == 0) {
+        return;
+    }
     int frontFd = ctx->GetFdQueueFront();
-    ctx->PopFrontFdQueue();
-    PROFILER_LOG_INFO(LOG_CORE, "HandleReadyCacheFile pop fd, queue size%zu", ctx->GetFdQueueSize());
+    ctx->cacheFileParsing = true;
     if (noDataQueue_) {
         ctx->stackPreprocess->TakeResultsFromCacheFile(frontFd);
     } else {
         ReadFromCacheFile(ctx, frontFd);
     }
-    if (ctx->cacheFileStopReceived && ctx->GetFdQueueSize() == 0 && ctx->stackPreprocess != nullptr) {
-        ctx->stackPreprocess->SetIsCacheFileParseDone(true);
-    }
+    ctx->PopFrontFdQueue();
+    ctx->cacheFileParsing = false;
+    PROFILER_LOG_INFO(LOG_CORE, "HandleReadyCacheFile pop fd, queue size%zu", ctx->GetFdQueueSize());
+    FinishFileCacheStopIfDrained(ctx);
 }
 
 void HookManager::WaitFinalSnapshotIfNeeded(const std::shared_ptr<HookManagerCtx>& item)
@@ -619,38 +670,137 @@ void HookManager::StopSignalProcess(pid_t pid)
     (void)strerror_r(errno, buf, bufSize);
 }
 
-void HookManager::StopFileCacheProcess(pid_t pid)
+bool HookManager::SendStopCommandIfConnected(pid_t pid)
 {
-    RequestCacheFileStop(pid);
-    if (hookService_ == nullptr) {
-        (void)HandleCacheFileStopByPid(pid);
+    if (hookService_ == nullptr || !hookService_->HasSocketFd(pid)) {
+        PROFILER_LOG_INFO(LOG_CORE, "SendStopCommandIfConnected: no control socket for pid %d", pid);
+        return false;
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "SendStopCommandIfConnected: send STOP_HOOK_CMD to pid %d", pid);
+    hookService_->SendCommand(pid, STOP_HOOK_CMD);
+    return true;
+}
+
+void HookManager::PrepareImmediateStop(const std::shared_ptr<HookManagerCtx>& item)
+{
+    if (item == nullptr || item->stackPreprocess == nullptr) {
+        PROFILER_LOG_WARN(LOG_CORE, "PrepareImmediateStop: hook context invalid");
         return;
     }
-    hookService_->SendCommand(pid, STOP_HOOK_CMD);
-    if (!hookService_->HasSocketFd(pid)) {
-        (void)HandleCacheFileStopByPid(pid);
+    if (hookConfig_.use_file_cache_mode()) {
+        PROFILER_LOG_INFO(LOG_CORE, "PrepareImmediateStop: file cache mode stop pid %d without active client",
+            item->pid);
+        (void)FinalizeCacheFileStop(item);
+        return;
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "PrepareImmediateStop: mark data source terminated for pid %d", item->pid);
+    FinalizeSharedMemoryTermination(item);
+}
+
+void HookManager::FinalizeSharedMemoryTermination(const std::shared_ptr<HookManagerCtx>& item)
+{
+    if (item == nullptr || item->stackPreprocess == nullptr || item->stackPreprocess->IsDataSourceTerminated()) {
+        return;
+    }
+    StopSharedMemoryPollers(item);
+    uint32_t quietRounds = 0;
+    uint32_t waitedMs = 0;
+    while (waitedMs < SHMEM_DRAIN_TIMEOUT_MS && quietRounds < SHMEM_DRAIN_QUIET_ROUNDS) {
+        if (DrainPendingSharedMemory(item)) {
+            quietRounds = 0;
+        } else {
+            quietRounds++;
+            if (quietRounds >= SHMEM_DRAIN_QUIET_ROUNDS) {
+                break;
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(SHMEM_DRAIN_POLL_MS));
+        waitedMs += SHMEM_DRAIN_POLL_MS;
+    }
+    item->stackPreprocess->SetDataSourceTerminated();
+    if (item->stackData != nullptr) {
+        item->stackData->SetProducerFinished();
+    }
+}
+
+bool HookManager::DrainPendingSharedMemory(const std::shared_ptr<HookManagerCtx>& item)
+{
+    if (item == nullptr || item->stackPreprocess == nullptr) {
+        return false;
+    }
+    bool drained = false;
+    for (size_t i = 0; i < item->shareMemoryBlockList.size(); ++i) {
+        if (item->shareMemoryBlockList[i] == nullptr) {
+            continue;
+        }
+        if (noDataQueue_) {
+            drained = item->stackPreprocess->DrainPendingShmemData(item->shareMemoryBlockList[i]) || drained;
+        } else {
+            drained = DrainSharedMemoryBlock(item, static_cast<int>(i), false) || drained;
+        }
+    }
+    return drained;
+}
+
+void HookManager::StopSharedMemoryPollers(const std::shared_ptr<HookManagerCtx>& item)
+{
+    if (item == nullptr) {
+        return;
+    }
+    for (const auto& poller : item->eventPollerList) {
+        if (poller != nullptr) {
+            (void)poller->Stop();
+        }
+    }
+}
+
+void HookManager::StopFileCacheProcess(const std::shared_ptr<HookManagerCtx>& item)
+{
+    pid_t pid = static_cast<pid_t>(item->pid);
+    PROFILER_LOG_INFO(LOG_CORE, "StopFileCacheProcess: request stop for pid %d", pid);
+    RequestCacheFileStop(pid);
+    if (!SendStopCommandIfConnected(pid)) {
+        PROFILER_LOG_INFO(LOG_CORE, "StopFileCacheProcess: client unavailable, finalize current cache files pid %d",
+            pid);
+        (void)FinalizeCacheFileStop(item);
+    }
+}
+
+void HookManager::FinishFileCacheStopIfDrained(const std::shared_ptr<HookManagerCtx>& item)
+{
+    if (item == nullptr || item->stackPreprocess == nullptr) {
+        return;
+    }
+    bool cacheInputEnded = item->cacheFileStopReceived || item->stackPreprocess->IsDataSourceTerminated();
+    if (!cacheInputEnded || item->GetFdQueueSize() > 0 || item->cacheFileParsing) {
+        return;
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "FinishFileCacheStopIfDrained: pid %d cache queue drained", item->pid);
+    item->stackPreprocess->SetIsCacheFileParseDone(true);
+    if (noDataQueue_ && (item->cacheFileClientDisconnected || item->stackPreprocess->IsDataSourceTerminated())) {
+        PROFILER_LOG_INFO(LOG_CORE,
+            "FinishFileCacheStopIfDrained: pid %d input ended, stop after current cache files", item->pid);
+        item->stackPreprocess->SetIsStopTakeData(true);
     }
 }
 
 bool HookManager::FinalizeCacheFileStop(const std::shared_ptr<HookManagerCtx>& item)
 {
     if (item == nullptr || item->stackPreprocess == nullptr) {
+        PROFILER_LOG_WARN(LOG_CORE, "FinalizeCacheFileStop: hook context invalid");
         return false;
     }
+    PROFILER_LOG_INFO(LOG_CORE, "FinalizeCacheFileStop: pid %d, queue size %zu, clientDisconnected %d",
+        item->pid, item->GetFdQueueSize(), item->cacheFileClientDisconnected.load());
     item->cacheFileStopReceived = true;
-    if (item->GetFdQueueSize() > 0) {
-        return true;
-    }
-    item->stackPreprocess->SetIsCacheFileParseDone(true);
+    FinishFileCacheStopIfDrained(item);
     return true;
 }
 
 void HookManager::HandleInvalidPidStop(const std::shared_ptr<HookManagerCtx>& item)
 {
     PROFILER_LOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
-    if (hookConfig_.use_file_cache_mode()) {
-        (void)FinalizeCacheFileStop(item);
-    }
+    PrepareImmediateStop(item);
 }
 
 void HookManager::StopTargetProcess(const std::shared_ptr<HookManagerCtx>& item)
@@ -660,17 +810,26 @@ void HookManager::StopTargetProcess(const std::shared_ptr<HookManagerCtx>& item)
         return;
     }
     pid_t pid = static_cast<pid_t>(item->pid);
+    PROFILER_LOG_INFO(LOG_CORE, "StopTargetProcess: begin stop pid %d, fileCacheMode %d", pid,
+        hookConfig_.use_file_cache_mode());
+    StopSignalProcess(pid);
     if (hookConfig_.use_file_cache_mode()) {
-        StopFileCacheProcess(pid);
+        StopFileCacheProcess(item);
         return;
     }
-    StopSignalProcess(pid);
+    if (!SendStopCommandIfConnected(pid)) {
+        PrepareImmediateStop(item);
+    }
     UpdateFreezeExcludedPid(false, static_cast<int32_t>(item->pid), getpid());
+    PROFILER_LOG_INFO(LOG_CORE, "StopTargetProcess: finish stop dispatch pid %d", pid);
 }
 
 bool HookManager::FinalizeStoppedContext(const std::shared_ptr<HookManagerCtx>& item)
 {
     CHECK_TRUE(item->stackPreprocess != nullptr, false, "stop StackPreprocess FAIL");
+    if (!hookConfig_.use_file_cache_mode() && !item->stackPreprocess->IsDataSourceTerminated()) {
+        FinalizeSharedMemoryTermination(item);
+    }
     item->stackPreprocess->StopTakeResults();
     PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults success");
     if (hookConfig_.statistics_interval() > 0 && !hookConfig_.allocator_sampling_enable()) {
@@ -689,7 +848,9 @@ bool HookManager::FinalizeStoppedContext(const std::shared_ptr<HookManagerCtx>& 
 void HookManager::CleanupHookServiceContext(pid_t pid)
 {
     if (pid > 0 && hookService_ != nullptr) {
-        hookService_->CloseSocketFd(pid);
+        if (hookService_->HasSocketFd(pid)) {
+            hookService_->CloseSocketFd(pid);
+        }
         hookService_->RemovePidInfo(pid);
     }
 }
@@ -871,12 +1032,13 @@ int HookManager::CreateMemLeakFile()
 {
     constexpr int FILE_MODE = 0644;
     std::string tempPath = fileCacheDir_ + memLeakFileName_;
-    int fileFd = open(tempPath.c_str(), O_CREAT | O_RDWR, FILE_MODE);
+    int fileFd = open(tempPath.c_str(), O_CREAT | O_RDWR | O_TRUNC, FILE_MODE);
     if (fileFd < 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "Create memLeak file failed!");
         return fileFd;
     }
     tempMemLeakFd_ = fileFd;
+    memLeakDumpDone_ = false;
     PROFILER_LOG_INFO(LOG_CORE, "Create tempMemLeak file success. fd: %d, type: %d, filename: %s",
         tempMemLeakFd_, memLeakFormat_, memLeakFileName_.c_str());
     return fileFd;
@@ -1097,23 +1259,17 @@ void HookManager::DumpMemLeakInfo()
     PROFILER_LOG_INFO(LOG_CORE, "DumpMemLeakInfo start");
     if (!hookConfig_.native_orphansnapshots_enable()) {
         PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo disabled");
+        memLeakDumpDone_ = true;
         return;
     }
     if (tempMemLeakFd_ < 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo tmpMemLeakFd_ err");
+        memLeakDumpDone_ = true;
         return;
     }
-    if (saMode_ && memLeakFd_ > 0) {
-        lseek(tempMemLeakFd_, 0, SEEK_SET);
-        struct stat statBuf;
-        if (fstat(tempMemLeakFd_, &statBuf) == 0) {
-            off_t offset = 0;
-            ssize_t total = sendfile(static_cast<int>(memLeakFd_), tempMemLeakFd_, &offset, statBuf.st_size);
-            if (total != statBuf.st_size) {
-                PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo sendfile failed, expected %zd, wrote %zd",
-                                   static_cast<ssize_t>(statBuf.st_size), total);
-            }
-            fsync(static_cast<int>(memLeakFd_));
+    if (saMode_ && memLeakFd_ >= 0) {
+        if (!CopyFdContent(static_cast<int>(memLeakFd_), tempMemLeakFd_)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo CopyFdContent failed");
         }
     } else {
         std::string finalPath = MEM_LEAK_FILE_PATH + memLeakFileName_;
@@ -1122,6 +1278,32 @@ void HookManager::DumpMemLeakInfo()
         }
     }
     CloseMemLeakTempFile();
+    memLeakDumpDone_ = true;
+}
+
+bool HookManager::HandleMemLeakDone()
+{
+    if (memLeakDumpDone_.load()) {
+        return true;
+    }
+    DumpMemLeakInfo();
+    return memLeakDumpDone_.load();
+}
+
+void HookManager::WaitMemLeakDoneIfNeeded()
+{
+    if (!hookConfig_.native_orphansnapshots_enable() || memLeakDumpDone_.load()) {
+        return;
+    }
+    uint32_t waitedMs = 0;
+    while (!memLeakDumpDone_.load() && waitedMs < MEM_LEAK_DONE_TIMEOUT_MS) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(MEM_LEAK_DONE_POLL_MS));
+        waitedMs += MEM_LEAK_DONE_POLL_MS;
+    }
+    if (!memLeakDumpDone_.load()) {
+        PROFILER_LOG_WARN(LOG_CORE, "WaitMemLeakDoneIfNeeded timeout");
+        memLeakDumpDone_ = true;
+    }
 }
 
 void HookManager::CollectGwpAsanFrames(std::unordered_map<uintptr_t, DfxFrame>& frameMap, uint8_t* allocDataPtr,
@@ -1302,9 +1484,27 @@ bool HookManager::ProcessRawStackByType(const std::shared_ptr<HookManagerCtx>& h
 
 void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex)
 {
+    DrainSharedMemoryBlock(hookCtx, sharedMemoryIndex, true);
+}
+
+void HookManager::FlushPendingRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx)
+{
+    if (hookCtx == nullptr || g_rawStackCount == 0) {
+        return;
+    }
+    hookCtx->FlushStackArray();
+}
+
+bool HookManager::DrainSharedMemoryBlock(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex,
+    bool takeNotifier)
+{
     std::shared_ptr<ShareMemoryBlock> shareMemoryBlock = hookCtx->shareMemoryBlockList[sharedMemoryIndex];
-    CHECK_NOTNULL(shareMemoryBlock, NO_RETVAL, "smb is null!");
-    hookCtx->eventNotifierList[sharedMemoryIndex]->Take();
+    CHECK_NOTNULL(shareMemoryBlock, false, "smb is null!");
+    if (takeNotifier && sharedMemoryIndex < hookCtx->eventNotifierList.size() &&
+        hookCtx->eventNotifierList[sharedMemoryIndex] != nullptr) {
+        hookCtx->eventNotifierList[sharedMemoryIndex]->Take();
+    }
+    bool drained = false;
     while (true) {
         std::shared_ptr<HookRecord> hookRecord = nullptr;
         std::shared_ptr<RawStack> rawStack = nullptr;
@@ -1314,10 +1514,13 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
         if (!ret) {
             break;
         }
+        drained = true;
         if (!ProcessRawStackByType(hookCtx, hookRecord, rawStack)) {
             break;
         }
     }
+    FlushPendingRawStackArray(hookCtx);
+    return drained;
 }
 
 bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& hookCtx, uint8_t* buffer,
@@ -1430,8 +1633,9 @@ void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookC
         }
     }
 
+    FlushPendingRawStackArray(hookCtx);
     close(fd);
-    PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile [%llu]completed, ret %d.", readfileSize, ret);
+    PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile [%" PRIu64 "]completed, ret %d.", readfileSize, ret);
 }
 
 bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
@@ -1482,6 +1686,7 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
             uniqueTableBlock_ = nullptr;
         }
     }
+    WaitMemLeakDoneIfNeeded();
     CloseResource();
     return true;
 }
@@ -1501,11 +1706,11 @@ void HookManager::CloseResource()
 
 bool HookManager::CloseMemLeakTempFile()
 {
-    if (memLeakFd_ > 0) {
+    if (memLeakFd_ >= 0) {
         close(memLeakFd_);
         memLeakFd_ = -1;
     }
-    if (tempMemLeakFd_ <= 0) {
+    if (tempMemLeakFd_ < 0) {
         return true;
     }
     close(tempMemLeakFd_);
@@ -1547,6 +1752,7 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
     for (const auto& item : hookCtx_) {
         WaitFinalSnapshotIfNeeded(item);
         StopTargetProcess(item);
+        WaitMemLeakDoneIfNeeded();
         if (!FinalizeStoppedContext(item)) {
             return false;
         }
@@ -1682,6 +1888,8 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
 void HookManager::SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
     hookConfig_.set_native_orphansnapshots_enable(config->nativeOrphanSnapshotsEnable_);
+    hookConfig_.set_async_nesting_depth(config->asyncNestingDepth_);
+    hookConfig_.set_async_task_stack_depth(config->asyncTaskStackDepth_);
     SetMemLeakFormat(config->memLeakFormat_);
     memLeakLimit_ = config->memLeakLimit_;
     largestSize_ = config->largestSize_;
@@ -1809,9 +2017,12 @@ bool HookManager::PrepareFileCacheContext(int32_t pid, const std::string& name)
     }
     item->cacheFileStopReceived = false;
     item->cacheFileStopRequested = false;
+    item->cacheFileClientDisconnected = false;
+    item->cacheFileParsing = false;
     if (item->stackPreprocess != nullptr) {
         item->stackPreprocess->SetPid(pid);
         item->stackPreprocess->SetIsCacheFileParseDone(false);
+        item->stackPreprocess->SetDataSourceTerminated(false);
     }
     return true;
 }
@@ -1898,6 +2109,27 @@ bool HookManager::HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex)
 bool HookManager::HandleCacheFileStopByPid(pid_t pid)
 {
     auto item = FindHookContext(pid, "");
+    return FinalizeCacheFileStop(item);
+}
+
+bool HookManager::HandleClientDisconnectedByPid(pid_t pid)
+{
+    auto item = FindHookContext(pid, "");
+    if (item == nullptr) {
+        PROFILER_LOG_WARN(LOG_CORE, "HandleClientDisconnectedByPid: hook context not found for pid %d", pid);
+        return false;
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "HandleClientDisconnectedByPid: pid %d disconnected, fileCacheMode %d", pid,
+        hookConfig_.use_file_cache_mode());
+    if (!hookConfig_.use_file_cache_mode()) {
+        if (item->stackPreprocess == nullptr) {
+            PROFILER_LOG_WARN(LOG_CORE, "HandleClientDisconnectedByPid: stackPreprocess null for pid %d", pid);
+            return false;
+        }
+        FinalizeSharedMemoryTermination(item);
+        return true;
+    }
+    item->cacheFileClientDisconnected = true;
     return FinalizeCacheFileStop(item);
 }
 

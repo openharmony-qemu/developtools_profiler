@@ -408,9 +408,13 @@ HWTEST_F(CommonTest, GetFullTracePath, TestSize.Level1)
 {
     pid_t demoUid = 100;
     pid_t demoPid = 1;
+    std::string demoName;
     std::string demoFileName = "demo.htrace";
-    std::string fullPath = COMMON::GetFullTracePath(demoUid, demoPid, demoFileName);
+    std::string fullPath = COMMON::GetFullTracePath(demoUid, demoPid, demoName, demoFileName);
     // avoid outputing absolute path
+    EXPECT_NE(fullPath, "");
+    demoName = "demoName";
+    fullPath = COMMON::GetFullTracePath(demoUid, demoPid, demoName, demoFileName);
     EXPECT_NE(fullPath, "");
 }
 

@@ -16,6 +16,8 @@
 #include "hidebug_native_interface.h"
 
 #include <chrono>
+#include <cstdio>
+#include <ctime>
 #include <fstream>
 #include <memory>
 #include <mutex>
@@ -33,6 +35,7 @@
 #include "client/trace_collector_client.h"
 #include "storage_acl.h"
 #include "utility/memory_collector.h"
+#include "ffrt.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -44,6 +47,8 @@ namespace HiviewDFX {
 
 namespace {
 constexpr int64_t SECOND_TO_NANOSECOND = 1000 * 1000 * 1000;
+constexpr int64_t MILLISECONDS_PER_SECOND = 1000;
+constexpr int64_t NANOSECONDS_PER_MILLISECOND = 1000 * 1000;
 constexpr size_t MAX_LEN_OF_TRACE_PREFIX = 20;
 constexpr uint32_t MIN_TRACE_BUFFER_SIZE = 1024; // 1M
 constexpr uint32_t MAX_TRACE_BUFFER_SIZE = 15 * 1024; // 15M
@@ -52,6 +57,8 @@ constexpr uint32_t MAX_TRACE_DURATION = 15 * 1000; // 15s
 constexpr uint8_t MAX_TRACE_FILE_NUM = 3;
 constexpr const char TRACE_PATH[] = "/data/storage/el2/log/trace/";
 constexpr const char TRACE_FILE_SUFFIX[] = ".sys";
+constexpr int PROC_STAT_SKIP_FIELD_COUNT = 13;
+constexpr int64_t CPU_USAGE_DELAY_TIME = 10 * 1000 * 1000;
 
 int GetNativeMemInfo(NativeMemInfo& nativeMemInfo)
 {
@@ -183,6 +190,7 @@ public:
     HidebugNativeInterfaceImpl(const HidebugNativeInterfaceImpl&) = delete;
     HidebugNativeInterfaceImpl& operator =(const HidebugNativeInterfaceImpl&) = delete;
     double GetCpuUsage() override;
+    bool ParseProcStat(uint64_t& utime, uint64_t& stime) override;
     std::map<uint32_t, double> GetAppThreadCpuUsage() override;
     TraceErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
         uint32_t limitsize, std::string &file) override;
@@ -203,7 +211,15 @@ public:
 private:
     bool CheckTraceErrorCode();
 private:
-    static inline HidebugAppThreadCpu threadCpu_; // It should be initialized at startup.
+    std::atomic<bool> cpuUsageTaskFlag_{false};
+    std::atomic<uint64_t> lastUtime_{0};
+    std::atomic<uint64_t> lastStime_{0};
+    std::atomic<int64_t>  lastTimeMs_{0};
+    std::function<void()> cpuUsageTask_;
+    long cpuTicksPerSec_;
+    long cpuCoreCount_;
+    std::unique_ptr<HidebugAppThreadCpu> threadCpu_;
+    std::mutex threadCpuMutex_;
     std::mutex traceMutex_;
     uint32_t traceErrorCode_ = 0;
     std::string date_;
@@ -225,14 +241,91 @@ HidebugNativeInterface& HidebugNativeInterface::GetInstance()
 
 double HidebugNativeInterfaceImpl::GetCpuUsage()
 {
-    std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
-    pid_t pid = getprocpid();
-    return dumpUsage->GetCpuUsage(pid);
+    static double cpuUsage = 0.0;
+
+    if (cpuUsageTaskFlag_.load()) {
+        return cpuUsage;
+    }
+    cpuTicksPerSec_ = sysconf(_SC_CLK_TCK);
+    cpuCoreCount_ = sysconf(_SC_NPROCESSORS_ONLN);
+    cpuUsageTask_ = [this]() {
+        uint64_t curUtime = 0;
+        uint64_t curStime = 0;
+        if (!ParseProcStat(curUtime, curStime)) {
+            HILOG_ERROR(LOG_CORE, "get cpuUsageInfo Failed");
+            return;
+        }
+
+        struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        int64_t curTimeMs = ts.tv_sec * MILLISECONDS_PER_SECOND +
+                            ts.tv_nsec / NANOSECONDS_PER_MILLISECOND;
+
+        int64_t DeltaMs = curTimeMs - lastTimeMs_.load();
+        uint64_t cpuDelta = (curUtime - lastUtime_.load()) + (curStime - lastStime_.load());
+        if (DeltaMs > 0 && cpuTicksPerSec_ > 0) {
+            double cpuDeltaMs = cpuDelta * MILLISECONDS_PER_SECOND / cpuTicksPerSec_;
+            if (cpuCoreCount_ > 0) {
+                cpuUsage = cpuDeltaMs / DeltaMs / cpuCoreCount_;
+            } else {
+                cpuUsage = cpuDeltaMs / DeltaMs;
+            }
+        }
+        lastUtime_.store(curUtime);
+        lastStime_.store(curStime);
+        lastTimeMs_.store(curTimeMs);
+
+        ffrt::submit(cpuUsageTask_, {}, {}, ffrt::task_attr().delay(CPU_USAGE_DELAY_TIME));
+    };
+    cpuUsageTaskFlag_.store(true);
+    cpuUsageTask_();
+    return cpuUsage;
+}
+
+bool HidebugNativeInterfaceImpl::ParseProcStat(uint64_t& utime, uint64_t& stime)
+{
+    const std::string path = "/proc/self/stat";
+    FILE* fp = fopen(path.c_str(), "r");
+    if (fp == nullptr) {
+        return false;
+    }
+    char buf[512];
+    if (fgets(buf, sizeof(buf), fp) == nullptr) {
+        fclose(fp);
+        return false;
+    }
+    if (fclose(fp) == -1) {
+        HILOG_ERROR(LOG_CORE, "close file failed:%{public}d, %{public}s", errno, strerror(errno));
+        return false;
+    }
+
+    std::string line(buf);
+    auto fields = SplitStr(line, ' ', [](std::string& token) {
+        return !token.empty();
+    });
+
+    uint64_t utimeIndex = PROC_STAT_SKIP_FIELD_COUNT;
+    uint64_t stimeIndex = PROC_STAT_SKIP_FIELD_COUNT + 1;
+    if (fields.size() <= stimeIndex) {
+        HILOG_ERROR(LOG_CORE, "proc stat fields not enough");
+        return false;
+    }
+
+    utime = std::stoull(fields[utimeIndex]);
+    stime = std::stoull(fields[stimeIndex]);
+
+    return true;
 }
 
 std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
 {
-    auto collectResult = threadCpu_.CollectThreadStatInfos();
+    {
+        std::lock_guard<std::mutex> guard(threadCpuMutex_);
+        if (threadCpu_ == nullptr) {
+            threadCpu_ = std::make_unique<HidebugAppThreadCpu>();
+        }
+    }
+    auto collectResult = threadCpu_->CollectThreadStatInfos();
     if (collectResult.retCode != UCollect::UcError::SUCCESS) {
         HILOG_ERROR(LOG_CORE, "GetAppThreadCpuUsage fail, ret: %{public}d", static_cast<int>(collectResult.retCode));
         return {};

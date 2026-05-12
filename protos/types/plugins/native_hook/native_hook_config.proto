@@ -74,4 +74,6 @@ message NativeHookConfig {
     bool native_orphansnapshots_enable = 39;
     bool nested_async_stack_enable = 40;
     repeated string filter_lib_list = 41;
+    uint32 async_nesting_depth = 42;
+    uint32 async_task_stack_depth = 43;
 }

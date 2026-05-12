@@ -1085,31 +1085,5 @@ void SPUtils::OverDumpFun()
     const std::string dumpCmd = "hidumper -s WindowManagerService -a '-w " + winId + " -touchmonitor -e'";
     LoadCmd(dumpCmd, cmdResult);
 }
-
-size_t SPUtils::GetDirSize(const std::string &dirPath)
-{
-    if (dirPath.empty()) {
-        LOGE("The dirPath does not exist.");
-        return 0;
-    }
-    size_t traceSize = 0;
-    DIR *dir = opendir(dirPath.c_str());
-    if (!dir) {
-        LOGE("open dir failed");
-        return traceSize;
-    }
-    struct dirent *ent = readdir(dir);
-    while (ent != nullptr) {
-        if (std::string(ent->d_name) == "Ohter_trace") {
-            std::string path = dirPath + "/" + ent->d_name;
-            struct stat st;
-            if (stat(path.c_str(), &st) == 0) {
-                traceSize += st.st_size;
-            }
-        }
-    }
-    closedir(dir);
-    return traceSize;
-}
 }
 }

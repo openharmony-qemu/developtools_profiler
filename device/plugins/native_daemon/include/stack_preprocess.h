@@ -191,6 +191,12 @@ public:
     void FlushRecordApplyAndReleaseMatchData();
     void WaitForFinalSnapshot();
     void ForceStop();
+    void SetDataSourceTerminated(bool dataSourceTerminated = true);
+    bool DrainPendingShmemData(const std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock);
+    bool IsDataSourceTerminated() const
+    {
+        return dataSourceTerminated_;
+    }
     inline void SetPid(int32_t pid)
     {
         pid_ = pid;
@@ -406,6 +412,7 @@ private:
     std::atomic_bool isStopTakeData_ = false;
     std::atomic_bool isStartTakeData_ = false;
     std::atomic_bool isCacheFileParseDone_ = false;
+    std::atomic_bool dataSourceTerminated_ = false;
     std::atomic_bool waitingCacheFileStop_ = false;
     std::shared_ptr<OHOS::Developtools::NativeDaemon::VirtualRuntime> runtime_instance;
     DISALLOW_COPY_AND_MOVE(StackPreprocess);

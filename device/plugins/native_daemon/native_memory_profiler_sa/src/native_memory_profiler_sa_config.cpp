@@ -134,6 +134,8 @@ bool NativeMemoryProfilerSaConfig::MarshallingExt(Parcel& parcel) const
     WRITEBOOL(parcel, nativeOrphanSnapshotsEnable_);
     WRITEUINT32(parcel, memLeakFormat_);
     WRITEUINT32(parcel, memLeakLimit_);
+    WRITEUINT32(parcel, asyncNestingDepth_);
+    WRITEUINT32(parcel, asyncTaskStackDepth_);
     return true;
 }
 
@@ -207,6 +209,8 @@ bool NativeMemoryProfilerSaConfig::UnmarshallingExt(Parcel& parcel,
     READBOOL(parcel, config->nativeOrphanSnapshotsEnable_);
     READUINT32(parcel, config->memLeakFormat_);
     READUINT32(parcel, config->memLeakLimit_);
+    READUINT32(parcel, config->asyncNestingDepth_);
+    READUINT32(parcel, config->asyncTaskStackDepth_);
     PrintConfig(config);
     return true;
 }

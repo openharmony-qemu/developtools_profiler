@@ -26,6 +26,10 @@
 #include "utilities.h"
 #include "async_context_manager.h"
 #include <memory_trace.h>
+#include <algorithm>
+#include <limits.h>
+#include <sstream>
+#include <string>
 #include <vector>
 
 #define MAX_THREAD_NAME (32)
@@ -53,7 +57,7 @@ inline uint32_t NormalizeUniqueStackTableSize(uint32_t size)
 const size_t FILTER_STACK_DEPTH = 2;
 const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
 const size_t GPU_TYPE_COUNT = 5;
-const size_t RESTRACE_TYPE_COUNT = 23;
+const size_t RESTRACE_TYPE_COUNT = 24;
 const size_t GPU_RANGE_COUNT = 2;
 const size_t GPU_VK_INDEX = 0;
 const size_t GPU_GLES_IMAGE_INDEX = 1;
@@ -79,6 +83,7 @@ const size_t ARK_GLOBAL_HANDLE_INDEX = 20;
 const size_t ARK_LOCAL_HANDLE_INDEX = 21;
 const size_t VMA_ARKWEB_INDEX = 22;
 const size_t DART_HEAP_INDEX = 23;
+const size_t ARKTS_STATIC_HEAP_MASK_INDEX = 24;
 // dlopen function minimum stack depth
 const int32_t DLOPEN_MIN_UNWIND_DEPTH = 5;
 // default max js stack depth
@@ -99,6 +104,9 @@ constexpr uint64_t FD_TAG = 0xD002D0C;
 constexpr size_t MAX_REG_SIZE = sizeof(uint64_t)
     * OHOS::Developtools::NativeDaemon::PERF_REG_ARM64_MAX;
 constexpr size_t MAX_HOOK_PATH = 256;
+constexpr size_t CLIENT_CONFIG_TARGET_SO_NAME_SIZE = PATH_MAX;
+constexpr size_t CLIENT_CONFIG_FILTER_LIB_NAME_SIZE = MAX_HOOK_PATH + 1;
+constexpr size_t CLIENT_CONFIG_FILTER_LIB_COUNT = 16;
 
 enum {
     MALLOCDISABLE = (1u << 0),
@@ -147,6 +155,7 @@ constexpr uint32_t ALIVE_ADDR_SNAPSHOT_MARKER = 0xADD50002;
 constexpr uint32_t ALIVE_ADDR_SNAPSHOT_END_MARKER = 0xADD50003;
 constexpr uint32_t FINAL_SNAPSHOT_REQUEST_CMD = 0xADD50004;
 constexpr uint32_t STOP_HOOK_CMD = 0xADD50005;
+constexpr uint32_t MEM_LEAK_DONE_CMD = 0xADD50006;
 
 enum SymbolType {
     NATIVE_SYMBOL,
@@ -288,6 +297,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         memLeakFormat = MemLeakFormat::TYPE_DISABLE;
         memLeakLimit = MEM_LEAK_LIMIT_DEFAULT;
         onlyMemLeak = false;
+        asyncNestingDepth = 0;
+        asyncTaskStackDepth = 0;
     }
 
     std::string ToString()
@@ -364,8 +375,223 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     uint32_t memLeakLimit = 0;
     MemLeakFormat memLeakFormat = MemLeakFormat::TYPE_DISABLE;
     bool onlyMemLeak = false;
+    uint32_t asyncNestingDepth = 0;
+    uint32_t asyncTaskStackDepth = 0;
 };
 
+struct alignas(8) ClientConfigIpc { // 8 is 8 bit
+    int32_t filterSize = -1;
+    uint32_t shareMemorySize = 0;
+    uint32_t uniqueStackTableSize = 0;
+    uint32_t sampleInterval = 0;
+    uint32_t statisticsInterval = 0;
+    clockid_t clockId = CLOCK_REALTIME;
+    uint8_t maxStackDepth = 0;
+    bool mallocDisable = false;
+    bool mmapDisable = false;
+    bool freeStackData = false;
+    bool munmapStackData = false;
+    bool fpunwind = false;
+    bool isBlocked = false;
+    bool memtraceEnable = false;
+    bool asyncStackEnable = false;
+    uint64_t asyncFlag = 0;
+    bool nestedAsyncStackEnable = false;
+    bool responseLibraryMode = false;
+    bool allocatorSamplingEnable = false;
+    bool freeEventOnlyAddrEnable = false;
+    bool printNmd = false;
+    int nmdType = -1;
+    bool isSaMode = false;
+    bool offlineSymbolization = false;
+    ArkTsClientConfig arktsConfig = {0};
+    unsigned long long traceMask = 0;
+    GpuRange gpuRange = {};
+    uint32_t largestSize = 0;
+    uint32_t secondLargestSize = 0;
+    uint32_t maxGrowthSize = 0;
+    char targetSoName[CLIENT_CONFIG_TARGET_SO_NAME_SIZE] = {0};
+    uint32_t filterLibCount = 0;
+    char filterLibList[CLIENT_CONFIG_FILTER_LIB_COUNT][CLIENT_CONFIG_FILTER_LIB_NAME_SIZE] = {{0}};
+    uint32_t gwpAsanHoldTime = 0;
+    uint32_t gwpAsanMaxEntries = 0;
+    uint32_t gwpAsanMaxStackDepth = 0;
+    bool enableFileCacheMode = false;
+    uint32_t fileCacheBufferSize = 0;
+    uint32_t memLeakLimit = 0;
+    MemLeakFormat memLeakFormat = MemLeakFormat::TYPE_DISABLE;
+    bool onlyMemLeak = false;
+};
+
+inline bool CopyClientConfigString(char* dest, size_t destSize, const std::string& src)
+{
+    if (dest == nullptr || destSize == 0 || src.size() >= destSize) {
+        return false;
+    }
+    dest[0] = '\0';
+    if (src.empty()) {
+        return true;
+    }
+    return strncpy_s(dest, destSize, src.c_str(), src.size()) == EOK;
+}
+
+inline std::string ReadClientConfigString(const char* src, size_t srcSize)
+{
+    if (src == nullptr || srcSize == 0) {
+        return "";
+    }
+    size_t len = 0;
+    while (len < srcSize && src[len] != '\0') {
+        ++len;
+    }
+    return std::string(src, len);
+}
+
+inline void CopyClientConfigBaseToIpc(const ClientConfig& config, ClientConfigIpc& ipc)
+{
+    ipc.filterSize = config.filterSize;
+    ipc.shareMemorySize = config.shareMemorySize;
+    ipc.uniqueStackTableSize = config.uniqueStackTableSize;
+    ipc.sampleInterval = config.sampleInterval;
+    ipc.statisticsInterval = config.statisticsInterval;
+    ipc.clockId = config.clockId;
+    ipc.maxStackDepth = config.maxStackDepth;
+    ipc.mallocDisable = config.mallocDisable;
+    ipc.mmapDisable = config.mmapDisable;
+    ipc.freeStackData = config.freeStackData;
+    ipc.munmapStackData = config.munmapStackData;
+    ipc.fpunwind = config.fpunwind;
+    ipc.isBlocked = config.isBlocked;
+    ipc.memtraceEnable = config.memtraceEnable;
+    ipc.asyncStackEnable = config.asyncStackEnable;
+    ipc.asyncFlag = config.asyncFlag;
+}
+
+inline void CopyClientConfigExtToIpc(const ClientConfig& config, ClientConfigIpc& ipc)
+{
+    ipc.nestedAsyncStackEnable = config.nestedAsyncStackEnable;
+    ipc.responseLibraryMode = config.responseLibraryMode;
+    ipc.allocatorSamplingEnable = config.allocatorSamplingEnable;
+    ipc.freeEventOnlyAddrEnable = config.freeEventOnlyAddrEnable;
+    ipc.printNmd = config.printNmd;
+    ipc.nmdType = config.nmdType;
+    ipc.isSaMode = config.isSaMode;
+    ipc.offlineSymbolization = config.offlineSymbolization;
+    ipc.arktsConfig = config.arktsConfig;
+    ipc.traceMask = config.traceMask;
+    ipc.gpuRange = config.gpuRange;
+    ipc.largestSize = config.largestSize;
+    ipc.secondLargestSize = config.secondLargestSize;
+    ipc.maxGrowthSize = config.maxGrowthSize;
+}
+
+inline void CopyClientConfigTailToIpc(const ClientConfig& config, ClientConfigIpc& ipc)
+{
+    ipc.gwpAsanHoldTime = config.gwpAsanHoldTime;
+    ipc.gwpAsanMaxEntries = config.gwpAsanMaxEntries;
+    ipc.gwpAsanMaxStackDepth = config.gwpAsanMaxStackDepth;
+    ipc.enableFileCacheMode = config.enableFileCacheMode;
+    ipc.fileCacheBufferSize = config.fileCacheBufferSize;
+    ipc.memLeakLimit = config.memLeakLimit;
+    ipc.memLeakFormat = config.memLeakFormat;
+    ipc.onlyMemLeak = config.onlyMemLeak;
+}
+
+inline bool CopyClientConfigTextToIpc(const ClientConfig& config, ClientConfigIpc& ipc)
+{
+    if (!CopyClientConfigString(ipc.targetSoName, sizeof(ipc.targetSoName), config.targetSoName)) {
+        return false;
+    }
+    if (config.filterLibList.size() > CLIENT_CONFIG_FILTER_LIB_COUNT) {
+        return false;
+    }
+    ipc.filterLibCount = static_cast<uint32_t>(config.filterLibList.size());
+    for (size_t index = 0; index < config.filterLibList.size(); ++index) {
+        if (!CopyClientConfigString(ipc.filterLibList[index], sizeof(ipc.filterLibList[index]),
+            config.filterLibList[index])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+inline bool ConvertClientConfigToIpc(const ClientConfig& config, ClientConfigIpc& ipc)
+{
+    ipc = ClientConfigIpc();
+    CopyClientConfigBaseToIpc(config, ipc);
+    CopyClientConfigExtToIpc(config, ipc);
+    CopyClientConfigTailToIpc(config, ipc);
+    return CopyClientConfigTextToIpc(config, ipc);
+}
+
+inline void CopyClientConfigBaseFromIpc(const ClientConfigIpc& ipc, ClientConfig& config)
+{
+    config.filterSize = ipc.filterSize;
+    config.shareMemorySize = ipc.shareMemorySize;
+    config.uniqueStackTableSize = ipc.uniqueStackTableSize;
+    config.sampleInterval = ipc.sampleInterval;
+    config.statisticsInterval = ipc.statisticsInterval;
+    config.clockId = ipc.clockId;
+    config.maxStackDepth = ipc.maxStackDepth;
+    config.mallocDisable = ipc.mallocDisable;
+    config.mmapDisable = ipc.mmapDisable;
+    config.freeStackData = ipc.freeStackData;
+    config.munmapStackData = ipc.munmapStackData;
+    config.fpunwind = ipc.fpunwind;
+    config.isBlocked = ipc.isBlocked;
+    config.memtraceEnable = ipc.memtraceEnable;
+    config.asyncStackEnable = ipc.asyncStackEnable;
+    config.asyncFlag = ipc.asyncFlag;
+}
+
+inline void CopyClientConfigExtFromIpc(const ClientConfigIpc& ipc, ClientConfig& config)
+{
+    config.nestedAsyncStackEnable = ipc.nestedAsyncStackEnable;
+    config.responseLibraryMode = ipc.responseLibraryMode;
+    config.allocatorSamplingEnable = ipc.allocatorSamplingEnable;
+    config.freeEventOnlyAddrEnable = ipc.freeEventOnlyAddrEnable;
+    config.printNmd = ipc.printNmd;
+    config.nmdType = ipc.nmdType;
+    config.isSaMode = ipc.isSaMode;
+    config.offlineSymbolization = ipc.offlineSymbolization;
+    config.arktsConfig = ipc.arktsConfig;
+    config.traceMask = ipc.traceMask;
+    config.gpuRange = ipc.gpuRange;
+    config.largestSize = ipc.largestSize;
+    config.secondLargestSize = ipc.secondLargestSize;
+    config.maxGrowthSize = ipc.maxGrowthSize;
+}
+
+inline void CopyClientConfigTailFromIpc(const ClientConfigIpc& ipc, ClientConfig& config)
+{
+    config.gwpAsanHoldTime = ipc.gwpAsanHoldTime;
+    config.gwpAsanMaxEntries = ipc.gwpAsanMaxEntries;
+    config.gwpAsanMaxStackDepth = ipc.gwpAsanMaxStackDepth;
+    config.enableFileCacheMode = ipc.enableFileCacheMode;
+    config.fileCacheBufferSize = ipc.fileCacheBufferSize;
+    config.memLeakLimit = ipc.memLeakLimit;
+    config.memLeakFormat = ipc.memLeakFormat;
+    config.onlyMemLeak = ipc.onlyMemLeak;
+}
+
+inline void CopyClientConfigTextFromIpc(const ClientConfigIpc& ipc, ClientConfig& config)
+{
+    config.targetSoName = ReadClientConfigString(ipc.targetSoName, sizeof(ipc.targetSoName));
+    config.filterLibList.clear();
+    size_t count = std::min(static_cast<size_t>(ipc.filterLibCount), CLIENT_CONFIG_FILTER_LIB_COUNT);
+    for (size_t index = 0; index < count; ++index) {
+        config.filterLibList.emplace_back(ReadClientConfigString(ipc.filterLibList[index], sizeof(ipc.filterLibList[index])));
+    }
+}
+
+inline void ConvertClientConfigFromIpc(const ClientConfigIpc& ipc, ClientConfig& config)
+{
+    config.Reset();
+    CopyClientConfigBaseFromIpc(ipc, config);
+    CopyClientConfigExtFromIpc(ipc, config);
+    CopyClientConfigTailFromIpc(ipc, config);
+    CopyClientConfigTextFromIpc(ipc, config);
+}
 struct alignas(8) HookCacheFileMsg {
     HookCacheFileMsg() : hookPid(-1), fileIndex(0), msgType(CACHE_FILE_CREATED) {}
     HookCacheFileMsg(int32_t pid, uint16_t index, uint16_t type) : hookPid(pid), fileIndex(index), msgType(type) {}

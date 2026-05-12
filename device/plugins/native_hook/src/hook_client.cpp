@@ -72,7 +72,7 @@ std::atomic<bool> g_isPidChanged = false;
 std::unordered_map<size_t, size_t> g_mallocUsableSizeMap;
 std::shared_ptr<AddressHandler> g_addrHandler = nullptr;
 std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
-std::atomic<Range> g_targetedRange;
+std::vector<std::pair<uint64_t, uint64_t>> g_targetLibRange;
 std::shared_ptr<HookSocketClient> g_hookClient {nullptr};
 std::atomic<int> g_sharedMemCount = 1;
 
@@ -235,7 +235,7 @@ void* MallocHookStart(void* disableHookCallback)
     } else {
         g_clientConfig.Reset();
         g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_clientConfig,
-                                                          &g_targetedRange, &g_sharedMemCount,
+                                                          &g_targetLibRange, &g_sharedMemCount,
                                                           reinterpret_cast<void (*)()>(disableHookCallback));
         if (g_hookClient->GetConnectState()) {
             g_addrHandler = std::make_shared<LowAddrHandler>();
@@ -358,8 +358,13 @@ bool FilterStandardSoIp(uint64_t ip)
 
 bool CheckTargetLibIp(uint64_t ip)
 {
-    auto range = g_targetedRange.load();
-    return (ip >= range.start && ip < range.end);
+    std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
+    for (auto [soBegin, soEnd]: g_targetLibRange) {
+        if (ip >= soBegin && ip < soEnd) {
+            return true;
+        }
+    }
+    return false;
 }
 
 #if defined(__aarch64__)
@@ -464,9 +469,12 @@ static void inline __attribute__((always_inline)) CollectSyncStack(AsyncStackDat
 static void inline __attribute__((always_inline)) CollectNestedAsyncStack(AsyncStackData& asyncData)
 {
 #ifdef __aarch64__
+    uint32_t nestingDepth = g_clientConfig.asyncNestingDepth > 0 ?
+        std::min(g_clientConfig.asyncNestingDepth, static_cast<uint32_t>(MAX_ASYNC_CHAIN_LAYERS)) :
+        MAX_ASYNC_CHAIN_LAYERS;
     DfxAsyncCtx asyncCtxBuffer[MAX_ASYNC_CHAIN_LAYERS];
-    int count = GetCurrentChainedAsyncContext(asyncCtxBuffer, MAX_ASYNC_CHAIN_LAYERS);
-    if (count > 0 && count <= static_cast<int>(MAX_ASYNC_CHAIN_LAYERS)) {
+    int count = GetCurrentChainedAsyncContext(asyncCtxBuffer, nestingDepth);
+    if (count > 0 && count <= static_cast<int>(nestingDepth)) {
         CollectNestedAsyncIds(asyncData, asyncCtxBuffer, count);
     }
     CollectSyncStack(asyncData);
@@ -494,6 +502,11 @@ static bool inline __attribute__((always_inline)) CollectAsyncStackInfo(AsyncSta
     return true;
 }
 
+static bool inline __attribute__((always_inline)) ShouldDropTargetSoStack(const StackParam& param)
+{
+    return !g_clientConfig.targetSoName.empty() && param.fpStackDepth <= 0;
+}
+
 static void inline __attribute__((always_inline)) CollectFpStackInfo(StackRawData& rawdata, StackParam& param)
 {
 #ifdef __aarch64__
@@ -516,6 +529,9 @@ static bool inline __attribute__((always_inline)) CollectStackInfoWithAsyncData(
             return CollectAsyncStackInfo(asyncData);
         } else {
             CollectFpStackInfo(rawdata, param);
+            if (ShouldDropTargetSoStack(param)) {
+                return false;
+            }
         }
 #endif
     } else {
@@ -531,8 +547,11 @@ static bool inline __attribute__((always_inline)) CollectStackInfo(StackRawData&
     }
     if (g_clientConfig.fpunwind && param.needFpunwind) {
 #ifdef __aarch64__
-        param.fpStackDepth = FpUnwind(g_clientConfig.maxStackDepth, rawdata.ip);
+        CollectFpStackInfo(rawdata, param);
         rawdata.jsChainId = getJsChainId();
+        if (ShouldDropTargetSoStack(param)) {
+            return false;
+        }
 #endif
     } else {
         param.stackSize = GetStackSize(param.stackPtr, rawdata);
@@ -1087,11 +1106,13 @@ int __attribute__((noinline)) hook_munmap(int(*fn)(void*, size_t), void* addr, s
 
     if (!g_clientConfig.targetSoName.empty()) {
         uint64_t addrval = reinterpret_cast<uint64_t>(addr);
-        auto range = g_targetedRange.load();
-        if (addrval < range.end && addrval >= range.start) {
-            range.end = 0;
-            range.start = 0;
-            g_targetedRange.store(range);
+        std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
+        for (auto& range : g_targetLibRange) {
+            if (addrval < range.second && addrval >= range.first) {
+                range.first = 0;
+                range.second = 0;
+                break;
+            }
         }
     }
 

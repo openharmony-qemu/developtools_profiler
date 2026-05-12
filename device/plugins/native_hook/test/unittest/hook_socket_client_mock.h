@@ -28,7 +28,7 @@
 class MockHookSocketClient : public HookSocketClient {
 public:
     explicit MockHookSocketClient(void (*disableHookCallback)() = nullptr) : HookSocketClient(
-        g_hookPid.load(), &g_clientConfig, &g_targetedRange, &g_sharedMemCount, disableHookCallback) {};
+        g_hookPid.load(), &g_clientConfig, &g_targetLibRange, &g_sharedMemCount, disableHookCallback) {};
     MOCK_METHOD5(SendStackWithPayload, bool(const void* data, size_t size, const void* payload,
         size_t payloadSize, int smbIndex));
 };

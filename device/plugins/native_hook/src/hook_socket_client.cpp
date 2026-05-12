@@ -31,6 +31,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cerrno>
 #include <iostream>
 
 extern "C" {
@@ -93,13 +94,14 @@ static void NmdWriteStat(void *arg, const char *buf)
 }
 
 HookSocketClient::HookSocketClient(int pid, ClientConfig *config,
-                                   std::atomic<Range>* targetedRange, std::atomic<int>* memCount,
+                                   std::vector<std::pair<uint64_t, uint64_t>>* targetLibRange,
+                                   std::atomic<int>* memCount,
                                    void (*disableHookCallback)())
-    : pid_(pid), config_(config), targetedRange_(targetedRange),
+    : pid_(pid), config_(config), targetLibRange_(targetLibRange),
       sharedMemCount_(memCount), disableHookCallback_(disableHookCallback)
 {
     g_disableHook = true;
-    int sharedMemCount = (config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
+    int sharedMemCount = (config_ != nullptr && config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
     smbFds_.reserve(sharedMemCount);
     eventFds_.reserve(sharedMemCount);
     stackWriterList_.reserve(sharedMemCount);
@@ -218,10 +220,14 @@ bool HookSocketClient::HandleControlCommand(uint32_t cmd)
     if (cmd != STOP_HOOK_CMD) {
         return true;
     }
+    PROFILER_LOG_INFO(LOG_CORE, "HandleControlCommand: received STOP_HOOK_CMD, pid %d", pid_);
     bool expected = false;
     if (stopRequested_.compare_exchange_strong(expected, true,
         std::memory_order_release, std::memory_order_relaxed)) {
+        PROFILER_LOG_INFO(LOG_CORE, "HandleControlCommand: trigger hook end, pid %d", pid_);
         (void)ohos_malloc_hook_on_end();
+    } else {
+        PROFILER_LOG_INFO(LOG_CORE, "HandleControlCommand: stop already requested, pid %d", pid_);
     }
     return true;
 }
@@ -305,7 +311,9 @@ void HookSocketClient::SendOptionalReports()
 {
     HandleCommonConfig();
     if (config_->onlyMemLeak) {
-        GetAndSendMemLeakInfo();
+        if (!GetAndSendMemLeakInfo()) {
+            PROFILER_LOG_ERROR(LOG_CORE, "SendOptionalReports mem leak report failed");
+        }
     }
     if (config_->allocatorSamplingEnable) {
 #ifdef OHOS_ENABLE_SAMPLER
@@ -328,10 +336,14 @@ void HookSocketClient::SendOptionalReports()
 
 bool HookSocketClient::ParseTargetMapsIfNeeded()
 {
+    if (config_ == nullptr) {
+        return false;
+    }
     if (config_->targetSoName.empty()) {
         return true;
     }
-    if (ParseTargetedMaps(*targetedRange_, config_->targetSoName)) {
+    std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
+    if (targetLibRange_ != nullptr && ParseTargetedMaps(*targetLibRange_, config_->targetSoName)) {
         return true;
     }
     PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc ParseTargetedMaps failed!");
@@ -340,6 +352,9 @@ bool HookSocketClient::ParseTargetMapsIfNeeded()
 
 bool HookSocketClient::ApplyClientConfig(SocketContext &context, const ClientConfig& clientConfig)
 {
+    if (config_ == nullptr) {
+        return false;
+    }
     *config_ = clientConfig;
     LogReceivedConfig();
     PrepareWriters(context);
@@ -350,23 +365,38 @@ bool HookSocketClient::ApplyClientConfig(SocketContext &context, const ClientCon
 
 bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size)
 {
+    if (buf == nullptr) {
+        return false;
+    }
     if (size == sizeof(HookCacheFileMsg) && config_ != nullptr && config_->enableFileCacheMode) {
-        HookCacheFileMsg cacheFileMsg = *reinterpret_cast<HookCacheFileMsg *>(const_cast<int8_t*>(buf));
+        HookCacheFileMsg cacheFileMsg;
+        if (memcpy_s(&cacheFileMsg, sizeof(cacheFileMsg), buf, size) != EOK) {
+            return false;
+        }
         return HandleFileCacheMsg(context, cacheFileMsg);
     }
     if (size == sizeof(uint32_t)) {
-        return HandleControlCommand(*reinterpret_cast<const uint32_t*>(buf));
+        uint32_t cmd = 0;
+        if (memcpy_s(&cmd, sizeof(cmd), buf, size) != EOK) {
+            return false;
+        }
+        return HandleControlCommand(cmd);
     }
-    if (size != sizeof(ClientConfig)) {
+    if (size != sizeof(ClientConfigIpc)) {
         return true;
     }
-    ClientConfig clientConfig = *reinterpret_cast<ClientConfig *>(const_cast<int8_t*>(buf));
+    ClientConfigIpc clientConfigIpc;
+    if (memcpy_s(&clientConfigIpc, sizeof(clientConfigIpc), buf, size) != EOK) {
+        return false;
+    }
+    ClientConfig clientConfig;
+    ConvertClientConfigFromIpc(clientConfigIpc, clientConfig);
     return ApplyClientConfig(context, clientConfig);
 }
 
 bool HookSocketClient::GetAndSendMemLeakInfo()
 {
-    if ((config_->memLeakFormat == MemLeakFormat::TYPE_DISABLE) || (stackWriterList_.size() == 0)) {
+    if (config_->memLeakFormat == MemLeakFormat::TYPE_DISABLE) {
         return false;
     }
 
@@ -377,25 +407,48 @@ bool HookSocketClient::GetAndSendMemLeakInfo()
         PROFILER_LOG_ERROR(LOG_CORE, "GetAndSendMemLeakInfo GetMemLeakInfo failed");
         return false;
     }
-    
-    // 直接写入接收到的 fd
-    if (memLeakRecvFd_ > 0) {
-        ssize_t written = write(memLeakRecvFd_, data.c_str(), data.size());
-        PROFILER_LOG_INFO(LOG_CORE, "GetAndSendMemLeakInfo wrote %zd bytes to fd %d", written, memLeakRecvFd_);
-        close(memLeakRecvFd_);
-        memLeakRecvFd_ = -1;
-    }
-    
-    // 发送完成通知
-    StackRawData rawdata = {{{{0}}}};
-    rawdata.type = MEM_LEAK_MSG;
-    if (!stackWriterList_[0]) {
+    return WriteMemLeakInfo(data) && SendMemLeakDone();
+}
+
+bool HookSocketClient::WriteMemLeakInfo(const std::string& data)
+{
+    if (memLeakRecvFd_ < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "WriteMemLeakInfo invalid fd %d", memLeakRecvFd_);
         return false;
     }
-    stackWriterList_[0]->WriteTimeout(&rawdata, sizeof(BaseStackRawData));
-    stackWriterList_[0]->Flush();
-    PROFILER_LOG_INFO(LOG_CORE, "GetAndSendMemLeakInfo sent MEM_LEAK_MSG notification");
+    size_t writtenSize = 0;
+    while (writtenSize < data.size()) {
+        ssize_t written = write(memLeakRecvFd_, data.data() + writtenSize, data.size() - writtenSize);
+        if (written < 0 && errno == EINTR) {
+            continue;
+        }
+        if (written <= 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "WriteMemLeakInfo write failed, errno=%d", errno);
+            close(memLeakRecvFd_);
+            memLeakRecvFd_ = -1;
+            return false;
+        }
+        writtenSize += static_cast<size_t>(written);
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "WriteMemLeakInfo wrote %zu bytes to fd %d", writtenSize, memLeakRecvFd_);
+    if (fsync(memLeakRecvFd_) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "WriteMemLeakInfo fsync failed, errno=%d", errno);
+    }
+    close(memLeakRecvFd_);
+    memLeakRecvFd_ = -1;
     return true;
+}
+
+bool HookSocketClient::SendMemLeakDone()
+{
+    if (unixSocketClient_ == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "SendMemLeakDone socket missing");
+        return false;
+    }
+    uint32_t cmd = MEM_LEAK_DONE_CMD;
+    bool ret = unixSocketClient_->SendHookConfig(reinterpret_cast<uint8_t*>(&cmd), sizeof(cmd));
+    PROFILER_LOG_INFO(LOG_CORE, "SendMemLeakDone result %d", ret);
+    return ret;
 }
 
 bool HookSocketClient::SendStack(const void* data, size_t size)
@@ -625,12 +678,15 @@ bool HookSocketClient::SendEndMsg()
     StackRawData rawdata = {{{{0}}}};
     rawdata.type = END_MSG;
     if (g_disableHook || unixSocketClient_ == nullptr) {
+        PROFILER_LOG_WARN(LOG_CORE, "SendEndMsg: hook disabled or client missing, pid %d", pid_);
         return false;
     }
     if (!config_->onlyMemLeak) {
         GetAndSendMemLeakInfo();
     }
     int sharedMemCount = *sharedMemCount_;
+    PROFILER_LOG_INFO(LOG_CORE, "SendEndMsg: send END_MSG, pid %d, sharedMemCount %d, fileCacheMode %d",
+        pid_, sharedMemCount, config_->enableFileCacheMode);
     for (int smbIndex = 0; smbIndex < sharedMemCount; ++smbIndex) {
         auto& writer = stackWriterList_[smbIndex];
         if (writer) {

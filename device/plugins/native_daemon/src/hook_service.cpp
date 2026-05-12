@@ -115,6 +115,17 @@ bool HookService::HandlePeerMessage(SocketContext &context, const int8_t *buf, u
     return false;
 }
 
+bool HookService::HandleControlCommand(uint32_t cmd)
+{
+    if (cmd != MEM_LEAK_DONE_CMD) {
+        return false;
+    }
+    if (hookMgr_ == nullptr || !hookMgr_->HandleMemLeakDone()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HandleControlCommand mem leak done failed");
+    }
+    return true;
+}
+
 bool HookService::ResolveProcessName(int32_t peerConfig, std::string& procName)
 {
     hookMgr_->SetPid(peerConfig);
@@ -206,19 +217,27 @@ bool HookService::SendMemLeakFd(SocketContext &context)
         return true;
     }
     int fd = hookMgr_->CreateMemLeakFile();
-    if (fd <= 0) {
+    if (fd < 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "SendMemLeakFd invalid fd");
         return false;
     }
-    context.SendFileDescriptor(fd);
+    if (!context.SendFileDescriptor(fd)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "SendMemLeakFd send fd failed");
+        return false;
+    }
     PROFILER_LOG_INFO(LOG_CORE, "SendMemLeakFd sent fd %d", fd);
     return true;
 }
 
 void HookService::SaveSocketFd(SocketContext &context, pid_t pid)
 {
+    int socketFd = context.GetSocketHandle();
+    if (socketFd <= 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "SaveSocketFd invalid socket fd, pid: %d", pid);
+        return;
+    }
     std::unique_lock<std::mutex> socketLock(pidFdMtx_);
-    pidFds_[pid] = context.GetSocketHandle();
+    pidFds_[pid] = socketFd;
 }
 
 void HookService::AddPidInfo(pid_t pid, uid_t uid, gid_t gid)
@@ -236,14 +255,19 @@ void HookService::RemovePidInfo(pid_t pid)
 void HookService::CloseSocketFd(pid_t pid)
 {
     std::unique_lock<std::mutex> lock(pidFdMtx_);
-    if ((pidFds_.find(pid) != pidFds_.end()) && (pidFds_[pid] != 0)) {
-        int socketFd = pidFds_[pid];
-        pidFds_.erase(pid);
-        lock.unlock();
-        serviceEntry_->RemoveContext(socketFd);
-    } else {
+    auto it = pidFds_.find(pid);
+    if (it == pidFds_.end()) {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService::CloseSocketFd pid invalid");
+        return;
     }
+    int socketFd = it->second;
+    pidFds_.erase(it);
+    if (socketFd <= 0 || serviceEntry_ == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CloseSocketFd invalid socket fd, pid: %d", pid);
+        return;
+    }
+    lock.unlock();
+    serviceEntry_->RemoveContext(socketFd);
 }
 
 bool HookService::HasSocketFd(pid_t pid)
@@ -265,8 +289,9 @@ void HookService::ClientDisconnectCallback(int socketFd)
             }
         }
     }
-    if (pid > 0 && hookMgr_ != nullptr && clientConfig_.enableFileCacheMode) {
-        (void)hookMgr_->HandleCacheFileStopByPid(pid);
+    PROFILER_LOG_INFO(LOG_CORE, "ClientDisconnectCallback: socket %d disconnected, pid %d", socketFd, pid);
+    if (pid > 0 && hookMgr_ != nullptr) {
+        (void)hookMgr_->HandleClientDisconnectedByPid(pid);
     }
 }
 
@@ -280,6 +305,9 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
         return HandlePeerMessage(context, buf, size);
     }
     int peerConfig = *const_cast<int *>(reinterpret_cast<const int *>(buf));
+    if (HandleControlCommand(static_cast<uint32_t>(peerConfig))) {
+        return true;
+    }
     if (peerConfig == -1) {
         return false;
     }
@@ -292,17 +320,21 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     if (!CheckConnectionPermission(context)) {
         return false;
     }
+    SaveSocketFd(context, static_cast<pid_t>(peerConfig));
     PROFILER_LOG_DEBUG(LOG_CORE, "ProtocolProc, receive message from hook client, and send hook config to process %d",
                        peerConfig);
-    if (!context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig_), sizeof(clientConfig_))) {
+    ClientConfigIpc clientConfigIpc;
+    if (!ConvertClientConfigToIpc(clientConfig_, clientConfigIpc) ||
+        !context.SendHookConfig(reinterpret_cast<const uint8_t *>(&clientConfigIpc), sizeof(clientConfigIpc))) {
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc send client config failed");
+        CloseSocketFd(static_cast<pid_t>(peerConfig));
         return false;
     }
     if (!SendPeerFds(context, peerConfig, procName) || !SendAsyncStackFd(context) || !SendMemLeakFd(context)) {
+        CloseSocketFd(static_cast<pid_t>(peerConfig));
         return false;
     }
     hookMgr_->ResetStartupParam();
-    SaveSocketFd(context, static_cast<pid_t>(peerConfig));
     return true;
 }
 
@@ -342,10 +374,12 @@ void HookService::SendCommand(pid_t pid, uint32_t cmd)
     std::unique_lock<std::mutex> lock(pidFdMtx_);
     auto it = pidFds_.find(pid);
     if (it == pidFds_.end() || it->second <= 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "SendCommand: control socket unavailable, pid %d cmd %u", pid, cmd);
         return;
     }
     int sockFd = it->second;
     lock.unlock();
+    PROFILER_LOG_INFO(LOG_CORE, "SendCommand: send cmd %u to pid %d via socket %d", cmd, pid, sockFd);
 
     struct ProtocolHead phead;
     phead.protoType = PROTOCOL_TYPE_PROTOBUF;

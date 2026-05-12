@@ -247,6 +247,8 @@ HWTEST_F(HookRecordTest, TestSetTraceType001, TestSize.Level0)
     EXPECT_EQ(traceAllocEvent->trace_type(), TraceType::FD);
     hookRecord->SetTraceType(traceAllocEvent, TAG_RES_ARKTS_HEAP_MASK);
     EXPECT_EQ(traceAllocEvent->trace_type(), TraceType::ARKTS_HEAP);
+    hookRecord->SetTraceType(traceAllocEvent, TAG_RES_ARKTS_STATIC_HEAP);
+    EXPECT_EQ(traceAllocEvent->trace_type(), TraceType::ARKTS_STATIC_HEAP);
     hookRecord->SetTraceType(traceAllocEvent, TAG_RES_JS_HEAP_MASK);
     EXPECT_EQ(traceAllocEvent->trace_type(), TraceType::JS_HEAP);
     hookRecord->SetTraceType(traceAllocEvent, TAG_RES_DART_HEAP);

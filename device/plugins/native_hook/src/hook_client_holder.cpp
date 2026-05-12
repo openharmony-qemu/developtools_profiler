@@ -114,21 +114,11 @@ void HookClientHolder::SendMmapFileRawData(int prot, int flags, off_t offset, co
         ParseEvent(filePath, g_filterStaLibRange, curRawdata);
     }
     if ((static_cast<uint32_t>(flags) & MAP_FIXED) && (IsLegalSoName(filePath)) &&
-        (!g_clientConfig.targetSoName.empty()) && strstr(filePath, g_clientConfig.targetSoName.c_str()) != NULL) {
+        (!g_clientConfig.targetSoName.empty()) && IsTargetLibrary(filePath, g_clientConfig.targetSoName)) {
         uint64_t soStart = reinterpret_cast<uint64_t>(curRawdata.addr);
         uint64_t soEnd = soStart + static_cast<uint64_t>(curRawdata.mallocSize);
-        auto range = g_targetedRange.load();
-        if (range.start == 0 && range.end == 0) {
-            range.start = soStart;
-            range.end = soEnd;
-        }
-        if (range.start > soStart) {
-            range.start = soStart;
-        }
-        if (range.end < soEnd) {
-            range.end = soEnd;
-        }
-        g_targetedRange.store(range);
+        std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
+        UpdateTargetLibraryRange(g_targetLibRange, soStart, soEnd);
     }
     if (strncpy_s(curRawdata.name, MAX_HOOK_PATH + 1, filePath, len) != EOK) {
         return;

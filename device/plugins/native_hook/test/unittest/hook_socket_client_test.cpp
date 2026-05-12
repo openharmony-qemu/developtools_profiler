@@ -31,6 +31,12 @@ namespace {
 static ClientConfig g_ClientConfigTest = {0};
 constexpr unsigned int WAIT_THREAD_TIME = 5;
 
+ClientConfigIpc MakeClientConfigIpc(const ClientConfig& config)
+{
+    ClientConfigIpc configIpc;
+    EXPECT_TRUE(ConvertClientConfigToIpc(config, configIpc));
+    return configIpc;
+}
 class HookSocketClientTest : public ::testing::Test {
 public:
     static void SetUpTestCase() {}
@@ -56,6 +62,53 @@ HWTEST_F(HookSocketClientTest, ProtocolProc, TestSize.Level0)
 }
 
 /*
+ * @tc.name: ProtocolProcWithNullBuffer
+ * @tc.desc: test HookSocketClient::ProtocolProc returns false with null buffer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, ProtocolProcWithNullBuffer, TestSize.Level0)
+{
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
+    SocketContext socketContext;
+    ASSERT_FALSE(hookClient.ProtocolProc(socketContext, 0, nullptr, sizeof(ClientConfigIpc)));
+}
+
+/*
+ * @tc.name: ClientConfigIpcRoundTrip
+ * @tc.desc: test ClientConfigIpc keeps long target so name and filter libs.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, ClientConfigIpcRoundTrip, TestSize.Level0)
+{
+    ClientConfig config;
+    config.shareMemorySize = 4096;
+    config.targetSoName = "lib" + std::string(64, 'a') + ".so, libtarget.so";
+    config.filterLibList = {"libfilter_first.so", "lib" + std::string(64, 'b') + ".so"};
+    ClientConfigIpc configIpc;
+    ASSERT_TRUE(ConvertClientConfigToIpc(config, configIpc));
+    ClientConfig output;
+    ConvertClientConfigFromIpc(configIpc, output);
+    EXPECT_EQ(output.shareMemorySize, config.shareMemorySize);
+    EXPECT_EQ(output.targetSoName, config.targetSoName);
+    EXPECT_EQ(output.filterLibList, config.filterLibList);
+}
+
+/*
+ * @tc.name: ProtocolProcWithTargetSoAndNullRange
+ * @tc.desc: test HookSocketClient::ProtocolProc returns false when target range is null.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, ProtocolProcWithTargetSoAndNullRange, TestSize.Level0)
+{
+    ClientConfig config;
+    config.targetSoName = "lib" + std::string(64, 'a') + ".so";
+    ClientConfigIpc configIpc = MakeClientConfigIpc(config);
+    SocketContext socketContext;
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
+    auto ptr = reinterpret_cast<const int8_t*>(&configIpc);
+    ASSERT_FALSE(hookClient.ProtocolProc(socketContext, 0, ptr, sizeof(configIpc)));
+}
+/*
  * @tc.name: SendStack
  * @tc.desc: test HookSocketClient::SendStack with normal case.
  * @tc.type: FUNC
@@ -66,8 +119,9 @@ HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level0)
     ClientConfig config;
     HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
     SocketContext socketContext;
-    auto ptr = reinterpret_cast<const int8_t*>(&config);
-    auto size = sizeof(ClientConfig);
+    ClientConfigIpc configIpc = MakeClientConfigIpc(config);
+    auto ptr = reinterpret_cast<const int8_t*>(&configIpc);
+    auto size = sizeof(configIpc);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
 
     struct timespec ts = {};
@@ -97,8 +151,9 @@ HWTEST_F(HookSocketClientTest, FdListSize, TestSize.Level0)
 {
     ClientConfig clientConfig;
     SocketContext socketContext;
-    auto ptr = reinterpret_cast<const int8_t*>(&clientConfig);
-    auto size = sizeof(ClientConfig);
+    ClientConfigIpc configIpc = MakeClientConfigIpc(clientConfig);
+    auto ptr = reinterpret_cast<const int8_t*>(&configIpc);
+    auto size = sizeof(configIpc);
     HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     ASSERT_EQ(hookClient.GetSmbFds().size(), 1);
@@ -115,8 +170,9 @@ HWTEST_F(HookSocketClientTest, GetSmbFds, TestSize.Level0)
 {
     ClientConfig clientConfig;
     SocketContext socketContext;
-    auto ptr = reinterpret_cast<const int8_t*>(&clientConfig);
-    auto size = sizeof(ClientConfig);
+    ClientConfigIpc configIpc = MakeClientConfigIpc(clientConfig);
+    auto ptr = reinterpret_cast<const int8_t*>(&configIpc);
+    auto size = sizeof(configIpc);
     HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     std::vector<int> smbFds = hookClient.GetSmbFds();
@@ -135,8 +191,9 @@ HWTEST_F(HookSocketClientTest, GetEventFds, TestSize.Level0)
 {
     ClientConfig clientConfig;
     SocketContext socketContext;
-    auto ptr = reinterpret_cast<const int8_t*>(&clientConfig);
-    auto size = sizeof(ClientConfig);
+    ClientConfigIpc configIpc = MakeClientConfigIpc(clientConfig);
+    auto ptr = reinterpret_cast<const int8_t*>(&configIpc);
+    auto size = sizeof(configIpc);
     HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     std::vector<int> eventFds = hookClient.GetEventFds();
@@ -157,8 +214,9 @@ HWTEST_F(HookSocketClientTest, SendNmdInfo, TestSize.Level0)
     ClientConfig config;
     HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
     SocketContext socketContext;
-    auto ptr = reinterpret_cast<const int8_t*>(&config);
-    auto size = sizeof(ClientConfig);
+    ClientConfigIpc configIpc = MakeClientConfigIpc(config);
+    auto ptr = reinterpret_cast<const int8_t*>(&configIpc);
+    auto size = sizeof(configIpc);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
 
     struct timespec ts = {};
@@ -182,8 +240,9 @@ HWTEST_F(HookSocketClientTest, SendSimplifiedNmdInfo, TestSize.Level0)
     ClientConfig config;
     HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
     SocketContext socketContext;
-    auto ptr = reinterpret_cast<const int8_t*>(&config);
-    auto size = sizeof(ClientConfig);
+    ClientConfigIpc configIpc = MakeClientConfigIpc(config);
+    auto ptr = reinterpret_cast<const int8_t*>(&configIpc);
+    auto size = sizeof(configIpc);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
 
     struct timespec ts = {};
