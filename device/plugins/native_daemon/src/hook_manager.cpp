@@ -2082,7 +2082,7 @@ void HookManager::SetGwpFd(uint32_t fd)
     gwpFd_ = fd;
 }
 
-void HookManager::SetMemLeakFd(uint32_t fd)
+void HookManager::SetMemLeakFd(int fd)
 {
     memLeakFd_ = fd;
 }

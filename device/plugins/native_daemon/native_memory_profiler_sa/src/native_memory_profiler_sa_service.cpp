@@ -675,7 +675,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     }
     hook->RegisterFdForSa(saFd);
     hook->SetGwpFd(config->gwpAsanHoldTime_ > 0 ? fd : 0);
-    hook->SetMemLeakFd(config->nativeOrphanSnapshotsEnable_ ? fd : 0);
+    hook->SetMemLeakFd(config->nativeOrphanSnapshotsEnable_ ? static_cast<int>(fd) : -1);
     hook->SetSaMode(true);
     hook->SetHookConfig(config);
     hook->SetSaServiceConfig(true, config->hookstandalone_);
