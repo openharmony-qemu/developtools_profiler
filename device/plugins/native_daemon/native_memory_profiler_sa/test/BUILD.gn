@@ -64,6 +64,9 @@ config("native_memory_profiler_sa_config") {
 ohos_unittest("native_memory_profiler_sa_ut") {
   configs = [ ":native_memory_profiler_sa_config" ]
   module_out_path = module_output_path
+  cflags = [
+    "-Dprivate=public", # allow test code access private members
+  ]
   sources = [
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_client_manager.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_callback_proxy.cpp",
@@ -99,6 +102,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "unittest/native_memory_profiler_sa_client_manager_test.cpp",
     "unittest/native_memory_profiler_sa_config_test.cpp",
     "unittest/native_memory_profiler_sa_service_test.cpp",
+    "unittest/native_memory_profiler_sa_path_security_test.cpp",
   ]
 
   defines = [

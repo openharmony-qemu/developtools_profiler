@@ -1054,6 +1054,11 @@ std::string GetFullTracePath(pid_t uid, pid_t pid, const std::string& processNam
     if (bundleName.empty()) {
         bundleName = GetBundleNameByPid(pid);
     }
+    if (filename.empty() || filename.find("..") != std::string::npos ||
+        filename.find("/") != std::string::npos) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:invalid filename: %s", __func__, filename.c_str());
+        return "";
+    }
     return HTRACE_PATH_PREFIX + std::to_string(uid / uidBase) + "/base/" + bundleName + HTRACE_PATH_SUFFIX + filename;
 }
 
@@ -1107,7 +1112,7 @@ static bool CopyFileWithRetry(uint32_t srcFd, const std::string& destPath, int m
         return false;
     }
 
-    int dest = open(destPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, DEFAULT_MODE);
+    int dest = open(destPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, DEFAULT_MODE);
     if (dest < 0) {
         return false;
     }
