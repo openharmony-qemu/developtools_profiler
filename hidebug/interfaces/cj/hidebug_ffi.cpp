@@ -209,7 +209,7 @@ extern "C" {
         for (int64_t i = 0; i < tags.size; i++) {
             taglist.push_back(tagPtr[i]);
         }
-        uint64_t tag = std::accumulate(taglist.begin(), taglist.end(), 0ull,
+        uint64_t tag = std::accumulate(taglist.begin(), taglist.end(), 0uLL,
             [](uint64_t a, uint64_t b) { return a | b; });
         std::string file;
         code = HidebugNativeInterface::GetInstance().StartAppTraceCapture(tag, flag, limitSize, file);
