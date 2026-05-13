@@ -35,6 +35,7 @@ constexpr uint32_t MAX_MATCH_CNT = 1000;
 constexpr uint32_t MAX_MATCH_INTERVAL = 3600;
 constexpr uint32_t LOG_PRINT_TIMES = 10000;
 constexpr uint32_t WAIT_STOP_TIME = 5000;
+constexpr uint32_t WAIT_STOP_TIME_ORPHAN = 30000;
 constexpr uint32_t FINAL_SNAPSHOT_TIMEOUT_MS = 3000;
 constexpr uint32_t WAIT_TIME_ONCE = 10;
 constexpr uint32_t MAX_FILE_CACHE_INACTIVE_SECONDS = 60;
@@ -408,8 +409,10 @@ bool StackPreprocess::StopTakeResults()
             }
         } else if (isStartTakeData_) {
             PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults: schedule timeout force stop, pid %d", pid_);
+            uint32_t waitTime = hookConfig_.native_orphansnapshots_enable() ? WAIT_STOP_TIME_ORPHAN :
+                                                                              WAIT_STOP_TIME;
             int32_t timerFd = scheduleTaskManager_.ScheduleTask(
-                std::bind(&StackPreprocess::ForceStop, this), WAIT_STOP_TIME, true);
+                std::bind(&StackPreprocess::ForceStop, this), waitTime, true);
             if (timerFd == -1) {
                 PROFILER_LOG_ERROR(LOG_CORE, "StopTakeResults ScheduleTask failed!");
                 return false;
