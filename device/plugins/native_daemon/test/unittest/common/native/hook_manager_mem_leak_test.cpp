@@ -302,7 +302,8 @@ HWTEST_F(HookManagerMemLeakTest, MemLeakFormat_EnumValues, TestSize.Level0)
  */
 HWTEST_F(HookManagerMemLeakTest, SetMemLeakFd_Basic, TestSize.Level0)
 {
-    uint32_t testFd = 100;
+    int testFd = dup(STDIN_FILENO);
+    ASSERT_GE(testFd, 0);
     hookManager_->SetMemLeakFd(testFd);
 
     // Verify through subsequent operations that fd was set
@@ -311,34 +312,34 @@ HWTEST_F(HookManagerMemLeakTest, SetMemLeakFd_Basic, TestSize.Level0)
     hookManager_->SetHookConfig(config);
     hookManager_->SetSaMode(true);
 
-    // The memLeakFd_ should be set to testFd
     EXPECT_EQ(hookManager_->memLeakFd_, testFd);
 }
 
 /*
- * @tc.name: SetMemLeakFd_ZeroValue
- * @tc.desc: test SetMemLeakFd with zero value.
+ * @tc.name: SetMemLeakFd_ValidFd
+ * @tc.desc: test SetMemLeakFd with a valid fd.
  * @tc.type: FUNC
  */
-HWTEST_F(HookManagerMemLeakTest, SetMemLeakFd_ZeroValue, TestSize.Level0)
+HWTEST_F(HookManagerMemLeakTest, SetMemLeakFd_ValidFd, TestSize.Level0)
 {
-    uint32_t testFd = 0;
+    int testFd = dup(STDIN_FILENO);
+    ASSERT_GE(testFd, 0);
     hookManager_->SetMemLeakFd(testFd);
 
-    EXPECT_EQ(hookManager_->memLeakFd_, 0u);
+    EXPECT_EQ(hookManager_->memLeakFd_, testFd);
 }
 
 /*
  * @tc.name: SetMemLeakFd_InvalidValue
- * @tc.desc: test SetMemLeakFd with invalid value (max uint32_t).
+ * @tc.desc: test SetMemLeakFd with invalid value.
  * @tc.type: FUNC
  */
 HWTEST_F(HookManagerMemLeakTest, SetMemLeakFd_InvalidValue, TestSize.Level0)
 {
-    uint32_t testFd = 0xFFFFFFFF;
+    int testFd = -1;
     hookManager_->SetMemLeakFd(testFd);
 
-    EXPECT_EQ(hookManager_->memLeakFd_, 0xFFFFFFFFu);
+    EXPECT_EQ(hookManager_->memLeakFd_, -1);
 }
 
 /*
@@ -526,10 +527,12 @@ HWTEST_F(HookManagerMemLeakTest, CloseResource_WithMemLeakFd, TestSize.Level0)
     config.set_native_orphansnapshots_enable(true);
     config.set_pid(TEST_PID);
     hookManager_->SetHookConfig(config);
-    hookManager_->SetMemLeakFd(100);
+    int testFd = dup(STDIN_FILENO);
+    ASSERT_GE(testFd, 0);
+    hookManager_->SetMemLeakFd(testFd);
 
     hookManager_->CloseResource();
-    // After CloseResource, internal state should be cleaned
+    EXPECT_EQ(hookManager_->memLeakFd_, -1);
 }
 
 /*
@@ -604,13 +607,13 @@ HWTEST_F(HookManagerMemLeakTest, SetMemLeakFormat_MultipleCalls, TestSize.Level0
 HWTEST_F(HookManagerMemLeakTest, SetMemLeakFd_MultipleCalls, TestSize.Level0)
 {
     hookManager_->SetMemLeakFd(10);
-    EXPECT_EQ(hookManager_->memLeakFd_, 10u);
+    EXPECT_EQ(hookManager_->memLeakFd_, 10);
 
     hookManager_->SetMemLeakFd(20);
-    EXPECT_EQ(hookManager_->memLeakFd_, 20u);
+    EXPECT_EQ(hookManager_->memLeakFd_, 20);
 
-    hookManager_->SetMemLeakFd(0);
-    EXPECT_EQ(hookManager_->memLeakFd_, 0u);
+    hookManager_->SetMemLeakFd(-1);
+    EXPECT_EQ(hookManager_->memLeakFd_, -1);
 }
 
 /*
