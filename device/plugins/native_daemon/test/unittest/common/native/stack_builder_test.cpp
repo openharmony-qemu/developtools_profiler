@@ -16,6 +16,7 @@
 #include "hook_record_factory_test.h"
 #include "stack_builder_test.h"
 #include "native_hook_config.pb.h"
+#include <memory>
 #include <string>
 #include <sys/time.h>
 #include <vector>
@@ -37,6 +38,29 @@ void StackBuilderTest::SetUpTestCase(void) {}
 void StackBuilderTest::TearDownTestCase(void) {}
 void StackBuilderTest::SetUp() {}
 void StackBuilderTest::TearDown() {}
+
+static HookRecordPtr CreateHookRecord(uint16_t type)
+{
+    RawStackPtr rawData = std::make_shared<RawStack>();
+    rawData->baseStackData = std::make_unique<uint8_t[]>(sizeof(BaseStackRawData));
+    auto* baseData = reinterpret_cast<BaseStackRawData*>(rawData->baseStackData.get());
+    *baseData = {};
+    baseData->type = type;
+    baseData->pid = 10;
+    baseData->tid = 11;
+    rawData->stackContext = baseData;
+    return std::make_shared<HookRecord>(rawData);
+}
+
+static NativeHookConfig CreateStackBuilderConfig(bool fpUnwind)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(fpUnwind);
+    hookConfig.set_offline_symbolization(true);
+    hookConfig.set_max_stack_depth(16);
+    hookConfig.set_max_js_stack_depth(8);
+    return hookConfig;
+}
 
 /*
  * @tc.name: FpStackBuilderFillIpTest
@@ -216,6 +240,107 @@ HWTEST_F(StackBuilderTest, DwarfStackBuilderReplaceErrStackTest, TestSize.Level0
     ASSERT_FALSE(builder->IsRecordInfoValid(hookRecord));
     builder->ReplaceErrStack(frames);
     EXPECT_EQ(frames.size(), 1);
+}
+
+/*
+ * @tc.name: DirectorReturnsEmptyWhenBuilderOrConfigInvalid
+ * @tc.desc: test BuildStackDirector returns empty frames for invalid dependencies.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackBuilderTest, DirectorReturnsEmptyWhenBuilderOrConfigInvalid, TestSize.Level0)
+{
+    NativeHookConfig hookConfig = CreateStackBuilderConfig(true);
+    auto runtime = std::make_shared<VirtualRuntime>(hookConfig);
+    BuildStackDirector director(&hookConfig, runtime, g_mtx);
+    HookRecordPtr hookRecord = CreateHookRecord(MALLOC_MSG);
+
+    director.SetBuilder(nullptr);
+    auto& framesWithoutBuilder = director.ConstructCallFrames(hookRecord, {0x1000}, {});
+    EXPECT_TRUE(framesWithoutBuilder.empty());
+
+    BuildStackDirector directorWithoutConfig(&hookConfig, runtime, g_mtx);
+    directorWithoutConfig.hookConfig_ = nullptr;
+    auto& framesWithoutConfig = directorWithoutConfig.ConstructCallFrames(hookRecord, {0x1000}, {});
+    EXPECT_TRUE(framesWithoutConfig.empty());
+}
+
+/*
+ * @tc.name: DirectorConstructsFramesFromExplicitPcs
+ * @tc.desc: test BuildStackDirector builds call frames from sync and async pcs.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackBuilderTest, DirectorConstructsFramesFromExplicitPcs, TestSize.Level0)
+{
+    NativeHookConfig hookConfig = CreateStackBuilderConfig(true);
+    auto runtime = std::make_shared<VirtualRuntime>(hookConfig);
+    BuildStackDirector director(&hookConfig, runtime, g_mtx);
+    HookRecordPtr hookRecord = CreateHookRecord(MALLOC_MSG);
+
+    auto& frames = director.ConstructCallFrames(hookRecord, {0x1000, 0}, {0x2000, 0x3000});
+
+    ASSERT_EQ(frames.size(), 3u);
+    EXPECT_EQ(frames[0].ip_, StripPac(0x1000, 0));
+    EXPECT_EQ(frames[1].ip_, StripPac(0x2000, 0));
+    EXPECT_EQ(frames[2].ip_, StripPac(0x3000, 0));
+}
+
+/*
+ * @tc.name: DirectorConstructsNestedFramesWithDepthLimit
+ * @tc.desc: test BuildStackDirector limits async task stack depth.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackBuilderTest, DirectorConstructsNestedFramesWithDepthLimit, TestSize.Level0)
+{
+    NativeHookConfig hookConfig = CreateStackBuilderConfig(true);
+    hookConfig.set_async_task_stack_depth(1);
+    auto runtime = std::make_shared<VirtualRuntime>(hookConfig);
+    BuildStackDirector director(&hookConfig, runtime, g_mtx);
+    HookRecordPtr hookRecord = CreateHookRecord(MALLOC_MSG);
+    std::vector<std::vector<uintptr_t>> nestedAsyncPcs = {{0x2000, 0x2001}, {0x3000, 0}};
+
+    auto& frames = director.ConstructNestedCallFrames(hookRecord, {0x1000, 0}, nestedAsyncPcs);
+
+    ASSERT_EQ(frames.size(), 3u);
+    EXPECT_EQ(frames[0].ip_, StripPac(0x1000, 0));
+    EXPECT_EQ(frames[1].ip_, StripPac(0x2000, 0));
+    EXPECT_EQ(frames[2].ip_, StripPac(0x3000, 0));
+}
+
+/*
+ * @tc.name: DirectorSkipsPrSetVmaRecord
+ * @tc.desc: test BuildStackDirector skips PR_SET_VMA records.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackBuilderTest, DirectorSkipsPrSetVmaRecord, TestSize.Level0)
+{
+    NativeHookConfig hookConfig = CreateStackBuilderConfig(true);
+    auto runtime = std::make_shared<VirtualRuntime>(hookConfig);
+    BuildStackDirector director(&hookConfig, runtime, g_mtx);
+    HookRecordPtr hookRecord = CreateHookRecord(PR_SET_VMA_MSG);
+
+    auto& frames = director.ConstructCallFrames(hookRecord, {0x1000}, {});
+
+    EXPECT_TRUE(frames.empty());
+    EXPECT_FALSE(director.IsRecordUnwindable(hookRecord));
+}
+
+/*
+ * @tc.name: DirectorReplacesInvalidDwarfStack
+ * @tc.desc: test BuildStackDirector emits dwarf error frame for invalid dwarf stack.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackBuilderTest, DirectorReplacesInvalidDwarfStack, TestSize.Level0)
+{
+    NativeHookConfig hookConfig = CreateStackBuilderConfig(false);
+    auto runtime = std::make_shared<VirtualRuntime>(hookConfig);
+    BuildStackDirector director(&hookConfig, runtime, g_mtx);
+    HookRecordPtr hookRecord = CreateHookRecord(MALLOC_MSG);
+
+    auto& frames = director.ConstructCallFrames(hookRecord);
+
+    ASSERT_EQ(frames.size(), 1u);
+    EXPECT_EQ(frames[0].callFrameId_, DWARF_ERROR_ID);
+    EXPECT_EQ(frames[0].symbolName_, "UnwindErrorDwarf");
 }
 
 /*

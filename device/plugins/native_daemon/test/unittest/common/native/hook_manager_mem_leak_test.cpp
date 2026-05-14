@@ -674,4 +674,44 @@ HWTEST_F(HookManagerMemLeakTest, HandleMemLeakDone_CleansTempFile, TestSize.Leve
     remove("/data/local/tmp/memleak-native-orphansnapshot-test.txt");
     rmdir(tempDir.c_str());
 }
+
+/*
+ * @tc.name: CreateMemLeakFile_InvalidDirectory
+ * @tc.desc: test CreateMemLeakFile fails when file cache directory is invalid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, CreateMemLeakFile_InvalidDirectory, TestSize.Level0)
+{
+    hookManager_->fileCacheDir_ = "/data/local/tmp/not_exists_memleak_dir/";
+    hookManager_->memLeakFileName_ = "memleak-invalid.txt";
+    EXPECT_LT(hookManager_->CreateMemLeakFile(), 0);
+}
+
+/*
+ * @tc.name: GetMemLeakFileName_StartupModeUsesZeroPid
+ * @tc.desc: test mem leak filename uses pid 0 for startup mode tasks.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, GetMemLeakFileName_StartupModeUsesZeroPid, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_pid(TEST_PID);
+    config.set_process_name(TEST_PROCESS_NAME);
+    config.set_startup_mode(true);
+    hookManager_->SetHookConfig(config);
+
+    EXPECT_EQ(hookManager_->GetMemLeakFileName(MemLeakFormat::TYPE_SNAPSHOT),
+        "memleak-native-orphansnapshot-0.txt");
+}
+
+/*
+ * @tc.name: HandleMemLeakDone_AlreadyFinished
+ * @tc.desc: test HandleMemLeakDone returns true immediately after dump state is complete.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, HandleMemLeakDone_AlreadyFinished, TestSize.Level0)
+{
+    hookManager_->memLeakDumpDone_ = true;
+    EXPECT_TRUE(hookManager_->HandleMemLeakDone());
+}
 } // namespace

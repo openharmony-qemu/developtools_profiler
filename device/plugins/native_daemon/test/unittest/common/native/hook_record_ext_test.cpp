@@ -73,6 +73,18 @@ static std::vector<CallFrame> MakeCallFrames()
     return frames;
 }
 
+static SerializeInfo MakeSerializeInfo(std::vector<CallFrame>& frames, NativeHookConfig& config)
+{
+    SerializeInfo hookInfo;
+    hookInfo.callFrames = &frames;
+    hookInfo.stackMapId = 0;
+    hookInfo.tagName = TEST_TAG_NAME;
+    hookInfo.nodeType = TEST_NODE_TYPE;
+    hookInfo.nodeId = TEST_NODE_ID;
+    hookInfo.config = &config;
+    return hookInfo;
+}
+
 class HookRecordExtTest : public testing::Test {
 public:
     static void SetUpTestCase(void);
@@ -231,6 +243,52 @@ HWTEST_F(HookRecordExtTest, HookRecordSetEventFrameTest, TestSize.Level0)
 }
 
 /*
+@tc.name: HookRecordSetEventFrameSkipsDwarfFilter
+@tc.desc: test SetEventFrame skips two dwarf frames when fp unwind is disabled.
+@tc.type: FUNC
+*/
+HWTEST_F(HookRecordExtTest, HookRecordSetEventFrameSkipsDwarfFilter, TestSize.Level0)
+{
+    RawStackPtr rawStack = MakeRawStack(TEST_TYPE, TEST_ADDR, TEST_SIZE);
+    HookRecord hookRecord(rawStack);
+    std::vector<CallFrame> frames = MakeCallFrames();
+    frames.push_back(frames[0]);
+    frames.push_back(frames[0]);
+    frames[2].ip_ = 0x3000;
+    hookConfig_.set_fp_unwind(false);
+    SerializeInfo hookInfo = MakeSerializeInfo(frames, hookConfig_);
+    NativeHookData event;
+    auto allocEvent = event.mutable_alloc_event();
+
+    hookRecord.SetEventFrame(allocEvent, hookInfo);
+    ASSERT_EQ(allocEvent->frame_info_size(), 1);
+    EXPECT_EQ(allocEvent->frame_info(0).ip(), 0x3000u);
+    EXPECT_EQ(allocEvent->thread_name_id(), TEST_TID);
+}
+
+/*
+@tc.name: HookRecordSetEventFrameRejectsInvalidInputs
+@tc.desc: test SetEventFrame with null event and invalid record.
+@tc.type: FUNC
+*/
+HWTEST_F(HookRecordExtTest, HookRecordSetEventFrameRejectsInvalidInputs, TestSize.Level0)
+{
+    RawStackPtr rawStack = MakeRawStack(TEST_TYPE, TEST_ADDR, TEST_SIZE);
+    HookRecord validRecord(rawStack);
+    std::vector<CallFrame> frames = MakeCallFrames();
+    SerializeInfo hookInfo = MakeSerializeInfo(frames, hookConfig_);
+    validRecord.SetEventFrame<AllocEvent>(nullptr, hookInfo);
+    EXPECT_TRUE(validRecord.IsValid());
+
+    HookRecord invalidRecord;
+    NativeHookData event;
+    auto allocEvent = event.mutable_alloc_event();
+    invalidRecord.SetEventFrame(allocEvent, hookInfo);
+    EXPECT_EQ(allocEvent->pid(), 0);
+    EXPECT_EQ(allocEvent->frame_info_size(), 0);
+}
+
+/*
 @tc.name: HookRecordSetFrameInfoTest
 @tc.desc: test HookRecord::SetFrameInfo method.
 @tc.type: FUNC
@@ -270,6 +328,71 @@ HWTEST_F(HookRecordExtTest, HookRecordSetFrameInfoTest, TestSize.Level0)
     EXPECT_EQ(frameInfoOffline->ip(), callFrame.ip_);
     // With offline symbolization, symbol name and file path should not be set
     // Note: Frame type doesn't have has_symbol_name() and has_file_path() methods
+}
+
+/*
+@tc.name: HookRecordSetFrameInfoUsesInlineStrings
+@tc.desc: test HookRecord::SetFrameInfo writes inline strings when ids are missing.
+@tc.type: FUNC
+*/
+HWTEST_F(HookRecordExtTest, HookRecordSetFrameInfoUsesInlineStrings, TestSize.Level0)
+{
+    RawStackPtr rawStack = MakeRawStack(TEST_TYPE, TEST_ADDR, TEST_SIZE);
+    HookRecord hookRecord(rawStack);
+    std::vector<CallFrame> frames = MakeCallFrames();
+    CallFrame& callFrame = frames[0];
+    callFrame.symbolNameId_ = 0;
+    callFrame.filePathId_ = 0;
+    BatchNativeHookData stackData;
+    auto frameInfo = stackData.add_events()->mutable_alloc_event()->add_frame_info();
+
+    hookRecord.SetFrameInfo(*frameInfo, callFrame, &hookConfig_);
+    EXPECT_EQ(frameInfo->symbol_name(), "test_function");
+    EXPECT_EQ(frameInfo->file_path(), "/path/to/file.cpp");
+}
+
+/*
+@tc.name: HookRecordSetFrameInfoHandlesGuardBranches
+@tc.desc: test SetFrameInfo null config and offline non-js branches.
+@tc.type: FUNC
+*/
+HWTEST_F(HookRecordExtTest, HookRecordSetFrameInfoHandlesGuardBranches, TestSize.Level0)
+{
+    RawStackPtr rawStack = MakeRawStack(TEST_TYPE, TEST_ADDR, TEST_SIZE);
+    HookRecord hookRecord(rawStack);
+    std::vector<CallFrame> frames = MakeCallFrames();
+    CallFrame& callFrame = frames[0];
+    BatchNativeHookData stackData;
+    auto nullConfigFrame = stackData.add_events()->mutable_alloc_event()->add_frame_info();
+    hookRecord.SetFrameInfo(*nullConfigFrame, callFrame, nullptr);
+    EXPECT_EQ(nullConfigFrame->ip(), 0u);
+
+    hookConfig_.set_offline_symbolization(true);
+    callFrame.isJsFrame_ = false;
+    auto offlineFrame = stackData.add_events()->mutable_alloc_event()->add_frame_info();
+    hookRecord.SetFrameInfo(*offlineFrame, callFrame, &hookConfig_);
+    EXPECT_EQ(offlineFrame->ip(), callFrame.ip_);
+    EXPECT_EQ(offlineFrame->sp(), 0u);
+    EXPECT_EQ(offlineFrame->symbol_name_id(), 0u);
+}
+
+/*
+@tc.name: HookRecordSetSizeAndTraceTypeHandleNull
+@tc.desc: test SetSize and SetTraceType null guards keep valid state unchanged.
+@tc.type: FUNC
+*/
+HWTEST_F(HookRecordExtTest, HookRecordSetSizeAndTraceTypeHandleNull, TestSize.Level0)
+{
+    RawStackPtr rawStack = MakeRawStack(TEST_TYPE, TEST_ADDR, TEST_SIZE);
+    HookRecord hookRecord(rawStack);
+    hookRecord.SetSize<AllocEvent>(nullptr);
+    HookRecord::SetTraceType<TraceAllocEvent>(nullptr, TAG_RES_GPU_VK);
+    EXPECT_EQ(hookRecord.GetAddr(), TEST_ADDR);
+
+    NativeHookData event;
+    auto allocEvent = event.mutable_alloc_event();
+    hookRecord.SetSize(allocEvent);
+    EXPECT_EQ(allocEvent->size(), TEST_SIZE);
 }
 
 /*
@@ -314,6 +437,69 @@ HWTEST_F(HookRecordExtTest, HookRecordSetTraceTypeTest, TestSize.Level0)
     auto traceEvent6 = event6.mutable_trace_alloc_event();
     HookRecord::SetTraceType(traceEvent6, "unknown_tag");
     EXPECT_EQ(traceEvent6->trace_type(), TraceType::OTHER);
+}
+
+/*
+@tc.name: HookRecordSetTraceTypeCoversRemainingTags
+@tc.desc: test HookRecord::SetTraceType with remaining direct tag mappings.
+@tc.type: FUNC
+*/
+HWTEST_F(HookRecordExtTest, HookRecordSetTraceTypeCoversRemainingTags, TestSize.Level0)
+{
+    NativeHookData event;
+    auto traceEvent = event.mutable_trace_alloc_event();
+    HookRecord::SetTraceType(traceEvent, TAG_RES_GPU_CL_BUFFER);
+    EXPECT_EQ(traceEvent->trace_type(), TraceType::GPU_CL);
+    HookRecord::SetTraceType(traceEvent, TAG_RES_FD_EPOLL);
+    EXPECT_EQ(traceEvent->trace_type(), TraceType::FD);
+    HookRecord::SetTraceType(traceEvent, TAG_RES_FD_EVENTFD);
+    EXPECT_EQ(traceEvent->trace_type(), TraceType::FD);
+    HookRecord::SetTraceType(traceEvent, TAG_RES_FD_SOCKET);
+    EXPECT_EQ(traceEvent->trace_type(), TraceType::FD);
+    HookRecord::SetTraceType(traceEvent, TAG_RES_FD_PIPE);
+    EXPECT_EQ(traceEvent->trace_type(), TraceType::FD);
+    HookRecord::SetTraceType(traceEvent, TAG_RES_FD_DUP);
+    EXPECT_EQ(traceEvent->trace_type(), TraceType::FD);
+    HookRecord::SetTraceType(traceEvent, TAG_RES_THREAD_ALL);
+    EXPECT_EQ(traceEvent->trace_type(), TraceType::THREAD);
+    HookRecord::SetTraceType(traceEvent, TAG_RES_KOTLIN_HEAP_MASK);
+    EXPECT_EQ(traceEvent->trace_type(), TraceType::KMP_HEAP);
+    HookRecord::SetTraceType(traceEvent, "ashmem");
+    EXPECT_EQ(traceEvent->trace_type(), TraceType::ASHMEM);
+    HookRecord::SetTraceType(traceEvent, TAG_RES_DMABUF_MASK);
+    EXPECT_EQ(traceEvent->trace_type(), TraceType::DMA);
+    HookRecord::SetTraceType(traceEvent, TAG_RES_ARK_GLOBAL_HANDLE);
+    EXPECT_EQ(traceEvent->trace_type(), TraceType::ARK_GLOBAL_HANDLE);
+    HookRecord::SetTraceType(traceEvent, TAG_RES_ARK_LOCAL_HANDLE);
+    EXPECT_EQ(traceEvent->trace_type(), TraceType::ARK_LOCAL_HANDLE);
+    HookRecord::SetTraceType(traceEvent, TAG_RES_VMA_ARKWEB);
+    EXPECT_EQ(traceEvent->trace_type(), TraceType::VMA_ARKWEB);
+}
+
+/*
+@tc.name: HookRecordSerializeDataWithEncoderVariant
+@tc.desc: test serialize paths with proto encoder event variant.
+@tc.type: FUNC
+*/
+HWTEST_F(HookRecordExtTest, HookRecordSerializeDataWithEncoderVariant, TestSize.Level0)
+{
+    RawStackPtr rawStack = MakeRawStack(MALLOC_MSG, TEST_ADDR, TEST_SIZE);
+    std::vector<CallFrame> frames = MakeCallFrames();
+    hookConfig_.set_fp_unwind(true);
+    SerializeInfo hookInfo = MakeSerializeInfo(frames, hookConfig_);
+    OHOS::Developtools::Profiler::ProtoEncoder::NativeHookData encoderEvent;
+    NativeHookProto stackData = &encoderEvent;
+
+    MallocRecord(rawStack).SerializeData(stackData, hookInfo);
+    MmapRecord(rawStack).SerializeData(stackData, hookInfo);
+    MmapFilePageRecord(rawStack).SerializeData(stackData, hookInfo);
+    MemoryUsingRecord(rawStack).SerializeData(stackData, hookInfo);
+    MemoryUnusingRecord(rawStack).SerializeData(stackData, hookInfo);
+    ArktsFreeRecord(rawStack).SerializeData(stackData, hookInfo);
+    rawStack->stackContext->newAddr = reinterpret_cast<void*>(TEST_ADDR + TEST_SIZE);
+    ArktsMallocRecord(rawStack).SerializeData(stackData, hookInfo);
+
+    EXPECT_LT(encoderEvent.Finish(), 0);
 }
 
 /*
@@ -417,6 +603,44 @@ HWTEST_F(HookRecordExtTest, MmapRecordSerializeDataTest, TestSize.Level0)
     EXPECT_EQ(event.mmap_event().type(), TEST_TAG_NAME);
     EXPECT_EQ(event.mmap_event().node_type(), TEST_NODE_TYPE);
     EXPECT_EQ(event.mmap_event().node_id(), TEST_NODE_ID);
+}
+
+/*
+@tc.name: MmapRecordSerializeDataWithoutOptionalFields
+@tc.desc: test MmapRecord::SerializeData leaves optional fields empty when context is absent.
+@tc.type: FUNC
+*/
+HWTEST_F(HookRecordExtTest, MmapRecordSerializeDataWithoutOptionalFields, TestSize.Level0)
+{
+    RawStackPtr rawStack = MakeRawStack(MMAP_MSG, TEST_ADDR, TEST_SIZE);
+    MmapRecord mmapRecord(rawStack);
+    std::vector<CallFrame> frames = MakeCallFrames();
+    SerializeInfo hookInfo = {&frames, 0, "", 0, 0, &hookConfig_};
+    NativeHookData event;
+    NativeHookProto stackData = &event;
+
+    mmapRecord.SerializeData(stackData, hookInfo);
+    EXPECT_EQ(event.mmap_event().type(), "");
+    EXPECT_EQ(event.mmap_event().node_type(), 0u);
+    EXPECT_EQ(event.mmap_event().node_id(), 0u);
+}
+
+/*
+@tc.name: MemoryUsingRecordSerializeDataWithSoTag
+@tc.desc: test MemoryUsingRecord::SerializeData maps shared object tags to SO trace type.
+@tc.type: FUNC
+*/
+HWTEST_F(HookRecordExtTest, MemoryUsingRecordSerializeDataWithSoTag, TestSize.Level0)
+{
+    RawStackPtr rawStack = MakeRawStack(MEMORY_USING_MSG, TEST_ADDR, TEST_SIZE);
+    MemoryUsingRecord memoryUsingRecord(rawStack);
+    std::vector<CallFrame> frames = MakeCallFrames();
+    SerializeInfo hookInfo = {&frames, 0, "libsample.so", 0, 0, &hookConfig_};
+    NativeHookData event;
+    NativeHookProto stackData = &event;
+
+    memoryUsingRecord.SerializeData(stackData, hookInfo);
+    EXPECT_EQ(event.trace_alloc_event().trace_type(), TraceType::SO);
 }
 
 /*

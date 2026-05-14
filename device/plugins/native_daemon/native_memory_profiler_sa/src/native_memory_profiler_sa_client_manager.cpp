@@ -650,7 +650,7 @@ bool NativeMemoryProfilerSaClientManager::WriteCountFileAtomic(const std::string
     return true;
 }
 
-inline bool NativeMemoryProfilerSaClientManager::IsSeparateByMoreThan24Hours(long long t1, long long t2)
+bool NativeMemoryProfilerSaClientManager::IsSeparateByMoreThan24Hours(long long t1, long long t2)
 {
     using namespace std::chrono;
     if (t1 < 0 || t2 < 0) {

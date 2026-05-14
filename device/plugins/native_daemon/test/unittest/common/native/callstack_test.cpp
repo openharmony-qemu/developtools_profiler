@@ -39,6 +39,142 @@ void CallStackTest::SetUp() {}
 
 void CallStackTest::TearDown() {}
 
+#if defined(HAVE_LIBUNWINDER) && HAVE_LIBUNWINDER
+HWTEST_F(CallStackTest, ReadVirtualThreadMemoryUsesCache, TestSize.Level0)
+{
+    std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles;
+    auto runtime = std::make_shared<VirtualRuntime>();
+    VirtualThread thread(getpid(), GetThreadId(), symbolsFiles, runtime.get(), false);
+    CallStack callStack;
+    UnwindInfo info = {thread, nullptr, 0, buildArchType, callStack};
+    ADDR_TYPE value = 0;
+    callStack.porcessMemoryMap_[thread.pid_][0x2000] = 0xABCD;
+    EXPECT_TRUE(CallStack::ReadVirtualThreadMemory(info, 0x2000, &value));
+    EXPECT_EQ(value, static_cast<ADDR_TYPE>(0xABCD));
+}
+
+HWTEST_F(CallStackTest, AccessMem2HandlesOverflowAndStackData, TestSize.Level0)
+{
+    std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles;
+    auto runtime = std::make_shared<VirtualRuntime>();
+    VirtualThread thread(getpid(), GetThreadId(), symbolsFiles, runtime.get(), false);
+    CallStack callStack;
+    uintptr_t stackData[2] = {0x1234, 0x5678};
+    callStack.stackPoint_ = 0x1000;
+    callStack.stackEnd_ = callStack.stackPoint_ + sizeof(stackData);
+    callStack.stack_ = reinterpret_cast<const u8*>(stackData);
+    UnwindInfo info = {thread, nullptr, 0, buildArchType, callStack};
+    uintptr_t value = 1;
+    EXPECT_EQ(CallStack::AccessMem2(std::numeric_limits<uintptr_t>::max(), &value, &info), -1);
+    EXPECT_EQ(CallStack::AccessMem2(0x1000, &value, &info), 0);
+    EXPECT_EQ(value, static_cast<uintptr_t>(0x1234));
+}
+
+HWTEST_F(CallStackTest, GetMapByPcReturnsExpectedStatus, TestSize.Level0)
+{
+    std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles;
+    auto runtime = std::make_shared<VirtualRuntime>();
+    VirtualThread thread(getpid(), GetThreadId(), symbolsFiles, runtime.get(), false);
+    thread.CreateMapItem("/data/test/test.so", 0x1000, 0x100, 0);
+    CallStack callStack;
+    UnwindInfo info = {thread, nullptr, 0, buildArchType, callStack};
+    std::shared_ptr<DfxMap> map = nullptr;
+    EXPECT_EQ(CallStack::GetMapByPc(0x1010, map, &info), 0);
+    ASSERT_NE(map, nullptr);
+    EXPECT_EQ(map->begin, 0x1000u);
+    EXPECT_EQ(CallStack::GetMapByPc(0x2000, map, &info), -1);
+}
+
+HWTEST_F(CallStackTest, GetIpSPRejectsMissingRegsAndZeroIp, TestSize.Level0)
+{
+    CallStack callStack;
+    callStack.arch_ = buildArchType;
+    uint64_t ip = 1;
+    uint64_t sp = 1;
+    std::vector<u64> regs(RegisterGetCount(), 0);
+    regs[RegisterGetSP(buildArchType)] = 0x2000;
+    EXPECT_FALSE(callStack.GetIpSP(ip, sp, regs.data(), 0));
+    EXPECT_FALSE(callStack.GetIpSP(ip, sp, regs.data(), RegisterGetSP(buildArchType)));
+    EXPECT_FALSE(callStack.GetIpSP(ip, sp, regs.data(), regs.size()));
+    regs[RegisterGetIP(buildArchType)] = 0x3000;
+    EXPECT_TRUE(callStack.GetIpSP(ip, sp, regs.data(), regs.size()));
+}
+
+HWTEST_F(CallStackTest, UnwindCallStackRejectsInvalidRegs, TestSize.Level0)
+{
+    std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles;
+    auto runtime = std::make_shared<VirtualRuntime>();
+    VirtualThread thread(getpid(), GetThreadId(), symbolsFiles, runtime.get(), false);
+    std::vector<u64> regs(RegisterGetCount(), 0);
+    uint8_t stackData[16] = {};
+    std::vector<CallFrame> frames;
+    CallStack callStack;
+    EXPECT_FALSE(callStack.UnwindCallStack(thread, regs.data(), 0, stackData, sizeof(stackData), frames, 1));
+    EXPECT_TRUE(frames.empty());
+}
+
+HWTEST_F(CallStackTest, AccessMem2ReadsCachedMmapAndReportsMiss, TestSize.Level0)
+{
+    std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles;
+    auto runtime = std::make_shared<VirtualRuntime>();
+    VirtualThread thread(getpid(), GetThreadId(), symbolsFiles, runtime.get(), false);
+    CallStack callStack;
+    callStack.stackPoint_ = 0x1000;
+    callStack.stackEnd_ = 0x1100;
+    callStack.porcessMemoryMap_[thread.pid_][0x2000] = 0x4321;
+    UnwindInfo info = {thread, nullptr, 0, buildArchType, callStack};
+    uintptr_t value = 0;
+    EXPECT_EQ(CallStack::AccessMem2(0x2000, &value, &info), 0);
+    EXPECT_EQ(value, static_cast<uintptr_t>(0x4321));
+    EXPECT_EQ(CallStack::AccessMem2(0x3000, &value, &info), -1);
+}
+
+HWTEST_F(CallStackTest, FindUnwindTableRejectsMissingMapAndSymbols, TestSize.Level0)
+{
+    std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles;
+    auto runtime = std::make_shared<VirtualRuntime>();
+    VirtualThread thread(getpid(), GetThreadId(), symbolsFiles, runtime.get(), false);
+    CallStack callStack;
+    UnwindInfo info = {thread, nullptr, 0, buildArchType, callStack};
+    UnwindTableInfo tableInfo;
+    EXPECT_EQ(CallStack::FindUnwindTable(0x1000, tableInfo, &info), -1);
+    thread.CreateMapItem("/data/test/no_symbols.so", 0x1000, 0x100, 0);
+    EXPECT_EQ(CallStack::FindUnwindTable(0x1010, tableInfo, &info), -1);
+}
+
+HWTEST_F(CallStackTest, FillUnwindTableRejectsSymbolsWithoutElf, TestSize.Level0)
+{
+    std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles;
+    symbolsFiles["/data/test/test.so"] = std::make_unique<SymbolsFile>(SYMBOL_UNKNOW_FILE, "/data/test/test.so");
+    auto runtime = std::make_shared<VirtualRuntime>();
+    VirtualThread thread(getpid(), GetThreadId(), symbolsFiles, runtime.get(), false);
+    thread.CreateMapItem("/data/test/test.so", 0x1000, 0x100, 0);
+    CallStack callStack;
+    UnwindInfo info = {thread, nullptr, 0, buildArchType, callStack};
+    UnwindTableInfo tableInfo;
+    auto map = thread.FindMapByAddr(0x1010);
+    ASSERT_NE(map, nullptr);
+    EXPECT_EQ(CallStack::FillUnwindTable(symbolsFiles["/data/test/test.so"].get(), map, &info, 0x1010, tableInfo), -1);
+}
+#endif
+
+HWTEST_F(CallStackTest, UnwindCallStackSingleFrame, TestSize.Level0)
+{
+    std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles;
+    auto runtime = std::make_shared<VirtualRuntime>();
+    VirtualThread thread(getpid(), GetThreadId(), symbolsFiles, runtime.get(), false);
+    std::vector<u64> regs(RegisterGetCount(), 0);
+    regs[RegisterGetSP(buildArchType)] = 0x2000;
+    regs[RegisterGetIP(buildArchType)] = 0x3000;
+    uint8_t stackData[16] = {};
+    std::vector<CallFrame> frames;
+    CallStack callStack;
+    ASSERT_TRUE(callStack.UnwindCallStack(thread, regs.data(), regs.size(), stackData, sizeof(stackData), frames, 1));
+    ASSERT_EQ(frames.size(), 1u);
+    EXPECT_EQ(frames[0].ip_, 0x3000u);
+    EXPECT_EQ(frames[0].sp_, 0x2000u);
+}
+
 
 #ifndef is_linux
 /**

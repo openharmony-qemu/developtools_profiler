@@ -44,6 +44,21 @@ void HookRecordFactoryTest::TearDown()
     g_factory = nullptr;
 }
 
+static std::vector<int8_t> MakeRecordBuffer(uint16_t type, uint32_t extraSize = sizeof(uint64_t) * 2)
+{
+    std::vector<int8_t> buffer(sizeof(BaseStackRawData) + extraSize, 0);
+    BaseStackRawData baseData = {};
+    baseData.type = type;
+    baseData.pid = 12;
+    baseData.tid = 11;
+    baseData.addr = reinterpret_cast<void*>(0x10);
+    errno_t ret = memcpy_s(buffer.data(), buffer.size(), &baseData, sizeof(baseData));
+    if (ret != EOK) {
+        return {};
+    }
+    return buffer;
+}
+
 /*
  * @tc.name: GetFreeSimpRecord
  * @tc.desc: test HookRecordFactory::GetHookRecord with free simple message.
@@ -233,6 +248,36 @@ HWTEST_F(HookRecordFactoryTest, CreateStackRecord002, TestSize.Level0)
     record = g_factory->CreateStackRecord(FREE_MSG, rawdata);
     EXPECT_EQ(record->GetType(), FREE_MSG);
 }
+
+/*
+ * @tc.name: CreateStackRecordCoversRemainingTypes
+ * @tc.desc: test HookRecordFactory::CreateStackRecord with remaining stack message types.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, CreateStackRecordCoversRemainingTypes, TestSize.Level0)
+{
+    std::shared_ptr<RawStack> rawdata = std::make_shared<RawStack>();
+    BaseStackRawData baseData = {};
+    rawdata->stackContext = &baseData;
+    rawdata->stackContext->addr = reinterpret_cast<void*>(0x10);
+
+    baseData.type = MUNMAP_MSG;
+    auto record = g_factory->CreateStackRecord(MUNMAP_MSG, rawdata);
+    ASSERT_NE(record, nullptr);
+    EXPECT_EQ(record->GetType(), MUNMAP_MSG);
+
+    baseData.type = MEMORY_UNUSING_MSG;
+    record = g_factory->CreateStackRecord(MEMORY_UNUSING_MSG, rawdata);
+    ASSERT_NE(record, nullptr);
+    EXPECT_EQ(record->GetType(), MEMORY_UNUSING_MSG);
+
+    baseData.type = MMAP_FILE_TYPE;
+    record = g_factory->CreateStackRecord(MMAP_FILE_TYPE, rawdata);
+    ASSERT_NE(record, nullptr);
+    EXPECT_EQ(record->GetType(), MMAP_FILE_TYPE);
+
+    EXPECT_EQ(g_factory->CreateStackRecord(UNKNOWN, rawdata), nullptr);
+}
  
 /*
 * @tc.name: GetGwpAsanRecord
@@ -250,5 +295,61 @@ HWTEST_F(HookRecordFactoryTest, GetGwpAsanRecord, TestSize.Level0)
         EXPECT_EQ(hookRecord->GetType(), GWP_ASAN_MSG);
     }
     delete[] data;
+}
+
+/*
+ * @tc.name: GetHookRecordCoversDirectTypes
+ * @tc.desc: test HookRecordFactory::GetHookRecord direct record creation paths.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, GetHookRecordCoversDirectTypes, TestSize.Level0)
+{
+    const std::vector<uint16_t> types = {
+        MEM_LEAK_MSG, MEMORY_TAG, THREAD_NAME_MSG, PR_SET_VMA_MSG, MALLOC_ARKTS, FREE_ARKTS
+    };
+    for (uint16_t type : types) {
+        std::vector<int8_t> buffer = MakeRecordBuffer(type);
+        ASSERT_FALSE(buffer.empty());
+        std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(
+            buffer.data(), static_cast<uint32_t>(buffer.size()));
+        ASSERT_NE(hookRecord, nullptr);
+        EXPECT_EQ(hookRecord->GetType(), type);
+    }
+}
+
+/*
+ * @tc.name: GetHookRecordSetsFpDepthAndStackData
+ * @tc.desc: test HookRecordFactory::GetHookRecord calculates raw stack metadata.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, GetHookRecordSetsFpDepthAndStackData, TestSize.Level0)
+{
+    NativeHookConfig fpConfig;
+    fpConfig.set_fp_unwind(true);
+    HookRecordFactory fpFactory(fpConfig);
+    std::vector<int8_t> fpBuffer = MakeRecordBuffer(MALLOC_MSG, sizeof(uint64_t) * 3);
+    ASSERT_FALSE(fpBuffer.empty());
+    auto fpRecord = fpFactory.GetHookRecord(fpBuffer.data(), static_cast<uint32_t>(fpBuffer.size()), false);
+    ASSERT_NE(fpRecord, nullptr);
+    EXPECT_EQ(fpRecord->GetRawStack()->fpDepth, 3u);
+    EXPECT_EQ(fpRecord->GetRawStack()->stackContext,
+        reinterpret_cast<BaseStackRawData*>(fpBuffer.data()));
+
+    NativeHookConfig asyncConfig;
+    asyncConfig.set_fp_unwind(true);
+    asyncConfig.set_async_stack_enable(true);
+    HookRecordFactory asyncFactory(asyncConfig);
+    auto asyncRecord = asyncFactory.GetHookRecord(fpBuffer.data(), static_cast<uint32_t>(fpBuffer.size()));
+    ASSERT_NE(asyncRecord, nullptr);
+    EXPECT_EQ(asyncRecord->GetRawStack()->fpDepth, 0u);
+
+    NativeHookConfig dwarfConfig;
+    HookRecordFactory dwarfFactory(dwarfConfig);
+    std::vector<int8_t> dwarfBuffer = MakeRecordBuffer(MALLOC_MSG, MAX_REG_SIZE + 16);
+    ASSERT_FALSE(dwarfBuffer.empty());
+    auto dwarfRecord = dwarfFactory.GetHookRecord(dwarfBuffer.data(), static_cast<uint32_t>(dwarfBuffer.size()));
+    ASSERT_NE(dwarfRecord, nullptr);
+    EXPECT_EQ(dwarfRecord->GetRawStack()->stackSize, 16u);
+    EXPECT_NE(dwarfRecord->GetRawStack()->stackData, nullptr);
 }
 }
