@@ -148,6 +148,11 @@ void VisualEffectAnalysis::ParsingTrace()
 void VisualEffectAnalysis::VisualEffectRanking(const std::string &beginStr, const std::string &overStr)
 {
     std::string line;
+    char fileName[PATH_MAX] = {0x00};
+    if (realpath(tracePase_.c_str(), fileName) == nullptr) {
+        LOGE("the file not exeit");
+        return "";
+    }
     std::ifstream file(tracePase_);
     if (!file.is_open()) {
         LOGE("Unable to open file");

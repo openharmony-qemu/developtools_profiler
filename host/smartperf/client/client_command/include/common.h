@@ -355,7 +355,7 @@ enum class HidumperCmd {
 const std::unordered_map<HidumperCmd, std::string> HIDUMPER_CMD_MAP = {
     { HidumperCmd::DUMPER_DUBAI_B, std::string("hidumper -s 1213 -a '-b'") },
     { HidumperCmd::DUMPER_DUBAI_F, std::string("hidumper -s 1213 -a '-f'") },
-    { HidumperCmd::DUMPER_SURFACE, std::string("hidumper -s 10 -a surface | grep surface") },
+    { HidumperCmd::DUMPER_SURFACE, std::string("hidumper -s 10 -a surface | grep surface | grep -v 'pointer window'") },
     { HidumperCmd::DUMPER_HEAD, std::string(
         "hidumper -s AbilityManagerService -a '-a' | grep 'bundle name' | head -n 1") },
     { HidumperCmd::DUMPER_SCREEN, std::string("hidumper -s 10 -a screen") },
