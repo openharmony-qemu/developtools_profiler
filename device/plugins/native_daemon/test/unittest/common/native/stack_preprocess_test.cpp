@@ -35,6 +35,8 @@ constexpr uint64_t DWARF_NAPI_CALLBACK = 999999;
 constexpr size_t MAX_BUFFER_SIZE = 1024 * 1024;
 constexpr uint32_t MAX_ENUM = 9999;
 constexpr uint32_t MAX_BATCH_CNT = 40;
+constexpr uint64_t JS_OFFLINE_IP_MASK = 0xFFFFFE0000000000;
+constexpr int NAPI_CALL_STACK = 2;
 
 static RawStackPtr MakeRawStack(uint32_t nodeType, uint64_t nodeId, uint32_t tagId)
 {
@@ -90,6 +92,17 @@ static std::vector<CallFrame> MakeFrames(uint64_t callFrameId)
     frame.callFrameId_ = static_cast<uint32_t>(callFrameId);
     frames.push_back(frame);
     return frames;
+}
+
+static ReportEventBaseData MakeReportEvent(uint16_t type, uint64_t addr, uint32_t stackId)
+{
+    BaseStackRawData base = {};
+    base.addr = reinterpret_cast<void*>(addr);
+    base.type = type;
+    base.mallocSize = 128;
+    base.tid = 456;
+    ReportEventBaseData event(&base, stackId);
+    return event;
 }
 
 static thread_local std::vector<uint64_t> g_callStack;
@@ -844,6 +857,121 @@ HWTEST_F(StackPreprocessTest, AsyncStatisticsLookupTest, TestSize.Level0)
     uint32_t stackId = preprocess.recordStatisticsMap_.begin()->first;
     uint32_t lookupId = preprocess.FindAsyncStatisticsStackIdLocked(hookRecord);
     EXPECT_EQ(lookupId, stackId);
+}
+
+/*
+@tc.name: GetCallStackIdOfflineWritesIpStackMap
+@tc.desc: offline symbolization should serialize stack map ip instead of frame_map_id.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, GetCallStackIdOfflineWritesIpStackMap, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(true);
+    hookConfig.set_offline_symbolization(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto hookRecord = MakeHookRecord(1, 100, 0);
+    auto frames = MakeFrames(0x1234);
+    frames[0].ip_ = 0xABCDEF;
+    BatchNativeHookData data;
+    uint32_t stackId = preprocess.GetCallStackId(hookRecord, frames, data);
+
+    ASSERT_GT(stackId, 0u);
+    ASSERT_EQ(data.events_size(), 1);
+    const auto& stackMap = data.events(0).stack_map();
+    EXPECT_EQ(stackMap.ip_size(), 1);
+    EXPECT_EQ(stackMap.ip(0), frames[0].ip_);
+    EXPECT_EQ(stackMap.frame_map_id_size(), 0);
+}
+
+/*
+@tc.name: GetCallStackIdOfflineEmptyDwarfStackStartsAtFirstFrame
+@tc.desc: offline dwarf stack with zero raw stack size should not skip first two frames.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, GetCallStackIdOfflineEmptyDwarfStackStartsAtFirstFrame, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_offline_symbolization(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto hookRecord = MakeHookRecord(1, 100, 0);
+    hookRecord->GetRawStack()->stackSize = 0;
+    auto frames = MakeFrames(0x2222);
+    frames[0].ip_ = 0x123456;
+    BatchNativeHookData data;
+    uint32_t stackId = preprocess.GetCallStackId(hookRecord, frames, data);
+
+    ASSERT_GT(stackId, 0u);
+    ASSERT_EQ(data.events_size(), 1);
+    const auto& stackMap = data.events(0).stack_map();
+    ASSERT_EQ(stackMap.ip_size(), 1);
+    EXPECT_EQ(stackMap.ip(0), frames[0].ip_);
+}
+
+/*
+@tc.name: SetAllocStatisticsFrameAddsNapiFrame
+@tc.desc: NAPI stack statistics should insert one synthetic JS frame and report it.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetAllocStatisticsFrameAddsNapiFrame, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    hookConfig.set_fp_unwind(true);
+    hookConfig.set_js_stack_report(NAPI_CALL_STACK);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SaveMemTag(1, "napi_callback");
+
+    auto hookRecord = MakeHookRecord(1, 100, 1);
+    hookRecord->GetRawStack()->stackContext->mallocSize = 64;
+    auto frames = MakeFrames(0x3333);
+    BatchNativeHookData data;
+    preprocess.SetAllocStatisticsFrame(hookRecord, frames, data);
+
+    ASSERT_EQ(frames.size(), 2);
+    EXPECT_TRUE(frames.back().isJsFrame_);
+    EXPECT_EQ(frames.back().symbolName_, "napi_callback");
+    ASSERT_EQ(data.events_size(), 4);
+    EXPECT_TRUE(data.events(0).has_symbol_name());
+    EXPECT_TRUE(data.events(1).has_file_path());
+    EXPECT_TRUE(data.events(2).has_frame_map());
+    EXPECT_TRUE(data.events(3).has_stack_map());
+    EXPECT_EQ(preprocess.recordStatisticsMap_.size(), 1u);
+}
+
+/*
+@tc.name: SetAllocStatisticsFrameOfflineAddsMaskedNapiFrame
+@tc.desc: offline NAPI stack statistics should store masked synthetic frame id in stack map ip.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetAllocStatisticsFrameOfflineAddsMaskedNapiFrame, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    hookConfig.set_fp_unwind(true);
+    hookConfig.set_offline_symbolization(true);
+    hookConfig.set_js_stack_report(NAPI_CALL_STACK);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SaveMemTag(1, "napi_async");
+
+    auto hookRecord = MakeHookRecord(1, 100, 1);
+    hookRecord->GetRawStack()->stackContext->mallocSize = 64;
+    auto frames = MakeFrames(0x4444);
+    frames[0].ip_ = 0x654321;
+    BatchNativeHookData data;
+    preprocess.SetAllocStatisticsFrame(hookRecord, frames, data);
+
+    ASSERT_EQ(data.events_size(), 4);
+    EXPECT_TRUE(data.events(0).has_symbol_name());
+    EXPECT_TRUE(data.events(1).has_file_path());
+    EXPECT_TRUE(data.events(2).has_frame_map());
+    const auto& stackMap = data.events(3).stack_map();
+    ASSERT_EQ(stackMap.ip_size(), 3);
+    EXPECT_EQ(stackMap.ip(0), static_cast<uint64_t>(frames.back().callFrameId_) | JS_OFFLINE_IP_MASK);
+    EXPECT_EQ(stackMap.ip(1), SIZE_MASK | 64u);
+    EXPECT_EQ(stackMap.ip(2), frames[0].ip_);
 }
 
 /*
@@ -2203,5 +2331,73 @@ HWTEST_F(StackPreprocessTest, SetFlushSizeAndVerifyTest, TestSize.Level0)
     EXPECT_EQ(preprocess.flushSize_, testSize / 10);
     // bufferSize_ = flushSize_ * 2
     EXPECT_EQ(preprocess.bufferSize_, (testSize / 10) * 2);
+}
+
+/*
+@tc.name: SetEventFrameCompressedAllocSetsStackAndSize
+@tc.desc: compressed alloc event should carry stack id, thread name id and size.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetEventFrameCompressedAllocSetsStackAndSize, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_callframe_compress(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    constexpr uint32_t stackId = 7;
+    ReportEventBaseData rawStack = MakeReportEvent(MALLOC_MSG, 0x1000, stackId);
+    AllocEvent allocEvent;
+
+    preprocess.SetEventFrame(rawStack, &allocEvent, stackId);
+
+    EXPECT_EQ(allocEvent.pid(), -1);
+    EXPECT_EQ(allocEvent.tid(), rawStack.tid);
+    EXPECT_EQ(allocEvent.addr(), rawStack.addr);
+    EXPECT_EQ(allocEvent.size(), rawStack.mallocSize);
+    EXPECT_EQ(allocEvent.thread_name_id(), rawStack.tid);
+    EXPECT_EQ(allocEvent.stack_id(), stackId);
+}
+
+/*
+@tc.name: SetEventFrameFreeSkipsSizeField
+@tc.desc: free event should set common fields and stack id without size handling.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetEventFrameFreeSkipsSizeField, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_callframe_compress(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    constexpr uint32_t stackId = 9;
+    ReportEventBaseData rawStack = MakeReportEvent(FREE_MSG, 0x2000, stackId);
+    FreeEvent freeEvent;
+
+    preprocess.SetEventFrame(rawStack, &freeEvent, stackId);
+
+    EXPECT_EQ(freeEvent.pid(), -1);
+    EXPECT_EQ(freeEvent.tid(), rawStack.tid);
+    EXPECT_EQ(freeEvent.addr(), rawStack.addr);
+    EXPECT_EQ(freeEvent.thread_name_id(), rawStack.tid);
+    EXPECT_EQ(freeEvent.stack_id(), stackId);
+}
+
+/*
+@tc.name: SetEventFrameMmapSetsTypeAndSkipsZeroStackId
+@tc.desc: mmap event should set type while zero stack id keeps stack_id unset.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetEventFrameMmapSetsTypeAndSkipsZeroStackId, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_callframe_compress(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    ReportEventBaseData rawStack = MakeReportEvent(MMAP_FILE_PAGE_MSG, 0x3000, 0);
+    MmapEvent mmapEvent;
+
+    preprocess.SetEventFrame(rawStack, &mmapEvent, 0, "FilePage:ashmem");
+
+    EXPECT_EQ(mmapEvent.type(), "FilePage:ashmem");
+    EXPECT_EQ(mmapEvent.size(), rawStack.mallocSize);
+    EXPECT_EQ(mmapEvent.thread_name_id(), rawStack.tid);
+    EXPECT_EQ(mmapEvent.stack_id(), 0u);
 }
 }

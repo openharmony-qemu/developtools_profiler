@@ -15,6 +15,8 @@
 
 #include <gtest/gtest.h>
 #include <google/protobuf/text_format.h>
+#include <fcntl.h>
+#include <unistd.h>
 #define private public
 #include "stack_preprocess.h"
 #undef private
@@ -55,6 +57,77 @@ static std::vector<CallFrame> MakeFrames(uint64_t callFrameId)
     frame.callFrameId_ = static_cast<uint32_t>(callFrameId);
     frames.push_back(frame);
     return frames;
+}
+
+static ReportEventBaseData MakeReportEvent(uint16_t type, uint64_t addr, uint32_t tagId, uint32_t stackId)
+{
+    BaseStackRawData base = {};
+    base.ts = {3, 4};
+    base.addr = reinterpret_cast<void*>(addr);
+    base.type = type;
+    base.tagId = static_cast<uint16_t>(tagId);
+    base.mallocSize = 64;
+    base.tid = 123;
+    ReportEventBaseData event(&base, stackId);
+    event.nodeType = 2;
+    event.nodeId = 9;
+    return event;
+}
+
+static RawStackPtr MakeAsyncRawStack(uint16_t type)
+{
+    auto raw = RawStackPtr(new RawStack(), [](RawStack* p) {
+        if (p != nullptr) {
+            delete reinterpret_cast<AsyncStackData*>(p->stackContext);
+            p->stackContext = nullptr;
+            delete p;
+        }
+    });
+
+    auto* asyncData = new AsyncStackData();
+    asyncData->type = type;
+    raw->stackContext = asyncData;
+    raw->stackSize = 1;
+    raw->reportFlag = true;
+    return raw;
+}
+
+static bool AppendSizedRecord(std::vector<uint8_t>& buffer, const void* data, uint32_t size)
+{
+    size_t offset = buffer.size();
+    buffer.resize(offset + sizeof(uint32_t) + size);
+    errno_t ret = memcpy_s(buffer.data() + offset, buffer.size() - offset, &size, sizeof(size));
+    if (ret != EOK) {
+        return false;
+    }
+    if (size == 0) {
+        return true;
+    }
+    ret = memcpy_s(buffer.data() + offset + sizeof(uint32_t),
+        buffer.size() - offset - sizeof(uint32_t), data, size);
+    return ret == EOK;
+}
+
+static int CreateTempCacheFd()
+{
+    char tempPath[] = "/data/local/tmp/stack_preprocess_ext_XXXXXX";
+    int fd = mkstemp(tempPath);
+    if (fd >= 0) {
+        (void)unlink(tempPath);
+    }
+    return fd;
+}
+
+static bool WriteBufferToFd(int fd, const std::vector<uint8_t>& buffer)
+{
+    if (fd < 0) {
+        return false;
+    }
+    ssize_t writeSize = write(fd, buffer.data(), buffer.size());
+    if (writeSize != static_cast<ssize_t>(buffer.size())) {
+        return false;
+    }
+    return lseek(fd, 0, SEEK_SET) == 0;
 }
 
 static thread_local std::vector<uint64_t> g_callStack;
@@ -125,6 +198,165 @@ HWTEST_F(StackPreprocessExtTest, StopTakeResultsTest, TestSize.Level0)
 }
 
 /*
+@tc.name: StopTakeResultsWithTerminatedSourceForcesStop
+@tc.desc: shared memory mode without repeater should force stop after source termination.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, StopTakeResultsWithTerminatedSourceForcesStop, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.dataSourceTerminated_ = true;
+
+    EXPECT_TRUE(preprocess.StopTakeResults());
+    EXPECT_TRUE(preprocess.isStopTakeData_);
+}
+
+/*
+@tc.name: StopTakeResultsRejectsInvalidThreadWithRepeater
+@tc.desc: StopTakeResults should fail when repeater exists but worker thread was never started.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, StopTakeResultsRejectsInvalidThreadWithRepeater, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackDataRepeaterPtr stackDataRepeater = std::make_shared<StackDataRepeater>(16);
+    StackPreprocess preprocess(stackDataRepeater, hookConfig, 0);
+
+    EXPECT_FALSE(preprocess.StopTakeResults());
+    EXPECT_TRUE(preprocess.isStopTakeData_);
+}
+
+/*
+@tc.name: SetDataSourceTerminatedHonorsFileCacheMode
+@tc.desc: SetDataSourceTerminated should force stop only for non-file-cache mode without repeater.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, SetDataSourceTerminatedHonorsFileCacheMode, TestSize.Level0)
+{
+    NativeHookConfig sharedConfig;
+    StackPreprocess sharedPreprocess(nullptr, sharedConfig, 0);
+    sharedPreprocess.SetDataSourceTerminated(true);
+    EXPECT_TRUE(sharedPreprocess.isStopTakeData_);
+
+    NativeHookConfig fileCacheConfig;
+    fileCacheConfig.set_use_file_cache_mode(true);
+    StackPreprocess fileCachePreprocess(nullptr, fileCacheConfig, 0);
+    fileCachePreprocess.SetDataSourceTerminated(true);
+    EXPECT_FALSE(fileCachePreprocess.isStopTakeData_);
+}
+
+/*
+@tc.name: UpdateLastCacheFileActivityTimeRequiresWaitingState
+@tc.desc: cache activity time should update only while waiting for file cache stop.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, UpdateLastCacheFileActivityTimeRequiresWaitingState, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_use_file_cache_mode(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto staleTime = std::chrono::steady_clock::now() - std::chrono::seconds(120);
+    preprocess.lastCacheFileActivityTime_ = staleTime;
+
+    preprocess.UpdateLastCacheFileActivityTime();
+    EXPECT_EQ(preprocess.lastCacheFileActivityTime_, staleTime);
+
+    preprocess.waitingCacheFileStop_ = true;
+    preprocess.UpdateLastCacheFileActivityTime();
+    EXPECT_GT(preprocess.lastCacheFileActivityTime_, staleTime);
+}
+
+/*
+@tc.name: StopCacheFileTaskStopsAfterInactivity
+@tc.desc: StopCacheFileTask should exit once cache file activity stays inactive.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, StopCacheFileTaskStopsAfterInactivity, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_use_file_cache_mode(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    std::thread worker([&preprocess]() { preprocess.StopCacheFileTask(); });
+    while (!preprocess.waitingCacheFileStop_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    {
+        std::lock_guard<std::mutex> lock(preprocess.cacheFileActivityTimeMtx_);
+        preprocess.lastCacheFileActivityTime_ = std::chrono::steady_clock::now() - std::chrono::seconds(61);
+    }
+    worker.join();
+
+    EXPECT_TRUE(preprocess.isStopTakeData_);
+    EXPECT_FALSE(preprocess.waitingCacheFileStop_);
+}
+
+/*
+@tc.name: StopTakeResultsInFileCacheModeStopsAfterInactivity
+@tc.desc: StopTakeResults should enter file cache stop flow and exit after inactivity.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, StopTakeResultsInFileCacheModeStopsAfterInactivity, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_use_file_cache_mode(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    bool result = false;
+
+    std::thread worker([&preprocess, &result]() { result = preprocess.StopTakeResults(); });
+    while (!preprocess.waitingCacheFileStop_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    {
+        std::lock_guard<std::mutex> lock(preprocess.cacheFileActivityTimeMtx_);
+        preprocess.lastCacheFileActivityTime_ = std::chrono::steady_clock::now() - std::chrono::seconds(61);
+    }
+    worker.join();
+
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(preprocess.isStopTakeData_);
+    EXPECT_FALSE(preprocess.waitingCacheFileStop_);
+}
+
+/*
+@tc.name: StopTakeResultsWithoutRepeaterStopsImmediately
+@tc.desc: StopTakeResults should force stop immediately when no repeater or active data exists.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, StopTakeResultsWithoutRepeaterStopsImmediately, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    EXPECT_TRUE(preprocess.StopTakeResults());
+    EXPECT_TRUE(preprocess.isStopTakeData_);
+}
+
+/*
+@tc.name: StopTakeResultsActiveDataWaitsForExternalStop
+@tc.desc: StopTakeResults should enter scheduled-stop path for active shared memory data.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, StopTakeResultsActiveDataWaitsForExternalStop, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetIsStartTakeData(true);
+    bool result = false;
+
+    std::thread worker([&preprocess, &result]() {
+        result = preprocess.StopTakeResults();
+    });
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    preprocess.SetIsStopTakeData(true);
+    worker.join();
+
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(preprocess.isStopTakeData_);
+}
+
+/*
 @tc.name: NeedBuildIdForJsPathTest
 @tc.desc: js related paths should skip build id resolution.
 @tc.type: FUNC
@@ -170,6 +402,111 @@ HWTEST_F(StackPreprocessExtTest, NeedBuildIdForJsPathTest, TestSize.Level0)
     preprocess.ReportFilePathMap(soFrame, soData);
     ASSERT_EQ(soData.events().size(), 1);
     EXPECT_EQ(soData.events(0).file_path().build_id(), "");
+}
+
+/*
+@tc.name: NeedBuildIdForMoreScriptExtensionsTest
+@tc.desc: script extension paths should not request build id resolution.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, NeedBuildIdForMoreScriptExtensionsTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    const std::array<std::string, 3> paths = {
+        "entry/build/default.mjs", "entry/build/default.cjs", "entry/build/default.abc"
+    };
+
+    for (size_t idx = 0; idx < paths.size(); ++idx) {
+        BatchNativeHookData stackData;
+        CallFrame frame(idx + 1);
+        frame.filePath_ = paths[idx];
+        frame.filePathId_ = static_cast<uint64_t>(idx + 1);
+        frame.needReport_ |= FILE_PATH_ID_REPORT;
+
+        preprocess.ReportFilePathMap(frame, stackData);
+
+        ASSERT_EQ(stackData.events().size(), 1);
+        EXPECT_EQ(stackData.events(0).file_path().build_id(), "");
+    }
+}
+
+/*
+@tc.name: ReconcileWithSnapshotFreesOnlyStaleAddresses
+@tc.desc: snapshot reconciliation should keep alive allocations and release stale ones.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ReconcileWithSnapshotFreesOnlyStaleAddresses, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    struct timespec ts = {1, 0};
+    preprocess.recordStatisticsMap_[1] = RecordStatistic{};
+    preprocess.recordStatisticsMap_[1].callstackId = 1;
+    preprocess.allocAddrMap_[0x1000] = AllocAddrInfo{64, 1, ts};
+    preprocess.allocAddrMap_[0x2000] = AllocAddrInfo{128, 1, ts};
+    preprocess.addrSet_.insert(0x1000);
+    preprocess.addrSet_.insert(0x2000);
+
+    preprocess.ReconcileWithSnapshot({0x1000});
+
+    EXPECT_EQ(preprocess.allocAddrMap_.count(0x1000), 1u);
+    EXPECT_EQ(preprocess.allocAddrMap_.count(0x2000), 0u);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].releaseCount, 1u);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].releaseSize, 128u);
+}
+
+/*
+@tc.name: ReconcileDuplicateMallocHonorsTimestampOrder
+@tc.desc: duplicate malloc should reject older timestamps and release stale newer records.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ReconcileDuplicateMallocHonorsTimestampOrder, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    struct timespec oldTs = {10, 20};
+    preprocess.recordStatisticsMap_[7] = RecordStatistic{};
+    preprocess.recordStatisticsMap_[7].callstackId = 7;
+    preprocess.allocAddrMap_[0x3000] = AllocAddrInfo{256, 7, oldTs};
+    preprocess.addrSet_.insert(0x3000);
+
+    struct timespec earlierTs = {10, 10};
+    EXPECT_FALSE(preprocess.ReconcileDuplicateMalloc(0x3000, earlierTs));
+    EXPECT_EQ(preprocess.allocAddrMap_.count(0x3000), 1u);
+
+    struct timespec newerTs = {10, 30};
+    EXPECT_TRUE(preprocess.ReconcileDuplicateMalloc(0x3000, newerTs));
+    EXPECT_EQ(preprocess.allocAddrMap_.count(0x3000), 0u);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[7].releaseSize, 256u);
+    EXPECT_TRUE(preprocess.ReconcileDuplicateMalloc(0x4000, newerTs));
+}
+
+/*
+@tc.name: ResolveTagTypeCoversSpecialAndFallbackTags
+@tc.desc: tag resolution should classify mapped, ashmem, so, and unknown names.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ResolveTagTypeCoversSpecialAndFallbackTags, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    RecordStatistic record;
+
+    EXPECT_TRUE(preprocess.ResolveTagType(TAG_RES_GPU_VK, record));
+    EXPECT_EQ(record.type, RecordStatisticsEvent::GPU_VK);
+
+    EXPECT_FALSE(preprocess.ResolveTagType(TAG_RES_FD_OPEN, record));
+    EXPECT_EQ(record.type, RecordStatisticsEvent::FD);
+
+    EXPECT_TRUE(preprocess.ResolveTagType("ashmem", record));
+    EXPECT_EQ(record.type, RecordStatisticsEvent::ASHMEM);
+
+    EXPECT_FALSE(preprocess.ResolveTagType("/system/lib64/libnative.so", record));
+    EXPECT_EQ(record.type, RecordStatisticsEvent::SO);
+
+    EXPECT_FALSE(preprocess.ResolveTagType("anonymous-region", record));
+    EXPECT_EQ(record.type, RecordStatisticsEvent::MEMORY_USING_MSG);
 }
 
 /*
@@ -219,6 +556,73 @@ HWTEST_F(StackPreprocessExtTest, ParseRecordsFromBufferStopsGracefullyOnEndMsg, 
         static_cast<uint32_t>(buffer.size()), ctx, rawData, hookRecord));
     EXPECT_TRUE(preprocess.isStopTakeData_);
     EXPECT_EQ(ctx.offset, static_cast<uint32_t>(buffer.size()));
+}
+
+/*
+@tc.name: ParseRecordsFromBufferRejectsZeroLengthRecord
+@tc.desc: test ParseRecordsFromBuffer rejects invalid zero-sized records.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ParseRecordsFromBufferRejectsZeroLengthRecord, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    std::vector<uint8_t> buffer(sizeof(uint32_t), 0);
+    StackPreprocess::ParseContext ctx = {0, 0};
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+
+    EXPECT_FALSE(preprocess.ParseRecordsFromBuffer(buffer.data(),
+        static_cast<uint32_t>(buffer.size()), ctx, rawData, hookRecord));
+    EXPECT_EQ(ctx.offset, 0u);
+}
+
+/*
+@tc.name: ParseRecordsFromBufferSkipsInvalidPayloadAndContinues
+@tc.desc: test ParseRecordsFromBuffer skips malformed records and keeps parsing later payloads.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ParseRecordsFromBufferSkipsInvalidPayloadAndContinues, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    std::vector<uint8_t> buffer;
+    uint8_t invalidPayload = 0x5A;
+    uint64_t freeAddr = 0x12345678ULL;
+    ASSERT_TRUE(AppendSizedRecord(buffer, &invalidPayload, sizeof(invalidPayload)));
+    ASSERT_TRUE(AppendSizedRecord(buffer, &freeAddr, sizeof(freeAddr)));
+
+    StackPreprocess::ParseContext ctx = {0, 0};
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+
+    EXPECT_TRUE(preprocess.ParseRecordsFromBuffer(buffer.data(),
+        static_cast<uint32_t>(buffer.size()), ctx, rawData, hookRecord));
+    EXPECT_EQ(ctx.offset, static_cast<uint32_t>(buffer.size()));
+    EXPECT_EQ(ctx.readfileSize, static_cast<uint64_t>(buffer.size()));
+    EXPECT_FALSE(preprocess.isStopTakeData_);
+}
+
+/*
+@tc.name: ParseRecordsFromBufferLeavesIncompleteRecordForNextRead
+@tc.desc: test ParseRecordsFromBuffer keeps partial record bytes for the next cache file read.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ParseRecordsFromBufferLeavesIncompleteRecordForNextRead, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    std::vector<uint8_t> buffer(sizeof(uint32_t) + sizeof(uint32_t), 0);
+    uint32_t totalSize = sizeof(uint64_t);
+    ASSERT_EQ(memcpy_s(buffer.data(), buffer.size(), &totalSize, sizeof(totalSize)), EOK);
+    StackPreprocess::ParseContext ctx = {0, 0};
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+
+    EXPECT_TRUE(preprocess.ParseRecordsFromBuffer(buffer.data(),
+        static_cast<uint32_t>(buffer.size()), ctx, rawData, hookRecord));
+    EXPECT_EQ(ctx.offset, 0u);
+    EXPECT_EQ(ctx.readfileSize, 0u);
 }
 
 /*
@@ -389,10 +793,76 @@ HWTEST_F(StackPreprocessExtTest, FlushRecordApplyAndReleaseMatchDataTest, TestSi
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
-    // Just call the method to ensure it doesn't crash
     preprocess.FlushRecordApplyAndReleaseMatchData();
-    // We can't easily verify the output, but we can ensure the method executes without error
-    EXPECT_TRUE(true);
+    auto& stackData = std::get<BatchNativeHookData>(preprocess.stackData_);
+    EXPECT_EQ(stackData.events_size(), 0);
+}
+
+/*
+@tc.name: FlushRecordApplyAndReleaseMatchDataSerializesEventTypes
+@tc.desc: test FlushRecordApplyAndReleaseMatchData serializes apply and release events.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, FlushRecordApplyAndReleaseMatchDataSerializesEventTypes, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_callframe_compress(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SaveMemTag(1, "file_page");
+    preprocess.SaveMemTag(2, TAG_RES_GPU_VK);
+    preprocess.prctlPeriodTags_.push_back("jit_code");
+    preprocess.applyAndReleaseMatchPeriodListData_.push_back(MakeReportEvent(MALLOC_MSG, 0x1000, 0, 11));
+    preprocess.applyAndReleaseMatchPeriodListData_.push_back(MakeReportEvent(MMAP_MSG, 0x2000, 0, 12));
+    preprocess.applyAndReleaseMatchPeriodListData_.push_back(MakeReportEvent(MMAP_FILE_PAGE_MSG, 0x3000, 1, 13));
+    preprocess.applyAndReleaseMatchPeriodListData_.push_back(MakeReportEvent(PR_SET_VMA_MSG, 0x4000, 0, 0));
+    preprocess.applyAndReleaseMatchPeriodListData_.push_back(MakeReportEvent(MEMORY_USING_MSG, 0x5000, 2, 14));
+    preprocess.applyAndReleaseMatchPeriodListData_.push_back(MakeReportEvent(MEMORY_UNUSING_MSG, 0x6000, 2, 15));
+    preprocess.releasedPeriodListData_.push_back(MakeReportEvent(FREE_MSG, 0x7000, 0, 16));
+    preprocess.releasedPeriodListData_.push_back(MakeReportEvent(MUNMAP_MSG, 0x8000, 0, 17));
+
+    preprocess.FlushRecordApplyAndReleaseMatchData();
+
+    auto& stackData = std::get<BatchNativeHookData>(preprocess.stackData_);
+    ASSERT_EQ(stackData.events_size(), 8);
+    EXPECT_EQ(stackData.events(0).alloc_event().stack_id(), 11u);
+    EXPECT_EQ(stackData.events(2).mmap_event().type(), "FilePage:file_page");
+    EXPECT_EQ(stackData.events(3).tag_event().tag(), "Anonymous:jit_code");
+    EXPECT_EQ(stackData.events(4).trace_alloc_event().tag_name(), TAG_RES_GPU_VK);
+    EXPECT_TRUE(preprocess.applyAndReleaseMatchPeriodListData_.empty());
+    EXPECT_TRUE(preprocess.releasedPeriodListData_.empty());
+}
+
+/*
+@tc.name: ReportFrameMapHandlesOfflineAndDwarfErrorFrames
+@tc.desc: test ReportFrameMap frame serialization paths.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ReportFrameMapHandlesOfflineAndDwarfErrorFrames, TestSize.Level0)
+{
+    NativeHookConfig offlineConfig;
+    offlineConfig.set_offline_symbolization(true);
+    StackPreprocess offlinePreprocess(nullptr, offlineConfig, 0);
+    BatchNativeHookData offlineData;
+    CallFrame jsFrame(0x1234, 0x5678, true);
+    jsFrame.callFrameId_ = 20;
+    jsFrame.symbolNameId_ = 21;
+    jsFrame.filePathId_ = 22;
+    jsFrame.needReport_ = CALL_FRAME_REPORT;
+    offlinePreprocess.ReportFrameMap(jsFrame, offlineData);
+    ASSERT_EQ(offlineData.events_size(), 1);
+    EXPECT_EQ(offlineData.events(0).frame_map().frame().sp(), 0x5678u);
+
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    BatchNativeHookData stackData;
+    CallFrame dwarfFrame(0x4321, 0x8765, false);
+    dwarfFrame.callFrameId_ = DWARF_ERROR_ID;
+    dwarfFrame.needReport_ = CALL_FRAME_REPORT;
+    preprocess.ReportFrameMap(dwarfFrame, stackData);
+    ASSERT_EQ(stackData.events_size(), 1);
+    EXPECT_FALSE(preprocess.unwindFailReport_);
+    preprocess.ReportFrameMap(dwarfFrame, stackData);
+    EXPECT_EQ(stackData.events_size(), 1);
 }
 
 /*
@@ -460,6 +930,209 @@ HWTEST_F(StackPreprocessExtTest, ProcessMemoryTagTest, TestSize.Level0)
 }
 
 /*
+@tc.name: ProcessRawDataHandlesSnapshotMarkers
+@tc.desc: test ProcessRawData handles alive snapshot marker messages.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ProcessRawDataHandlesSnapshotMarkers, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.waitingFinalSnapshot_ = true;
+    preprocess.finalSnapshotDone_ = false;
+
+    std::array<uint64_t, 2> snapshotAddrs = {0x10, 0x20};
+    std::vector<uint8_t> snapshot(sizeof(uint32_t) + sizeof(snapshotAddrs));
+    uint32_t marker = ALIVE_ADDR_SNAPSHOT_MARKER;
+    ASSERT_EQ(memcpy_s(snapshot.data(), snapshot.size(), &marker, sizeof(marker)), EOK);
+    ASSERT_EQ(memcpy_s(snapshot.data() + sizeof(marker), snapshot.size() - sizeof(marker),
+        snapshotAddrs.data(), sizeof(snapshotAddrs)), EOK);
+    EXPECT_TRUE(preprocess.ProcessRawData(reinterpret_cast<const int8_t*>(snapshot.data()),
+        static_cast<uint32_t>(snapshot.size()), nullptr, nullptr));
+    EXPECT_EQ(preprocess.snapshotAddrs_.size(), snapshotAddrs.size());
+
+    std::array<uint8_t, sizeof(uint32_t)> snapshotEnd = {};
+    marker = ALIVE_ADDR_SNAPSHOT_END_MARKER;
+    ASSERT_EQ(memcpy_s(snapshotEnd.data(), snapshotEnd.size(), &marker, sizeof(marker)), EOK);
+    EXPECT_TRUE(preprocess.ProcessRawData(reinterpret_cast<const int8_t*>(snapshotEnd.data()),
+        static_cast<uint32_t>(snapshotEnd.size()), nullptr, nullptr));
+    EXPECT_TRUE(preprocess.snapshotAddrs_.empty());
+    EXPECT_TRUE(preprocess.finalSnapshotDone_);
+}
+
+/*
+@tc.name: WaitForFinalSnapshotReturnsAfterCallbackSignal
+@tc.desc: WaitForFinalSnapshot should exit after callback marks snapshot completion.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, WaitForFinalSnapshotReturnsAfterCallbackSignal, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    uint32_t requestCmd = 0;
+    preprocess.SetServerCommandCallback([&preprocess, &requestCmd](uint32_t cmd) {
+        requestCmd = cmd;
+        preprocess.finalSnapshotDone_ = true;
+        preprocess.snapshotCv_.notify_one();
+    });
+
+    preprocess.WaitForFinalSnapshot();
+
+    EXPECT_EQ(requestCmd, FINAL_SNAPSHOT_REQUEST_CMD);
+    EXPECT_TRUE(preprocess.finalSnapshotDone_);
+    EXPECT_FALSE(preprocess.waitingFinalSnapshot_);
+}
+
+/*
+@tc.name: WaitForFinalSnapshotTimesOutWithoutSignal
+@tc.desc: WaitForFinalSnapshot should leave completion flag unset when callback never signals completion.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, WaitForFinalSnapshotTimesOutWithoutSignal, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    uint32_t requestCmd = 0;
+    preprocess.SetServerCommandCallback([&requestCmd](uint32_t cmd) {
+        requestCmd = cmd;
+    });
+
+    preprocess.WaitForFinalSnapshot();
+
+    EXPECT_EQ(requestCmd, FINAL_SNAPSHOT_REQUEST_CMD);
+    EXPECT_FALSE(preprocess.finalSnapshotDone_);
+    EXPECT_FALSE(preprocess.waitingFinalSnapshot_);
+}
+
+/*
+@tc.name: WaitForFinalSnapshotWithoutCallbackReturnsImmediately
+@tc.desc: WaitForFinalSnapshot should return directly when callback is absent.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, WaitForFinalSnapshotWithoutCallbackReturnsImmediately, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    preprocess.WaitForFinalSnapshot();
+
+    EXPECT_FALSE(preprocess.waitingFinalSnapshot_);
+    EXPECT_FALSE(preprocess.finalSnapshotDone_);
+}
+
+/*
+@tc.name: TakeResultsFromCacheFileNegativeFdStopsImmediately
+@tc.desc: TakeResultsFromCacheFile should stop immediately when fd is invalid.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, TakeResultsFromCacheFileNegativeFdStopsImmediately, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_use_file_cache_mode(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    preprocess.TakeResultsFromCacheFile(-1);
+
+    EXPECT_TRUE(preprocess.isStopTakeData_);
+}
+
+/*
+@tc.name: TakeResultsFromCacheFileHandlesPartialWindowAndEof
+@tc.desc: TakeResultsFromCacheFile should keep remaining bytes across reads and stop on incomplete EOF.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, TakeResultsFromCacheFileHandlesPartialWindowAndEof, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_use_file_cache_mode(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    std::vector<uint8_t> buffer;
+    constexpr uint32_t readBufSize = 4 * 1024 * 1024;
+    uint64_t freeAddr = 0x12345678ULL;
+    ASSERT_TRUE(AppendSizedRecord(buffer, &freeAddr, sizeof(freeAddr)));
+
+    uint32_t partialSize = readBufSize - static_cast<uint32_t>(buffer.size()) + 8;
+    uint32_t secondPayloadSize = partialSize;
+    size_t remainPayloadSize = readBufSize - buffer.size() - sizeof(uint32_t);
+    size_t originSize = buffer.size();
+    buffer.resize(originSize + sizeof(uint32_t) + remainPayloadSize, 0);
+    ASSERT_EQ(memcpy_s(buffer.data() + originSize, buffer.size() - originSize,
+        &secondPayloadSize, sizeof(secondPayloadSize)), EOK);
+
+    int fd = CreateTempCacheFd();
+    ASSERT_GE(fd, 0);
+    ASSERT_TRUE(WriteBufferToFd(fd, buffer));
+
+    preprocess.TakeResultsFromCacheFile(fd);
+
+    EXPECT_NE(StackPreprocess::GetDirectorForTest(), nullptr);
+    EXPECT_FALSE(preprocess.isStopTakeData_);
+}
+
+/*
+@tc.name: TakeResultsFromCacheFileHandlesClosedFdReadError
+@tc.desc: TakeResultsFromCacheFile should stop parsing current file when read returns an error.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, TakeResultsFromCacheFileHandlesClosedFdReadError, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_use_file_cache_mode(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    int fd = CreateTempCacheFd();
+    ASSERT_GE(fd, 0);
+    ASSERT_EQ(close(fd), 0);
+
+    preprocess.TakeResultsFromCacheFile(fd);
+
+    EXPECT_NE(StackPreprocess::GetDirectorForTest(), nullptr);
+    EXPECT_FALSE(preprocess.isStopTakeData_);
+}
+
+/*
+@tc.name: TakeResultsFromCacheFileSkipsOversizeRecord
+@tc.desc: TakeResultsFromCacheFile should skip cache records larger than the read window.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, TakeResultsFromCacheFileSkipsOversizeRecord, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_use_file_cache_mode(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    constexpr uint32_t readBufSize = 4 * 1024 * 1024;
+    std::vector<uint8_t> buffer(sizeof(uint32_t), 0);
+    uint32_t oversizeRecord = readBufSize + 16;
+    ASSERT_EQ(memcpy_s(buffer.data(), buffer.size(), &oversizeRecord, sizeof(oversizeRecord)), EOK);
+    int fd = CreateTempCacheFd();
+    ASSERT_GE(fd, 0);
+    ASSERT_TRUE(WriteBufferToFd(fd, buffer));
+
+    preprocess.TakeResultsFromCacheFile(fd);
+
+    EXPECT_NE(StackPreprocess::GetDirectorForTest(), nullptr);
+    EXPECT_FALSE(preprocess.isStopTakeData_);
+}
+
+/*
+@tc.name: TakeResultsFromCacheFileHandlesEmptyFile
+@tc.desc: TakeResultsFromCacheFile should exit cleanly when cache file reaches EOF immediately.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, TakeResultsFromCacheFileHandlesEmptyFile, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_use_file_cache_mode(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    int fd = CreateTempCacheFd();
+    ASSERT_GE(fd, 0);
+
+    preprocess.TakeResultsFromCacheFile(fd);
+
+    EXPECT_NE(StackPreprocess::GetDirectorForTest(), nullptr);
+    EXPECT_FALSE(preprocess.isStopTakeData_);
+}
+
+/*
 @tc.name: ProcessNmdMsgTest
 @tc.desc: test ProcessNmdMsg method.
 @tc.type: FUNC
@@ -497,6 +1170,39 @@ HWTEST_F(StackPreprocessExtTest, ProcessEndMsgTest, TestSize.Level0)
 }
 
 /*
+@tc.name: ProcessEndMsgStopsImmediatelyInFileCacheMode
+@tc.desc: test ProcessEndMsg stops immediately for file cache mode.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ProcessEndMsgStopsImmediatelyInFileCacheMode, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_use_file_cache_mode(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    EXPECT_FALSE(preprocess.ProcessEndMsg());
+    EXPECT_TRUE(preprocess.isStopTakeData_);
+}
+
+/*
+@tc.name: ProcessEndMsgWaitsForAllOfflineStreams
+@tc.desc: test ProcessEndMsg waits until all offline shared memory streams end.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ProcessEndMsgWaitsForAllOfflineStreams, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_offline_symbolization(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    EXPECT_TRUE(preprocess.ProcessEndMsg());
+    EXPECT_TRUE(preprocess.ProcessEndMsg());
+    EXPECT_FALSE(preprocess.isStopTakeData_);
+    EXPECT_FALSE(preprocess.ProcessEndMsg());
+    EXPECT_TRUE(preprocess.isStopTakeData_);
+}
+
+/*
 @tc.name: ProcessAddressDataTest
 @tc.desc: test ProcessAddressData method.
 @tc.type: FUNC
@@ -513,6 +1219,56 @@ HWTEST_F(StackPreprocessExtTest, ProcessAddressDataTest, TestSize.Level0)
     bool result = preprocess.ProcessAddressData(addressData);
     // We can't easily verify the output, but we can ensure the method executes without error
     EXPECT_TRUE(result);
+}
+
+/*
+@tc.name: HandleSimpleMessagesRecognizesSimpleFree
+@tc.desc: HandleSimpleMessages should consume FREE_MSG_SIMP directly.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, HandleSimpleMessagesRecognizesSimpleFree, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    HookRecordPtr hookRecord = std::make_shared<FreeRecordSimp>(0x1234);
+
+    EXPECT_TRUE(preprocess.HandleSimpleMessages(hookRecord));
+}
+
+/*
+@tc.name: ProcessSingleRecordHandlesNullContextGracefully
+@tc.desc: ProcessSingleRecord should return true when hook record exists but raw stack context is null.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ProcessSingleRecordHandlesNullContextGracefully, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    RawStackPtr rawData = std::make_shared<RawStack>();
+    HookRecordPtr hookRecord = std::make_shared<HookRecord>(rawData);
+
+    EXPECT_TRUE(preprocess.ProcessSingleRecord(hookRecord));
+    EXPECT_FALSE(preprocess.isStopTakeData_);
+}
+
+/*
+@tc.name: ProcessSingleRecordSkipsUnreportedArktsFree
+@tc.desc: ProcessSingleRecord should keep running when FREE_ARKTS is filtered out by reportFlag.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ProcessSingleRecordSkipsUnreportedArktsFree, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    RawStackPtr rawData = MakeRawStack(FREE_ARKTS, 7, 0);
+    rawData->stackContext->mallocSize = 16;
+    rawData->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawData->reportFlag = false;
+    HookRecordPtr hookRecord = std::make_shared<HookRecord>(rawData);
+
+    EXPECT_TRUE(preprocess.ProcessSingleRecord(hookRecord));
+    EXPECT_EQ(preprocess.ignoreCnts_, 1);
+    EXPECT_TRUE(preprocess.isStartTakeData_.load());
 }
 
 /*
@@ -553,6 +1309,96 @@ HWTEST_F(StackPreprocessExtTest, BuildCallFramesTest, TestSize.Level0)
     bool result = preprocess.BuildCallFrames(hookRecord, rawData, callFrames);
     // We can't easily verify the output, but we can ensure the method executes without error
     EXPECT_TRUE(result);
+}
+
+/*
+@tc.name: BuildCallFramesRejectsNullAsyncRawData
+@tc.desc: test BuildCallFrames rejects null rawData in async mode.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, BuildCallFramesRejectsNullAsyncRawData, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_async_stack_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto hookRecord = std::make_shared<HookRecord>(nullptr);
+    RawStackPtr rawData = nullptr;
+    std::vector<CallFrame> callFrames;
+
+    EXPECT_FALSE(preprocess.BuildCallFrames(hookRecord, rawData, callFrames));
+}
+
+/*
+@tc.name: BuildCallFramesRejectsNullAsyncContext
+@tc.desc: test BuildCallFrames rejects async rawData without stackContext.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, BuildCallFramesRejectsNullAsyncContext, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_async_stack_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    RawStackPtr rawData(new RawStack(), [](RawStack* p) { delete p; });
+    auto hookRecord = std::make_shared<HookRecord>(rawData);
+    std::vector<CallFrame> callFrames;
+
+    EXPECT_FALSE(preprocess.BuildCallFrames(hookRecord, rawData, callFrames));
+}
+
+/*
+@tc.name: BuildCallFramesSkipsSpecialAsyncTypes
+@tc.desc: test BuildCallFrames skips special async message types without touching call frames.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, BuildCallFramesSkipsSpecialAsyncTypes, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_async_stack_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    RawStackPtr rawData = MakeAsyncRawStack(PR_SET_VMA_MSG);
+    auto hookRecord = std::make_shared<HookRecord>(rawData);
+    std::vector<CallFrame> callFrames = MakeFrames(321);
+
+    EXPECT_TRUE(preprocess.BuildCallFrames(hookRecord, rawData, callFrames));
+    EXPECT_EQ(callFrames.size(), 1u);
+    EXPECT_EQ(callFrames[0].callFrameId_, 321u);
+}
+
+/*
+@tc.name: ValidateAndPrepareDataRejectsTooSmallBuffer
+@tc.desc: test ValidateAndPrepareData rejects payloads smaller than BaseStackRawData.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ValidateAndPrepareDataRejectsTooSmallBuffer, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    std::array<int8_t, sizeof(BaseStackRawData) - 1> invalidData = {};
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+
+    EXPECT_FALSE(preprocess.ValidateAndPrepareData(invalidData.data(),
+        static_cast<uint32_t>(invalidData.size()), hookRecord, rawData));
+}
+
+/*
+@tc.name: ValidateAndPrepareDataRejectsUnknownType
+@tc.desc: test ValidateAndPrepareData rejects unknown hook record types.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ValidateAndPrepareDataRejectsUnknownType, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetFactory(std::make_shared<HookRecordFactory>(hookConfig));
+    BaseStackRawData invalidData = {};
+    invalidData.type = UNKNOWN;
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+
+    EXPECT_FALSE(preprocess.ValidateAndPrepareData(reinterpret_cast<const int8_t*>(&invalidData),
+        sizeof(invalidData), hookRecord, rawData));
 }
 
 /*

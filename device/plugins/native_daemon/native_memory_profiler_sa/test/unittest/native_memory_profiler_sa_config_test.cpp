@@ -144,4 +144,117 @@ HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest004, 
     EXPECT_EQ(result->gwpAsanMaxStackDepth_, 16u);
 }
 
+/**
+ * @tc.name: NativeMemoryProfilerSaConfigTest005
+ * @tc.desc: Test extended fields and multi-entry vectors serialization
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest005, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(config, nullptr);
+    config->filterLibList_ = {"liba.so", "libb.so"};
+    config->targetSoName_ = "libtarget.so";
+    config->filterNapiName_ = "napi_entry";
+    config->allocatorSamplingEnable_ = true;
+    config->nativeOrphanSnapshotsEnable_ = true;
+    config->memLeakFormat_ = 7;
+    config->memLeakLimit_ = 9;
+    config->asyncNestingDepth_ = 5;
+    config->asyncTaskStackDepth_ = 6;
+    config->gpuRange_[GPU_TYPE_SIZE - 1][GPU_RANGE_SIZE * 2 - 1] = 99;
+
+    OHOS::Parcel parcel;
+    ASSERT_TRUE(config->Marshalling(parcel));
+    auto result = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(result, nullptr);
+    ASSERT_TRUE(NativeMemoryProfilerSaConfig::Unmarshalling(parcel, result));
+    ASSERT_EQ(result->filterLibList_.size(), 2u);
+    EXPECT_EQ(result->filterLibList_[0], "liba.so");
+    EXPECT_EQ(result->filterLibList_[1], "libb.so");
+    EXPECT_EQ(result->targetSoName_, "libtarget.so");
+    EXPECT_EQ(result->filterNapiName_, "napi_entry");
+    EXPECT_TRUE(result->allocatorSamplingEnable_);
+    EXPECT_TRUE(result->nativeOrphanSnapshotsEnable_);
+    EXPECT_EQ(result->memLeakFormat_, 7u);
+    EXPECT_EQ(result->memLeakLimit_, 9u);
+    EXPECT_EQ(result->asyncNestingDepth_, 5u);
+    EXPECT_EQ(result->asyncTaskStackDepth_, 6u);
+    EXPECT_EQ(result->gpuRange_[GPU_TYPE_SIZE - 1][GPU_RANGE_SIZE * 2 - 1], 99u);
+}
+
+/**
+ * @tc.name: NativeMemoryProfilerSaConfigTest006
+ * @tc.desc: Test Unmarshalling fails when filter library list payload is incomplete
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest006, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    OHOS::Parcel parcel;
+    ASSERT_TRUE(parcel.WriteBool(true));
+    ASSERT_TRUE(parcel.WriteBool(false));
+    ASSERT_TRUE(parcel.WriteUint32(1));
+    ASSERT_TRUE(parcel.WriteInt32(CLOCK_REALTIME));
+    ASSERT_TRUE(parcel.WriteUint32(2));
+    ASSERT_TRUE(parcel.WriteBool(false));
+    ASSERT_TRUE(parcel.WriteBool(false));
+    ASSERT_TRUE(parcel.WriteBool(false));
+    ASSERT_TRUE(parcel.WriteBool(false));
+    ASSERT_TRUE(parcel.WriteBool(false));
+    ASSERT_TRUE(parcel.WriteBool(false));
+    ASSERT_TRUE(parcel.WriteString("file_name"));
+    ASSERT_TRUE(parcel.WriteUint32(3));
+    ASSERT_TRUE(parcel.WriteUint32(4));
+    ASSERT_TRUE(parcel.WriteInt32(5));
+    ASSERT_TRUE(parcel.WriteUint8(6));
+    ASSERT_TRUE(parcel.WriteString("napi_name"));
+    ASSERT_TRUE(parcel.WriteString("libtarget.so"));
+    ASSERT_TRUE(parcel.WriteUint32(1));
+
+    auto result = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(result, nullptr);
+    EXPECT_FALSE(NativeMemoryProfilerSaConfig::UnmarshallingExt(parcel, result));
+}
+
+/**
+ * @tc.name: NativeMemoryProfilerSaConfigTest007
+ * @tc.desc: Test Unmarshalling fails when extended scalar tail is incomplete
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest007, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    OHOS::Parcel parcel;
+    ASSERT_TRUE(parcel.WriteBool(true));
+    ASSERT_TRUE(parcel.WriteBool(false));
+    ASSERT_TRUE(parcel.WriteUint32(1));
+    ASSERT_TRUE(parcel.WriteInt32(CLOCK_REALTIME));
+    ASSERT_TRUE(parcel.WriteUint32(2));
+    ASSERT_TRUE(parcel.WriteBool(false));
+    ASSERT_TRUE(parcel.WriteBool(false));
+    ASSERT_TRUE(parcel.WriteBool(false));
+    ASSERT_TRUE(parcel.WriteBool(false));
+    ASSERT_TRUE(parcel.WriteBool(false));
+    ASSERT_TRUE(parcel.WriteBool(false));
+    ASSERT_TRUE(parcel.WriteString("file_name"));
+    ASSERT_TRUE(parcel.WriteUint32(3));
+    ASSERT_TRUE(parcel.WriteUint32(4));
+    ASSERT_TRUE(parcel.WriteInt32(5));
+    ASSERT_TRUE(parcel.WriteUint8(6));
+    ASSERT_TRUE(parcel.WriteString("napi_name"));
+    ASSERT_TRUE(parcel.WriteString("libtarget.so"));
+    ASSERT_TRUE(parcel.WriteUint32(0));
+    ASSERT_TRUE(parcel.WriteUint32(10));
+    ASSERT_TRUE(parcel.WriteUint32(11));
+    ASSERT_TRUE(parcel.WriteUint32(12));
+    ASSERT_TRUE(parcel.WriteUint32(13));
+    ASSERT_TRUE(parcel.WriteString("type_name"));
+
+    auto result = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(result, nullptr);
+    EXPECT_FALSE(NativeMemoryProfilerSaConfig::UnmarshallingExt(parcel, result));
+}
+
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_TEST_H

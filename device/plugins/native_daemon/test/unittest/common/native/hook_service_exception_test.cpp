@@ -16,6 +16,9 @@
 #include "hook_service_exception_test.h"
 #include "native_hook_config.pb.h"
 
+#include <sys/socket.h>
+#include <unistd.h>
+
 using namespace testing::ext;
 using namespace std;
 
@@ -153,5 +156,110 @@ HWTEST_F(HookServiceExceptionTest, AddDuplicatePidInfo, TestSize.Level0)
     hookService_->AddPidInfo(testPid, 2000, 2000);
     EXPECT_EQ(hookService_->pidInfo_.size(), 1);
     EXPECT_EQ(hookService_->pidInfo_[testPid].first, 2000);
+}
+
+/*
+ * @tc.name: SocketFdStateHandlesMissingAndInvalidFd
+ * @tc.desc: test socket fd lookup, invalid fd cleanup and send command guard.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookServiceExceptionTest, SocketFdStateHandlesMissingAndInvalidFd, TestSize.Level0)
+{
+    hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
+    constexpr pid_t testPid = 12345;
+    EXPECT_FALSE(hookService_->HasSocketFd(testPid));
+
+    hookService_->pidFds_[testPid] = -1;
+    EXPECT_FALSE(hookService_->HasSocketFd(testPid));
+    hookService_->SendCommand(testPid, STOP_HOOK_CMD);
+    hookService_->CloseSocketFd(testPid);
+    EXPECT_TRUE(hookService_->pidFds_.empty());
+
+    hookService_->CloseSocketFd(testPid);
+    hookService_->SendCommand(testPid, STOP_HOOK_CMD);
+}
+
+/*
+ * @tc.name: ClientDisconnectCallbackHandlesSocketMatch
+ * @tc.desc: test disconnect callback with unmatched, matched and null manager paths.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookServiceExceptionTest, ClientDisconnectCallbackHandlesSocketMatch, TestSize.Level0)
+{
+    hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
+    constexpr pid_t testPid = 23456;
+    constexpr int socketFd = 123;
+    hookService_->pidFds_[testPid] = socketFd;
+
+    hookService_->ClientDisconnectCallback(socketFd + 1);
+    EXPECT_TRUE(hookService_->HasSocketFd(testPid));
+    hookService_->ClientDisconnectCallback(socketFd);
+    EXPECT_TRUE(hookService_->HasSocketFd(testPid));
+
+    auto nullMgrService = std::make_shared<HookService>(clientConfig_, nullptr);
+    nullMgrService->pidFds_[testPid] = socketFd;
+    nullMgrService->ClientDisconnectCallback(socketFd);
+    EXPECT_TRUE(nullMgrService->HasSocketFd(testPid));
+}
+
+/*
+ * @tc.name: SendCommandWritesCommandWhenSocketIsAvailable
+ * @tc.desc: test SendCommand writes protocol header and command to socket.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookServiceExceptionTest, SendCommandWritesCommandWhenSocketIsAvailable, TestSize.Level0)
+{
+    int sockets[2] = {-1, -1};
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, sockets), 0);
+    hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
+    constexpr pid_t testPid = 34567;
+    hookService_->pidFds_[testPid] = sockets[0];
+
+    hookService_->SendCommand(testPid, STOP_HOOK_CMD);
+    ProtocolHead head;
+    uint32_t cmd = 0;
+    EXPECT_EQ(read(sockets[1], &head, sizeof(head)), static_cast<ssize_t>(sizeof(head)));
+    EXPECT_EQ(read(sockets[1], &cmd, sizeof(cmd)), static_cast<ssize_t>(sizeof(cmd)));
+    EXPECT_EQ(head.protoType, PROTOCOL_TYPE_PROTOBUF);
+    EXPECT_EQ(head.protoSize, sizeof(cmd) + sizeof(ProtocolHead));
+    EXPECT_EQ(cmd, STOP_HOOK_CMD);
+
+    close(sockets[1]);
+    hookService_->pidFds_.erase(testPid);
+    close(sockets[0]);
+}
+
+/*
+ * @tc.name: HandlePeerMessageRejectsInvalidPreloadData
+ * @tc.desc: test non-cache peer messages with invalid preload payload.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookServiceExceptionTest, HandlePeerMessageRejectsInvalidPreloadData, TestSize.Level0)
+{
+    hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
+    SocketContext socketContext;
+    const std::string invalidMsg = "invalid_preload_message";
+    EXPECT_FALSE(hookService_->HandlePeerMessage(socketContext,
+        reinterpret_cast<const int8_t*>(invalidMsg.data()), invalidMsg.size()));
+}
+
+/*
+ * @tc.name: ControlAndCacheMessagesHandleFailurePaths
+ * @tc.desc: test control command and cache file stop failure paths.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookServiceExceptionTest, ControlAndCacheMessagesHandleFailurePaths, TestSize.Level0)
+{
+    hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
+    SocketContext socketContext;
+    EXPECT_FALSE(hookService_->HandleControlCommand(STOP_HOOK_CMD));
+    EXPECT_TRUE(hookService_->HandleControlCommand(MEM_LEAK_DONE_CMD));
+
+    hookService_->ReceiveCacheFileMsg(socketContext, nullptr);
+    HookCacheFileMsg stopMsg(45678, 0, CACHE_FILE_STOP);
+    hookService_->ReceiveCacheFileMsg(socketContext, reinterpret_cast<const int8_t*>(&stopMsg));
+
+    HookCacheFileMsg unknownMsg(45678, 0, CACHE_FILE_CREATED);
+    hookService_->ReceiveCacheFileMsg(socketContext, reinterpret_cast<const int8_t*>(&unknownMsg));
 }
 } // namespace OHOS::Developtools::NativeDaemon

@@ -179,7 +179,7 @@ HWTEST_F(HookManagerExtTest, UpdateAsyncFlagConfigDisabled, TestSize.Level0)
     NativeHookConfig config;
     config.set_async_stack_enable(false);
     hookManager_->SetHookConfig(config);
-    
+
     hookManager_->UpdateAsyncFlagConfig();
     
     // asyncFlagMask should remain 0 when async_stack_enable is false
@@ -286,6 +286,49 @@ HWTEST_F(HookManagerExtTest, HandleReadyCacheFileKeepsPendingStackData, TestSize
 }
 
 /*
+ * @tc.name: HandleReadyCacheFileIgnoresNullAndEmptyQueue
+ * @tc.desc: test HandleReadyCacheFile returns directly for null context or empty fd queue.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleReadyCacheFileIgnoresNullAndEmptyQueue, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    hookManager_->HandleReadyCacheFile(nullptr);
+    hookManager_->HandleReadyCacheFile(ctx);
+
+    EXPECT_EQ(ctx->GetFdQueueSize(), 0u);
+    EXPECT_FALSE(ctx->cacheFileParsing);
+    EXPECT_FALSE(ctx->stackPreprocess->isCacheFileParseDone_);
+}
+
+/*
+ * @tc.name: FindHookContextSkipsNullEntriesAndMatchesName
+ * @tc.desc: test FindHookContext skips null entries and matches pid or process name.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, FindHookContextSkipsNullEntriesAndMatchesName, TestSize.Level0)
+{
+    hookManager_->hookCtx_.clear();
+    auto nameCtx = std::make_shared<HookManager::HookManagerCtx>(TEST_PROCESS_NAME);
+    auto pidCtx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(nameCtx != nullptr);
+    ASSERT_TRUE(pidCtx != nullptr);
+    hookManager_->hookCtx_.push_back(nullptr);
+    hookManager_->hookCtx_.push_back(nameCtx);
+    hookManager_->hookCtx_.push_back(pidCtx);
+
+    EXPECT_EQ(hookManager_->FindHookContext(TEST_PID, ""), pidCtx);
+    EXPECT_EQ(hookManager_->FindHookContext(-1, TEST_PROCESS_NAME), nameCtx);
+    EXPECT_EQ(hookManager_->FindHookContext(TEST_PID + 1, "missing"), nullptr);
+
+    hookManager_->hookCtx_.clear();
+    hookManager_->hookCtx_.push_back(nameCtx);
+    hookManager_->hookCtx_.push_back(pidCtx);
+}
+
+/*
  * @tc.name: ReadFromCacheFileFlushesPendingBatch
  * @tc.desc: test ReadFromCacheFile flushes the final partial record batch into stackData.
  * @tc.type: FUNC
@@ -363,6 +406,28 @@ HWTEST_F(HookManagerExtTest, StopTargetProcessWithoutSocketUsesImmediateLocalExi
     EXPECT_TRUE(ctx->stackData->IsProducerFinished());
     EXPECT_FALSE(ctx->stackPreprocess->isStopTakeData_);
     EXPECT_EQ(ctx->stackData->Size(), 1u);
+}
+
+/*
+ * @tc.name: WaitFinalSnapshotIfNeededTriggersCallback
+ * @tc.desc: test WaitFinalSnapshotIfNeeded sends final snapshot request when sampling is enabled.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, WaitFinalSnapshotIfNeededTriggersCallback, TestSize.Level0)
+{
+    auto ctx = CreateSharedMemoryCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    hookManager_->hookConfig_.set_allocator_sampling_enable(true);
+    uint32_t requestCmd = 0;
+    ctx->stackPreprocess->SetServerCommandCallback([&ctx, &requestCmd](uint32_t cmd) {
+        requestCmd = cmd;
+        ctx->stackPreprocess->finalSnapshotDone_ = true;
+        ctx->stackPreprocess->snapshotCv_.notify_one();
+    });
+
+    hookManager_->WaitFinalSnapshotIfNeeded(ctx);
+
+    EXPECT_EQ(requestCmd, FINAL_SNAPSHOT_REQUEST_CMD);
 }
 
 /*
@@ -445,6 +510,95 @@ HWTEST_F(HookManagerExtTest, HandleClientDisconnectedByPidMarksSharedMemoryProdu
     EXPECT_TRUE(ctx->stackPreprocess->IsDataSourceTerminated());
     EXPECT_TRUE(ctx->stackData->IsProducerFinished());
     EXPECT_EQ(ctx->stackData->Size(), 1u);
+}
+
+/*
+ * @tc.name: FinalizeSharedMemoryTerminationSkipsTerminatedContext
+ * @tc.desc: test FinalizeSharedMemoryTermination returns directly when source is already terminated.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, FinalizeSharedMemoryTerminationSkipsTerminatedContext, TestSize.Level0)
+{
+    auto ctx = CreateSharedMemoryCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ctx->stackPreprocess->SetDataSourceTerminated(true);
+
+    hookManager_->FinalizeSharedMemoryTermination(ctx);
+
+    EXPECT_FALSE(ctx->stackData->IsProducerFinished());
+}
+
+/*
+ * @tc.name: FinalizeSharedMemoryTerminationMarksProducerFinished
+ * @tc.desc: test FinalizeSharedMemoryTermination marks shared memory source as terminated and producer finished.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, FinalizeSharedMemoryTerminationMarksProducerFinished, TestSize.Level0)
+{
+    auto ctx = CreateSharedMemoryCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ASSERT_TRUE(ctx->stackData != nullptr);
+
+    hookManager_->FinalizeSharedMemoryTermination(ctx);
+
+    EXPECT_TRUE(ctx->stackPreprocess->IsDataSourceTerminated());
+    EXPECT_TRUE(ctx->stackData->IsProducerFinished());
+}
+
+/*
+ * @tc.name: DrainPendingSharedMemoryNoQueueSkipsNullBlocks
+ * @tc.desc: test DrainPendingSharedMemory uses no-queue path and skips null shared memory blocks.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, DrainPendingSharedMemoryNoQueueSkipsNullBlocks, TestSize.Level0)
+{
+    auto ctx = CreateSharedMemoryCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    hookManager_->noDataQueue_ = true;
+    ctx->shareMemoryBlockList.push_back(nullptr);
+    AppendSharedMemoryRecord(ctx, MALLOC_MSG);
+
+    EXPECT_TRUE(hookManager_->DrainPendingSharedMemory(ctx));
+}
+
+/*
+ * @tc.name: PrepareImmediateStopFileCacheMarksStopReceived
+ * @tc.desc: test PrepareImmediateStop routes file cache mode to FinalizeCacheFileStop.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, PrepareImmediateStopFileCacheMarksStopReceived, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(true);
+    hookManager_->SetHookConfig(config);
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    hookManager_->PrepareImmediateStop(ctx);
+
+    EXPECT_TRUE(ctx->cacheFileStopReceived);
+    EXPECT_TRUE(ctx->stackPreprocess->isCacheFileParseDone_);
+}
+
+/*
+ * @tc.name: FinishFileCacheStopIfDrainedStopsNoQueueOnTerminatedInput
+ * @tc.desc: test FinishFileCacheStopIfDrained stops no-queue file cache after input termination.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, FinishFileCacheStopIfDrainedStopsNoQueueOnTerminatedInput, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(true);
+    hookManager_->SetHookConfig(config);
+    hookManager_->noDataQueue_ = true;
+    auto ctx = CreateNoQueueFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ctx->stackPreprocess->SetDataSourceTerminated(true);
+
+    hookManager_->FinishFileCacheStopIfDrained(ctx);
+
+    EXPECT_TRUE(ctx->stackPreprocess->isCacheFileParseDone_);
+    EXPECT_TRUE(ctx->stackPreprocess->isStopTakeData_);
 }
 
 /*
@@ -696,9 +850,56 @@ HWTEST_F(HookManagerExtTest, CheckProcessWithProcessName, TestSize.Level0)
     // This should return true even if the process doesn't exist
     // because startup_mode is true
     EXPECT_TRUE(hookManager_->CheckProcess());
-    
+
     // Reset startup param
     hookManager_->ResetStartupParam();
+}
+
+/*
+ * @tc.name: CheckProcessRejectsMissingPid
+ * @tc.desc: test CheckProcess returns false when target pid does not exist.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, CheckProcessRejectsMissingPid, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_pid(2000000000);
+    hookManager_->SetHookConfig(config);
+
+    EXPECT_FALSE(hookManager_->CheckProcess());
+}
+
+/*
+ * @tc.name: CheckProcessRejectsTooManyResponseLibraryContexts
+ * @tc.desc: test CheckProcess rejects response library mode with more than eight contexts.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, CheckProcessRejectsTooManyResponseLibraryContexts, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_response_library_mode(true);
+    hookManager_->SetHookConfig(config);
+    for (int i = 0; i < 9; ++i) {
+        hookManager_->hookCtx_.push_back(std::make_shared<HookManager::HookManagerCtx>(TEST_PID + i));
+    }
+
+    EXPECT_FALSE(hookManager_->CheckProcess());
+}
+
+/*
+ * @tc.name: CheckProcessEnablesProtobufSerializeForMultiContext
+ * @tc.desc: test CheckProcess enables protobuf serialization when multiple contexts exist.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, CheckProcessEnablesProtobufSerializeForMultiContext, TestSize.Level0)
+{
+    NativeHookConfig config;
+    hookManager_->SetHookConfig(config);
+    hookManager_->hookCtx_.push_back(std::make_shared<HookManager::HookManagerCtx>(TEST_PID));
+    hookManager_->hookCtx_.push_back(std::make_shared<HookManager::HookManagerCtx>(TEST_PID + 1));
+
+    EXPECT_TRUE(hookManager_->CheckProcess());
+    EXPECT_TRUE(hookManager_->isProtobufSerialize_);
 }
 
 /*
@@ -718,6 +919,130 @@ HWTEST_F(HookManagerExtTest, MergeAsyncFlagMaskFromEnum, TestSize.Level0)
     uint64_t result = hookManager_->MergeAsyncFlagMaskFromEnum(baseMask);
     EXPECT_TRUE(result & ASYNC_TYPE_LIBUV_SEND);
     EXPECT_TRUE(result & ASYNC_TYPE_PROMISE);
+}
+
+/*
+ * @tc.name: MergeAsyncFlagMaskFromEnumCoversRemainingValues
+ * @tc.desc: test MergeAsyncFlagMaskFromEnum covers remaining enum branches.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, MergeAsyncFlagMaskFromEnumCoversRemainingValues, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.add_async_type(AsyncFlagType::FFRT_QUEUE);
+    config.add_async_type(AsyncFlagType::EVENTHANDLER);
+    config.add_async_type(AsyncFlagType::CUSTOMIZE);
+    config.add_async_type(AsyncFlagType::ARKTS_WORKER);
+    config.add_async_type(AsyncFlagType::ARKTS_TASKPOOL);
+    config.add_async_type(AsyncFlagType::ARKWEB_ENGINE);
+    config.add_async_type(AsyncFlagType::JSVM_ASYNC);
+    config.add_async_type(AsyncFlagType::ALL_ASYNC_NESTED_TYPE);
+    config.add_async_type(static_cast<AsyncFlagType>(999));
+    hookManager_->SetHookConfig(config);
+
+    uint64_t result = hookManager_->MergeAsyncFlagMaskFromEnum(0);
+    EXPECT_TRUE(result & ASYNC_TYPE_FFRT_QUEUE);
+    EXPECT_TRUE(result & ASYNC_TYPE_EVENTHANDLER);
+    EXPECT_TRUE(result & ASYNC_TYPE_CUSTOMIZE);
+    EXPECT_TRUE(result & ASYNC_TYPE_ARKTS_WORKER);
+    EXPECT_TRUE(result & ASYNC_TYPE_ARKTS_TASKPOOL);
+    EXPECT_TRUE(result & ASYNC_TYPE_ARKWEB);
+    EXPECT_TRUE(result & ASYNC_TYPE_JSVM);
+    EXPECT_TRUE(result & ASYNC_TYPE_LIBUV_SEND);
+    EXPECT_TRUE(result & ASYNC_TYPE_FFRT_POOL);
+    EXPECT_TRUE(result & ASYNC_TYPE_EVENTHANDLER);
+    EXPECT_TRUE(result & ASYNC_TYPE_PROFILER);
+}
+
+/*
+ * @tc.name: UpdateFileCacheModeConfigClampsOutOfRange
+ * @tc.desc: test UpdateFileCacheModeConfig clamps invalid buffer sizes.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, UpdateFileCacheModeConfigClampsOutOfRange, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_file_cache_buffer_size(MIN_FILE_CACHE_MEMORY_SIZE - 1);
+    hookManager_->SetHookConfig(config);
+    hookManager_->UpdateFileCacheModeConfig();
+    EXPECT_EQ(hookManager_->hookConfig_.file_cache_buffer_size(), MAX_FILE_CACHE_MEMORY_SIZE);
+
+    config.set_file_cache_buffer_size(MAX_FILE_CACHE_MEMORY_SIZE + 1);
+    hookManager_->SetHookConfig(config);
+    hookManager_->UpdateFileCacheModeConfig();
+    EXPECT_EQ(hookManager_->hookConfig_.file_cache_buffer_size(), MAX_FILE_CACHE_MEMORY_SIZE);
+}
+
+/*
+ * @tc.name: UpdateAsyncFlagConfigKeepsExistingMaskWithoutEnumConfig
+ * @tc.desc: test UpdateAsyncFlagConfig keeps explicit mask when no enum list is configured.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, UpdateAsyncFlagConfigKeepsExistingMaskWithoutEnumConfig, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_async_stack_enable(true);
+    hookManager_->SetHookConfig(config);
+    hookManager_->asyncFlagMask_ = ASYNC_TYPE_CUSTOMIZE;
+
+    hookManager_->UpdateAsyncFlagConfig();
+
+    EXPECT_EQ(hookManager_->asyncFlagMask_, ASYNC_TYPE_CUSTOMIZE);
+}
+
+/*
+ * @tc.name: RegisterAgentPluginRejectsEmptyPath
+ * @tc.desc: test RegisterAgentPlugin rejects empty path.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, RegisterAgentPluginRejectsEmptyPath, TestSize.Level0)
+{
+    EXPECT_FALSE(hookManager_->RegisterAgentPlugin(""));
+}
+
+/*
+ * @tc.name: UnregisterAgentPluginRejectsEmptyPath
+ * @tc.desc: test UnregisterAgentPlugin rejects empty path.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, UnregisterAgentPluginRejectsEmptyPath, TestSize.Level0)
+{
+    EXPECT_FALSE(hookManager_->UnregisterAgentPlugin(""));
+}
+
+/*
+ * @tc.name: SetLocalHandleIgnoresNonLocalTags
+ * @tc.desc: test SetLocalHandle ignores restrace tags other than local handle.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, SetLocalHandleIgnoresNonLocalTags, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_process_name(TEST_PROCESS_NAME);
+    config.add_restrace_tag(TAG_RES_SO_MASK);
+    hookManager_->SetHookConfig(config);
+
+    EXPECT_TRUE(hookManager_->SetLocalHandle("1"));
+}
+
+/*
+ * @tc.name: GetArktsDiagPathRejectsInvalidPayload
+ * @tc.desc: test GetArktsDiagPath rejects malformed preload messages.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, GetArktsDiagPathRejectsInvalidPayload, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_process_name(TEST_PROCESS_NAME);
+    hookManager_->SetHookConfig(config);
+
+    const std::string invalidData = "bad preload data";
+    EXPECT_TRUE(hookManager_->GetArktsDiagPath(reinterpret_cast<const int8_t*>(invalidData.data()),
+        invalidData.size()).empty());
+
+    const std::string mismatchData = PRELOAD_APP_IDENTIFY + "other.process";
+    EXPECT_TRUE(hookManager_->GetArktsDiagPath(reinterpret_cast<const int8_t*>(mismatchData.data()),
+        mismatchData.size()).empty());
 }
 
 /*
@@ -924,6 +1249,28 @@ HWTEST_F(HookManagerExtTest, GetClientConfigGwpAsan, TestSize.Level0)
 }
 
 /*
+ * @tc.name: GetClientConfigSkipsInvalidLibraryNames
+ * @tc.desc: test GetClientConfig filters invalid target so and library names.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, GetClientConfigSkipsInvalidLibraryNames, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_target_so_name("bad\"name.so");
+    config.add_filter_lib_list("libvalid.so");
+    config.add_filter_lib_list("bad\nlib.so");
+    config.add_filter_lib_list(std::string(PATH_MAX, 'a'));
+    hookManager_->SetHookConfig(config);
+
+    ClientConfig clientConfig;
+    hookManager_->GetClientConfig(clientConfig);
+
+    EXPECT_TRUE(clientConfig.targetSoName.empty());
+    ASSERT_EQ(clientConfig.filterLibList.size(), 1u);
+    EXPECT_EQ(clientConfig.filterLibList[0], "libvalid.so");
+}
+
+/*
 * @tc.name: SetHookConfigAsyncStackDepth
 * @tc.desc: test SetHookConfig with async nesting depth and task stack depth from SaConfig.
 * @tc.type: FUNC
@@ -961,5 +1308,489 @@ HWTEST_F(HookManagerExtTest, GetClientConfigAsyncStackDepth, TestSize.Level0)
 
     EXPECT_EQ(clientConfig.asyncNestingDepth, 10);
     EXPECT_EQ(clientConfig.asyncTaskStackDepth, 20);
+}
+
+/*
+ * @tc.name: HandleHookContextRejectsNullContext
+ * @tc.desc: test HandleHookContext rejects nullptr context.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleHookContextRejectsNullContext, TestSize.Level0)
+{
+    EXPECT_FALSE(hookManager_->HandleHookContext(nullptr));
+}
+
+/*
+ * @tc.name: HandleSharedMemoryHookContextRejectsAnonymousContext
+ * @tc.desc: test shared memory context creation rejects ctx without pid and process name.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleSharedMemoryHookContextRejectsAnonymousContext, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(false);
+    config.set_clock("monotonic");
+    config.set_smb_pages(TEST_SMB_PAGES);
+    hookManager_->SetHookConfig(config);
+
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(-1);
+    ASSERT_TRUE(ctx != nullptr);
+    EXPECT_FALSE(hookManager_->HandleSharedMemoryHookContext(ctx, 1));
+}
+
+/*
+ * @tc.name: HandleHookContextSharedMemoryAsyncStackCreatesUniqueTable
+ * @tc.desc: test HandleHookContext initializes shared memory resources and unique stack table for async stack.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleHookContextSharedMemoryAsyncStackCreatesUniqueTable, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(false);
+    config.set_clock("monotonic");
+    config.set_smb_pages(TEST_SMB_PAGES);
+    config.set_async_stack_enable(true);
+    hookManager_->SetHookConfig(config);
+    hookManager_->SetSaMode(true);
+    hookManager_->factory_ = std::make_shared<HookRecordFactory>(hookManager_->hookConfig_);
+
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    hookManager_->hookCtx_.push_back(ctx);
+
+    EXPECT_TRUE(hookManager_->HandleHookContext(ctx));
+    EXPECT_NE(ctx->stackPreprocess, nullptr);
+    EXPECT_EQ(ctx->eventPollerList.size(), 1u);
+    EXPECT_NE(hookManager_->uniqueTableBlock_, nullptr);
+    EXPECT_TRUE(hookManager_->DestroyPluginSession({0}));
+}
+
+/*
+ * @tc.name: HandleHookContextFileCacheNoQueueCreatesReadyPoller
+ * @tc.desc: test HandleHookContext initializes no-queue file cache handler and ready poller.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleHookContextFileCacheNoQueueCreatesReadyPoller, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(true);
+    config.set_clock("monotonic");
+    hookManager_->SetHookConfig(config);
+    hookManager_->SetSaMode(true);
+    hookManager_->noDataQueue_ = true;
+    hookManager_->factory_ = std::make_shared<HookRecordFactory>(hookManager_->hookConfig_);
+
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    hookManager_->hookCtx_.push_back(ctx);
+
+    EXPECT_TRUE(hookManager_->HandleHookContext(ctx));
+    EXPECT_NE(ctx->readyFileNotifier, nullptr);
+    EXPECT_NE(ctx->readyFilePoller, nullptr);
+    EXPECT_NE(ctx->stackPreprocess, nullptr);
+    EXPECT_TRUE(hookManager_->DestroyPluginSession({0}));
+}
+
+/*
+ * @tc.name: PrepareFileCacheContextMissingContextReturnsFalse
+ * @tc.desc: test PrepareFileCacheContext fails when target context is absent.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, PrepareFileCacheContextMissingContextReturnsFalse, TestSize.Level0)
+{
+    EXPECT_FALSE(hookManager_->PrepareFileCacheContext(TEST_PID, TEST_PROCESS_NAME));
+}
+
+/*
+ * @tc.name: PrepareFileCacheContextResetsFlagsAndAssignsPid
+ * @tc.desc: test PrepareFileCacheContext resets file cache state for startup-name context.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, PrepareFileCacheContextResetsFlagsAndAssignsPid, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(true);
+    config.set_clock("monotonic");
+    hookManager_->SetHookConfig(config);
+    hookManager_->factory_ = std::make_shared<HookRecordFactory>(hookManager_->hookConfig_);
+
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PROCESS_NAME);
+    ASSERT_TRUE(ctx != nullptr);
+    ctx->stackPreprocess = std::make_shared<StackPreprocess>(nullptr, hookManager_->hookConfig_, CLOCK_MONOTONIC);
+    ASSERT_TRUE(ctx->stackPreprocess != nullptr);
+    ctx->stackPreprocess->SetFactory(hookManager_->factory_);
+    ctx->stackPreprocess->SetIsCacheFileParseDone(true);
+    ctx->stackPreprocess->SetDataSourceTerminated(true);
+    ctx->cacheFileStopReceived = true;
+    ctx->cacheFileStopRequested = true;
+    ctx->cacheFileClientDisconnected = true;
+    ctx->cacheFileParsing = true;
+    hookManager_->hookCtx_.push_back(ctx);
+
+    EXPECT_TRUE(hookManager_->PrepareFileCacheContext(TEST_PID, TEST_PROCESS_NAME));
+    EXPECT_EQ(ctx->pid, TEST_PID);
+    EXPECT_FALSE(ctx->cacheFileStopReceived);
+    EXPECT_FALSE(ctx->cacheFileStopRequested);
+    EXPECT_FALSE(ctx->cacheFileClientDisconnected);
+    EXPECT_FALSE(ctx->cacheFileParsing);
+    EXPECT_FALSE(ctx->stackPreprocess->isCacheFileParseDone_);
+    EXPECT_FALSE(ctx->stackPreprocess->IsDataSourceTerminated());
+}
+
+/*
+ * @tc.name: HandleCachedFileFdByPidWithoutNotifierStillQueuesFd
+ * @tc.desc: test HandleCachedFileFdByPid succeeds without ready notifier and queues fd.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleCachedFileFdByPidWithoutNotifierStillQueuesFd, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ctx->readyFileNotifier = nullptr;
+    int fd = CreateCacheFileWithRecord(MALLOC_MSG);
+    ASSERT_GE(fd, 0);
+
+    EXPECT_TRUE(hookManager_->HandleCachedFileFdByPid(TEST_PID, fd, 0));
+    EXPECT_EQ(ctx->GetFdQueueSize(), 1u);
+    EXPECT_TRUE(ctx->stackPreprocess->isStartTakeData_);
+}
+
+/*
+ * @tc.name: HandleClientDisconnectedByPidWithoutStackPreprocessReturnsFalse
+ * @tc.desc: test shared memory mode rejects disconnected pid when stackPreprocess is absent.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleClientDisconnectedByPidWithoutStackPreprocessReturnsFalse, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(false);
+    hookManager_->SetHookConfig(config);
+
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    hookManager_->hookCtx_.push_back(ctx);
+
+    EXPECT_FALSE(hookManager_->HandleClientDisconnectedByPid(TEST_PID));
+}
+
+/*
+ * @tc.name: FinalizeCacheFileStopRejectsInvalidContext
+ * @tc.desc: test FinalizeCacheFileStop rejects null or incomplete context.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, FinalizeCacheFileStopRejectsInvalidContext, TestSize.Level0)
+{
+    EXPECT_FALSE(hookManager_->FinalizeCacheFileStop(nullptr));
+
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    EXPECT_FALSE(hookManager_->FinalizeCacheFileStop(ctx));
+}
+
+/*
+ * @tc.name: FinalizeStoppedContextFlushesAndClosesStackData
+ * @tc.desc: test FinalizeStoppedContext flushes statistics and closes stack data.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, FinalizeStoppedContextFlushesAndClosesStackData, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_clock("monotonic");
+    config.set_statistics_interval(1);
+    config.set_malloc_free_matching_interval(1);
+    hookManager_->SetHookConfig(config);
+
+    auto ctx = CreateSharedMemoryCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ASSERT_TRUE(hookManager_->FinalizeStoppedContext(ctx));
+    EXPECT_TRUE(ctx->stackPreprocess->IsDataSourceTerminated());
+    EXPECT_TRUE(ctx->stackData->closed_);
+}
+
+/*
+ * @tc.name: FinalizeStoppedContextRejectsMissingPreprocess
+ * @tc.desc: test FinalizeStoppedContext rejects context without stack preprocess.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, FinalizeStoppedContextRejectsMissingPreprocess, TestSize.Level0)
+{
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    EXPECT_FALSE(hookManager_->FinalizeStoppedContext(ctx));
+}
+
+/*
+ * @tc.name: StopTargetProcessInvalidPidFinalizesFileCache
+ * @tc.desc: test invalid pid in file cache mode finalizes stop state immediately.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, StopTargetProcessInvalidPidFinalizesFileCache, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(true);
+    config.set_clock("monotonic");
+    hookManager_->SetHookConfig(config);
+    hookManager_->factory_ = std::make_shared<HookRecordFactory>(hookManager_->hookConfig_);
+
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PROCESS_NAME);
+    ASSERT_TRUE(ctx != nullptr);
+    ctx->stackPreprocess = std::make_shared<StackPreprocess>(nullptr, hookManager_->hookConfig_, CLOCK_MONOTONIC);
+    ASSERT_TRUE(ctx->stackPreprocess != nullptr);
+    ctx->stackPreprocess->SetFactory(hookManager_->factory_);
+
+    hookManager_->StopTargetProcess(ctx);
+
+    EXPECT_TRUE(ctx->cacheFileStopReceived);
+    EXPECT_TRUE(ctx->stackPreprocess->isCacheFileParseDone_);
+}
+
+/*
+ * @tc.name: StopTargetProcessFileCacheRequestsStopWithoutSocket
+ * @tc.desc: test file cache mode marks stop requested and finalizes current queue when socket is absent.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, StopTargetProcessFileCacheRequestsStopWithoutSocket, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    hookManager_->StopTargetProcess(ctx);
+
+    EXPECT_TRUE(ctx->cacheFileStopRequested);
+    EXPECT_TRUE(ctx->cacheFileStopReceived);
+    EXPECT_TRUE(ctx->stackPreprocess->isCacheFileParseDone_);
+}
+
+/*
+ * @tc.name: RequestCacheFileStopMarksContext
+ * @tc.desc: test RequestCacheFileStop marks matching context and query reflects the flag.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, RequestCacheFileStopMarksContext, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ctx->processName = TEST_PROCESS_NAME;
+
+    EXPECT_FALSE(hookManager_->IsCacheFileStopRequested(TEST_PID));
+    hookManager_->RequestCacheFileStop(TEST_PID);
+
+    EXPECT_TRUE(ctx->cacheFileStopRequested);
+    EXPECT_TRUE(hookManager_->IsCacheFileStopRequested(TEST_PID));
+    EXPECT_FALSE(hookManager_->IsCacheFileStopRequested(TEST_PID + 1));
+}
+
+/*
+ * @tc.name: FinishFileCacheStopIfDrainedNoQueueWaitsForInputEnd
+ * @tc.desc: test no-queue file cache mode marks parse done but keeps running until input ends.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, FinishFileCacheStopIfDrainedNoQueueWaitsForInputEnd, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(true);
+    config.set_clock("monotonic");
+    hookManager_->SetHookConfig(config);
+    hookManager_->noDataQueue_ = true;
+
+    auto ctx = CreateNoQueueFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ctx->cacheFileStopReceived = true;
+
+    hookManager_->FinishFileCacheStopIfDrained(ctx);
+
+    EXPECT_TRUE(ctx->stackPreprocess->isCacheFileParseDone_);
+    EXPECT_FALSE(ctx->stackPreprocess->isStopTakeData_);
+}
+
+/*
+ * @tc.name: DrainSharedMemoryBlockTakesNotifier
+ * @tc.desc: test DrainSharedMemoryBlock consumes notifier and shared memory data.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, DrainSharedMemoryBlockTakesNotifier, TestSize.Level0)
+{
+    auto ctx = CreateSharedMemoryCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    hookManager_->hookConfig_.set_smb_pages(TEST_SMB_PAGES);
+    hookManager_->hookCtx_.clear();
+    ASSERT_TRUE(hookManager_->HandleSharedMemoryHookContext(ctx, 1));
+    ASSERT_TRUE(ctx->shareMemoryBlockList[0] != nullptr);
+    ASSERT_TRUE(ctx->eventNotifierList[0] != nullptr);
+
+    StackRawData rawData = {};
+    rawData.type = MALLOC_MSG;
+    rawData.pid = TEST_PID;
+    rawData.tid = TEST_PID;
+    rawData.mallocSize = 64;
+    rawData.nodeType = 1;
+    rawData.nodeId = 1;
+    rawData.ts = {1, 1};
+    ASSERT_TRUE(ctx->shareMemoryBlockList[0]->PutRaw(reinterpret_cast<const int8_t*>(&rawData), sizeof(rawData)));
+    ASSERT_TRUE(ctx->eventNotifierList[0]->Post(1));
+
+    EXPECT_TRUE(hookManager_->DrainSharedMemoryBlock(ctx, 0, true));
+    EXPECT_EQ(ctx->stackData->Size(), 1u);
+}
+
+/*
+ * @tc.name: DestroyPluginSessionReleasesSharedMemoryResources
+ * @tc.desc: test DestroyPluginSession releases shared memory resources and unique table.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, DestroyPluginSessionReleasesSharedMemoryResources, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(false);
+    config.set_clock("monotonic");
+    config.set_smb_pages(TEST_SMB_PAGES);
+    hookManager_->SetHookConfig(config);
+    hookManager_->SetSaMode(true);
+    hookManager_->factory_ = std::make_shared<HookRecordFactory>(hookManager_->hookConfig_);
+
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>("destroy_plugin_session_ctx");
+    ASSERT_TRUE(ctx != nullptr);
+    ctx->stackData = std::make_shared<StackDataRepeater>(8);
+    ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookManager_->hookConfig_,
+        CLOCK_MONOTONIC);
+    ASSERT_TRUE(ctx->stackPreprocess != nullptr);
+    ctx->stackPreprocess->SetFactory(hookManager_->factory_);
+    ASSERT_TRUE(hookManager_->HandleSharedMemoryHookContext(ctx, 1));
+    hookManager_->hookCtx_.push_back(ctx);
+    hookManager_->uniqueTableBlock_ =
+        ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("unique_stack_table", TEST_PAGE_BYTES);
+
+    EXPECT_TRUE(hookManager_->DestroyPluginSession({0}));
+    EXPECT_TRUE(ctx->stackData->Size() == 0);
+    EXPECT_EQ(hookManager_->uniqueTableBlock_, nullptr);
+}
+
+/*
+ * @tc.name: DestroyPluginSessionReleasesFileCacheQueue
+ * @tc.desc: test DestroyPluginSession stops file cache poller and drains queued fds.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, DestroyPluginSessionReleasesFileCacheQueue, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    hookManager_->SetSaMode(true);
+    ASSERT_TRUE(hookManager_->HandleFileCacheHookContext(ctx));
+
+    int fd = CreateCacheFileWithRecord(MALLOC_MSG);
+    ASSERT_GE(fd, 0);
+    ctx->PushBackFdQueue(fd);
+
+    EXPECT_TRUE(hookManager_->DestroyPluginSession({0}));
+    EXPECT_EQ(ctx->GetFdQueueSize(), 0u);
+}
+
+/*
+ * @tc.name: FinalizeCacheFileStopNoQueueDisconnectedStopsImmediately
+ * @tc.desc: test no-queue file cache mode stops immediately after disconnect when queue is already drained.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, FinalizeCacheFileStopNoQueueDisconnectedStopsImmediately, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(true);
+    config.set_clock("monotonic");
+    hookManager_->SetHookConfig(config);
+    hookManager_->noDataQueue_ = true;
+
+    auto ctx = CreateNoQueueFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ctx->cacheFileClientDisconnected = true;
+
+    EXPECT_TRUE(hookManager_->FinalizeCacheFileStop(ctx));
+    EXPECT_TRUE(ctx->stackPreprocess->isCacheFileParseDone_);
+    EXPECT_TRUE(ctx->stackPreprocess->isStopTakeData_);
+}
+
+/*
+ * @tc.name: StartPluginSessionHandlesInvalidTargetState
+ * @tc.desc: test StartPluginSession handles invalid pid and uid lookup failure.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, StartPluginSessionHandlesInvalidTargetState, TestSize.Level0)
+{
+    constexpr int missingPid = 2000000000;
+    NativeHookConfig config;
+    config.set_clock("monotonic");
+    hookManager_->SetHookConfig(config);
+    hookManager_->SetSaMode(true);
+
+    auto missingPidCtx = CreateSharedMemoryCtx(missingPid);
+    auto invalidPidCtx = CreateSharedMemoryCtx(-1);
+    ASSERT_TRUE(missingPidCtx != nullptr);
+    ASSERT_TRUE(invalidPidCtx != nullptr);
+
+    std::unordered_map<pid_t, std::pair<uid_t, gid_t>> pidInfo;
+    hookManager_->StartPluginSession(&pidInfo);
+
+    EXPECT_FALSE(missingPidCtx->stackPreprocess->isStopTakeData_);
+    EXPECT_TRUE(pidInfo.empty());
+    missingPidCtx->stackPreprocess->StopTakeResults();
+    invalidPidCtx->stackPreprocess->StopTakeResults();
+}
+
+/*
+ * @tc.name: GetFdsAssignsPidForProcessNameContext
+ * @tc.desc: test GetFds resolves startup-name context and assigns pid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, GetFdsAssignsPidForProcessNameContext, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(false);
+    config.set_clock("monotonic");
+    config.set_smb_pages(TEST_SMB_PAGES);
+    hookManager_->SetHookConfig(config);
+    hookManager_->factory_ = std::make_shared<HookRecordFactory>(hookManager_->hookConfig_);
+
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PROCESS_NAME);
+    ASSERT_TRUE(ctx != nullptr);
+    ctx->stackPreprocess = std::make_shared<StackPreprocess>(nullptr, hookManager_->hookConfig_, CLOCK_MONOTONIC);
+    ASSERT_TRUE(ctx->stackPreprocess != nullptr);
+    ctx->stackPreprocess->SetFactory(hookManager_->factory_);
+    ASSERT_TRUE(hookManager_->HandleSharedMemoryHookContext(ctx, 1));
+    hookManager_->hookCtx_.push_back(ctx);
+
+    std::vector<int> fds = hookManager_->GetFds(TEST_PID, TEST_PROCESS_NAME, 1);
+    ASSERT_EQ(fds.size(), 2u);
+    EXPECT_GE(fds[0], 0);
+    EXPECT_GE(fds[1], 0);
+    EXPECT_EQ(ctx->pid, TEST_PID);
+}
+
+/*
+ * @tc.name: RequestCacheFileStopMarksFlag
+ * @tc.desc: test RequestCacheFileStop and IsCacheFileStopRequested track stop flag.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, RequestCacheFileStopMarksFlag, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    EXPECT_FALSE(hookManager_->IsCacheFileStopRequested(TEST_PID));
+    hookManager_->RequestCacheFileStop(TEST_PID);
+    EXPECT_TRUE(hookManager_->IsCacheFileStopRequested(TEST_PID));
+}
+
+/*
+ * @tc.name: GetFdsWithoutMatchedContextReturnsDefaultFdList
+ * @tc.desc: test GetFds returns placeholder fds when no context matches pid or name.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, GetFdsWithoutMatchedContextReturnsDefaultFdList, TestSize.Level0)
+{
+    std::vector<int> fds = hookManager_->GetFds(TEST_PID, TEST_PROCESS_NAME, 2);
+    ASSERT_EQ(fds.size(), 4u);
+    EXPECT_EQ(fds[0], -1);
+    EXPECT_EQ(fds[1], -1);
+    EXPECT_EQ(fds[2], -1);
+    EXPECT_EQ(fds[3], -1);
 }
 } // namespace

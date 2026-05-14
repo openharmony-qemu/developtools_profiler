@@ -21,7 +21,9 @@
 #include <random>
 #include <sys/mman.h>
 
+#define private public
 #include "call_stack.h"
+#undef private
 #include "debug_logger.h"
 #include "utilities.h"
 

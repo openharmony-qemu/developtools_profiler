@@ -14,7 +14,9 @@
  */
 
 #include <gtest/gtest.h>
+#include <fcntl.h>
 #include <random>
+#include <unistd.h>
 #include "symbols_file.h"
 #include "common.h"
 
@@ -134,6 +136,18 @@ HWTEST_F(SymbolsFileExtTest, SearchReadableFile, TestSize.Level0)
 }
 
 /**
+ * @tc.name: SearchReadableFileRejectsEmptyTarget
+ * @tc.desc: Test SearchReadableFile returns empty when filePath is empty
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileExtTest, SearchReadableFileRejectsEmptyTarget, TestSize.Level0)
+{
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+    std::vector<std::string> searchPaths = {"."};
+    EXPECT_TRUE(symbolsFile->SearchReadableFile(searchPaths, "").empty());
+}
+
+/**
  * @tc.name: AdjustSymbols
  * @tc.desc: Test AdjustSymbols method with different symbol lists
  * @tc.type: FUNC
@@ -162,6 +176,28 @@ HWTEST_F(SymbolsFileExtTest, AdjustSymbols, TestSize.Level0)
     EXPECT_EQ(symbolsFile->symbols_.size(), 3u);
     EXPECT_LT(symbolsFile->symbols_[0].funcVaddr_, symbolsFile->symbols_[1].funcVaddr_);
     EXPECT_LT(symbolsFile->symbols_[1].funcVaddr_, symbolsFile->symbols_[2].funcVaddr_);
+}
+
+/**
+ * @tc.name: AdjustSymbolsDeduplicatesAndUpdatesRange
+ * @tc.desc: Test AdjustSymbols removes duplicate vaddr entries and updates range/index.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileExtTest, AdjustSymbolsDeduplicatesAndUpdatesRange, TestSize.Level0)
+{
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+    symbolsFile->symbols_.emplace_back(0x3000, 0x100, "symbol3", "test_module");
+    symbolsFile->symbols_.emplace_back(0x1000, 0x100, "symbol1", "test_module");
+    symbolsFile->symbols_.emplace_back(0x1000, 0x100, "symbol1_dup", "test_module");
+    symbolsFile->symbols_.emplace_back(0x2000, 0x100, "symbol2", "test_module");
+
+    symbolsFile->AdjustSymbols();
+
+    ASSERT_EQ(symbolsFile->symbols_.size(), 3u);
+    EXPECT_EQ(symbolsFile->symbols_[0].index_, 0u);
+    EXPECT_EQ(symbolsFile->symbols_[1].index_, 1u);
+    EXPECT_EQ(symbolsFile->symbols_[2].index_, 2u);
+    EXPECT_EQ(symbolsFile->textExecVaddrRange_, 0x2000U);
 }
 
 /**
@@ -315,6 +351,26 @@ HWTEST_F(SymbolsFileExtTest, HapFileSymbolsLoad, TestSize.Level0)
 }
 
 /**
+ * @tc.name: HapFileSymbolsLoadRecognizesArkExtensions
+ * @tc.desc: Test HapFileSymbols treats hap-like extensions as ark bytecode in recording mode.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileExtTest, HapFileSymbolsLoadRecognizesArkExtensions, TestSize.Level0)
+{
+    const bool previousRecording = SymbolsFile::onRecording_;
+    SymbolsFile::onRecording_ = true;
+    const std::vector<std::string> suffixes = {"demo.hap", "demo.hsp", "demo.hqf", "demo.abc"};
+    auto map = std::make_shared<DfxMap>();
+    map->name = "demo.map";
+    for (const auto& suffix : suffixes) {
+        auto hapSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_HAP_FILE, suffix, getpid());
+        EXPECT_TRUE(hapSymbols->LoadSymbols(map, ""));
+        EXPECT_TRUE(hapSymbols->IsAbc());
+    }
+    SymbolsFile::onRecording_ = previousRecording;
+}
+
+/**
  * @tc.name: GetSymbolWithPcAndMap
  * @tc.desc: Test GetSymbolWithPcAndMap method
  * @tc.type: FUNC
@@ -332,6 +388,26 @@ HWTEST_F(SymbolsFileExtTest, GetSymbolWithPcAndMap, TestSize.Level0)
     map->name = "test_map";
     auto symbol2 = symbolsFile->GetSymbolWithPcAndMap(0x1000, map);
     EXPECT_EQ(symbol2.IsValid(), false);
+}
+
+/**
+ * @tc.name: HapFileSymbolsGetSymbolWithPcAndMapCoversArkExtensions
+ * @tc.desc: Test HapFileSymbols ark frame path for hap-like map suffixes.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileExtTest, HapFileSymbolsGetSymbolWithPcAndMapCoversArkExtensions, TestSize.Level0)
+{
+    const std::vector<std::string> suffixes = {"demo.hap", "demo.hsp", "demo.hqf", "demo.abc"};
+    for (const auto& suffix : suffixes) {
+        auto hapSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_HAP_FILE, suffix, getpid());
+        auto map = std::make_shared<DfxMap>();
+        map->name = suffix;
+        map->begin = 0x1000;
+        map->offset = 0x20;
+        hapSymbols->SetMapsInfo(map);
+        hapSymbols->SetBoolValue(true);
+        EXPECT_FALSE(hapSymbols->GetSymbolWithPcAndMap(0x1010, map).IsValid());
+    }
 }
 
 /**
@@ -421,6 +497,115 @@ HWTEST_F(SymbolsFileExtTest, FindSymbolFileEdgeCases, TestSize.Level0)
     
     // Test with non-existent file
     EXPECT_EQ(symbolsFile->FindSymbolFile(searchPaths, "non_existent_file.txt"), "");
+}
+
+/**
+ * @tc.name: FindSymbolFileUsesBasenameFallback
+ * @tc.desc: Test FindSymbolFile falls back to basename when full path misses search roots.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileExtTest, FindSymbolFileUsesBasenameFallback, TestSize.Level0)
+{
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+    char tempPath[] = "/data/local/tmp/symbols_ext_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    ASSERT_EQ(close(fd), 0);
+
+    std::string fullPath = tempPath;
+    std::string fileName = fullPath.substr(fullPath.find_last_of('/') + 1);
+    std::vector<std::string> searchPaths = {"/data/local/tmp"};
+
+    EXPECT_EQ(symbolsFile->FindSymbolFile(searchPaths, "/system/lib/" + fileName), fullPath);
+    EXPECT_EQ(unlink(tempPath), 0);
+}
+
+/**
+ * @tc.name: FindSymbolFileHonorsRecordingFlagForDirectPath
+ * @tc.desc: Test FindSymbolFile direct path lookup depends on recording mode.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileExtTest, FindSymbolFileHonorsRecordingFlagForDirectPath, TestSize.Level0)
+{
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+    char tempPath[] = "/data/local/tmp/symbols_recording_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    ASSERT_EQ(close(fd), 0);
+
+    const bool previousRecording = SymbolsFile::onRecording_;
+    SymbolsFile::onRecording_ = false;
+    EXPECT_TRUE(symbolsFile->FindSymbolFile({}, tempPath).empty());
+
+    SymbolsFile::onRecording_ = true;
+    EXPECT_EQ(symbolsFile->FindSymbolFile({}, tempPath), std::string(tempPath));
+
+    SymbolsFile::onRecording_ = previousRecording;
+    EXPECT_EQ(unlink(tempPath), 0);
+}
+
+/**
+ * @tc.name: FindSymbolFileReturnsHapContainerPath
+ * @tc.desc: Test FindSymbolFile returns hap container path for embedded entries.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileExtTest, FindSymbolFileReturnsHapContainerPath, TestSize.Level0)
+{
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+    EXPECT_EQ(symbolsFile->FindSymbolFile({}, "/data/local/tmp/demo.hap!ets/modules.abc"),
+        "/data/local/tmp/demo.hap");
+}
+
+/**
+ * @tc.name: CreateSymbolsFileByPathRecognizesKinds
+ * @tc.desc: Test CreateSymbolsFile chooses symbol kind by file path.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileExtTest, CreateSymbolsFileByPathRecognizesKinds, TestSize.Level0)
+{
+    auto kernelSymbols = SymbolsFile::CreateSymbolsFile(KERNEL_MMAP_NAME);
+    auto moduleSymbols = SymbolsFile::CreateSymbolsFile("sample.ko");
+    auto arkJsSymbols = SymbolsFile::CreateSymbolsFile("entry.hsp", getpid());
+    auto arkwebSymbols = SymbolsFile::CreateSymbolsFile("[anon:v8 runtime]", getpid());
+    auto elfSymbols = SymbolsFile::CreateSymbolsFile("/system/lib/libsample.so");
+
+    EXPECT_EQ(kernelSymbols->symbolFileType_, SYMBOL_KERNEL_FILE);
+    EXPECT_EQ(moduleSymbols->symbolFileType_, SYMBOL_KERNEL_MODULE_FILE);
+    EXPECT_EQ(arkJsSymbols->symbolFileType_, SYMBOL_HAP_FILE);
+    EXPECT_EQ(arkwebSymbols->symbolFileType_, SYMBOL_ARKWEB_V8_FILE);
+    EXPECT_EQ(elfSymbols->symbolFileType_, SYMBOL_ELF_FILE);
+}
+
+/**
+ * @tc.name: GetSymbolWithVaddrMarksMatchedOnce
+ * @tc.desc: Test GetSymbolWithVaddr records matched symbol only once.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileExtTest, GetSymbolWithVaddrMarksMatchedOnce, TestSize.Level0)
+{
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+    symbolsFile->symbols_.emplace_back(0x1000, 0x20, "symbol", "module");
+
+    EXPECT_TRUE(symbolsFile->GetSymbolWithVaddr(0x1008).IsValid());
+    EXPECT_TRUE(symbolsFile->GetSymbolWithVaddr(0x100C).IsValid());
+    ASSERT_EQ(symbolsFile->matchedSymbols_.size(), 1u);
+    EXPECT_EQ(symbolsFile->matchedSymbols_[0]->funcVaddr_, 0x1000u);
+}
+
+/**
+ * @tc.name: GetSymbolWithVaddrReturnsInvalidForGap
+ * @tc.desc: Test GetSymbolWithVaddr keeps gap addresses unmatched.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileExtTest, GetSymbolWithVaddrReturnsInvalidForGap, TestSize.Level0)
+{
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+    symbolsFile->symbols_.emplace_back(0x1000, 0x10, "symbol1", "module");
+    symbolsFile->symbols_.emplace_back(0x2000, 0x10, "symbol2", "module");
+    symbolsFile->AdjustSymbols();
+
+    EXPECT_FALSE(symbolsFile->GetSymbolWithVaddr(0x1500).IsValid());
+    EXPECT_TRUE(symbolsFile->matchedSymbols_.empty());
 }
 
 /**

@@ -214,6 +214,9 @@ HWTEST_F(VirtualRuntimeExtTest, FindArktsMapByAddr, TestSize.Level0)
     // Test with address in range
     EXPECT_NE(runtime_->FindArktsMapByAddr(0x1500), nullptr);
 
+    // Test with address before the first map
+    EXPECT_EQ(runtime_->FindArktsMapByAddr(0x500), nullptr);
+
     // Test with address out of range
     EXPECT_EQ(runtime_->FindArktsMapByAddr(0x2500), nullptr);
 }
@@ -545,6 +548,21 @@ HWTEST_F(VirtualRuntimeExtTest, FillMapsCache, TestSize.Level0)
     EXPECT_NE(runtime_->mapsCache_.find(0x1000), runtime_->mapsCache_.end());
 }
 
+HWTEST_F(VirtualRuntimeExtTest, FillMapsCacheAppendsExecSegment, TestSize.Level0)
+{
+    std::string currentFileName;
+    auto headMap = std::make_shared<DfxMap>(0x1000, 0x2000, 0, PROT_READ, "append.so");
+    auto execMap = std::make_shared<DfxMap>(0x2000, 0x3000, 0x1000, PROT_EXEC, "append.so");
+
+    runtime_->FillMapsCache(currentFileName, headMap);
+    runtime_->FillMapsCache(currentFileName, execMap);
+
+    ASSERT_NE(runtime_->mapsCache_.find(0x1000), runtime_->mapsCache_.end());
+    EXPECT_EQ(runtime_->mapsCache_[0x1000]->soEnd_, 0x3000u);
+    ASSERT_EQ(runtime_->offlineMapAddr_.size(), 1u);
+    EXPECT_EQ(runtime_->offlineMapAddr_[0], 0x1000u);
+}
+
 /**
  * @tc.name: HandleMapInfoReuseFilePathId
  * @tc.desc: Test repeated map of same path reuses filePathId
@@ -582,6 +600,23 @@ HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoDedupOfflineMap, TestSize.Level0)
     EXPECT_EQ(runtime_->offlineMapAddr_[0], 0x1000u);
 }
 
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoRejectsInvalidAndNonFixedMaps, TestSize.Level0)
+{
+    runtime_->HandleMapInfo({0x1000, 0x1000, PROT_EXEC}, "bad.so", 1, 1);
+    EXPECT_TRUE(runtime_->mapsCache_.empty());
+
+    runtime_->HandleMapInfo({0x1000, 0x1000, PROT_EXEC, 0}, "not_fixed.so", 1, 1);
+    EXPECT_TRUE(runtime_->mapsCache_.empty());
+}
+
+HWTEST_F(VirtualRuntimeExtTest, OfflineFileReportedTracksDuplicates, TestSize.Level0)
+{
+    EXPECT_TRUE(runtime_->MarkOfflineFileReported(7));
+    EXPECT_FALSE(runtime_->MarkOfflineFileReported(7));
+    runtime_->ResetOfflineFileReported(7);
+    EXPECT_TRUE(runtime_->MarkOfflineFileReported(7));
+}
+
 /**
  * @tc.name: FillSymbolNameId
  * @tc.desc: Test FillSymbolNameId method
@@ -597,6 +632,10 @@ HWTEST_F(VirtualRuntimeExtTest, FillSymbolNameId, TestSize.Level0)
 
     // Verify symbol name id was set
     EXPECT_GT(symbol.symbolNameId_, 0u);
+
+    DfxSymbol secondSymbol(0x2000, "test_func");
+    runtime_->FillSymbolNameId(callFrame, secondSymbol);
+    EXPECT_EQ(secondSymbol.symbolNameId_, symbol.symbolNameId_);
 }
 
 /**
@@ -614,9 +653,11 @@ HWTEST_F(VirtualRuntimeExtTest, FillFileSet, TestSize.Level0)
     runtime_->FillFileSet(callFrame, symbol);
 
     // Verify file set was updated
-    // Note: fileSet_ is private, so we can't directly access it here
-    // This test just ensures the method doesn't crash
-    EXPECT_TRUE(true);
+    EXPECT_TRUE(callFrame.needReport_ & FILE_PATH_ID_REPORT);
+
+    callFrame.needReport_ = 0;
+    runtime_->FillFileSet(callFrame, symbol);
+    EXPECT_FALSE(callFrame.needReport_ & FILE_PATH_ID_REPORT);
 }
 
 /**
@@ -649,6 +690,19 @@ HWTEST_F(VirtualRuntimeExtTest, MakeCallFrame, TestSize.Level0)
     EXPECT_EQ(callFrame.callFrameId_, symbol.symbolId_);
     EXPECT_EQ(callFrame.symbolNameId_, symbol.symbolNameId_);
     EXPECT_EQ(callFrame.filePathId_, symbol.filePathId_);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, MakeCallFrameUsesFallbackFileAndOffset, TestSize.Level0)
+{
+    CallFrame callFrame(0x3000);
+    DfxSymbol symbol(0x3000, "fallback_func");
+    symbol.funcVaddr_ = 0;
+    symbol.comm_ = "fallback_comm";
+
+    runtime_->MakeCallFrame(symbol, callFrame);
+
+    EXPECT_EQ(callFrame.filePath_, "fallback_comm");
+    EXPECT_EQ(callFrame.offset_, callFrame.ip_);
 }
 }
 }

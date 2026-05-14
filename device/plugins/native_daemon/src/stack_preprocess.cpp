@@ -2466,3 +2466,10 @@ std::string StackPreprocess::GetBuildId(const std::string& soName)
     std::string buildId = elf->GetBuildId();
     return buildId;
 }
+
+template void StackPreprocess::SetEventFrame<AllocEvent>(const ReportEventBaseData& rawStack,
+    AllocEvent* event, uint32_t stackMapId, const std::string& type);
+template void StackPreprocess::SetEventFrame<FreeEvent>(const ReportEventBaseData& rawStack,
+    FreeEvent* event, uint32_t stackMapId, const std::string& type);
+template void StackPreprocess::SetEventFrame<MmapEvent>(const ReportEventBaseData& rawStack,
+    MmapEvent* event, uint32_t stackMapId, const std::string& type);

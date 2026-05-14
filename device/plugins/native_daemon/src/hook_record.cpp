@@ -298,4 +298,6 @@ void ArktsMallocRecord::SerializeData(NativeHookProto stackData, SerializeInfo& 
         traceMoveEvent->set_addr(GetAddr());
         }, stackData);
 }
+
+template void HookRecord::SetSize<AllocEvent>(AllocEvent* event);
 }
