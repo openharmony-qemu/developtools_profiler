@@ -626,6 +626,56 @@ HWTEST_F(StackPreprocessExtTest, ParseRecordsFromBufferLeavesIncompleteRecordFor
 }
 
 /*
+@tc.name: ProcessStacklessMunmapWithAsyncConfig
+@tc.desc: test stackless MUNMAP_MSG does not build async stack frames.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ProcessStacklessMunmapWithAsyncConfig, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(true);
+    hookConfig.set_async_stack_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetFactory(std::make_shared<HookRecordFactory>(hookConfig));
+
+    BaseStackRawData baseData = {};
+    baseData.type = MUNMAP_MSG;
+    baseData.addr = reinterpret_cast<void*>(0x1000);
+    baseData.mallocSize = 4096;
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+
+    EXPECT_TRUE(preprocess.ProcessRawData(reinterpret_cast<int8_t*>(&baseData), sizeof(baseData),
+        rawData, hookRecord));
+    EXPECT_EQ(hookRecord, nullptr);
+}
+
+/*
+@tc.name: ProcessStacklessMunmapWithMatchInterval
+@tc.desc: test stackless MUNMAP_MSG with matching interval does not relock mtx.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ProcessStacklessMunmapWithMatchInterval, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_malloc_free_matching_interval(1);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetFactory(std::make_shared<HookRecordFactory>(hookConfig));
+
+    BaseStackRawData baseData = {};
+    baseData.type = MUNMAP_MSG;
+    baseData.addr = reinterpret_cast<void*>(0x2000);
+    baseData.mallocSize = 4096;
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+
+    EXPECT_TRUE(preprocess.ProcessRawData(reinterpret_cast<int8_t*>(&baseData), sizeof(baseData),
+        rawData, hookRecord));
+    EXPECT_EQ(hookRecord, nullptr);
+    EXPECT_EQ(preprocess.releasedPeriodListData_.size(), 1u);
+}
+
+/*
 @tc.name: SetFlushSizeTest
 @tc.desc: test SetFlushSize method with different sizes.
 @tc.type: FUNC

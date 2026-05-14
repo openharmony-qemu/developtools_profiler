@@ -41,6 +41,17 @@ void* FakeMmapFailed(void*, size_t, int, int, int, off_t)
     return MAP_FAILED;
 }
 
+void* FakeMmapFixed(void* addr, size_t, int, int, int, off_t)
+{
+    return addr;
+}
+
+struct SendInfoVec {
+    std::vector<uint64_t>* addrVec = nullptr;
+    std::vector<size_t>* sendSizeVec = nullptr;
+    std::vector<size_t>* payloadSizeVec = nullptr;
+};
+
 class HookClientExternTest : public ::testing::Test {
 public:
     static void SetUpTestCase()
@@ -58,6 +69,25 @@ public:
 
     void StartMock(std::vector<int> &typeVec, std::vector<int> &sizeVec)
     {
+        SendInfoVec sendInfo;
+        StartMockClient(typeVec, sizeVec, sendInfo);
+    }
+
+    void StartMock(std::vector<int> &typeVec, std::vector<int> &sizeVec, std::vector<uint64_t> &addrVec)
+    {
+        SendInfoVec sendInfo = {&addrVec, nullptr, nullptr};
+        StartMockClient(typeVec, sizeVec, sendInfo);
+    }
+
+    void StartMock(std::vector<int> &typeVec, std::vector<int> &sizeVec, std::vector<uint64_t> &addrVec,
+        std::vector<size_t> &sendSizeVec, std::vector<size_t> &payloadSizeVec)
+    {
+        SendInfoVec sendInfo = {&addrVec, &sendSizeVec, &payloadSizeVec};
+        StartMockClient(typeVec, sizeVec, sendInfo);
+    }
+
+    void StartMockClient(std::vector<int> &typeVec, std::vector<int> &sizeVec, SendInfoVec sendInfo)
+    {
         g_hookReady = true;
         g_hookPid.store(getpid());
         g_clientConfig.filterSize = 1;
@@ -65,12 +95,21 @@ public:
         g_hookClient = mockClient;
 
         EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_,
-            ::testing::_, ::testing::_)).WillRepeatedly([&typeVec, &sizeVec]
+            ::testing::_, ::testing::_)).WillRepeatedly([&typeVec, &sizeVec, sendInfo]
             (const void* data, size_t size, const void* payload, size_t payloadSize, int smbIndex) {
             if (data) {
                 const BaseStackRawData* data_ptr = static_cast<const BaseStackRawData*>(data);
                 typeVec.push_back(data_ptr->type);
                 sizeVec.push_back(data_ptr->mallocSize);
+                if (sendInfo.addrVec != nullptr) {
+                    sendInfo.addrVec->push_back(reinterpret_cast<uint64_t>(data_ptr->addr));
+                }
+                if (sendInfo.sendSizeVec != nullptr) {
+                    sendInfo.sendSizeVec->push_back(size);
+                }
+                if (sendInfo.payloadSizeVec != nullptr) {
+                    sendInfo.payloadSizeVec->push_back(payloadSize);
+                }
             }
             return true;
         });
@@ -281,6 +320,42 @@ HWTEST_F(HookClientExternTest, HookMmapFailedTest, TestSize.Level0)
     EXPECT_EQ(result, MAP_FAILED);
     EXPECT_TRUE(typeVec.empty());
     EXPECT_TRUE(sizeVec.empty());
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test MAP_FIXED mmap sends release event before mmap event.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientExternTest, HookMmapFixedReleaseTest, TestSize.Level0)
+{
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    std::vector<uint64_t> addrVec;
+    std::vector<size_t> sendSizeVec;
+    std::vector<size_t> payloadSizeVec;
+    StartMock(typeVec, sizeVec, addrVec, sendSizeVec, payloadSizeVec);
+    g_clientConfig.mmapDisable = false;
+    g_clientConfig.memtraceEnable = false;
+    g_clientConfig.sampleInterval = 0;
+    g_clientConfig.fpunwind = false;
+    g_clientConfig.asyncStackEnable = false;
+
+    void* fixedAddr = reinterpret_cast<void*>(0x1000);
+    void* result = hook_mmap(FakeMmapFixed, fixedAddr, SIZE, PROT_READ, MAP_FIXED | MAP_PRIVATE, -1, 0);
+    EXPECT_EQ(result, fixedAddr);
+
+    std::vector<int> expectedTypeVec = {MUNMAP_MSG, MMAP_MSG};
+    EXPECT_EQ(typeVec, expectedTypeVec);
+    std::vector<int> expectedSizeVec = {SIZE, SIZE};
+    EXPECT_EQ(sizeVec, expectedSizeVec);
+    ASSERT_EQ(addrVec.size(), expectedTypeVec.size());
+    EXPECT_EQ(addrVec[0], reinterpret_cast<uint64_t>(fixedAddr));
+    EXPECT_EQ(addrVec[1], reinterpret_cast<uint64_t>(fixedAddr));
+    ASSERT_EQ(sendSizeVec.size(), expectedTypeVec.size());
+    EXPECT_EQ(sendSizeVec[0], sizeof(BaseStackRawData));
+    ASSERT_EQ(payloadSizeVec.size(), expectedTypeVec.size());
+    EXPECT_EQ(payloadSizeVec[0], 0);
 }
 
 /**
