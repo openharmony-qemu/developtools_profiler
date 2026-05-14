@@ -56,7 +56,7 @@ constexpr uint32_t SHMEM_DRAIN_POLL_MS = 10;
 constexpr uint32_t SHMEM_DRAIN_QUIET_ROUNDS = 3;
 constexpr uint32_t SHMEM_DRAIN_TIMEOUT_MS = 5000;
 constexpr uint32_t MEM_LEAK_DONE_POLL_MS = 10;
-constexpr uint32_t MEM_LEAK_DONE_TIMEOUT_MS = 5000;
+constexpr uint32_t MEM_LEAK_DONE_TIMEOUT_MS = 30000;
 std::shared_ptr<Writer> g_buffWriter;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
