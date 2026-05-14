@@ -31,12 +31,13 @@ ohos_unittest("hidebug_test") {
   deps = [
     "$hidebug_path/frameworks/hidebug_ndk:ohhidebug",
     "$hidebug_path/frameworks/native:hidebug_native",
-    "$hidebug_path/interfaces/innerkits/native/hidebug_dump:hidebug_dump",
+    "$hidebug_path/interfaces/innerkits/native/hidebug_dump",
   ]
 
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
+    "faultloggerd:libasync_stack",
     "hilog:libhilog",
     "hiview:libucollection_client",
   ]

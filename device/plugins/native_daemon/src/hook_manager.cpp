@@ -73,7 +73,8 @@ constexpr int DOUBLE = 2;
 constexpr mode_t FILE_CACHE_MODE = S_IRUSR | S_IWUSR;
 const std::string FILE_CACHE_TEMPLATE = "native_hook_cache_XXXXXX";
 constexpr uint64_t ALL_NESTED_MASK_TYPE = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
-    ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROFILER;
+    ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROFILER | ASYNC_TYPE_CUSTOMIZE | ASYNC_TYPE_ARKTS_WORKER |
+    ASYNC_TYPE_ARKTS_TASKPOOL;
 const std::string MEM_LEAK_FILE_PERFIX = "memleak-native-orphansnapshot-";
 const std::string MEM_LEAK_FILE_SUFFIX = ".txt";
 const std::string MEM_LEAK_FILE_PATH = "/data/local/tmp/";

@@ -400,6 +400,39 @@ HiDebug_ErrorCode OH_HiDebug_RegisterMemDumpListener(const char* name, OH_HiDebu
  * @since 26.0.0
  */
 HiDebug_ErrorCode OH_HiDebug_UnregisterMemDumpListener(const char* name);
+
+/**
+ * @brief Profiler helper interfaces, acquire a AsyncContext for further using.
+ *      The corresponding unregister function is as follows:OH_HiDebug_ReleaseAsyncContext.
+ *
+ * @return AsyncContext.
+ * @since 26.0.0
+ */
+uint64_t OH_HiDebug_AcquireAsyncContext();
+
+/**
+ * @brief Profiler helper interfaces, push AsyncContext to the running context.
+ *
+ * @param ctx The context acquired by {@link OH_HiDebug_AcquireAsyncContext}.
+ * @since 26.0.0
+ */
+void OH_HiDebug_PushAsyncContext(uint64_t ctx);
+
+/**
+ * @brief Profiler helper interfaces, pop AsyncContext from the running context.
+ *
+ * @param ctx The context acquired by {@link OH_HiDebug_AcquireAsyncContext}.
+ * @since 26.0.0
+ */
+void OH_HiDebug_PopAsyncContext(uint64_t ctx);
+
+/**
+ * @brief Profiler helper interfaces, release AsyncContext to system.
+ *
+ * @param ctx The context acquired by {@link OH_HiDebug_AcquireAsyncContext}.
+ * @since 26.0.0
+ */
+void OH_HiDebug_ReleaseAsyncContext(uint64_t ctx);
 #ifdef __cplusplus
 }
 #endif // __cplusplus

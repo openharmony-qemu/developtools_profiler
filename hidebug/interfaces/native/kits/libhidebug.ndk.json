@@ -74,5 +74,21 @@
     {
         "first_introduced": "26",
         "name": "OH_HiDebug_UnregisterMemDumpListener"
+    },
+    {
+        "first_introduced": "26",
+        "name": "OH_HiDebug_AcquireAsyncContext"
+    },
+    {
+        "first_introduced": "26",
+        "name": "OH_HiDebug_PushAsyncContext"
+    },
+    {
+        "first_introduced": "26",
+        "name": "OH_HiDebug_PopAsyncContext"
+    },
+    {
+        "first_introduced": "26",
+        "name": "OH_HiDebug_ReleaseAsyncContext"
     }
 ]
