@@ -14,6 +14,10 @@
 #ifndef EBPF_STD_TYPE_H
 #define EBPF_STD_TYPE_H
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 namespace OHOS {
 namespace EBPF_TOOLS {
 struct HeaderDataItem {
