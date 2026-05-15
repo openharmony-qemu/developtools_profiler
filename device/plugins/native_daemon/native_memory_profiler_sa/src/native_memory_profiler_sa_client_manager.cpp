@@ -68,6 +68,20 @@ void ParseMemStatsFromString(std::string& stats, std::vector<SimplifiedMemStats>
         memStats.push_back(tmp);
     }
 }
+
+void SetDefaultGpuRange(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
+    if (config == nullptr) {
+        return;
+    }
+    std::vector<std::vector<uint64_t>> defaultRange;
+    constexpr uint64_t UINT64_MAX_VAL = 0xFFFFFFFFFFFFFFFFULL;
+    constexpr size_t GPU_TYPE_NUM = 5;
+    for (size_t i = 0; i < GPU_TYPE_NUM; i++) {
+        defaultRange.push_back({0, UINT64_MAX_VAL, 0, UINT64_MAX_VAL});
+    }
+    std::swap(config->gpuRange_, defaultRange);
+}
 }
 
 static std::mutex g_profilingCallbackMutex;
@@ -498,6 +512,7 @@ int32_t NativeMemoryProfilerSaClientManager::ParseResType(int32_t type,
     config->asyncStackEnable_ = false;
     if (internalType == InternalResourceType::OH_RES_TYPE_GPU) {
         config->traceMask_ = RES_GPU_MASK;
+        SetDefaultGpuRange(config);
     } else if (internalType == InternalResourceType::OH_RES_TYPE_FD) {
         config->traceMask_ = RES_FD_MASK;
     } else if (internalType == InternalResourceType::OH_RES_TYPE_THREAD) {
