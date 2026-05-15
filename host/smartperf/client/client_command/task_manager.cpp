@@ -661,7 +661,7 @@ void TaskManager::InitDataCsv()
         char fileName[PATH_MAX] = {0x00};
         if (realpath(fileName_.c_str(), fileName) == nullptr) {
             LOGE("the file not exeit");
-            return "";
+            return;
         }
         std::ofstream file(fileName_);
         if (file) {

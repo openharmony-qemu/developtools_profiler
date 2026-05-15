@@ -151,7 +151,7 @@ void VisualEffectAnalysis::VisualEffectRanking(const std::string &beginStr, cons
     char fileName[PATH_MAX] = {0x00};
     if (realpath(tracePase_.c_str(), fileName) == nullptr) {
         LOGE("the file not exeit");
-        return "";
+        return;
     }
     std::ifstream file(tracePase_);
     if (!file.is_open()) {
