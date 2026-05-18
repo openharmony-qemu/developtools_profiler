@@ -482,6 +482,26 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseSimplifiedConfigTargetSoN
     EXPECT_EQ(config->targetSoName_, inputConfig.targetSoName);
 }
 
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseSimplifiedConfigUsesResponseLibraryMode, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(config, nullptr);
+
+    SimplifiedMemConfig inputConfig;
+    inputConfig.sampleSize = 512;
+    inputConfig.responseLibraryMode = true;
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseSimplifiedConfig(config, inputConfig, 10), RET_OK);
+    EXPECT_TRUE(config->responseLibraryMode_);
+    EXPECT_EQ(config->shareMemorySize_, 4096u);
+
+    inputConfig.responseLibraryMode = false;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseSimplifiedConfig(config, inputConfig, 10), RET_OK);
+    EXPECT_FALSE(config->responseLibraryMode_);
+    EXPECT_EQ(config->shareMemorySize_, 16384u);
+}
+
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, CheckConfigHandlesDefaultsAndInvalidFields, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;

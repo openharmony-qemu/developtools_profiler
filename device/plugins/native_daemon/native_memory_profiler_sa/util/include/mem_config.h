@@ -67,6 +67,7 @@ struct SimplifiedMemConfig {
     bool asyncStackEnable = false;
     uint64_t asyncFlag = 0;
     std::string targetSoName;
+    bool responseLibraryMode = false;
 };
 
 struct MemAPIConfig {
