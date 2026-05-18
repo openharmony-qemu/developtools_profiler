@@ -140,6 +140,48 @@ ohos_source_set("hiprofiler_base") {
   }
 }
 
+ohos_source_set("hiprofiler_base_cfi") {
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  sources = [
+    "src/common.cpp",
+    "src/epoll_event_poller.cpp",
+    "src/event_notifier.cpp",
+    "src/i_semaphore.cpp",
+    "src/posix_semaphore.cpp",
+    "src/schedule_task_manager.cpp",
+    "src/std_semaphore.cpp",
+  ]
+
+  public_configs = [
+    ":hiprofiler_test_config",
+    ":hiprofiler_base_config",
+  ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "hisysevent:libhisysevent",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "os_account:os_account_innerkits",
+    "samgr:samgr_proxy",
+  ]
+
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+  }
+}
+
 ohos_source_set("mock_test_source") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

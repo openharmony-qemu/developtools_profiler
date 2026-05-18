@@ -83,10 +83,43 @@ ohos_source_set("network_profiler_cpp") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
+ohos_source_set("network_profiler_cpp_cfi") {
+  deps = [ ":network_profiler_data_cpp_gen" ]
+  external_deps = [
+    "protobuf:protobuf_lite",
+  ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":network_profiler_include_config" ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+  sources = network_profiler_data_codegen
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
 ohos_source_set("network_profiler_encoder") {
   deps = [ ":network_profiler_data_cpp_gen" ]
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":network_profiler_include_config" ]
+  sources = network_profiler_data_codegen_encoder
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_source_set("network_profiler_encoder_cfi") {
+  deps = [ ":network_profiler_data_cpp_gen" ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":network_profiler_include_config" ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
   sources = network_profiler_data_codegen_encoder
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

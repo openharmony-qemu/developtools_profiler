@@ -44,6 +44,35 @@ ohos_source_set("shared_memory_source") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
+ohos_source_set("shared_memory_source_cfi") {
+  sources = [
+    "src/share_memory_allocator.cpp",
+    "src/share_memory_block.cpp",
+  ]
+  public_configs = [
+    ":shared_memory_config",
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
+  ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+    external_deps = [
+      "bounds_checking_function:libsec_shared",
+      "c_utils:utils",
+      "protobuf:protobuf_lite",
+    ]
+  }
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
 ohos_shared_library("shared_memory") {
   deps = [ ":shared_memory_source" ]
   if (current_toolchain != host_toolchain) {

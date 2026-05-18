@@ -120,6 +120,24 @@ ohos_source_set("profiler_service_all_type_source") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
+ohos_source_set("profiler_service_all_type_source_cfi") {
+  deps = [ ":all_type_gen" ]
+  external_deps = [
+    "protobuf:protobuf_lite",
+  ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":public_configs" ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+  sources = all_type_codegen
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
 ########################################################
 profiler_service_interface_proto = [ "./profiler_service.proto" ]
 
@@ -246,6 +264,31 @@ ohos_source_set("plugin_service_proto") {
     "${OHOS_PROFILER_DIR}/device/services/ipc/include",
   ]
   public_configs = [ ":public_configs" ]
+  sources = plugin_service_interface_codegen
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_source_set("plugin_service_proto_cfi") {
+  deps = [
+    ":all_type_gen",
+    ":plugin_service_interface_proto_gen",
+  ]
+  public_deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:ipc" ]
+  external_deps = [
+    "protobuf:protobuf_lite",
+  ]
+  include_dirs = [
+    "$proto_out_dir",
+    "${OHOS_PROFILER_DIR}/device/services/ipc/include",
+  ]
+  public_configs = [ ":public_configs" ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
   sources = plugin_service_interface_codegen
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

@@ -63,3 +63,47 @@ ohos_source_set("network_profiler_service") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }
+
+ohos_source_set("network_profiler_service_cfi") {
+  public_configs = [ ":network_profiler_service_config" ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+
+  sources = [
+    "src/network_profiler_common.cpp",
+    "src/network_profiler_handle.cpp",
+    "src/network_profiler_manager.cpp",
+    "src/network_profiler_socket_service.cpp",
+  ]
+
+  public_deps = [
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base_cfi",
+    "${OHOS_PROFILER_DIR}/device/services/ipc:ipc_cfi",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
+    "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source_cfi",
+    "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto_cfi",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source_cfi",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/network_profiler:network_profiler_cpp_cfi",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/network_profiler:network_profiler_encoder_cfi",
+  ]
+
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "c_utils:utils",
+    "hisysevent:libhisysevent",
+    "init:libbegetutil",
+    "protobuf:protobuf_lite",
+  ]
+
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+  }
+
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
