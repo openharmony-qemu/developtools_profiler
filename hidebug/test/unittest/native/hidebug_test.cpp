@@ -24,19 +24,42 @@
 #include "hidebug/hidebug.h"
 #include "hidebug/hidebug_type.h"
 #include "hidebug_util.h"
+#if defined(__aarch64__)
+#include "async_stack.h"
+#endif
 #include "securec.h"
 #include <sys/mman.h>
 
 using namespace testing::ext;
 
+#if defined(__aarch64__)
+struct PackedNode {
+    uint64_t pc : 39;
+    uint64_t prevIdx : 25;
+};
+
+struct PackedStackId {
+    uint64_t id : 25;
+    uint64_t nr : 39;
+};
+#endif
+
 namespace {
 class HidebugTest : public ::testing::Test {
 protected:
-    void SetUp() override {}
+    void SetUp() override
+    {
+#if defined(__aarch64__)
+        system("param set hilog.debug.async_stack.enable_developer_stack true");
+#endif
+    }
     void TearDown() override
     {
         system("param set hiviewdfx.debugenv.hidebug_test 0");
         system("param set libc.hook_mode 0");
+#if defined(__aarch64__)
+        system("param set hilog.debug.async_stack.enable_developer_stack false");
+#endif
     }
 };
 
@@ -494,4 +517,53 @@ HWTEST_F(HidebugTest, OH_HiDebug_RequestTraceTest, TestSize.Level1)
         ASSERT_EQ(OH_HiDebug_RequestTrace(&config, callback), HIDEBUG_TRACE_ABNORMAL);
     }
 }
+
+#if defined(__aarch64__)
+std::vector<uint64_t> ReadPcsFromExternalBuffer(void* buffer, uint64_t stackIdValue)
+{
+    std::vector<uint64_t> pcs;
+    if (buffer == nullptr || stackIdValue == 0) {
+        std::cerr << "[Error] Buffer is null or stackId is 0" << std::endl;
+        return pcs;
+    }
+    PackedStackId* sid = reinterpret_cast<PackedStackId*>(&stackIdValue);
+    uint64_t currentIndex = sid->id;
+    uint64_t count = sid->nr;
+    PackedNode* nodes = reinterpret_cast<PackedNode*>(buffer);
+    for (uint64_t i = 0; i < count; i++) {
+        if (currentIndex == 0) {
+            break;
+        }
+        const PackedNode& node = nodes[currentIndex];
+        pcs.push_back(node.pc);
+        currentIndex = node.prevIdx;
+    }
+    return pcs;
+}
+
+/**
+ * @tc.name: OH_HiDebug_AcquireAsyncContext.
+ * @tc.desc: test OH_HiDebug_AcquireAsyncContext.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_AcquireAsyncContextTest, TestSize.Level1)
+{
+    size_t size = 1024 * 1024;
+    void* buffer = malloc(size);
+    ASSERT_NE(buffer, nullptr);
+    (void)memset_s(buffer, size, 0, size);
+    setenv("HAP_DEBUGGABLE", "true", 1);
+    DfxInitProfilerAsyncStack(buffer, size);
+    DfxSetAsyncStackType(ASYNC_TYPE_CUSTOMIZE | DEFAULT_ASYNC_TYPE);
+    uint64_t ctx = OH_HiDebug_AcquireAsyncContext();
+    ASSERT_NE(ctx, 0);
+    std::vector<uint64_t> pcs = ReadPcsFromExternalBuffer(buffer, ctx);
+    ASSERT_GT(pcs.size(), 0);
+    DfxSetAsyncStackType(ASYNC_TYPE_CUSTOMIZE);
+    OH_HiDebug_PushAsyncContext(ctx);
+    OH_HiDebug_PopAsyncContext(ctx);
+    OH_HiDebug_ReleaseAsyncContext(ctx);
+    free(buffer);
+}
+#endif
 } // namespace

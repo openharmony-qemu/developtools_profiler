@@ -21,6 +21,7 @@ ohos_shared_library("ohhidebug") {
   ]
 
   sources = [
+    "hidebug_async_stack.cpp",
     "hidebug_backtrace.cpp",
     "hidebug_crash_obj.cpp",
     "hidebug_ndk.cpp",
@@ -32,7 +33,7 @@ ohos_shared_library("ohhidebug") {
   }
   deps = [
     "../../../device/plugins/native_daemon:libnative_daemon_client",
-    "../../interfaces/innerkits/native/hidebug_dump:hidebug_dump",
+    "../../interfaces/innerkits/native/hidebug_dump",
     "../native:hidebug_native",
   ]
 
@@ -40,6 +41,7 @@ ohos_shared_library("ohhidebug") {
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "faultloggerd:dfx_signalhandler",
+    "faultloggerd:libasync_stack",
     "faultloggerd:libbacktrace_local",
     "faultloggerd:libdfx_dumpcatcher",
     "hilog:libhilog",
