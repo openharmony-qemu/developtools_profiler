@@ -264,7 +264,8 @@ void VisualEffectAnalysis::PushPowerToMap()
     }
     if (jittersTime - powerTime_ > oneHundred_ && (i_ + 1) < size) {
         i_ += 1;
-        powerTime_ = SPUtilesTye::StringToSometype<long long>(powerResult_[i_]["powerTime"]);
+        std::string powerTime = (powerResult_[i_])["powerTime"];
+        powerTime_ = SPUtilesTye::StringToSometype<long long>(powerTime);
         dynamic_Effect_Rs_Data_["currentNow"] = (powerResult_[i_])["currentNow"];
         dynamic_Effect_Rs_Data_["voltageNow"] = (powerResult_[i_])["voltageNow"];
     }
