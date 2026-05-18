@@ -86,6 +86,7 @@ common_deps = [
   "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
   "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
   "../../../base:hiprofiler_base",
+  "../../../base:libstack_common",
 ]
 
 config("native_daemon_test_config") {

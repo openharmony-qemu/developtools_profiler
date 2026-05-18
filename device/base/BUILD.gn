@@ -53,6 +53,58 @@ config("hiprofiler_base_config") {
   include_dirs = [ "include" ]
 }
 
+config("stack_common_public") {
+  visibility = [ "*:*" ]
+  include_dirs = [ "stack_common" ]
+}
+
+config("stack_common_export_config") {
+  cflags = [
+    "-std=c++17",
+    "-fPIC",
+  ]
+}
+
+# Shared by libstack_common (OHOS) and hiperf host/mingw via external_deps (static lib: headers + TU).
+ohos_static_library("stack_common_static") {
+  visibility = [ "*:*" ]
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  sources = [
+    "stack_common/stack_map_query.cpp",
+    "stack_common/kernel_map_lookup.cpp",
+  ]
+  public_configs = [
+    ":stack_common_public",
+    ":stack_common_export_config",
+  ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+  ]
+  if (is_ohos) {
+    external_deps += [ "faultloggerd:libunwinder" ]
+  } else {
+    external_deps += [ "faultloggerd:unwinder_host" ]
+  }
+}
+
+ohos_shared_library("libstack_common") {
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  visibility = [ "*:*" ]
+  deps = [ ":stack_common_static" ]
+  public_configs = [
+    ":stack_common_public",
+    ":stack_common_export_config",
+  ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "faultloggerd:libunwinder",
+  ]
+  install_enable = true
+  innerapi_tags = [ "platformsdk" ]
+}
+
 ohos_source_set("hiprofiler_base") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
