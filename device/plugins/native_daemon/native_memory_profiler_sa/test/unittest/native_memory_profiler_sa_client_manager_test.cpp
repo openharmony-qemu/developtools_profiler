@@ -524,6 +524,14 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseResTypeSetsExpectedMasks,
         static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_GPU), config), RET_OK);
     EXPECT_TRUE(config->mallocDisable_);
     EXPECT_EQ(config->traceMask_, RES_GPU_MASK);
+    EXPECT_EQ(config->gpuRange_.size(), 5u);
+    for (const auto& range : config->gpuRange_) {
+        EXPECT_EQ(range.size(), 4u);
+        EXPECT_EQ(range[0], 0u);
+        EXPECT_EQ(range[1], 0xFFFFFFFFFFFFFFFFULL);
+        EXPECT_EQ(range[2], 0u);
+        EXPECT_EQ(range[3], 0xFFFFFFFFFFFFFFFFULL);
+    }
 
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseResType(
         static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_FD), config), RET_OK);
