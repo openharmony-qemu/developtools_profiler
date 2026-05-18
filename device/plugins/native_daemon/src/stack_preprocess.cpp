@@ -772,8 +772,13 @@ bool StackPreprocess::ProcessRawData(const int8_t data[], uint32_t size,
     } else if (HandleNoStackEvent(hookRecord)) {
         return true;
     } else if (type == MUNMAP_MSG) {
-        std::lock_guard<std::mutex> guard(mtx_);
-        runtime_instance->RemoveMaps(reinterpret_cast<uint64_t>(hookRecord->GetAddr()));
+        {
+            std::lock_guard<std::mutex> guard(mtx_);
+            runtime_instance->RemoveMaps(reinterpret_cast<uint64_t>(hookRecord->GetAddr()));
+        }
+        if (rawData->stackSize == 0 && rawData->fpDepth == 0) {
+            return ProcessStacklessMunmap(hookRecord, rawData);
+        }
     } else if (type == NMD_MSG) {
         return ProcessNmdMsg(rawData);
     }  else if (type == END_MSG) {
@@ -846,6 +851,31 @@ bool StackPreprocess::ProcessEndMsg()
         PROFILER_LOG_INFO(LOG_CORE, "Received all END_MSG, stopping data collection");
         isStopTakeData_ = true;
         return false;
+    }
+    return true;
+}
+
+bool StackPreprocess::ProcessStacklessMunmap(std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData)
+{
+    std::visit([&](auto& stackData) {
+        if (hookConfig_.malloc_free_matching_interval() == 0) {
+            SetHookData(hookRecord, stackData);
+            return;
+        }
+        ReportEventBaseData eventData(rawData->stackContext, 0);
+        uint64_t addr = reinterpret_cast<uint64_t>(hookRecord->GetAddr());
+        std::lock_guard<std::mutex> guard(mtx_);
+        auto iter = applyAndReleaseMatchIntervallMap_.find(addr);
+        if (iter != applyAndReleaseMatchIntervallMap_.end()) {
+            applyAndReleaseMatchPeriodListData_.erase(iter->second);
+            applyAndReleaseMatchIntervallMap_.erase(addr);
+        } else {
+            releasedPeriodListData_.emplace_back(eventData);
+        }
+    }, stackData_);
+    if (hookRecord != nullptr) {
+        factory_->SaveHookRecord(std::move(hookRecord));
+        hookRecord = nullptr;
     }
     return true;
 }
@@ -1616,6 +1646,13 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, T& stackData)
         }
         return;
     }
+    auto hookData = stackData.add_events();
+    hookData->set_tv_sec(rawStack->stackContext->ts.tv_sec);
+    hookData->set_tv_nsec(rawStack->stackContext->ts.tv_nsec);
+    std::vector<CallFrame> callFrames;
+    SerializeInfo hookInfo = {&callFrames, 0, "", rawStack->stackContext->nodeType,
+                              rawStack->stackContext->nodeId, &hookConfig_};
+    hookRecord->SerializeData(hookData, hookInfo);
 }
 
 void StackPreprocess::ReportOfflineSymbolizationData()

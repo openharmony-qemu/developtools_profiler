@@ -1037,6 +1037,16 @@ static bool RefreshMmapRawData(StackRawData &rawdata, int prot, int flags, int f
     return true;
 }
 
+static bool SendMmapFixedReleaseEvent(HookClientHolder& client, void* addr, size_t length)
+{
+    if (addr == nullptr || length == 0) {
+        return true;
+    }
+    BaseStackRawData rawdata = {};
+    SetStackRawData(rawdata, MUNMAP_MSG, addr, length);
+    return client.SendStackWithPayload(&rawdata, sizeof(rawdata), nullptr, 0);
+}
+
 void* __attribute__((noinline)) hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     void* addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
@@ -1067,6 +1077,9 @@ void* __attribute__((noinline)) hook_mmap(void*(*fn)(void*, size_t, int, int, in
     StackRawData rawdata = {{{{0}}}};
     if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
         return ret;
+    }
+    if (((static_cast<uint32_t>(flags) & MAP_FIXED) != 0) && !SendMmapFixedReleaseEvent(client, addr, length)) {
+        PROFILER_LOG_WARN(LOG_CORE, "hook_mmap send MAP_FIXED release event failed");
     }
     SetStackRawData(rawdata, MMAP_MSG, ret, length);
     if (!RefreshMmapRawData(rawdata, prot, flags, fd, offset, length)) {

@@ -352,4 +352,31 @@ HWTEST_F(HookRecordFactoryTest, GetHookRecordSetsFpDepthAndStackData, TestSize.L
     EXPECT_EQ(dwarfRecord->GetRawStack()->stackSize, 16u);
     EXPECT_NE(dwarfRecord->GetRawStack()->stackData, nullptr);
 }
+
+/*
+ * @tc.name: GetStacklessMunmapRecord
+ * @tc.desc: test HookRecordFactory::GetHookRecord with stackless munmap message.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, GetStacklessMunmapRecord, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(true);
+    hookConfig.set_async_stack_enable(true);
+    HookRecordFactory factory(hookConfig);
+    std::vector<int8_t> buffer = MakeRecordBuffer(MUNMAP_MSG, 0);
+    ASSERT_FALSE(buffer.empty());
+    auto* rawdata = reinterpret_cast<BaseStackRawData*>(buffer.data());
+    rawdata->addr = reinterpret_cast<void*>(0x1000);
+    rawdata->mallocSize = 4096;
+    auto hookRecord = factory.GetHookRecord(buffer.data(), static_cast<uint32_t>(buffer.size()));
+    ASSERT_NE(hookRecord, nullptr);
+    auto rawStack = hookRecord->GetRawStack();
+    ASSERT_NE(rawStack, nullptr);
+    EXPECT_EQ(hookRecord->GetType(), MUNMAP_MSG);
+    EXPECT_EQ(rawStack->fpDepth, 0);
+    EXPECT_EQ(rawStack->stackSize, 0);
+    EXPECT_EQ(hookRecord->GetAddr(), reinterpret_cast<uint64_t>(rawdata->addr));
 }
+
+} // namespace OHOS::Developtools::NativeDaemon

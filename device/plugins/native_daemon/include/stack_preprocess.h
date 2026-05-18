@@ -391,6 +391,7 @@ private:
     bool ProcessMemoryTag(RawStackPtr& rawData);
     bool ProcessNmdMsg(RawStackPtr& rawData);
     bool ProcessEndMsg();
+    bool ProcessStacklessMunmap(std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);
     bool ProcessRegularStackData(std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);
     bool GetPcsByStackId(StackId stackId, std::vector<uintptr_t>& pcs, const std::string& errorMsg);
     bool BuildNestedAsyncCallFrames(const AsyncStackData* asyncData,

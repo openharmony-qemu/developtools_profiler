@@ -289,6 +289,12 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
             break;
     }
 
+    if (type == MUNMAP_MSG && size == sizeof(BaseStackRawData)) {
+        rawStack->fpDepth = 0;
+        rawStack->stackSize = 0;
+        return CreateStackRecord(type, rawStack);
+    }
+
     if (hookConfig_.fp_unwind()) {
         if (hookConfig_.async_stack_enable()) {
             rawStack->fpDepth = 0;
