@@ -65,7 +65,8 @@
         "zlib",
         "grpc",
         "abseil-cpp",
-        "netmanager_base"
+        "netmanager_base",
+        "ets_frontend"
       ],
       "third_party": [
         "libunwind"
