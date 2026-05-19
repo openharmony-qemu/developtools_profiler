@@ -2172,6 +2172,65 @@ HWTEST_F(StackPreprocessTest, HandleNoStackEventFreeTest, TestSize.Level0)
 }
 
 /*
+@tc.name: ResolveDmaSizeUpdatesSizeTest
+@tc.desc: test ResolveDmaSize updates DMA using event size from batch map.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, ResolveDmaSizeUpdatesSizeTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_filter_size(1024);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    constexpr uint32_t testPid = 1234;
+    constexpr uint32_t testFd = 5;
+    constexpr size_t testDmaSize = 4096;
+    auto rawStack = MakeRawStack(0, 0, DMABUF_MASK_INDEX + 1);
+    rawStack->stackContext->type = MEMORY_USING_MSG;
+    rawStack->stackContext->pid = testPid;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(testFd | RES_DMABUF_MASK);
+    rawStack->stackContext->mallocSize = 1;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    StackPreprocess::DmaFdSizeMap dmaFdSizeMap;
+    dmaFdSizeMap[testFd] = testDmaSize;
+    uint32_t dmaFdSizePid = testPid;
+    bool result = preprocess.ResolveDmaSize(hookRecord, dmaFdSizeMap, dmaFdSizePid);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(rawStack->stackContext->mallocSize, testDmaSize);
+}
+
+/*
+@tc.name: ResolveDmaSizeRejectsFilteredSizeTest
+@tc.desc: test ResolveDmaSize rejects DMA using event when resolved size is below filter.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, ResolveDmaSizeRejectsFilteredSizeTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_filter_size(1024);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    constexpr uint32_t testPid = 1234;
+    constexpr uint32_t testFd = 5;
+    auto rawStack = MakeRawStack(0, 0, DMABUF_MASK_INDEX + 1);
+    rawStack->stackContext->type = MEMORY_USING_MSG;
+    rawStack->stackContext->pid = testPid;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(testFd | RES_DMABUF_MASK);
+    rawStack->stackContext->mallocSize = 1;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    StackPreprocess::DmaFdSizeMap dmaFdSizeMap;
+    dmaFdSizeMap[testFd] = 512;
+    uint32_t dmaFdSizePid = testPid;
+    bool result = preprocess.ResolveDmaSize(hookRecord, dmaFdSizeMap, dmaFdSizePid);
+
+    EXPECT_FALSE(result);
+    EXPECT_EQ(rawStack->stackContext->mallocSize, 1U);
+}
+
+/*
 @tc.name: HandleNoStackEventMmapTest
 @tc.desc: test HandleNoStackEvent with MMAP event.
 @tc.type: FUNC

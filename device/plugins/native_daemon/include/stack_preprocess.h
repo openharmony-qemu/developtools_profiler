@@ -272,6 +272,7 @@ public:
     }
 private:
     using CallFrame = OHOS::Developtools::NativeDaemon::CallFrame;
+    using DmaFdSizeMap = std::unordered_map<uint32_t, size_t>;
     struct ElfSymbolTable {
         uint64_t textVaddr;
         uint32_t textOffset;
@@ -393,6 +394,12 @@ private:
     bool ProcessEndMsg();
     bool ProcessStacklessMunmap(std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);
     bool ProcessRegularStackData(std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);
+    bool ResolveDmaSize(HookRecordPtr& hookRecord, DmaFdSizeMap& dmaFdSizeMap, uint32_t& dmaFdSizePid);
+    bool IsDmaUsingRecord(const HookRecordPtr& hookRecord) const;
+    bool ParseDmaInfoLine(const std::string& line, uint32_t targetPid, DmaFdSizeMap& dmaFdSizeMap) const;
+    DmaFdSizeMap LoadDmaFdSizeMap(uint32_t pid) const;
+    bool PassesSizeFilter(size_t size) const;
+    uint32_t GetDmaFd(uint64_t addr) const;
     bool GetPcsByStackId(StackId stackId, std::vector<uintptr_t>& pcs, const std::string& errorMsg);
     bool BuildNestedAsyncCallFrames(const AsyncStackData* asyncData,
         const std::shared_ptr<HookRecord>& hookRecord, std::vector<CallFrame>& callFrames);
