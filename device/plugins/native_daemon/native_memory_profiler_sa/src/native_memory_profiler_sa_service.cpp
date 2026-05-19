@@ -316,6 +316,11 @@ int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfile
             "no profiling permission");
         return RET_ERR;
     }
+    if (config->startType_ == START_TYPE_API &&
+        config->pid_ != static_cast<int32_t>(IPCSkeleton::GetCallingPid())) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Start failed, api pid mismatch!");
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
+    }
     if (IsNativeDeamonRunning()) {
         PROFILER_LOG_ERROR(LOG_CORE, "Native Daemon is already running,errorcode is:%d.",
             static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
@@ -342,6 +347,11 @@ int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfile
         COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
             "no profiling permission");
         return RET_ERR;
+    }
+    if (config->startType_ == START_TYPE_API &&
+        config->pid_ != static_cast<int32_t>(IPCSkeleton::GetCallingPid())) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Start failed, api pid mismatch!");
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
     }
     if (IsNativeDeamonRunning()) {
         PROFILER_LOG_ERROR(LOG_CORE, "Native Daemon is already running,errorcode is:%d.",
@@ -485,6 +495,11 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
         COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
             "no profiling permission");
         return RET_ERR;
+    }
+    if (config->startType_ == START_TYPE_API &&
+        config->pid_ != static_cast<int32_t>(IPCSkeleton::GetCallingPid())) {
+        PROFILER_LOG_ERROR(LOG_CORE, "DumpData failed, api pid mismatch!");
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
     }
     if (IsNativeDeamonRunning()) {
         PROFILER_LOG_ERROR(LOG_CORE, "Native Daemon is already running,errorcode is:%d.",

@@ -45,6 +45,7 @@ const std::string TEST_NATIVE_NAME = "foundation";
 const std::string NATIVE_PARAM = "hiviewdfx.hiprofiler.native_memoryd.start";
 constexpr uint32_t TEST_DURATION = 10;
 constexpr uint32_t TEST_SHARE_MEMORY_SIZE = 4096;
+constexpr uint32_t START_TYPE_API = 1;
 static AccessTokenID g_selfTokenId;
 static TEST_COMMON::MockNativeToken* g_mock = nullptr;
 
@@ -1087,5 +1088,26 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcRejectsNegativePeerConfi
     ASSERT_NE(service, nullptr);
 
     EXPECT_FALSE(service->ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&peerConfig), sizeof(peerConfig)));
+}
+/**
+ * @tc.name: StartApiTypePidMismatchTest
+ * @tc.desc: Start returns PERMISSION_DENIED when startType is API but pid does not match calling pid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, StartApiTypePidMismatchTest, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(config, nullptr);
+    config->startType_ = START_TYPE_API;
+    config->pid_ = 99999;
+    config->duration_ = TEST_DURATION;
+    config->shareMemorySize_ = TEST_SHARE_MEMORY_SIZE;
+
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+
+    int32_t result = service->Start(config);
+    EXPECT_EQ(result, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED));
 }
 #endif // NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H
