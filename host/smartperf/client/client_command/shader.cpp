@@ -63,6 +63,11 @@ std::string Shader::ReadFileContent(const std::string& path)
         LOGD("The cur file do not change");
         return "";
     }
+    char fileName[PATH_MAX] = {0x00};
+    if (realpath(shaderFile.c_str(), fileName) == nullptr) {
+        LOGE("the file not exeit");
+        return "";
+    }
     std::ifstream file(shaderFile, std::ios::in | std::ios::binary);
     if (!file) {
         LOGE("the file not exeit");

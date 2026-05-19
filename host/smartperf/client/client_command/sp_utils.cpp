@@ -656,8 +656,7 @@ bool SPUtils::VerifyValueStr(std::map<std::string, std::string> &mapInfo, std::s
             errorInfo += "invalid parameter,not file name -- '" + a->first + "'";
             return false;
         }
-        if (std::string::npos != pos &&
-                (!SPUtils::FileAccess(a->second.substr(0, pos)))) { // determine if the directory exists
+        if (pos != std::string::npos && (!SPUtils::FileAccess(a->second.substr(0, pos)))) {
             errorInfo += "invalid parameter,file path not found -- '" + a->first + "'";
             return false;
         }

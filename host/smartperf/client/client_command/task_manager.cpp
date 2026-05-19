@@ -658,6 +658,11 @@ void TaskManager::DeleteTask(SpProfiler* task)
 void TaskManager::InitDataCsv()
 {
     if (!SPUtils::FileAccess(fileName_)) {
+        char fileName[PATH_MAX] = {0x00};
+        if (realpath(fileName_.c_str(), fileName) == nullptr) {
+            LOGE("the file not exeit");
+            return;
+        }
         std::ofstream file(fileName_);
         if (file) {
             std::string chmodCmd = "chmod 777 " + fileName_;
@@ -669,6 +674,11 @@ void TaskManager::InitDataCsv()
             return;
         }
     } else {
+        char fileName[PATH_MAX] = {0x00};
+        if (realpath(fileName_.c_str(), fileName) == nullptr) {
+            LOGE("the file not exeit");
+            return;
+        }
         std::ofstream file(fileName_, std::ios::trunc);
         if (!file) {
             LOGE("Unable to open file");
