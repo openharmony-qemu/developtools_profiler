@@ -549,7 +549,7 @@ int32_t NativeMemoryProfilerSaClientManager::ParseSimplifiedConfig(
     config->secondLargestSize_ = inputConfig.secondLargestSize;
     config->maxGrowthSize_ = inputConfig.maxGrowthSize;
     config->sampleInterval_ = inputConfig.sampleSize;
-    config->shareMemorySize_ = CALL_STACK_SMS;
+    config->shareMemorySize_ = inputConfig.responseLibraryMode ? LIB_SMS : CALL_STACK_SMS;
     config->statisticsInterval_ = FIVE_MINUTES;
     config->jsStackReport_ = true;
     config->maxJsStackDepth_ = JS_STACK_DEPS;
@@ -559,6 +559,7 @@ int32_t NativeMemoryProfilerSaClientManager::ParseSimplifiedConfig(
     config->asyncStackEnable_ = inputConfig.asyncStackEnable;
     config->asyncFlag_ = inputConfig.asyncFlag;
     config->targetSoName_ = inputConfig.targetSoName;
+    config->responseLibraryMode_ = inputConfig.responseLibraryMode;
     return RET_OK;
 }
 
