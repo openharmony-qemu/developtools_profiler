@@ -50,4 +50,5 @@ auto_generated_cpp_sources = [
   "ftrace_vmscan_event_parser.cpp",
   "ftrace_workqueue_event_parser.cpp",
   "ftrace_writeback_event_parser.cpp",
+  "ftrace_xacct_event_parser.cpp",
 ]

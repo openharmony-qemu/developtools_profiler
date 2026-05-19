@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option optimize_for = LITE_RUNTIME;
+
+// category: xacct
+// /sys/kernel/tracing/events/xacct/tracing_mark_write/format
+message TracingMarkWriteFormat {
+    int32 pid = 1;
+    string name = 2;
+    int32 start = 3;
+}

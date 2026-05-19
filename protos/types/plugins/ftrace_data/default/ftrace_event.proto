@@ -54,6 +54,7 @@ import "v4l2.proto";
 import "vmscan.proto";
 import "workqueue.proto";
 import "writeback.proto";
+import "xacct.proto";
 
 message FtraceEvent {
     uint64 timestamp = 1;
@@ -483,5 +484,6 @@ message FtraceEvent {
         HmfsReadExitFormat hmfs_read_exit_format = 4027;
         HmfsWriteEnterFormat hmfs_write_enter_format = 4028;
         HmfsWriteExitFormat hmfs_write_exit_format = 4029;
+        TracingMarkWriteFormat tracing_mark_write_format = 4030;
     }
 }

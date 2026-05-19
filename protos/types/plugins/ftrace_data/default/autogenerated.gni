@@ -50,4 +50,5 @@ auto_generated_ftrace_proto_sources = [
   "vmscan.proto",
   "workqueue.proto",
   "writeback.proto",
+  "xacct.proto",
 ]

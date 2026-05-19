@@ -526,3 +526,4 @@ dma_fence/dma_fence_init
 dma_fence/dma_fence_signaled
 dma_fence/dma_fence_wait_end
 dma_fence/dma_fence_wait_start
+xacct/tracing_mark_write
