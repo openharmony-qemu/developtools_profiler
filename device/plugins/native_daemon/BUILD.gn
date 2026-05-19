@@ -67,6 +67,13 @@ ohos_shared_library("libmemory_profiler") {
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
   ]
 
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+
   include_dirs = [
     "./include",
     "./src",
@@ -124,16 +131,16 @@ ohos_shared_library("libmemory_profiler") {
 
   deps = [
     ":hiprofiler_daemon.cfg",
-    "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service:network_profiler_service",
-    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
-    "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
-    "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
-    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
-    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
-    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
-    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_encoder",
+    "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service:network_profiler_service_cfi",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source_cfi",
+    "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source_cfi",
+    "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto_cfi",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source_cfi",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_cfi",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard_cfi",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_encoder_cfi",
     "../../base:libstack_common",
-    "../../base:hiprofiler_base",
+    "../../base:hiprofiler_base_cfi",
   ]
 
   if (hiprofiler_use_libunwind) {

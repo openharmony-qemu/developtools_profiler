@@ -92,6 +92,24 @@ ohos_source_set("native_hook_cpp") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
+ohos_source_set("native_hook_cpp_cfi") {
+  deps = [ ":native_hook_cpp_gen" ]
+  external_deps = [
+    "protobuf:protobuf_lite",
+  ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":native_hook_include_config" ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
+  sources = native_hook_codegen
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
 ohos_source_set("native_hook_cpp_standard") {
   deps = [ ":native_hook_cpp_gen" ]
   external_deps = [
@@ -99,6 +117,24 @@ ohos_source_set("native_hook_cpp_standard") {
   ]
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":native_hook_include_config" ]
+  sources = native_hook_codegen_standard
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_source_set("native_hook_cpp_standard_cfi") {
+  deps = [ ":native_hook_cpp_gen" ]
+  external_deps = [
+    "protobuf:protobuf_lite",
+  ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":native_hook_include_config" ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
   sources = native_hook_codegen_standard
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
@@ -120,6 +156,21 @@ ohos_source_set("native_hook_encoder") {
   deps = [ ":native_hook_cpp_gen" ]
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":native_hook_include_config" ]
+  sources = native_hook_codegen_encoder
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_source_set("native_hook_encoder_cfi") {
+  deps = [ ":native_hook_cpp_gen" ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":native_hook_include_config" ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+  }
   sources = native_hook_codegen_encoder
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
