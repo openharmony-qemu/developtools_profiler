@@ -69,7 +69,6 @@
         "ets_frontend"
       ],
       "third_party": [
-        "libunwind"
       ]
     },
     "hisysevent_config": [
