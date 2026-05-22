@@ -414,8 +414,10 @@ bool TraceFileWriter::Finish()
         stream_.seekp(filePos);
         CHECK_TRUE(stream_, false, "write final header to %s failed!", path_.c_str());
         CHECK_TRUE(stream_.flush(), false, "binary file %s flush failed!", path_.c_str());
-        PROFILER_LOG_DEBUG(LOG_CORE, "Finish: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(), writeBytes_,
-                   writeCount_);
+        if (writeCount_ % 5000 == 0) {
+            PROFILER_LOG_DEBUG(LOG_CORE, "Finish: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(), writeBytes_,
+                    writeCount_);
+        }
     }
     return true;
 }
@@ -460,8 +462,10 @@ bool TraceFileWriter::FlushStream()
         CHECK_TRUE(stream_.is_open(), false, "binary file %s not open or open failed!", path_.c_str());
         CHECK_TRUE(stream_.flush(), false, "binary file %s flush failed!", path_.c_str());
     }
-    PROFILER_LOG_DEBUG(LOG_CORE, "flush: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(),
-                       writeBytes_, writeCount_);
+    if (writeCount_ % 5000 == 0) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "flush: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(),
+            writeBytes_, writeCount_);
+    }
     return true;
 }
 
