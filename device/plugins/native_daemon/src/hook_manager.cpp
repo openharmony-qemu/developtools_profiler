@@ -26,6 +26,7 @@
 #include <thread>
 #include <unordered_set>
 #include <unordered_map>
+#include <dirent.h>
 #include "async_stack.h"
 #include "command_poller.h"
 #include "common.h"
@@ -1032,6 +1033,9 @@ void HookManager::UpdateFreezeExcludedPid(bool isAdd, int32_t targetPid, int32_t
 
 int HookManager::CreateMemLeakFile()
 {
+    if (!hookConfig_.native_orphansnapshots_enable()) {
+        return -1;
+    }
     constexpr int FILE_MODE = 0644;
     std::string tempPath = fileCacheDir_ + memLeakFileName_;
     int fileFd = open(tempPath.c_str(), O_CREAT | O_RDWR | O_TRUNC, FILE_MODE);
@@ -1121,9 +1125,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         hookConfig_.set_max_js_stack_depth(DEFAULT_MAX_JS_STACK_DEPTH);
     }
     if (hookConfig_.native_orphansnapshots_enable()) {
-        memLeakFileName_ = GetMemLeakFileName(memLeakFormat_);
-        std::string finalFileName = MEM_LEAK_FILE_PATH + memLeakFileName_;
-        std::remove(finalFileName.c_str());
+        CleanOldSnapshotFiles();
     }
 
     UpdateAsyncFlagConfig();
@@ -1181,6 +1183,26 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     }
 
     return true;
+}
+// Clean up old orphan snapshot files from previous sessions
+void HookManager::CleanOldSnapshotFiles()
+{
+    DIR* dir = opendir(MEM_LEAK_FILE_PATH.c_str());
+    if (dir != nullptr) {
+        struct dirent* entry;
+        while ((entry = readdir(dir)) != nullptr) {
+            std::string filename = entry->d_name;
+            if (filename.find(MEM_LEAK_FILE_PERFIX) == 0) {
+                std::string fullPath = MEM_LEAK_FILE_PATH + filename;
+                std::remove(fullPath.c_str());
+                PROFILER_LOG_INFO(LOG_CORE, "Removed old orphan snapshot file: %s", filename.c_str());
+            }
+        }
+        closedir(dir);
+    }
+    memLeakFileName_ = GetMemLeakFileName(memLeakFormat_);
+    std::string finalFileName = MEM_LEAK_FILE_PATH + memLeakFileName_;
+    std::remove(finalFileName.c_str());
 }
 
 void HookManager::HookManagerCtx::FlushStackArray()

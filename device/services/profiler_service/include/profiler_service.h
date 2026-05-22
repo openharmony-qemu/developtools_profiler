@@ -86,7 +86,7 @@ public:
     void StopService();
 
 private:
-    static constexpr size_t DEFAULT_REPEATER_BUFFER_SIZE = 2000;
+    static constexpr size_t DEFAULT_REPEATER_BUFFER_SIZE = 20000;
 
     using BufferConfig = ProfilerSessionConfig::BufferConfig;
 

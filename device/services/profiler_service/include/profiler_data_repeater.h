@@ -81,6 +81,7 @@ void ProfilerDataRepeater<T>::Reset()
 {
     std::unique_lock<std::mutex> lock(mutex_);
     closed_ = false;
+    dataQueue_.clear();
 }
 
 template <typename T>
@@ -88,7 +89,6 @@ void ProfilerDataRepeater<T>::Close()
 {
     {
         std::unique_lock<std::mutex> lock(mutex_);
-        dataQueue_.clear();
         closed_ = true;
     }
     slotCondVar_.notify_all();
@@ -127,7 +127,7 @@ std::shared_ptr<T> ProfilerDataRepeater<T>::TakePluginData()
     while (dataQueue_.empty() && !closed_) {
         itemCondVar_.wait(lock);
     }
-    if (closed_) {
+    if (closed_ && dataQueue_.empty()) {
         return nullptr;
     }
 
@@ -146,7 +146,7 @@ int ProfilerDataRepeater<T>::TakePluginData(std::vector<std::shared_ptr<T>>& plu
     while (dataQueue_.empty() && !closed_) {
         itemCondVar_.wait(lock);
     }
-    if (closed_) {
+    if (closed_ && dataQueue_.empty()) {
         return -1;
     }
 
@@ -168,6 +168,8 @@ void ProfilerDataRepeater<T>::ClearQueue()
 {
     std::unique_lock<std::mutex> lock(mutex_);
     dataQueue_.clear();
+    // Wake up producers waiting for space
+    slotCondVar_.notify_all();
 }
 
 using ProfilerDataRepeaterPtr = STD_PTR(shared, ProfilerDataRepeater<ProfilerPluginData>);

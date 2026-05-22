@@ -189,6 +189,7 @@ public:
     void SetMemLeakFd(int fd);
     int CreateMemLeakFile();
     bool HandleMemLeakDone();
+    void CleanOldSnapshotFiles();
     void WaitMemLeakDoneIfNeeded();
     void FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                             std::shared_ptr<HookRecord>& hookRecord);

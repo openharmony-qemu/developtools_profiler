@@ -36,7 +36,6 @@ using namespace OHOS::Developtools::NativeDaemon;
 namespace {
 const std::string TEST_PROCESS_NAME = "test_process";
 const int TEST_PID = 12345;
-const std::string TEST_NMD_FILE_PATH = "/data/local/tmp/nmd_test_process.txt";
 const std::string TEST_MEM_LEAK_FILE_PATH = "/data/local/tmp/mem_leak_test.txt";
 const std::string FILE_CACHE_DIR = "/data/log/hiprofiler/";
 const std::string MEM_LEAK_FILE_PATH = "/data/local/tmp/";
@@ -52,10 +51,6 @@ public:
     static void TearDownTestCase()
     {
         OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
-        int result = remove(TEST_NMD_FILE_PATH.c_str());
-        if (result != 0) {
-            std::cout << "Failed to remove file: " << TEST_NMD_FILE_PATH << std::endl;
-        }
     }
 
     void SetUp() override

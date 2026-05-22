@@ -36,6 +36,7 @@ using ProfilerServicePtr = STD_PTR(shared, ProfilerService);
 namespace {
 constexpr int ROUND_COUNT = 200;
 constexpr int FETCH_DATA_DELAY_US = 100 * 1000;
+constexpr int TEST_WAIT_START_SESSION_US = 200 * 1000;
 constexpr int TEST_SESSION_TIMEOUT_MS = 1000;
 constexpr int TIMEOUT_US = 3 * 1000 * 1000;
 
@@ -1332,6 +1333,9 @@ HWTEST_F(ProfilerServiceTest, SubscribeProfilerEvtBatchTest, TestSize.Level1)
 
     auto sessionCtx = service_->GetSessionContext(sessionId);
     ASSERT_NE(sessionCtx->stateRepeater, nullptr);
+    // StartSession中会在某种异常场景给IDE发消息，导致用例失败，此处等待处理完成后再继续
+    usleep(TEST_WAIT_START_SESSION_US);
+    sessionCtx->stateRepeater->Reset();
 
     // 只能存入小于maxsize的数据才能确保dataProducer线程正常退出
     int size = ProfilerService::DEFAULT_REPEATER_BUFFER_SIZE - 1;
