@@ -137,6 +137,7 @@ public:
     void GetDistr();
     void GetDistrTimes(std::string &line, long long &tamps);
     void SetWinId(std::string &winId);
+    std::string GetWeChatSurface(std::string &uniteLayer);
 private:
     FPS() {};
     FPS(const FPS &);
