@@ -155,6 +155,7 @@ HWTEST_F(HidebugNativeInterfaceTest, GetCpuUsageTest_ReturnNonNegative, TestSize
  */
 HWTEST_F(HidebugNativeInterfaceTest, GetCpuUsageTest_SecondCallReturnsCached, TestSize.Level0)
 {
+    int a = 0;
     auto& interface = HidebugNativeInterface::GetInstance();
     double first  = interface.GetCpuUsage();
     double second = interface.GetCpuUsage();
