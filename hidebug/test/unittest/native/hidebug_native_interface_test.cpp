@@ -147,5 +147,18 @@ HWTEST_F(HidebugNativeInterfaceTest, GetCpuUsageTest_ReturnNonNegative, TestSize
     double usage = interface.GetCpuUsage();
     ASSERT_GE(usage, 0.0);
 }
+
+/**
+ * @tc.name: GetCpuUsageTest_SecondCallReturnsCached
+ * @tc.desc: test GetCpuUsage second call returns cached value without recalculation.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugNativeInterfaceTest, GetCpuUsageTest_SecondCallReturnsCached, TestSize.Level0)
+{
+    auto& interface = HidebugNativeInterface::GetInstance();
+    double first  = interface.GetCpuUsage();
+    double second = interface.GetCpuUsage();
+    ASSERT_DOUBLE_EQ(first, second);
+}
 }
 }

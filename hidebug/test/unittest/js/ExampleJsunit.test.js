@@ -1198,8 +1198,8 @@ describe("HidebugJsTest", function () {
                 console.info("dumpJsRawHeapData success, filePath: " + filePath);
                 expect(filePath.length > 0).assertTrue();
             }).catch((err) => {
-                const validErrorCodes = [401, 11400106, 11400107, 11400108, 11400109,
-                                         11400110, 11400111, 11400112, 11400113];
+                const validErrorCodes = ["401", "11400106", "11400107", "11400108", "11400109",
+                                         "11400110", "11400111", "11400112", "11400113"];
                 console.info("dumpJsRawHeapData failed: " + err.code + ", " + err.message);
                 expect(validErrorCodes.includes(err.code)).assertTrue("Unexpected error code: " + err.code);
             })
