@@ -576,7 +576,6 @@ bool HookManager::HandleFileCacheHookContext(const std::shared_ptr<HookManagerCt
     ctx->readyFileNotifier = EventNotifier::Create(0, EventNotifier::NONBLOCK | EventNotifier::SEMAPHORE);
     CHECK_NOTNULL(ctx->readyFileNotifier, false, "create readyFileNotifier failed!");
     ctx->readyFilePoller = std::make_shared<EpollEventPoller>(DEFAULT_EVENT_POLLING_INTERVAL);
-    CHECK_NOTNULL(ctx->readyFilePoller, false, "create readyFilePoller FAILED!");
 
     ctx->readyFilePoller->Init();
     ctx->readyFilePoller->Start();
@@ -617,8 +616,6 @@ bool HookManager::HandleSharedMemoryHookContext(const std::shared_ptr<HookManage
             eventNotifier->GetFd());
         // start event poller task
         auto eventPoller = std::make_shared<EpollEventPoller>(DEFAULT_EVENT_POLLING_INTERVAL);
-        CHECK_NOTNULL(eventPoller, false, "create event poller FAILED!");
-
         eventPoller->Init();
         eventPoller->Start();
         ctx->eventPollerList.push_back(eventPoller);
@@ -889,7 +886,6 @@ bool HookManager::CreateQueueDataHandler(const std::shared_ptr<HookManagerCtx>& 
     clockid_t pluginDataClockId = COMMON::GetClockId(hookConfig_.clock());
     int stackSize = (hookConfig_.fp_unwind() ? STACK_DATA_SIZE : STACK_DATA_SIZE_DWARF);
     ctx->stackData = std::make_shared<StackDataRepeater>(static_cast<size_t>(stackSize));
-    CHECK_TRUE(ctx->stackData != nullptr, false, "Create StackDataRepeater FAIL");
     ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookConfig_, pluginDataClockId,
         fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
     ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
@@ -1177,7 +1173,6 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         std::string clientConfigStr = clientConfig.ToString();
         PROFILER_LOG_INFO(LOG_CORE, "send hook client config:%s\n", clientConfigStr.c_str());
         hookService_ = std::make_shared<HookService>(clientConfig, shared_from_this(), (hookCtx_.size() > 1));
-        CHECK_NOTNULL(hookService_, false, "HookService create failed!");
     }
 
     return true;

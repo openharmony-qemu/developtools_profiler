@@ -324,25 +324,7 @@ int main(int argc, char* argv[])
             return 0;
         }
         auto hookManager = std::make_shared<HookManager>();
-        if (hookManager == nullptr) {
-            if (lockFileFd > 0) {
-                flock(lockFileFd, LOCK_UN);
-                close(lockFileFd);
-                PROFILER_LOG_INFO(LOG_CORE, "create PluginManager FAILED!");
-                return 1;
-            }
-            return 0;
-        }
         auto commandPoller = std::make_shared<CommandPoller>(hookManager);
-        if (commandPoller == nullptr) {
-            if (lockFileFd > 0) {
-                flock(lockFileFd, LOCK_UN);
-                close(lockFileFd);
-                PROFILER_LOG_INFO(LOG_CORE, "create CommandPoller FAILED!");
-                return 1;
-            }
-            return 0;
-        }
         if (!commandPoller->OnConnect()) {
             if (lockFileFd > 0) {
                 flock(lockFileFd, LOCK_UN);

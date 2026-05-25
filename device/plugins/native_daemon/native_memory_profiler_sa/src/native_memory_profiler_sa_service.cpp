@@ -437,7 +437,6 @@ int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemory
     }
     auto args = GetCmdArgs(config);
     std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
-    CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
     uint32_t fd = 0;
     return StartHookLock(config, fd, hook, args, callback);
 }
@@ -744,7 +743,6 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     std::shared_ptr<TaskConfig> configCtx =
         std::make_shared<TaskConfig>(hook, config->pid_, config->processName_, config->filePath_, timerFd,
                                      config->startupMode_, fd, config->startType_);
-    CHECK_NOTNULL(hook, RET_ERR, "Failed to create TaskConfig");
     configCtx->callback = callback;
     if (!g_hasStartupMode && config->startupMode_) {
         g_hasStartupMode = true;
@@ -773,8 +771,6 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     }
     auto args = GetCmdArgs(config);
     std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
-    CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
-
     return StartHookLock(config, fd, hook, args);
 }
 
@@ -801,7 +797,6 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     }
     auto args = GetCmdArgs(config);
     std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
-    CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
     bool isInputZeroFd = (fd == 0); // when fd is 0, need to bring fd out of function to close.
     int32_t ret = StartHookLock(config, fd, hook, args);
     if (ret != RET_OK) {

@@ -179,7 +179,6 @@ int32_t NativeMemoryProfilerSaClientManager::Start(NativeMemProfilerType type, u
         return RET_ERR;
     }
     auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
     config->pid_ = static_cast<int32_t>(pid);
     config->duration_ = duration;
     config->sampleInterval_ = sampleIntervel;
@@ -300,7 +299,6 @@ int32_t NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid_t pid,
 {
     CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: StartPrintSimplifiedNmd invalid pid");
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
     config->printNmd_ = true;
     config->printNmdOnly_ = true;
     config->pid_ = static_cast<int32_t>(pid);
@@ -355,7 +353,6 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
     CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
     CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Simplified Start invalid pid");
     std::shared_ptr<NativeMemoryProfilerSaConfig> nConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
-    CHECK_NOTNULL(nConfig, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
     nConfig->pid_ = static_cast<int32_t>(pid);
     CHECK_TRUE(ParseSimplifiedConfig(nConfig, config, duration) == RET_OK,
         RET_ERR, "NativeMemoryProfilerSaClientManager: Parse simplified config failed");
@@ -369,8 +366,6 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
     CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
     CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid pid with MemSaConfig");
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
- 
     config->pid_ = static_cast<int32_t>(pid);
     config->duration_ = duration;
     config->statisticsInterval_ = FIVE_MINUTES;
@@ -844,7 +839,6 @@ int32_t NativeMemoryProfilerSaClientManager::GetGwpAsan(int fd, pid_t pid, GwpAs
     CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
     CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid pid with MemSaConfig");
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: saConfig is nullptr");
     config->pid_ = static_cast<int32_t>(pid);
     config->duration_ = GWP_DURATION;
     config->mallocDisable_ = true;
