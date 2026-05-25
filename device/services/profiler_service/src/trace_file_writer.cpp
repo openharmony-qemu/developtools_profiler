@@ -40,6 +40,7 @@ constexpr int SPLIT_FILE_MIN_SIZE = 200;    // split file min size
 constexpr int SPLIT_FILE_DEFAULT_NUM = 10;  // split file default num
 constexpr size_t DEFULT_PAGES = 32 * 256; // 32M
 constexpr int PIECE_HEAD_LEN = 4;
+constexpr int TRACE_WRITE_LOGLIMIT = 5000;
 } // namespace
 
 TraceFileWriter::TraceFileWriter(const std::string& path) : TraceFileWriter(path, false, 0, 0) {}
@@ -414,8 +415,10 @@ bool TraceFileWriter::Finish()
         stream_.seekp(filePos);
         CHECK_TRUE(stream_, false, "write final header to %s failed!", path_.c_str());
         CHECK_TRUE(stream_.flush(), false, "binary file %s flush failed!", path_.c_str());
-        PROFILER_LOG_DEBUG(LOG_CORE, "Finish: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(), writeBytes_,
-                   writeCount_);
+        if (writeCount_ % TRACE_WRITE_LOGLIMIT == 0) {
+            PROFILER_LOG_DEBUG(LOG_CORE, "Finish: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(), writeBytes_,
+                    writeCount_);
+        }
     }
     return true;
 }
@@ -460,8 +463,10 @@ bool TraceFileWriter::FlushStream()
         CHECK_TRUE(stream_.is_open(), false, "binary file %s not open or open failed!", path_.c_str());
         CHECK_TRUE(stream_.flush(), false, "binary file %s flush failed!", path_.c_str());
     }
-    PROFILER_LOG_DEBUG(LOG_CORE, "flush: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(),
-                       writeBytes_, writeCount_);
+    if (writeCount_ % TRACE_WRITE_LOGLIMIT == 0) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "flush: %s, bytes: %" PRIu64 ", count: %" PRIu64, path_.c_str(),
+            writeBytes_, writeCount_);
+    }
     return true;
 }
 
