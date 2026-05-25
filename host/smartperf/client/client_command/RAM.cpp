@@ -386,7 +386,7 @@ void RAM::GetPssAboutPid(struct PssValues &pss, std::vector<std::string> &params
             SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
     }
     if (params.size() > RAM_TENTH && params[0].find("ark") != std::string::npos &&
-        params[1].find("js") != std::string::npos) {
+        params[1].find("ts") != std::string::npos) {
         pss.arktsHeapPssValue =
             std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_THIRD]) +
             SPUtilesTye::StringToSometype<int>(params[RAM_NINTH]));
