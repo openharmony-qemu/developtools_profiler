@@ -272,7 +272,7 @@ FpsInfo FPS::GetFpsInfo()
 std::string FPS::GetWeChatSurface(std::string &uniteLayer)
 {
     if (pkgName.find("wechat") != std::string::npos || pkgName.find("alipay") != std::string::npos) {
-        uniteLayer = OHOS::SmartPerf::SPUtils::GetSurface();;
+        uniteLayer = OHOS::SmartPerf::SPUtils::GetSurface();
     }
     return uniteLayer;
 }
