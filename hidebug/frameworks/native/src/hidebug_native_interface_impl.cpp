@@ -255,7 +255,6 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
             HILOG_ERROR(LOG_CORE, "get cpuUsageInfo Failed");
             return;
         }
-        int times = 0;
         struct timespec ts;
         clock_gettime(CLOCK_MONOTONIC, &ts);
         int64_t curTimeMs = ts.tv_sec * MILLISECONDS_PER_SECOND +
