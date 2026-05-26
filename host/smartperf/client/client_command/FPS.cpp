@@ -253,6 +253,7 @@ FpsInfo FPS::GetFpsInfo()
             uniteLayer = OHOS::SmartPerf::SPUtils::GetSurface();
         } else if (!rkFlag && !isOtherDevice) {
             uniteLayer = "UniRender";
+            uniteLayer = GetWeChatSurface(uniteLayer);
         } else {
             uniteLayer = OHOS::SmartPerf::SPUtils::GetSurface();
             isNeedDump = true;
@@ -266,6 +267,14 @@ FpsInfo FPS::GetFpsInfo()
         }
     }
     return fpsInfoData;
+}
+
+std::string FPS::GetWeChatSurface(std::string &uniteLayer)
+{
+    if (pkgName.find("wechat") != std::string::npos || pkgName.find("alipay") != std::string::npos) {
+        uniteLayer = OHOS::SmartPerf::SPUtils::GetSurface();
+    }
+    return uniteLayer;
 }
 
 FpsInfo FPS::GetAppFps(std::string &uniteLayer)
@@ -294,7 +303,7 @@ bool FPS::SetOtherDeviceFlag()
 
 FpsInfo FPS::GetSurfaceFrame(const std::string& name)
 {
-    if (name == "UniRender" || isNeedDump || isHistoryHap) {
+    if (name == "ScreenNode" || name == "UniRender" || isNeedDump || isHistoryHap) {
         fpsInfo = GetFpsInfoByDump(name);
     } else {
         fpsInfo = GetFpsInfoByRs("");
