@@ -83,6 +83,7 @@ ohos_unittest("sp_daemon_ut") {
     "unittest/editor_command_test.cpp",
     "unittest/fps_test.cpp",
     "unittest/gpuCounter_test.cpp",
+    "unittest/navigation_test.cpp",
     "unittest/parse_click_complete_trace_test.cpp",
     "unittest/parse_radar_test.cpp",
     "unittest/parse_slide_fps_trace_test.cpp",
@@ -131,10 +132,6 @@ ohos_unittest("sp_daemon_ut") {
   if (arkxtest_able) {
     external_deps += [ "arkxtest:test_server_client" ]
     defines = [ "ARKTEST_ENABLE" ]
-  }
-
-  if (!support_jsapi) {
-    sources += [ "unittest/navigation_test.cpp" ]
   }
 }
 
