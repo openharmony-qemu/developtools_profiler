@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "securec.h"
 #include "include/hitrace_converter.h"
 #include "include/sp_log.h"
 #include "include/common.h"
@@ -176,24 +177,22 @@ bool TraceFileParser::ReadContentSection()
     {
         std::string content(data.begin(), data.end());
         size_t pos = 0;
-        constexpr size_t KERNEL_VERSION_PREFIX_LEN = 14;
-        constexpr size_t UNIX_TIME_MS_PREFIX_LEN = 12;
-        constexpr size_t BOOT_TIME_MS_PREFIX_LEN = 12;
+        constexpr size_t kernelPrefixLen = 14;
+        constexpr size_t unixPrefixLen = 12;
+        constexpr size_t bootPrefixLen = 12;
 
         while (pos < content.size()) {
             size_t lineEnd = content.find('\n', pos);
             if (lineEnd == std::string::npos) {
                 lineEnd = content.size();
             }
-
             std::string line = content.substr(pos, lineEnd - pos);
-
             if (line.find("KERNEL_VERSION:") == 0) {
-                metadata_.kernelVersion = line.substr(KERNEL_VERSION_PREFIX_LEN);
+                metadata_.kernelVersion = line.substr(kernelPrefixLen);
             } else if (line.find("UNIX_TIME_MS:") == 0) {
-                metadata_.unixTimeMs = std::stoull(line.substr(UNIX_TIME_MS_PREFIX_LEN));
+                metadata_.unixTimeMs = std::stoull(line.substr(unixPrefixLen));
             } else if (line.find("BOOT_TIME_MS:") == 0) {
-                metadata_.bootTimeMs = std::stoull(line.substr(BOOT_TIME_MS_PREFIX_LEN));
+                metadata_.bootTimeMs = std::stoull(line.substr(bootPrefixLen));
             }
 
             pos = lineEnd + 1;
@@ -210,7 +209,9 @@ bool TraceFileParser::ParsePageTimestamps(const std::vector<uint8_t>& data, uint
 
     while (offset + sizeof(PageHeader) <= data.size()) {
         PageHeader pageHeader = {};
-        memcpy_s(&pageHeader, sizeof(pageHeader), data.data() + offset, sizeof(PageHeader));
+        if (memcpy_s(&pageHeader, sizeof(pageHeader), data.data() + offset, sizeof(PageHeader)) != EOK) {
+            break;
+        }
 
         if (pageHeader.size == 0 || pageHeader.size > PAGE_SIZE) {
             break;
@@ -340,7 +341,13 @@ bool TraceClipper::ClipCpuTraceData(const CpuTraceData& cpuData, uint64_t startT
 
     while (offset + sizeof(PageHeader) <= originalData.size()) {
         PageHeader pageHeader = {};
-        memcpy_s(&pageHeader, sizeof(pageHeader), originalData.data() + offset, sizeof(PageHeader));
+        if (memcpy_s(&pageHeader, sizeof(pageHeader), originalData.data() + offset, sizeof(PageHeader)) != EOK) {
+            offset += PAGE_SIZE;
+            if (offset >= originalData.size()) {
+                break;
+            }
+            continue;
+        }
 
         if (pageHeader.size == 0 || pageHeader.size > PAGE_SIZE) {
             offset += PAGE_SIZE;

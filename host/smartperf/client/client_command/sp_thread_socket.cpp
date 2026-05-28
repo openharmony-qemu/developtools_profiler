@@ -859,7 +859,8 @@ void SpThreadSocket::SendTraceFile(const std::string& recvBuf, SpServerSocket &s
             std::string cmd = "cp -r " + traceOriginPath + traceFile + " " + sysTracePath;
             SPUtils::LoadCmd(cmd, cmdResult);
             const std::string sysTraceFilePath = sysTracePath + traceFile;
-            const std::string sendTraceFileName = traceDir + "profilerTrace" + std::to_string(collectTraceNum_) + ".ftrace";
+            const std::string sendTraceFileName = traceDir + "profilerTrace" +
+                std::to_string(collectTraceNum_) + ".ftrace";
             SPUtils::ConvertTraceByTime(sysTraceFilePath, sendTraceFileName, traceTime, errMassage);
             GetSocketPort(recvBuf);
             ConnectAndSendFile(spSocket, sendTraceFileName);
