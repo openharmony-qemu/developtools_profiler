@@ -75,7 +75,7 @@ HWTEST_F(SPdaemonAIScheduleTest, ItemDataTest001, TestSize.Level1)
     AISchedule &aiSchedule = AISchedule::GetInstance();
     aiSchedule.SetProcessId("12345");
     
-    size_t size = aiSchedule.ItemData();
+    size_t size = aiSchedule.ItemData().size();
     
     EXPECT_EQ(size, 0);
 }
