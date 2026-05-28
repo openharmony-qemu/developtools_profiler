@@ -172,30 +172,33 @@ bool TraceFileParser::ReadContentSection()
     return true;
 }
 
-void TraceFileParser::ParseBaseInfo(const std::vector<uint8_t>& data)
-{
-    std::string content(data.begin(), data.end());
-    size_t pos = 0;
+    void TraceFileParser::ParseBaseInfo(const std::vector<uint8_t>& data)
+    {
+        std::string content(data.begin(), data.end());
+        size_t pos = 0;
+        constexpr size_t KERNEL_VERSION_PREFIX_LEN = 14;
+        constexpr size_t UNIX_TIME_MS_PREFIX_LEN = 12;
+        constexpr size_t BOOT_TIME_MS_PREFIX_LEN = 12;
 
-    while (pos < content.size()) {
-        size_t lineEnd = content.find('\n', pos);
-        if (lineEnd == std::string::npos) {
-            lineEnd = content.size();
+        while (pos < content.size()) {
+            size_t lineEnd = content.find('\n', pos);
+            if (lineEnd == std::string::npos) {
+                lineEnd = content.size();
+            }
+
+            std::string line = content.substr(pos, lineEnd - pos);
+
+            if (line.find("KERNEL_VERSION:") == 0) {
+                metadata_.kernelVersion = line.substr(KERNEL_VERSION_PREFIX_LEN);
+            } else if (line.find("UNIX_TIME_MS:") == 0) {
+                metadata_.unixTimeMs = std::stoull(line.substr(UNIX_TIME_MS_PREFIX_LEN));
+            } else if (line.find("BOOT_TIME_MS:") == 0) {
+                metadata_.bootTimeMs = std::stoull(line.substr(BOOT_TIME_MS_PREFIX_LEN));
+            }
+
+            pos = lineEnd + 1;
         }
-
-        std::string line = content.substr(pos, lineEnd - pos);
-
-        if (line.find("KERNEL_VERSION:") == 0) {
-            metadata_.kernelVersion = line.substr(16);
-        } else if (line.find("UNIX_TIME_MS:") == 0) {
-            metadata_.unixTimeMs = std::stoull(line.substr(14));
-        } else if (line.find("BOOT_TIME_MS:") == 0) {
-            metadata_.bootTimeMs = std::stoull(line.substr(14));
-        }
-
-        pos = lineEnd + 1;
     }
-}
 
 bool TraceFileParser::ParsePageTimestamps(const std::vector<uint8_t>& data, uint64_t& firstTs, uint64_t& lastTs)
 {
@@ -207,7 +210,7 @@ bool TraceFileParser::ParsePageTimestamps(const std::vector<uint8_t>& data, uint
 
     while (offset + sizeof(PageHeader) <= data.size()) {
         PageHeader pageHeader = {};
-        std::memcpy(&pageHeader, data.data() + offset, sizeof(PageHeader));
+        memcpy_s(&pageHeader, sizeof(pageHeader), data.data() + offset, sizeof(PageHeader));
 
         if (pageHeader.size == 0 || pageHeader.size > PAGE_SIZE) {
             break;
@@ -279,7 +282,7 @@ bool TraceClipper::SaveToFile(const std::string& outputPath)
 
     outFile.write(reinterpret_cast<const char*>(&header), sizeof(TraceFileHeader));
 
-    auto WriteContentSection = [&outFile](uint8_t type, const std::vector<uint8_t>& data) {
+    auto writeContentSection = [&outFile](uint8_t type, const std::vector<uint8_t>& data) {
         TraceFileContentHeader contentHeader = {};
         contentHeader.type = type;
         contentHeader.length = static_cast<uint32_t>(data.size());
@@ -289,15 +292,15 @@ bool TraceClipper::SaveToFile(const std::string& outputPath)
         }
     };
 
-    WriteContentSection(CONTENT_TYPE_BASE_INFO, std::vector<uint8_t>());
-    WriteContentSection(CONTENT_TYPE_EVENTS_FORMAT, parser_->GetEventFormats());
-    WriteContentSection(CONTENT_TYPE_CMDLINES, parser_->GetCmdLines());
-    WriteContentSection(CONTENT_TYPE_TGIDS, parser_->GetTgids());
+    writeContentSection(CONTENT_TYPE_BASE_INFO, std::vector<uint8_t>());
+    writeContentSection(CONTENT_TYPE_EVENTS_FORMAT, parser_->GetEventFormats());
+    writeContentSection(CONTENT_TYPE_CMDLINES, parser_->GetCmdLines());
+    writeContentSection(CONTENT_TYPE_TGIDS, parser_->GetTgids());
 
     for (const auto& kv : clippedCpuData_) {
         int cpuId = kv.first;
         const std::vector<uint8_t>& cpuData = kv.second;
-        WriteContentSection(CONTENT_TYPE_CPU_RAW + cpuId, cpuData);
+        writeContentSection(CONTENT_TYPE_CPU_RAW + cpuId, cpuData);
     }
 
     outFile.close();
@@ -337,7 +340,7 @@ bool TraceClipper::ClipCpuTraceData(const CpuTraceData& cpuData, uint64_t startT
 
     while (offset + sizeof(PageHeader) <= originalData.size()) {
         PageHeader pageHeader = {};
-        std::memcpy(&pageHeader, originalData.data() + offset, sizeof(PageHeader));
+        memcpy_s(&pageHeader, sizeof(pageHeader), originalData.data() + offset, sizeof(PageHeader));
 
         if (pageHeader.size == 0 || pageHeader.size > PAGE_SIZE) {
             offset += PAGE_SIZE;
@@ -367,7 +370,8 @@ void TraceClipper::UpdateFileHeader(TraceFileHeader& header)
     header.reserved = (static_cast<uint64_t>(cpuCount) << 1) | (header.reserved & 1);
 }
 
-bool ConvertTraceByTime(const std::string& inputPath, const std::string& outputPath, uint64_t durationSec, std::string& errorMsg)
+bool ConvertTraceByTime(const std::string& inputPath, const std::string& outputPath,
+    uint64_t durationSec, std::string& errorMsg)
 {
     auto parser = std::make_shared<TraceFileParser>(inputPath);
     if (!parser->Parse()) {

@@ -1087,7 +1087,8 @@ void SPUtils::OverDumpFun()
     LoadCmd(dumpCmd, cmdResult);
 }
 
-bool SPUtils::ConvertTraceByTime(const std::string& inputPath, const std::string& outputPath, uint64_t durationSec, std::string& errorMsg)
+bool SPUtils::ConvertTraceByTime(const std::string& inputPath, const std::string& outputPath,
+    uint64_t durationSec, std::string& errorMsg)
 {
     auto parser = std::make_shared<TraceFileParser>(inputPath);
     if (!parser->Parse()) {

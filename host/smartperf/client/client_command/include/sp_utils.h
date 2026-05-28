@@ -179,7 +179,8 @@ std::string GetWinId();
 void GetWinIdNum(std::string &hidumperStr, std::string &winId);
 void EnDumpFun(const std::string &winId);
 void OverDumpFun();
-bool ConvertTraceByTime(const std::string& inputPath, const std::string& outputPath, uint64_t durationSec, std::string& errorMsg);
+bool ConvertTraceByTime(const std::string& inputPath, const std::string& outputPath,
+    uint64_t durationSec, std::string& errorMsg);
 };
 }
 }
