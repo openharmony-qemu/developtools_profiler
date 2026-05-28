@@ -59,6 +59,7 @@ std::shared_ptr<OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaConfig> 
     config->filePath_ = "/data/local/tmp/sa_coverage_test.htrace";
     config->duration_ = TEST_DURATION;
     config->shareMemorySize_ = TEST_SHARE_MEMORY_SIZE;
+    config->typeFileName_ = "test";
     return config;
 }
 }
