@@ -87,6 +87,10 @@ private:
     static void StopHookTask(uint32_t pid, std::shared_ptr<TaskConfig> config, int32_t finishErrorCode);
     static int32_t StopHookByType(uint32_t pid, std::string& name, int32_t finishErrorCode, bool isAsync);
     int32_t CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
+    int32_t CheckTaskLimit(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    int32_t CheckStartupModeConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    int32_t CheckPidNameConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    int32_t CheckFilePath(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     void FillTaskConfigContext(int32_t pid, const std::string& name);
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
     std::string GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
@@ -112,7 +116,8 @@ private:
 private:
     std::mutex gpuMtx_;
     std::string startupModeProcessName_;
-    int32_t taskMaxNum_ = 4;
+    int32_t taskMaxNum_ = 2;
+    int32_t globalTaskMaxNum_ = 4;
     std::atomic<bool> started_ = false;
 };
 } // namespace OHOS::Developtools::NativeDaemon
