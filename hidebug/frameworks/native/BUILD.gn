@@ -58,6 +58,7 @@ ohos_shared_library("hidebug_native") {
     "hitrace:hitrace_meter",
     "hiview:libucollection_client",
     "hiview:libucollection_utility",
+    "icu:shared_icuuc",
     "init:libbegetutil",
     "ipc:ipc_single",
     "storage_service:storage_manager_acl",
