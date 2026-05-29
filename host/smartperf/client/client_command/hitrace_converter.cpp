@@ -177,9 +177,9 @@ bool TraceFileParser::ReadContentSection()
     {
         std::string content(data.begin(), data.end());
         size_t pos = 0;
-        constexpr size_t kernelPrefixLen = 14;
-        constexpr size_t unixPrefixLen = 12;
-        constexpr size_t bootPrefixLen = 12;
+        constexpr size_t kernelPrefixLen = 16;
+        constexpr size_t unixPrefixLen = 14;
+        constexpr size_t bootPrefixLen = 14;
 
         while (pos < content.size()) {
             size_t lineEnd = content.find('\n', pos);
