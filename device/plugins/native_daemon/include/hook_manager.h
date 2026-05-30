@@ -186,7 +186,7 @@ public:
     }
     void SetNmdInfo(std::pair<uint32_t, uint32_t>);
     void SetGwpFd(uint32_t fd);
-    void SetMemLeakFd(uint32_t fd);
+    void SetMemLeakFd(int fd);
     int CreateMemLeakFile();
     bool HandleMemLeakDone();
     void WaitMemLeakDoneIfNeeded();
@@ -283,7 +283,7 @@ private:
     uint32_t gwpAsanMaxStackDepth_ = 0;
     uint32_t gwpFd_ = 0;
     MemLeakFormat memLeakFormat_ = MemLeakFormat::TYPE_DISABLE;
-    uint32_t memLeakFd_ = 0;
+    int memLeakFd_ = -1;
     int tempMemLeakFd_ = -1;
     uint32_t memLeakLimit_ = 0;
     std::string memLeakFileName_;

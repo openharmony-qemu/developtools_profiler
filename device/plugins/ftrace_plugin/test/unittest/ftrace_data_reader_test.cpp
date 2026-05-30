@@ -33,14 +33,16 @@ constexpr uint32_t PAGE_SIZE = 4096;
 class FtraceDataReaderTest : public ::testing::Test {
 protected:
     std::mt19937 gen_;
-    std::string path_ = "raw_data.bin";
+    std::string path_ = "/data/local/tmp/raw_data.bin";
     long dataSize_ = RAW_DATA_SIZE;
 
     void SetUp() override
     {
-        std::ofstream fout(path_);
+        std::ofstream fout(path_, std::ios::binary);
+        ASSERT_TRUE(fout.is_open()) << "Failed to open " << path_;
         std::string data = RandomString(dataSize_);
         fout.write(data.data(), data.size());
+        fout.close();
     }
 
     void TearDown() override

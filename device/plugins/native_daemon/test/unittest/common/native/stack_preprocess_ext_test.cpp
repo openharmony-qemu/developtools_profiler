@@ -543,8 +543,9 @@ HWTEST_F(StackPreprocessExtTest, BuildCallFramesTest, TestSize.Level0)
     
     // Create test data
     RawStackPtr rawData = MakeRawStack(1, 100, 0);
-    const char* testTag = "test_memory_tag0";
-    rawData->data = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(testTag));
+    constexpr size_t regBufferSize = sizeof(uint64_t) * 34; // Enough for ARM64 registers
+    rawData->baseStackData = std::make_unique<uint8_t[]>(regBufferSize);
+    rawData->data = rawData->baseStackData.get();
     auto hookRecord = std::make_shared<HookRecord>(rawData);
     std::vector<CallFrame> callFrames = MakeFrames(123);
     
