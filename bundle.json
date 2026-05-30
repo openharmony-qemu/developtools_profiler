@@ -45,6 +45,7 @@
         "hisysevent",
         "hitrace",
         "hiview",
+        "icu",
         "ipc",
         "init",
         "libbpf",

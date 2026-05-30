@@ -40,6 +40,7 @@ ohos_shared_library("hidebug_ani") {
     "common_event_service:cesfwk_innerkits",
     "hilog:libhilog",
     "hiview:libfaultlogger",
+    "icu:shared_icuuc",
     "init:libbegetutil",
     "ipc:ipc_core",
     "runtime_core:ani",
