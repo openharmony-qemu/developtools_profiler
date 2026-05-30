@@ -211,7 +211,7 @@ bool SocketContext::SendRaw(uint32_t pnum, const int8_t* data, uint32_t size, in
 #ifndef NO_PROTOBUF
 bool SocketContext::SendProtobuf(uint32_t pnum, google::protobuf::Message& pmsg)
 {
-    int size = pmsg.ByteSizeLong();
+    size_t size = pmsg.ByteSizeLong();
     CHECK_TRUE(size > 0, false, "%s:size less than or equal to 0", __func__);
     int8_t* data = reinterpret_cast<int8_t*>(malloc(size));
     if (data == nullptr) {
@@ -221,13 +221,13 @@ bool SocketContext::SendProtobuf(uint32_t pnum, google::protobuf::Message& pmsg)
     struct ProtocolHead phead;
     phead.protoType = PROTOCOL_TYPE_PROTOBUF | pnum;
     phead.protoSize = size + sizeof(struct ProtocolHead);
-    if (send(socketHandle_, reinterpret_cast<int8_t*>(&phead), sizeof(struct ProtocolHead), 0) == -1) {
-        PROFILER_LOG_ERROR(LOG_CORE, "SendProtobuf Send Head ERR : %d", errno);
+    if (!SendAll(socketHandle_, reinterpret_cast<int8_t*>(&phead), sizeof(struct ProtocolHead))) {
+        PROFILER_LOG_ERROR(LOG_CORE, "SendProtobuf Send Head ERR");
         free(data);
         return false;
     }
-    if (send(socketHandle_, data, size, 0) == -1) {
-        PROFILER_LOG_ERROR(LOG_CORE, "SendProtobuf Send Data ERR : %d", errno);
+    if (!SendAll(socketHandle_, data, size, 0)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "SendProtobuf Send Data ERR");
         free(data);
         return false;
     }
