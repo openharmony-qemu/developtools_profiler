@@ -1147,8 +1147,8 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
             return false;
         }
     }
-    if ((hookConfig_.fp_unwind() && hookConfig_.offline_symbolization()
-        && hookConfig_.statistics_interval() > 0) || hookConfig_.use_file_cache_mode()) {
+    if (hookConfig_.fp_unwind() && hookConfig_.offline_symbolization()
+        && hookConfig_.statistics_interval() > 0) {
         noDataQueue_ = true;
     }
     if (hookConfig_.allocator_sampling_enable()) {
