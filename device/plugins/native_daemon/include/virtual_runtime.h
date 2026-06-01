@@ -65,8 +65,8 @@ public:
         return symbolsFiles_;
     }
 
-    const DfxSymbol GetSymbol(CallFrame& callFrame, pid_t pid, pid_t tid,
-                           const perf_callchain_context &context = PERF_CONTEXT_MAX);
+    void GetSymbol(DfxSymbol &symbol, CallFrame& callFrame, pid_t pid, pid_t tid,
+        const perf_callchain_context &context = PERF_CONTEXT_MAX);
 
     VirtualThread &GetThread(pid_t pid, pid_t tid);
     const std::map<pid_t, VirtualThread> &GetThreads() const
@@ -250,13 +250,13 @@ private:
     std::unordered_map<SymbolCacheKey, DfxSymbol, HashPair> userSymbolCache_;
     std::unordered_map<uint64_t, uint32_t> jsFilePathCache_;
 
-    bool GetSymbolCache(uint64_t ip, DfxSymbol &symbol, const VirtualThread &thread);
+    bool GetSymbolCache(uint64_t ip, std::shared_ptr<MemMaps> curMaps, DfxSymbol &symbol, const VirtualThread &thread);
     void UpdateSymbolCache(uint64_t ip, DfxSymbol &symbol, HashList<uint64_t, DfxSymbol> &cache);
     uint32_t GetOrCreateFilePathId(const std::string& filePath);
     void QueueOfflineMap(uint64_t soBegin);
 
-    // find synbols function name
-    void MakeCallFrame(DfxSymbol &symbol, CallFrame &callFrame);
+    // find symbols function name
+    void MakeCallFrame(const DfxSymbol &symbol, CallFrame &callFrame);
 
     std::string ReadThreadName(pid_t tid);
 
@@ -264,7 +264,8 @@ private:
 
     const DfxSymbol GetKernelSymbol(uint64_t ip, const std::vector<std::shared_ptr<DfxMap>> &maps,
                                  const VirtualThread &thread);
-    const DfxSymbol GetUserSymbol(uint64_t ip, const VirtualThread &thread);
+    const DfxSymbol GetUserSymbol(uint64_t ip, std::shared_ptr<MemMaps> curMaps, uint32_t itemIndex,
+        const VirtualThread &thread);
 
     std::vector<std::string> symbolsPaths_;
 

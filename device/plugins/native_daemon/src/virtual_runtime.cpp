@@ -117,7 +117,7 @@ VirtualThread &VirtualRuntime::GetThread(pid_t pid, pid_t tid)
     }
 }
 
-void VirtualRuntime::MakeCallFrame(DfxSymbol &symbol, CallFrame &callFrame)
+void VirtualRuntime::MakeCallFrame(const DfxSymbol &symbol, CallFrame &callFrame)
 {
     callFrame.vaddrInFile_ = symbol.funcVaddr_;
     callFrame.symbolName_ = symbol.symbolName_;
@@ -165,7 +165,7 @@ bool VirtualRuntime::SymbolizeFrame(CallFrame& callFrame, pid_t pid, pid_t tid)
         symbol = found->second;
     } else {
         const perf_callchain_context context = PERF_CONTEXT_MAX;
-        symbol = GetSymbol(callFrame, pid, tid, context);
+        GetSymbol(symbol, callFrame, pid, tid, context);
     }
 
     callFrame.isJsFrame_ = true;
@@ -204,8 +204,8 @@ bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>&
             HLOGV("%s", UpdatePerfContext(callFrame.ip_, perfCallchainContext).c_str());
             continue;
         }
-        auto symbol = GetSymbol(callFrame, pid, tid,
-            perfCallchainContext);
+        DfxSymbol symbol;
+        GetSymbol(symbol, callFrame, pid, tid, perfCallchainContext);
         if (symbol.IsValid()) {
             MakeCallFrame(symbol, callFrame);
         } else {
@@ -491,10 +491,10 @@ const DfxSymbol VirtualRuntime::GetKernelSymbol(uint64_t ip, const std::vector<s
     return vaddrSymbol;
 }
 
-const DfxSymbol VirtualRuntime::GetUserSymbol(uint64_t ip, const VirtualThread &thread)
+const DfxSymbol VirtualRuntime::GetUserSymbol(uint64_t ip, std::shared_ptr<MemMaps> curMaps, uint32_t itemIndex,
+    const VirtualThread &thread)
 {
     DfxSymbol vaddrSymbol(ip, thread.name_);
-    auto [curMaps, itemIndex] = FindMap(ip);
     if (curMaps != nullptr) {
         auto symbolsFilesIter = symbolsFiles_.find((curMaps->GetMaps())[itemIndex]->name);
         if (symbolsFilesIter != symbolsFiles_.end()) {
@@ -539,9 +539,9 @@ const DfxSymbol VirtualRuntime::GetUserSymbol(uint64_t ip, const VirtualThread &
     return vaddrSymbol;
 }
 
-bool VirtualRuntime::GetSymbolCache(uint64_t ip, DfxSymbol &symbol, const VirtualThread &thread)
+bool VirtualRuntime::GetSymbolCache(uint64_t ip, std::shared_ptr<MemMaps> curMaps, DfxSymbol &symbol,
+    const VirtualThread &thread)
 {
-    auto [curMaps, itemIndex] = FindMap(ip);
     if (curMaps != nullptr) {
         auto foundSymbolIter = userSymbolCache_.find(std::pair(ip, curMaps->filePathId_));
         if (foundSymbolIter != userSymbolCache_.end()) {
@@ -560,14 +560,13 @@ void VirtualRuntime::UpdateSymbolCache(uint64_t ip, DfxSymbol &symbol,
     cache[ip] = symbol;
 }
 
-const DfxSymbol VirtualRuntime::GetSymbol(CallFrame& callFrame, pid_t pid, pid_t tid,
-                                          const perf_callchain_context &context)
+void VirtualRuntime::GetSymbol(DfxSymbol &symbol, CallFrame& callFrame, pid_t pid, pid_t tid,
+    const perf_callchain_context &context)
 {
     HLOGM("try find tid %u ip 0x%" PRIx64 " in %zu symbolsFiles ", tid, callFrame.ip_, symbolsFiles_.size());
-    DfxSymbol symbol;
     if (hookConfig_.fp_unwind() && callFrame.isJsFrame_) {
         if (ArktsGetSymbolCache(callFrame, symbol)) {
-            return symbol;
+            return;
         } else {
             symbol.filePathId_ = FillArkTsFilePath(callFrame.filePath_);
             symbol.module_ = callFrame.filePath_;
@@ -579,14 +578,16 @@ const DfxSymbol VirtualRuntime::GetSymbol(CallFrame& callFrame, pid_t pid, pid_t
             }
             callFrame.needReport_ |= CALL_FRAME_REPORT;
             userSymbolCache_[std::pair(callFrame.ip_, symbol.filePathId_)] = symbol;
-            return symbol;
+            return;
         }
-    } else if (GetSymbolCache(callFrame.ip_, symbol, GetThread(pid, tid))) {
-        return symbol;
+    }
+    auto [curMaps, itemIndex] = FindMap(callFrame.ip_);
+    if (GetSymbolCache(callFrame.ip_, curMaps, symbol, GetThread(pid, tid))) {
+        return;
     }
     if (context == PERF_CONTEXT_USER || (context == PERF_CONTEXT_MAX && !symbol.IsValid())) {
         // check userspace memmap
-        symbol = GetUserSymbol(callFrame.ip_, GetThread(pid, tid));
+        symbol = GetUserSymbol(callFrame.ip_, curMaps, itemIndex, GetThread(pid, tid));
         if (symbol.IsValid()) {
             HLOGM("GetUserSymbol valid tid = %d ip = 0x%" PRIx64 "", tid, callFrame.ip_);
             symbol.symbolId_ = userSymbolCache_.size() + 1;
@@ -600,8 +601,6 @@ const DfxSymbol VirtualRuntime::GetSymbol(CallFrame& callFrame, pid_t pid, pid_t
             HLOGM("GetUserSymbol invalid!");
         }
     }
-
-    return symbol;
 }
 
 bool VirtualRuntime::SetSymbolsPaths(const std::vector<std::string> &symbolsPaths)
@@ -901,7 +900,7 @@ std::pair<std::shared_ptr<MemMaps>, uint32_t> VirtualRuntime::FindMap(uint64_t a
 
     std::shared_ptr<MemMaps> curMaps = (--iter)->second;
     if (addr >= curMaps->soBegin_ && addr < curMaps->soEnd_) {
-        std::vector<std::shared_ptr<DfxMap>> mapVec = curMaps->GetMaps();
+        const std::vector<std::shared_ptr<DfxMap>>& mapVec = curMaps->GetMaps();
         for (auto curMapItem = mapVec.begin();
             curMapItem != mapVec.end(); ++curMapItem) {
             if (addr >= (*curMapItem)->begin && addr < (*curMapItem)->end) {
