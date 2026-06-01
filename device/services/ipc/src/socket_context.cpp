@@ -226,7 +226,7 @@ bool SocketContext::SendProtobuf(uint32_t pnum, google::protobuf::Message& pmsg)
         free(data);
         return false;
     }
-    if (!SendAll(socketHandle_, data, size, 0)) {
+    if (!SendAll(socketHandle_, data, size)) {
         PROFILER_LOG_ERROR(LOG_CORE, "SendProtobuf Send Data ERR");
         free(data);
         return false;
