@@ -56,9 +56,7 @@ HWTEST_F(NavigationTest, NavigationTest_SetProcessId_001, TestSize.Level1)
     GTEST_LOG_(INFO) << "NavigationTest-begin NavigationTest_SetProcessId_001";
     Navigation &navigation = Navigation::GetInstance();
     std::string testPid = "12345";
-    
     navigation.SetProcessId(testPid);
-    
     std::map<std::string, std::string> result = navigation.ItemData();
     EXPECT_TRUE(result.count("navPathName") > 0);
     GTEST_LOG_(INFO) << "NavigationTest-end NavigationTest_SetProcessId_001";
@@ -74,9 +72,7 @@ HWTEST_F(NavigationTest, NavigationTest_SetProcessId_002, TestSize.Level1)
     GTEST_LOG_(INFO) << "NavigationTest-begin NavigationTest_SetProcessId_002";
     Navigation &navigation = Navigation::GetInstance();
     std::string emptyPid = "";
-    
     navigation.SetProcessId(emptyPid);
-    
     std::map<std::string, std::string> result = navigation.ItemData();
     EXPECT_TRUE(result.count("navPathName") > 0);
     GTEST_LOG_(INFO) << "NavigationTest-end NavigationTest_SetProcessId_002";

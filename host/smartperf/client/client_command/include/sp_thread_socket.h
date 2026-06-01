@@ -102,6 +102,7 @@ private:
     bool isNeedUdpToken = true;     // 如果是hdc shell拉起，不需要校验token以兼容旧版本
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
     const std::string traceOriginPath = "/data/log/hitrace/";
+    const std::string sysTracePath = "/data/local/tmp/";
     const std::string traceDir = "/data/local/tmp/smartperfHitrace/";
     const std::string indexFilePath = "/data/local/tmp/smartperf/1/t_index_info.csv";
     const std::string indexFileFePath = "/data/local/tmp/smartperf/1/t_gpu_info.csv";

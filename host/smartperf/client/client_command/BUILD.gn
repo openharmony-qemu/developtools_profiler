@@ -66,6 +66,7 @@ ohos_executable("SP_daemon") {
     "heartbeat.cpp",
     "jitters.cpp",
     "hiperf.cpp",
+    "hitrace_converter.cpp",
     "lock_frequency.cpp",
     "navigation.cpp",
     "parse_click_complete_trace.cpp",

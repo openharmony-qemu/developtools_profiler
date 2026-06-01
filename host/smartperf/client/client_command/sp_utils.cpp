@@ -42,6 +42,8 @@
 #include "include/FileDescriptor.h"
 #include "include/Threads.h"
 #include "parameters.h"
+#include "hitrace_converter.h"
+#include <memory>
 
 #ifdef ARKTEST_ENABLE
 #include "test_server_client.h"
@@ -1083,6 +1085,34 @@ void SPUtils::OverDumpFun()
     std::string cmdResult = "";
     const std::string dumpCmd = "hidumper -s WindowManagerService -a '-w " + winId + " -touchmonitor -e'";
     LoadCmd(dumpCmd, cmdResult);
+}
+
+bool SPUtils::ConvertTraceByTime(const std::string& inputPath, const std::string& outputPath,
+    uint64_t durationSec, std::string& errorMsg)
+{
+    auto parser = std::make_shared<TraceFileParser>(inputPath);
+    if (!parser->Parse()) {
+        errorMsg = parser->GetErrorMsg();
+        return false;
+    }
+
+    uint64_t endTime = parser->GetTraceEndTime();
+    uint64_t startTime = (endTime > durationSec * 1000000000)
+                         ? (endTime - durationSec * 1000000000)
+                         : parser->GetTraceStartTime();
+
+    TraceClipper clipper(parser);
+    if (!clipper.ClipByTimeRange(startTime, endTime)) {
+        errorMsg = clipper.GetErrorMsg();
+        return false;
+    }
+
+    if (!clipper.SaveToFile(outputPath)) {
+        errorMsg = clipper.GetErrorMsg();
+        return false;
+    }
+
+    return true;
 }
 }
 }

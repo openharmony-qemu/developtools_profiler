@@ -852,12 +852,14 @@ void SpThreadSocket::SendTraceFile(const std::string& recvBuf, SpServerSocket &s
         std::string traceFileName = SplitMsg(recvBuf);
         size_t pos = traceFileName.find("trace_");
         if (pos != std::string::npos) {
+            uint64_t traceTime = 3;
+            std::string errMassage = "";
             std::string traceFile = traceFileName.substr(pos);
-            std::string cmdResult;
-            std::string cmd = "cp -r " + traceOriginPath + traceFile + " " + traceDir;
-            SPUtils::LoadCmd(cmd, cmdResult);
+            const std::string sysTraceFilePath = traceOriginPath + traceFile;
+            const std::string sendTraceFileName = traceDir + "profilerTrace" +
+                std::to_string(collectTraceNum_) + ".ftrace";
+            SPUtils::ConvertTraceByTime(sysTraceFilePath, sendTraceFileName, traceTime, errMassage);
             GetSocketPort(recvBuf);
-            const std::string sendTraceFileName = traceDir + traceFile;
             ConnectAndSendFile(spSocket, sendTraceFileName);
             collectTraceNum_++;
         } else {
