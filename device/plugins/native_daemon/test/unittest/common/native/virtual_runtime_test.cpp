@@ -157,11 +157,11 @@ HWTEST_F(VirtualRuntimeTest, GetSymbol, TestSize.Level0)
     ScopeDebugLevel tempLogLevel(LEVEL_MUCH);
     CallFrame callFrame(0);
 
-    symbol = runtime_->GetSymbol(callFrame, TEST_TID, TEST_TID);
+    runtime_->GetSymbol(symbol, callFrame, TEST_TID, TEST_TID);
     EXPECT_EQ(symbol.IsValid(), false);
 
     callFrame.ip_ = TEST_KERNEL_VADDR + TEST_USET_MAP_BEGIN;
-    symbol = runtime_->GetSymbol(callFrame, TEST_TID, TEST_TID);
+    runtime_->GetSymbol(symbol, callFrame, TEST_TID, TEST_TID);
     // in user
     EXPECT_EQ(symbol.IsValid(), true);
     EXPECT_EQ(symbol.funcVaddr_, TEST_KERNEL_VADDR);
