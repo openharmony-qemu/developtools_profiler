@@ -221,12 +221,12 @@ bool SocketContext::SendProtobuf(uint32_t pnum, google::protobuf::Message& pmsg)
     struct ProtocolHead phead;
     phead.protoType = PROTOCOL_TYPE_PROTOBUF | pnum;
     phead.protoSize = size + sizeof(struct ProtocolHead);
-    if (!SendAll(socketHandle_, reinterpret_cast<int8_t*>(&phead), sizeof(struct ProtocolHead))) {
+    if (!SendAll(socketHandle_, reinterpret_cast<uint8_t *>(&phead), sizeof(struct ProtocolHead))) {
         PROFILER_LOG_ERROR(LOG_CORE, "SendProtobuf Send Head ERR");
         free(data);
         return false;
     }
-    if (!SendAll(socketHandle_, data, size)) {
+    if (!SendAll(socketHandle_, reinterpret_cast<uint8_t *>(data), size)) {
         PROFILER_LOG_ERROR(LOG_CORE, "SendProtobuf Send Data ERR");
         free(data);
         return false;
