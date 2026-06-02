@@ -56,6 +56,7 @@ ohos_unittest("sp_daemon_ut") {
     "../parse_slide_fps_trace.cpp",
     "../sdk_data_recv.cpp",
     "../service_plugin.cpp",
+    "../shader.cpp",
     "../sp_log.cpp",
     "../sp_profiler_factory.cpp",
     "../sp_server_socket.cpp",
@@ -97,6 +98,7 @@ ohos_unittest("sp_daemon_ut") {
     "unittest/stalling_rate_trace_test.cpp",
     "unittest/startup_delay_test.cpp",
     "unittest/threads_test.cpp",
+    "unittest/shader_test.cpp",
   ]
   include_dirs = [
     "${OHOS_PROFILER_DIR}/host/smartperf/client/client_command/include",

@@ -64,6 +64,7 @@ public:
     ArgumentParser& GetArgumentParser();
     void SetFileTitleFlag();
     bool ThreadLock();
+    void ClearShaderFile();
 
 private:
     std::map<std::string, std::string> TaskFun(SpProfiler* pro, uint32_t batch, bool record);

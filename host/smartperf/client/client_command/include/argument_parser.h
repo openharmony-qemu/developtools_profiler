@@ -116,6 +116,7 @@ private:
         {"-nav", {ArgumentParser::ArgType::BOOL, "get page navigation information"}},
         {"-SESSIONID", {ArgumentParser::ArgType::STRING, "session id"}},
         {"-aischedule", {ArgumentParser::ArgType::BOOL, "AI schedule"}},
+        {"-sh", {ArgumentParser::ArgType::BOOL, "shader"}},
         {"-ved", {ArgumentParser::ArgType::BOOL, "VisualEffectDisPatch"}},
 
         // UDP
