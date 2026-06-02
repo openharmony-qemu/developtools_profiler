@@ -586,20 +586,30 @@ HWTEST_F(StackPreprocessExtTest, ParseRecordsFromBufferSkipsInvalidPayloadAndCon
 {
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
-    std::vector<uint8_t> buffer;
-    uint8_t invalidPayload = 0x5A;
-    uint64_t freeAddr = 0x12345678ULL;
-    ASSERT_TRUE(AppendSizedRecord(buffer, &invalidPayload, sizeof(invalidPayload)));
-    ASSERT_TRUE(AppendSizedRecord(buffer, &freeAddr, sizeof(freeAddr)));
+    // Manually construct aligned buffer to avoid SIGBUS on ARM64.
+    // ProcessAddressData reads uint64_t directly, requiring 8-byte alignment.
+    // std::vector's allocation is 8/16-byte aligned, so buffer[4] is at offset 4,
+    // buffer[8] is at offset 8 (8-byte aligned).
+    // Layout: [pad4][size=8(4B)][freeAddr(8B,aligned)][size=1(4B)][invalid(1B)]
+    // Resize to exact size to avoid trailing zeros being parsed as size=0.
+    std::vector<uint8_t> buffer = {
+        0, 0, 0, 0,                          // pad (4 bytes)
+        8, 0, 0, 0,                          // size = 8 (4 bytes, LE)
+        0x78, 0x56, 0x34, 0x12, 0, 0, 0, 0, // freeAddr = 0x12345678 (8 bytes)
+        1, 0, 0, 0,                          // size = 1 (4 bytes, LE)
+        0x5A                                 // invalidPayload (1 byte)
+    }; // total 21 bytes
+    const uint32_t dataOffset = 4;
+    const uint32_t dataSize = static_cast<uint32_t>(buffer.size()) - dataOffset;
 
     StackPreprocess::ParseContext ctx = {0, 0};
     RawStackPtr rawData = nullptr;
     std::shared_ptr<HookRecord> hookRecord = nullptr;
 
-    EXPECT_TRUE(preprocess.ParseRecordsFromBuffer(buffer.data(),
-        static_cast<uint32_t>(buffer.size()), ctx, rawData, hookRecord));
-    EXPECT_EQ(ctx.offset, static_cast<uint32_t>(buffer.size()));
-    EXPECT_EQ(ctx.readfileSize, static_cast<uint64_t>(buffer.size()));
+    EXPECT_TRUE(preprocess.ParseRecordsFromBuffer(buffer.data() + dataOffset,
+        dataSize, ctx, rawData, hookRecord));
+    EXPECT_EQ(ctx.offset, dataSize);
+    EXPECT_EQ(ctx.readfileSize, static_cast<uint64_t>(dataSize));
     EXPECT_FALSE(preprocess.isStopTakeData_);
 }
 
@@ -1349,8 +1359,9 @@ HWTEST_F(StackPreprocessExtTest, BuildCallFramesTest, TestSize.Level0)
     
     // Create test data
     RawStackPtr rawData = MakeRawStack(1, 100, 0);
-    const char* testTag = "test_memory_tag0";
-    rawData->data = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(testTag));
+    constexpr size_t regBufferSize = sizeof(uint64_t) * 34; // Enough for ARM64 registers
+    rawData->baseStackData = std::make_unique<uint8_t[]>(regBufferSize);
+    rawData->data = rawData->baseStackData.get();
     auto hookRecord = std::make_shared<HookRecord>(rawData);
     std::vector<CallFrame> callFrames = MakeFrames(123);
     
