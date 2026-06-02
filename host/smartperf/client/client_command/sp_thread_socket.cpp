@@ -770,7 +770,6 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
             firstFlag = true;
             SPUtils::CreateDir(gpuCounterfilePath);
             GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
-            taskMgr_->ClearShaderFile();
             taskMgr_->SetHapFlag(false);
             taskMgr_->Stop();
             SPUtils::OverDumpFun();
