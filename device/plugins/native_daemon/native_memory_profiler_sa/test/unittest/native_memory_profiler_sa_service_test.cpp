@@ -1111,4 +1111,94 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, StartApiTypePidMismatchTest, TestSiz
     int32_t result = service->Start(config);
     EXPECT_EQ(result, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED));
 }
+
+/**
+ * @tc.name: CheckTaskLimitPassesWhenUnderLimit
+ * @tc.desc: CheckTaskLimit returns RET_OK when task count is within limits.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckTaskLimitPassesWhenUnderLimit, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->extendProcesses_ = false;
+
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+
+    EXPECT_EQ(service->CheckTaskLimit(config), RET_OK);
+}
+
+/**
+ * @tc.name: CheckStartupModeConflictReturnsOkWhenNoStartupMode
+ * @tc.desc: CheckStartupModeConflict returns RET_OK when no startup mode is active.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckStartupModeConflictReturnsOkWhenNoStartupMode, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->startupMode_ = false;
+
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+
+    EXPECT_EQ(service->CheckStartupModeConflict(config), RET_OK);
+}
+
+/**
+ * @tc.name: CheckPidNameConflictReturnsOkForUniquePid
+ * @tc.desc: CheckPidNameConflict returns RET_OK when PID is not in use.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckPidNameConflictReturnsOkForUniquePid, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = getpid();
+
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+
+    EXPECT_EQ(service->CheckPidNameConflict(config), RET_OK);
+}
+
+/**
+ * @tc.name: CheckFilePathSkipsWhenFdProvided
+ * @tc.desc: CheckFilePath returns RET_OK when fd > 0 (file-cache mode).
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckFilePathSkipsWhenFdProvided, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->filePath_.clear();
+
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+
+    EXPECT_EQ(service->CheckFilePath(STDOUT_FILENO, config), RET_OK);
+}
+
+/**
+ * @tc.name: CheckFilePathRejectsEmptyPath
+ * @tc.desc: CheckFilePath returns RET_ERR when filePath_ is empty and fd is 0.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckFilePathRejectsEmptyPath, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->filePath_.clear();
+
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+
+    EXPECT_EQ(service->CheckFilePath(0, config), RET_ERR);
+}
 #endif // NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H

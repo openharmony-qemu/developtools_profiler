@@ -27,6 +27,7 @@
 #include <mutex>
 #include <sstream>
 #include <sys/stat.h>
+#include <unistd.h>
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
@@ -48,7 +49,7 @@ constexpr uint32_t DEFINE_MIN_FILTER_SIZE = 1; // bytes
 constexpr uint32_t DEFINE_MAX_STACK_DEPTH = 30;
 constexpr uint32_t DEFINE_MAX_STATISTICS_INTERVAL = 3600; // seconds
 constexpr uint32_t DEFINE_MIN_SAMPLE_INTERVAL = 384; // bytes
-constexpr int32_t MAX_MEM_PROFILER_USE_COUNT_PER_DAY = 10;
+constexpr int32_t MAX_MEM_PROFILER_USE_COUNT_PER_DAY = 2;
 constexpr int HOURS_PER_DAY = 24;
 const std::string MEM_PROFILER_COUNT_FILE_NAME = "/MemProfilerCount";
 const std::string FILE_SUFFIX = ".htrace";
@@ -437,6 +438,14 @@ int32_t NativeMemoryProfilerSaClientManager::StartByType(int32_t type,
     std::shared_ptr<NativeMemoryProfilerSaConfig>& config, ProfilingCallback callback)
 {
     config->pid_ = getpid();
+
+    std::lock_guard<std::mutex> lock(g_countFileMutex);
+    if (GetMemProfilerUseCountToday() >= MAX_MEM_PROFILER_USE_COUNT_PER_DAY) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Daily use count exceeded,errorcode is:%d.",
+            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED));
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED);
+    }
+
     std::string filename = GenerateFileName(type, config->pid_);
     std::string fullPath = NAPI_FILE_PATH_PREFIX + filename;
     if (!COMMON::CreateFile(fullPath)) {
@@ -446,14 +455,8 @@ int32_t NativeMemoryProfilerSaClientManager::StartByType(int32_t type,
     config->typeFileName_ = filename;
     config->startType_ = 1; // 1:API
 
-    std::lock_guard<std::mutex> lock(g_countFileMutex);
-    if (GetMemProfilerUseCountToday() >= MAX_MEM_PROFILER_USE_COUNT_PER_DAY) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Daily use count exceeded,errorcode is:%d.",
-            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED));
-        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED);
-    }
-
     if (!UpdateMemProfilerUserCount()) {
+        (void)unlink(fullPath.c_str());
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG);
     }
 
@@ -463,6 +466,7 @@ int32_t NativeMemoryProfilerSaClientManager::StartByType(int32_t type,
     sptr<IRemoteObject> callbackObject = GetProfilingResultCallbackObject();
     if (callbackObject == nullptr) {
         SetProfilingCallback(nullptr);
+        (void)unlink(fullPath.c_str());
         if (!RollbackMemProfilerUserCount()) {
             PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: rollback count failed");
         }
@@ -477,6 +481,7 @@ int32_t NativeMemoryProfilerSaClientManager::StartByType(int32_t type,
     if (retStart != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: StartPidVoid failed");
         SetProfilingCallback(nullptr);
+        (void)unlink(fullPath.c_str());
         if (!RollbackMemProfilerUserCount()) {
             PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: rollback count failed");
         }
@@ -494,12 +499,10 @@ int32_t NativeMemoryProfilerSaClientManager::ParseResType(int32_t type,
     InternalResourceType internalType = static_cast<InternalResourceType>(type);
     if (internalType == InternalResourceType::OH_RES_TYPE_NATIVE) {
         config->mallocDisable_ = false;
-        config->mmapDisable_ = false;
         config->memtraceEnable_ = false;
         return RET_OK;
     } else {
         config->mallocDisable_ = true;
-        config->mmapDisable_ = true;
         config->memtraceEnable_ = true;
     }
 

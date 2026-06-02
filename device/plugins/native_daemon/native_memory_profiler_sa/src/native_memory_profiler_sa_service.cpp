@@ -41,8 +41,8 @@ constexpr int32_t SIMP_NMD = 3;
 constexpr int32_t NMD_WAIT_MS = 100;
 constexpr int32_t NMD_WAIT_TIMES = 50;
 constexpr int VEC_SHIFT = 2;
-constexpr double MIN_MEM_ROM_PERCENT = 0.15;
-constexpr double MIN_MEM_PROFILER_MEM_PERCENT = 0.15;
+constexpr double MIN_MEM_ROM_PERCENT = 0.20;
+constexpr double MIN_MEM_PROFILER_MEM_PERCENT = 0.20;
 constexpr double MAX_MEM_PROFILER_CPU_PERCENT = 0.7;
 const std::string API_SANDBOX_PATH_PREFIX = "/data/storage/el2/base/files/";
 constexpr uint32_t START_TYPE_HIVIEW = 0;
@@ -876,41 +876,74 @@ int32_t NativeMemoryProfilerSaService::PidAndNameConflict(std::shared_ptr<Native
     return RET_OK;
 }
 
-int32_t NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd)
+// Check whether task count (same UID for API mode, or all HIVIEW tasks)
+// exceeds the per-app limit defined by taskMaxNum_.
+// Also checks the global task limit across all UIDs (globalTaskMaxNum_).
+// Returns RES_PROF_PROCESS_OVERLIMIT if either limit is exceeded.
+int32_t NativeMemoryProfilerSaService::CheckTaskLimit(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
     auto maxTaskCount = GetValueFromJsonFile(PRODUCT_CONFIG_PATH, "hiprofiler_hook_process_count");
     taskMaxNum_ = maxTaskCount > 0 ? maxTaskCount : taskMaxNum_;
-    if (!config->extendProcesses_) {
-        // Check whether API tasks exceed the maximum allowed task count.
-        // If exceeded, return RES_PROF_PROCESS_OVERLIMIT.
-        // For API mode: count tasks that belong to the same UID.
-        // For HIVIEW mode: count tasks with startType == START_TYPE_HIVIEW.
-        int taskCount = GetTaskNum(config);
-        PROFILER_LOG_INFO(LOG_CORE, "GetTaskNum: taskCount:%d", taskCount);
-        if ((taskCount + 1) > taskMaxNum_) {
-            if (config->startType_ == START_TYPE_HIVIEW) {
-                PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, pid: %d", config->pid_);
-                return RET_ERR;
-            }
-            int checkRet = static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PROCESS_OVERLIMIT);
-            PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: too many tasks, errorcode: %d.", checkRet);
-            return checkRet;
+
+    int taskCount = GetTaskNum(config);
+    PROFILER_LOG_INFO(LOG_CORE, "GetTaskNum: taskCount:%d", taskCount);
+    if ((taskCount + 1) > taskMaxNum_) {
+        if (config->startType_ == START_TYPE_HIVIEW) {
+            PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, pid: %d", config->pid_);
+            return RET_ERR;
         }
+        int checkRet = static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PROCESS_OVERLIMIT);
+        PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: too many tasks, errorcode: %d.", checkRet);
+        return checkRet;
     }
 
+    int globalTaskCount = 0;
+    for (const auto& item : g_pidCtx) {
+        if (item.second != nullptr) {
+            globalTaskCount++;
+        }
+    }
+    if ((globalTaskCount + 1) > globalTaskMaxNum_) {
+        int checkRet = static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PROCESS_OVERLIMIT);
+        PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: global task limit reached, errorcode: %d.",
+            checkRet);
+        return checkRet;
+    }
+    return RET_OK;
+}
+
+// Check whether a startup mode task conflicts with an already running startup mode task.
+// Only one startup mode task is allowed at a time.
+// Returns RET_ERR if a startup mode conflict is detected.
+int32_t NativeMemoryProfilerSaService::CheckStartupModeConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
     if (g_hasStartupMode && config->startupMode_) {
         PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: tasks with an existing startup mode, name: %s",
             startupModeProcessName_.c_str());
         return RET_ERR;
     }
+    return RET_OK;
+}
 
+// Check whether the requested PID/process name conflicts with an already running task.
+// For HIVIEW mode tasks, conflicts return RET_ERR directly.
+// For API mode tasks, returns the specific conflict error code.
+int32_t NativeMemoryProfilerSaService::CheckPidNameConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
     int32_t conflictRet = PidAndNameConflict(config);
     if ((conflictRet != RET_OK) && (config->startType_ == START_TYPE_HIVIEW)) {
         return RET_ERR;
     } else if (conflictRet != RET_OK) {
         return conflictRet;
     }
+    return RET_OK;
+}
 
+// Check whether the output file path is available.
+// If fd > 0 (file-cache mode), file path check is skipped.
+// Otherwise, validates that filePath_ is not empty and not already in use.
+int32_t NativeMemoryProfilerSaService::CheckFilePath(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
     if (fd > 0) {
         return RET_OK;
     }
@@ -926,6 +959,32 @@ int32_t NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryP
         return RET_ERR;
     }
     return RET_OK;
+}
+
+// Entry point for config validation. Orchestrates all checks in order.
+// Returns early on the first failure. If extendProcesses_ is true, skips all checks.
+int32_t NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd)
+{
+    if (config->extendProcesses_) {
+        return RET_OK;
+    }
+
+    int32_t ret = CheckTaskLimit(config);
+    if (ret != RET_OK) {
+        return ret;
+    }
+
+    ret = CheckStartupModeConflict(config);
+    if (ret != RET_OK) {
+        return ret;
+    }
+
+    ret = CheckPidNameConflict(config);
+    if (ret != RET_OK) {
+        return ret;
+    }
+
+    return CheckFilePath(fd, config);
 }
 
 void NativeMemoryProfilerSaService::FillTaskConfigContext(int32_t pid, const std::string& name)
