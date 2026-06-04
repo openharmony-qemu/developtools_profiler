@@ -1052,7 +1052,7 @@ std::string HookManager::GetMemLeakFileName(MemLeakFormat format)
     std::string processName = hookConfig_.process_name();
     COMMON::IsProcessExist(processName, pidValue);
     // startmode, pid is unknown, set default value 0
-    pidValue = hookConfig_.startup_mode() ? 0 : hookConfig_.pid();
+    pidValue = hookConfig_.startup_mode() ? 0 : pidValue;
     return MEM_LEAK_FILE_PERFIX + std::to_string(pidValue) + MEM_LEAK_FILE_SUFFIX;
 }
 
