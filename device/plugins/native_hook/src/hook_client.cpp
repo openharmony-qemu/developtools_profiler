@@ -315,6 +315,7 @@ void* ohos_release_on_end(void*)
         return nullptr;
     }
     PROFILER_LOG_INFO(LOG_CORE, "ohos_release_on_end begin!");
+    g_hookReady = false;
     if (g_hookClient != nullptr) {
         g_hookClient->SendEndMsg();
         PERF_PRINT_RESULTS();
@@ -326,7 +327,6 @@ void* ohos_release_on_end(void*)
     g_sharedMemCount = 1;
     std::unique_lock<std::mutex> lock(g_tagMapMutex);
     g_memTagMap.clear();
-    g_hookReady = false;
     return nullptr;
 }
 

@@ -1173,6 +1173,7 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         }
         iter->second->hookMgr->ResetStartupParam();
     } else {
+        SendHookCommand(static_cast<pid_t>(peerConfig), STOP_HOOK_CMD);
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: send config failed");
         return false;
     }
