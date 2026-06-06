@@ -38,8 +38,7 @@ const std::string PRODUCT_CONFIG_PATH = "/sys_prod/etc/hiview/hiprofiler/hiprofi
 constexpr int32_t DELAYED_SHUTDOWN_TIME = 20;
 constexpr int FILE_MODE = 0644;
 constexpr int32_t SIMP_NMD = 3;
-constexpr int32_t NMD_WAIT_MS = 100;
-constexpr int32_t NMD_WAIT_TIMES = 50;
+constexpr int32_t NMD_WAIT_MS = 5000;
 constexpr int VEC_SHIFT = 2;
 constexpr double MIN_MEM_ROM_PERCENT = 0.20;
 constexpr double MIN_MEM_PROFILER_MEM_PERCENT = 0.20;
@@ -774,21 +773,6 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     return StartHookLock(config, fd, hook, args);
 }
 
-static int32_t WaitSimplifiedNmdTimeout(uint32_t times, std::shared_ptr<HookManager>& hook, MessageParcel &reply)
-{
-    uint32_t cnt = 0;
-    while ((!hook->nmdComplete_) && (cnt < times)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(NMD_WAIT_MS));
-        cnt++;
-    }
-    if (!hook->nmdComplete_) {
-        PROFILER_LOG_ERROR(LOG_CORE, "WaitSimplifiedNmdTimeout, %d ms", times * NMD_WAIT_MS);
-        return RET_ERR;
-    }
-    WRITESTRING(reply, hook->simplifiedNmd_, RET_ERR);
-    return RET_OK;
-}
-
 int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
                                                  uint32_t fd, MessageParcel &reply)
 {
@@ -807,7 +791,10 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     }
 
     if (config->nmdType_ == SIMP_NMD) {
-        return WaitSimplifiedNmdTimeout(NMD_WAIT_TIMES, hook, reply);
+        std::string simplifiedNmdResult = hook->GetSimplifiedNmdResult(NMD_WAIT_MS);
+        CHECK_TRUE(!simplifiedNmdResult.empty(), RET_ERR, "Get simplified nmd result FAIL");
+        WRITESTRING(reply, simplifiedNmdResult, RET_ERR);
+        return RET_OK;
     }
     return RET_OK;
 }
