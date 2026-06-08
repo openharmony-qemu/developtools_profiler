@@ -370,7 +370,7 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
     config->pid_ = static_cast<int32_t>(pid);
     config->duration_ = duration;
     config->statisticsInterval_ = FIVE_MINUTES;
-    config->jsStackReport_ = false;
+    config->jsStackReport_ = true;
     config->mallocDisable_ = true;
     config->mmapDisable_ = true;
     config->memtraceEnable_ = true;
