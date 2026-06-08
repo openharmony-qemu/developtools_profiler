@@ -1065,6 +1065,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
             return false;
         }
     }
+    hookConfig_.set_native_orphansnapshots_enable(false);
     if ((!saMode_) && (COMMON::IsUserMode())) {
         if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
             return false;
@@ -1887,7 +1888,7 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
 
 void HookManager::SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
-    hookConfig_.set_native_orphansnapshots_enable(config->nativeOrphanSnapshotsEnable_);
+    hookConfig_.set_native_orphansnapshots_enable(false);
     hookConfig_.set_async_nesting_depth(config->asyncNestingDepth_);
     hookConfig_.set_async_task_stack_depth(config->asyncTaskStackDepth_);
     SetMemLeakFormat(config->memLeakFormat_);
