@@ -98,7 +98,7 @@ public:
 
         for (int i = 0; i < fileContent_->dependency_count(); ++i) {
             printer_->Print("#include \"@name@.pbencoder.h\"\n", "name",
-                            GetPrefix(fileContent_->dependency(i)->name()));
+                            GetPrefix(std::string(fileContent_->dependency(i)->name())));
         }
 
         printer_->Print("namespace OHOS {\n");
@@ -115,7 +115,7 @@ public:
 
             for (int j = 0; j < fileContent_->enum_type(i)->value_count(); ++j) {
                 const EnumValueDescriptor* value = fileContent_->enum_type(i)->value(j);
-                const std::string value_name = value->name();
+                const std::string value_name = std::string(value->name());
                 printer_->Print("@name@ = @number@,\n", "name", value_name, "number",
                                 std::to_string(value->number()));
             }
@@ -191,7 +191,7 @@ public:
                 printer_->Print("inline @typename@* @mora@_@name@()\n",
                     "mora", field->is_repeated()?"add":"mutable",
                     "typename", field->message_type()->name(),
-                    "name", Tolowercase(field->name()));
+                    "name", Tolowercase(std::string(field->name())));
                 printer_->Print("{\n");
                 printer_->Indent();
                 printer_->Print("return AddSubMessage<@typename@>(FIELDID_@name@);\n",
@@ -201,25 +201,28 @@ public:
                 printer_->Print("}\n");
             } else if (field->type() == FieldDescriptor::TYPE_BYTES) {
                 printer_->Print("inline void set_@name@(const void* bytes, uint32_t size)\n",
-                    "name", Tolowercase(field->name()));
+                    "name", Tolowercase(std::string(field->name())));
                 printer_->Print("{\n");
                 printer_->Indent();
                 printer_->Print("AddBytes(FIELDID_@name@, bytes, size);\n", "name", field->name());
                 printer_->Outdent();
                 printer_->Print("}\n");
-                printer_->Print("void set_@name@(GetDataCallback getData)\n", "name", Tolowercase(field->name()));
+                printer_->Print("void set_@name@(GetDataCallback getData)\n", "name",
+                    Tolowercase(std::string(field->name())));
                 printer_->Print("{\n");
                 printer_->Indent();
                 printer_->Print("return AddBytesByCallBack(FIELDID_@name@, getData);\n", "name", field->name());
                 printer_->Outdent();
                 printer_->Print("}\n");
-                printer_->Print("inline RandomWriteCtx* startAdd_@name@()\n", "name", Tolowercase(field->name()));
+                printer_->Print("inline RandomWriteCtx* startAdd_@name@()\n", "name",
+                    Tolowercase(std::string(field->name())));
                 printer_->Print("{\n");
                 printer_->Indent();
                 printer_->Print("return StartAddBytes(FIELDID_@name@);\n", "name", field->name());
                 printer_->Outdent();
                 printer_->Print("}\n");
-                printer_->Print("inline void finishAdd_@name@(int32_t size)\n", "name", Tolowercase(field->name()));
+                printer_->Print("inline void finishAdd_@name@(int32_t size)\n", "name",
+                    Tolowercase(std::string(field->name())));
                 printer_->Print("{\n");
                 printer_->Indent();
                 printer_->Print("return FinishAddBytes(size);\n", "name", field->name());
@@ -228,7 +231,7 @@ public:
             } else if (field->type() == FieldDescriptor::TYPE_STRING) {
                 printer_->Print("inline void @sora@_@name@(const std::string& str)\n",
                     "sora", field->is_repeated()?"add":"set",
-                    "name", Tolowercase(field->name()));
+                    "name", Tolowercase(std::string(field->name())));
                 printer_->Print("{\n");
                 printer_->Indent();
                 printer_->Print("AddBytes(FIELDID_@name@, str.data(), str.size());\n", "name", field->name());
@@ -236,7 +239,7 @@ public:
                 printer_->Print("}\n");
                 printer_->Print("inline void @sora@_@name@(std::string&& str)\n",
                     "sora", field->is_repeated()?"add":"set",
-                    "name", Tolowercase(field->name()));
+                    "name", Tolowercase(std::string(field->name())));
                 printer_->Print("{\n");
                 printer_->Indent();
                 printer_->Print("AddBytes(FIELDID_@name@, str.data(), str.size());\n", "name", field->name());
@@ -244,7 +247,7 @@ public:
                 printer_->Print("}\n");
                 printer_->Print("inline void @sora@_@name@(const char* str)\n",
                     "sora", field->is_repeated()?"add":"set",
-                    "name", Tolowercase(field->name()));
+                    "name", Tolowercase(std::string(field->name())));
                 printer_->Print("{\n");
                 printer_->Indent();
                 printer_->Print("AddBytes(FIELDID_@name@, str, strlen(str));\n", "name", field->name());
@@ -252,7 +255,7 @@ public:
                 printer_->Print("}\n");
                 printer_->Print("inline void @sora@_@name@(const char* str, uint32_t len)\n",
                     "sora", field->is_repeated()?"add":"set",
-                    "name", Tolowercase(field->name()));
+                    "name", Tolowercase(std::string(field->name())));
                 printer_->Print("{\n");
                 printer_->Indent();
                 printer_->Print("AddBytes(FIELDID_@name@, str, len);\n", "name", field->name());
@@ -261,7 +264,7 @@ public:
             } else {
                 // varint, fix32, fix64
                 printer_->Print("inline void @sora@_@name@(@paramtype@ v)\n",
-                    "sora", field->is_repeated()?"add":"set", "name", Tolowercase(field->name()),
+                    "sora", field->is_repeated()?"add":"set", "name", Tolowercase(std::string(field->name())),
                     "paramtype", GetParamType(field));
                 printer_->Print("{\n");
                 printer_->Indent();
@@ -282,7 +285,7 @@ public:
                     continue;
                 }
                 printer_->Print("inline void add_@name@(const @paramtype@* array, uint32_t size)\n",
-                    "name", Tolowercase(field->name()),
+                    "name", Tolowercase(std::string(field->name())),
                     "paramtype", GetParamType(field));
                 printer_->Print("{\n");
                 printer_->Indent();
@@ -292,7 +295,7 @@ public:
                 printer_->Print("}\n");
 
                 printer_->Print("inline void add_@name@(const std::vector<@paramtype@>& array)\n",
-                    "name", Tolowercase(field->name()),
+                    "name", Tolowercase(std::string(field->name())),
                     "paramtype", GetParamType(field));
                 printer_->Print("{\n");
                 printer_->Indent();
@@ -405,7 +408,7 @@ bool ProtoEncoderGenerator::Generate(const google::protobuf::FileDescriptor* fil
                                      std::string* error) const
 {
     auto pcsp = std::make_shared<OptGeneratorImpl>(file);
-    std::string baseName = pcsp->SetNames(file->name(), file->package());
+    std::string baseName = pcsp->SetNames(std::string(file->name()), std::string(file->package()));
     std::unique_ptr<::google::protobuf::io::ZeroCopyOutputStream> headerOutput(context->Open(baseName +
                                                                                               ".pbencoder.h"));
     std::unique_ptr<::google::protobuf::io::ZeroCopyOutputStream> sourceOutput(context->Open(baseName +
