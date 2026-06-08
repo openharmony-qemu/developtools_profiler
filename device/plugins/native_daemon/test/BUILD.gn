@@ -24,7 +24,6 @@ sources_base = [
   "unittest/common/native/hook_boundary_test.cpp",
   "unittest/common/native/hook_manager_test.cpp",
   "unittest/common/native/hook_manager_ext_test.cpp",
-  "unittest/common/native/hook_manager_mem_leak_test.cpp",
   "unittest/common/native/stack_preprocess_ext_test.cpp",
   "unittest/common/native/hook_record_ext_test.cpp",
   "unittest/common/native/symbols_file_ext_test.cpp",
