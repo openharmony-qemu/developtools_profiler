@@ -58,6 +58,8 @@ constexpr uint32_t SHMEM_DRAIN_QUIET_ROUNDS = 3;
 constexpr uint32_t SHMEM_DRAIN_TIMEOUT_MS = 5000;
 constexpr uint32_t MEM_LEAK_DONE_POLL_MS = 10;
 constexpr uint32_t MEM_LEAK_DONE_TIMEOUT_MS = 30000;
+constexpr uint32_t NS_PER_MS = 1000 * 1000;
+constexpr uint32_t MS_PER_SEC = 1000;
 std::shared_ptr<Writer> g_buffWriter;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
@@ -236,10 +238,7 @@ void HookManager::SetCommandPoller(const std::shared_ptr<CommandPoller>& p)
 
 bool HookManager::RegisterAgentPlugin(const std::string& pluginPath)
 {
-    if (pluginPath.empty()) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "RegisterPlugin Path is empty");
-        return false;
-    }
+    CHECK_TRUE(!pluginPath.empty(), false, "RegisterPlugin Path is empty");
     RegisterPluginRequest request;
     request.set_request_id(commandPoller_->GetRequestId());
     request.set_path(pluginPath);
@@ -267,10 +266,7 @@ bool HookManager::RegisterAgentPlugin(const std::string& pluginPath)
 
 bool HookManager::UnregisterAgentPlugin(const std::string& pluginPath)
 {
-    if (pluginPath.empty()) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "UnregisterPlugin Path is empty");
-        return false;
-    }
+    CHECK_TRUE(!pluginPath.empty(), false, "UnregisterPlugin Path is empty");
     UnregisterPluginRequest request;
     request.set_request_id(commandPoller_->GetRequestId());
     request.set_plugin_id(agentIndex_);
@@ -409,8 +405,7 @@ void HookManager::UpdateAsyncFlagConfig()
         PROFILER_LOG_WARN(LOG_CORE, "async_stack_enable set but async_type is erro");
         return;
     }
-    PROFILER_LOG_WARN(LOG_CORE, "async_flag final mask: 0x%llx",
-        static_cast<unsigned long long>(asyncFlagMask_));
+    PROFILER_LOG_WARN(LOG_CORE, "async_flag final mask: 0x%llx", static_cast<unsigned long long>(asyncFlagMask_));
 }
 
 void HookManager::UpdateFileCacheModeConfig()
@@ -1445,8 +1440,9 @@ bool HookManager::TakeDataHandler(const std::shared_ptr<HookManagerCtx>& hookCtx
             DumpNmdInfo(nmdResult);
         }
         if (nmdParamInfo_.type == SIMP_NMD) {
+            CHECK_NOTNULL(nmdSemaphore_, false, "nmd semaphore is NULL");
             simplifiedNmd_ = std::string(nmdResult);
-            nmdComplete_ = true;
+            nmdSemaphore_->Post();
             PROFILER_LOG_INFO(LOG_CORE, "receive simplified nmd info, target pid :%d, processName:%s.\n",
                 hookCtx->pid, hookCtx->processName.c_str());
         } else {
@@ -1832,7 +1828,6 @@ bool HookManager::ResetWriter(uint32_t pluginId)
 void HookManager::RegisterWriter(const std::shared_ptr<Writer> writer)
 {
     g_buffWriter = writer;
-    return;
 }
 
 void HookManager::RegisterFdForSa(uint32_t saFd)
@@ -2094,6 +2089,17 @@ void HookManager::SetNmdInfo(std::pair<uint32_t, uint32_t> info)
     printMallocNmd_ = true;
     nmdParamInfo_.fd = info.first;
     nmdParamInfo_.type = info.second;
+    nmdSemaphore_ = nmdParamInfo_.type == SIMP_NMD ? GetSemaphoreFactory().Create(0) : nullptr;
+}
+
+std::string HookManager::GetSimplifiedNmdResult(uint32_t waitMs)
+{
+    CHECK_NOTNULL(nmdSemaphore_, "", "nmd semaphore not created for type %u", nmdParamInfo_.type);
+    CHECK_TRUE(nmdSemaphore_->TimedWait(waitMs / MS_PER_SEC, (waitMs % MS_PER_SEC) * NS_PER_MS), "",
+        "wait simplified nmd result FAIL for %u ms", waitMs);
+    std::string result = std::move(simplifiedNmd_);
+    simplifiedNmd_.clear();
+    return result;
 }
 
 void HookManager::SetGwpFd(uint32_t fd)

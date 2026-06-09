@@ -28,6 +28,7 @@
 #include "epoll_event_poller.h"
 #include "share_memory_allocator.h"
 #include "event_notifier.h"
+#include "i_semaphore.h"
 #include "native_hook_config.pb.h"
 #include "native_hook_result.pb.h"
 #include "virtual_runtime.h"
@@ -185,6 +186,7 @@ public:
         saMode_ = saMode;
     }
     void SetNmdInfo(std::pair<uint32_t, uint32_t>);
+    std::string GetSimplifiedNmdResult(uint32_t waitMs);
     void SetGwpFd(uint32_t fd);
     void SetMemLeakFd(int fd);
     int CreateMemLeakFile();
@@ -193,9 +195,6 @@ public:
     void WaitMemLeakDoneIfNeeded();
     void FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                             std::shared_ptr<HookRecord>& hookRecord);
-    std::string simplifiedNmd_;
-    volatile bool nmdComplete_ = false;
-
     std::shared_ptr<ShareMemoryBlock> uniqueTableBlock_;
 
 private:
@@ -290,6 +289,8 @@ private:
     std::string memLeakFileName_;
     std::string fileCacheDir_ = "/data/log/hiprofiler/";
     std::atomic_bool memLeakDumpDone_ {true};
+    std::string simplifiedNmd_;
+    SemaphorePtr nmdSemaphore_{nullptr};
 };
 }
 #endif // AGENT_MANAGER_H

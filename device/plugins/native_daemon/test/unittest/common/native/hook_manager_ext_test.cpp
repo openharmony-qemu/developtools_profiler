@@ -39,6 +39,7 @@ const int TEST_FILTER_SIZE = 512;
 const int TEST_MAX_STACK_DEPTH = 20;
 const int TEST_MAX_JS_STACK_DEPTH = 10;
 const uint32_t TEST_PAGE_BYTES = 4096;
+const uint32_t TEST_WAIT_MS = 1000;
 const std::string TEST_NMD_FILE_PATH = "/data/local/tmp/nmd_test_process.txt";
 
 class HookManagerExtTest : public ::testing::Test {
@@ -166,6 +167,19 @@ protected:
         EXPECT_EQ(write(fd, &rawData, sizeof(rawData)), static_cast<ssize_t>(sizeof(rawData)));
         EXPECT_EQ(lseek(fd, 0, SEEK_SET), 0);
         return fd;
+    }
+
+    std::vector<int8_t> CreateRecordRawData(uint16_t type, std::string data)
+    {
+        std::vector<int8_t> buffer(sizeof(BaseStackRawData) + data.size() + 1, 0);
+        BaseStackRawData baseRawData = {};
+        baseRawData.type = type;
+        if (memcpy_s(buffer.data(), buffer.size(), &baseRawData, sizeof(baseRawData)) != EOK ||
+            strcpy_s(reinterpret_cast<char *>(buffer.data()) + sizeof(baseRawData), buffer.size() - sizeof(baseRawData),
+                data.c_str()) != EOK) {
+            return {};
+        }
+        return buffer;
     }
 };
 
@@ -801,6 +815,7 @@ HWTEST_F(HookManagerExtTest, SetNmdInfo, TestSize.Level0)
     // Check if nmdParamInfo_ was set correctly
     EXPECT_EQ(hookManager_->nmdParamInfo_.fd, fd);
     EXPECT_EQ(hookManager_->nmdParamInfo_.type, type);
+    EXPECT_TRUE(hookManager_->nmdSemaphore_ == nullptr);
 }
 
 /*
@@ -1792,5 +1807,41 @@ HWTEST_F(HookManagerExtTest, GetFdsWithoutMatchedContextReturnsDefaultFdList, Te
     EXPECT_EQ(fds[1], -1);
     EXPECT_EQ(fds[2], -1);
     EXPECT_EQ(fds[3], -1);
+}
+
+/*
+ * @tc.name: GetSimplifiedNmdResult
+ * @tc.desc: test GetSimplifiedNmdResult method.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, GetSimplifiedNmdResult, TestSize.Level0)
+{
+    std::string result = hookManager_->GetSimplifiedNmdResult(TEST_WAIT_MS);
+    EXPECT_TRUE(result.empty());
+
+    const uint32_t fd = 5;
+    const uint32_t type = 3;
+    hookManager_->SetNmdInfo(std::make_pair(fd, type));
+    // Check if nmdParamInfo_ was set correctly and nmdSemaphore created
+    EXPECT_TRUE(hookManager_->nmdSemaphore_ != nullptr);
+
+    result = hookManager_->GetSimplifiedNmdResult(TEST_WAIT_MS);
+    EXPECT_TRUE(result.empty());
+
+    std::string nmdResultString = "nmdResultString";
+    std::vector<int8_t> nmdData = CreateRecordRawData(NMD_MSG, nmdResultString);
+    EXPECT_TRUE(!nmdData.empty());
+    std::thread nmdResultProducer([&]() {
+        std::shared_ptr<HookManager::HookManagerCtx> ctx = CreateFileCacheCtx(TEST_PID);
+        ASSERT_TRUE(ctx != nullptr);
+        std::shared_ptr<HookRecord> record = nullptr;
+        std::shared_ptr<RawStack> rawStack = nullptr;
+        EXPECT_TRUE(hookManager_->TakeDataHandler(
+            ctx, std::ref(record), std::ref(rawStack), nmdData.data(), nmdData.size()));
+    });
+    nmdResultProducer.detach();
+    result = hookManager_->GetSimplifiedNmdResult(TEST_WAIT_MS);
+    EXPECT_TRUE(!result.empty());
+    EXPECT_TRUE(result == nmdResultString);
 }
 } // namespace
