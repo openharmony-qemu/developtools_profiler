@@ -17,12 +17,10 @@
 #include <cstdint>
 #include <dlfcn.h>
 #include <fcntl.h>
-#include <fstream>
 #include <iostream>
 #include <malloc.h>
 #include <new>
 #include <pthread.h>
-#include <sstream>
 #include <string>
 #include <sys/time.h>
 #include <sys/prctl.h>
@@ -1224,63 +1222,6 @@ void __attribute__((noinline)) hook_memtrace(void* addr, size_t size, const char
     }
 }
 
-size_t FindFdSize(const std::string& fileName, uint32_t targetPid, uint32_t targetFd)
-{
-    std::ifstream file(fileName);
-    if (!file) {
-        PROFILER_LOG_ERROR(LOG_CORE, "caon not open errno=%d!!!", errno);
-        return 0;
-    }
-    std::string line;
-    int skip = 1;
-    while (std::getline(file, line)) {
-        if (skip > 0) {
-            --skip;
-            continue;
-        }
-        std::istringstream iss(line);
-        std::string col1;
-        uint32_t pid;
-        uint32_t fd;
-        size_t size;
-        if (!(iss >> col1 >> pid >> fd >> size)) {
-            continue;
-        }
-        if (pid == targetPid && fd == targetFd) {
-            return size;
-        }
-    }
-    return 0;
-}
-
-size_t GetDmaSize(void* addr)
-{
-    char path[FD_PATH_LENGTH] = {0};
-    char fileName[MAX_HOOK_PATH + 1] = {0};
-    int fd = static_cast<int>(reinterpret_cast<intptr_t>(addr));
-
-    if (fd < 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Invalid fd value");
-        return 0;
-    }
-
-    if (snprintf_s(path, FD_PATH_LENGTH, FD_PATH_LENGTH - 1, "/proc/self/fd/%d", fd) < 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "getDmaSize snprintf_s error");
-        return 0;
-    }
-    
-    ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
-    if (len != -1) {
-        fileName[len] = '\0';
-        if (strstr(fileName, "anon_inode:dmabuf") != NULL) {
-            std::string filePath = "/proc/" + std::to_string(g_hookPid.load()) + "/mm_dmabuf_info";
-            size_t size = FindFdSize(filePath, g_hookPid.load(), fd);
-            return size;
-        }
-    }
-    return 0;
-}
-
 template <typename T>
 inline void SendDmaCloseData(T& data, unsigned long long mask, void* addr,
     size_t size, uint16_t type, HookClientHolder& client, int realSize, StackParam& param)
@@ -1314,16 +1255,11 @@ void __attribute__((noinline)) hook_restrace(unsigned long long mask,
     if ((g_clientConfig.isSaMode && isUsing) && (!HookGuard::CheckRestraceConditions(combineVal, size))) {
         return;
     }
+    bool deferDmaSize = mask == RES_DMABUF_MASK && size == FD_SIZE && isUsing;
     if (mask == RES_DMABUF_MASK) {
-        if (size == FD_SIZE && isUsing) {
-            size = GetDmaSize(addr);
-            if (size == 0) {
-                return;
-            }
-        }
         addr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(addr) | RES_DMABUF_MASK);
     }
-    if ((isUsing || size != 0) &&
+    if (!deferDmaSize && (isUsing || size != 0) &&
         ((mask & (RES_FD_MASK | RES_THREAD_MASK | RES_ARK_LOCAL_HANDLE | RES_ARK_GLOBAL_HANDLE)) == 0) &&
         !ohos_set_filter_size(size, nullptr)) {
         return;

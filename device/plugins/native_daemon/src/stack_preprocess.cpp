@@ -17,6 +17,7 @@
 
 #include <elf.h>
 #include <unistd.h>
+#include <fstream>
 #include <sstream>
 #include <unordered_set>
 #include "common.h"
@@ -740,6 +741,12 @@ bool StackPreprocess::ProcessRawData(const int8_t data[], uint32_t size,
     if (!ValidateAndPrepareData(data, size, hookRecord, rawData)) {
         return false;
     }
+    DmaFdSizeMap dmaFdSizeMap;
+    uint32_t dmaFdSizePid = 0;
+    if (!ResolveDmaSize(hookRecord, dmaFdSizeMap, dmaFdSizePid)) {
+        factory_->SaveHookRecord(std::move(hookRecord));
+        return true;
+    }
     uint16_t type = hookRecord->GetType();
 
     // jemalloc may report duplicate malloc addresses; reconcile before expensive unwinding
@@ -871,6 +878,89 @@ bool StackPreprocess::ProcessStacklessMunmap(std::shared_ptr<HookRecord>& hookRe
         factory_->SaveHookRecord(std::move(hookRecord));
         hookRecord = nullptr;
     }
+    return true;
+}
+
+bool StackPreprocess::IsDmaUsingRecord(const HookRecordPtr& hookRecord) const
+{
+    if (hookRecord == nullptr) {
+        return false;
+    }
+    auto rawData = hookRecord->GetRawStack();
+    if (rawData == nullptr || rawData->stackContext == nullptr) {
+        return false;
+    }
+    return rawData->stackContext->type == MEMORY_USING_MSG &&
+        rawData->stackContext->tagId == DMABUF_MASK_INDEX + 1;
+}
+
+bool StackPreprocess::PassesSizeFilter(size_t size) const
+{
+    return size > 0 && hookConfig_.filter_size() >= 0 &&
+        size >= static_cast<size_t>(hookConfig_.filter_size());
+}
+
+uint32_t StackPreprocess::GetDmaFd(uint64_t addr) const
+{
+    return static_cast<uint32_t>(addr & ~static_cast<uint64_t>(RES_DMABUF_MASK));
+}
+
+bool StackPreprocess::ParseDmaInfoLine(const std::string& line, uint32_t targetPid,
+                                       DmaFdSizeMap& dmaFdSizeMap) const
+{
+    std::istringstream iss(line);
+    std::string col;
+    uint32_t pid = 0;
+    uint32_t fd = 0;
+    size_t size = 0;
+    if (!(iss >> col >> pid >> fd >> size)) {
+        return false;
+    }
+    if (pid == targetPid && size > 0) {
+        dmaFdSizeMap[fd] = size;
+    }
+    return true;
+}
+
+StackPreprocess::DmaFdSizeMap StackPreprocess::LoadDmaFdSizeMap(uint32_t pid) const
+{
+    DmaFdSizeMap dmaFdSizeMap;
+    char fileName[MAX_HOOK_PATH + 1] = {0};
+    if (snprintf_s(fileName, sizeof(fileName), sizeof(fileName) - 1,
+        "/proc/%u/mm_dmabuf_info", pid) < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "LoadDmaFdSizeMap snprintf_s failed");
+        return dmaFdSizeMap;
+    }
+    std::ifstream file(fileName);
+    if (!file) {
+        PROFILER_LOG_ERROR(LOG_CORE, "LoadDmaFdSizeMap open %s failed errno=%d", fileName, errno);
+        return dmaFdSizeMap;
+    }
+    std::string line;
+    while (std::getline(file, line)) {
+        ParseDmaInfoLine(line, pid, dmaFdSizeMap);
+    }
+    return dmaFdSizeMap;
+}
+
+bool StackPreprocess::ResolveDmaSize(HookRecordPtr& hookRecord, DmaFdSizeMap& dmaFdSizeMap,
+                                     uint32_t& dmaFdSizePid)
+{
+    if (!IsDmaUsingRecord(hookRecord)) {
+        return true;
+    }
+    auto rawData = hookRecord->GetRawStack();
+    uint32_t pid = rawData->stackContext->pid;
+    if (dmaFdSizePid != pid) {
+        dmaFdSizeMap = LoadDmaFdSizeMap(pid);
+        dmaFdSizePid = pid;
+    }
+    uint32_t fd = GetDmaFd(reinterpret_cast<uint64_t>(rawData->stackContext->addr));
+    auto iter = dmaFdSizeMap.find(fd);
+    if (iter == dmaFdSizeMap.end() || !PassesSizeFilter(iter->second)) {
+        return false;
+    }
+    rawData->stackContext->mallocSize = iter->second;
     return true;
 }
 
@@ -1104,7 +1194,12 @@ bool StackPreprocess::ProcessBatchData()
         return false;
     }
 
+    DmaFdSizeMap dmaFdSizeMap;
+    uint32_t dmaFdSizePid = 0;
     for (unsigned int i = 0; i < MAX_BATCH_CNT; i++) {
+        if (!ResolveDmaSize(batchRawStack[i], dmaFdSizeMap, dmaFdSizePid)) {
+            continue;
+        }
         if (!ProcessSingleRecord(batchRawStack[i])) {
             break;
         }
