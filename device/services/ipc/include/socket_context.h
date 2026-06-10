@@ -27,8 +27,10 @@ const static char DEFAULT_UNIX_SOCKET_PATH[] = "hiprofiler_unix_socket";
 const static char DEFAULT_UNIX_SOCKET_HOOK_PATH[] = "hook_unix_socket";
 const static char FFRT_PROFILER_UNIX_SOCKET_PATH[] = "ffrt_profiler_unix_socket";
 const static char FFRT_PROFILER_UNIX_SOCKET_FULL_PATH[] = "/dev/unix/socket/ffrt_profiler_unix_socket";
+const static char DEFAULT_UNIX_SOCKET_FULL_PATH[] = "/dev/unix/socket/hiprofiler_unix_socket";
 const static char NETWORK_PROFILER_UNIX_SOCKET_PATH[] = "network_profiler_unix_socket";
 const static char NETWORK_PROFILER_UNIX_SOCKET_FULL_PATH[] = "/dev/unix/socket/network_profiler_unix_socket";
+const static char DEFAULT_UNIX_SOCKET_HOOK_FULL_PATH[] = "/dev/unix/socket/hook_unix_socket";
 #else
 const static char DEFAULT_UNIX_SOCKET_PATH[] = "hiprofiler_unix_socket";
 const static char DEFAULT_UNIX_SOCKET_HOOK_PATH[] = "hook_unix_socket";
