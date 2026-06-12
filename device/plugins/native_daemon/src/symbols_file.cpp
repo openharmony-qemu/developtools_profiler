@@ -755,7 +755,8 @@ public:
             return false;
         }
         if (StringEndsWith(filePath_, ".hap") || StringEndsWith(filePath_, ".hsp")
-            || StringEndsWith(filePath_, ".hqf") || StringEndsWith(filePath_, ".abc")) {
+            || StringEndsWith(filePath_, ".hqf") || StringEndsWith(filePath_, ".abc")
+            || StringStartsWith(filePath_, "[anon:ArkTS Code:/")) {
             isHapAbc_ = true;
         } else {
             if (map_ == nullptr) {
@@ -842,7 +843,8 @@ public:
             HLOGD("map->name module:%s", module.c_str());
             // symbolization based on ark bytecode
             if (StringEndsWith(map->name, ".hap") || StringEndsWith(map->name, ".hsp")
-                || StringEndsWith(map->name, ".hqf") || StringEndsWith(map->name, ".abc")) {
+                || StringEndsWith(map->name, ".hqf") || StringEndsWith(map->name, ".abc")
+                || StringStartsWith(map->name, "[anon:ArkTS Code:/")) {
                 auto ret = DfxArk::Instance().ParseArkFileInfo(static_cast<uintptr_t>(ip),
                                                                static_cast<uintptr_t>(map->begin),
                                                                static_cast<uintptr_t>(map->offset), filePath_.c_str(),
