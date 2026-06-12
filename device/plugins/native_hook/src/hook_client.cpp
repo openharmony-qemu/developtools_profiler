@@ -467,16 +467,15 @@ static void inline __attribute__((always_inline)) CollectSyncStack(AsyncStackDat
 static void inline __attribute__((always_inline)) CollectNestedAsyncStack(AsyncStackData& asyncData)
 {
 #ifdef __aarch64__
-    uint32_t nestingDepth = g_clientConfig.asyncNestingDepth > 0 ?
-        std::min(g_clientConfig.asyncNestingDepth, static_cast<uint32_t>(MAX_ASYNC_CHAIN_LAYERS)) :
-        MAX_ASYNC_CHAIN_LAYERS;
-    DfxAsyncCtx asyncCtxBuffer[MAX_ASYNC_CHAIN_LAYERS];
-    int count = GetCurrentChainedAsyncContext(asyncCtxBuffer, nestingDepth);
-    if (count > 0 && count <= static_cast<int>(nestingDepth)) {
-        CollectNestedAsyncIds(asyncData, asyncCtxBuffer, count);
+    asyncData.asyncStackId = DfxGetSubmitterStackId();
+    if (asyncData.asyncStackId == 0) {
+        DfxAsyncCtx asyncCtxBuffer[MAX_ASYNC_CHAIN_LAYERS];
+        int count = GetCurrentChainedAsyncContext(asyncCtxBuffer, MAX_ASYNC_CHAIN_LAYERS);
+        if (count > 0) {
+            CollectNestedAsyncIds(asyncData, asyncCtxBuffer, count);
+        }
     }
     CollectSyncStack(asyncData);
-    asyncData.asyncStackId = 0;
 #endif
 }
 

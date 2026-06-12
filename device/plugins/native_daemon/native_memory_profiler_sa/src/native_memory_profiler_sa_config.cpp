@@ -231,10 +231,12 @@ void NativeMemoryProfilerSaConfig::PrintConfig(std::shared_ptr<NativeMemoryProfi
         config->fpUnwind_, config->blocked_, config->recordAccurately_);
     PROFILER_LOG_DEBUG(LOG_CORE,
         "startupMode: %d, memtraceEnable: %d, asyncStackEnable: %d, asyncFlag: %llu,"
-        " nestedAsyncStackEnable: %d, traceMask: %llu, offlineSymbolization: %d, callframeCompress: %d,"
+        " nestedAsyncStackEnable: %d, asyncNestingDepth: %u, asyncTaskStackDepth: %u,"
+        " traceMask: %llu, offlineSymbolization: %d, callframeCompress: %d,"
         "statisticsInterval: %d, clockId: %d, targetSoName: %s, filterLibListSize: %zu",
         config->startupMode_, config->memtraceEnable_, config->asyncStackEnable_,
         static_cast<unsigned long long>(config->asyncFlag_), config->nestedAsyncStackEnable_,
+        config->asyncNestingDepth_, config->asyncTaskStackDepth_,
         static_cast<unsigned long long>(config->traceMask_), config->offlineSymbolization_,
         config->callframeCompress_, config->statisticsInterval_, config->clockId_, config->targetSoName_.c_str(),
         config->filterLibList_.size());

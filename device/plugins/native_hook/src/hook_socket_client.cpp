@@ -551,6 +551,7 @@ void HookSocketClient::RestoreAsyncStackType()
 #ifdef __aarch64__
     if (asyncFlagConfigured_) {
         DfxSetAsyncStackType(asyncFlagBackup_);
+        SetAsyncStackMode(MODE_LAST_STACKTRACE);
         asyncFlagConfigured_ = false;
     }
 #endif
@@ -705,6 +706,12 @@ void HookSocketClient::SetAsyncStack()
         asyncFlagBackup_ = DfxSetAsyncStackType(config_->asyncFlag);
         asyncFlagConfigured_ = true;
         if (config_->nestedAsyncStackEnable) {
+            // asyncNestingDepth is nesting count, layer count is depth + 1
+            constexpr uint32_t DEFAULT_MAX_ASYNC_CTX_COUNT = 64 * 1024;
+            SetChainedAsyncStackConfig(
+                config_->asyncNestingDepth + 1,
+                config_->asyncTaskStackDepth,
+                DEFAULT_MAX_ASYNC_CTX_COUNT);
             SetAsyncStackMode(MODE_CHAINED_STACKTRACE);
         }
         // the default mode is MODE_LAST_STACKTRACE.
