@@ -285,25 +285,29 @@ HWTEST_F(StackBuilderTest, DirectorConstructsFramesFromExplicitPcs, TestSize.Lev
 }
 
 /*
- * @tc.name: DirectorConstructsNestedFramesWithDepthLimit
- * @tc.desc: test BuildStackDirector limits async task stack depth.
+ * @tc.name: DirectorConstructsNestedFramesWithFullAsyncStack
+ * @tc.desc: test BuildStackDirector constructs frames with full async stack depth.
  * @tc.type: FUNC
  */
-HWTEST_F(StackBuilderTest, DirectorConstructsNestedFramesWithDepthLimit, TestSize.Level0)
+HWTEST_F(StackBuilderTest, DirectorConstructsNestedFramesWithFullAsyncStack, TestSize.Level0)
 {
     NativeHookConfig hookConfig = CreateStackBuilderConfig(true);
-    hookConfig.set_async_task_stack_depth(1);
     auto runtime = std::make_shared<VirtualRuntime>(hookConfig);
     BuildStackDirector director(&hookConfig, runtime, g_mtx);
     HookRecordPtr hookRecord = CreateHookRecord(MALLOC_MSG);
+    // Sync stack: 1 PC
+    // Async stack 1: 2 PCs
+    // Async stack 2: 1 PC
     std::vector<std::vector<uintptr_t>> nestedAsyncPcs = {{0x2000, 0x2001}, {0x3000, 0}};
 
     auto& frames = director.ConstructNestedCallFrames(hookRecord, {0x1000, 0}, nestedAsyncPcs);
 
-    ASSERT_EQ(frames.size(), 3u);
+    // Expect 4 frames: 1 sync + 2 from async1 + 1 from async2
+    ASSERT_EQ(frames.size(), 4u);
     EXPECT_EQ(frames[0].ip_, StripPac(0x1000, 0));
     EXPECT_EQ(frames[1].ip_, StripPac(0x2000, 0));
-    EXPECT_EQ(frames[2].ip_, StripPac(0x3000, 0));
+    EXPECT_EQ(frames[2].ip_, StripPac(0x2001, 0));
+    EXPECT_EQ(frames[3].ip_, StripPac(0x3000, 0));
 }
 
 /*

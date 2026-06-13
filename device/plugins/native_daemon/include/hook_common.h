@@ -34,7 +34,7 @@
 
 #define MAX_THREAD_NAME (32)
 #define MAX_UNWIND_DEPTH (100)
-#define MAX_ASYNC_CHAIN_LAYERS (10)
+#define MAX_ASYNC_CHAIN_LAYERS (17)
 
 namespace OHOS {
 namespace Developtools {
@@ -311,6 +311,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", freeStackData:" << freeStackData << ", munmapStackData:" << munmapStackData
             << ", fpunwind:" << fpunwind << ", isBlocked:" << isBlocked << ", memtraceEnable:" << memtraceEnable
             << ", asyncStackEnable:" << asyncStackEnable << ", asyncFlag:" << asyncFlag
+            << ", asyncNestingDepth:" << asyncNestingDepth << ", asyncTaskStackDepth:" << asyncTaskStackDepth
             << ", sampleInterval: " << sampleInterval << ", responseLibraryMode: " << responseLibraryMode
             << ", allocatorSamplingEnable: " << allocatorSamplingEnable
             << ", uniqueStackTableSize: " << uniqueStackTableSize
@@ -422,6 +423,8 @@ struct alignas(8) ClientConfigIpc { // 8 is 8 bit
     uint32_t memLeakLimit = 0;
     MemLeakFormat memLeakFormat = MemLeakFormat::TYPE_DISABLE;
     bool onlyMemLeak = false;
+    uint32_t asyncNestingDepth = 0;
+    uint32_t asyncTaskStackDepth = 0;
 };
 
 inline bool CopyClientConfigString(char* dest, size_t destSize, const std::string& src)
@@ -498,6 +501,12 @@ inline void CopyClientConfigTailToIpc(const ClientConfig& config, ClientConfigIp
     ipc.onlyMemLeak = config.onlyMemLeak;
 }
 
+inline void CopyClientConfigAsyncToIpc(const ClientConfig& config, ClientConfigIpc& ipc)
+{
+    ipc.asyncNestingDepth = config.asyncNestingDepth;
+    ipc.asyncTaskStackDepth = config.asyncTaskStackDepth;
+}
+
 inline bool CopyClientConfigTextToIpc(const ClientConfig& config, ClientConfigIpc& ipc)
 {
     if (!CopyClientConfigString(ipc.targetSoName, sizeof(ipc.targetSoName), config.targetSoName)) {
@@ -522,6 +531,7 @@ inline bool ConvertClientConfigToIpc(const ClientConfig& config, ClientConfigIpc
     CopyClientConfigBaseToIpc(config, ipc);
     CopyClientConfigExtToIpc(config, ipc);
     CopyClientConfigTailToIpc(config, ipc);
+    CopyClientConfigAsyncToIpc(config, ipc);
     return CopyClientConfigTextToIpc(config, ipc);
 }
 
@@ -575,6 +585,12 @@ inline void CopyClientConfigTailFromIpc(const ClientConfigIpc& ipc, ClientConfig
     config.onlyMemLeak = ipc.onlyMemLeak;
 }
 
+inline void CopyClientConfigAsyncFromIpc(const ClientConfigIpc& ipc, ClientConfig& config)
+{
+    config.asyncNestingDepth = ipc.asyncNestingDepth;
+    config.asyncTaskStackDepth = ipc.asyncTaskStackDepth;
+}
+
 inline void CopyClientConfigTextFromIpc(const ClientConfigIpc& ipc, ClientConfig& config)
 {
     config.targetSoName = ReadClientConfigString(ipc.targetSoName, sizeof(ipc.targetSoName));
@@ -591,6 +607,7 @@ inline void ConvertClientConfigFromIpc(const ClientConfigIpc& ipc, ClientConfig&
     CopyClientConfigBaseFromIpc(ipc, config);
     CopyClientConfigExtFromIpc(ipc, config);
     CopyClientConfigTailFromIpc(ipc, config);
+    CopyClientConfigAsyncFromIpc(ipc, config);
     CopyClientConfigTextFromIpc(ipc, config);
 }
 struct alignas(8) HookCacheFileMsg {

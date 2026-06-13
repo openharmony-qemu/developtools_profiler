@@ -639,6 +639,9 @@ std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemo
     args << "startup_mode: " << (config->startupMode_ ? "true" : "false") << ", ";
     args << "memtrace_enable: " << (config->memtraceEnable_ ? "true" : "false") << ", ";
     args << "asyncStack_enable: " << (config->asyncStackEnable_ ? "true" : "false") << ", ";
+    args << "nested_async_stack_enable: " << (config->nestedAsyncStackEnable_ ? "true" : "false") << ", ";
+    args << "async_nesting_depth: " << std::to_string(config->asyncNestingDepth_) << ", ";
+    args << "async_task_stack_depth: " << std::to_string(config->asyncTaskStackDepth_) << ", ";
     args << "offline_symbolization: " << (config->offlineSymbolization_ ? "true" : "false") << ", ";
     args << "callframe_compress: " << (config->callframeCompress_ ? "true" : "false") << ", ";
     args << "statistics_interval: " << std::to_string(config->statisticsInterval_) << ", ";

@@ -28,6 +28,7 @@
 #include "native_hook_result_standard.pb.h"
 #include "native_hook_config_standard.pb.h"
 #include "google/protobuf/text_format.h"
+#include "hook_common.h"
 #include "trace_file_writer.h"
 #include "unique_stack_table.h"
 #include "dfx_elf.h"
@@ -984,8 +985,10 @@ bool StackPreprocess::BuildNestedAsyncCallFrames(const AsyncStackData* asyncData
         "BuildCallFrames Get syncStackPcs Failed");
 
     std::vector<std::vector<uintptr_t>> nestedAsyncPcs;
-    nestedAsyncPcs.reserve(asyncData->nestedAsyncCount);
-    for (uint32_t i = 0; i < asyncData->nestedAsyncCount; i++) {
+    uint32_t extendCount = asyncData->nestedAsyncCount <= MAX_ASYNC_CHAIN_LAYERS ?
+        asyncData->nestedAsyncCount : 0;
+    nestedAsyncPcs.reserve(extendCount);
+    for (uint32_t i = 0; i < extendCount; i++) {
         std::vector<uintptr_t> asyncPcs;
         std::string errorMsg = "BuildCallFrames Get nestedAsyncPcs[" + std::to_string(i) + "] Failed";
         GetPcsByStackId({asyncData->nestedAsyncIds[i]}, asyncPcs, errorMsg);

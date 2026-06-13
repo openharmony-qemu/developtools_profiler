@@ -555,6 +555,9 @@ int32_t NativeMemoryProfilerSaClientManager::ParseSimplifiedConfig(
     config->mmapDisable_ = false;
     config->memtraceEnable_ = false;
     config->asyncStackEnable_ = inputConfig.asyncStackEnable;
+    config->nestedAsyncStackEnable_ = inputConfig.nestedAsyncStackEnable;
+    config->asyncNestingDepth_ = inputConfig.asyncNestingDepth;
+    config->asyncTaskStackDepth_ = inputConfig.asyncTaskStackDepth;
     config->asyncFlag_ = inputConfig.asyncFlag;
     config->targetSoName_ = inputConfig.targetSoName;
     config->responseLibraryMode_ = inputConfig.responseLibraryMode;
