@@ -46,14 +46,10 @@ ohos_shared_library("libnetwork_profiler") {
     "${OHOS_PROFILER_DIR}/device/base/src/epoll_event_poller.cpp",
     "${OHOS_PROFILER_DIR}/device/base/src/event_notifier.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service/src/network_profiler_common.cpp",
-    "${OHOS_PROFILER_DIR}/device/services/ipc/src/client_connection.cpp",
-    "${OHOS_PROFILER_DIR}/device/services/ipc/src/service_entry.cpp",
-    "${OHOS_PROFILER_DIR}/device/services/ipc/src/socket_context.cpp",
-    "${OHOS_PROFILER_DIR}/device/services/ipc/src/unix_socket_client.cpp",
-    "${OHOS_PROFILER_DIR}/device/services/ipc/src/unix_socket_server.cpp",
   ]
 
   deps = [
+    "${OHOS_PROFILER_DIR}/device/services/ipc:libhiprofiler_ipc",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_lite",
   ]
 

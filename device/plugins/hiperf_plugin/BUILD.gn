@@ -37,7 +37,7 @@ ohos_source_set("hiperfplugin_source") {
   public_deps = [
     "${OHOS_PROFILER_DIR}/protos/services:common_types_lite_proto",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hiperf_data:hiperf_data_cpp",
-    "../../base:hiprofiler_base",
+    "../../base:libhiprofiler_base",
   ]
   if (current_toolchain != host_toolchain) {
     defines = [

@@ -37,8 +37,6 @@ config("hook_config") {
 ohos_source_set("native_hook_source") {
   use_exceptions = true
   sources = [
-    "../../services/ipc/src/socket_context.cpp",
-    "../../services/ipc/src/unix_socket_client.cpp",
     "../native_daemon/src/debug_logger.cpp",
     "../native_daemon/src/get_thread_id.cpp",
     "../native_daemon/src/register.cpp",
@@ -70,8 +68,9 @@ ohos_source_set("native_hook_source") {
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
   ]
   deps = [
+    "${OHOS_PROFILER_DIR}/device/services/ipc:libhiprofiler_ipc",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_lite",
-    "../../base:hiprofiler_base",
+    "../../base:libhiprofiler_base",
   ]
   if (hiprofiler_use_libunwind) {
     public_deps = [ "//third_party/libunwind:unwind_source_${target_cpu}" ]

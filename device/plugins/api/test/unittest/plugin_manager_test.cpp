@@ -23,6 +23,7 @@
 #include "command_poller.h"
 #include "grpc/impl/codegen/log.h"
 #include "logging.h"
+#include "network_profiler_manager.h"
 #include "parameters.h"
 #include "plugin_manager.h"
 #include "plugin_service.h"
@@ -283,7 +284,9 @@ HWTEST_F(PluginManagerTest, networkprofilerPlugin, TestSize.Level1)
     config.set_sample_interval(DEFAULT_SLEEP_TIME);
     std::shared_ptr<NetworkProfilerManager> networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
     networkProfilerMgr->Init();
-    pluginManage->AddNetworkProfilerManager(networkProfilerMgr);
+    pluginManage->SetNetworkProfilerStopCallback([networkProfilerMgr]() {
+        networkProfilerMgr->StopNetworkProfiler();
+    });
     std::vector<ProfilerPluginConfig> configVec;
     PluginResult result;
     configVec.push_back(config);

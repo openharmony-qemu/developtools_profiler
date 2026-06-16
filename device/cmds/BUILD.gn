@@ -15,7 +15,17 @@ import("//build/ohos.gni")
 import("../base/config.gni")
 import("../plugins/ftrace_plugin/ftrace.gni")
 
+config("hiprofiler_cmd_size_opt_config") {
+  cflags = [
+    "-Os",
+    "-ffunction-sections",
+    "-fdata-sections",
+  ]
+  ldflags = [ "-Wl,--gc-sections" ]
+}
+
 ohos_source_set("command_line") {
+  configs = [ ":hiprofiler_cmd_size_opt_config" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   sources = [
@@ -27,6 +37,7 @@ ohos_source_set("command_line") {
   include_dirs = [ "include" ]
 }
 ohos_executable("hiprofiler_cmd") {
+  configs = [ ":hiprofiler_cmd_size_opt_config" ]
   sources = [
     "src/main.cpp",
     "src/parse_plugin_config.cpp",
@@ -40,7 +51,7 @@ ohos_executable("hiprofiler_cmd") {
   include_dirs = [ "include" ]
   deps = [
     ":command_line",
-    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
+    "${OHOS_PROFILER_DIR}/device/base:libhiprofiler_base",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_proto",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_type_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/cpu_data:cpu_plugin_config_cpp_standard",

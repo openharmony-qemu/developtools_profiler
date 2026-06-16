@@ -53,6 +53,11 @@ config("hiprofiler_base_config") {
   include_dirs = [ "include" ]
 }
 
+config("hiprofiler_base_build_config") {
+  cflags = [ "-std=c++17" ]
+  cflags_cc = [ "-fno-exceptions" ]
+}
+
 config("stack_common_public") {
   visibility = [ "*:*" ]
   include_dirs = [ "stack_common" ]
@@ -103,6 +108,60 @@ ohos_shared_library("libstack_common") {
   ]
   install_enable = true
   innerapi_tags = [ "platformsdk" ]
+}
+
+ohos_static_library("hiprofiler_base_static") {
+  visibility = [ "*:*" ]
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  sources = [
+    "src/common.cpp",
+    "src/epoll_event_poller.cpp",
+    "src/event_notifier.cpp",
+    "src/i_semaphore.cpp",
+    "src/posix_semaphore.cpp",
+    "src/schedule_task_manager.cpp",
+    "src/std_semaphore.cpp",
+  ]
+  configs = [ ":hiprofiler_base_build_config" ]
+  public_configs = [ ":hiprofiler_base_config" ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "hisysevent:libhisysevent",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "os_account:os_account_innerkits",
+    "samgr:samgr_proxy",
+  ]
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+  }
+}
+
+ohos_shared_library("libhiprofiler_base") {
+  visibility = [ "*:*" ]
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  deps = [ ":hiprofiler_base_static" ]
+  public_configs = [
+    ":hiprofiler_test_config",
+    ":hiprofiler_base_config",
+  ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "hisysevent:libhisysevent",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "os_account:os_account_innerkits",
+    "samgr:samgr_proxy",
+  ]
+  install_enable = true
 }
 
 ohos_source_set("hiprofiler_base") {

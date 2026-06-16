@@ -29,7 +29,17 @@ config("hiprofiler_plugins_config") {
   }
 }
 
+config("hiprofiler_plugins_size_opt_config") {
+  cflags = [
+    "-Os",
+    "-ffunction-sections",
+    "-fdata-sections",
+  ]
+  ldflags = [ "-Wl,--gc-sections" ]
+}
+
 ohos_source_set("plugins_sources") {
+  configs = [ ":hiprofiler_plugins_size_opt_config" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   include_dirs = [
@@ -46,13 +56,11 @@ ohos_source_set("plugins_sources") {
     "src/writer_adapter.cpp",
   ]
   public_deps = [
-    "${OHOS_PROFILER_DIR}/device/plugins/ffrt_profiler/service:ffrt_profiler_service",
-    "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service:network_profiler_service",
-    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
-    "../../base:hiprofiler_base",
+    "../../base:libhiprofiler_base",
   ]
   public_configs = [
     ":hiprofiler_plugins_config",
@@ -77,9 +85,12 @@ ohos_prebuilt_etc("hiprofiler_plugins.cfg") {
 }
 
 ohos_executable("hiprofiler_plugins") {
+  configs = [ ":hiprofiler_plugins_size_opt_config" ]
   deps = [
     ":hiprofiler_plugins.cfg",
     ":plugins_sources",
+    "${OHOS_PROFILER_DIR}/device/plugins/ffrt_profiler/service:ffrt_profiler_service",
+    "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service:network_profiler_service",
   ]
   sources = [ "src/main.cpp" ]
   if (current_toolchain != host_toolchain) {

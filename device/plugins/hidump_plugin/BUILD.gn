@@ -26,7 +26,7 @@ ohos_source_set("hidumpplugin_source") {
     "${OHOS_PROFILER_DIR}/device/base/include",
   ]
   deps = [
-    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
+    "${OHOS_PROFILER_DIR}/device/base:libhiprofiler_base",
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hidump_data:hidump_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hidump_data:hidump_data_encoder",

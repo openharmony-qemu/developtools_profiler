@@ -19,7 +19,7 @@
 #include "socket_context.h"
 #include <string>
 
-class UnixSocketClient final : public SocketContext {
+class IPC_EXPORT UnixSocketClient final : public SocketContext {
 public:
     UnixSocketClient();
     ~UnixSocketClient();

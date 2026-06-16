@@ -16,6 +16,7 @@
     extern "C++" {
       CommandPoller::*;
       OHOS::Developtools::NativeDaemon::HookManager*;
+      OHOS::Developtools::NativeDaemon::RunDaemonServiceLoop*;
       OHOS::Developtools::NativeDaemon::StringSplit*;
       OHOS::Developtools::NativeDaemon::IsDigits*;
       OHOS::Developtools::Profiler::Hook::StartHook*;

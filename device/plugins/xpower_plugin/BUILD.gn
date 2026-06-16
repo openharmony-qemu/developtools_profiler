@@ -29,7 +29,7 @@ ohos_shared_library("xpowerplugin") {
   ]
   deps = [
     "${OHOS_PROFILER_DIR}/protos/types/plugins/xpower_data:xpower_data_cpp",
-    "../../base:hiprofiler_base",
+    "../../base:libhiprofiler_base",
   ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]

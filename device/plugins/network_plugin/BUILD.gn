@@ -57,7 +57,7 @@ ohos_shared_library("networkplugin") {
   version_script = "libnetwork_plugin.map"
   deps = [
     ":networkplugin_source",
-    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
+    "${OHOS_PROFILER_DIR}/device/base:libhiprofiler_base",
   ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]

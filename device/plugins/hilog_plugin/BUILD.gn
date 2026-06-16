@@ -31,7 +31,7 @@ ohos_source_set("hilogplugin_source") {
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hilog_data:hilog_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hilog_data:hilog_data_encoder",
-    "../../base:hiprofiler_base",
+    "../../base:libhiprofiler_base",
   ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
