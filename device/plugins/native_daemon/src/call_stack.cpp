@@ -519,6 +519,9 @@ bool CallStack::DoUnwind2(const VirtualThread &thread, std::vector<CallFrame> &c
         tempRegs.push_back((uintptr_t)regs_[i]);
     }
     regs->SetRegsData(tempRegs);
+#elif defined(target_cpu_x86_64)
+    std::shared_ptr<DfxRegs> regs = std::make_shared<DfxRegsX86_64>();
+    regs->SetRegsData(reinterpret_cast<uintptr_t*>(regs_), regsNum_);
 #else
     std::shared_ptr<DfxRegs> regs = std::make_shared<DfxRegsArm64>();
     regs->SetRegsData(reinterpret_cast<uintptr_t*>(regs_), regsNum_);
