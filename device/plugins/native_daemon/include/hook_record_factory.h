@@ -46,7 +46,7 @@ public:
     void SaveRawStack(RawStackPtr rawStack);
     std::shared_ptr<HookRecord> CreateStackRecord(uint16_t type, RawStackPtr rawStack);
     void SaveRecordToCache(uint16_t type, HookRecordPtr hookRecord);
-    void InitRawStack(RawStackPtr rawStack, const int8_t sharedMemData[], uint32_t size, bool storeData,
+    void InitRawStack(RawStackPtr rawStack, const int8_t sharedMemData[], uint32_t& size, bool storeData,
         const SaveMemTagCallBack& callback = DefaultSaveMemTagCallBack);
 
 private:

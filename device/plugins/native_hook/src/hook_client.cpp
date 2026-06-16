@@ -192,7 +192,7 @@ pid_t GetCurThreadId()
     return reinterpret_cast<long>((pthread_getspecific(g_hookTid)));
 }
 
-uint16_t GetTagId(const char* tagName, unsigned long long mask = 0)
+uint32_t GetTagId(const char* tagName, unsigned long long mask = 0)
 {
     if (tagName == nullptr || strlen(tagName) > MAX_HOOK_PATH) {
         return 0;
