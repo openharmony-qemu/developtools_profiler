@@ -149,13 +149,13 @@ bool CacheFileWriter::WriteWithExtraData(const void* data, size_t size, const vo
     }
     WriteToMemoryCache(&totalSize, sizeof(totalSize));
     WriteToMemoryCache(data, size);
-    if (payload != nullptr && payloadSize > 0) {
+    if (payloadSize > 0) {
         WriteToMemoryCache(payload, payloadSize);
     }
-    if (firstExtra != nullptr && firstExtraSize > 0) {
+    if (firstExtraSize > 0) {
         WriteToMemoryCache(firstExtra, firstExtraSize);
     }
-    if (secondExtra != nullptr && secondExtraSize > 0) {
+    if (secondExtraSize > 0) {
         WriteToMemoryCache(secondExtra, secondExtraSize);
     }
     return true;

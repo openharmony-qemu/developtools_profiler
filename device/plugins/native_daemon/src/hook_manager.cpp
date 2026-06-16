@@ -1477,8 +1477,6 @@ bool HookManager::ProcessRawStackByType(const std::shared_ptr<HookManagerCtx>& h
 {
     uint16_t type = hookRecord->GetType();
     if (type == MEMORY_TAG) {
-/*         std::string tagName = reinterpret_cast<char*>(rawStack->data);
-        hookCtx->stackPreprocess->SaveMemTag(rawStack->stackContext->tagId, tagName); */
         return true;
     } else if (type == JS_STACK_MSG) {
         hookCtx->stackPreprocess->SaveJsRawStack(rawStack->stackContext->jsChainId,

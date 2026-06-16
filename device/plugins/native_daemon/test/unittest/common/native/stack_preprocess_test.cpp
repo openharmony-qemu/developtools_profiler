@@ -281,7 +281,7 @@ HWTEST_F(StackPreprocessTest, MemtagMapTest, TestSize.Level0)
 
 /*
 @tc.name: ValidateAndPrepareDataValidTest
-@tc.desc: test ProcessMemoryTag with valid data.
+@tc.desc: test ValidateAndPrepareData with valid data.
 @tc.type: FUNC
 */
 HWTEST_F(StackPreprocessTest, ValidateAndPrepareDataValidTest, TestSize.Level0)

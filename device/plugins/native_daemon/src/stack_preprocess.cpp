@@ -762,7 +762,7 @@ bool StackPreprocess::ProcessRawData(const int8_t data[], uint32_t size,
     if (isStopTakeData_) {
         return false;
     } else if (type == MEMORY_TAG) {
-        return ProcessMemoryTag(rawData);
+        return true;
     } else if (type == FREE_ARKTS) {
         size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
         HandleDeleteAddr(reinterpret_cast<uint64_t>(hookRecord->GetAddr()), size);
@@ -825,13 +825,6 @@ bool StackPreprocess::ValidateAndPrepareData(const int8_t data[], uint32_t size,
     hookRecord = factory_->GetHookRecord(data, size, false, saveMemTagCallBack);
     CHECK_NOTNULL(hookRecord, false, "hookRecord invalid!");
     rawData = hookRecord->GetRawStack();
-    return true;
-}
-
-bool StackPreprocess::ProcessMemoryTag(RawStackPtr& rawData)
-{
-/*     std::string tagName = reinterpret_cast<char*>(rawData->data);
-    SaveMemTag(rawData->stackContext->tagId, tagName); */
     return true;
 }
 
@@ -2407,7 +2400,7 @@ bool StackPreprocess::FlushRecordStatistics()
 
 void StackPreprocess::SaveMemTag(uint32_t tagId, const std::string& tagName)
 {
-    memTagMap_.Insert(tagId, tagName);
+    memTagMap_.EnsureInsert(tagId, tagName);
 }
 
 bool StackPreprocess::GetMemTag(uint32_t tagId, std::string& tagName)

@@ -224,13 +224,15 @@ std::shared_ptr<HookRecord> HookRecordFactory::CreateStackRecord(uint16_t type, 
     }
 }
 
-uint32_t HookRecordFactory::GetDynamicTagId(const std::string& tagName)
+uint32_t HookRecordFactory::GetDynamicTagId(const std::string& tagName, bool& isNewTagId)
 {
     std::lock_guard<std::mutex> guard(tagIdMutex_);
     auto it = tagNameToIdMap_.find(tagName);
     if (it != tagNameToIdMap_.end()) {
+        isNewTagId = false;
         return it->second;
     }
+    isNewTagId = true;
     uint32_t newTagId = nextTagId_;
     nextTagId_++;
     if (nextTagId_ >= TAG_ID_PENDING) {
@@ -280,9 +282,10 @@ void HookRecordFactory::ProcessDynamicTagInfo(RawStackPtr rawStack, uint32_t& si
     char* tagNamePtr = reinterpret_cast<char*>(baseData + realDataSize);    
     std::string tagName(tagNamePtr, tagNameSize - 1);  // Remove '\0'
     // Generate real tagId
-    uint32_t realTagId = GetDynamicTagId(tagName);
+    bool isNewTagId = true;
+    uint32_t realTagId = GetDynamicTagId(tagName, isNewTagId);
     rawStack->stackContext->tagId = realTagId;
-    if (callback) {
+    if (callback && isNewTagId) {
         callback(realTagId, tagName);
     }
     PROFILER_LOG_DEBUG(LOG_CORE, "Dynamic tag: %s -> %u, size restored to %u", tagName.c_str(), realTagId, size);
