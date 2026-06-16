@@ -42,6 +42,9 @@ public:
     bool WriteSync(const void* data, size_t size, const std::function<bool()>& callback);
     bool WriteWithPayloadTimeout(const void* data, size_t size, const void* payload, size_t payloadSize,
                                  const std::function<bool()>& callback);
+    bool WriteWithExtraDataTimeout(const void* data, size_t size, const void* payload, size_t payloadSize,
+        const void* firstExtra, size_t firstExtraSize, const void* secondExtra, size_t secondExtraSize,
+        const std::function<bool()>& callback);
     bool Flush() override;
     bool PrepareFlush();
     bool IsFileCacheMode();

@@ -201,21 +201,8 @@ uint16_t GetTagId(const char* tagName, unsigned long long mask = 0)
     if (predefinedId != 0) {
         return predefinedId;
     }
-    std::unique_lock<std::mutex> lock(g_tagIdMutex);
-    NameData tagData = {{{{0}}}};
-    tagData.type = MEMORY_TAG;
-    ++g_tagId;
-    if (g_tagId.load() == 0) {
-        g_tagId.store(RESTRACE_TYPE_COUNT + 1);
-    }
-    tagData.tagId = g_tagId.load();
-    lock.unlock();
-    if (strcpy_s(tagData.name, MAX_HOOK_PATH + 1, tagName) != EOK) {
-        return 0;
-    }
-    HookClientHolder client(g_hookClient);
-    client.SendStackWithPayload(&tagData, sizeof(BaseStackRawData) + strlen(tagName) + 1, nullptr, 0);
-    return tagData.tagId;
+    // return dynamic tagId
+    return TAG_ID_PENDING;
 }
 
 void* MallocHookStart(void* disableHookCallback)
@@ -991,19 +978,19 @@ extern "C" __attribute__((visibility("default"), used)) void hook_free(void (*fr
     }
 }
 
-static bool RefreshMmapRawData(StackRawData &rawdata, int prot, int flags, int fd, off_t offset, size_t length)
+static bool RefreshMmapRawData(StackRawData &rawdata, int prot, int flags, int fd, off_t offset, size_t length,
+    char* fileName, size_t fileNameSize)
 {
     if (fd < 0) {
         return true;
     }
     rawdata.type = MMAP_FILE_PAGE_MSG;
     char path[FD_PATH_LENGTH] = {0};
-    char fileName[MAX_HOOK_PATH + 1] = {0};
     if (snprintf_s(path, FD_PATH_LENGTH, FD_PATH_LENGTH - 1, "/proc/self/fd/%d", fd) < 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "hook_mmap snprintf_s error");
         return false;
     }
-    ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
+    ssize_t len = readlink(path, fileName, fileNameSize - 1);
     if (len == -1) {
         return true;
     }
@@ -1025,12 +1012,6 @@ static bool RefreshMmapRawData(StackRawData &rawdata, int prot, int flags, int f
         return false;
     }
     client.SendMmapFileRawData(prot, flags, offset, fileName, rawdata);
-    char* p = strrchr(fileName, '/');
-    if (p != nullptr) {
-        rawdata.tagId = GetTagId(&fileName[p - fileName + 1]);
-    } else {
-        rawdata.tagId = GetTagId(fileName);
-    }
     return true;
 }
 
@@ -1079,7 +1060,8 @@ void* __attribute__((noinline)) hook_mmap(void*(*fn)(void*, size_t, int, int, in
         PROFILER_LOG_WARN(LOG_CORE, "hook_mmap send MAP_FIXED release event failed");
     }
     SetStackRawData(rawdata, MMAP_MSG, ret, length);
-    if (!RefreshMmapRawData(rawdata, prot, flags, fd, offset, length)) {
+    char fileName[MAX_HOOK_PATH + 1] = {0};
+    if (!RefreshMmapRawData(rawdata, prot, flags, fd, offset, length, fileName, sizeof(fileName))) {
         return ret;
     }
     if (!client.UpdateThreadName()) {
@@ -1087,11 +1069,32 @@ void* __attribute__((noinline)) hook_mmap(void*(*fn)(void*, size_t, int, int, in
     }
     const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
-    if (isAsyncStack) {
-        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
-        client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+
+    // Get tagName for mmap file
+    char* p = strrchr(fileName, '/');
+    const char* tagName = (p != nullptr) ? (p + 1) : fileName;
+    if (tagName[0] == '\0') {
+        if (isAsyncStack) {
+            *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
+            client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr),
+                param.stackSize);
+        } else {
+            client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr),
+                param.stackSize);
+        }
     } else {
-        client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+        rawdata.tagId = GetTagId(tagName);
+        uint32_t originSize = realSize + param.stackSize;
+        ExtraDataInfo extraNameInfo = { reinterpret_cast<const int8_t*>(tagName), strlen(tagName) + 1,
+            reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize)};
+        if (isAsyncStack) {
+            *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
+            client.SendStackWithExtraData(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr),
+                param.stackSize, extraNameInfo);
+        } else {
+            client.SendStackWithExtraData(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr),
+                param.stackSize, extraNameInfo);
+        }
     }
     return ret;
 }
@@ -1208,16 +1211,35 @@ void __attribute__((noinline)) hook_memtrace(void* addr, size_t size, const char
     uint16_t type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
     const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
+    uint32_t tagId = GetTagId(tag);
+    uint32_t originSize = realSize + param.stackSize;
     if (isAsyncStack) {
         SetStackRawData(asyncData, type, addr, size);
         FillNodeInfo(asyncData);
-        asyncData.tagId = GetTagId(tag);
-        client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+        asyncData.tagId = tagId;
+        if (tagId != TAG_ID_PENDING) {
+            client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr),
+                param.stackSize);
+        } else {
+            ExtraDataInfo extraNameInfo = { reinterpret_cast<const int8_t*>(tag), strlen(tag) + 1,
+                reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize)};
+            client.SendStackWithExtraData(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr),
+                param.stackSize, extraNameInfo);
+        }
+
     } else {
         SetStackRawData(rawdata, type, addr, size);
         FillNodeInfo(rawdata);
-        rawdata.tagId = GetTagId(tag);
-        client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+        rawdata.tagId = tagId;
+        if (tagId != TAG_ID_PENDING) {
+            client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr),
+                param.stackSize);
+        } else {
+            ExtraDataInfo extraNameInfo = { reinterpret_cast<const int8_t*>(tag), strlen(tag) + 1,
+                reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize)};
+            client.SendStackWithExtraData(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr),
+                param.stackSize, extraNameInfo);
+        }
     }
 }
 

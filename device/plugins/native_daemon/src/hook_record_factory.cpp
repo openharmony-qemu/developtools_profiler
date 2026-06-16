@@ -224,12 +224,107 @@ std::shared_ptr<HookRecord> HookRecordFactory::CreateStackRecord(uint16_t type, 
     }
 }
 
-void HookRecordFactory::InitRawStack(RawStackPtr rawStack, const int8_t sharedMemData[],
-                                     uint32_t size, bool storeData)
+uint32_t HookRecordFactory::GetDynamicTagId(const std::string& tagName)
+{
+    std::lock_guard<std::mutex> guard(tagIdMutex_);
+    auto it = tagNameToIdMap_.find(tagName);
+    if (it != tagNameToIdMap_.end()) {
+        return it->second;
+    }
+    uint32_t newTagId = nextTagId_;
+    nextTagId_++;
+    if (nextTagId_ >= TAG_ID_PENDING) {
+        nextTagId_ = INITIAL_MEM_TAG_ID;
+    }
+    tagNameToIdMap_[tagName] = newTagId;
+    PROFILER_LOG_INFO(LOG_CORE, "Generate tagId: %s -> %u", tagName.c_str(), newTagId);
+    return newTagId;
+}
+    
+void HookRecordFactory::ProcessDynamicTagInfo(RawStackPtr rawStack, uint32_t& size, const SaveMemTagCallBack& callback)
+{
+    uint16_t type = rawStack->stackContext->type;
+    if (type != MMAP_FILE_PAGE_MSG && type != MEMORY_USING_MSG && type != MEMORY_UNUSING_MSG) {
+        return;
+    }
+    // Only process dynamic tag (tagId == TAG_ID_PENDING)
+    if (rawStack->stackContext->tagId != TAG_ID_PENDING) {
+        return;
+    }
+    
+    // Dynamic tag format: [data][payload][tagName][realDataSize(at END)]
+    // Key innovation: realDataSize at last 4 bytes (fixed position!)
+    // Check minimum size
+    if (size <= sizeof(ExtraDataInfo::secondExtraSize)) {
+        return;  // No enough space
+    }
+    
+    // Read realDataSize from LAST 4 bytes (fixed position, easy to locate!)
+    uint8_t* baseData = reinterpret_cast<uint8_t*>(rawStack->stackContext);
+    uint32_t* realSizePtr = reinterpret_cast<uint32_t*>(baseData + size - sizeof(ExtraDataInfo::secondExtraSize));
+    uint32_t realDataSize = *realSizePtr;
+    // Validate realDataSize
+    if (realDataSize < sizeof(BaseStackRawData) || realDataSize > size - sizeof(ExtraDataInfo::secondExtraSize)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Invalid realDataSize: %u, size: %u", realDataSize, size);
+        return;
+    }
+    
+    uint32_t tagNameSize = size - realDataSize - sizeof(ExtraDataInfo::secondExtraSize);
+    // Restore original size (remove tagName + realDataSize field)
+    size = realDataSize;
+    // Check tagNameInfo size
+    if (tagNameSize <= 1) {
+        return;  // No tagName data
+    }
+    // Locate tagName: after [data][payload] field
+    char* tagNamePtr = reinterpret_cast<char*>(baseData + realDataSize);    
+    std::string tagName(tagNamePtr, tagNameSize - 1);  // Remove '\0'
+    // Generate real tagId
+    uint32_t realTagId = GetDynamicTagId(tagName);
+    rawStack->stackContext->tagId = realTagId;
+    if (callback) {
+        callback(realTagId, tagName);
+    }
+    PROFILER_LOG_DEBUG(LOG_CORE, "Dynamic tag: %s -> %u, size restored to %u", tagName.c_str(), realTagId, size);
+}
+
+uint32_t HookRecordFactory::GetOriginStackDataSize(const int8_t sharedMemData[], uint32_t size)
+{
+    BaseStackRawData* stackContext = reinterpret_cast<BaseStackRawData*>(const_cast<int8_t*>(sharedMemData));
+    uint16_t type = stackContext->type;
+    if (type != MMAP_FILE_PAGE_MSG && type != MEMORY_USING_MSG && type != MEMORY_UNUSING_MSG) {
+        return size;
+    }
+    // Only process dynamic tag (tagId == TAG_ID_PENDING)
+    if (stackContext->tagId != TAG_ID_PENDING) {
+        return size;
+    }
+    
+    // Dynamic tag format: [data][payload][tagName][realDataSize(at END)]
+    // Key innovation: realDataSize at last 4 bytes (fixed position!)
+    // Check minimum size
+    if (size <= sizeof(ExtraDataInfo::secondExtraSize)) {
+        return size;
+    }
+    
+    // Read realDataSize from LAST 4 bytes (fixed position, easy to locate!)
+    const uint32_t* realSizePtr = reinterpret_cast<const uint32_t*>(sharedMemData + size -
+        sizeof(ExtraDataInfo::secondExtraSize));
+    uint32_t realDataSize = *realSizePtr;
+    // Validate realDataSize
+    if (realDataSize < sizeof(BaseStackRawData) || realDataSize > size - sizeof(ExtraDataInfo::secondExtraSize)) {
+        return size;
+    }
+    return realDataSize;
+}
+
+void HookRecordFactory::InitRawStack(RawStackPtr rawStack, const int8_t sharedMemData[], uint32_t& size,
+    bool storeData, const SaveMemTagCallBack& callback)
 {
     if (storeData) {
-        rawStack->baseStackData = std::make_unique<uint8_t[]>(size);
-        if (memcpy_s(rawStack->baseStackData.get(), size, sharedMemData, size) != EOK) {
+        uint32_t originDataSize= GetOriginStackDataSize(sharedMemData, size);
+        rawStack->baseStackData = std::make_unique<uint8_t[]>(originDataSize);
+        if (memcpy_s(rawStack->baseStackData.get(), originDataSize, sharedMemData, originDataSize) != EOK) {
             PROFILER_LOG_ERROR(LOG_CORE, "HookRecordFactory memcpy_s raw data failed!");
             return;
         }
@@ -239,10 +334,11 @@ void HookRecordFactory::InitRawStack(RawStackPtr rawStack, const int8_t sharedMe
         rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(const_cast<int8_t*>(sharedMemData));
         rawStack->data = reinterpret_cast<uint8_t*>(const_cast<int8_t*>(sharedMemData)) + sizeof(BaseStackRawData);
     }
+    ProcessDynamicTagInfo(rawStack, size, callback);
 }
 
-std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t sharedMemData[],
-                                                             uint32_t size, bool storeData)
+std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t sharedMemData[], uint32_t size,
+    bool storeData, const SaveMemTagCallBack& callback)
 {
     if (size == sizeof(void*)) {
         uint64_t freeAddr = 0;
@@ -255,7 +351,7 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
         return freeRecord;
     }
     auto rawStack = GetRawStackFromCache();
-    InitRawStack(rawStack, sharedMemData, size, storeData);
+    InitRawStack(rawStack, sharedMemData, size, storeData, callback);
     uint16_t type = rawStack->stackContext->type;
     switch (type) {
         case GWP_ASAN_MSG:

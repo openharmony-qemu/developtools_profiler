@@ -819,7 +819,10 @@ bool StackPreprocess::ValidateAndPrepareData(const int8_t data[], uint32_t size,
                                              RawStackPtr& rawData)
 {
     CHECK_TRUE(size >= sizeof(BaseStackRawData), false, "stack data invalid!");
-    hookRecord = factory_->GetHookRecord(data, size, false);
+    auto saveMemTagCallBack = [this] (uint32_t tagId, const std::string& tagName) {
+        this->SaveMemTag(tagId, tagName);
+    };
+    hookRecord = factory_->GetHookRecord(data, size, false, saveMemTagCallBack);
     CHECK_NOTNULL(hookRecord, false, "hookRecord invalid!");
     rawData = hookRecord->GetRawStack();
     return true;
@@ -827,8 +830,8 @@ bool StackPreprocess::ValidateAndPrepareData(const int8_t data[], uint32_t size,
 
 bool StackPreprocess::ProcessMemoryTag(RawStackPtr& rawData)
 {
-    std::string tagName = reinterpret_cast<char*>(rawData->data);
-    SaveMemTag(rawData->stackContext->tagId, tagName);
+/*     std::string tagName = reinterpret_cast<char*>(rawData->data);
+    SaveMemTag(rawData->stackContext->tagId, tagName); */
     return true;
 }
 
@@ -2404,7 +2407,7 @@ bool StackPreprocess::FlushRecordStatistics()
 
 void StackPreprocess::SaveMemTag(uint32_t tagId, const std::string& tagName)
 {
-    memTagMap_.EnsureInsert(tagId, tagName);
+    memTagMap_.Insert(tagId, tagName);
 }
 
 bool StackPreprocess::GetMemTag(uint32_t tagId, std::string& tagName)

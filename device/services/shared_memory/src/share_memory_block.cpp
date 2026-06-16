@@ -381,6 +381,58 @@ bool ShareMemoryBlock::PutWithPayloadTimeout(const int8_t* header, uint32_t head
     return true;
 }
 
+bool ShareMemoryBlock::PutWithExtraDataTimeout(const int8_t* header, uint32_t headerSize,
+    const int8_t* payload, uint32_t payloadSize,
+    const int8_t* firstExtra, uint32_t firstExtraSize,
+    const int8_t* secondExtra, uint32_t secondExtraSize)
+{
+    CHECK_NOTNULL(header_, false, "header not ready!");
+    struct timespec time_out;
+    clock_gettime(CLOCK_REALTIME, &time_out);
+    time_out.tv_sec += TIMEOUT_SEC;
+    uint32_t totalSize = headerSize + payloadSize + firstExtraSize + secondExtraSize;
+    if (pthread_mutex_timedlock(&header_->info.mutex_, &time_out) != 0) {
+        return false;
+    }
+
+    int8_t* rawMemory = GetFreeMemory(totalSize);
+    if (rawMemory == nullptr) {
+        PROFILER_LOG_INFO(LOG_CORE, "%s: shared memory exhausted, discarding data", __FUNCTION__);
+        pthread_mutex_unlock(&header_->info.mutex_);
+        return false;
+    }
+    if (memcpy_s(rawMemory, totalSize, header, headerSize) != EOK) {
+        pthread_mutex_unlock(&header_->info.mutex_);
+        return false;
+    }
+    if (payloadSize > 0) {
+        if (memcpy_s(rawMemory + headerSize, totalSize - headerSize, payload, payloadSize) != EOK) {
+            pthread_mutex_unlock(&header_->info.mutex_);
+            return false;
+        }
+    }
+    if (firstExtraSize > 0) {
+        if (memcpy_s(rawMemory + headerSize + payloadSize, totalSize - headerSize - payloadSize,
+            firstExtra, firstExtraSize) != EOK) {
+            pthread_mutex_unlock(&header_->info.mutex_);
+            return false;
+        }
+    }
+    if (secondExtraSize > 0) {
+        if (memcpy_s(rawMemory + headerSize + payloadSize + firstExtraSize,
+            totalSize - headerSize - payloadSize - firstExtraSize, secondExtra, secondExtraSize) != EOK) {
+            pthread_mutex_unlock(&header_->info.mutex_);
+            return false;
+        }
+    }
+    UseFreeMemory(rawMemory, totalSize);
+    ++header_->info.bytesCount_;
+    ++header_->info.chunkCount_;
+
+    pthread_mutex_unlock(&header_->info.mutex_);
+    return true;
+}
+
 #ifndef NO_PROTOBUF
 bool ShareMemoryBlock::PutMessage(const google::protobuf::Message& pmsg, const std::string& pluginName)
 {
@@ -515,6 +567,69 @@ bool ShareMemoryBlock::PutWithPayloadSync(const int8_t* header, uint32_t headerS
         }
     }
     UseFreeMemory(rawMemory, headerSize + payloadSize);
+    ++header_->info.bytesCount_;
+    ++header_->info.chunkCount_;
+    pthread_mutex_unlock(&header_->info.mutex_);
+    return true;
+}
+
+bool ShareMemoryBlock::PutWithExtraDataSync(const int8_t* header, uint32_t headerSize,
+    const int8_t* payload, uint32_t payloadSize,
+    const int8_t* firstExtra, uint32_t firstExtraSize,
+    const int8_t* secondExtra, uint32_t secondExtraSize,
+    const std::function<bool()>& callback)
+{
+    if (header_ == nullptr) {
+        return false;
+    }
+    uint32_t totalSize = headerSize + payloadSize + firstExtraSize + secondExtraSize;
+    pthread_mutex_lock(&header_->info.mutex_);
+    int8_t* rawMemory = GetFreeMemory(totalSize);
+    if (rawMemory == nullptr) {
+        while (true) {
+            if (rawMemory == nullptr) {
+                if ((callback && callback()) || (g_timeCount > waitTime_)) {
+                    HILOG_BASE_ERROR(LOG_CORE, "PutWithPayloadSync exit with g_timeCount %{public}d",
+                        g_timeCount.load());
+                    pthread_mutex_unlock(&header_->info.mutex_);
+                    return false;
+                }
+                pthread_mutex_unlock(&header_->info.mutex_);
+                usleep(WAIT_RELEASE_TIMEOUT_US);
+                g_timeCount += WAIT_RELEASE_TIMEOUT_US;
+                pthread_mutex_lock(&header_->info.mutex_);
+                rawMemory = GetFreeMemory(totalSize);
+                continue;
+            }
+            g_timeCount = 0;
+            break;
+        }
+    }
+    if (memcpy_s(rawMemory, totalSize, header, headerSize) != EOK) {
+        pthread_mutex_unlock(&header_->info.mutex_);
+        return false;
+    }
+    if (payloadSize > 0) {
+        if (memcpy_s(rawMemory + headerSize, totalSize - headerSize, payload, payloadSize) != EOK) {
+            pthread_mutex_unlock(&header_->info.mutex_);
+            return false;
+        }
+    }
+    if (firstExtraSize > 0) {
+        if (memcpy_s(rawMemory + headerSize + payloadSize, totalSize - headerSize - payloadSize,
+            firstExtra, firstExtraSize) != EOK) {
+            pthread_mutex_unlock(&header_->info.mutex_);
+            return false;
+        }
+    }
+    if (secondExtraSize > 0) {
+        if (memcpy_s(rawMemory + headerSize + payloadSize + firstExtraSize,
+            totalSize - headerSize - payloadSize - firstExtraSize, secondExtra, secondExtraSize) != EOK) {
+            pthread_mutex_unlock(&header_->info.mutex_);
+            return false;
+        }
+    }
+    UseFreeMemory(rawMemory, totalSize);
     ++header_->info.bytesCount_;
     ++header_->info.chunkCount_;
     pthread_mutex_unlock(&header_->info.mutex_);

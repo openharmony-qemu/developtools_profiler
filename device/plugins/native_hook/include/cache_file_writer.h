@@ -38,6 +38,8 @@ public:
     void EnterStopMode();
     bool Write(const void* data, size_t size);
     bool WriteWithPayload(const void* data, size_t size, const void* payload, size_t payloadSize);
+    bool WriteWithExtraData(const void* data, size_t size, const void* payload, size_t payloadSize,
+        const void* firstExtra, size_t firstExtraSize, const void* secondExtra, size_t secondExtraSize);
     bool Flush();
     void SetCacheFileWriterEnd();
 
