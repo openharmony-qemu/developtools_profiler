@@ -14,39 +14,6 @@
 import("//build/ohos.gni")
 import("../../base/config.gni")
 
-config("ipc_export_config") {
-  cflags = [ "-fvisibility=default" ]
-}
-
-ohos_shared_library("libhiprofiler_ipc") {
-  visibility = [ "*:*" ]
-  part_name = "${OHOS_PROFILER_PART_NAME}"
-  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
-  configs = [ ":ipc_export_config" ]
-  sources = [
-    "src/client_connection.cpp",
-    "src/client_map.cpp",
-    "src/service_entry.cpp",
-    "src/socket_context.cpp",
-    "src/unix_socket_client.cpp",
-    "src/unix_socket_server.cpp",
-  ]
-  include_dirs = [
-    "include",
-    "../../base/include",
-  ]
-  public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
-  external_deps = [
-    "bounds_checking_function:libsec_shared",
-    "init:libbegetutil",
-    "protobuf:protobuf_lite_static",
-  ]
-  if (current_toolchain != host_toolchain) {
-    defines = [ "HAVE_HILOG" ]
-  }
-  install_enable = true
-}
-
 ohos_source_set("ipc") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

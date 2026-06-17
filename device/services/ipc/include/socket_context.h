@@ -47,10 +47,6 @@ const static char NETWORK_PROFILER_UNIX_SOCKET_FULL_PATH[] = "/dev/unix/socket/n
 
 class ServiceBase;
 
-#ifndef IPC_EXPORT
-#define IPC_EXPORT __attribute__((visibility("default")))
-#endif
-
 enum ClientState {
     CLIENT_STAT_WORKING,
     CLIENT_STAT_WAIT_THREAD_EXIT,
@@ -64,7 +60,7 @@ struct RawPointToService {
     char serviceName_[64];
 };
 
-class IPC_EXPORT SocketContext {
+class SocketContext {
 public:
     SocketContext();
     virtual ~SocketContext();
