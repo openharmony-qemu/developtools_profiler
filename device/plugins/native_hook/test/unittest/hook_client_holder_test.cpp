@@ -506,4 +506,414 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_AddrNull, TestSize.Level0
     EXPECT_TRUE(holder.IsValid());
     holder.SendMmapFileRawData(PROT_READ, 0, 0, filePath, rawdata);
 }
+
+/**
+ * @tc.name: SendStackWithExtraDataBasic
+ * @tc.desc: Test SendStackWithExtraData basic functionality
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientHolderTest, SendStackWithExtraDataBasic, TestSize.Level0)
+{
+    g_hookReady = true;
+    g_clientConfig.filterSize = 1;
+    g_clientConfig.shareMemorySize = 1024 * 1024;
+    g_hookPid.store(1234);
+    
+    std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
+    g_hookClient = mockClient;
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    uint8_t payload[4] = {9, 10, 11, 12};
+    
+    std::string tagName = "test_tag";
+    uint32_t originSize = sizeof(header) + sizeof(payload);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    EXPECT_CALL(*mockClient, SendStackWithExtraData(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
+        .WillOnce([](const void* data, size_t size, const void* payload, size_t payloadSize,
+            ExtraDataInfo& info, int smbIndex) {
+            EXPECT_NE(data, nullptr);
+            EXPECT_EQ(size, 8u);
+            return true;
+        });
+    
+    HookClientHolder holder(g_hookClient);
+    EXPECT_TRUE(holder.IsValid());
+    EXPECT_TRUE(holder.SendStackWithExtraData(header, sizeof(header), payload, sizeof(payload),
+        extraDataInfo, 0));
+}
+
+/**
+ * @tc.name: SendStackWithExtraDataNullPayload
+ * @tc.desc: Test SendStackWithExtraData with null payload
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientHolderTest, SendStackWithExtraDataNullPayload, TestSize.Level0)
+{
+    g_hookReady = true;
+    g_clientConfig.filterSize = 1;
+    g_clientConfig.shareMemorySize = 1024 * 1024;
+    g_hookPid.store(2345);
+    
+    std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
+    g_hookClient = mockClient;
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+    std::string tagName = "test_null_payload";
+    uint32_t originSize = sizeof(header);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    EXPECT_CALL(*mockClient, SendStackWithExtraData(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
+        .WillOnce([](const void* data, size_t size, const void* payload, size_t payloadSize,
+            ExtraDataInfo& info, int smbIndex) {
+            EXPECT_EQ(payloadSize, 0u);
+            return true;
+        });
+    
+    HookClientHolder holder(g_hookClient);
+    EXPECT_TRUE(holder.IsValid());
+    EXPECT_TRUE(holder.SendStackWithExtraData(header, sizeof(header), nullptr, 0,
+        extraDataInfo, 0));
+}
+
+/**
+ * @tc.name: SendStackWithExtraDataDynamicTag
+ * @tc.desc: Test SendStackWithExtraData with dynamic tag
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientHolderTest, SendStackWithExtraDataDynamicTag, TestSize.Level0)
+{
+    g_hookReady = true;
+    g_clientConfig.filterSize = 1;
+    g_clientConfig.shareMemorySize = 1024 * 1024;
+    g_hookPid.store(3456);
+    
+    std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
+    g_hookClient = mockClient;
+    
+    uint8_t header[sizeof(BaseStackRawData)] = {0};
+    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(header);
+    baseData->type = MMAP_FILE_PAGE_MSG;
+    baseData->tagId = TAG_ID_PENDING;
+    baseData->pid = g_hookPid.load();
+    
+    std::string tagName = "libtest_dynamic.so";
+    uint32_t originSize = sizeof(BaseStackRawData);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    EXPECT_CALL(*mockClient, SendStackWithExtraData(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
+        .WillOnce([&tagName](const void* data, size_t size, const void* payload, size_t payloadSize,
+            ExtraDataInfo& info, int smbIndex) {
+            EXPECT_EQ(info.firstExtraSize, tagName.size() + 1);
+            return true;
+        });
+    
+    HookClientHolder holder(g_hookClient);
+    EXPECT_TRUE(holder.IsValid());
+    EXPECT_TRUE(holder.SendStackWithExtraData(header, sizeof(header), nullptr, 0,
+        extraDataInfo, 0));
+}
+
+/**
+ * @tc.name: SendStackWithExtraDataEmptyTagName
+ * @tc.desc: Test SendStackWithExtraData with empty tag name
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientHolderTest, SendStackWithExtraDataEmptyTagName, TestSize.Level0)
+{
+    g_hookReady = true;
+    g_clientConfig.filterSize = 1;
+    g_clientConfig.shareMemorySize = 1024 * 1024;
+    g_hookPid.store(4567);
+    
+    std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
+    g_hookClient = mockClient;
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+    std::string tagName = "";
+    uint32_t originSize = sizeof(header);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    EXPECT_CALL(*mockClient, SendStackWithExtraData(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
+        .WillOnce([](const void* data, size_t size, const void* payload, size_t payloadSize,
+            ExtraDataInfo& info, int smbIndex) {
+            EXPECT_EQ(info.firstExtraSize, 1u);
+            return true;
+        });
+    
+    HookClientHolder holder(g_hookClient);
+    EXPECT_TRUE(holder.IsValid());
+    EXPECT_TRUE(holder.SendStackWithExtraData(header, sizeof(header), nullptr, 0,
+        extraDataInfo, 0));
+}
+
+/**
+ * @tc.name: SendStackWithExtraDataLargeTagName
+ * @tc.desc: Test SendStackWithExtraData with large tag name
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientHolderTest, SendStackWithExtraDataLargeTagName, TestSize.Level0)
+{
+    g_hookReady = true;
+    g_clientConfig.filterSize = 1;
+    g_clientConfig.shareMemorySize = 1024 * 1024;
+    g_hookPid.store(5678);
+    
+    std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
+    g_hookClient = mockClient;
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+    std::string tagName = "libvery_long_library_name_for_testing_boundary_conditions_v2.so";
+    uint32_t originSize = sizeof(header);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    EXPECT_CALL(*mockClient, SendStackWithExtraData(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
+        .WillOnce([&tagName](const void* data, size_t size, const void* payload, size_t payloadSize,
+            ExtraDataInfo& info, int smbIndex) {
+            EXPECT_EQ(info.firstExtraSize, tagName.size() + 1);
+            return true;
+        });
+    
+    HookClientHolder holder(g_hookClient);
+    EXPECT_TRUE(holder.IsValid());
+    EXPECT_TRUE(holder.SendStackWithExtraData(header, sizeof(header), nullptr, 0,
+        extraDataInfo, 0));
+}
+
+/**
+ * @tc.name: SendStackWithExtraDataInvalidSmbIndex
+ * @tc.desc: Test SendStackWithExtraData with invalid smb index
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientHolderTest, SendStackWithExtraDataInvalidSmbIndex, TestSize.Level0)
+{
+    g_hookReady = true;
+    g_clientConfig.filterSize = 1;
+    g_clientConfig.shareMemorySize = 1024 * 1024;
+    g_hookPid.store(6789);
+    
+    std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
+    g_hookClient = mockClient;
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+    std::string tagName = "test_invalid_index";
+    uint32_t originSize = sizeof(header);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    EXPECT_CALL(*mockClient, SendStackWithExtraData(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
+        .Times(0);
+    
+    HookClientHolder holder(g_hookClient);
+    EXPECT_TRUE(holder.IsValid());
+    EXPECT_FALSE(holder.SendStackWithExtraData(header, sizeof(header), nullptr, 0,
+        extraDataInfo, 100));
+}
+
+/**
+ * @tc.name: SendStackWithExtraDataNullClient
+ * @tc.desc: Test SendStackWithExtraData with null client
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientHolderTest, SendStackWithExtraDataNullClient, TestSize.Level0)
+{
+    std::shared_ptr<HookSocketClient> nullClient;
+    HookClientHolder holder(nullClient);
+    
+    EXPECT_FALSE(holder.IsValid());
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+    std::string tagName = "test_null_client";
+    uint32_t originSize = sizeof(header);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    EXPECT_FALSE(holder.SendStackWithExtraData(header, sizeof(header), nullptr, 0,
+        extraDataInfo, 0));
+}
+
+/**
+ * @tc.name: SendStackWithExtraDataMultipleCalls
+ * @tc.desc: Test SendStackWithExtraData with multiple calls
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientHolderTest, SendStackWithExtraDataMultipleCalls, TestSize.Level0)
+{
+    g_hookReady = true;
+    g_clientConfig.filterSize = 1;
+    g_clientConfig.shareMemorySize = 1024 * 1024;
+    g_hookPid.store(7890);
+    
+    std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
+    g_hookClient = mockClient;
+    
+    uint8_t header1[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    uint8_t header2[8] = {11, 12, 13, 14, 15, 16, 17, 18};
+    
+    std::string tagName = "test_multiple";
+    uint32_t originSize = sizeof(header1);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    EXPECT_CALL(*mockClient, SendStackWithExtraData(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
+        .Times(2)
+        .WillRepeatedly([](const void* data, size_t size, const void* payload, size_t payloadSize,
+            ExtraDataInfo& info, int smbIndex) {
+            return true;
+        });
+    
+    HookClientHolder holder(g_hookClient);
+    EXPECT_TRUE(holder.IsValid());
+    EXPECT_TRUE(holder.SendStackWithExtraData(header1, sizeof(header1), nullptr, 0,
+        extraDataInfo, 0));
+    EXPECT_TRUE(holder.SendStackWithExtraData(header2, sizeof(header2), nullptr, 0,
+        extraDataInfo, 0));
+}
+
+/**
+ * @tc.name: SendStackWithExtraDataWithPayload
+ * @tc.desc: Test SendStackWithExtraData with payload
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientHolderTest, SendStackWithExtraDataWithPayload, TestSize.Level0)
+{
+    g_hookReady = true;
+    g_clientConfig.filterSize = 1;
+    g_clientConfig.shareMemorySize = 1024 * 1024;
+    g_hookPid.store(8901);
+    
+    std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
+    g_hookClient = mockClient;
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    uint8_t payload[16] = {9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24};
+    
+    std::string tagName = "test_with_payload";
+    uint32_t originSize = sizeof(header) + sizeof(payload);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    EXPECT_CALL(*mockClient, SendStackWithExtraData(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
+        .WillOnce([](const void* data, size_t size, const void* payload, size_t payloadSize,
+            ExtraDataInfo& info, int smbIndex) {
+            EXPECT_EQ(payloadSize, 16u);
+            return true;
+        });
+    
+    HookClientHolder holder(g_hookClient);
+    EXPECT_TRUE(holder.IsValid());
+    EXPECT_TRUE(holder.SendStackWithExtraData(header, sizeof(header), payload, sizeof(payload),
+        extraDataInfo, 0));
+}
+
+/**
+ * @tc.name: SendStackWithExtraDataMemoryUsingMsg
+ * @tc.desc: Test SendStackWithExtraData with MEMORY_USING_MSG
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientHolderTest, SendStackWithExtraDataMemoryUsingMsg, TestSize.Level0)
+{
+    g_hookReady = true;
+    g_clientConfig.filterSize = 1;
+    g_clientConfig.shareMemorySize = 1024 * 1024;
+    g_hookPid.store(9012);
+    
+    std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
+    g_hookClient = mockClient;
+    
+    uint8_t header[sizeof(BaseStackRawData)] = {0};
+    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(header);
+    baseData->type = MEMORY_USING_MSG;
+    baseData->tagId = TAG_ID_PENDING;
+    baseData->pid = g_hookPid.load();
+    
+    std::string tagName = "memory_using_tag";
+    uint32_t originSize = sizeof(BaseStackRawData);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    EXPECT_CALL(*mockClient, SendStackWithExtraData(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
+        .WillOnce([](const void* data, size_t size, const void* payload, size_t payloadSize,
+            ExtraDataInfo& info, int smbIndex) {
+            const BaseStackRawData* bd = static_cast<const BaseStackRawData*>(data);
+            EXPECT_EQ(bd->type, MEMORY_USING_MSG);
+            return true;
+        });
+    
+    HookClientHolder holder(g_hookClient);
+    EXPECT_TRUE(holder.IsValid());
+    EXPECT_TRUE(holder.SendStackWithExtraData(header, sizeof(header), nullptr, 0,
+        extraDataInfo, 0));
+}
+
+/**
+ * @tc.name: SendStackWithExtraDataMemoryUnusingMsg
+ * @tc.desc: Test SendStackWithExtraData with MEMORY_UNUSING_MSG
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientHolderTest, SendStackWithExtraDataMemoryUnusingMsg, TestSize.Level0)
+{
+    g_hookReady = true;
+    g_clientConfig.filterSize = 1;
+    g_clientConfig.shareMemorySize = 1024 * 1024;
+    g_hookPid.store(9013);
+    
+    std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
+    g_hookClient = mockClient;
+    
+    uint8_t header[sizeof(BaseStackRawData)] = {0};
+    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(header);
+    baseData->type = MEMORY_UNUSING_MSG;
+    baseData->tagId = TAG_ID_PENDING;
+    baseData->pid = g_hookPid.load();
+    
+    std::string tagName = "memory_unusing_tag";
+    uint32_t originSize = sizeof(BaseStackRawData);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    EXPECT_CALL(*mockClient, SendStackWithExtraData(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
+        .WillOnce([](const void* data, size_t size, const void* payload, size_t payloadSize,
+            ExtraDataInfo& info, int smbIndex) {
+            const BaseStackRawData* bd = static_cast<const BaseStackRawData*>(data);
+            EXPECT_EQ(bd->type, MEMORY_UNUSING_MSG);
+            return true;
+        });
+    
+    HookClientHolder holder(g_hookClient);
+    EXPECT_TRUE(holder.IsValid());
+    EXPECT_TRUE(holder.SendStackWithExtraData(header, sizeof(header), nullptr, 0,
+        extraDataInfo, 0));
+}
 }

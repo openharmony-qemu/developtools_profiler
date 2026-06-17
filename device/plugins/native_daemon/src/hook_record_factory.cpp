@@ -254,32 +254,32 @@ void HookRecordFactory::ProcessDynamicTagInfo(RawStackPtr rawStack, uint32_t& si
         return;
     }
     
-    // Dynamic tag format: [data][payload][tagName][realDataSize(at END)]
-    // Key innovation: realDataSize at last 4 bytes (fixed position!)
+    // Dynamic tag format: [data][payload][tagName][originDataSize(at END)]
+    // Key innovation: originDataSize at last 4 bytes (fixed position!)
     // Check minimum size
     if (size <= sizeof(ExtraDataInfo::secondExtraSize)) {
         return;  // No enough space
     }
     
-    // Read realDataSize from LAST 4 bytes (fixed position, easy to locate!)
+    // Read originDataSize from LAST 4 bytes (fixed position, easy to locate!)
     uint8_t* baseData = reinterpret_cast<uint8_t*>(rawStack->stackContext);
-    uint32_t* realSizePtr = reinterpret_cast<uint32_t*>(baseData + size - sizeof(ExtraDataInfo::secondExtraSize));
-    uint32_t realDataSize = *realSizePtr;
-    // Validate realDataSize
-    if (realDataSize < sizeof(BaseStackRawData) || realDataSize > size - sizeof(ExtraDataInfo::secondExtraSize)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Invalid realDataSize: %u, size: %u", realDataSize, size);
+    uint32_t* originSizePtr = reinterpret_cast<uint32_t*>(baseData + size - sizeof(ExtraDataInfo::secondExtraSize));
+    uint32_t originDataSize = *originSizePtr;
+    // Validate originDataSize
+    if (originDataSize < sizeof(BaseStackRawData) || originDataSize > size - sizeof(ExtraDataInfo::secondExtraSize)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Invalid originDataSize: %u, size: %u", originDataSize, size);
         return;
     }
     
-    uint32_t tagNameSize = size - realDataSize - sizeof(ExtraDataInfo::secondExtraSize);
-    // Restore original size (remove tagName + realDataSize field)
-    size = realDataSize;
+    uint32_t tagNameSize = size - originDataSize - sizeof(ExtraDataInfo::secondExtraSize);
+    // Restore original size (remove tagName + originDataSize field)
+    size = originDataSize;
     // Check tagNameInfo size
     if (tagNameSize <= 1) {
         return;  // No tagName data
     }
     // Locate tagName: after [data][payload] field
-    char* tagNamePtr = reinterpret_cast<char*>(baseData + realDataSize);    
+    char* tagNamePtr = reinterpret_cast<char*>(baseData + originDataSize);    
     std::string tagName(tagNamePtr, tagNameSize - 1);  // Remove '\0'
     // Generate real tagId
     bool isNewTagId = true;
@@ -303,22 +303,22 @@ uint32_t HookRecordFactory::GetOriginStackDataSize(const int8_t sharedMemData[],
         return size;
     }
     
-    // Dynamic tag format: [data][payload][tagName][realDataSize(at END)]
-    // Key innovation: realDataSize at last 4 bytes (fixed position!)
+    // Dynamic tag format: [data][payload][tagName][originDataSize(at END)]
+    // Key innovation: originDataSize at last 4 bytes (fixed position!)
     // Check minimum size
     if (size <= sizeof(ExtraDataInfo::secondExtraSize)) {
         return size;
     }
     
-    // Read realDataSize from LAST 4 bytes (fixed position, easy to locate!)
-    const uint32_t* realSizePtr = reinterpret_cast<const uint32_t*>(sharedMemData + size -
+    // Read originDataSize from LAST 4 bytes (fixed position, easy to locate!)
+    const uint32_t* originSizePtr = reinterpret_cast<const uint32_t*>(sharedMemData + size -
         sizeof(ExtraDataInfo::secondExtraSize));
-    uint32_t realDataSize = *realSizePtr;
-    // Validate realDataSize
-    if (realDataSize < sizeof(BaseStackRawData) || realDataSize > size - sizeof(ExtraDataInfo::secondExtraSize)) {
+    uint32_t originDataSize = *originSizePtr;
+    // Validate originDataSize
+    if (originDataSize < sizeof(BaseStackRawData) || originDataSize > size - sizeof(ExtraDataInfo::secondExtraSize)) {
         return size;
     }
-    return realDataSize;
+    return originDataSize;
 }
 
 void HookRecordFactory::InitRawStack(RawStackPtr rawStack, const int8_t sharedMemData[], uint32_t& size,

@@ -256,4 +256,216 @@ HWTEST_F(HookSocketClientTest, SendSimplifiedNmdInfo, TestSize.Level0)
     sleep(WAIT_THREAD_TIME);
 }
 #endif
+
+/*
+ * @tc.name: SendStackWithExtraDataBasic
+ * @tc.desc: test HookSocketClient::SendStackWithExtraData basic functionality.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, SendStackWithExtraDataBasic, TestSize.Level0)
+{
+    ClientConfig config;
+    config.shareMemorySize = 1024 * 1024;
+    HookSocketClient hookClient(getpid(), &config, nullptr);
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    uint8_t payload[4] = {9, 10, 11, 12};
+    
+    std::string tagName = "test_tag";
+    uint32_t originSize = sizeof(header) + sizeof(payload);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    bool result = hookClient.SendStackWithExtraData(header, sizeof(header), payload, sizeof(payload),
+        extraDataInfo, 0);
+    
+    EXPECT_TRUE(result || !hookClient.unixSocketClient_);
+}
+
+/*
+ * @tc.name: SendStackWithExtraDataNullPayload
+ * @tc.desc: test HookSocketClient::SendStackWithExtraData with null payload.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, SendStackWithExtraDataNullPayload, TestSize.Level0)
+{
+    ClientConfig config;
+    config.shareMemorySize = 1024 * 1024;
+    HookSocketClient hookClient(getpid(), &config, nullptr);
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+    std::string tagName = "test_null_payload";
+    uint32_t originSize = sizeof(header);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    bool result = hookClient.SendStackWithExtraData(header, sizeof(header), nullptr, 0,
+        extraDataInfo, 0);
+    
+    EXPECT_TRUE(result || !hookClient.unixSocketClient_);
+}
+
+/*
+ * @tc.name: SendStackWithExtraDataDynamicTag
+ * @tc.desc: test HookSocketClient::SendStackWithExtraData with dynamic tag.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, SendStackWithExtraDataDynamicTag, TestSize.Level0)
+{
+    ClientConfig config;
+    config.shareMemorySize = 1024 * 1024;
+    HookSocketClient hookClient(getpid(), &config, nullptr);
+    
+    uint8_t header[sizeof(BaseStackRawData)] = {0};
+    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(header);
+    baseData->type = MMAP_FILE_PAGE_MSG;
+    baseData->tagId = TAG_ID_PENDING;
+    baseData->pid = getpid();
+    baseData->tid = gettid();
+    
+    std::string tagName = "libtest_dynamic.so";
+    uint32_t originSize = sizeof(BaseStackRawData);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    bool result = hookClient.SendStackWithExtraData(header, sizeof(header), nullptr, 0,
+        extraDataInfo, 0);
+    
+    EXPECT_TRUE(result || !hookClient.unixSocketClient_);
+}
+
+/*
+ * @tc.name: SendStackWithExtraDataEmptyTagName
+ * @tc.desc: test HookSocketClient::SendStackWithExtraData with empty tag name.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, SendStackWithExtraDataEmptyTagName, TestSize.Level0)
+{
+    ClientConfig config;
+    config.shareMemorySize = 1024 * 1024;
+    HookSocketClient hookClient(getpid(), &config, nullptr);
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+    std::string tagName = "";
+    uint32_t originSize = sizeof(header);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    bool result = hookClient.SendStackWithExtraData(header, sizeof(header), nullptr, 0,
+        extraDataInfo, 0);
+    
+    EXPECT_TRUE(result || !hookClient.unixSocketClient_);
+}
+
+/*
+ * @tc.name: SendStackWithExtraDataLargeTagName
+ * @tc.desc: test HookSocketClient::SendStackWithExtraData with large tag name.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, SendStackWithExtraDataLargeTagName, TestSize.Level0)
+{
+    ClientConfig config;
+    config.shareMemorySize = 1024 * 1024;
+    HookSocketClient hookClient(getpid(), &config, nullptr);
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+    std::string tagName = "libvery_long_library_name_for_testing_boundary_conditions.so";
+    uint32_t originSize = sizeof(header);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    bool result = hookClient.SendStackWithExtraData(header, sizeof(header), nullptr, 0,
+        extraDataInfo, 0);
+    
+    EXPECT_TRUE(result || !hookClient.unixSocketClient_);
+}
+
+/*
+ * @tc.name: SendStackWithExtraDataInvalidSmbIndex
+ * @tc.desc: test HookSocketClient::SendStackWithExtraData with invalid smb index.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, SendStackWithExtraDataInvalidSmbIndex, TestSize.Level0)
+{
+    ClientConfig config;
+    config.shareMemorySize = 1024 * 1024;
+    HookSocketClient hookClient(getpid(), &config, nullptr);
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+    std::string tagName = "test_invalid_index";
+    uint32_t originSize = sizeof(header);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    bool result = hookClient.SendStackWithExtraData(header, sizeof(header), nullptr, 0,
+        extraDataInfo, 100);
+    
+    EXPECT_FALSE(result);
+}
+
+/*
+ * @tc.name: SendStackWithExtraDataMultipleCalls
+ * @tc.desc: test HookSocketClient::SendStackWithExtraData with multiple calls.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, SendStackWithExtraDataMultipleCalls, TestSize.Level0)
+{
+    ClientConfig config;
+    config.shareMemorySize = 1024 * 1024;
+    HookSocketClient hookClient(getpid(), &config, nullptr);
+    
+    uint8_t header1[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    uint8_t header2[8] = {11, 12, 13, 14, 15, 16, 17, 18};
+    
+    std::string tagName = "test_multiple";
+    uint32_t originSize = sizeof(header1);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    bool result1 = hookClient.SendStackWithExtraData(header1, sizeof(header1), nullptr, 0,
+        extraDataInfo, 0);
+    
+    bool result2 = hookClient.SendStackWithExtraData(header2, sizeof(header2), nullptr, 0,
+        extraDataInfo, 0);
+    
+    EXPECT_TRUE(result1 || !hookClient.unixSocketClient_);
+    EXPECT_TRUE(result2 || !hookClient.unixSocketClient_);
+}
+
+/*
+ * @tc.name: SendStackWithExtraDataBlockedMode
+ * @tc.desc: test HookSocketClient::SendStackWithExtraData with blocked mode.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, SendStackWithExtraDataBlockedMode, TestSize.Level0)
+{
+    ClientConfig config;
+    config.shareMemorySize = 1024 * 1024;
+    config.isBlocked = true;
+    HookSocketClient hookClient(getpid(), &config, nullptr);
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+    std::string tagName = "test_blocked_tag";
+    uint32_t originSize = sizeof(header);
+    ExtraDataInfo extraDataInfo(
+        reinterpret_cast<const int8_t*>(tagName.c_str()), tagName.size() + 1,
+        reinterpret_cast<const int8_t*>(&originSize), sizeof(originSize));
+    
+    bool result = hookClient.SendStackWithExtraData(header, sizeof(header), nullptr, 0,
+        extraDataInfo, 0);
+    
+    EXPECT_TRUE(result || !hookClient.unixSocketClient_);
+}
 } // namespace
