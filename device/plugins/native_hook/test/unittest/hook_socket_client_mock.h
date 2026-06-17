@@ -31,8 +31,6 @@ public:
         g_hookPid.load(), &g_clientConfig, &g_targetLibRange, &g_sharedMemCount, disableHookCallback) {};
     MOCK_METHOD5(SendStackWithPayload, bool(const void* data, size_t size, const void* payload,
         size_t payloadSize, int smbIndex));
-    MOCK_METHOD5(SendStackWithExtraData, bool(const void* data, size_t size, const void* payload,
-        size_t payloadSize, ExtraDataInfo& extraDataInfo, int smbIndex));
 };
 
 #endif // HOOK_SOCKET_CLIENT_MOCK_H

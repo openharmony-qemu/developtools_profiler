@@ -243,14 +243,16 @@ uint32_t HookRecordFactory::GetDynamicTagId(const std::string& tagName, bool& is
     return newTagId;
 }
     
-void HookRecordFactory::ProcessDynamicTagInfo(RawStackPtr rawStack, uint32_t& size, const SaveMemTagCallBack& callback)
+void HookRecordFactory::ProcessDynamicTagInfo(RawStackPtr rawStack, const int8_t sharedMemData[], uint32_t& size,
+    const SaveMemTagCallBack& callback)
 {
-    uint16_t type = rawStack->stackContext->type;
+    BaseStackRawData* stackContext = reinterpret_cast<BaseStackRawData*>(const_cast<int8_t*>(sharedMemData));
+    uint16_t type = stackContext->type;
     if (type != MMAP_FILE_PAGE_MSG && type != MEMORY_USING_MSG && type != MEMORY_UNUSING_MSG) {
         return;
     }
     // Only process dynamic tag (tagId == TAG_ID_PENDING)
-    if (rawStack->stackContext->tagId != TAG_ID_PENDING) {
+    if (stackContext->tagId != TAG_ID_PENDING) {
         return;
     }
     
@@ -262,8 +264,9 @@ void HookRecordFactory::ProcessDynamicTagInfo(RawStackPtr rawStack, uint32_t& si
     }
     
     // Read originDataSize from LAST 4 bytes (fixed position, easy to locate!)
-    uint8_t* baseData = reinterpret_cast<uint8_t*>(rawStack->stackContext);
-    uint32_t* originSizePtr = reinterpret_cast<uint32_t*>(baseData + size - sizeof(ExtraDataInfo::secondExtraSize));
+    const uint8_t* baseData = reinterpret_cast<const uint8_t*>(sharedMemData);
+    const uint32_t* originSizePtr = reinterpret_cast<const uint32_t*>(baseData + size -
+        sizeof(ExtraDataInfo::secondExtraSize));
     uint32_t originDataSize = *originSizePtr;
     // Validate originDataSize
     if (originDataSize < sizeof(BaseStackRawData) || originDataSize > size - sizeof(ExtraDataInfo::secondExtraSize)) {
@@ -279,7 +282,7 @@ void HookRecordFactory::ProcessDynamicTagInfo(RawStackPtr rawStack, uint32_t& si
         return;  // No tagName data
     }
     // Locate tagName: after [data][payload] field
-    char* tagNamePtr = reinterpret_cast<char*>(baseData + originDataSize);    
+    const char* tagNamePtr = reinterpret_cast<const char*>(baseData + originDataSize);    
     std::string tagName(tagNamePtr, tagNameSize - 1);  // Remove '\0'
     // Generate real tagId
     bool isNewTagId = true;
@@ -337,7 +340,7 @@ void HookRecordFactory::InitRawStack(RawStackPtr rawStack, const int8_t sharedMe
         rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(const_cast<int8_t*>(sharedMemData));
         rawStack->data = reinterpret_cast<uint8_t*>(const_cast<int8_t*>(sharedMemData)) + sizeof(BaseStackRawData);
     }
-    ProcessDynamicTagInfo(rawStack, size, callback);
+    ProcessDynamicTagInfo(rawStack, sharedMemData, size, callback);
 }
 
 std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t sharedMemData[], uint32_t size,

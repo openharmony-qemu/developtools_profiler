@@ -1088,8 +1088,6 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_CallbackReturnsTrue, TestSi
     ASSERT_NE(shareMemoryBlock, nullptr);
     EXPECT_NE(shareMemoryBlock->Valid(), false);
 
-    int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
-
     size_t hugeSize = SMB_SIZE - sizeof(ShareMemoryBlock::BlockHeader) + 1;
     std::vector<int8_t> hugeData(hugeSize, 0);
 

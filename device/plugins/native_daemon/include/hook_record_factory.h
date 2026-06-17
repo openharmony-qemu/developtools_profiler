@@ -51,7 +51,8 @@ public:
 
 private:
     uint32_t GetDynamicTagId(const std::string& tagName, bool& isNewTagId);
-    void ProcessDynamicTagInfo(RawStackPtr rawStack, uint32_t& size, const SaveMemTagCallBack& callback);
+    void ProcessDynamicTagInfo(RawStackPtr rawStack, const int8_t sharedMemData[], uint32_t& size,
+        const SaveMemTagCallBack& callback);
     uint32_t GetOriginStackDataSize(const int8_t sharedMemData[], uint32_t size);
 
     NativeHookConfig hookConfig_;

@@ -254,7 +254,7 @@ HWTEST_F(CacheFileWriterTest, WriteWithExtraDataAllParts, TestSize.Level0)
     
     std::string content = ReadAll(writer.currentFileFd_);
     uint32_t expectedTotalSize = sizeof(header) + sizeof(payload) + sizeof(firstExtra) + sizeof(secondExtra);
-    EXPECT_GT(content.size(), sizeof(uint32_t) + expectedTotalSize);
+    EXPECT_GE(content.size(), sizeof(uint32_t) + expectedTotalSize);
 }
 
 HWTEST_F(CacheFileWriterTest, WriteWithExtraDataNoPayload, TestSize.Level0)

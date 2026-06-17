@@ -509,272 +509,435 @@ HWTEST_F(HookRecordFactoryTest, GetOriginStackDataSize_DynamicTagWithTooLargeSiz
 }
 
 /*
- * @tc.name: ProcessDynamicTagInfo_NonDynamicTagType
- * @tc.desc: test HookRecordFactory::ProcessDynamicTagInfo with non-dynamic tag message type.
+ * @tc.name: ProcessDynamicTagInfo_MmapFilePageMsg
+ * @tc.desc: test ProcessDynamicTagInfo with MMAP_FILE_PAGE_MSG type.
  * @tc.type: FUNC
  */
-HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_NonDynamicTagType, TestSize.Level0)
+HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_MmapFilePageMsg, TestSize.Level0)
 {
-    std::shared_ptr<RawStack> rawStack = std::make_shared<RawStack>();
-    rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(new int8_t[sizeof(BaseStackRawData) + 50]);
-    rawStack->stackContext->type = MALLOC_MSG;
-    rawStack->stackContext->tagId = 100;
-    
-    uint32_t size = sizeof(BaseStackRawData) + 50;
-    std::string savedTagName;
-    uint32_t savedTagId = 0;
-    auto callback = [&savedTagName, &savedTagId](uint32_t tagId, const std::string& tagName) {
-        savedTagId = tagId;
-        savedTagName = tagName;
-    };
-    
-    g_factory->ProcessDynamicTagInfo(rawStack, size, callback);
-    EXPECT_EQ(savedTagId, 0u);
-    EXPECT_TRUE(savedTagName.empty());
-    
-    delete[] reinterpret_cast<int8_t*>(rawStack->stackContext);
-}
-
-/*
- * @tc.name: ProcessDynamicTagInfo_DynamicTagValidData
- * @tc.desc: test HookRecordFactory::ProcessDynamicTagInfo with valid dynamic tag data.
- * @tc.type: FUNC
- */
-HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_DynamicTagValidData, TestSize.Level0)
-{
-    uint32_t realDataSize = sizeof(BaseStackRawData) + 50;
-    std::string tagName = "libtest.so";
+    uint32_t originDataSize = sizeof(BaseStackRawData) + 50;
+    std::string tagName = "test_mmap_file.so";
     uint32_t tagNameSize = tagName.size() + 1;
-    uint32_t totalSize = realDataSize + tagNameSize + sizeof(uint32_t);
-    
-    std::shared_ptr<RawStack> rawStack = std::make_shared<RawStack>();
-    rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(new int8_t[totalSize]);
-    rawStack->stackContext->type = MMAP_FILE_PAGE_MSG;
-    rawStack->stackContext->tagId = TAG_ID_PENDING;
-    
-    uint8_t* baseData = reinterpret_cast<uint8_t*>(rawStack->stackContext);
-    memcpy_s(baseData + realDataSize, tagNameSize, tagName.c_str(), tagNameSize);
-    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(baseData + totalSize - sizeof(uint32_t));
-    *sizePtr = realDataSize;
-    
-    uint32_t size = totalSize;
-    std::string savedTagName;
-    uint32_t savedTagId = 0;
-    bool callbackCalled = false;
-    auto callback = [&savedTagName, &savedTagId, &callbackCalled](uint32_t tagId, const std::string& name) {
-        savedTagId = tagId;
-        savedTagName = name;
-        callbackCalled = true;
-    };
-    
-    g_factory->ProcessDynamicTagInfo(rawStack, size, callback);
-    
-    EXPECT_TRUE(callbackCalled);
-    EXPECT_EQ(savedTagName, tagName);
-    EXPECT_GE(savedTagId, INITIAL_MEM_TAG_ID);
-    EXPECT_LT(savedTagId, TAG_ID_PENDING);
-    EXPECT_EQ(rawStack->stackContext->tagId, savedTagId);
-    EXPECT_EQ(size, realDataSize);
-    
-    delete[] reinterpret_cast<int8_t*>(rawStack->stackContext);
-}
-
-/*
- * @tc.name: ProcessDynamicTagInfo_DynamicTagExistingName
- * @tc.desc: test HookRecordFactory::ProcessDynamicTagInfo with existing tag name.
- * @tc.type: FUNC
- */
-HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_DynamicTagExistingName, TestSize.Level0)
-{
-    std::string tagName = "libexisting.so";
-    bool isNewTagId = false;
-    uint32_t existingTagId = g_factory->GetDynamicTagId(tagName, isNewTagId);
-    EXPECT_TRUE(isNewTagId);
-    
-    uint32_t realDataSize = sizeof(BaseStackRawData) + 50;
-    uint32_t tagNameSize = tagName.size() + 1;
-    uint32_t totalSize = realDataSize + tagNameSize + sizeof(uint32_t);
-    
-    std::shared_ptr<RawStack> rawStack = std::make_shared<RawStack>();
-    rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(new int8_t[totalSize]);
-    rawStack->stackContext->type = MEMORY_USING_MSG;
-    rawStack->stackContext->tagId = TAG_ID_PENDING;
-    
-    uint8_t* baseData = reinterpret_cast<uint8_t*>(rawStack->stackContext);
-    memcpy_s(baseData + realDataSize, tagNameSize, tagName.c_str(), tagNameSize);
-    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(baseData + totalSize - sizeof(uint32_t));
-    *sizePtr = realDataSize;
-    
-    uint32_t size = totalSize;
-    bool callbackCalled = false;
-    auto callback = [&callbackCalled](uint32_t tagId, const std::string& name) {
-        callbackCalled = true;
-    };
-    
-    g_factory->ProcessDynamicTagInfo(rawStack, size, callback);
-    
-    EXPECT_FALSE(callbackCalled);
-    EXPECT_EQ(rawStack->stackContext->tagId, existingTagId);
-    
-    delete[] reinterpret_cast<int8_t*>(rawStack->stackContext);
-}
-
-/*
- * @tc.name: ProcessDynamicTagInfo_DynamicTagInvalidRealDataSize
- * @tc.desc: test HookRecordFactory::ProcessDynamicTagInfo with invalid realDataSize.
- * @tc.type: FUNC
- */
-HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_DynamicTagInvalidRealDataSize, TestSize.Level0)
-{
-    uint32_t totalSize = sizeof(BaseStackRawData) + 20 + sizeof(uint32_t);
-    
-    std::shared_ptr<RawStack> rawStack = std::make_shared<RawStack>();
-    rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(new int8_t[totalSize]);
-    rawStack->stackContext->type = MEMORY_UNUSING_MSG;
-    rawStack->stackContext->tagId = TAG_ID_PENDING;
-    
-    uint8_t* baseData = reinterpret_cast<uint8_t*>(rawStack->stackContext);
-    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(baseData + totalSize - sizeof(uint32_t));
-    *sizePtr = 0;
-    
-    uint32_t size = totalSize;
-    auto callback = [](uint32_t tagId, const std::string& name) {};
-    
-    g_factory->ProcessDynamicTagInfo(rawStack, size, callback);
-    
-    EXPECT_EQ(rawStack->stackContext->tagId, TAG_ID_PENDING);
-    EXPECT_EQ(size, totalSize);
-    
-    delete[] reinterpret_cast<int8_t*>(rawStack->stackContext);
-}
-
-/*
- * @tc.name: ProcessDynamicTagInfo_DynamicTagEmptyTagName
- * @tc.desc: test HookRecordFactory::ProcessDynamicTagInfo with empty tag name.
- * @tc.type: FUNC
- */
-HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_DynamicTagEmptyTagName, TestSize.Level0)
-{
-    uint32_t realDataSize = sizeof(BaseStackRawData) + 50;
-    uint32_t tagNameSize = 1;
-    uint32_t totalSize = realDataSize + tagNameSize + sizeof(uint32_t);
-    
-    std::shared_ptr<RawStack> rawStack = std::make_shared<RawStack>();
-    rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(new int8_t[totalSize]);
-    rawStack->stackContext->type = MMAP_FILE_PAGE_MSG;
-    rawStack->stackContext->tagId = TAG_ID_PENDING;
-    
-    uint8_t* baseData = reinterpret_cast<uint8_t*>(rawStack->stackContext);
-    baseData[realDataSize] = '\0';
-    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(baseData + totalSize - sizeof(uint32_t));
-    *sizePtr = realDataSize;
-    
-    uint32_t size = totalSize;
-    auto callback = [](uint32_t tagId, const std::string& name) {};
-    
-    g_factory->ProcessDynamicTagInfo(rawStack, size, callback);
-    
-    EXPECT_EQ(rawStack->stackContext->tagId, TAG_ID_PENDING);
-    
-    delete[] reinterpret_cast<int8_t*>(rawStack->stackContext);
-}
-
-/*
- * @tc.name: ProcessDynamicTagInfo_DynamicTagWithNullCallback
- * @tc.desc: test HookRecordFactory::ProcessDynamicTagInfo with null callback.
- * @tc.type: FUNC
- */
-HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_DynamicTagWithNullCallback, TestSize.Level0)
-{
-    uint32_t realDataSize = sizeof(BaseStackRawData) + 50;
-    std::string tagName = "libnullcallback.so";
-    uint32_t tagNameSize = tagName.size() + 1;
-    uint32_t totalSize = realDataSize + tagNameSize + sizeof(uint32_t);
-    
-    std::shared_ptr<RawStack> rawStack = std::make_shared<RawStack>();
-    rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(new int8_t[totalSize]);
-    rawStack->stackContext->type = MEMORY_USING_MSG;
-    rawStack->stackContext->tagId = TAG_ID_PENDING;
-    
-    uint8_t* baseData = reinterpret_cast<uint8_t*>(rawStack->stackContext);
-    memcpy_s(baseData + realDataSize, tagNameSize, tagName.c_str(), tagNameSize);
-    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(baseData + totalSize - sizeof(uint32_t));
-    *sizePtr = realDataSize;
-    
-    uint32_t size = totalSize;
-    
-    g_factory->ProcessDynamicTagInfo(rawStack, size, nullptr);
-    
-    EXPECT_GE(rawStack->stackContext->tagId, INITIAL_MEM_TAG_ID);
-    EXPECT_LT(rawStack->stackContext->tagId, TAG_ID_PENDING);
-    EXPECT_EQ(size, realDataSize);
-    
-    delete[] reinterpret_cast<int8_t*>(rawStack->stackContext);
-}
-
-/*
- * @tc.name: GetHookRecordWithDynamicTag
- * @tc.desc: test HookRecordFactory::GetHookRecord with dynamic tag data.
- * @tc.type: FUNC
- */
-HWTEST_F(HookRecordFactoryTest, GetHookRecordWithDynamicTag, TestSize.Level0)
-{
-    uint32_t realDataSize = sizeof(BaseStackRawData) + 50;
-    std::string tagName = "libtest_dynamic.so";
-    uint32_t tagNameSize = tagName.size() + 1;
-    uint32_t totalSize = realDataSize + tagNameSize + sizeof(uint32_t);
+    uint32_t totalSize = originDataSize + tagNameSize + sizeof(uint32_t);
     
     std::vector<int8_t> buffer(totalSize, 0);
     BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
     baseData->type = MMAP_FILE_PAGE_MSG;
     baseData->tagId = TAG_ID_PENDING;
-    baseData->pid = 1234;
-    baseData->tid = 5678;
+    baseData->pid = 100;
+    baseData->tid = 101;
+    baseData->addr = reinterpret_cast<void*>(0x1000);
     
-    memcpy_s(buffer.data() + realDataSize, tagNameSize, tagName.c_str(), tagNameSize);
+    memcpy_s(buffer.data() + originDataSize, tagNameSize, tagName.c_str(), tagNameSize);
     uint32_t* sizePtr = reinterpret_cast<uint32_t*>(buffer.data() + totalSize - sizeof(uint32_t));
-    *sizePtr = realDataSize;
+    *sizePtr = originDataSize;
     
-    std::string savedTagName;
-    uint32_t savedTagId = 0;
-    auto callback = [&savedTagName, &savedTagId](uint32_t tagId, const std::string& name) {
-        savedTagId = tagId;
-        savedTagName = name;
+    uint32_t callbackTagId = 0;
+    std::string callbackTagName;
+    auto callback = [&callbackTagId, &callbackTagName](uint32_t tagId, const std::string& name) {
+        callbackTagId = tagId;
+        callbackTagName = name;
     };
     
+    uint32_t size = totalSize;
     std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(
-        buffer.data(), buffer.size(), true, callback);
+        buffer.data(), size, true, callback);
     
     ASSERT_NE(hookRecord, nullptr);
     EXPECT_EQ(hookRecord->GetType(), MMAP_FILE_PAGE_MSG);
-    EXPECT_GE(savedTagId, INITIAL_MEM_TAG_ID);
-    EXPECT_LT(savedTagId, TAG_ID_PENDING);
-    EXPECT_EQ(savedTagName, tagName);
-    EXPECT_EQ(hookRecord->GetRawStack()->stackContext->tagId, savedTagId);
+    EXPECT_GE(callbackTagId, INITIAL_MEM_TAG_ID);
+    EXPECT_LT(callbackTagId, TAG_ID_PENDING);
+    EXPECT_EQ(callbackTagName, tagName);
 }
 
 /*
- * @tc.name: GetHookRecordWithNonDynamicTag
- * @tc.desc: test HookRecordFactory::GetHookRecord with non-dynamic tag data and callback.
+ * @tc.name: ProcessDynamicTagInfo_MemoryUsingMsg
+ * @tc.desc: test ProcessDynamicTagInfo with MEMORY_USING_MSG type.
  * @tc.type: FUNC
  */
-HWTEST_F(HookRecordFactoryTest, GetHookRecordWithNonDynamicTag, TestSize.Level0)
+HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_MemoryUsingMsg, TestSize.Level0)
 {
-    std::vector<int8_t> buffer(sizeof(BaseStackRawData) + 50, 0);
+    uint32_t originDataSize = sizeof(BaseStackRawData) + 30;
+    std::string tagName = "memory_using_test.so";
+    uint32_t tagNameSize = tagName.size() + 1;
+    uint32_t totalSize = originDataSize + tagNameSize + sizeof(uint32_t);
+    
+    std::vector<int8_t> buffer(totalSize, 0);
+    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
+    baseData->type = MEMORY_USING_MSG;
+    baseData->tagId = TAG_ID_PENDING;
+    baseData->pid = 200;
+    baseData->tid = 201;
+    
+    memcpy_s(buffer.data() + originDataSize, tagNameSize, tagName.c_str(), tagNameSize);
+    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(buffer.data() + totalSize - sizeof(uint32_t));
+    *sizePtr = originDataSize;
+    
+    uint32_t callbackCount = 0;
+    auto callback = [&callbackCount](uint32_t tagId, const std::string& name) {
+        callbackCount++;
+    };
+    
+    uint32_t size = totalSize;
+    std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(
+        buffer.data(), size, true, callback);
+    
+    ASSERT_NE(hookRecord, nullptr);
+    EXPECT_EQ(hookRecord->GetType(), MEMORY_USING_MSG);
+    EXPECT_EQ(callbackCount, 1);
+}
+
+/*
+ * @tc.name: ProcessDynamicTagInfo_MemoryUnUsingMsg
+ * @tc.desc: test ProcessDynamicTagInfo with MEMORY_UNUSING_MSG type.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_MemoryUnUsingMsg, TestSize.Level0)
+{
+    uint32_t originDataSize = sizeof(BaseStackRawData) + 40;
+    std::string tagName = "memory_unusing_test.so";
+    uint32_t tagNameSize = tagName.size() + 1;
+    uint32_t totalSize = originDataSize + tagNameSize + sizeof(uint32_t);
+    
+    std::vector<int8_t> buffer(totalSize, 0);
+    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
+    baseData->type = MEMORY_UNUSING_MSG;
+    baseData->tagId = TAG_ID_PENDING;
+    baseData->pid = 300;
+    baseData->tid = 301;
+    
+    memcpy_s(buffer.data() + originDataSize, tagNameSize, tagName.c_str(), tagNameSize);
+    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(buffer.data() + totalSize - sizeof(uint32_t));
+    *sizePtr = originDataSize;
+    
+    uint32_t size = totalSize;
+    std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(
+        buffer.data(), size, true);
+    
+    ASSERT_NE(hookRecord, nullptr);
+    EXPECT_EQ(hookRecord->GetType(), MEMORY_UNUSING_MSG);
+}
+
+/*
+ * @tc.name: ProcessDynamicTagInfo_NonDynamicTagType
+ * @tc.desc: test ProcessDynamicTagInfo with non-dynamic tag message type.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_NonDynamicTagType, TestSize.Level0)
+{
+    uint32_t originDataSize = sizeof(BaseStackRawData) + 20;
+    std::string tagName = "non_dynamic.so";
+    uint32_t tagNameSize = tagName.size() + 1;
+    uint32_t totalSize = originDataSize + tagNameSize + sizeof(uint32_t);
+    
+    std::vector<int8_t> buffer(totalSize, 0);
     BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
     baseData->type = MALLOC_MSG;
-    baseData->tagId = 100;
+    baseData->tagId = TAG_ID_PENDING;
     
-    bool callbackCalled = false;
-    auto callback = [&callbackCalled](uint32_t tagId, const std::string& name) {
-        callbackCalled = true;
+    memcpy_s(buffer.data() + originDataSize, tagNameSize, tagName.c_str(), tagNameSize);
+    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(buffer.data() + totalSize - sizeof(uint32_t));
+    *sizePtr = originDataSize;
+    
+    uint32_t callbackCount = 0;
+    auto callback = [&callbackCount](uint32_t tagId, const std::string& name) {
+        callbackCount++;
+    };
+    
+    uint32_t size = totalSize;
+    std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(
+        buffer.data(), size, true, callback);
+    
+    ASSERT_NE(hookRecord, nullptr);
+    EXPECT_EQ(callbackCount, 0);
+}
+
+/*
+ * @tc.name: ProcessDynamicTagInfo_NonPendingTagId
+ * @tc.desc: test ProcessDynamicTagInfo with non-pending tagId.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_NonPendingTagId, TestSize.Level0)
+{
+    uint32_t originDataSize = sizeof(BaseStackRawData) + 20;
+    std::string tagName = "existing_tag.so";
+    uint32_t tagNameSize = tagName.size() + 1;
+    uint32_t totalSize = originDataSize + tagNameSize + sizeof(uint32_t);
+    
+    std::vector<int8_t> buffer(totalSize, 0);
+    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
+    baseData->type = MMAP_FILE_PAGE_MSG;
+    baseData->tagId = INITIAL_MEM_TAG_ID + 10;
+    
+    memcpy_s(buffer.data() + originDataSize, tagNameSize, tagName.c_str(), tagNameSize);
+    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(buffer.data() + totalSize - sizeof(uint32_t));
+    *sizePtr = originDataSize;
+    
+    uint32_t callbackCount = 0;
+    auto callback = [&callbackCount](uint32_t tagId, const std::string& name) {
+        callbackCount++;
+    };
+    
+    uint32_t size = totalSize;
+    std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(
+        buffer.data(), size, true, callback);
+    
+    ASSERT_NE(hookRecord, nullptr);
+    EXPECT_EQ(callbackCount, 0);
+}
+
+/*
+ * @tc.name: ProcessDynamicTagInfo_TooSmallSize
+ * @tc.desc: test ProcessDynamicTagInfo with size too small.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_TooSmallSize, TestSize.Level0)
+{
+    uint32_t smallSize = sizeof(uint32_t);
+    std::vector<int8_t> buffer(smallSize, 0);
+    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
+    baseData->type = MMAP_FILE_PAGE_MSG;
+    baseData->tagId = TAG_ID_PENDING;
+    
+    uint32_t callbackCount = 0;
+    auto callback = [&callbackCount](uint32_t tagId, const std::string& name) {
+        callbackCount++;
     };
     
     std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(
-        buffer.data(), buffer.size(), false, callback);
+        buffer.data(), smallSize, true, callback);
+    
+    EXPECT_EQ(hookRecord, nullptr);
+    EXPECT_EQ(callbackCount, 0);
+}
+
+/*
+ * @tc.name: ProcessDynamicTagInfo_InvalidOriginDataSize
+ * @tc.desc: test ProcessDynamicTagInfo with invalid originDataSize.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_InvalidOriginDataSize, TestSize.Level0)
+{
+    uint32_t totalSize = sizeof(BaseStackRawData) + 30 + sizeof(uint32_t);
+    std::vector<int8_t> buffer(totalSize, 0);
+    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
+    baseData->type = MMAP_FILE_PAGE_MSG;
+    baseData->tagId = TAG_ID_PENDING;
+    
+    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(buffer.data() + totalSize - sizeof(uint32_t));
+    *sizePtr = 10;
+    
+    uint32_t callbackCount = 0;
+    auto callback = [&callbackCount](uint32_t tagId, const std::string& name) {
+        callbackCount++;
+    };
+    
+    uint32_t size = totalSize;
+    std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(
+        buffer.data(), size, true, callback);
+    
+    EXPECT_EQ(callbackCount, 0);
+}
+
+/*
+ * @tc.name: ProcessDynamicTagInfo_OriginDataSizeTooLarge
+ * @tc.desc: test ProcessDynamicTagInfo with originDataSize too large.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_OriginDataSizeTooLarge, TestSize.Level0)
+{
+    uint32_t totalSize = sizeof(BaseStackRawData) + 30 + sizeof(uint32_t);
+    std::vector<int8_t> buffer(totalSize, 0);
+    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
+    baseData->type = MMAP_FILE_PAGE_MSG;
+    baseData->tagId = TAG_ID_PENDING;
+    
+    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(buffer.data() + totalSize - sizeof(uint32_t));
+    *sizePtr = totalSize + 100;
+    
+    uint32_t callbackCount = 0;
+    auto callback = [&callbackCount](uint32_t tagId, const std::string& name) {
+        callbackCount++;
+    };
+    
+    uint32_t size = totalSize;
+    std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(
+        buffer.data(), size, true, callback);
+    
+    EXPECT_EQ(callbackCount, 0);
+}
+
+/*
+ * @tc.name: ProcessDynamicTagInfo_EmptyTagName
+ * @tc.desc: test ProcessDynamicTagInfo with empty tagName.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_EmptyTagName, TestSize.Level0)
+{
+    uint32_t originDataSize = sizeof(BaseStackRawData) + 20;
+    uint32_t tagNameSize = 1;
+    uint32_t totalSize = originDataSize + tagNameSize + sizeof(uint32_t);
+    
+    std::vector<int8_t> buffer(totalSize, 0);
+    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
+    baseData->type = MMAP_FILE_PAGE_MSG;
+    baseData->tagId = TAG_ID_PENDING;
+    
+    buffer[originDataSize] = '\0';
+    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(buffer.data() + totalSize - sizeof(uint32_t));
+    *sizePtr = originDataSize;
+    
+    uint32_t callbackCount = 0;
+    auto callback = [&callbackCount](uint32_t tagId, const std::string& name) {
+        callbackCount++;
+    };
+    
+    uint32_t size = totalSize;
+    std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(
+        buffer.data(), size, true, callback);
+    
+    EXPECT_EQ(callbackCount, 0);
+}
+
+/*
+ * @tc.name: ProcessDynamicTagInfo_DuplicateTagName
+ * @tc.desc: test ProcessDynamicTagInfo with duplicate tagName.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_DuplicateTagName, TestSize.Level0)
+{
+    uint32_t originDataSize = sizeof(BaseStackRawData) + 20;
+    std::string tagName = "duplicate_tag.so";
+    uint32_t tagNameSize = tagName.size() + 1;
+    uint32_t totalSize = originDataSize + tagNameSize + sizeof(uint32_t);
+    
+    std::vector<int8_t> buffer(totalSize, 0);
+    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
+    baseData->type = MMAP_FILE_PAGE_MSG;
+    baseData->tagId = TAG_ID_PENDING;
+    
+    memcpy_s(buffer.data() + originDataSize, tagNameSize, tagName.c_str(), tagNameSize);
+    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(buffer.data() + totalSize - sizeof(uint32_t));
+    *sizePtr = originDataSize;
+    
+    uint32_t firstTagId = 0;
+    uint32_t secondTagId = 0;
+    uint32_t callbackCount = 0;
+    auto callback = [&callbackCount](uint32_t tagId, const std::string& name) {
+        callbackCount++;
+    };
+    
+    uint32_t size1 = totalSize;
+    std::shared_ptr<HookRecord> hookRecord1 = g_factory->GetHookRecord(
+        buffer.data(), size1, true, callback);
+    firstTagId = hookRecord1->GetRawStack()->stackContext->tagId;
+    
+    uint32_t size2 = totalSize;
+    std::shared_ptr<HookRecord> hookRecord2 = g_factory->GetHookRecord(
+        buffer.data(), size2, true, callback);
+    secondTagId = hookRecord2->GetRawStack()->stackContext->tagId;
+    
+    ASSERT_NE(hookRecord1, nullptr);
+    ASSERT_NE(hookRecord2, nullptr);
+    EXPECT_EQ(firstTagId, secondTagId);
+    EXPECT_EQ(callbackCount, 1);
+}
+
+/*
+ * @tc.name: ProcessDynamicTagInfo_LongTagName
+ * @tc.desc: test ProcessDynamicTagInfo with long tagName.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_LongTagName, TestSize.Level0)
+{
+    uint32_t originDataSize = sizeof(BaseStackRawData) + 20;
+    std::string tagName(256, 'a');
+    uint32_t tagNameSize = tagName.size() + 1;
+    uint32_t totalSize = originDataSize + tagNameSize + sizeof(uint32_t);
+    
+    std::vector<int8_t> buffer(totalSize, 0);
+    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
+    baseData->type = MMAP_FILE_PAGE_MSG;
+    baseData->tagId = TAG_ID_PENDING;
+    
+    memcpy_s(buffer.data() + originDataSize, tagNameSize, tagName.c_str(), tagNameSize);
+    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(buffer.data() + totalSize - sizeof(uint32_t));
+    *sizePtr = originDataSize;
+    
+    uint32_t size = totalSize;
+    std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(
+        buffer.data(), size, true);
     
     ASSERT_NE(hookRecord, nullptr);
-    EXPECT_FALSE(callbackCalled);
+    EXPECT_EQ(hookRecord->GetType(), MMAP_FILE_PAGE_MSG);
+}
+
+/*
+ * @tc.name: ProcessDynamicTagInfo_MinimumValidSize
+ * @tc.desc: test ProcessDynamicTagInfo with minimum valid size.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_MinimumValidSize, TestSize.Level0)
+{
+    uint32_t originDataSize = sizeof(BaseStackRawData);
+    std::string tagName = "a";
+    uint32_t tagNameSize = tagName.size() + 1;
+    uint32_t totalSize = originDataSize + tagNameSize + sizeof(uint32_t);
+    
+    std::vector<int8_t> buffer(totalSize, 0);
+    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
+    baseData->type = MMAP_FILE_PAGE_MSG;
+    baseData->tagId = TAG_ID_PENDING;
+    
+    memcpy_s(buffer.data() + originDataSize, tagNameSize, tagName.c_str(), tagNameSize);
+    uint32_t* sizePtr = reinterpret_cast<uint32_t*>(buffer.data() + totalSize - sizeof(uint32_t));
+    *sizePtr = originDataSize;
+    
+    uint32_t size = totalSize;
+    std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(
+        buffer.data(), size, true);
+    
+    ASSERT_NE(hookRecord, nullptr);
+    EXPECT_EQ(hookRecord->GetType(), MMAP_FILE_PAGE_MSG);
+}
+
+/*
+ * @tc.name: ProcessDynamicTagInfo_AllThreeTypes
+ * @tc.desc: test ProcessDynamicTagInfo with all three valid types in sequence.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_AllThreeTypes, TestSize.Level0)
+{
+    const std::vector<uint16_t> types = {MMAP_FILE_PAGE_MSG, MEMORY_USING_MSG, MEMORY_UNUSING_MSG};
+    uint32_t callbackCount = 0;
+    auto callback = [&callbackCount](uint32_t tagId, const std::string& name) {
+        callbackCount++;
+    };
+    
+    for (uint16_t type : types) {
+        uint32_t originDataSize = sizeof(BaseStackRawData) + 20;
+        std::string tagName = "test_type_" + std::to_string(type) + ".so";
+        uint32_t tagNameSize = tagName.size() + 1;
+        uint32_t totalSize = originDataSize + tagNameSize + sizeof(uint32_t);
+        
+        std::vector<int8_t> buffer(totalSize, 0);
+        BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
+        baseData->type = type;
+        baseData->tagId = TAG_ID_PENDING;
+        
+        memcpy_s(buffer.data() + originDataSize, tagNameSize, tagName.c_str(), tagNameSize);
+        uint32_t* sizePtr = reinterpret_cast<uint32_t*>(buffer.data() + totalSize - sizeof(uint32_t));
+        *sizePtr = originDataSize;
+        
+        uint32_t size = totalSize;
+        std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(
+            buffer.data(), size, true, callback);
+        
+        ASSERT_NE(hookRecord, nullptr);
+        EXPECT_EQ(hookRecord->GetType(), type);
+    }
+    
+    EXPECT_EQ(callbackCount, 3);
 }
 
 } // namespace OHOS::Developtools::NativeDaemon
