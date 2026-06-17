@@ -125,7 +125,7 @@ bool CacheFileWriter::WriteWithPayload(const void* data, size_t size, const void
 
 bool CacheFileWriter::WriteWithExtraData(const void* data, size_t size, const void* payload, size_t payloadSize,
     const void* firstExtra, size_t firstExtraSize, const void* secondExtra, size_t secondExtraSize)
-{   
+{
     if (payload == nullptr) {
         payloadSize = 0;
     }

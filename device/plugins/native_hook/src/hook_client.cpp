@@ -1226,7 +1226,6 @@ void __attribute__((noinline)) hook_memtrace(void* addr, size_t size, const char
             client.SendStackWithExtraData(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr),
                 param.stackSize, extraNameInfo);
         }
-
     } else {
         SetStackRawData(rawdata, type, addr, size);
         FillNodeInfo(rawdata);

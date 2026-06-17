@@ -221,8 +221,8 @@ struct alignas(8) NameData: public BaseStackRawData { // 8 is 8 bit
 
 struct alignas(8) ExtraDataInfo {
     ExtraDataInfo() : firstExtra(nullptr), firstExtraSize(0), secondExtra(nullptr), secondExtraSize(0) {}
-    ExtraDataInfo(const int8_t* first, uint32_t firstSize, const int8_t* second, uint32_t secondSize) :
-        firstExtra(first), firstExtraSize(firstSize), secondExtra(second), secondExtraSize(secondSize) {}
+    ExtraDataInfo(const int8_t* first, uint32_t firstSize, const int8_t* second, uint32_t secondSize)
+        : firstExtra(first), firstExtraSize(firstSize), secondExtra(second), secondExtraSize(secondSize) {}
     const int8_t* firstExtra = nullptr;
     uint32_t firstExtraSize = 0;
     const int8_t* secondExtra = nullptr;

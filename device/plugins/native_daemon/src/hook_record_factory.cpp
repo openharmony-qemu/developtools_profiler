@@ -282,7 +282,7 @@ void HookRecordFactory::ProcessDynamicTagInfo(RawStackPtr rawStack, const int8_t
         return;  // No tagName data
     }
     // Locate tagName: after [data][payload] field
-    const char* tagNamePtr = reinterpret_cast<const char*>(baseData + originDataSize);    
+    const char* tagNamePtr = reinterpret_cast<const char*>(baseData + originDataSize);
     std::string tagName(tagNamePtr, tagNameSize - 1);  // Remove '\0'
     // Generate real tagId
     bool isNewTagId = true;
@@ -328,7 +328,7 @@ void HookRecordFactory::InitRawStack(RawStackPtr rawStack, const int8_t sharedMe
     bool storeData, const SaveMemTagCallBack& callback)
 {
     if (storeData) {
-        uint32_t originDataSize= GetOriginStackDataSize(sharedMemData, size);
+        uint32_t originDataSize = GetOriginStackDataSize(sharedMemData, size);
         rawStack->baseStackData = std::make_unique<uint8_t[]>(originDataSize);
         if (memcpy_s(rawStack->baseStackData.get(), originDataSize, sharedMemData, originDataSize) != EOK) {
             PROFILER_LOG_ERROR(LOG_CORE, "HookRecordFactory memcpy_s raw data failed!");
