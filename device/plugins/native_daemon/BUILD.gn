@@ -14,15 +14,6 @@
 import("//build/ohos.gni")
 import("../../base/config.gni")
 
-config("size_opt_config") {
-  cflags = [
-    "-Os",
-    "-ffunction-sections",
-    "-fdata-sections",
-  ]
-  ldflags = [ "-Wl,--gc-sections" ]
-}
-
 config("hook_config") {
   defines = [
     "HAVE_LIBUNWIND=0",
@@ -66,7 +57,7 @@ ohos_prebuilt_etc("hiprofiler_daemon.cfg") {
 }
 
 ohos_shared_library("libmemory_profiler") {
-  configs = [ ":size_opt_config" ]
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   public_configs = [
     ":hook_config",
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
@@ -191,7 +182,7 @@ ohos_shared_library("libmemory_profiler") {
 
 ohos_executable("native_daemon") {
   output_name = "native_daemon"
-  configs = [ ":size_opt_config" ]
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   public_configs = [
     ":hook_config",
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
@@ -304,7 +295,7 @@ ohos_executable("native_daemon_client") {
 }
 
 ohos_shared_library("libnative_daemon_client") {
-  configs = [ ":size_opt_config" ]
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   public_configs = [ ":profiler_sa_config" ]
   include_dirs = [
     "../../base/include",
@@ -346,7 +337,7 @@ ohos_shared_library("libnative_daemon_client") {
 }
 
 ohos_shared_library("memory_profiler_client") {
-  configs = [ ":size_opt_config" ]
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   public_configs = [ ":memory_profiler_client_config" ]
   sources = [ "memory_profiler_client/memory_profiler_client_impl.cpp" ]
   deps = [ ":libnative_daemon_client" ]

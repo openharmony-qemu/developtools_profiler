@@ -15,17 +15,8 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 import("ftrace.gni")
 
-config("ftrace_size_opt_config") {
-  cflags = [
-    "-Os",
-    "-ffunction-sections",
-    "-fdata-sections",
-  ]
-  ldflags = [ "-Wl,--gc-sections" ]
-}
-
 ohos_source_set("ftrace_plugin_source") {
-  configs = [ ":ftrace_size_opt_config" ]
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   sources = [
     "src/file_utils.cpp",
     "src/flow_controller.cpp",
@@ -73,7 +64,7 @@ ohos_source_set("ftrace_plugin_source") {
 }
 
 ohos_shared_library("ftrace_plugin") {
-  configs = [ ":ftrace_size_opt_config" ]
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   deps = [ ":ftrace_plugin_source" ]
   version_script = "libftrace_plugin.map"
   if (current_toolchain != host_toolchain) {

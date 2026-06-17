@@ -14,15 +14,6 @@
 import("//build/ohos.gni")
 import("../../base/config.gni")
 
-config("profiler_service_size_opt_config") {
-  cflags = [
-    "-Os",
-    "-ffunction-sections",
-    "-fdata-sections",
-  ]
-  ldflags = [ "-Wl,--gc-sections" ]
-}
-
 config("profiler_service_config") {
   include_dirs = [
     "../../plugins/api/include",
@@ -39,7 +30,7 @@ config("profiler_service_config") {
 }
 
 ohos_source_set("profiler_service") {
-  configs = [ ":profiler_service_size_opt_config" ]
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   sources = [
@@ -96,7 +87,7 @@ ohos_prebuilt_etc("hiprofiler.para.dac") {
 }
 
 ohos_executable("hiprofilerd") {
-  configs = [ ":profiler_service_size_opt_config" ]
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   sources = [ "src/main.cpp" ]
   deps = [
     ":hiprofiler.para",

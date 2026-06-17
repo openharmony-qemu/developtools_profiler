@@ -58,6 +58,21 @@ config("hiprofiler_base_build_config") {
   cflags_cc = [ "-fno-exceptions" ]
 }
 
+config("hiprofiler_size_opt_cflags_config") {
+  visibility = [ "*:*" ]
+  cflags = [
+    "-Os",
+    "-ffunction-sections",
+    "-fdata-sections",
+  ]
+}
+
+config("hiprofiler_size_opt_config") {
+  visibility = [ "*:*" ]
+  configs = [ ":hiprofiler_size_opt_cflags_config" ]
+  ldflags = [ "-Wl,--gc-sections" ]
+}
+
 config("stack_common_public") {
   visibility = [ "*:*" ]
   include_dirs = [ "stack_common" ]

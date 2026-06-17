@@ -29,17 +29,8 @@ config("hiprofiler_plugins_config") {
   }
 }
 
-config("hiprofiler_plugins_size_opt_config") {
-  cflags = [
-    "-Os",
-    "-ffunction-sections",
-    "-fdata-sections",
-  ]
-  ldflags = [ "-Wl,--gc-sections" ]
-}
-
 ohos_source_set("plugins_sources") {
-  configs = [ ":hiprofiler_plugins_size_opt_config" ]
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   include_dirs = [
@@ -85,7 +76,7 @@ ohos_prebuilt_etc("hiprofiler_plugins.cfg") {
 }
 
 ohos_executable("hiprofiler_plugins") {
-  configs = [ ":hiprofiler_plugins_size_opt_config" ]
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   deps = [
     ":hiprofiler_plugins.cfg",
     ":plugins_sources",
