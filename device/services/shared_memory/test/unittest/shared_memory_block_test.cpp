@@ -793,19 +793,19 @@ HWTEST_F(SharedMemoryBlockTest, WriterSyncTest, TestSize.Level0)
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataTimeout_AllParts, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock(SMB_NAME, SMB_SIZE);
-    ASSERT_TRUE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    ASSERT_NE(shareMemoryBlock, nullptr);
+    EXPECT_NE(shareMemoryBlock->Valid(), false);
 
     int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     int8_t payload[4] = {9, 10, 11, 12};
     int8_t firstExtra[6] = {13, 14, 15, 16, 17, 18};
     int8_t secondExtra[4] = {19, 20, 21, 22};
 
-    bool result = shareMemoryBlock.PutWithExtraDataTimeout(
+    bool result = shareMemoryBlock->PutWithExtraDataTimeout(
         header, sizeof(header), payload, sizeof(payload),
         firstExtra, sizeof(firstExtra), secondExtra, sizeof(secondExtra));
     EXPECT_TRUE(result);
-    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 
 /**
@@ -815,18 +815,18 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataTimeout_AllParts, TestSize.Level
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataTimeout_NoPayload, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock(SMB_NAME, SMB_SIZE);
-    ASSERT_TRUE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    ASSERT_NE(shareMemoryBlock, nullptr);
+    EXPECT_NE(shareMemoryBlock->Valid(), false);
 
     int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     int8_t firstExtra[6] = {13, 14, 15, 16, 17, 18};
     int8_t secondExtra[4] = {19, 20, 21, 22};
 
-    bool result = shareMemoryBlock.PutWithExtraDataTimeout(
+    bool result = shareMemoryBlock->PutWithExtraDataTimeout(
         header, sizeof(header), nullptr, 0,
         firstExtra, sizeof(firstExtra), secondExtra, sizeof(secondExtra));
     EXPECT_TRUE(result);
-    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 
 /**
@@ -836,18 +836,18 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataTimeout_NoPayload, TestSize.Leve
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataTimeout_NoFirstExtra, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock(SMB_NAME, SMB_SIZE);
-    ASSERT_TRUE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    ASSERT_NE(shareMemoryBlock, nullptr);
+    EXPECT_NE(shareMemoryBlock->Valid(), false);
 
     int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     int8_t payload[4] = {9, 10, 11, 12};
     int8_t secondExtra[4] = {19, 20, 21, 22};
 
-    bool result = shareMemoryBlock.PutWithExtraDataTimeout(
+    bool result = shareMemoryBlock->PutWithExtraDataTimeout(
         header, sizeof(header), payload, sizeof(payload),
         nullptr, 0, secondExtra, sizeof(secondExtra));
     EXPECT_TRUE(result);
-    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 
 /**
@@ -857,18 +857,18 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataTimeout_NoFirstExtra, TestSize.L
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataTimeout_NoSecondExtra, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock(SMB_NAME, SMB_SIZE);
-    ASSERT_TRUE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    ASSERT_NE(shareMemoryBlock, nullptr);
+    EXPECT_NE(shareMemoryBlock->Valid(), false);
 
     int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     int8_t payload[4] = {9, 10, 11, 12};
     int8_t firstExtra[6] = {13, 14, 15, 16, 17, 18};
 
-    bool result = shareMemoryBlock.PutWithExtraDataTimeout(
+    bool result = shareMemoryBlock->PutWithExtraDataTimeout(
         header, sizeof(header), payload, sizeof(payload),
         firstExtra, sizeof(firstExtra), nullptr, 0);
     EXPECT_TRUE(result);
-    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 
 /**
@@ -878,15 +878,15 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataTimeout_NoSecondExtra, TestSize.
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataTimeout_OnlyHeader, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock(SMB_NAME, SMB_SIZE);
-    ASSERT_TRUE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    ASSERT_NE(shareMemoryBlock, nullptr);
+    EXPECT_NE(shareMemoryBlock->Valid(), false);
 
     int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 
-    bool result = shareMemoryBlock.PutWithExtraDataTimeout(
+    bool result = shareMemoryBlock->PutWithExtraDataTimeout(
         header, sizeof(header), nullptr, 0, nullptr, 0, nullptr, 0);
     EXPECT_TRUE(result);
-    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 
 /**
@@ -896,12 +896,12 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataTimeout_OnlyHeader, TestSize.Lev
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataTimeout_InvalidBlock, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock("", SMB_SIZE);
-    EXPECT_FALSE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>("", SMB_SIZE);
+    EXPECT_NE(shareMemoryBlock->Valid(), true);
 
     int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 
-    bool result = shareMemoryBlock.PutWithExtraDataTimeout(
+    bool result = shareMemoryBlock->PutWithExtraDataTimeout(
         header, sizeof(header), nullptr, 0, nullptr, 0, nullptr, 0);
     EXPECT_FALSE(result);
 }
@@ -913,16 +913,16 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataTimeout_InvalidBlock, TestSize.L
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataTimeout_ExceedsMemorySize, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock(SMB_NAME, SMB_SIZE);
-    ASSERT_TRUE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    ASSERT_NE(shareMemoryBlock, nullptr);
+    EXPECT_NE(shareMemoryBlock->Valid(), false);
 
     size_t hugeSize = SMB_SIZE + 1;
     std::vector<int8_t> hugeData(hugeSize, 0);
 
-    bool result = shareMemoryBlock.PutWithExtraDataTimeout(
+    bool result = shareMemoryBlock->PutWithExtraDataTimeout(
         hugeData.data(), hugeSize, nullptr, 0, nullptr, 0, nullptr, 0);
     EXPECT_FALSE(result);
-    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 
 /**
@@ -932,8 +932,9 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataTimeout_ExceedsMemorySize, TestS
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_AllParts, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock(SMB_NAME, SMB_SIZE);
-    ASSERT_TRUE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    ASSERT_NE(shareMemoryBlock, nullptr);
+    EXPECT_NE(shareMemoryBlock->Valid(), false);
 
     int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     int8_t payload[4] = {9, 10, 11, 12};
@@ -942,11 +943,10 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_AllParts, TestSize.Level0)
 
     auto callback = []() { return false; };
 
-    bool result = shareMemoryBlock.PutWithExtraDataSync(
+    bool result = shareMemoryBlock->PutWithExtraDataSync(
         header, sizeof(header), payload, sizeof(payload),
         firstExtra, sizeof(firstExtra), secondExtra, sizeof(secondExtra), callback);
     EXPECT_TRUE(result);
-    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 
 /**
@@ -956,8 +956,9 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_AllParts, TestSize.Level0)
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_NoPayload, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock(SMB_NAME, SMB_SIZE);
-    ASSERT_TRUE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    ASSERT_NE(shareMemoryBlock, nullptr);
+    EXPECT_NE(shareMemoryBlock->Valid(), false);
 
     int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     int8_t firstExtra[6] = {13, 14, 15, 16, 17, 18};
@@ -965,11 +966,10 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_NoPayload, TestSize.Level0)
 
     auto callback = []() { return false; };
 
-    bool result = shareMemoryBlock.PutWithExtraDataSync(
+    bool result = shareMemoryBlock->PutWithExtraDataSync(
         header, sizeof(header), nullptr, 0,
         firstExtra, sizeof(firstExtra), secondExtra, sizeof(secondExtra), callback);
     EXPECT_TRUE(result);
-    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 
 /**
@@ -979,8 +979,9 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_NoPayload, TestSize.Level0)
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_NoFirstExtra, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock(SMB_NAME, SMB_SIZE);
-    ASSERT_TRUE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    ASSERT_NE(shareMemoryBlock, nullptr);
+    EXPECT_NE(shareMemoryBlock->Valid(), false);
 
     int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     int8_t payload[4] = {9, 10, 11, 12};
@@ -988,11 +989,10 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_NoFirstExtra, TestSize.Leve
 
     auto callback = []() { return false; };
 
-    bool result = shareMemoryBlock.PutWithExtraDataSync(
+    bool result = shareMemoryBlock->PutWithExtraDataSync(
         header, sizeof(header), payload, sizeof(payload),
         nullptr, 0, secondExtra, sizeof(secondExtra), callback);
     EXPECT_TRUE(result);
-    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 
 /**
@@ -1002,8 +1002,9 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_NoFirstExtra, TestSize.Leve
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_NoSecondExtra, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock(SMB_NAME, SMB_SIZE);
-    ASSERT_TRUE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    ASSERT_NE(shareMemoryBlock, nullptr);
+    EXPECT_NE(shareMemoryBlock->Valid(), false);
 
     int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     int8_t payload[4] = {9, 10, 11, 12};
@@ -1011,11 +1012,10 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_NoSecondExtra, TestSize.Lev
 
     auto callback = []() { return false; };
 
-    bool result = shareMemoryBlock.PutWithExtraDataSync(
+    bool result = shareMemoryBlock->PutWithExtraDataSync(
         header, sizeof(header), payload, sizeof(payload),
         firstExtra, sizeof(firstExtra), nullptr, 0, callback);
     EXPECT_TRUE(result);
-    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 
 /**
@@ -1025,17 +1025,17 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_NoSecondExtra, TestSize.Lev
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_OnlyHeader, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock(SMB_NAME, SMB_SIZE);
-    ASSERT_TRUE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    ASSERT_NE(shareMemoryBlock, nullptr);
+    EXPECT_NE(shareMemoryBlock->Valid(), false);
 
     int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 
     auto callback = []() { return false; };
 
-    bool result = shareMemoryBlock.PutWithExtraDataSync(
+    bool result = shareMemoryBlock->PutWithExtraDataSync(
         header, sizeof(header), nullptr, 0, nullptr, 0, nullptr, 0, callback);
     EXPECT_TRUE(result);
-    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 
 /**
@@ -1045,14 +1045,14 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_OnlyHeader, TestSize.Level0
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_InvalidBlock, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock("", SMB_SIZE);
-    EXPECT_FALSE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>("", SMB_SIZE);
+    EXPECT_NE(shareMemoryBlock->Valid(), true);
 
     int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 
     auto callback = []() { return false; };
 
-    bool result = shareMemoryBlock.PutWithExtraDataSync(
+    bool result = shareMemoryBlock->PutWithExtraDataSync(
         header, sizeof(header), nullptr, 0, nullptr, 0, nullptr, 0, callback);
     EXPECT_FALSE(result);
 }
@@ -1064,17 +1064,17 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_InvalidBlock, TestSize.Leve
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_NullCallback, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock(SMB_NAME, SMB_SIZE);
-    ASSERT_TRUE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    ASSERT_NE(shareMemoryBlock, nullptr);
+    EXPECT_NE(shareMemoryBlock->Valid(), false);
 
     int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     int8_t payload[4] = {9, 10, 11, 12};
 
-    bool result = shareMemoryBlock.PutWithExtraDataSync(
+    bool result = shareMemoryBlock->PutWithExtraDataSync(
         header, sizeof(header), payload, sizeof(payload),
         nullptr, 0, nullptr, 0, nullptr);
     EXPECT_TRUE(result);
-    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 
 /**
@@ -1084,8 +1084,9 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_NullCallback, TestSize.Leve
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_CallbackReturnsTrue, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock(SMB_NAME, SMB_SIZE);
-    ASSERT_TRUE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    ASSERT_NE(shareMemoryBlock, nullptr);
+    EXPECT_NE(shareMemoryBlock->Valid(), false);
 
     int8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 
@@ -1094,10 +1095,9 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_CallbackReturnsTrue, TestSi
 
     auto callback = []() { return true; };
 
-    bool result = shareMemoryBlock.PutWithExtraDataSync(
+    bool result = shareMemoryBlock->PutWithExtraDataSync(
         hugeData.data(), hugeSize, nullptr, 0, nullptr, 0, nullptr, 0, callback);
     EXPECT_FALSE(result);
-    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 
 /**
@@ -1107,8 +1107,9 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_CallbackReturnsTrue, TestSi
  */
 HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_MultipleWrites, TestSize.Level0)
 {
-    ShareMemoryBlock shareMemoryBlock(SMB_NAME, SMB_SIZE);
-    ASSERT_TRUE(shareMemoryBlock.Valid());
+    auto shareMemoryBlock = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    ASSERT_NE(shareMemoryBlock, nullptr);
+    EXPECT_NE(shareMemoryBlock->Valid(), false);
 
     int8_t header1[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     int8_t header2[8] = {11, 12, 13, 14, 15, 16, 17, 18};
@@ -1116,15 +1117,14 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_MultipleWrites, TestSize.Le
 
     auto callback = []() { return false; };
 
-    bool result1 = shareMemoryBlock.PutWithExtraDataSync(
+    bool result1 = shareMemoryBlock->PutWithExtraDataSync(
         header1, sizeof(header1), nullptr, 0,
         firstExtra, sizeof(firstExtra), nullptr, 0, callback);
     EXPECT_TRUE(result1);
 
-    bool result2 = shareMemoryBlock.PutWithExtraDataSync(
+    bool result2 = shareMemoryBlock->PutWithExtraDataSync(
         header2, sizeof(header2), nullptr, 0,
         firstExtra, sizeof(firstExtra), nullptr, 0, callback);
     EXPECT_TRUE(result2);
-    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 } // namespace
