@@ -239,7 +239,6 @@ uint32_t HookRecordFactory::GetDynamicTagId(const std::string& tagName, bool& is
         nextTagId_ = INITIAL_MEM_TAG_ID;
     }
     tagNameToIdMap_[tagName] = newTagId;
-    PROFILER_LOG_INFO(LOG_CORE, "Generate tagId: %s -> %u", tagName.c_str(), newTagId);
     return newTagId;
 }
     
@@ -291,7 +290,6 @@ void HookRecordFactory::ProcessDynamicTagInfo(RawStackPtr rawStack, const int8_t
     if (callback && isNewTagId) {
         callback(realTagId, tagName);
     }
-    PROFILER_LOG_DEBUG(LOG_CORE, "Dynamic tag: %s -> %u, size restored to %u", tagName.c_str(), realTagId, size);
 }
 
 uint32_t HookRecordFactory::GetOriginStackDataSize(const int8_t sharedMemData[], uint32_t size)
