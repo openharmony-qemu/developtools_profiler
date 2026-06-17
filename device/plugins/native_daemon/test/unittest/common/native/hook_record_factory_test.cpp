@@ -424,6 +424,7 @@ HWTEST_F(HookRecordFactoryTest, GetDynamicTagId_MultipleTags, TestSize.Level0)
         bool isNewTagId = false;
         uint32_t tagId = g_factory->GetDynamicTagId(tagName, isNewTagId);
         EXPECT_TRUE(isNewTagId);
+        EXPECT_TRUE(tagId >= INITIAL_MEM_TAG_ID);
     }
 }
 
