@@ -26,16 +26,17 @@ bool IpcGenerator::Generate(const google::protobuf::FileDescriptor* file,
                             std::string* error) const
 {
     auto pcsp = std::make_shared<IpcGeneratorImpl>();
-    std::string base_name = pcsp->SetNames(file->name(), file->package());
+    std::string base_name = pcsp->SetNames(std::string(file->name()), std::string(file->package()));
 
     for (int i = 0; i < file->service_count(); i++) {
         const google::protobuf::ServiceDescriptor* service = file->service(i);
-        pcsp->AddService(service->name());
+        pcsp->AddService(std::string(service->name()));
         for (int j = 0; j < service->method_count(); j++) {
             const google::protobuf::MethodDescriptor* method = service->method(j);
             const google::protobuf::Descriptor* inputType = method->input_type();
             const google::protobuf::Descriptor* outputType = method->output_type();
-            pcsp->AddServiceMethod(service->name(), method->name(), inputType->name(), outputType->name());
+            pcsp->AddServiceMethod(std::string(service->name()), std::string(method->name()),
+                std::string(inputType->name()), std::string(outputType->name()));
         }
     }
 
