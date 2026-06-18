@@ -1416,7 +1416,10 @@ void HookManager::DumpGwpAsanInfo(uint8_t* data)
 bool HookManager::TakeDataHandler(const std::shared_ptr<HookManagerCtx>& hookCtx,
     std::shared_ptr<HookRecord>& hookRecord, std::shared_ptr<RawStack>& rawStack, const int8_t *data, uint32_t size)
 {
-    hookRecord = factory_->GetHookRecord(data, size);
+    auto saveMemTagCallBack = [&hookCtx] (uint32_t tagId, const std::string& tagName) {
+        hookCtx->stackPreprocess->SaveMemTag(tagId, tagName);
+    };
+    hookRecord = factory_->GetHookRecord(data, size, true, saveMemTagCallBack);
     CHECK_NOTNULL(hookRecord, false, "TakeDataHandler hookRecord invalid!");
     rawStack = hookRecord->GetRawStack();
     uint16_t type = hookRecord->GetType();
@@ -1474,8 +1477,6 @@ bool HookManager::ProcessRawStackByType(const std::shared_ptr<HookManagerCtx>& h
 {
     uint16_t type = hookRecord->GetType();
     if (type == MEMORY_TAG) {
-        std::string tagName = reinterpret_cast<char*>(rawStack->data);
-        hookCtx->stackPreprocess->SaveMemTag(rawStack->stackContext->tagId, tagName);
         return true;
     } else if (type == JS_STACK_MSG) {
         hookCtx->stackPreprocess->SaveJsRawStack(rawStack->stackContext->jsChainId,

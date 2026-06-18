@@ -18,6 +18,8 @@
 #include <memory>
 #include <string>
 #include <deque>
+#include <atomic>
+#include <unordered_map>
 #include "hook_common.h"
 #include "hook_record.h"
 
@@ -26,12 +28,16 @@ constexpr int RAW_DATA_CACHE_INIT_SIZE = 40000;
 constexpr int HOOK_RECORD_CACHE_INIT_SIZE = 20000;
 constexpr int RAW_DATA_CACHE_MAX_SIZE = 400000;
 constexpr int HOOK_RECORD_CACHE_MAX_SIZE = 200000;
+constexpr uint32_t INITIAL_MEM_TAG_ID = RESTRACE_TYPE_COUNT + 2;
 
 class HookRecordFactory {
 public:
     HookRecordFactory() = delete;
     HookRecordFactory(NativeHookConfig hookConfig);
-    std::shared_ptr<HookRecord> GetHookRecord(const int8_t sharedMemData[], uint32_t size, bool storeData = true);
+    using SaveMemTagCallBack = std::function<void(uint32_t tagId, const std::string& tagName)>;
+    static void DefaultSaveMemTagCallBack(uint32_t tagId, const std::string& tagName) {};
+    std::shared_ptr<HookRecord> GetHookRecord(const int8_t sharedMemData[], uint32_t size, bool storeData = true,
+        const SaveMemTagCallBack& callback = DefaultSaveMemTagCallBack);
     void SaveHookRecord(HookRecordPtr hookRecord);
 
     template <typename T>
@@ -40,11 +46,19 @@ public:
     void SaveRawStack(RawStackPtr rawStack);
     std::shared_ptr<HookRecord> CreateStackRecord(uint16_t type, RawStackPtr rawStack);
     void SaveRecordToCache(uint16_t type, HookRecordPtr hookRecord);
-    void InitRawStack(RawStackPtr rawStack, const int8_t sharedMemData[],
-                      uint32_t size, bool storeData);
+    void InitRawStack(RawStackPtr rawStack, const int8_t sharedMemData[], uint32_t& size, bool storeData,
+        const SaveMemTagCallBack& callback = DefaultSaveMemTagCallBack);
 
 private:
+    uint32_t GetDynamicTagId(const std::string& tagName, bool& isNewTagId);
+    void ProcessDynamicTagInfo(RawStackPtr rawStack, const int8_t sharedMemData[], uint32_t& size,
+        const SaveMemTagCallBack& callback);
+    uint32_t GetOriginStackDataSize(const int8_t sharedMemData[], uint32_t size);
+
     NativeHookConfig hookConfig_;
+    std::unordered_map<std::string, uint32_t> tagNameToIdMap_;
+    uint32_t nextTagId_ = INITIAL_MEM_TAG_ID;
+    std::mutex tagIdMutex_;
     std::deque<std::shared_ptr<RawStack>> rawStackCache_;
     std::deque<std::shared_ptr<HookRecord>> freeRecordSimpCache_;
     std::deque<std::shared_ptr<HookRecord>> freeRecordCache_;

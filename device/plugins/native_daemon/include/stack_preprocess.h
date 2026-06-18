@@ -389,7 +389,6 @@ private:
     bool ProcessAddressData(const int8_t data[]);
     bool ValidateAndPrepareData(const int8_t data[],
         uint32_t size, std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);
-    bool ProcessMemoryTag(RawStackPtr& rawData);
     bool ProcessNmdMsg(RawStackPtr& rawData);
     bool ProcessEndMsg();
     bool ProcessStacklessMunmap(std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);

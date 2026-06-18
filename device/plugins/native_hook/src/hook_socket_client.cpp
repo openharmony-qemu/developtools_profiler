@@ -496,6 +496,37 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
     return true;
 }
 
+bool HookSocketClient::SendStackWithExtraData(const void* data, size_t size, const void* payload,
+    size_t payloadSize, ExtraDataInfo& extraDataInfo, int smbIndex)
+{
+    if (smbIndex + 1 > static_cast<int>(stackWriterList_.size())) {
+        return false;
+    }
+    if (g_disableHook || unixSocketClient_ == nullptr) {
+        return false;
+    }
+    if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
+        DisableHook();
+        return false;
+    }
+    std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
+    if (!stackWriter) {
+        return false;
+    }
+    bool ret = stackWriter->WriteWithExtraDataTimeout(data, size, payload, payloadSize,
+        extraDataInfo.firstExtra, extraDataInfo.firstExtraSize,
+        extraDataInfo.secondExtra, extraDataInfo.secondExtraSize,
+        std::bind(&HookSocketClient::PeerIsConnected, this));
+    if (!ret && config_->isBlocked) {
+        DisableHook();
+        return false;
+    }
+    if (!stackWriter->IsFileCacheMode() && stackWriter->PrepareFlush()) {
+        stackWriter->Flush();
+    }
+    return true;
+}
+
 bool HookSocketClient::SendRawData(const void* data, size_t size, int smbIndex)
 {
     if (smbIndex + 1 > static_cast<int>(stackWriterList_.size())) {

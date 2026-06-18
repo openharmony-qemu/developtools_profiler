@@ -52,6 +52,16 @@ bool HookClientHolder::SendStackWithPayload(const void* data, size_t size, const
     return client->SendStackWithPayload(data, size, payload, payloadSize, smbIndex);
 }
 
+bool HookClientHolder::SendStackWithExtraData(const void* data, size_t size, const void* payload,
+    size_t payloadSize, ExtraDataInfo& extraDataInfo, int smbIndex)
+{
+    std::shared_ptr<HookSocketClient> client = holder_.lock();
+    if (client == nullptr) {
+        return false;
+    }
+    return client->SendStackWithExtraData(data, size, payload, payloadSize, extraDataInfo, smbIndex);
+}
+
 bool HookClientHolder::SendRawData(const void* data, size_t size, int smbIndex)
 {
     std::shared_ptr<HookSocketClient> client = holder_.lock();

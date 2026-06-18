@@ -158,6 +158,37 @@ bool StackWriter::WriteWithPayloadTimeout(const void* data, size_t size, const v
     }
 }
 
+bool StackWriter::WriteWithExtraDataTimeout(const void* data, size_t size, const void* payload, size_t payloadSize,
+    const void* firstExtra, size_t firstExtraSize, const void* secondExtra, size_t secondExtraSize,
+    const std::function<bool()>& callback)
+{
+    if (useFileCache_) {
+        if (cacheFileWriter_ == nullptr) {
+            return false;
+        }
+        return cacheFileWriter_->WriteWithExtraData(data, size, payload, payloadSize,
+            firstExtra, firstExtraSize, secondExtra, secondExtraSize);
+    }
+
+    if (shareMemoryBlock_ == nullptr || data == nullptr || size == 0) {
+        return false;
+    }
+    if (blocked_) {
+        return shareMemoryBlock_->PutWithExtraDataSync(
+            reinterpret_cast<const int8_t*>(data), size,
+            reinterpret_cast<const int8_t*>(payload), payloadSize,
+            reinterpret_cast<const int8_t*>(firstExtra), firstExtraSize,
+            reinterpret_cast<const int8_t*>(secondExtra), secondExtraSize,
+            callback);
+    } else {
+        return shareMemoryBlock_->PutWithExtraDataTimeout(
+            reinterpret_cast<const int8_t*>(data), size,
+            reinterpret_cast<const int8_t*>(payload), payloadSize,
+            reinterpret_cast<const int8_t*>(firstExtra), firstExtraSize,
+            reinterpret_cast<const int8_t*>(secondExtra), secondExtraSize);
+    }
+}
+
 bool StackWriter::PrepareFlush()
 {
     ++dataCount_;

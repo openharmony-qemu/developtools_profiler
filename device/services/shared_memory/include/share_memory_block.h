@@ -39,6 +39,14 @@ public:
     bool PutWithPayloadTimeout(const int8_t* header, uint32_t headerSize, const int8_t* payload, uint32_t payloadSize);
     bool PutWithPayloadSync(const int8_t* header, uint32_t headerSize, const int8_t* payload, uint32_t payloadSize,
                             const std::function<bool()>& callback);
+    bool PutWithExtraDataTimeout(const int8_t* header, uint32_t headerSize,
+        const int8_t* payload, uint32_t payloadSize,
+        const int8_t* firstExtra, uint32_t firstExtraSize,
+        const int8_t* secondExtra, uint32_t secondExtraSize);
+    bool PutWithExtraDataSync(const int8_t* header, uint32_t headerSize, const int8_t* payload, uint32_t payloadSize,
+        const int8_t* firstExtra, uint32_t firstExtraSize,
+        const int8_t* secondExtra, uint32_t secondExtraSize,
+        const std::function<bool()>& callback);
 #ifndef NO_PROTOBUF
     EXPORT_API bool PutMessage(const google::protobuf::Message& pmsg, const std::string& pluginName);
 #endif

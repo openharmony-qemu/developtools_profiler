@@ -123,6 +123,44 @@ bool CacheFileWriter::WriteWithPayload(const void* data, size_t size, const void
     return true;
 }
 
+bool CacheFileWriter::WriteWithExtraData(const void* data, size_t size, const void* payload, size_t payloadSize,
+    const void* firstExtra, size_t firstExtraSize, const void* secondExtra, size_t secondExtraSize)
+{
+    if (payload == nullptr) {
+        payloadSize = 0;
+    }
+    if (firstExtra == nullptr) {
+        firstExtraSize = 0;
+    }
+    if (secondExtra == nullptr) {
+        secondExtraSize = 0;
+    }
+    uint32_t totalSize = size + payloadSize + firstExtraSize + secondExtraSize;
+    if (data == nullptr || size == 0 || totalSize > cacheMemorySize_ || !initialized_ || isCacheFileEnded_) {
+        return false;
+    }
+    size_t incomingSize = sizeof(totalSize) + totalSize;
+    std::lock_guard<std::mutex> lock(writeMutex_);
+    if (!EnsureWritableCacheFile()) {
+        return false;
+    }
+    if (memoryCache_.size() + incomingSize >= cacheMemorySize_ && !FlushMemoryCacheToFile()) {
+        return false;
+    }
+    WriteToMemoryCache(&totalSize, sizeof(totalSize));
+    WriteToMemoryCache(data, size);
+    if (payloadSize > 0) {
+        WriteToMemoryCache(payload, payloadSize);
+    }
+    if (firstExtraSize > 0) {
+        WriteToMemoryCache(firstExtra, firstExtraSize);
+    }
+    if (secondExtraSize > 0) {
+        WriteToMemoryCache(secondExtra, secondExtraSize);
+    }
+    return true;
+}
+
 void CacheFileWriter::SetCacheFileWriterEnd()
 {
     std::lock_guard<std::mutex> lock(writeMutex_);

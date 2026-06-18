@@ -58,6 +58,7 @@ inline uint32_t NormalizeUniqueStackTableSize(uint32_t size)
 const size_t FILTER_STACK_DEPTH = 2;
 const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
 const size_t GPU_TYPE_COUNT = 5;
+const uint32_t TAG_ID_PENDING = UINT32_MAX;  // Special marker for dynamic tagId generation
 const size_t RESTRACE_TYPE_COUNT = 24;
 const size_t GPU_RANGE_COUNT = 2;
 const size_t GPU_VK_INDEX = 0;
@@ -194,7 +195,7 @@ struct alignas(8) BaseStackRawData { // 8 is 8 bit
     uint32_t pid;
     uint32_t tid;
     uint16_t type;
-    uint16_t tagId;
+    uint32_t tagId;
     uint32_t nodeType;
     uint64_t nodeId;
 };
@@ -218,6 +219,16 @@ struct alignas(8) NameData: public BaseStackRawData { // 8 is 8 bit
     char name[MAX_HOOK_PATH + 1] {0};
 };
 
+struct alignas(8) ExtraDataInfo {
+    ExtraDataInfo() : firstExtra(nullptr), firstExtraSize(0), secondExtra(nullptr), secondExtraSize(0) {}
+    ExtraDataInfo(const int8_t* first, uint32_t firstSize, const int8_t* second, uint32_t secondSize)
+        : firstExtra(first), firstExtraSize(firstSize), secondExtra(second), secondExtraSize(secondSize) {}
+    const int8_t* firstExtra = nullptr;
+    uint32_t firstExtraSize = 0;
+    const int8_t* secondExtra = nullptr;
+    uint32_t secondExtraSize = 0;
+};
+
 struct alignas(8) ReportEventBaseData { // 8 is 8 bit
     ReportEventBaseData(const BaseStackRawData* baseData, uint32_t id = 0)
     {
@@ -232,7 +243,7 @@ struct alignas(8) ReportEventBaseData { // 8 is 8 bit
     struct timespec ts;
     uint64_t addr : 40;
     uint64_t type : 8;
-    uint64_t tagId : 16;
+    uint32_t tagId;
     uint32_t mallocSize;
     uint32_t tid;
     uint32_t stackMapId;

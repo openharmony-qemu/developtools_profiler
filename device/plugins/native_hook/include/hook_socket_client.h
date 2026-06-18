@@ -46,6 +46,8 @@ public:
     bool SendStack(const void* data, size_t size);
     virtual bool SendStackWithPayload(const void* data, size_t size, const void* payload,
             size_t payloadSize, int smbIndex = 0);
+    bool SendStackWithExtraData(const void* data, size_t size, const void* payload, size_t payloadSize,
+        ExtraDataInfo& extraDataInfo, int smbIndex = 0);
     bool SendRawData(const void* data, size_t size, int smbIndex = 0);
     void DisableHook();
     bool PeerIsConnected();

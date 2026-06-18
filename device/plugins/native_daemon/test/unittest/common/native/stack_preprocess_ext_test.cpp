@@ -968,28 +968,6 @@ HWTEST_F(StackPreprocessExtTest, ReportOfflineSymbolizationDataTest, TestSize.Le
 }
 
 /*
-@tc.name: ProcessMemoryTagTest
-@tc.desc: test ProcessMemoryTag method.
-@tc.type: FUNC
-*/
-HWTEST_F(StackPreprocessExtTest, ProcessMemoryTagTest, TestSize.Level0)
-{
-    NativeHookConfig hookConfig;
-    StackPreprocess preprocess(nullptr, hookConfig, 0);
-    
-    // Create a raw stack with memory tag data
-    RawStackPtr rawData = MakeRawStack(1, 100, 0);
-    // Set data field to a test string
-    const char* testTag = "test_memory_tag";
-    rawData->data = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(testTag));
-    
-    // Just call the method to ensure it doesn't crash
-    bool result = preprocess.ProcessMemoryTag(rawData);
-    // We can't easily verify the output, but we can ensure the method executes without error
-    EXPECT_TRUE(result);
-}
-
-/*
 @tc.name: ProcessRawDataHandlesSnapshotMarkers
 @tc.desc: test ProcessRawData handles alive snapshot marker messages.
 @tc.type: FUNC

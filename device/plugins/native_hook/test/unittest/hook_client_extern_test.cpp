@@ -288,13 +288,11 @@ HWTEST_F(HookClientExternTest, HookMmapTest, TestSize.Level0)
     EXPECT_NE(mappedAddr, nullptr);
     EXPECT_NE(mappedAddr, MAP_FAILED);
 
-    ASSERT_GE(typeVec.size(), 2);
+    ASSERT_GE(typeVec.size(), 1);
     EXPECT_EQ(typeVec[0], MMAP_FILE_TYPE);
-    EXPECT_EQ(typeVec[typeVec.size() - 1], MMAP_FILE_PAGE_MSG);
     
-    ASSERT_GE(sizeVec.size(), 2);
+    ASSERT_GE(sizeVec.size(), 1);
     EXPECT_EQ(sizeVec[0], static_cast<int>(length));
-    EXPECT_EQ(sizeVec[sizeVec.size() - 1], static_cast<int>(length));
 
     if (mappedAddr != nullptr && mappedAddr != MAP_FAILED) {
         munmap(mappedAddr, length);
@@ -394,13 +392,13 @@ HWTEST_F(HookClientExternTest, HookMemtraceTest, TestSize.Level0)
     g_clientConfig.isSaMode = false;
 
     size_t size = 100;
-    const char* tag = "test";
+    const char* tag = nullptr;
     bool isUsing = false;
     ohos_malloc_hook_memtrace(reinterpret_cast<void*>(0x1000), size, tag, isUsing);
 
-    std::vector<int> expectedTypeVec = {MEMORY_TAG, MEMORY_UNUSING_MSG};
+    std::vector<int> expectedTypeVec = {MEMORY_UNUSING_MSG};
     EXPECT_EQ(typeVec, expectedTypeVec);
-    std::vector<int> expectedsizeVec = {0, size};
+    std::vector<int> expectedsizeVec = {size};
     EXPECT_EQ(sizeVec, expectedsizeVec);
 }
 

@@ -762,7 +762,7 @@ bool StackPreprocess::ProcessRawData(const int8_t data[], uint32_t size,
     if (isStopTakeData_) {
         return false;
     } else if (type == MEMORY_TAG) {
-        return ProcessMemoryTag(rawData);
+        return true;
     } else if (type == FREE_ARKTS) {
         size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
         HandleDeleteAddr(reinterpret_cast<uint64_t>(hookRecord->GetAddr()), size);
@@ -819,16 +819,12 @@ bool StackPreprocess::ValidateAndPrepareData(const int8_t data[], uint32_t size,
                                              RawStackPtr& rawData)
 {
     CHECK_TRUE(size >= sizeof(BaseStackRawData), false, "stack data invalid!");
-    hookRecord = factory_->GetHookRecord(data, size, false);
+    auto saveMemTagCallBack = [this] (uint32_t tagId, const std::string& tagName) {
+        this->SaveMemTag(tagId, tagName);
+    };
+    hookRecord = factory_->GetHookRecord(data, size, false, saveMemTagCallBack);
     CHECK_NOTNULL(hookRecord, false, "hookRecord invalid!");
     rawData = hookRecord->GetRawStack();
-    return true;
-}
-
-bool StackPreprocess::ProcessMemoryTag(RawStackPtr& rawData)
-{
-    std::string tagName = reinterpret_cast<char*>(rawData->data);
-    SaveMemTag(rawData->stackContext->tagId, tagName);
     return true;
 }
 

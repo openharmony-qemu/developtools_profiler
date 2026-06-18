@@ -236,4 +236,169 @@ HWTEST_F(CacheFileWriterTest, WriteWithPayloadStoresCombinedRecord, TestSize.Lev
     std::string content = ReadAll(writer.currentFileFd_);
     EXPECT_GT(content.size(), sizeof(uint32_t) + sizeof(header));
 }
+
+HWTEST_F(CacheFileWriterTest, WriteWithExtraDataAllParts, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    uint8_t payload[4] = {9, 10, 11, 12};
+    uint8_t firstExtra[6] = {13, 14, 15, 16, 17, 18};
+    uint8_t secondExtra[4] = {19, 20, 21, 22};
+    
+    ASSERT_TRUE(writer.WriteWithExtraData(header, sizeof(header), payload, sizeof(payload),
+        firstExtra, sizeof(firstExtra), secondExtra, sizeof(secondExtra)));
+    ASSERT_TRUE(writer.Flush());
+    
+    std::string content = ReadAll(writer.currentFileFd_);
+    uint32_t expectedTotalSize = sizeof(header) + sizeof(payload) + sizeof(firstExtra) + sizeof(secondExtra);
+    EXPECT_GE(content.size(), sizeof(uint32_t) + expectedTotalSize);
+}
+
+HWTEST_F(CacheFileWriterTest, WriteWithExtraDataNoPayload, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    uint8_t firstExtra[6] = {13, 14, 15, 16, 17, 18};
+    uint8_t secondExtra[4] = {19, 20, 21, 22};
+    
+    ASSERT_TRUE(writer.WriteWithExtraData(header, sizeof(header), nullptr, 0,
+        firstExtra, sizeof(firstExtra), secondExtra, sizeof(secondExtra)));
+    ASSERT_TRUE(writer.Flush());
+    
+    std::string content = ReadAll(writer.currentFileFd_);
+    EXPECT_GT(content.size(), sizeof(uint32_t));
+}
+
+HWTEST_F(CacheFileWriterTest, WriteWithExtraDataNoFirstExtra, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    uint8_t payload[4] = {9, 10, 11, 12};
+    uint8_t secondExtra[4] = {19, 20, 21, 22};
+    
+    ASSERT_TRUE(writer.WriteWithExtraData(header, sizeof(header), payload, sizeof(payload),
+        nullptr, 0, secondExtra, sizeof(secondExtra)));
+    ASSERT_TRUE(writer.Flush());
+    
+    std::string content = ReadAll(writer.currentFileFd_);
+    EXPECT_GT(content.size(), sizeof(uint32_t));
+}
+
+HWTEST_F(CacheFileWriterTest, WriteWithExtraDataNoSecondExtra, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    uint8_t payload[4] = {9, 10, 11, 12};
+    uint8_t firstExtra[6] = {13, 14, 15, 16, 17, 18};
+    
+    ASSERT_TRUE(writer.WriteWithExtraData(header, sizeof(header), payload, sizeof(payload),
+        firstExtra, sizeof(firstExtra), nullptr, 0));
+    ASSERT_TRUE(writer.Flush());
+    
+    std::string content = ReadAll(writer.currentFileFd_);
+    EXPECT_GT(content.size(), sizeof(uint32_t));
+}
+
+HWTEST_F(CacheFileWriterTest, WriteWithExtraDataOnlyHeader, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+    ASSERT_TRUE(writer.WriteWithExtraData(header, sizeof(header), nullptr, 0, nullptr, 0, nullptr, 0));
+    ASSERT_TRUE(writer.Flush());
+    
+    std::string content = ReadAll(writer.currentFileFd_);
+    EXPECT_GT(content.size(), sizeof(uint32_t));
+}
+
+HWTEST_F(CacheFileWriterTest, WriteWithExtraDataNullHeader, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    
+    EXPECT_FALSE(writer.WriteWithExtraData(nullptr, 0, nullptr, 0, nullptr, 0, nullptr, 0));
+}
+
+HWTEST_F(CacheFileWriterTest, WriteWithExtraDataZeroSize, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+    EXPECT_FALSE(writer.WriteWithExtraData(header, 0, nullptr, 0, nullptr, 0, nullptr, 0));
+}
+
+HWTEST_F(CacheFileWriterTest, WriteWithExtraDataExceedsCacheSize, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    
+    size_t hugeSize = writer.cacheMemorySize_ + 1;
+    std::vector<uint8_t> hugeData(hugeSize, 0);
+    
+    EXPECT_FALSE(writer.WriteWithExtraData(hugeData.data(), hugeSize, nullptr, 0, nullptr, 0, nullptr, 0));
+}
+
+HWTEST_F(CacheFileWriterTest, WriteWithExtraDataBeforeInit, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    
+    EXPECT_FALSE(writer.WriteWithExtraData(header, sizeof(header), nullptr, 0, nullptr, 0, nullptr, 0));
+}
+
+HWTEST_F(CacheFileWriterTest, WriteWithExtraDataAfterEnd, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    ASSERT_TRUE(writer.Write(header, sizeof(header)));
+    
+    writer.SetCacheFileWriterEnd();
+    
+    EXPECT_FALSE(writer.WriteWithExtraData(header, sizeof(header), nullptr, 0, nullptr, 0, nullptr, 0));
+}
+
+HWTEST_F(CacheFileWriterTest, WriteWithExtraDataMultipleWrites, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    
+    uint8_t header1[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    uint8_t header2[8] = {11, 12, 13, 14, 15, 16, 17, 18};
+    uint8_t firstExtra[4] = {19, 20, 21, 22};
+    uint8_t secondExtra[4] = {23, 24, 25, 26};
+    
+    ASSERT_TRUE(writer.WriteWithExtraData(header1, sizeof(header1), nullptr, 0,
+        firstExtra, sizeof(firstExtra), secondExtra, sizeof(secondExtra)));
+    ASSERT_TRUE(writer.WriteWithExtraData(header2, sizeof(header2), nullptr, 0,
+        firstExtra, sizeof(firstExtra), secondExtra, sizeof(secondExtra)));
+    ASSERT_TRUE(writer.Flush());
+    
+    std::string content = ReadAll(writer.currentFileFd_);
+    EXPECT_GT(content.size(), sizeof(uint32_t) * 2);
+}
 } // namespace

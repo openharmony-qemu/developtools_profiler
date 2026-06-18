@@ -445,4 +445,251 @@ HWTEST_F(StackWriterTest, StackWriterFalseTest, TestSize.Level0)
     write = std::make_shared<StackWriter>("", 0, 0, -1, true);
     EXPECT_EQ(write->shareMemoryBlock_, nullptr);
 }
+
+/**
+ * @tc.name: WriteWithExtraDataTimeoutAllParts
+ * @tc.desc: test WriteWithExtraDataTimeout with all extra data parts.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteWithExtraDataTimeoutAllParts, TestSize.Level0)
+{
+    auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, false);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
+    uint8_t buffer4[] = {0xCC, 0xDD, 0xBB, 0xEE};
+
+    EXPECT_TRUE(write->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer1), sizeof(buffer1),
+        reinterpret_cast<const void*>(buffer2), sizeof(buffer2),
+        reinterpret_cast<const void*>(buffer3), sizeof(buffer3),
+        reinterpret_cast<const void*>(buffer4), sizeof(buffer4), nullptr));
+    EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
+}
+
+/**
+ * @tc.name: WriteWithExtraDataTimeoutNoPayload
+ * @tc.desc: test WriteWithExtraDataTimeout without payload.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteWithExtraDataTimeoutNoPayload, TestSize.Level0)
+{
+    auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, false);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
+
+    EXPECT_TRUE(write->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer1), sizeof(buffer1),
+        nullptr, 0,
+        reinterpret_cast<const void*>(buffer2), sizeof(buffer2),
+        reinterpret_cast<const void*>(buffer3), sizeof(buffer3), nullptr));
+    EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
+}
+
+/**
+ * @tc.name: WriteWithExtraDataTimeoutNoFirstExtra
+ * @tc.desc: test WriteWithExtraDataTimeout without first extra.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteWithExtraDataTimeoutNoFirstExtra, TestSize.Level0)
+{
+    auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, false);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
+
+    EXPECT_TRUE(write->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer1), sizeof(buffer1),
+        reinterpret_cast<const void*>(buffer2), sizeof(buffer2),
+        nullptr, 0,
+        reinterpret_cast<const void*>(buffer3), sizeof(buffer3), nullptr));
+    EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
+}
+
+/**
+ * @tc.name: WriteWithExtraDataTimeoutNoSecondExtra
+ * @tc.desc: test WriteWithExtraDataTimeout without second extra.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteWithExtraDataTimeoutNoSecondExtra, TestSize.Level0)
+{
+    auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, false);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
+
+    EXPECT_TRUE(write->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer1), sizeof(buffer1),
+        reinterpret_cast<const void*>(buffer2), sizeof(buffer2),
+        reinterpret_cast<const void*>(buffer3), sizeof(buffer3),
+        nullptr, 0, nullptr));
+    EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
+}
+
+/**
+ * @tc.name: WriteWithExtraDataTimeoutOnlyHeader
+ * @tc.desc: test WriteWithExtraDataTimeout with only header.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteWithExtraDataTimeoutOnlyHeader, TestSize.Level0)
+{
+    auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, false);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+
+    uint8_t buffer[] = {0x55, 0xAA, 0x55, 0xAA};
+
+    EXPECT_TRUE(write->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer), sizeof(buffer),
+        nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+    EXPECT_TRUE(CheckBuffer(buffer, sizeof(buffer)));
+}
+
+/**
+ * @tc.name: WriteWithExtraDataTimeoutNullHeader
+ * @tc.desc: test WriteWithExtraDataTimeout with null header.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteWithExtraDataTimeoutNullHeader, TestSize.Level0)
+{
+    auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, false);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+
+    EXPECT_FALSE(write->WriteWithExtraDataTimeout(nullptr, 0, nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+}
+
+/**
+ * @tc.name: WriteWithExtraDataTimeoutZeroSize
+ * @tc.desc: test WriteWithExtraDataTimeout with zero size.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteWithExtraDataTimeoutZeroSize, TestSize.Level0)
+{
+    auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, false);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+
+    uint8_t buffer[] = {0x55, 0xAA, 0x55, 0xAA};
+
+    EXPECT_FALSE(write->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer), 0,
+        nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+}
+
+/**
+ * @tc.name: WriteWithExtraDataTimeoutNoShareMemory
+ * @tc.desc: test WriteWithExtraDataTimeout without share memory.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteWithExtraDataTimeoutNoShareMemory, TestSize.Level0)
+{
+    auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, 0, -1, false);
+    EXPECT_EQ(write->shareMemoryBlock_, nullptr);
+
+    uint8_t buffer[] = {0x55, 0xAA, 0x55, 0xAA};
+
+    EXPECT_FALSE(write->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer), sizeof(buffer),
+        nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+}
+
+/**
+ * @tc.name: WriteWithExtraDataTimeoutBlockedMode
+ * @tc.desc: test WriteWithExtraDataTimeout with blocked mode.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteWithExtraDataTimeoutBlockedMode, TestSize.Level0)
+{
+    auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, true);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
+    uint8_t buffer4[] = {0xCC, 0xDD, 0xBB, 0xEE};
+
+    EXPECT_FALSE(write->WriteWithExtraDataTimeout(nullptr, 0, nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+    EXPECT_TRUE(write->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer1), sizeof(buffer1),
+        reinterpret_cast<const void*>(buffer2), sizeof(buffer2),
+        reinterpret_cast<const void*>(buffer3), sizeof(buffer3),
+        reinterpret_cast<const void*>(buffer4), sizeof(buffer4), nullptr));
+    EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
+    write->blocked_ = false;
+    EXPECT_FALSE(write->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer1), 0,
+        nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+    EXPECT_FALSE(write->WriteWithExtraDataTimeout(nullptr, 0, nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+}
+
+/**
+ * @tc.name: WriteWithExtraDataTimeoutTwoSmbTest
+ * @tc.desc: test WriteWithExtraDataTimeout with two shared memory block.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteWithExtraDataTimeoutTwoSmbTest, TestSize.Level0)
+{
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
+    auto writer1 = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, true);
+    auto writer2 = std::make_shared<StackWriter>(PLUGIN_NAME_SECOND, SMB_SIZE, InitShareMemory(), -1, true);
+    EXPECT_NE(writer1->shareMemoryBlock_, nullptr);
+    EXPECT_NE(writer2->shareMemoryBlock_, nullptr);
+    EXPECT_TRUE(writer1->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer1), sizeof(buffer1),
+        nullptr, 0, reinterpret_cast<const void*>(buffer2), sizeof(buffer2), nullptr, 0, nullptr));
+    EXPECT_TRUE(writer2->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer2), sizeof(buffer2),
+        nullptr, 0, reinterpret_cast<const void*>(buffer3), sizeof(buffer3), nullptr, 0, nullptr));
+    EXPECT_TRUE(CheckBuffer(buffer2, sizeof(buffer2)));
+}
+
+/**
+ * @tc.name: WriteWithExtraDataTimeoutMultiSmbTest
+ * @tc.desc: test WriteWithExtraDataTimeout with three shared memory block.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteWithExtraDataTimeoutMultiSmbTest, TestSize.Level0)
+{
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
+    auto writer1 = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, true);
+    auto writer2 = std::make_shared<StackWriter>(PLUGIN_NAME_SECOND, SMB_SIZE, InitShareMemory(), -1, true);
+    auto writer3 = std::make_shared<StackWriter>(PLUGIN_NAME_THIRD, SMB_SIZE, InitShareMemory(), -1, true);
+    EXPECT_NE(writer1->shareMemoryBlock_, nullptr);
+    EXPECT_NE(writer2->shareMemoryBlock_, nullptr);
+    EXPECT_NE(writer3->shareMemoryBlock_, nullptr);
+    EXPECT_TRUE(writer1->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer1), sizeof(buffer1),
+        nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+    EXPECT_TRUE(writer2->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer2), sizeof(buffer2),
+        nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+    EXPECT_TRUE(writer3->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer3), sizeof(buffer3),
+        nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+    EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
+}
+
+/**
+ * @tc.name: WriteWithExtraDataTimeoutMultiSmbFalseTest
+ * @tc.desc: test WriteWithExtraDataTimeout with three shared memory block false case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackWriterTest, WriteWithExtraDataTimeoutMultiSmbFalseTest, TestSize.Level0)
+{
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
+    auto writer1 = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, true);
+    auto writer2 = std::make_shared<StackWriter>(PLUGIN_NAME_SECOND, SMB_SIZE, InitShareMemory(), -1, true);
+    auto writer3 = std::make_shared<StackWriter>(PLUGIN_NAME_THIRD, SMB_SIZE, InitShareMemory(), -1, true);
+    EXPECT_FALSE(writer1->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer1), 0,
+        nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+    EXPECT_FALSE(writer1->WriteWithExtraDataTimeout(nullptr, 0, nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+    EXPECT_FALSE(writer2->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer2), 0,
+        nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+    EXPECT_FALSE(writer2->WriteWithExtraDataTimeout(nullptr, 0, nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+    EXPECT_FALSE(writer3->WriteWithExtraDataTimeout(reinterpret_cast<const void*>(buffer3), 0,
+        nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+    EXPECT_FALSE(writer3->WriteWithExtraDataTimeout(nullptr, 0, nullptr, 0, nullptr, 0, nullptr, 0, nullptr));
+    EXPECT_FALSE(CheckBuffer(buffer1, sizeof(buffer1)));
+    EXPECT_FALSE(CheckBuffer(buffer2, sizeof(buffer2)));
+    EXPECT_FALSE(CheckBuffer(buffer3, sizeof(buffer3)));
+}
 } // namespace
