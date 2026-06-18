@@ -34,15 +34,19 @@ constexpr uint32_t DEFINE_MAX_STATISTICS_INTERVAL = 3600; // seconds
 constexpr uint32_t DEFINE_MIN_SAMPLE_INTERVAL = 384; // bytes
 }
 
-ResProfilerErrorCode MemoryProfilerClientImpl::Start(uint32_t duration, SimplifiedMemConfig& config)
+ResProfilerErrorCode MemoryProfilerClientImpl::Start(uint32_t duration, SimplifiedMemConfig& config,
+    ProfilingCallback profilingCallback)
 {
     CHECK_TRUE(duration >= DEFINE_MIN_MAX_DURATION && duration <= DEFINE_MAX_MAX_DURATION,
         ResProfilerErrorCode::RES_PROF_ERROR, "Invalid duration: %u", duration);
     CHECK_TRUE(config.sampleSize >= DEFINE_MIN_SAMPLE_INTERVAL, ResProfilerErrorCode::RES_PROF_ERROR,
         "Invalid sampleSize: %zu", config.sampleSize);
-    auto profilingCallback = [](int32_t errCode, const std::string& path) {
-        PROFILER_LOG_INFO(LOG_CORE, "Hiprofiler native memory ret:%d", errCode);
-    };
+    if (profilingCallback == nullptr) {
+        profilingCallback = [](int32_t errCode, const std::string& path) {
+            PROFILER_LOG_INFO(LOG_CORE, "Hiprofiler native memory ret:%d", errCode);
+        };
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "Start memory profiler by simplified memory config");
     int32_t ret = NativeMemoryProfilerSaClientManager::StartMemProfiler(duration, config, profilingCallback);
     if (ret < static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS) ||
         ret > static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR)) {
@@ -51,14 +55,18 @@ ResProfilerErrorCode MemoryProfilerClientImpl::Start(uint32_t duration, Simplifi
     return static_cast<ResProfilerErrorCode>(ret);
 }
 
-ResProfilerErrorCode MemoryProfilerClientImpl::Start(int32_t resourceType, MemAPIConfig& config)
+ResProfilerErrorCode MemoryProfilerClientImpl::Start(int32_t resourceType, MemAPIConfig& config,
+    ProfilingCallback profilingCallback)
 {
     if (!CheckInput(resourceType, config)) {
         return ResProfilerErrorCode::RES_PROF_ERROR;
     }
-    auto profilingCallback = [](int32_t errCode, const std::string& path) {
-        PROFILER_LOG_INFO(LOG_CORE, "Hiprofiler native memory ret:%d", errCode);
-    };
+    if (profilingCallback == nullptr) {
+        profilingCallback = [](int32_t errCode, const std::string& path) {
+            PROFILER_LOG_INFO(LOG_CORE, "Hiprofiler native memory ret:%d", errCode);
+        };
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "Start memory profiler by resourceType: %d", resourceType);
     int32_t ret = NativeMemoryProfilerSaClientManager::StartProfilerByType(resourceType, &config, profilingCallback);
     if (ret < static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS) ||
         ret > static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR)) {
@@ -69,11 +77,13 @@ ResProfilerErrorCode MemoryProfilerClientImpl::Start(int32_t resourceType, MemAP
 
 int32_t MemoryProfilerClientImpl::StartPrintSimplifiedNmd(std::vector<SimplifiedMemStats>& memStats)
 {
+    PROFILER_LOG_INFO(LOG_CORE, "Start simplified nmd mode profiler");
     return NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(getpid(), memStats);
 }
 
 int32_t MemoryProfilerClientImpl::Stop()
 {
+    PROFILER_LOG_INFO(LOG_CORE, "Stop memory profiler");
     int32_t ret =  NativeMemoryProfilerSaClientManager::Stop();
     if (ret != RET_OK) {
         PROFILER_LOG_ERROR(LOG_CORE, "Stop memory profiler failed, ret = %d", ret);
@@ -82,7 +92,7 @@ int32_t MemoryProfilerClientImpl::Stop()
     return RET_OK;
 }
 
-bool MemoryProfilerClientImpl::CheckInput(int32_t resourceType, const MemAPIConfig& config)
+bool MemoryProfilerClientImpl::CheckInput(int32_t resourceType, const MemAPIConfig& config) const
 {
     // value of resourceType : int32_t
     // OH_RES_TYPE_FD = 0

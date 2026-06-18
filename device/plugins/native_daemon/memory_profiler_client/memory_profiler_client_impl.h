@@ -30,9 +30,11 @@ public:
      * @desc: Start memory profiler on simplified memory configuration.
      * @param duration: The profiling duration in seconds.
      * @param config: The simplified memory profiler configuration.
+     * @param profilingCallback: The callback to be invoked when profiling result is ready, can be nullptr.
      * @return: RES_PROF_SUCCESS on success, specific error code on failure.
      */
-    ResProfilerErrorCode Start(uint32_t duration, SimplifiedMemConfig& config);
+    ResProfilerErrorCode Start(uint32_t duration, SimplifiedMemConfig& config,
+        ProfilingCallback profilingCallback = nullptr) override;
 
     /**
      * @desc: Start memory profiler on memory API configuration.
@@ -44,25 +46,27 @@ public:
      * OH_RES_TYPE_GPU = 3
      * OH_RES_TYPE_GLOBAL_HANDLE = 4
      * @param config: The memory API profiler configuration.
+     * @param profilingCallback: The callback to be invoked when profiling result is ready, can be nullptr.
      * @return: RES_PROF_SUCCESS on success, specific error code on failure.
      */
-    ResProfilerErrorCode Start(int32_t resourceType, MemAPIConfig& config);
+    ResProfilerErrorCode Start(int32_t resourceType, MemAPIConfig& config,
+        ProfilingCallback profilingCallback = nullptr) override;
 
     /**
      * @desc: Start simplified nmd mode profiler.
      * @param memStats: The simplified memory stats vector to store the result.
      * @return: RET_OK on success, RET_ERR on failure.
      */
-    int32_t StartPrintSimplifiedNmd(std::vector<SimplifiedMemStats>& memStats);
+    int32_t StartPrintSimplifiedNmd(std::vector<SimplifiedMemStats>& memStats) override;
 
     /**
      * @desc: Stop memory profiler.
      * @return: RET_OK on success, RET_ERR on failure.
      */
-    int32_t Stop();
+    int32_t Stop() override;
 
 private:
-    bool CheckInput(int32_t resourceType, const MemAPIConfig& config);
+    bool CheckInput(int32_t resourceType, const MemAPIConfig& config) const;
 };
 }   // namespace NativeDaemon
 }   // namespace Developtools

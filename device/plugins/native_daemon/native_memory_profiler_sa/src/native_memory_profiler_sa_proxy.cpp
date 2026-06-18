@@ -205,6 +205,15 @@ int32_t NativeMemoryProfilerSaProxy::Stop()
         NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_PID_VOID);
 }
 
+int32_t NativeMemoryProfilerSaProxy::StopSync()
+{
+    return ExecuteWithTimeout(
+        [](MessageParcel& data) -> int32_t {
+            return RET_OK;
+        },
+        NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_SYNC);
+}
+
 int32_t NativeMemoryProfilerSaProxy::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
                                            std::string& replyStats)
 {

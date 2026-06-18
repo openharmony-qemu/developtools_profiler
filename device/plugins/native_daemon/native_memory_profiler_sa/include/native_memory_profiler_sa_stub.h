@@ -38,6 +38,7 @@ protected:
     int32_t StubStartPidVoid(MessageParcel &data, MessageParcel &reply);
     int32_t StubStopPid(MessageParcel &data, MessageParcel &reply);
     int32_t StubStopPidVoid(MessageParcel &data, MessageParcel &reply);
+    int32_t StubStopSync(MessageParcel &data, MessageParcel &reply);
     int32_t StubStopName(MessageParcel &data, MessageParcel &reply);
     int32_t StubDumpFile(MessageParcel &data, MessageParcel &reply);
     int32_t StubDumpSimpFile(MessageParcel &data, MessageParcel &reply);

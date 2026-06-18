@@ -36,6 +36,7 @@ public:
         const sptr<IRemoteObject>& callback) override;
     int32_t Stop(uint32_t pid) override;
     int32_t Stop() override;
+    int32_t StopSync() override;
     int32_t Stop(const std::string& name) override;
     int32_t DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override;
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, std::string& replyStats) override;

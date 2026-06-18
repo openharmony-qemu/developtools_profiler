@@ -117,6 +117,11 @@ public:
         stoppedVoid_ = true;
         return RET_OK;
     }
+    int32_t StopSync() override
+    {
+        stoppedSync_ = true;
+        return RET_OK;
+    }
     int32_t DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override
     {
         lastFd_ = fd;
@@ -138,6 +143,7 @@ public:
     std::string lastName_;
     bool callbackIsNull_ = false;
     bool stoppedVoid_ = false;
+    bool stoppedSync_ = false;
 };
 
 class TestNativeMemoryProfilerSaCallbackStub : public NativeMemoryProfilerSaCallbackStub {
@@ -429,6 +435,9 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaProxyDispatchesStopRequests, TestS
 
     EXPECT_EQ(proxy->Stop(), RET_OK);
     EXPECT_TRUE(stub->stoppedVoid_);
+
+    EXPECT_EQ(proxy->StopSync(), RET_OK);
+    EXPECT_TRUE(stub->stoppedSync_);
 }
 
 /**
