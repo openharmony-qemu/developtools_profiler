@@ -28,6 +28,7 @@
 #include <sstream>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "storage_acl.h"
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
@@ -458,11 +459,8 @@ int32_t NativeMemoryProfilerSaClientManager::StartByType(int32_t type,
     }
 
     std::string filename = GenerateFileName(type, config->pid_);
-    std::string fullPath = NAPI_FILE_PATH_PREFIX + filename;
-    if (!COMMON::CreateFile(fullPath)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: CreateFile failed");
-        return RET_ERR;
-    }
+    std::string fullPath = CreateFileAndGrantPermission(filename);
+    CHECK_TRUE(!fullPath.empty(), RET_ERR, "create file or grant permission FAIL");
     config->typeFileName_ = filename;
     config->startType_ = 1; // 1:API
 
@@ -876,6 +874,27 @@ void NativeMemoryProfilerSaClientManager::SetProfilingCallback(ProfilingCallback
     if (callback == nullptr) {
         g_currentFilePath.clear();
     }
+}
+
+std::string NativeMemoryProfilerSaClientManager::CreateFileAndGrantPermission(std::string& filename)
+{
+    std::shared_ptr<OHOS::AbilityRuntime::ApplicationContext> context =
+        OHOS::AbilityRuntime::Context::GetApplicationContext();
+    CHECK_NOTNULL(context, "", "context is NULL");
+    std::string baseDir = context->GetBaseDir();
+    CHECK_TRUE(!baseDir.empty(), "", "base dir is empty");
+    CHECK_TRUE(OHOS::StorageDaemon::AclSetAccess(baseDir, "u:3063:x") == 0, "", "grant base dir FAIL");
+    std::string filesDir = context->GetFilesDir();
+    CHECK_TRUE(!filesDir.empty(), "", "files dir is empty");
+    CHECK_TRUE(OHOS::StorageDaemon::AclSetAccess(filesDir, "u:3063:x") == 0, "", "grant files dir FAIL");
+    std::string fullPath = filesDir + "/" + filename;
+    CHECK_TRUE(COMMON::CreateFile(fullPath), "", "create file FAIL");
+    if (OHOS::StorageDaemon::AclSetAccess(fullPath, "u:3063:rw") != 0) {
+        (void)unlink(fullPath.c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "grant file permission FAIL");
+        return "";
+    }
+    return fullPath;
 }
 
 } // namespace OHOS::Developtools::NativeDaemon

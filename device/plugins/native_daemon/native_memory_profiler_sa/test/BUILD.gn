@@ -157,6 +157,9 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "samgr:samgr_proxy",
     "zlib:libz",
     "faultloggerd:libasync_stack",
+    "bundle_framework:appexecfwk_core",
+    "ability_runtime:app_context",
+    "storage_service:storage_manager_acl",
   ]
 
   if (hiprofiler_use_libunwinder) {
