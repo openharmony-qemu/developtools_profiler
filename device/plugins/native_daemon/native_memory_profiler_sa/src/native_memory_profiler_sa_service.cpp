@@ -308,11 +308,10 @@ int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfile
     if (config == nullptr) {
         return RET_ERR;
     }
-    auto args = GetCmdArgs(config);
     if (config->startType_ != START_TYPE_API && !HasProfilingPermission()) {
         PROFILER_LOG_ERROR(LOG_CORE, "Start failed, no profiling permission!");
-        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
-            "no profiling permission");
+        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", GetCmdArgs(config),
+            COMMON::ErrorType::RET_NO_PERMISSION, "no profiling permission");
         return RET_ERR;
     }
     if (config->startType_ == START_TYPE_API &&
