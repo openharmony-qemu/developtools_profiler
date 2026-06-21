@@ -28,6 +28,7 @@
 #include <sstream>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "application_context.h"
 #include "storage_acl.h"
 
 namespace OHOS::Developtools::NativeDaemon {
