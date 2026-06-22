@@ -654,8 +654,8 @@ void VirtualRuntime::FillSymbolNameId(CallFrame& callFrame, DfxSymbol& symbol)
 void VirtualRuntime::FillFileSet(CallFrame& callFrame, const DfxSymbol& symbol)
 {
     auto itFile = fileSet_.find(symbol.filePathId_);
+    callFrame.needReport_ |= FILE_PATH_ID_REPORT;
     if (itFile == fileSet_.end()) {
-        callFrame.needReport_ |= FILE_PATH_ID_REPORT;
         fileSet_.insert(symbol.filePathId_);
     }
 }

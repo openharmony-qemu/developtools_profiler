@@ -640,7 +640,7 @@ HWTEST_F(VirtualRuntimeExtTest, FillSymbolNameId, TestSize.Level0)
 
 /**
  * @tc.name: FillFileSet
- * @tc.desc: Test FillFileSet method
+ * @tc.desc: Test FillFileSet method always sets FILE_PATH_ID_REPORT
  * @tc.type: FUNC
  */
 HWTEST_F(VirtualRuntimeExtTest, FillFileSet, TestSize.Level0)
@@ -649,15 +649,21 @@ HWTEST_F(VirtualRuntimeExtTest, FillFileSet, TestSize.Level0)
     DfxSymbol symbol(0x1000, "test_func");
     symbol.filePathId_ = 1;
 
-    // Fill file set
+    // First call: should set FILE_PATH_ID_REPORT and insert into fileSet_
     runtime_->FillFileSet(callFrame, symbol);
-
-    // Verify file set was updated
     EXPECT_TRUE(callFrame.needReport_ & FILE_PATH_ID_REPORT);
 
+    // Second call with same filePathId: should still set FILE_PATH_ID_REPORT
+    // even though fileSet_ already contains the ID (bug fix verification)
     callFrame.needReport_ = 0;
     runtime_->FillFileSet(callFrame, symbol);
-    EXPECT_FALSE(callFrame.needReport_ & FILE_PATH_ID_REPORT);
+    EXPECT_TRUE(callFrame.needReport_ & FILE_PATH_ID_REPORT);
+
+    // Third call with different filePathId: should set FILE_PATH_ID_REPORT
+    callFrame.needReport_ = 0;
+    symbol.filePathId_ = 2;
+    runtime_->FillFileSet(callFrame, symbol);
+    EXPECT_TRUE(callFrame.needReport_ & FILE_PATH_ID_REPORT);
 }
 
 /**
