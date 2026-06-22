@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 
 ohos_source_set("streamplugin_source") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   sources = [
     "src/stream_module.cpp",
     "src/stream_plugin.cpp",
@@ -42,7 +43,9 @@ ohos_source_set("streamplugin_source") {
 }
 
 ohos_shared_library("streamplugin") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   output_name = "streamplugin"
+  version_script = "libstream_plugin.map"
   deps = [ ":streamplugin_source" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]

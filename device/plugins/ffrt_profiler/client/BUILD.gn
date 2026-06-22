@@ -32,6 +32,7 @@ config("ffrt_config") {
 }
 
 ohos_shared_library("libffrt_profiler") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   output_name = "libffrt_profiler"
   public_configs = [ ":ffrt_config" ]
 

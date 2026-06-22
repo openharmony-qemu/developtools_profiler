@@ -14,46 +14,82 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T>
-void mm_lru_activate_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct MmLruActivateData {
+    uint64_t folio {};
+    uint64_t pfn {};
+};
+__attribute__((noinline)) void ParseMmLruActivateData(MmLruActivateData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_folio(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.folio = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_lru_activate, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                         const EventFormat &format) {
+void ParseMmLruActivate(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmLruActivateData eventData {};
+    ParseMmLruActivateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_lru_activate_format();
-    mm_lru_activate_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_lru_activate, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                                 size_t size, const EventFormat &format) {
+    msg->set_folio(eventData.folio);
+    msg->set_pfn(eventData.pfn);
+}
+void ParseMmLruActivateEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmLruActivateData eventData {};
+    ParseMmLruActivateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_lru_activate_format();
-    mm_lru_activate_func(msg, data, size, format);
-});
+    msg->set_folio(eventData.folio);
+    msg->set_pfn(eventData.pfn);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_lru_activate, ParseMmLruActivate);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_lru_activate, ParseMmLruActivateEncoder);
 
-template <typename T>
-void mm_lru_insertion_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct MmLruInsertionData {
+    uint64_t folio {};
+    uint64_t pfn {};
+    uint32_t lru {};
+    uint64_t flags {};
+};
+__attribute__((noinline)) void ParseMmLruInsertionData(MmLruInsertionData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_folio(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_lru(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_flags(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.folio = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.lru = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_lru_insertion, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                          const EventFormat &format) {
+void ParseMmLruInsertion(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmLruInsertionData eventData {};
+    ParseMmLruInsertionData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_lru_insertion_format();
-    mm_lru_insertion_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_lru_insertion,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
-                                                auto msg = ftraceEvent.mutable_mm_lru_insertion_format();
-                                                mm_lru_insertion_func(msg, data, size, format);
-                                            });
+    msg->set_folio(eventData.folio);
+    msg->set_pfn(eventData.pfn);
+    msg->set_lru(eventData.lru);
+    msg->set_flags(eventData.flags);
+}
+void ParseMmLruInsertionEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmLruInsertionData eventData {};
+    ParseMmLruInsertionData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_mm_lru_insertion_format();
+    msg->set_folio(eventData.folio);
+    msg->set_pfn(eventData.pfn);
+    msg->set_lru(eventData.lru);
+    msg->set_flags(eventData.flags);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_lru_insertion, ParseMmLruInsertion);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_lru_insertion, ParseMmLruInsertionEncoder);
 }  // namespace
 FTRACE_NS_END

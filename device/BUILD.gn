@@ -29,14 +29,8 @@ group("hiprofiler_targets") {
       "plugins/hiperf_plugin:hiperfplugin",
       "plugins/hisysevent_plugin:hisyseventplugin",
       "plugins/memory_plugin:memdataplugin",
-      "plugins/native_hook:malloctest_cpp",
-      "plugins/native_hook:nativetest_c",
-      "plugins/native_hook:nativetest_cpp",
-      "plugins/native_hook:nativetest_so",
-      "plugins/native_hook:statisticstest_cpp",
       "plugins/network_plugin:networkplugin",
       "plugins/process_plugin:processplugin",
-      "plugins/sample_plugin:sampleplugin",
       "plugins/xpower_plugin:xpowerplugin",
       "services/profiler_service:hiprofilerd",
       "services/shared_memory:shared_memory",
@@ -56,9 +50,29 @@ group("hiprofiler_targets") {
         "plugins/native_daemon:libmemory_profiler",
         "plugins/native_daemon:memory_profiler_client",
         "plugins/native_hook:native_hook",
-        "plugins/native_hook:perf_test_data",
       ]
     }
+  }
+}
+
+group("hiprofiler_debug_targets") {
+  testonly = true
+  deps = [
+    "plugins/native_hook:malloctest_cpp",
+    "plugins/native_hook:nativetest_c",
+    "plugins/native_hook:nativetest_cpp",
+    "plugins/native_hook:nativetest_so",
+    "plugins/native_hook:statisticstest_cpp",
+    "plugins/sample_plugin:sampleplugin",
+  ]
+  if (build_variant == "root") {
+    deps += [ "plugins/ftrace_plugin:ftrace_debug_targets" ]
+  }
+  if (target_cpu == "arm64" && build_variant == "root") {
+    deps += [ "plugins/hiebpf_plugin:ebpf_debug_targets" ]
+  }
+  if (is_ohos && use_musl && !is_asan) {
+    deps += [ "plugins/native_hook:perf_test_data" ]
   }
 }
 

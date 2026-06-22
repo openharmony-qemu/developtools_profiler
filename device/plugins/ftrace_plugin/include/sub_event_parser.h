@@ -14,9 +14,10 @@
  */
 #ifndef SUB_EVENT_PARSER_H
 #define SUB_EVENT_PARSER_H
+#include <cstring>
 #include <cstdint>
-#include <functional>
-#include <map>
+#include <type_traits>
+#include <vector>
 
 #include "ftrace_field_parser.h"
 #include "logging.h"
@@ -25,13 +26,27 @@
 
 FTRACE_NS_BEGIN
 
+#if defined(__has_attribute)
+#if __has_attribute(retain)
+#define FTRACE_PARSE_ENTRY_ATTR __attribute__((used, retain, section("ftrace_parse_entries")))
+#else
+#define FTRACE_PARSE_ENTRY_ATTR __attribute__((used, section("ftrace_parse_entries")))
+#endif
+#else
+#define FTRACE_PARSE_ENTRY_ATTR __attribute__((used, section("ftrace_parse_entries")))
+#endif
+
 template <class T> // T: FtraceEvent
 class SubEventParser {
 public:
-    using ParseFunction = std::function<void(T&, uint8_t[], size_t, const EventFormat&)>;
+    using ParseFunction = void (*)(T&, uint8_t[], size_t, const EventFormat&);
     struct ParseEventCtx {
         EventFormat format;
-        ParseFunction func;
+        ParseFunction func = nullptr;
+    };
+    struct NamedParseFunction {
+        const char* name = nullptr;
+        ParseFunction func = nullptr;
     };
 
     SubEventParser()
@@ -52,28 +67,28 @@ public:
 
     inline bool IsSupport(const std::string& eventName) const
     {
-        return nameToFunctions_.count(eventName) > 0;
+        return FindParseFunction(eventName) != nullptr;
     }
 
     bool SetupEvent(const EventFormat& format)
     {
-        auto it = nameToFunctions_.find(format.eventName);
-        if (it == nameToFunctions_.end()) {
+        auto func = FindParseFunction(format.eventName);
+        if (func == nullptr) {
             PROFILER_LOG_INFO(LOG_CORE, "SetupEvent: event(%s) is not supported", format.eventName.c_str());
             return false;
         }
 
-        it->second.format = format;
-        idToParseCtx_[format.eventId] = it->second;
+        if (format.eventId >= idToFunctions_.size()) {
+            idToFunctions_.resize(format.eventId + 1);
+        }
+        idToFunctions_[format.eventId] = {format, func};
 
         if (format.eventName == "sched_switch") {
-            schedSwitchCtx = &it->second;
             schedSwitchEventID = format.eventId;
+            schedSwitchCtx = GetMutableParseEventCtx(format.eventId);
         } else if (format.eventName == "sched_waking") {
-            schedWakingCtx = &it->second;
             schedWakingEventID = format.eventId;
-        } else {
-            idToFunctions_[format.eventId] = &idToParseCtx_[format.eventId];
+            schedWakingCtx = GetMutableParseEventCtx(format.eventId);
         }
         return true;
     }
@@ -81,17 +96,12 @@ public:
     inline ParseEventCtx* GetParseEventCtx(uint32_t eventId)
     {
         if (eventId == schedSwitchEventID) {
-            return schedSwitchCtx;
+            return GetMutableParseEventCtx(eventId);
         } else if (eventId == schedWakingEventID) {
-            return schedWakingCtx;
+            return GetMutableParseEventCtx(eventId);
         }
 
-        auto it = idToFunctions_.find(eventId);
-        if (it != idToFunctions_.end()) {
-            return it->second;
-        }
-
-        return nullptr;
+        return GetMutableParseEventCtx(eventId);
     }
 
     inline void ParseEvent(T& event,
@@ -105,25 +115,42 @@ public:
 protected:
     friend class SubEventParserRegisterar;
     friend class SubEventParserOptimizeRegisterar;
+    friend class SubEventParserPairRegisterar;
 
-    void RegisterParseFunction(const std::string& name, ParseFunction&& func)
+    void RegisterParseFunction(const char* name, ParseFunction func)
     {
-        CHECK_TRUE(nameToFunctions_.count(name) == 0, NO_RETVAL,
-                   "parse function for %s already registered!", name.c_str());
-        nameToFunctions_[name] = {{}, func};
+        CHECK_NOTNULL(name, NO_RETVAL, "parse function name is null!");
+        CHECK_NOTNULL(func, NO_RETVAL, "parse function for %s is null!", name);
+        CHECK_TRUE(FindParseFunction(name) == nullptr, NO_RETVAL, "parse function for %s already registered!", name);
+        registeredFunctions_.push_back({name, func});
     }
 
-    void UnregisterParseFunction(const std::string& name)
+    void UnregisterParseFunction(const char* name)
     {
-        CHECK_TRUE(nameToFunctions_.count(name) > 0, NO_RETVAL, "parse function for %s not registered!", name.c_str());
-        nameToFunctions_.erase(name);
+        CHECK_NOTNULL(name, NO_RETVAL, "parse function name is null!");
+        for (auto it = registeredFunctions_.begin(); it != registeredFunctions_.end(); ++it) {
+            if (std::strcmp(it->name, name) == 0) {
+                registeredFunctions_.erase(it);
+                return;
+            }
+        }
+        CHECK_TRUE(false, NO_RETVAL, "parse function for %s not registered!", name);
     }
 
 private:
+    ParseFunction FindParseFunction(const std::string& name) const;
+    ParseFunction FindParseFunction(const char* name) const;
+    ParseEventCtx* GetMutableParseEventCtx(uint32_t eventId)
+    {
+        if (eventId < idToFunctions_.size() && idToFunctions_[eventId].func != nullptr) {
+            return &idToFunctions_[eventId];
+        }
+        return nullptr;
+    }
+
     DISALLOW_COPY_AND_MOVE(SubEventParser);
-    std::unordered_map<std::string, ParseEventCtx> nameToFunctions_;
-    std::unordered_map<uint32_t, ParseEventCtx> idToParseCtx_;
-    std::unordered_map<uint32_t, ParseEventCtx*> idToFunctions_;
+    std::vector<NamedParseFunction> registeredFunctions_;
+    std::vector<ParseEventCtx> idToFunctions_;
 
     uint32_t schedSwitchEventID = (uint32_t)-1;
     uint32_t schedWakingEventID = (uint32_t)-1;
@@ -131,13 +158,60 @@ private:
     ParseEventCtx* schedWakingCtx = nullptr;
 };
 
+using FtraceEventParseFunction = SubEventParser<FtraceEvent>::ParseFunction;
+using FtraceEventParseEncoderFunction =
+    SubEventParser<Developtools::Profiler::ProtoEncoder::FtraceEvent>::ParseFunction;
+
+struct FtraceParseEntry {
+    const char* name = nullptr;
+    FtraceEventParseFunction func = nullptr;
+    FtraceEventParseEncoderFunction encoderFunc = nullptr;
+};
+
+extern "C" {
+extern const FtraceParseEntry __start_ftrace_parse_entries[] __attribute__((weak));
+extern const FtraceParseEntry __stop_ftrace_parse_entries[] __attribute__((weak));
+}
+
+template <class T>
+typename SubEventParser<T>::ParseFunction SubEventParser<T>::FindParseFunction(const std::string& name) const
+{
+    return FindParseFunction(name.c_str());
+}
+
+template <class T>
+typename SubEventParser<T>::ParseFunction SubEventParser<T>::FindParseFunction(const char* name) const
+{
+    for (const auto& item : registeredFunctions_) {
+        if (std::strcmp(item.name, name) == 0) {
+            return item.func;
+        }
+    }
+    if (__start_ftrace_parse_entries == nullptr || __stop_ftrace_parse_entries == nullptr) {
+        return nullptr;
+    }
+    for (auto entry = __start_ftrace_parse_entries; entry < __stop_ftrace_parse_entries; ++entry) {
+        if (std::strcmp(entry->name, name) != 0) {
+            continue;
+        }
+        if constexpr (std::is_same_v<T, FtraceEvent>) {
+            return entry->func;
+        } else {
+            return entry->encoderFunc;
+        }
+    }
+    return nullptr;
+}
+
 class SubEventParserRegisterar {
 public:
-    SubEventParserRegisterar(const std::string& name, SubEventParser<FtraceEvent>::ParseFunction&& func)
+    __attribute__((noinline))
+    SubEventParserRegisterar(const char* name, SubEventParser<FtraceEvent>::ParseFunction func)
     {
-        SubEventParser<FtraceEvent>::GetInstance().RegisterParseFunction(name, std::move(func));
         name_ = name;
+        SubEventParser<FtraceEvent>::GetInstance().RegisterParseFunction(name_, func);
     }
+    __attribute__((noinline))
     ~SubEventParserRegisterar()
     {
         SubEventParser<FtraceEvent>::GetInstance().UnregisterParseFunction(name_);
@@ -145,18 +219,20 @@ public:
 
 private:
     DISALLOW_COPY_AND_MOVE(SubEventParserRegisterar);
-    std::string name_;
+    const char* name_ = nullptr;
 };
 
 class SubEventParserOptimizeRegisterar {
 public:
-    SubEventParserOptimizeRegisterar(const std::string& name,
-        SubEventParser<Developtools::Profiler::ProtoEncoder::FtraceEvent>::ParseFunction&& func)
+    __attribute__((noinline))
+    SubEventParserOptimizeRegisterar(const char* name,
+        SubEventParser<Developtools::Profiler::ProtoEncoder::FtraceEvent>::ParseFunction func)
     {
-        SubEventParser<Developtools::Profiler::ProtoEncoder::FtraceEvent>::GetInstance().RegisterParseFunction(name,
-            std::move(func));
         name_ = name;
+        SubEventParser<Developtools::Profiler::ProtoEncoder::FtraceEvent>::GetInstance().RegisterParseFunction(name_,
+            func);
     }
+    __attribute__((noinline))
     ~SubEventParserOptimizeRegisterar()
     {
         SubEventParser<Developtools::Profiler::ProtoEncoder::FtraceEvent>::GetInstance().UnregisterParseFunction(name_);
@@ -164,16 +240,40 @@ public:
 
 private:
     DISALLOW_COPY_AND_MOVE(SubEventParserOptimizeRegisterar);
-    std::string name_;
+    const char* name_ = nullptr;
+};
+
+class SubEventParserPairRegisterar {
+public:
+    __attribute__((noinline))
+    SubEventParserPairRegisterar(const char* name, SubEventParser<FtraceEvent>::ParseFunction func,
+        SubEventParser<Developtools::Profiler::ProtoEncoder::FtraceEvent>::ParseFunction encoderFunc)
+    {
+        name_ = name;
+        SubEventParser<FtraceEvent>::GetInstance().RegisterParseFunction(name_, func);
+        SubEventParser<Developtools::Profiler::ProtoEncoder::FtraceEvent>::GetInstance().RegisterParseFunction(name_,
+            encoderFunc);
+    }
+    __attribute__((noinline))
+    ~SubEventParserPairRegisterar()
+    {
+        SubEventParser<Developtools::Profiler::ProtoEncoder::FtraceEvent>::GetInstance().UnregisterParseFunction(name_);
+        SubEventParser<FtraceEvent>::GetInstance().UnregisterParseFunction(name_);
+    }
+
+private:
+    DISALLOW_COPY_AND_MOVE(SubEventParserPairRegisterar);
+    const char* name_ = nullptr;
 };
 FTRACE_NS_END
 
 // Register the protobuf parsing function
 #define REGISTER_FTRACE_EVENT_PARSE_FUNCTION(name, func) \
-    static FTRACE_NS::SubEventParserRegisterar g_eventRegisterar##name(#name, func)
+    static constexpr FTRACE_NS::FtraceEventParseFunction g_eventParseFunc##name = func
 
 // Register the proto_encoder parsing function
 #define REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(name, func) \
-    static FTRACE_NS::SubEventParserOptimizeRegisterar g_eventOptimizeRegisterar##name(#name, func)
+    FTRACE_PARSE_ENTRY_ATTR static const FTRACE_NS::FtraceParseEntry g_eventParseEntry##name = {#name, \
+        g_eventParseFunc##name, func}
 
 #endif // SUB_EVENT_PARSER_H

@@ -14,59 +14,98 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T>
-void ipi_entry_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct IpiEntryData {
+    std::string reason {};
+};
+__attribute__((noinline)) void ParseIpiEntryData(IpiEntryData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_reason(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.reason = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ipi_entry, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                   const EventFormat &format) {
+void ParseIpiEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    IpiEntryData eventData {};
+    ParseIpiEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ipi_entry_format();
-    ipi_entry_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ipi_entry, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                           size_t size, const EventFormat &format) {
+    msg->set_reason(eventData.reason);
+}
+void ParseIpiEntryEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    IpiEntryData eventData {};
+    ParseIpiEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ipi_entry_format();
-    ipi_entry_func(msg, data, size, format);
-});
+    msg->set_reason(eventData.reason);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ipi_entry, ParseIpiEntry);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ipi_entry, ParseIpiEntryEncoder);
 
-template <typename T>
-void ipi_exit_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct IpiExitData {
+    std::string reason {};
+};
+__attribute__((noinline)) void ParseIpiExitData(IpiExitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_reason(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.reason = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ipi_exit, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                  const EventFormat &format) {
+void ParseIpiExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    IpiExitData eventData {};
+    ParseIpiExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ipi_exit_format();
-    ipi_exit_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ipi_exit, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                          size_t size, const EventFormat &format) {
+    msg->set_reason(eventData.reason);
+}
+void ParseIpiExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    IpiExitData eventData {};
+    ParseIpiExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ipi_exit_format();
-    ipi_exit_func(msg, data, size, format);
-});
+    msg->set_reason(eventData.reason);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ipi_exit, ParseIpiExit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ipi_exit, ParseIpiExitEncoder);
 
-template <typename T>
-void ipi_raise_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct IpiRaiseData {
+    uint64_t target_cpus {};
+    std::string reason {};
+};
+__attribute__((noinline)) void ParseIpiRaiseData(IpiRaiseData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_target_cpus(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_reason(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.target_cpus = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.reason = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ipi_raise, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                   const EventFormat &format) {
+void ParseIpiRaise(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    IpiRaiseData eventData {};
+    ParseIpiRaiseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ipi_raise_format();
-    ipi_raise_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ipi_raise, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                           size_t size, const EventFormat &format) {
+    msg->set_target_cpus(eventData.target_cpus);
+    msg->set_reason(eventData.reason);
+}
+void ParseIpiRaiseEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    IpiRaiseData eventData {};
+    ParseIpiRaiseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ipi_raise_format();
-    ipi_raise_func(msg, data, size, format);
-});
+    msg->set_target_cpus(eventData.target_cpus);
+    msg->set_reason(eventData.reason);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ipi_raise, ParseIpiRaise);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ipi_raise, ParseIpiRaiseEncoder);
 }  // namespace
 FTRACE_NS_END

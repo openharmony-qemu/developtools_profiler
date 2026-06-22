@@ -157,65 +157,77 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
             count += 1
             if count > 1:
                 f.write("\n")
-            f.write("template <typename T>\n")
-            f.write("void {}_func(T& msg, {}\n".format(event.name, Common.parse_function_args))
+            data_type = "{}Data".format(to_camel_case(event.name))
+            f.write("struct {} {{\n".format(data_type))
+            for i in range(len(event.remain_fields)):
+                self.generate_field_member(event, f, i)
+            f.write("};\n")
+            f.write("__attribute__((noinline)) void Parse{}({}, {}\n".format(data_type, data_type + "& eventData",
+                                                                              Common.parse_function_args))
             f.write("{\n    int i = 0;\n")
             for i in range(len(event.remain_fields)):
                 self.generate_parse_field_lines(event, f, i)
             f.write("}\n")
-            f.write("{}({},\n".format(Common.parse_register_macro, event.name))
-            f.write("[] (FtraceEvent& ftraceEvent, {} {{\n".format(Common.parse_function_args))
-            f.write(
-                "    auto msg = ftraceEvent.mutable_{}_format();\n".format(
-                    str.lower(event.name)
-                )
-            )
-            f.write("    {}_func(msg, data, size, format);\n".format(event.name))
-            f.write("});\n")
-            f.write("{}({},\n".format(Common.parse_register_encoder_macro, event.name))
-            f.write("[] (ProtoEncoder::FtraceEvent& ftraceEvent, {} {{\n".format(Common.parse_function_args))
-            f.write(
-                "    auto msg = ftraceEvent.mutable_{}_format();\n".format(
-                    str.lower(event.name)
-                )
-            )
-            f.write("    {}_func(msg, data, size, format);\n".format(event.name))
-            f.write("});\n")
+            self.generate_parse_wrapper(event, f, data_type, "FtraceEvent", "")
+            self.generate_parse_wrapper(event, f, data_type, "ProtoEncoder::FtraceEvent", "Encoder")
+            f.write("{}({}, Parse{});\n".format(Common.parse_register_macro, event.name, to_camel_case(event.name)))
+            f.write("{}({}, Parse{}Encoder);\n".format(Common.parse_register_encoder_macro, event.name,
+                                                       to_camel_case(event.name)))
 
     @staticmethod
-    def generate_parse_field_lines(event, f, i):
+    def get_field_parser_info(event, i):
         field_info = event.remain_fields[i]
         field_name = fix_field_name(field_info.name)
         type_info = field_info.to_proto_type()
-        parse_func = None
         if type_info.tid == ProtoType.STRING:
-            parse_func = "ParseStrField"
-        elif type_info.tid == ProtoType.ARRAY:
-            parse_func = "ParseVectorIntField"
-        elif type_info.tid == ProtoType.INTEGER:
-            if type_info.size in [4, 8]:
-                c_type = None
-                if type_info.size == 4:
-                    c_type = "int32_t" if type_info.signed else "uint32_t"
-                elif type_info.size == 8:
-                    c_type = "int64_t" if type_info.signed else "uint64_t"
-                parse_func = "ParseIntField<{}>".format(c_type)
-        elif type_info.tid != ProtoType.INVALID:
-            Common.logger.warning(
-                "WARNING: unkown proto type:{} {}".format(event.name, field_name)
-            )
+            return field_name, "std::string", "ParseStrField", False
+        if type_info.tid == ProtoType.ARRAY:
+            return field_name, "std::vector<uint64_t>", "ParseVectorIntField<uint64_t>", True
+        if type_info.tid == ProtoType.INTEGER and type_info.size in [4, 8]:
+            c_type = None
+            if type_info.size == 4:
+                c_type = "int32_t" if type_info.signed else "uint32_t"
+            elif type_info.size == 8:
+                c_type = "int64_t" if type_info.signed else "uint64_t"
+            return field_name, c_type, "ParseIntField<{}>".format(c_type), False
+        return field_name, None, None, False
+
+    def generate_field_member(self, event, f, i):
+        field_name, field_type, _, _ = self.get_field_parser_info(event, i)
+        if field_type is not None:
+            f.write("    {} {} {{}};\n".format(field_type, field_name))
+
+    def generate_parse_wrapper(self, event, f, data_type, event_type, suffix):
+        function_name = "Parse{}{}".format(to_camel_case(event.name), suffix)
+        f.write("void {}({}& ftraceEvent, {}\n".format(function_name, event_type, Common.parse_function_args))
+        f.write("{\n")
+        f.write("    {} eventData {{}};\n".format(data_type))
+        f.write("    Parse{}(eventData, data, size, format);\n".format(data_type))
+        f.write("    auto msg = ftraceEvent.mutable_{}_format();\n".format(str.lower(event.name)))
+        for i in range(len(event.remain_fields)):
+            self.generate_write_field_lines(event, f, i)
+        f.write("}\n")
+
+    @staticmethod
+    def generate_parse_field_lines(event, f, i):
+        field_name, field_type, parse_func, is_array = EventParserCodeGenerator.get_field_parser_info(event, i)
         if parse_func != None:
-            if type_info.tid == ProtoType.ARRAY:
-                f.write(
-                    "    std::vector<uint64_t> retvalVec = FtraceFieldParser::ParseVectorIntField<uint64_t>"
-                    "(format.fields, i++, data, size);"
-                )
-                f.write("    for (size_t i = 0; i < retvalVec.size(); i++) {")
-                f.write("    msg->add_{}(retvalVec[i]);".format(field_name))
-                f.write("    }")
-            else:
-                f.write("    msg->set_{}(FtraceFieldParser::".format(field_name))
-                f.write("{}(format.fields, i++, data, size));\n".format(parse_func))
+            f.write("    eventData.{} = FtraceFieldParser::".format(field_name))
+            f.write("{}(format.fields, i++, data, size);\n".format(parse_func))
+        elif field_type is not None:
+            Common.logger.warning("WARNING: unkown proto type:{} {}".format(event.name, field_name))
+
+    @staticmethod
+    def generate_write_field_lines(event, f, i):
+        field_name, field_type, _, is_array = EventParserCodeGenerator.get_field_parser_info(event, i)
+        if field_type is None:
+            return
+        if is_array:
+            f.write("    for (size_t i = 0; i < eventData.{}.size(); i++) {{\n".format(field_name))
+            f.write("        msg->add_{}(eventData.{}[i]);\n".format(field_name, field_name))
+            f.write("    }\n")
+            return
+        f.write("    msg->set_{}(eventData.{});\n".format(field_name, field_name))
 
 
 class EventFormatterCodeGenerator(FtraceEventCodeGenerator):

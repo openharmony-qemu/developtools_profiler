@@ -87,6 +87,7 @@ config("stack_common_export_config") {
 
 # Shared by libstack_common (OHOS) and hiperf host/mingw via external_deps (static lib: headers + TU).
 ohos_static_library("stack_common_static") {
+  configs = [ ":hiprofiler_size_opt_cflags_config" ]
   visibility = [ "*:*" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
@@ -109,6 +110,7 @@ ohos_static_library("stack_common_static") {
 }
 
 ohos_shared_library("libstack_common") {
+  configs = [ ":hiprofiler_size_opt_config" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   visibility = [ "*:*" ]
@@ -126,6 +128,10 @@ ohos_shared_library("libstack_common") {
 }
 
 ohos_static_library("hiprofiler_base_static") {
+  configs = [
+    ":hiprofiler_base_build_config",
+    ":hiprofiler_size_opt_cflags_config",
+  ]
   visibility = [ "*:*" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
@@ -138,7 +144,6 @@ ohos_static_library("hiprofiler_base_static") {
     "src/schedule_task_manager.cpp",
     "src/std_semaphore.cpp",
   ]
-  configs = [ ":hiprofiler_base_build_config" ]
   public_configs = [ ":hiprofiler_base_config" ]
   external_deps = [
     "bounds_checking_function:libsec_shared",
@@ -157,6 +162,7 @@ ohos_static_library("hiprofiler_base_static") {
 }
 
 ohos_shared_library("libhiprofiler_base") {
+  configs = [ ":hiprofiler_size_opt_config" ]
   visibility = [ "*:*" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

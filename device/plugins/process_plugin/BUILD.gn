@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 
 ohos_source_set("processplugin_source") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   sources = [
     "../memory_plugin/src/buffer_splitter.cpp",
     "src/process_data_plugin.cpp",
@@ -46,6 +47,7 @@ ohos_source_set("processplugin_source") {
 }
 
 ohos_shared_library("processplugin") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   output_name = "processplugin"
   version_script = "libprocess_plugin.map"
   deps = [
