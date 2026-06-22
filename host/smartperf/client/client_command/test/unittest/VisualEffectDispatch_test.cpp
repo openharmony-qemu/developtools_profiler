@@ -33,7 +33,6 @@ public:
     void SetUp() {}
     void TearDown() {}
 };
-
 HWTEST_F(VisualEffectDisPatchTest, GameScheduleEventCallbackImpl_OnGameScheduleEvent_001, TestSize.Level1)
 {
     GameScheduleEventCallbackImpl callback;

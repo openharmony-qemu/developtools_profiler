@@ -83,6 +83,7 @@ void SmartPerfCommand::DeviceServer(int isNeedDaemon) const
     }
     CreateSocketThread();
 }
+
 void SmartPerfCommand::HelpCommand(CommandHelp type, const std::string& token) const
 {
     if (type == CommandHelp::HELP) {

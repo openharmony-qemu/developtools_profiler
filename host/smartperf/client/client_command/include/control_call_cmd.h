@@ -27,10 +27,11 @@ public:
     double ResponseTime();
     std::string GetResult(const std::vector<std::string>& v);
     std::string GetFrame();
-    std::string GetAppStartTime() const;
+    std::string GetAppStartTime();
     std::string SlideList();
     std::string TimeDelay();
     void IsohTest(const std::vector<std::string>& v);
+    void HitchTimeRateData(std::ostringstream &ss);
 
 private:
     bool isOhTest = false;
@@ -41,6 +42,7 @@ private:
     double noNameType = -1.0;
     std::ostringstream stream;
     int two = 2;
+    std::string ssResult_ = "";
 };
 }
 }

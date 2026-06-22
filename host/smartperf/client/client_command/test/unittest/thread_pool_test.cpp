@@ -47,7 +47,6 @@ void ThreadPoolTest::SetUp()
 void ThreadPoolTest::TearDown()
 {
 }
-
 /**
 * @tc.name: ThreadPoolTest_Constructor_001
 * @tc.desc:：验证 ThreadPool 构造函数创建指定数量的线程
