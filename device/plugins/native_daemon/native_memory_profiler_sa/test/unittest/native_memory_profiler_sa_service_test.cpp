@@ -1222,10 +1222,10 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckTryBeginStopHook, TestSize.Leve
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
     ASSERT_NE(service, nullptr);
     uint32_t pid = static_cast<uint32_t>(getpid());
-    EXPECT_TRUE(TryBeginStopHook(pid));
-    EXPECT_FALSE(TryBeginStopHook(pid));
-    EndStopHook(pid);
-    EXPECT_TRUE(TryBeginStopHook(pid));
-    EndStopHook(pid);
+    EXPECT_TRUE(service->TryBeginStopHook(pid));
+    EXPECT_FALSE(service->TryBeginStopHook(pid));
+    service->EndStopHook(pid);
+    EXPECT_TRUE(service->TryBeginStopHook(pid));
+    service->EndStopHook(pid);
 }
 #endif // NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H
