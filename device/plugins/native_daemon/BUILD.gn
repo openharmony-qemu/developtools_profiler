@@ -284,6 +284,8 @@ ohos_executable("native_daemon_client") {
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "ability_runtime:app_context",
+    "storage_service:storage_manager_acl",
   ]
 
   if (current_toolchain != host_toolchain) {
@@ -325,6 +327,8 @@ ohos_shared_library("libnative_daemon_client") {
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "ability_runtime:app_context",
+    "storage_service:storage_manager_acl",
   ]
 
   if (current_toolchain != host_toolchain) {
