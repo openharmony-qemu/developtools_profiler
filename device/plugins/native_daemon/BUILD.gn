@@ -14,10 +14,6 @@
 import("//build/ohos.gni")
 import("../../base/config.gni")
 
-config("cflags_config") {
-  cflags = [ "-O3" ]
-}
-
 config("hook_config") {
   defines = [
     "HAVE_LIBUNWIND=0",
@@ -61,7 +57,7 @@ ohos_prebuilt_etc("hiprofiler_daemon.cfg") {
 }
 
 ohos_shared_library("libmemory_profiler") {
-  configs = [ ":cflags_config" ]
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   public_configs = [
     ":hook_config",
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
@@ -104,6 +100,7 @@ ohos_shared_library("libmemory_profiler") {
     "src/hook_record_factory.cpp",
     "src/hook_service.cpp",
     "src/hook_standalone.cpp",
+    "src/native_daemon_service.cpp",
     "src/register.cpp",
     "src/smo_map_global.cpp",
     "src/stack_builder.cpp",
@@ -131,8 +128,7 @@ ohos_shared_library("libmemory_profiler") {
 
   deps = [
     ":hiprofiler_daemon.cfg",
-    "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service:network_profiler_service_cfi",
-    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source_cfi",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source_cfi",
     "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto_cfi",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source_cfi",
@@ -140,7 +136,7 @@ ohos_shared_library("libmemory_profiler") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard_cfi",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_encoder_cfi",
     "../../base:libstack_common",
-    "../../base:hiprofiler_base_cfi",
+    "../../base:libhiprofiler_base",
   ]
 
   if (hiprofiler_use_libunwind) {
@@ -179,7 +175,6 @@ ohos_shared_library("libmemory_profiler") {
   }
   shlib_type = "sa"
   version_script = "libmemory_profiler.versionscript"
-  use_exceptions = true
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
@@ -187,7 +182,7 @@ ohos_shared_library("libmemory_profiler") {
 
 ohos_executable("native_daemon") {
   output_name = "native_daemon"
-  configs = [ ":cflags_config" ]
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   public_configs = [
     ":hook_config",
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
@@ -215,15 +210,7 @@ ohos_executable("native_daemon") {
 
   deps = [
     ":hiprofiler_daemon.cfg",
-    "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service:network_profiler_service",
-    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
-    "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
-    "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
-    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
-    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
-    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
-    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_encoder",
-    "../../base:hiprofiler_base",
+    "../../base:libhiprofiler_base",
     ":libmemory_profiler",
   ]
 
@@ -308,6 +295,7 @@ ohos_executable("native_daemon_client") {
 }
 
 ohos_shared_library("libnative_daemon_client") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   public_configs = [ ":profiler_sa_config" ]
   include_dirs = [
     "../../base/include",
@@ -349,6 +337,7 @@ ohos_shared_library("libnative_daemon_client") {
 }
 
 ohos_shared_library("memory_profiler_client") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   public_configs = [ ":memory_profiler_client_config" ]
   sources = [ "memory_profiler_client/memory_profiler_client_impl.cpp" ]
   deps = [ ":libnative_daemon_client" ]

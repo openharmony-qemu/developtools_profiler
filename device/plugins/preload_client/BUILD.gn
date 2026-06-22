@@ -54,7 +54,7 @@ ohos_source_set("preload_client_source") {
   ]
   deps = [
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_lite",
-    "../../base:hiprofiler_base",
+    "../../base:libhiprofiler_base",
   ]
   external_deps = [
     "bounds_checking_function:libsec_shared",

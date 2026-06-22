@@ -375,15 +375,15 @@ bool PluginManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
             return false;
         }
     }
-    if (networkProfilerMgr_) {
-        networkProfilerMgr_->StopNetworkProfiler();
+    if (networkProfilerStopCallback_) {
+        networkProfilerStopCallback_();
     }
     return true;
 }
 
-void PluginManager::AddNetworkProfilerManager(std::shared_ptr<NetworkProfilerManager> networkProfilerMgr)
+void PluginManager::SetNetworkProfilerStopCallback(std::function<void()> callback)
 {
-    networkProfilerMgr_ = networkProfilerMgr;
+    networkProfilerStopCallback_ = std::move(callback);
 }
 
 bool PluginManager::StopAllPluginSession()

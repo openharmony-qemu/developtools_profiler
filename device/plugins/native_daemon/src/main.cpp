@@ -13,15 +13,13 @@
  * limitations under the License.
  */
 #include <thread>
+#include <signal.h>
 #include <sys/file.h>
 #include "common.h"
-#include "command_poller.h"
-#include "hook_manager.h"
 #include "logging.h"
-#include "plugin_service_types.pb.h"
-#include "writer_adapter.h"
-#include "hook_standalone.h"
 #include "hook_common.h"
+#include "hook_standalone.h"
+#include "native_daemon_service.h"
 
 using namespace OHOS::Developtools::NativeDaemon;
 
@@ -323,23 +321,12 @@ int main(int argc, char* argv[])
             }
             return 0;
         }
-        auto hookManager = std::make_shared<HookManager>();
-        auto commandPoller = std::make_shared<CommandPoller>(hookManager);
-        if (!commandPoller->OnConnect()) {
-            if (lockFileFd > 0) {
-                flock(lockFileFd, LOCK_UN);
-                close(lockFileFd);
-                PROFILER_LOG_INFO(LOG_CORE, "connect FAILED");
-                return 1;
-            }
-            return 0;
+        int ret = OHOS::Developtools::NativeDaemon::RunDaemonServiceLoop();
+        if (lockFileFd > 0) {
+            flock(lockFileFd, LOCK_UN);
+            close(lockFileFd);
         }
-        hookManager->SetCommandPoller(commandPoller);
-        hookManager->RegisterAgentPlugin("nativehook");
-
-        while (true) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));
-        }
+        return ret;
     }
     if (lockFileFd > 0) {
         flock(lockFileFd, LOCK_UN);

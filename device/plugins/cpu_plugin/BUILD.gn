@@ -49,7 +49,7 @@ ohos_shared_library("cpudataplugin") {
   version_script = "libcpu_plugin.map"
   deps = [
     ":cpudataplugin_source",
-    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
+    "${OHOS_PROFILER_DIR}/device/base:libhiprofiler_base",
   ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]

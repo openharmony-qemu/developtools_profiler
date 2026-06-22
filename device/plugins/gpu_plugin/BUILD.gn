@@ -50,7 +50,7 @@ ohos_shared_library("gpudataplugin") {
   version_script = "libgpu_plugin.map"
   deps = [
     ":gpudataplugin_source",
-    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
+    "${OHOS_PROFILER_DIR}/device/base:libhiprofiler_base",
   ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
