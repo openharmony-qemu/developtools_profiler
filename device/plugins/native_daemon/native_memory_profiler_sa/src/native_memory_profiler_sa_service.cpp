@@ -580,12 +580,12 @@ int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, 
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
     }
     if (!TryBeginStopHook(pid)) {
- 	    PROFILER_LOG_INFO(LOG_CORE, "StopHook: pid %d is already stopping, skip.", pid);
- 	    return RET_OK;
+        PROFILER_LOG_INFO(LOG_CORE, "StopHook: pid %d is already stopping, skip.", pid);
+        return RET_OK;
     }
- 	int32_t stopResult = StopHookTask(pid, config, finishErrorCode);
- 	EndStopHook(pid);
- 	return stopResult;
+    int32_t stopResult = StopHookTask(pid, config, finishErrorCode);
+    EndStopHook(pid);
+    return stopResult;
 }
 
 int32_t NativeMemoryProfilerSaService::StopHookTask(uint32_t pid, std::shared_ptr<TaskConfig> config,
@@ -622,8 +622,8 @@ int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finis
     }
 
     if (!TryBeginStopHook(pid)) {
- 	    PROFILER_LOG_INFO(LOG_CORE, "StopHookAsync: pid %d is already stopping, skip.", pid);
- 	    return RET_OK;
+        PROFILER_LOG_INFO(LOG_CORE, "StopHookAsync: pid %d is already stopping, skip.", pid);
+        return RET_OK;
     }
 
     std::thread([pid, config, finishErrorCode]() {
