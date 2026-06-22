@@ -66,8 +66,8 @@ static std::mutex g_timerFdMtx;
 static std::mutex g_fileNameMtx;
 //2: double
 static std::mutex g_nmdMtx;
-static std::unordered_set<uint32_t> g_asyncStoppingPids;
-static std::mutex g_asyncStoppingPidsMtx;
+static std::unordered_set<uint32_t> g_stoppingPids;
+static std::mutex g_stoppingPidsMtx;
 #ifdef ENABLE_SA_AUTO_START
 const bool G_REGISTER_RESUTL = SystemAbility::MakeAndRegisterAbility(
     DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance().get());
@@ -555,7 +555,7 @@ void NativeMemoryProfilerSaService::CloseSocketFd(pid_t pid)
 
 int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, int32_t finishErrorCode)
 {
-    std::lock_guard<std::mutex> guard(g_mtx);
+    std::unique_lock<std::mutex> lock(g_mtx);
     std::shared_ptr<TaskConfig> config = nullptr;
     if (pid > 0) {
         if (auto taskIter = g_pidCtx.find(pid); taskIter != g_pidCtx.end()) {
@@ -565,6 +565,7 @@ int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, 
         config = taskIter->second;
         pid = static_cast<pid_t>(config->hookMgr->GetPid());
     }
+    lock.unlock();
     if (config == nullptr) {
         int32_t ret = static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED);
         PROFILER_LOG_ERROR(LOG_CORE,
@@ -578,24 +579,20 @@ int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, 
             static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED));
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
     }
-    std::string resultPath;
-    int32_t retRelease = ReleaseForStopHook(pid, config, resultPath);
-    int32_t callbackError = retRelease == RET_OK ? finishErrorCode :
-        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR);
-    NotifyProfilingResult(config, callbackError, retRelease == RET_OK ? resultPath : "");
-    if (--g_taskNum == 0) {
-        PROFILER_LOG_INFO(LOG_CORE, "StringViewMemoryHold clear");
-        StringViewMemoryHold::GetInstance().Clear();
-        DelayedShutdown(false);
+    if (!TryBeginStopHook(pid)) {
+        PROFILER_LOG_INFO(LOG_CORE, "StopHook: pid %d is already stopping, skip.", pid);
+        return RET_OK;
     }
-    return retRelease;
+    int32_t stopResult = StopHookTask(pid, config, finishErrorCode);
+    EndStopHook(pid);
+    return stopResult;
 }
 
-void NativeMemoryProfilerSaService::StopHookTask(uint32_t pid, std::shared_ptr<TaskConfig> config,
+int32_t NativeMemoryProfilerSaService::StopHookTask(uint32_t pid, std::shared_ptr<TaskConfig> config,
     int32_t finishErrorCode)
 {
     std::string resultPath;
-    int32_t retRelease = ReleaseForStopHook(pid, config, resultPath, true);
+    int32_t retRelease = ReleaseForStopHook(pid, config, resultPath);
     int32_t callbackError = retRelease == RET_OK ? finishErrorCode :
         static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR);
     NotifyProfilingResult(config, callbackError, retRelease == RET_OK ? resultPath : "");
@@ -606,6 +603,7 @@ void NativeMemoryProfilerSaService::StopHookTask(uint32_t pid, std::shared_ptr<T
         StringViewMemoryHold::GetInstance().Clear();
         DelayedShutdown(false);
     }
+    return retRelease;
 }
 
 int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finishErrorCode)
@@ -623,19 +621,14 @@ int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finis
         return ret;
     }
 
-    {
-        std::lock_guard<std::mutex> guard(g_asyncStoppingPidsMtx);
-        if (g_asyncStoppingPids.find(pid) != g_asyncStoppingPids.end()) {
-            PROFILER_LOG_INFO(LOG_CORE, "StopHookAsync: pid %d is already stopping, skip.", pid);
-            return RET_OK;
-        }
-        g_asyncStoppingPids.insert(pid);
+    if (!TryBeginStopHook(pid)) {
+        PROFILER_LOG_INFO(LOG_CORE, "StopHookAsync: pid %d is already stopping, skip.", pid);
+        return RET_OK;
     }
 
     std::thread([pid, config, finishErrorCode]() {
         StopHookTask(pid, config, finishErrorCode);
-        std::lock_guard<std::mutex> guard(g_asyncStoppingPidsMtx);
-        g_asyncStoppingPids.erase(pid);
+        EndStopHook(pid);
     }).detach();
 
     return RET_OK;
@@ -648,6 +641,22 @@ int32_t NativeMemoryProfilerSaService::StopHookByType(uint32_t pid, std::string&
         return StopHookAsync(pid, finishErrorCode);
     }
     return StopHook(pid, name, finishErrorCode);
+}
+
+bool NativeMemoryProfilerSaService::TryBeginStopHook(uint32_t pid)
+{
+    std::lock_guard<std::mutex> guard(g_stoppingPidsMtx);
+    if (g_stoppingPids.find(pid) != g_stoppingPids.end()) {
+        return false;
+    }
+    g_stoppingPids.insert(pid);
+    return true;
+}
+ 	 
+void NativeMemoryProfilerSaService::EndStopHook(uint32_t pid)
+{
+    std::lock_guard<std::mutex> guard(g_stoppingPidsMtx);
+    g_stoppingPids.erase(pid);
 }
 
 std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
@@ -1010,7 +1019,6 @@ int32_t NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryP
 
 void NativeMemoryProfilerSaService::FillTaskConfigContext(int32_t pid, const std::string& name)
 {
-    std::lock_guard<std::mutex> guard(g_mtx);
     if (auto iter = g_pidCtx.find(pid); iter != g_pidCtx.end()) {
         iter->second->processName = name;
         g_nameAndFilePathCtx[name] = iter->second;
@@ -1114,10 +1122,10 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
     if (bundleName.substr(0, 2) == "./") { // 2: size, Command line programs will be prefixed with "./"
         bundleName = bundleName.substr(2); // 2: point
     }
-    bool startupMode = g_hasStartupMode;
-    FillTaskConfigContext(peerConfig, bundleName); // Save the relevant context for subsequent inspection
 
     std::lock_guard<std::mutex> guard(g_mtx);
+    bool startupMode = g_hasStartupMode;
+    FillTaskConfigContext(peerConfig, bundleName); // Save the relevant context for subsequent inspection
     if (auto iter = g_pidCtx.find(peerConfig); iter != g_pidCtx.end()) {
         if (!startupMode) {
             int socketHandle = context.GetSocketHandle();
@@ -1417,7 +1425,7 @@ int32_t NativeMemoryProfilerSaService::CopyApiCollectorFile(uint32_t pid, std::s
 }
 
 int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config,
-    std::string& resultPath, bool isAsync)
+    std::string& resultPath)
 {
     int32_t ret = RET_OK;
     if (config->hookMgr->GetHookConfig().use_file_cache_mode()) {
@@ -1427,7 +1435,7 @@ int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::sha
     config->hookMgr->StopPluginSession({});
     CloseSocketFd(static_cast<pid_t>(pid));
     config->hookMgr->DestroyPluginSession({});
-    if (isAsync) {
+    {
         std::lock_guard<std::mutex> guard(g_mtx);
         g_nameAndFilePathCtx.erase(config->processName);
         g_nameAndFilePathCtx.erase(config->filePath);
@@ -1436,23 +1444,15 @@ int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::sha
         }
         g_pidCtx.erase(config->pid);
         g_pidInfo.erase(static_cast<pid_t>(pid));
-    } else {
-        g_nameAndFilePathCtx.erase(config->processName);
-        g_nameAndFilePathCtx.erase(config->filePath);
-        if (config->startType == START_TYPE_API) {
-            ret = CopyApiCollectorFile(pid, config, resultPath);
-        }
-        g_pidCtx.erase(config->pid);
-        g_pidInfo.erase(static_cast<pid_t>(pid));
-    }
-    {
+
         std::lock_guard<std::mutex> nmdGuard(g_nmdMtx);
         if (g_nmdPidType.find(config->pid) != g_nmdPidType.end()) {
             g_nmdPidType.erase(config->pid);
         }
-    }
-    if (config->isStartupMode) {
-        g_hasStartupMode = false;
+
+        if (config->isStartupMode) {
+            g_hasStartupMode = false;
+        }
     }
     if (config->fd > 0) {
         close(config->fd);

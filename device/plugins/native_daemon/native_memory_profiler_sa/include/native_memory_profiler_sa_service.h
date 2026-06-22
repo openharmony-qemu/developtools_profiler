@@ -85,8 +85,10 @@ private:
                           const sptr<IRemoteObject>& callback = nullptr);
     int32_t StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd, MessageParcel &reply);
     static int32_t StopHookAsync(uint32_t pid, int32_t finishErrorCode);
-    static void StopHookTask(uint32_t pid, std::shared_ptr<TaskConfig> config, int32_t finishErrorCode);
+    static int32_t StopHookTask(uint32_t pid, std::shared_ptr<TaskConfig> config, int32_t finishErrorCode);
     static int32_t StopHookByType(uint32_t pid, std::string& name, int32_t finishErrorCode, bool isAsync);
+    static bool TryBeginStopHook(uint32_t pid);
+    static void EndStopHook(uint32_t pid);
     int32_t CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
     int32_t CheckTaskLimit(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     int32_t CheckStartupModeConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
@@ -111,8 +113,7 @@ private:
     static void NotifyProfilingResult(const std::shared_ptr<TaskConfig>& config, int32_t errorCode,
         const std::string& filePath);
     static int32_t CopyApiCollectorFile(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath);
-    static int32_t ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath,
-        bool isAsync = false);
+    static int32_t ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath);
 
 private:
     std::mutex gpuMtx_;
