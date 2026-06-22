@@ -1210,4 +1210,22 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckFilePathRejectsEmptyPath, TestS
 
     EXPECT_EQ(service->CheckFilePath(0, config), RET_ERR);
 }
+
+/**
+ * @tc.name: CheckTryBeginStopHook
+ * @tc.desc: Check try stop hook fail when hook is stopping
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckTryBeginStopHook, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    uint32_t pid = static_cast<uint32_t>(getpid());
+    EXPECT_TRUE(TryBeginStopHook(pid));
+    EXPECT_FALSE(TryBeginStopHook(pid));
+    EndStopHook(pid);
+    EXPECT_TRUE(TryBeginStopHook(pid));
+    EndStopHook(pid);
+}
 #endif // NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H
