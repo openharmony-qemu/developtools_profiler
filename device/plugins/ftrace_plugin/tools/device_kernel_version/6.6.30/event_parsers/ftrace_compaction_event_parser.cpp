@@ -14,49 +14,90 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T>
-void mm_compaction_isolate_freepages_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct MmCompactionIsolateFreepagesData {
+    uint64_t start_pfn {};
+    uint64_t end_pfn {};
+    uint64_t nr_scanned {};
+    uint64_t nr_taken {};
+};
+__attribute__((noinline)) void ParseMmCompactionIsolateFreepagesData(MmCompactionIsolateFreepagesData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_start_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_end_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_scanned(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_taken(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.start_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.end_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_scanned = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_taken = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_freepages, [](FtraceEvent &ftraceEvent, uint8_t data[],
-                                                                         size_t size, const EventFormat &format) {
+void ParseMmCompactionIsolateFreepages(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmCompactionIsolateFreepagesData eventData {};
+    ParseMmCompactionIsolateFreepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_isolate_freepages_format();
-    mm_compaction_isolate_freepages_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_freepages, [](ProtoEncoder::FtraceEvent &ftraceEvent,
-                                                                                 uint8_t data[], size_t size,
-                                                                                 const EventFormat &format) {
+    msg->set_start_pfn(eventData.start_pfn);
+    msg->set_end_pfn(eventData.end_pfn);
+    msg->set_nr_scanned(eventData.nr_scanned);
+    msg->set_nr_taken(eventData.nr_taken);
+}
+void ParseMmCompactionIsolateFreepagesEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmCompactionIsolateFreepagesData eventData {};
+    ParseMmCompactionIsolateFreepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_isolate_freepages_format();
-    mm_compaction_isolate_freepages_func(msg, data, size, format);
-});
+    msg->set_start_pfn(eventData.start_pfn);
+    msg->set_end_pfn(eventData.end_pfn);
+    msg->set_nr_scanned(eventData.nr_scanned);
+    msg->set_nr_taken(eventData.nr_taken);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_freepages, ParseMmCompactionIsolateFreepages);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_freepages, ParseMmCompactionIsolateFreepagesEncoder);
 
-template <typename T>
-void mm_compaction_isolate_migratepages_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct MmCompactionIsolateMigratepagesData {
+    uint64_t start_pfn {};
+    uint64_t end_pfn {};
+    uint64_t nr_scanned {};
+    uint64_t nr_taken {};
+};
+__attribute__((noinline)) void ParseMmCompactionIsolateMigratepagesData(MmCompactionIsolateMigratepagesData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_start_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_end_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_scanned(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_taken(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.start_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.end_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_scanned = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_taken = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_migratepages, [](FtraceEvent &ftraceEvent, uint8_t data[],
-                                                                            size_t size, const EventFormat &format) {
+void ParseMmCompactionIsolateMigratepages(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmCompactionIsolateMigratepagesData eventData {};
+    ParseMmCompactionIsolateMigratepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_isolate_migratepages_format();
-    mm_compaction_isolate_migratepages_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_migratepages,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
+    msg->set_start_pfn(eventData.start_pfn);
+    msg->set_end_pfn(eventData.end_pfn);
+    msg->set_nr_scanned(eventData.nr_scanned);
+    msg->set_nr_taken(eventData.nr_taken);
+}
+void ParseMmCompactionIsolateMigratepagesEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmCompactionIsolateMigratepagesData eventData {};
+    ParseMmCompactionIsolateMigratepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_isolate_migratepages_format();
-    mm_compaction_isolate_migratepages_func(msg, data, size, format);
-});
+    msg->set_start_pfn(eventData.start_pfn);
+    msg->set_end_pfn(eventData.end_pfn);
+    msg->set_nr_scanned(eventData.nr_scanned);
+    msg->set_nr_taken(eventData.nr_taken);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_migratepages, ParseMmCompactionIsolateMigratepages);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_migratepages, ParseMmCompactionIsolateMigratepagesEncoder);
 }  // namespace
 FTRACE_NS_END

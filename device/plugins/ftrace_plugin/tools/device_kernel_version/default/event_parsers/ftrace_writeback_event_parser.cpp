@@ -14,581 +14,1298 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T> void balance_dirty_pages_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct BalanceDirtyPagesData {
+    std::string bdi {};
+    uint64_t limit {};
+    uint64_t setpoint {};
+    uint64_t dirty {};
+    uint64_t bdi_setpoint {};
+    uint64_t bdi_dirty {};
+    uint64_t dirty_ratelimit {};
+    uint64_t task_ratelimit {};
+    uint32_t dirtied {};
+    uint32_t dirtied_pause {};
+    uint64_t paused {};
+    uint64_t pause {};
+    uint64_t period {};
+    uint64_t think {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseBalanceDirtyPagesData(BalanceDirtyPagesData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_bdi(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_limit(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_setpoint(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_dirty(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_bdi_setpoint(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_bdi_dirty(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_dirty_ratelimit(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_task_ratelimit(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_dirtied(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_dirtied_pause(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_paused(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_pause(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_period(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_think(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.bdi = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.limit = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.setpoint = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.dirty = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.bdi_setpoint = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.bdi_dirty = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.dirty_ratelimit = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.task_ratelimit = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.dirtied = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.dirtied_pause = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.paused = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.pause = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.period = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.think = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(balance_dirty_pages,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_balance_dirty_pages_format();
-        balance_dirty_pages_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(balance_dirty_pages,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_balance_dirty_pages_format();
-        balance_dirty_pages_func(msg, data, size, format);
-    });
+void ParseBalanceDirtyPages(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BalanceDirtyPagesData eventData {};
+    ParseBalanceDirtyPagesData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_balance_dirty_pages_format();
+    msg->set_bdi(eventData.bdi);
+    msg->set_limit(eventData.limit);
+    msg->set_setpoint(eventData.setpoint);
+    msg->set_dirty(eventData.dirty);
+    msg->set_bdi_setpoint(eventData.bdi_setpoint);
+    msg->set_bdi_dirty(eventData.bdi_dirty);
+    msg->set_dirty_ratelimit(eventData.dirty_ratelimit);
+    msg->set_task_ratelimit(eventData.task_ratelimit);
+    msg->set_dirtied(eventData.dirtied);
+    msg->set_dirtied_pause(eventData.dirtied_pause);
+    msg->set_paused(eventData.paused);
+    msg->set_pause(eventData.pause);
+    msg->set_period(eventData.period);
+    msg->set_think(eventData.think);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseBalanceDirtyPagesEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BalanceDirtyPagesData eventData {};
+    ParseBalanceDirtyPagesData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_balance_dirty_pages_format();
+    msg->set_bdi(eventData.bdi);
+    msg->set_limit(eventData.limit);
+    msg->set_setpoint(eventData.setpoint);
+    msg->set_dirty(eventData.dirty);
+    msg->set_bdi_setpoint(eventData.bdi_setpoint);
+    msg->set_bdi_dirty(eventData.bdi_dirty);
+    msg->set_dirty_ratelimit(eventData.dirty_ratelimit);
+    msg->set_task_ratelimit(eventData.task_ratelimit);
+    msg->set_dirtied(eventData.dirtied);
+    msg->set_dirtied_pause(eventData.dirtied_pause);
+    msg->set_paused(eventData.paused);
+    msg->set_pause(eventData.pause);
+    msg->set_period(eventData.period);
+    msg->set_think(eventData.think);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(balance_dirty_pages, ParseBalanceDirtyPages);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(balance_dirty_pages, ParseBalanceDirtyPagesEncoder);
 
-template <typename T> void bdi_dirty_ratelimit_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct BdiDirtyRatelimitData {
+    std::string bdi {};
+    uint64_t write_bw {};
+    uint64_t avg_write_bw {};
+    uint64_t dirty_rate {};
+    uint64_t dirty_ratelimit {};
+    uint64_t task_ratelimit {};
+    uint64_t balanced_dirty_ratelimit {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseBdiDirtyRatelimitData(BdiDirtyRatelimitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_bdi(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_write_bw(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_avg_write_bw(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_dirty_rate(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_dirty_ratelimit(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_task_ratelimit(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_balanced_dirty_ratelimit(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.bdi = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.write_bw = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.avg_write_bw = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.dirty_rate = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.dirty_ratelimit = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.task_ratelimit = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.balanced_dirty_ratelimit = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(bdi_dirty_ratelimit,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_bdi_dirty_ratelimit_format();
-        bdi_dirty_ratelimit_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(bdi_dirty_ratelimit,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_bdi_dirty_ratelimit_format();
-        bdi_dirty_ratelimit_func(msg, data, size, format);
-    });
+void ParseBdiDirtyRatelimit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BdiDirtyRatelimitData eventData {};
+    ParseBdiDirtyRatelimitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_bdi_dirty_ratelimit_format();
+    msg->set_bdi(eventData.bdi);
+    msg->set_write_bw(eventData.write_bw);
+    msg->set_avg_write_bw(eventData.avg_write_bw);
+    msg->set_dirty_rate(eventData.dirty_rate);
+    msg->set_dirty_ratelimit(eventData.dirty_ratelimit);
+    msg->set_task_ratelimit(eventData.task_ratelimit);
+    msg->set_balanced_dirty_ratelimit(eventData.balanced_dirty_ratelimit);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseBdiDirtyRatelimitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BdiDirtyRatelimitData eventData {};
+    ParseBdiDirtyRatelimitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_bdi_dirty_ratelimit_format();
+    msg->set_bdi(eventData.bdi);
+    msg->set_write_bw(eventData.write_bw);
+    msg->set_avg_write_bw(eventData.avg_write_bw);
+    msg->set_dirty_rate(eventData.dirty_rate);
+    msg->set_dirty_ratelimit(eventData.dirty_ratelimit);
+    msg->set_task_ratelimit(eventData.task_ratelimit);
+    msg->set_balanced_dirty_ratelimit(eventData.balanced_dirty_ratelimit);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(bdi_dirty_ratelimit, ParseBdiDirtyRatelimit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(bdi_dirty_ratelimit, ParseBdiDirtyRatelimitEncoder);
 
-template <typename T> void global_dirty_state_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct GlobalDirtyStateData {
+    uint64_t nr_dirty {};
+    uint64_t nr_writeback {};
+    uint64_t nr_unstable {};
+    uint64_t background_thresh {};
+    uint64_t dirty_thresh {};
+    uint64_t dirty_limit {};
+    uint64_t nr_dirtied {};
+    uint64_t nr_written {};
+};
+__attribute__((noinline)) void ParseGlobalDirtyStateData(GlobalDirtyStateData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_nr_dirty(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_writeback(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_unstable(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_background_thresh(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_dirty_thresh(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_dirty_limit(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_dirtied(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_written(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.nr_dirty = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_writeback = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_unstable = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.background_thresh = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.dirty_thresh = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.dirty_limit = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_dirtied = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_written = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(global_dirty_state,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_global_dirty_state_format();
-        global_dirty_state_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(global_dirty_state,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_global_dirty_state_format();
-        global_dirty_state_func(msg, data, size, format);
-    });
+void ParseGlobalDirtyState(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    GlobalDirtyStateData eventData {};
+    ParseGlobalDirtyStateData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_global_dirty_state_format();
+    msg->set_nr_dirty(eventData.nr_dirty);
+    msg->set_nr_writeback(eventData.nr_writeback);
+    msg->set_nr_unstable(eventData.nr_unstable);
+    msg->set_background_thresh(eventData.background_thresh);
+    msg->set_dirty_thresh(eventData.dirty_thresh);
+    msg->set_dirty_limit(eventData.dirty_limit);
+    msg->set_nr_dirtied(eventData.nr_dirtied);
+    msg->set_nr_written(eventData.nr_written);
+}
+void ParseGlobalDirtyStateEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    GlobalDirtyStateData eventData {};
+    ParseGlobalDirtyStateData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_global_dirty_state_format();
+    msg->set_nr_dirty(eventData.nr_dirty);
+    msg->set_nr_writeback(eventData.nr_writeback);
+    msg->set_nr_unstable(eventData.nr_unstable);
+    msg->set_background_thresh(eventData.background_thresh);
+    msg->set_dirty_thresh(eventData.dirty_thresh);
+    msg->set_dirty_limit(eventData.dirty_limit);
+    msg->set_nr_dirtied(eventData.nr_dirtied);
+    msg->set_nr_written(eventData.nr_written);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(global_dirty_state, ParseGlobalDirtyState);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(global_dirty_state, ParseGlobalDirtyStateEncoder);
 
-template <typename T> void wbc_writepage_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WbcWritepageData {
+    std::string name {};
+    uint64_t nr_to_write {};
+    uint64_t pages_skipped {};
+    int32_t sync_mode {};
+    int32_t for_kupdate {};
+    int32_t for_background {};
+    int32_t for_reclaim {};
+    int32_t range_cyclic {};
+    uint64_t range_start {};
+    uint64_t range_end {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseWbcWritepageData(WbcWritepageData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_nr_to_write(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_pages_skipped(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sync_mode(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_for_kupdate(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_for_background(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_for_reclaim(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_range_cyclic(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_range_start(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_range_end(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.nr_to_write = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.pages_skipped = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sync_mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.for_kupdate = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.for_background = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.for_reclaim = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.range_cyclic = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.range_start = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.range_end = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(wbc_writepage,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_wbc_writepage_format();
-        wbc_writepage_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(wbc_writepage,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_wbc_writepage_format();
-        wbc_writepage_func(msg, data, size, format);
-    });
+void ParseWbcWritepage(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WbcWritepageData eventData {};
+    ParseWbcWritepageData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_wbc_writepage_format();
+    msg->set_name(eventData.name);
+    msg->set_nr_to_write(eventData.nr_to_write);
+    msg->set_pages_skipped(eventData.pages_skipped);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_for_kupdate(eventData.for_kupdate);
+    msg->set_for_background(eventData.for_background);
+    msg->set_for_reclaim(eventData.for_reclaim);
+    msg->set_range_cyclic(eventData.range_cyclic);
+    msg->set_range_start(eventData.range_start);
+    msg->set_range_end(eventData.range_end);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseWbcWritepageEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WbcWritepageData eventData {};
+    ParseWbcWritepageData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_wbc_writepage_format();
+    msg->set_name(eventData.name);
+    msg->set_nr_to_write(eventData.nr_to_write);
+    msg->set_pages_skipped(eventData.pages_skipped);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_for_kupdate(eventData.for_kupdate);
+    msg->set_for_background(eventData.for_background);
+    msg->set_for_reclaim(eventData.for_reclaim);
+    msg->set_range_cyclic(eventData.range_cyclic);
+    msg->set_range_start(eventData.range_start);
+    msg->set_range_end(eventData.range_end);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(wbc_writepage, ParseWbcWritepage);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(wbc_writepage, ParseWbcWritepageEncoder);
 
-template <typename T> void writeback_bdi_register_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackBdiRegisterData {
+    std::string name {};
+};
+__attribute__((noinline)) void ParseWritebackBdiRegisterData(WritebackBdiRegisterData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_bdi_register,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_bdi_register_format();
-        writeback_bdi_register_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_bdi_register,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_bdi_register_format();
-        writeback_bdi_register_func(msg, data, size, format);
-    });
+void ParseWritebackBdiRegister(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackBdiRegisterData eventData {};
+    ParseWritebackBdiRegisterData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_bdi_register_format();
+    msg->set_name(eventData.name);
+}
+void ParseWritebackBdiRegisterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackBdiRegisterData eventData {};
+    ParseWritebackBdiRegisterData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_bdi_register_format();
+    msg->set_name(eventData.name);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_bdi_register, ParseWritebackBdiRegister);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_bdi_register, ParseWritebackBdiRegisterEncoder);
 
-template <typename T>
-void writeback_congestion_wait_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackCongestionWaitData {
+    uint32_t usec_timeout {};
+    uint32_t usec_delayed {};
+};
+__attribute__((noinline)) void ParseWritebackCongestionWaitData(WritebackCongestionWaitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_usec_timeout(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_usec_delayed(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.usec_timeout = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.usec_delayed = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_congestion_wait,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_congestion_wait_format();
-        writeback_congestion_wait_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_congestion_wait,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_congestion_wait_format();
-        writeback_congestion_wait_func(msg, data, size, format);
-    });
+void ParseWritebackCongestionWait(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackCongestionWaitData eventData {};
+    ParseWritebackCongestionWaitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_congestion_wait_format();
+    msg->set_usec_timeout(eventData.usec_timeout);
+    msg->set_usec_delayed(eventData.usec_delayed);
+}
+void ParseWritebackCongestionWaitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackCongestionWaitData eventData {};
+    ParseWritebackCongestionWaitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_congestion_wait_format();
+    msg->set_usec_timeout(eventData.usec_timeout);
+    msg->set_usec_delayed(eventData.usec_delayed);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_congestion_wait, ParseWritebackCongestionWait);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_congestion_wait, ParseWritebackCongestionWaitEncoder);
 
-template <typename T> void writeback_dirty_inode_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackDirtyInodeData {
+    std::string name {};
+    uint64_t ino {};
+    uint64_t state {};
+    uint64_t flags {};
+};
+__attribute__((noinline)) void ParseWritebackDirtyInodeData(WritebackDirtyInodeData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_state(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_flags(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_dirty_inode_format();
-        writeback_dirty_inode_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_dirty_inode_format();
-        writeback_dirty_inode_func(msg, data, size, format);
-    });
+void ParseWritebackDirtyInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackDirtyInodeData eventData {};
+    ParseWritebackDirtyInodeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_dirty_inode_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_flags(eventData.flags);
+}
+void ParseWritebackDirtyInodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackDirtyInodeData eventData {};
+    ParseWritebackDirtyInodeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_dirty_inode_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_flags(eventData.flags);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode, ParseWritebackDirtyInode);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode, ParseWritebackDirtyInodeEncoder);
 
-template <typename T>
-void writeback_dirty_inode_enqueue_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackDirtyInodeEnqueueData {
+    uint64_t dev {};
+    uint64_t ino {};
+    uint64_t state {};
+    uint32_t mode {};
+    uint64_t dirtied_when {};
+};
+__attribute__((noinline)) void ParseWritebackDirtyInodeEnqueueData(WritebackDirtyInodeEnqueueData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_state(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_mode(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_dirtied_when(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.dirtied_when = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode_enqueue,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_dirty_inode_enqueue_format();
-        writeback_dirty_inode_enqueue_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode_enqueue,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_dirty_inode_enqueue_format();
-        writeback_dirty_inode_enqueue_func(msg, data, size, format);
-    });
+void ParseWritebackDirtyInodeEnqueue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackDirtyInodeEnqueueData eventData {};
+    ParseWritebackDirtyInodeEnqueueData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_dirty_inode_enqueue_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_mode(eventData.mode);
+    msg->set_dirtied_when(eventData.dirtied_when);
+}
+void ParseWritebackDirtyInodeEnqueueEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackDirtyInodeEnqueueData eventData {};
+    ParseWritebackDirtyInodeEnqueueData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_dirty_inode_enqueue_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_mode(eventData.mode);
+    msg->set_dirtied_when(eventData.dirtied_when);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode_enqueue, ParseWritebackDirtyInodeEnqueue);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode_enqueue, ParseWritebackDirtyInodeEnqueueEncoder);
 
-template <typename T>
-void writeback_dirty_inode_start_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackDirtyInodeStartData {
+    std::string name {};
+    uint64_t ino {};
+    uint64_t state {};
+    uint64_t flags {};
+};
+__attribute__((noinline)) void ParseWritebackDirtyInodeStartData(WritebackDirtyInodeStartData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_state(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_flags(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode_start,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_dirty_inode_start_format();
-        writeback_dirty_inode_start_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode_start,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_dirty_inode_start_format();
-        writeback_dirty_inode_start_func(msg, data, size, format);
-    });
+void ParseWritebackDirtyInodeStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackDirtyInodeStartData eventData {};
+    ParseWritebackDirtyInodeStartData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_dirty_inode_start_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_flags(eventData.flags);
+}
+void ParseWritebackDirtyInodeStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackDirtyInodeStartData eventData {};
+    ParseWritebackDirtyInodeStartData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_dirty_inode_start_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_flags(eventData.flags);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode_start, ParseWritebackDirtyInodeStart);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode_start, ParseWritebackDirtyInodeStartEncoder);
 
-template <typename T> void writeback_dirty_page_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackDirtyPageData {
+    std::string name {};
+    uint64_t ino {};
+    uint64_t index {};
+};
+__attribute__((noinline)) void ParseWritebackDirtyPageData(WritebackDirtyPageData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_index(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_page,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_dirty_page_format();
-        writeback_dirty_page_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_page,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_dirty_page_format();
-        writeback_dirty_page_func(msg, data, size, format);
-    });
+void ParseWritebackDirtyPage(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackDirtyPageData eventData {};
+    ParseWritebackDirtyPageData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_dirty_page_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_index(eventData.index);
+}
+void ParseWritebackDirtyPageEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackDirtyPageData eventData {};
+    ParseWritebackDirtyPageData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_dirty_page_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_index(eventData.index);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_page, ParseWritebackDirtyPage);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_page, ParseWritebackDirtyPageEncoder);
 
-template <typename T> void writeback_exec_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackExecData {
+    std::string name {};
+    uint64_t nr_pages {};
+    uint64_t sb_dev {};
+    int32_t sync_mode {};
+    int32_t for_kupdate {};
+    int32_t range_cyclic {};
+    int32_t for_background {};
+    int32_t reason {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseWritebackExecData(WritebackExecData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_nr_pages(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sb_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sync_mode(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_for_kupdate(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_range_cyclic(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_for_background(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_reason(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sb_dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sync_mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.for_kupdate = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.range_cyclic = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.for_background = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.reason = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_exec,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_exec_format();
-        writeback_exec_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_exec,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_exec_format();
-        writeback_exec_func(msg, data, size, format);
-    });
+void ParseWritebackExec(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackExecData eventData {};
+    ParseWritebackExecData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_exec_format();
+    msg->set_name(eventData.name);
+    msg->set_nr_pages(eventData.nr_pages);
+    msg->set_sb_dev(eventData.sb_dev);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_for_kupdate(eventData.for_kupdate);
+    msg->set_range_cyclic(eventData.range_cyclic);
+    msg->set_for_background(eventData.for_background);
+    msg->set_reason(eventData.reason);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseWritebackExecEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackExecData eventData {};
+    ParseWritebackExecData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_exec_format();
+    msg->set_name(eventData.name);
+    msg->set_nr_pages(eventData.nr_pages);
+    msg->set_sb_dev(eventData.sb_dev);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_for_kupdate(eventData.for_kupdate);
+    msg->set_range_cyclic(eventData.range_cyclic);
+    msg->set_for_background(eventData.for_background);
+    msg->set_reason(eventData.reason);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_exec, ParseWritebackExec);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_exec, ParseWritebackExecEncoder);
 
-template <typename T> void writeback_lazytime_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackLazytimeData {
+    uint64_t dev {};
+    uint64_t ino {};
+    uint64_t state {};
+    uint32_t mode {};
+    uint64_t dirtied_when {};
+};
+__attribute__((noinline)) void ParseWritebackLazytimeData(WritebackLazytimeData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_state(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_mode(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_dirtied_when(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.dirtied_when = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_lazytime,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_lazytime_format();
-        writeback_lazytime_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_lazytime,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_lazytime_format();
-        writeback_lazytime_func(msg, data, size, format);
-    });
+void ParseWritebackLazytime(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackLazytimeData eventData {};
+    ParseWritebackLazytimeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_lazytime_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_mode(eventData.mode);
+    msg->set_dirtied_when(eventData.dirtied_when);
+}
+void ParseWritebackLazytimeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackLazytimeData eventData {};
+    ParseWritebackLazytimeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_lazytime_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_mode(eventData.mode);
+    msg->set_dirtied_when(eventData.dirtied_when);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_lazytime, ParseWritebackLazytime);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_lazytime, ParseWritebackLazytimeEncoder);
 
-template <typename T> void writeback_lazytime_iput_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackLazytimeIputData {
+    uint64_t dev {};
+    uint64_t ino {};
+    uint64_t state {};
+    uint32_t mode {};
+    uint64_t dirtied_when {};
+};
+__attribute__((noinline)) void ParseWritebackLazytimeIputData(WritebackLazytimeIputData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_state(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_mode(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_dirtied_when(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.dirtied_when = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_lazytime_iput,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_lazytime_iput_format();
-        writeback_lazytime_iput_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_lazytime_iput,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_lazytime_iput_format();
-        writeback_lazytime_iput_func(msg, data, size, format);
-    });
+void ParseWritebackLazytimeIput(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackLazytimeIputData eventData {};
+    ParseWritebackLazytimeIputData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_lazytime_iput_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_mode(eventData.mode);
+    msg->set_dirtied_when(eventData.dirtied_when);
+}
+void ParseWritebackLazytimeIputEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackLazytimeIputData eventData {};
+    ParseWritebackLazytimeIputData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_lazytime_iput_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_mode(eventData.mode);
+    msg->set_dirtied_when(eventData.dirtied_when);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_lazytime_iput, ParseWritebackLazytimeIput);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_lazytime_iput, ParseWritebackLazytimeIputEncoder);
 
-template <typename T>
-void writeback_mark_inode_dirty_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackMarkInodeDirtyData {
+    std::string name {};
+    uint64_t ino {};
+    uint64_t state {};
+    uint64_t flags {};
+};
+__attribute__((noinline)) void ParseWritebackMarkInodeDirtyData(WritebackMarkInodeDirtyData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_state(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_flags(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_mark_inode_dirty,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_mark_inode_dirty_format();
-        writeback_mark_inode_dirty_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_mark_inode_dirty,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_mark_inode_dirty_format();
-        writeback_mark_inode_dirty_func(msg, data, size, format);
-    });
+void ParseWritebackMarkInodeDirty(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackMarkInodeDirtyData eventData {};
+    ParseWritebackMarkInodeDirtyData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_mark_inode_dirty_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_flags(eventData.flags);
+}
+void ParseWritebackMarkInodeDirtyEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackMarkInodeDirtyData eventData {};
+    ParseWritebackMarkInodeDirtyData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_mark_inode_dirty_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_flags(eventData.flags);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_mark_inode_dirty, ParseWritebackMarkInodeDirty);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_mark_inode_dirty, ParseWritebackMarkInodeDirtyEncoder);
 
-template <typename T> void writeback_pages_written_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackPagesWrittenData {
+    uint64_t pages {};
+};
+__attribute__((noinline)) void ParseWritebackPagesWrittenData(WritebackPagesWrittenData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_pages(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_pages_written,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_pages_written_format();
-        writeback_pages_written_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_pages_written,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_pages_written_format();
-        writeback_pages_written_func(msg, data, size, format);
-    });
+void ParseWritebackPagesWritten(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackPagesWrittenData eventData {};
+    ParseWritebackPagesWrittenData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_pages_written_format();
+    msg->set_pages(eventData.pages);
+}
+void ParseWritebackPagesWrittenEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackPagesWrittenData eventData {};
+    ParseWritebackPagesWrittenData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_pages_written_format();
+    msg->set_pages(eventData.pages);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_pages_written, ParseWritebackPagesWritten);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_pages_written, ParseWritebackPagesWrittenEncoder);
 
-template <typename T> void writeback_queue_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackQueueData {
+    std::string name {};
+    uint64_t nr_pages {};
+    uint64_t sb_dev {};
+    int32_t sync_mode {};
+    int32_t for_kupdate {};
+    int32_t range_cyclic {};
+    int32_t for_background {};
+    int32_t reason {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseWritebackQueueData(WritebackQueueData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_nr_pages(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sb_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sync_mode(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_for_kupdate(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_range_cyclic(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_for_background(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_reason(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sb_dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sync_mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.for_kupdate = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.range_cyclic = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.for_background = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.reason = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_queue,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_queue_format();
-        writeback_queue_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_queue,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_queue_format();
-        writeback_queue_func(msg, data, size, format);
-    });
+void ParseWritebackQueue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackQueueData eventData {};
+    ParseWritebackQueueData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_queue_format();
+    msg->set_name(eventData.name);
+    msg->set_nr_pages(eventData.nr_pages);
+    msg->set_sb_dev(eventData.sb_dev);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_for_kupdate(eventData.for_kupdate);
+    msg->set_range_cyclic(eventData.range_cyclic);
+    msg->set_for_background(eventData.for_background);
+    msg->set_reason(eventData.reason);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseWritebackQueueEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackQueueData eventData {};
+    ParseWritebackQueueData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_queue_format();
+    msg->set_name(eventData.name);
+    msg->set_nr_pages(eventData.nr_pages);
+    msg->set_sb_dev(eventData.sb_dev);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_for_kupdate(eventData.for_kupdate);
+    msg->set_range_cyclic(eventData.range_cyclic);
+    msg->set_for_background(eventData.for_background);
+    msg->set_reason(eventData.reason);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_queue, ParseWritebackQueue);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_queue, ParseWritebackQueueEncoder);
 
-template <typename T> void writeback_queue_io_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackQueueIoData {
+    std::string name {};
+    uint64_t older {};
+    uint64_t age {};
+    int32_t moved {};
+    int32_t reason {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseWritebackQueueIoData(WritebackQueueIoData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_older(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_age(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_moved(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_reason(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.older = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.age = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.moved = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.reason = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_queue_io,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_queue_io_format();
-        writeback_queue_io_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_queue_io,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_queue_io_format();
-        writeback_queue_io_func(msg, data, size, format);
-    });
+void ParseWritebackQueueIo(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackQueueIoData eventData {};
+    ParseWritebackQueueIoData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_queue_io_format();
+    msg->set_name(eventData.name);
+    msg->set_older(eventData.older);
+    msg->set_age(eventData.age);
+    msg->set_moved(eventData.moved);
+    msg->set_reason(eventData.reason);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseWritebackQueueIoEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackQueueIoData eventData {};
+    ParseWritebackQueueIoData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_queue_io_format();
+    msg->set_name(eventData.name);
+    msg->set_older(eventData.older);
+    msg->set_age(eventData.age);
+    msg->set_moved(eventData.moved);
+    msg->set_reason(eventData.reason);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_queue_io, ParseWritebackQueueIo);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_queue_io, ParseWritebackQueueIoEncoder);
 
-template <typename T>
-void writeback_sb_inodes_requeue_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackSbInodesRequeueData {
+    std::string name {};
+    uint64_t ino {};
+    uint64_t state {};
+    uint64_t dirtied_when {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseWritebackSbInodesRequeueData(WritebackSbInodesRequeueData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_state(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_dirtied_when(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.dirtied_when = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_sb_inodes_requeue,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_sb_inodes_requeue_format();
-        writeback_sb_inodes_requeue_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_sb_inodes_requeue,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_sb_inodes_requeue_format();
-        writeback_sb_inodes_requeue_func(msg, data, size, format);
-    });
+void ParseWritebackSbInodesRequeue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackSbInodesRequeueData eventData {};
+    ParseWritebackSbInodesRequeueData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_sb_inodes_requeue_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_dirtied_when(eventData.dirtied_when);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseWritebackSbInodesRequeueEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackSbInodesRequeueData eventData {};
+    ParseWritebackSbInodesRequeueData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_sb_inodes_requeue_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_dirtied_when(eventData.dirtied_when);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_sb_inodes_requeue, ParseWritebackSbInodesRequeue);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_sb_inodes_requeue, ParseWritebackSbInodesRequeueEncoder);
 
-template <typename T> void writeback_single_inode_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackSingleInodeData {
+    std::string name {};
+    uint64_t ino {};
+    uint64_t state {};
+    uint64_t dirtied_when {};
+    uint64_t writeback_index {};
+    uint64_t nr_to_write {};
+    uint64_t wrote {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseWritebackSingleInodeData(WritebackSingleInodeData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_state(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_dirtied_when(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_writeback_index(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_to_write(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_wrote(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.dirtied_when = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.writeback_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_to_write = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.wrote = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_single_inode,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_single_inode_format();
-        writeback_single_inode_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_single_inode,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_single_inode_format();
-        writeback_single_inode_func(msg, data, size, format);
-    });
+void ParseWritebackSingleInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackSingleInodeData eventData {};
+    ParseWritebackSingleInodeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_single_inode_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_dirtied_when(eventData.dirtied_when);
+    msg->set_writeback_index(eventData.writeback_index);
+    msg->set_nr_to_write(eventData.nr_to_write);
+    msg->set_wrote(eventData.wrote);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseWritebackSingleInodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackSingleInodeData eventData {};
+    ParseWritebackSingleInodeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_single_inode_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_dirtied_when(eventData.dirtied_when);
+    msg->set_writeback_index(eventData.writeback_index);
+    msg->set_nr_to_write(eventData.nr_to_write);
+    msg->set_wrote(eventData.wrote);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_single_inode, ParseWritebackSingleInode);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_single_inode, ParseWritebackSingleInodeEncoder);
 
-template <typename T>
-void writeback_single_inode_start_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackSingleInodeStartData {
+    std::string name {};
+    uint64_t ino {};
+    uint64_t state {};
+    uint64_t dirtied_when {};
+    uint64_t writeback_index {};
+    uint64_t nr_to_write {};
+    uint64_t wrote {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseWritebackSingleInodeStartData(WritebackSingleInodeStartData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_state(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_dirtied_when(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_writeback_index(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_to_write(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_wrote(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.dirtied_when = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.writeback_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_to_write = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.wrote = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_single_inode_start,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_single_inode_start_format();
-        writeback_single_inode_start_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_single_inode_start,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_single_inode_start_format();
-        writeback_single_inode_start_func(msg, data, size, format);
-    });
+void ParseWritebackSingleInodeStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackSingleInodeStartData eventData {};
+    ParseWritebackSingleInodeStartData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_single_inode_start_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_dirtied_when(eventData.dirtied_when);
+    msg->set_writeback_index(eventData.writeback_index);
+    msg->set_nr_to_write(eventData.nr_to_write);
+    msg->set_wrote(eventData.wrote);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseWritebackSingleInodeStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackSingleInodeStartData eventData {};
+    ParseWritebackSingleInodeStartData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_single_inode_start_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_state(eventData.state);
+    msg->set_dirtied_when(eventData.dirtied_when);
+    msg->set_writeback_index(eventData.writeback_index);
+    msg->set_nr_to_write(eventData.nr_to_write);
+    msg->set_wrote(eventData.wrote);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_single_inode_start, ParseWritebackSingleInodeStart);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_single_inode_start, ParseWritebackSingleInodeStartEncoder);
 
-template <typename T> void writeback_start_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackStartData {
+    std::string name {};
+    uint64_t nr_pages {};
+    uint64_t sb_dev {};
+    int32_t sync_mode {};
+    int32_t for_kupdate {};
+    int32_t range_cyclic {};
+    int32_t for_background {};
+    int32_t reason {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseWritebackStartData(WritebackStartData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_nr_pages(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sb_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sync_mode(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_for_kupdate(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_range_cyclic(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_for_background(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_reason(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sb_dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sync_mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.for_kupdate = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.range_cyclic = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.for_background = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.reason = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_start,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_start_format();
-        writeback_start_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_start,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_start_format();
-        writeback_start_func(msg, data, size, format);
-    });
+void ParseWritebackStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackStartData eventData {};
+    ParseWritebackStartData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_start_format();
+    msg->set_name(eventData.name);
+    msg->set_nr_pages(eventData.nr_pages);
+    msg->set_sb_dev(eventData.sb_dev);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_for_kupdate(eventData.for_kupdate);
+    msg->set_range_cyclic(eventData.range_cyclic);
+    msg->set_for_background(eventData.for_background);
+    msg->set_reason(eventData.reason);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseWritebackStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackStartData eventData {};
+    ParseWritebackStartData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_start_format();
+    msg->set_name(eventData.name);
+    msg->set_nr_pages(eventData.nr_pages);
+    msg->set_sb_dev(eventData.sb_dev);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_for_kupdate(eventData.for_kupdate);
+    msg->set_range_cyclic(eventData.range_cyclic);
+    msg->set_for_background(eventData.for_background);
+    msg->set_reason(eventData.reason);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_start, ParseWritebackStart);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_start, ParseWritebackStartEncoder);
 
-template <typename T> void writeback_wait_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackWaitData {
+    std::string name {};
+    uint64_t nr_pages {};
+    uint64_t sb_dev {};
+    int32_t sync_mode {};
+    int32_t for_kupdate {};
+    int32_t range_cyclic {};
+    int32_t for_background {};
+    int32_t reason {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseWritebackWaitData(WritebackWaitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_nr_pages(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sb_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sync_mode(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_for_kupdate(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_range_cyclic(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_for_background(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_reason(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sb_dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sync_mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.for_kupdate = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.range_cyclic = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.for_background = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.reason = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_wait,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_wait_format();
-        writeback_wait_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_wait,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_wait_format();
-        writeback_wait_func(msg, data, size, format);
-    });
+void ParseWritebackWait(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackWaitData eventData {};
+    ParseWritebackWaitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_wait_format();
+    msg->set_name(eventData.name);
+    msg->set_nr_pages(eventData.nr_pages);
+    msg->set_sb_dev(eventData.sb_dev);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_for_kupdate(eventData.for_kupdate);
+    msg->set_range_cyclic(eventData.range_cyclic);
+    msg->set_for_background(eventData.for_background);
+    msg->set_reason(eventData.reason);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseWritebackWaitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackWaitData eventData {};
+    ParseWritebackWaitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_wait_format();
+    msg->set_name(eventData.name);
+    msg->set_nr_pages(eventData.nr_pages);
+    msg->set_sb_dev(eventData.sb_dev);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_for_kupdate(eventData.for_kupdate);
+    msg->set_range_cyclic(eventData.range_cyclic);
+    msg->set_for_background(eventData.for_background);
+    msg->set_reason(eventData.reason);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_wait, ParseWritebackWait);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_wait, ParseWritebackWaitEncoder);
 
-template <typename T>
-void writeback_wait_iff_congested_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackWaitIffCongestedData {
+    uint32_t usec_timeout {};
+    uint32_t usec_delayed {};
+};
+__attribute__((noinline)) void ParseWritebackWaitIffCongestedData(WritebackWaitIffCongestedData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_usec_timeout(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_usec_delayed(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.usec_timeout = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.usec_delayed = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_wait_iff_congested,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_wait_iff_congested_format();
-        writeback_wait_iff_congested_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_wait_iff_congested,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_wait_iff_congested_format();
-        writeback_wait_iff_congested_func(msg, data, size, format);
-    });
+void ParseWritebackWaitIffCongested(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackWaitIffCongestedData eventData {};
+    ParseWritebackWaitIffCongestedData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_wait_iff_congested_format();
+    msg->set_usec_timeout(eventData.usec_timeout);
+    msg->set_usec_delayed(eventData.usec_delayed);
+}
+void ParseWritebackWaitIffCongestedEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackWaitIffCongestedData eventData {};
+    ParseWritebackWaitIffCongestedData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_wait_iff_congested_format();
+    msg->set_usec_timeout(eventData.usec_timeout);
+    msg->set_usec_delayed(eventData.usec_delayed);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_wait_iff_congested, ParseWritebackWaitIffCongested);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_wait_iff_congested, ParseWritebackWaitIffCongestedEncoder);
 
-template <typename T>
-void writeback_wake_background_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackWakeBackgroundData {
+    std::string name {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseWritebackWakeBackgroundData(WritebackWakeBackgroundData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_wake_background,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_wake_background_format();
-        writeback_wake_background_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_wake_background,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_wake_background_format();
-        writeback_wake_background_func(msg, data, size, format);
-    });
+void ParseWritebackWakeBackground(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackWakeBackgroundData eventData {};
+    ParseWritebackWakeBackgroundData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_wake_background_format();
+    msg->set_name(eventData.name);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseWritebackWakeBackgroundEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackWakeBackgroundData eventData {};
+    ParseWritebackWakeBackgroundData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_wake_background_format();
+    msg->set_name(eventData.name);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_wake_background, ParseWritebackWakeBackground);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_wake_background, ParseWritebackWakeBackgroundEncoder);
 
-template <typename T> void writeback_write_inode_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackWriteInodeData {
+    std::string name {};
+    uint64_t ino {};
+    int32_t sync_mode {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseWritebackWriteInodeData(WritebackWriteInodeData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sync_mode(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sync_mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_write_inode,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_write_inode_format();
-        writeback_write_inode_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_write_inode,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_write_inode_format();
-        writeback_write_inode_func(msg, data, size, format);
-    });
+void ParseWritebackWriteInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackWriteInodeData eventData {};
+    ParseWritebackWriteInodeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_write_inode_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseWritebackWriteInodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackWriteInodeData eventData {};
+    ParseWritebackWriteInodeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_write_inode_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_write_inode, ParseWritebackWriteInode);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_write_inode, ParseWritebackWriteInodeEncoder);
 
-template <typename T>
-void writeback_write_inode_start_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackWriteInodeStartData {
+    std::string name {};
+    uint64_t ino {};
+    int32_t sync_mode {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseWritebackWriteInodeStartData(WritebackWriteInodeStartData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sync_mode(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sync_mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_write_inode_start,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_write_inode_start_format();
-        writeback_write_inode_start_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_write_inode_start,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_write_inode_start_format();
-        writeback_write_inode_start_func(msg, data, size, format);
-    });
+void ParseWritebackWriteInodeStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackWriteInodeStartData eventData {};
+    ParseWritebackWriteInodeStartData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_write_inode_start_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseWritebackWriteInodeStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackWriteInodeStartData eventData {};
+    ParseWritebackWriteInodeStartData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_write_inode_start_format();
+    msg->set_name(eventData.name);
+    msg->set_ino(eventData.ino);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_write_inode_start, ParseWritebackWriteInodeStart);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_write_inode_start, ParseWritebackWriteInodeStartEncoder);
 
-template <typename T> void writeback_written_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct WritebackWrittenData {
+    std::string name {};
+    uint64_t nr_pages {};
+    uint64_t sb_dev {};
+    int32_t sync_mode {};
+    int32_t for_kupdate {};
+    int32_t range_cyclic {};
+    int32_t for_background {};
+    int32_t reason {};
+    uint32_t cgroup_ino {};
+};
+__attribute__((noinline)) void ParseWritebackWrittenData(WritebackWrittenData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_nr_pages(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sb_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sync_mode(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_for_kupdate(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_range_cyclic(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_for_background(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_reason(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_cgroup_ino(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sb_dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sync_mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.for_kupdate = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.range_cyclic = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.for_background = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.reason = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_written,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_written_format();
-        writeback_written_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_written,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_writeback_written_format();
-        writeback_written_func(msg, data, size, format);
-    });
+void ParseWritebackWritten(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackWrittenData eventData {};
+    ParseWritebackWrittenData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_written_format();
+    msg->set_name(eventData.name);
+    msg->set_nr_pages(eventData.nr_pages);
+    msg->set_sb_dev(eventData.sb_dev);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_for_kupdate(eventData.for_kupdate);
+    msg->set_range_cyclic(eventData.range_cyclic);
+    msg->set_for_background(eventData.for_background);
+    msg->set_reason(eventData.reason);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+void ParseWritebackWrittenEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    WritebackWrittenData eventData {};
+    ParseWritebackWrittenData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_writeback_written_format();
+    msg->set_name(eventData.name);
+    msg->set_nr_pages(eventData.nr_pages);
+    msg->set_sb_dev(eventData.sb_dev);
+    msg->set_sync_mode(eventData.sync_mode);
+    msg->set_for_kupdate(eventData.for_kupdate);
+    msg->set_range_cyclic(eventData.range_cyclic);
+    msg->set_for_background(eventData.for_background);
+    msg->set_reason(eventData.reason);
+    msg->set_cgroup_ino(eventData.cgroup_ino);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_written, ParseWritebackWritten);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_written, ParseWritebackWrittenEncoder);
 } // namespace
 FTRACE_NS_END

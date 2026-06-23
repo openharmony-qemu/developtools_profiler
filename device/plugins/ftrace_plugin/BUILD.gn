@@ -81,8 +81,12 @@ ohos_shared_library("ftrace_plugin") {
 }
 
 group("ftrace_targets") {
+  deps = [ ":ftrace_plugin" ]
+}
+
+group("ftrace_debug_targets") {
+  testonly = true
   deps = [
-    ":ftrace_plugin",
     "test:busy_test",
     "test:get_tzinfo",
   ]

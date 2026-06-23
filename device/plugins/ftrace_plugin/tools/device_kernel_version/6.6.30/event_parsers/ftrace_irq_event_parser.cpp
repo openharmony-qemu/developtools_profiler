@@ -14,96 +14,158 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T>
-void irq_handler_entry_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct IrqHandlerEntryData {
+    int32_t irq {};
+    std::string name {};
+};
+__attribute__((noinline)) void ParseIrqHandlerEntryData(IrqHandlerEntryData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_irq(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.irq = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(irq_handler_entry, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                           const EventFormat &format) {
+void ParseIrqHandlerEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    IrqHandlerEntryData eventData {};
+    ParseIrqHandlerEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_irq_handler_entry_format();
-    irq_handler_entry_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(irq_handler_entry,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
-                                                auto msg = ftraceEvent.mutable_irq_handler_entry_format();
-                                                irq_handler_entry_func(msg, data, size, format);
-                                            });
+    msg->set_irq(eventData.irq);
+    msg->set_name(eventData.name);
+}
+void ParseIrqHandlerEntryEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    IrqHandlerEntryData eventData {};
+    ParseIrqHandlerEntryData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_irq_handler_entry_format();
+    msg->set_irq(eventData.irq);
+    msg->set_name(eventData.name);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(irq_handler_entry, ParseIrqHandlerEntry);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(irq_handler_entry, ParseIrqHandlerEntryEncoder);
 
-template <typename T>
-void irq_handler_exit_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct IrqHandlerExitData {
+    int32_t irq {};
+    int32_t ret {};
+};
+__attribute__((noinline)) void ParseIrqHandlerExitData(IrqHandlerExitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_irq(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_ret(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    eventData.irq = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(irq_handler_exit, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                          const EventFormat &format) {
+void ParseIrqHandlerExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    IrqHandlerExitData eventData {};
+    ParseIrqHandlerExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_irq_handler_exit_format();
-    irq_handler_exit_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(irq_handler_exit,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
-                                                auto msg = ftraceEvent.mutable_irq_handler_exit_format();
-                                                irq_handler_exit_func(msg, data, size, format);
-                                            });
+    msg->set_irq(eventData.irq);
+    msg->set_ret(eventData.ret);
+}
+void ParseIrqHandlerExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    IrqHandlerExitData eventData {};
+    ParseIrqHandlerExitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_irq_handler_exit_format();
+    msg->set_irq(eventData.irq);
+    msg->set_ret(eventData.ret);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(irq_handler_exit, ParseIrqHandlerExit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(irq_handler_exit, ParseIrqHandlerExitEncoder);
 
-template <typename T>
-void softirq_entry_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct SoftirqEntryData {
+    uint32_t vec {};
+};
+__attribute__((noinline)) void ParseSoftirqEntryData(SoftirqEntryData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_vec(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.vec = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(softirq_entry, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                       const EventFormat &format) {
+void ParseSoftirqEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    SoftirqEntryData eventData {};
+    ParseSoftirqEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_softirq_entry_format();
-    softirq_entry_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(softirq_entry, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                               size_t size, const EventFormat &format) {
+    msg->set_vec(eventData.vec);
+}
+void ParseSoftirqEntryEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    SoftirqEntryData eventData {};
+    ParseSoftirqEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_softirq_entry_format();
-    softirq_entry_func(msg, data, size, format);
-});
+    msg->set_vec(eventData.vec);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(softirq_entry, ParseSoftirqEntry);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(softirq_entry, ParseSoftirqEntryEncoder);
 
-template <typename T>
-void softirq_exit_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct SoftirqExitData {
+    uint32_t vec {};
+};
+__attribute__((noinline)) void ParseSoftirqExitData(SoftirqExitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_vec(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.vec = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(softirq_exit, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                      const EventFormat &format) {
+void ParseSoftirqExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    SoftirqExitData eventData {};
+    ParseSoftirqExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_softirq_exit_format();
-    softirq_exit_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(softirq_exit, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                              size_t size, const EventFormat &format) {
+    msg->set_vec(eventData.vec);
+}
+void ParseSoftirqExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    SoftirqExitData eventData {};
+    ParseSoftirqExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_softirq_exit_format();
-    softirq_exit_func(msg, data, size, format);
-});
+    msg->set_vec(eventData.vec);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(softirq_exit, ParseSoftirqExit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(softirq_exit, ParseSoftirqExitEncoder);
 
-template <typename T>
-void softirq_raise_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct SoftirqRaiseData {
+    uint32_t vec {};
+};
+__attribute__((noinline)) void ParseSoftirqRaiseData(SoftirqRaiseData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_vec(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.vec = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(softirq_raise, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                       const EventFormat &format) {
+void ParseSoftirqRaise(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    SoftirqRaiseData eventData {};
+    ParseSoftirqRaiseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_softirq_raise_format();
-    softirq_raise_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(softirq_raise, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                               size_t size, const EventFormat &format) {
+    msg->set_vec(eventData.vec);
+}
+void ParseSoftirqRaiseEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    SoftirqRaiseData eventData {};
+    ParseSoftirqRaiseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_softirq_raise_format();
-    softirq_raise_func(msg, data, size, format);
-});
+    msg->set_vec(eventData.vec);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(softirq_raise, ParseSoftirqRaise);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(softirq_raise, ParseSoftirqRaiseEncoder);
 }  // namespace
 FTRACE_NS_END

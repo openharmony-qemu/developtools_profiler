@@ -14,258 +14,426 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T>
-void clk_disable_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ClkDisableData {
+    std::string name {};
+};
+__attribute__((noinline)) void ParseClkDisableData(ClkDisableData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_disable, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                     const EventFormat &format) {
+void ParseClkDisable(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkDisableData eventData {};
+    ParseClkDisableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_disable_format();
-    clk_disable_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_disable, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                             size_t size, const EventFormat &format) {
+    msg->set_name(eventData.name);
+}
+void ParseClkDisableEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkDisableData eventData {};
+    ParseClkDisableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_disable_format();
-    clk_disable_func(msg, data, size, format);
-});
+    msg->set_name(eventData.name);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_disable, ParseClkDisable);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_disable, ParseClkDisableEncoder);
 
-template <typename T>
-void clk_disable_complete_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ClkDisableCompleteData {
+    std::string name {};
+};
+__attribute__((noinline)) void ParseClkDisableCompleteData(ClkDisableCompleteData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_disable_complete, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                              const EventFormat &format) {
+void ParseClkDisableComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkDisableCompleteData eventData {};
+    ParseClkDisableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_disable_complete_format();
-    clk_disable_complete_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_disable_complete,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
-                                                auto msg = ftraceEvent.mutable_clk_disable_complete_format();
-                                                clk_disable_complete_func(msg, data, size, format);
-                                            });
+    msg->set_name(eventData.name);
+}
+void ParseClkDisableCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkDisableCompleteData eventData {};
+    ParseClkDisableCompleteData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_clk_disable_complete_format();
+    msg->set_name(eventData.name);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_disable_complete, ParseClkDisableComplete);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_disable_complete, ParseClkDisableCompleteEncoder);
 
-template <typename T>
-void clk_enable_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ClkEnableData {
+    std::string name {};
+};
+__attribute__((noinline)) void ParseClkEnableData(ClkEnableData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_enable, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                    const EventFormat &format) {
+void ParseClkEnable(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkEnableData eventData {};
+    ParseClkEnableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_enable_format();
-    clk_enable_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_enable, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                            size_t size, const EventFormat &format) {
+    msg->set_name(eventData.name);
+}
+void ParseClkEnableEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkEnableData eventData {};
+    ParseClkEnableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_enable_format();
-    clk_enable_func(msg, data, size, format);
-});
+    msg->set_name(eventData.name);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_enable, ParseClkEnable);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_enable, ParseClkEnableEncoder);
 
-template <typename T>
-void clk_enable_complete_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ClkEnableCompleteData {
+    std::string name {};
+};
+__attribute__((noinline)) void ParseClkEnableCompleteData(ClkEnableCompleteData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_enable_complete, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                             const EventFormat &format) {
+void ParseClkEnableComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkEnableCompleteData eventData {};
+    ParseClkEnableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_enable_complete_format();
-    clk_enable_complete_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_enable_complete,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
-                                                auto msg = ftraceEvent.mutable_clk_enable_complete_format();
-                                                clk_enable_complete_func(msg, data, size, format);
-                                            });
+    msg->set_name(eventData.name);
+}
+void ParseClkEnableCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkEnableCompleteData eventData {};
+    ParseClkEnableCompleteData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_clk_enable_complete_format();
+    msg->set_name(eventData.name);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_enable_complete, ParseClkEnableComplete);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_enable_complete, ParseClkEnableCompleteEncoder);
 
-template <typename T>
-void clk_prepare_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ClkPrepareData {
+    std::string name {};
+};
+__attribute__((noinline)) void ParseClkPrepareData(ClkPrepareData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_prepare, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                     const EventFormat &format) {
+void ParseClkPrepare(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkPrepareData eventData {};
+    ParseClkPrepareData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_prepare_format();
-    clk_prepare_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_prepare, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                             size_t size, const EventFormat &format) {
+    msg->set_name(eventData.name);
+}
+void ParseClkPrepareEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkPrepareData eventData {};
+    ParseClkPrepareData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_prepare_format();
-    clk_prepare_func(msg, data, size, format);
-});
+    msg->set_name(eventData.name);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_prepare, ParseClkPrepare);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_prepare, ParseClkPrepareEncoder);
 
-template <typename T>
-void clk_prepare_complete_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ClkPrepareCompleteData {
+    std::string name {};
+};
+__attribute__((noinline)) void ParseClkPrepareCompleteData(ClkPrepareCompleteData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_prepare_complete, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                              const EventFormat &format) {
+void ParseClkPrepareComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkPrepareCompleteData eventData {};
+    ParseClkPrepareCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_prepare_complete_format();
-    clk_prepare_complete_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_prepare_complete,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
-                                                auto msg = ftraceEvent.mutable_clk_prepare_complete_format();
-                                                clk_prepare_complete_func(msg, data, size, format);
-                                            });
+    msg->set_name(eventData.name);
+}
+void ParseClkPrepareCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkPrepareCompleteData eventData {};
+    ParseClkPrepareCompleteData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_clk_prepare_complete_format();
+    msg->set_name(eventData.name);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_prepare_complete, ParseClkPrepareComplete);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_prepare_complete, ParseClkPrepareCompleteEncoder);
 
-template <typename T>
-void clk_set_parent_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ClkSetParentData {
+    std::string name {};
+    std::string pname {};
+};
+__attribute__((noinline)) void ParseClkSetParentData(ClkSetParentData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_pname(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.pname = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_parent, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                        const EventFormat &format) {
+void ParseClkSetParent(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkSetParentData eventData {};
+    ParseClkSetParentData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_parent_format();
-    clk_set_parent_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_parent, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                                size_t size, const EventFormat &format) {
+    msg->set_name(eventData.name);
+    msg->set_pname(eventData.pname);
+}
+void ParseClkSetParentEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkSetParentData eventData {};
+    ParseClkSetParentData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_parent_format();
-    clk_set_parent_func(msg, data, size, format);
-});
+    msg->set_name(eventData.name);
+    msg->set_pname(eventData.pname);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_parent, ParseClkSetParent);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_parent, ParseClkSetParentEncoder);
 
-template <typename T>
-void clk_set_parent_complete_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ClkSetParentCompleteData {
+    std::string name {};
+    std::string pname {};
+};
+__attribute__((noinline)) void ParseClkSetParentCompleteData(ClkSetParentCompleteData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_pname(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.pname = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_parent_complete, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                                 const EventFormat &format) {
+void ParseClkSetParentComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkSetParentCompleteData eventData {};
+    ParseClkSetParentCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_parent_complete_format();
-    clk_set_parent_complete_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_parent_complete,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
+    msg->set_name(eventData.name);
+    msg->set_pname(eventData.pname);
+}
+void ParseClkSetParentCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkSetParentCompleteData eventData {};
+    ParseClkSetParentCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_parent_complete_format();
-    clk_set_parent_complete_func(msg, data, size, format);
-});
+    msg->set_name(eventData.name);
+    msg->set_pname(eventData.pname);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_parent_complete, ParseClkSetParentComplete);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_parent_complete, ParseClkSetParentCompleteEncoder);
 
-template <typename T>
-void clk_set_phase_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ClkSetPhaseData {
+    std::string name {};
+    int32_t phase {};
+};
+__attribute__((noinline)) void ParseClkSetPhaseData(ClkSetPhaseData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_phase(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.phase = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_phase, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                       const EventFormat &format) {
+void ParseClkSetPhase(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkSetPhaseData eventData {};
+    ParseClkSetPhaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_phase_format();
-    clk_set_phase_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_phase, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                               size_t size, const EventFormat &format) {
+    msg->set_name(eventData.name);
+    msg->set_phase(eventData.phase);
+}
+void ParseClkSetPhaseEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkSetPhaseData eventData {};
+    ParseClkSetPhaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_phase_format();
-    clk_set_phase_func(msg, data, size, format);
-});
+    msg->set_name(eventData.name);
+    msg->set_phase(eventData.phase);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_phase, ParseClkSetPhase);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_phase, ParseClkSetPhaseEncoder);
 
-template <typename T>
-void clk_set_phase_complete_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ClkSetPhaseCompleteData {
+    std::string name {};
+    int32_t phase {};
+};
+__attribute__((noinline)) void ParseClkSetPhaseCompleteData(ClkSetPhaseCompleteData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_phase(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.phase = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_phase_complete, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                                const EventFormat &format) {
+void ParseClkSetPhaseComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkSetPhaseCompleteData eventData {};
+    ParseClkSetPhaseCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_phase_complete_format();
-    clk_set_phase_complete_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_phase_complete,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
+    msg->set_name(eventData.name);
+    msg->set_phase(eventData.phase);
+}
+void ParseClkSetPhaseCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkSetPhaseCompleteData eventData {};
+    ParseClkSetPhaseCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_phase_complete_format();
-    clk_set_phase_complete_func(msg, data, size, format);
-});
+    msg->set_name(eventData.name);
+    msg->set_phase(eventData.phase);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_phase_complete, ParseClkSetPhaseComplete);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_phase_complete, ParseClkSetPhaseCompleteEncoder);
 
-template <typename T>
-void clk_set_rate_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ClkSetRateData {
+    std::string name {};
+    uint64_t rate {};
+};
+__attribute__((noinline)) void ParseClkSetRateData(ClkSetRateData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_rate(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.rate = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_rate, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                      const EventFormat &format) {
+void ParseClkSetRate(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkSetRateData eventData {};
+    ParseClkSetRateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_rate_format();
-    clk_set_rate_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_rate, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                              size_t size, const EventFormat &format) {
+    msg->set_name(eventData.name);
+    msg->set_rate(eventData.rate);
+}
+void ParseClkSetRateEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkSetRateData eventData {};
+    ParseClkSetRateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_rate_format();
-    clk_set_rate_func(msg, data, size, format);
-});
+    msg->set_name(eventData.name);
+    msg->set_rate(eventData.rate);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_rate, ParseClkSetRate);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_rate, ParseClkSetRateEncoder);
 
-template <typename T>
-void clk_set_rate_complete_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ClkSetRateCompleteData {
+    std::string name {};
+    uint64_t rate {};
+};
+__attribute__((noinline)) void ParseClkSetRateCompleteData(ClkSetRateCompleteData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_rate(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.rate = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_rate_complete, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                               const EventFormat &format) {
+void ParseClkSetRateComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkSetRateCompleteData eventData {};
+    ParseClkSetRateCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_rate_complete_format();
-    clk_set_rate_complete_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_rate_complete,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
+    msg->set_name(eventData.name);
+    msg->set_rate(eventData.rate);
+}
+void ParseClkSetRateCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkSetRateCompleteData eventData {};
+    ParseClkSetRateCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_rate_complete_format();
-    clk_set_rate_complete_func(msg, data, size, format);
-});
+    msg->set_name(eventData.name);
+    msg->set_rate(eventData.rate);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_rate_complete, ParseClkSetRateComplete);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_rate_complete, ParseClkSetRateCompleteEncoder);
 
-template <typename T>
-void clk_unprepare_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ClkUnprepareData {
+    std::string name {};
+};
+__attribute__((noinline)) void ParseClkUnprepareData(ClkUnprepareData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_unprepare, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                       const EventFormat &format) {
+void ParseClkUnprepare(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkUnprepareData eventData {};
+    ParseClkUnprepareData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_unprepare_format();
-    clk_unprepare_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_unprepare, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                               size_t size, const EventFormat &format) {
+    msg->set_name(eventData.name);
+}
+void ParseClkUnprepareEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkUnprepareData eventData {};
+    ParseClkUnprepareData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_unprepare_format();
-    clk_unprepare_func(msg, data, size, format);
-});
+    msg->set_name(eventData.name);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_unprepare, ParseClkUnprepare);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_unprepare, ParseClkUnprepareEncoder);
 
-template <typename T>
-void clk_unprepare_complete_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ClkUnprepareCompleteData {
+    std::string name {};
+};
+__attribute__((noinline)) void ParseClkUnprepareCompleteData(ClkUnprepareCompleteData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_unprepare_complete, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                                const EventFormat &format) {
+void ParseClkUnprepareComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkUnprepareCompleteData eventData {};
+    ParseClkUnprepareCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_unprepare_complete_format();
-    clk_unprepare_complete_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_unprepare_complete,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
+    msg->set_name(eventData.name);
+}
+void ParseClkUnprepareCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ClkUnprepareCompleteData eventData {};
+    ParseClkUnprepareCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_unprepare_complete_format();
-    clk_unprepare_complete_func(msg, data, size, format);
-});
+    msg->set_name(eventData.name);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_unprepare_complete, ParseClkUnprepareComplete);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_unprepare_complete, ParseClkUnprepareCompleteEncoder);
 }  // namespace
 FTRACE_NS_END

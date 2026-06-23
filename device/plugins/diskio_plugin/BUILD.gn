@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 
 ohos_source_set("diskiodataplugin_source") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   sources = [
@@ -46,6 +47,7 @@ ohos_source_set("diskiodataplugin_source") {
 }
 
 ohos_shared_library("diskiodataplugin") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   output_name = "diskiodataplugin"
   version_script = "libdiskio_plugin.map"
   deps = [

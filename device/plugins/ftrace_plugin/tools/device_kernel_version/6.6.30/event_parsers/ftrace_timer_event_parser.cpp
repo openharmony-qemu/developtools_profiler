@@ -14,237 +14,434 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T>
-void hrtimer_cancel_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct HrtimerCancelData {
+    uint64_t hrtimer {};
+};
+__attribute__((noinline)) void ParseHrtimerCancelData(HrtimerCancelData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_hrtimer(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hrtimer_cancel, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                        const EventFormat &format) {
+void ParseHrtimerCancel(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HrtimerCancelData eventData {};
+    ParseHrtimerCancelData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_cancel_format();
-    hrtimer_cancel_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hrtimer_cancel, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                                size_t size, const EventFormat &format) {
+    msg->set_hrtimer(eventData.hrtimer);
+}
+void ParseHrtimerCancelEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HrtimerCancelData eventData {};
+    ParseHrtimerCancelData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_cancel_format();
-    hrtimer_cancel_func(msg, data, size, format);
-});
+    msg->set_hrtimer(eventData.hrtimer);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hrtimer_cancel, ParseHrtimerCancel);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hrtimer_cancel, ParseHrtimerCancelEncoder);
 
-template <typename T>
-void hrtimer_expire_entry_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct HrtimerExpireEntryData {
+    uint64_t hrtimer {};
+    int64_t now {};
+    uint64_t function {};
+};
+__attribute__((noinline)) void ParseHrtimerExpireEntryData(HrtimerExpireEntryData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_hrtimer(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_now(FtraceFieldParser::ParseIntField<int64_t>(format.fields, i++, data, size));
-    msg->set_function(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.now = FtraceFieldParser::ParseIntField<int64_t>(format.fields, i++, data, size);
+    eventData.function = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hrtimer_expire_entry, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                              const EventFormat &format) {
+void ParseHrtimerExpireEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HrtimerExpireEntryData eventData {};
+    ParseHrtimerExpireEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_expire_entry_format();
-    hrtimer_expire_entry_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hrtimer_expire_entry,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
-                                                auto msg = ftraceEvent.mutable_hrtimer_expire_entry_format();
-                                                hrtimer_expire_entry_func(msg, data, size, format);
-                                            });
+    msg->set_hrtimer(eventData.hrtimer);
+    msg->set_now(eventData.now);
+    msg->set_function(eventData.function);
+}
+void ParseHrtimerExpireEntryEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HrtimerExpireEntryData eventData {};
+    ParseHrtimerExpireEntryData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_hrtimer_expire_entry_format();
+    msg->set_hrtimer(eventData.hrtimer);
+    msg->set_now(eventData.now);
+    msg->set_function(eventData.function);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hrtimer_expire_entry, ParseHrtimerExpireEntry);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hrtimer_expire_entry, ParseHrtimerExpireEntryEncoder);
 
-template <typename T>
-void hrtimer_expire_exit_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct HrtimerExpireExitData {
+    uint64_t hrtimer {};
+};
+__attribute__((noinline)) void ParseHrtimerExpireExitData(HrtimerExpireExitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_hrtimer(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hrtimer_expire_exit, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                             const EventFormat &format) {
+void ParseHrtimerExpireExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HrtimerExpireExitData eventData {};
+    ParseHrtimerExpireExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_expire_exit_format();
-    hrtimer_expire_exit_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hrtimer_expire_exit,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
-                                                auto msg = ftraceEvent.mutable_hrtimer_expire_exit_format();
-                                                hrtimer_expire_exit_func(msg, data, size, format);
-                                            });
+    msg->set_hrtimer(eventData.hrtimer);
+}
+void ParseHrtimerExpireExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HrtimerExpireExitData eventData {};
+    ParseHrtimerExpireExitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_hrtimer_expire_exit_format();
+    msg->set_hrtimer(eventData.hrtimer);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hrtimer_expire_exit, ParseHrtimerExpireExit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hrtimer_expire_exit, ParseHrtimerExpireExitEncoder);
 
-template <typename T>
-void hrtimer_init_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct HrtimerInitData {
+    uint64_t hrtimer {};
+    int32_t clockid {};
+    uint32_t mode {};
+};
+__attribute__((noinline)) void ParseHrtimerInitData(HrtimerInitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_hrtimer(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_clockid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_mode(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.clockid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hrtimer_init, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                      const EventFormat &format) {
+void ParseHrtimerInit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HrtimerInitData eventData {};
+    ParseHrtimerInitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_init_format();
-    hrtimer_init_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hrtimer_init, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                              size_t size, const EventFormat &format) {
+    msg->set_hrtimer(eventData.hrtimer);
+    msg->set_clockid(eventData.clockid);
+    msg->set_mode(eventData.mode);
+}
+void ParseHrtimerInitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HrtimerInitData eventData {};
+    ParseHrtimerInitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_init_format();
-    hrtimer_init_func(msg, data, size, format);
-});
+    msg->set_hrtimer(eventData.hrtimer);
+    msg->set_clockid(eventData.clockid);
+    msg->set_mode(eventData.mode);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hrtimer_init, ParseHrtimerInit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hrtimer_init, ParseHrtimerInitEncoder);
 
-template <typename T>
-void hrtimer_start_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct HrtimerStartData {
+    uint64_t hrtimer {};
+    uint64_t function {};
+    int64_t expires {};
+    int64_t softexpires {};
+    uint32_t mode {};
+};
+__attribute__((noinline)) void ParseHrtimerStartData(HrtimerStartData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_hrtimer(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_function(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_expires(FtraceFieldParser::ParseIntField<int64_t>(format.fields, i++, data, size));
-    msg->set_softexpires(FtraceFieldParser::ParseIntField<int64_t>(format.fields, i++, data, size));
-    msg->set_mode(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.function = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.expires = FtraceFieldParser::ParseIntField<int64_t>(format.fields, i++, data, size);
+    eventData.softexpires = FtraceFieldParser::ParseIntField<int64_t>(format.fields, i++, data, size);
+    eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hrtimer_start, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                       const EventFormat &format) {
+void ParseHrtimerStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HrtimerStartData eventData {};
+    ParseHrtimerStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_start_format();
-    hrtimer_start_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hrtimer_start, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                               size_t size, const EventFormat &format) {
+    msg->set_hrtimer(eventData.hrtimer);
+    msg->set_function(eventData.function);
+    msg->set_expires(eventData.expires);
+    msg->set_softexpires(eventData.softexpires);
+    msg->set_mode(eventData.mode);
+}
+void ParseHrtimerStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HrtimerStartData eventData {};
+    ParseHrtimerStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_start_format();
-    hrtimer_start_func(msg, data, size, format);
-});
+    msg->set_hrtimer(eventData.hrtimer);
+    msg->set_function(eventData.function);
+    msg->set_expires(eventData.expires);
+    msg->set_softexpires(eventData.softexpires);
+    msg->set_mode(eventData.mode);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hrtimer_start, ParseHrtimerStart);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hrtimer_start, ParseHrtimerStartEncoder);
 
-template <typename T>
-void itimer_expire_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ItimerExpireData {
+    int32_t which {};
+    int32_t pid {};
+    uint64_t now {};
+};
+__attribute__((noinline)) void ParseItimerExpireData(ItimerExpireData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_which(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_now(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.which = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.now = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(itimer_expire, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                       const EventFormat &format) {
+void ParseItimerExpire(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ItimerExpireData eventData {};
+    ParseItimerExpireData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_itimer_expire_format();
-    itimer_expire_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(itimer_expire, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                               size_t size, const EventFormat &format) {
+    msg->set_which(eventData.which);
+    msg->set_pid(eventData.pid);
+    msg->set_now(eventData.now);
+}
+void ParseItimerExpireEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ItimerExpireData eventData {};
+    ParseItimerExpireData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_itimer_expire_format();
-    itimer_expire_func(msg, data, size, format);
-});
+    msg->set_which(eventData.which);
+    msg->set_pid(eventData.pid);
+    msg->set_now(eventData.now);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(itimer_expire, ParseItimerExpire);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(itimer_expire, ParseItimerExpireEncoder);
 
-template <typename T>
-void itimer_state_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ItimerStateData {
+    int32_t which {};
+    uint64_t expires {};
+    uint64_t value_sec {};
+    uint64_t value_nsec {};
+    uint64_t interval_sec {};
+    uint64_t interval_nsec {};
+};
+__attribute__((noinline)) void ParseItimerStateData(ItimerStateData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_which(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_expires(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_value_sec(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_value_nsec(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_interval_sec(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_interval_nsec(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.which = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.expires = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.value_sec = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.value_nsec = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.interval_sec = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.interval_nsec = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(itimer_state, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                      const EventFormat &format) {
+void ParseItimerState(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ItimerStateData eventData {};
+    ParseItimerStateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_itimer_state_format();
-    itimer_state_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(itimer_state, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                              size_t size, const EventFormat &format) {
+    msg->set_which(eventData.which);
+    msg->set_expires(eventData.expires);
+    msg->set_value_sec(eventData.value_sec);
+    msg->set_value_nsec(eventData.value_nsec);
+    msg->set_interval_sec(eventData.interval_sec);
+    msg->set_interval_nsec(eventData.interval_nsec);
+}
+void ParseItimerStateEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ItimerStateData eventData {};
+    ParseItimerStateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_itimer_state_format();
-    itimer_state_func(msg, data, size, format);
-});
+    msg->set_which(eventData.which);
+    msg->set_expires(eventData.expires);
+    msg->set_value_sec(eventData.value_sec);
+    msg->set_value_nsec(eventData.value_nsec);
+    msg->set_interval_sec(eventData.interval_sec);
+    msg->set_interval_nsec(eventData.interval_nsec);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(itimer_state, ParseItimerState);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(itimer_state, ParseItimerStateEncoder);
 
-template <typename T>
-void timer_cancel_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct TimerCancelData {
+    uint64_t timer {};
+};
+__attribute__((noinline)) void ParseTimerCancelData(TimerCancelData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_timer(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(timer_cancel, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                      const EventFormat &format) {
+void ParseTimerCancel(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    TimerCancelData eventData {};
+    ParseTimerCancelData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_cancel_format();
-    timer_cancel_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(timer_cancel, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                              size_t size, const EventFormat &format) {
+    msg->set_timer(eventData.timer);
+}
+void ParseTimerCancelEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    TimerCancelData eventData {};
+    ParseTimerCancelData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_cancel_format();
-    timer_cancel_func(msg, data, size, format);
-});
+    msg->set_timer(eventData.timer);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(timer_cancel, ParseTimerCancel);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(timer_cancel, ParseTimerCancelEncoder);
 
-template <typename T>
-void timer_expire_entry_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct TimerExpireEntryData {
+    uint64_t timer {};
+    uint64_t now {};
+    uint64_t function {};
+    uint64_t baseclk {};
+};
+__attribute__((noinline)) void ParseTimerExpireEntryData(TimerExpireEntryData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_timer(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_now(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_function(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_baseclk(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.now = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.function = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.baseclk = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(timer_expire_entry, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                            const EventFormat &format) {
+void ParseTimerExpireEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    TimerExpireEntryData eventData {};
+    ParseTimerExpireEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_expire_entry_format();
-    timer_expire_entry_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(timer_expire_entry,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
-                                                auto msg = ftraceEvent.mutable_timer_expire_entry_format();
-                                                timer_expire_entry_func(msg, data, size, format);
-                                            });
+    msg->set_timer(eventData.timer);
+    msg->set_now(eventData.now);
+    msg->set_function(eventData.function);
+    msg->set_baseclk(eventData.baseclk);
+}
+void ParseTimerExpireEntryEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    TimerExpireEntryData eventData {};
+    ParseTimerExpireEntryData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_timer_expire_entry_format();
+    msg->set_timer(eventData.timer);
+    msg->set_now(eventData.now);
+    msg->set_function(eventData.function);
+    msg->set_baseclk(eventData.baseclk);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(timer_expire_entry, ParseTimerExpireEntry);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(timer_expire_entry, ParseTimerExpireEntryEncoder);
 
-template <typename T>
-void timer_expire_exit_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct TimerExpireExitData {
+    uint64_t timer {};
+};
+__attribute__((noinline)) void ParseTimerExpireExitData(TimerExpireExitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_timer(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(timer_expire_exit, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                           const EventFormat &format) {
+void ParseTimerExpireExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    TimerExpireExitData eventData {};
+    ParseTimerExpireExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_expire_exit_format();
-    timer_expire_exit_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(timer_expire_exit,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
-                                                auto msg = ftraceEvent.mutable_timer_expire_exit_format();
-                                                timer_expire_exit_func(msg, data, size, format);
-                                            });
+    msg->set_timer(eventData.timer);
+}
+void ParseTimerExpireExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    TimerExpireExitData eventData {};
+    ParseTimerExpireExitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_timer_expire_exit_format();
+    msg->set_timer(eventData.timer);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(timer_expire_exit, ParseTimerExpireExit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(timer_expire_exit, ParseTimerExpireExitEncoder);
 
-template <typename T>
-void timer_init_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct TimerInitData {
+    uint64_t timer {};
+};
+__attribute__((noinline)) void ParseTimerInitData(TimerInitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_timer(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(timer_init, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                    const EventFormat &format) {
+void ParseTimerInit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    TimerInitData eventData {};
+    ParseTimerInitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_init_format();
-    timer_init_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(timer_init, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                            size_t size, const EventFormat &format) {
+    msg->set_timer(eventData.timer);
+}
+void ParseTimerInitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    TimerInitData eventData {};
+    ParseTimerInitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_init_format();
-    timer_init_func(msg, data, size, format);
-});
+    msg->set_timer(eventData.timer);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(timer_init, ParseTimerInit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(timer_init, ParseTimerInitEncoder);
 
-template <typename T>
-void timer_start_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct TimerStartData {
+    uint64_t timer {};
+    uint64_t function {};
+    uint64_t expires {};
+    uint64_t now {};
+    uint32_t flags {};
+};
+__attribute__((noinline)) void ParseTimerStartData(TimerStartData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_timer(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_function(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_expires(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_now(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.function = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.expires = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.now = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(timer_start, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                     const EventFormat &format) {
+void ParseTimerStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    TimerStartData eventData {};
+    ParseTimerStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_start_format();
-    timer_start_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(timer_start, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                             size_t size, const EventFormat &format) {
+    msg->set_timer(eventData.timer);
+    msg->set_function(eventData.function);
+    msg->set_expires(eventData.expires);
+    msg->set_now(eventData.now);
+    msg->set_flags(eventData.flags);
+}
+void ParseTimerStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    TimerStartData eventData {};
+    ParseTimerStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_start_format();
-    timer_start_func(msg, data, size, format);
-});
+    msg->set_timer(eventData.timer);
+    msg->set_function(eventData.function);
+    msg->set_expires(eventData.expires);
+    msg->set_now(eventData.now);
+    msg->set_flags(eventData.flags);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(timer_start, ParseTimerStart);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(timer_start, ParseTimerStartEncoder);
 }  // namespace
 FTRACE_NS_END

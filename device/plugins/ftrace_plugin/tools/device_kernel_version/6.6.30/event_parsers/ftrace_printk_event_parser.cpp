@@ -14,24 +14,38 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T>
-void console_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct ConsoleData {
+    std::string msg {};
+};
+__attribute__((noinline)) void ParseConsoleData(ConsoleData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_msg(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.msg = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(console, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                 const EventFormat &format) {
+void ParseConsole(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ConsoleData eventData {};
+    ParseConsoleData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_console_format();
-    console_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(console, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                         size_t size, const EventFormat &format) {
+    msg->set_msg(eventData.msg);
+}
+void ParseConsoleEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    ConsoleData eventData {};
+    ParseConsoleData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_console_format();
-    console_func(msg, data, size, format);
-});
+    msg->set_msg(eventData.msg);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(console, ParseConsole);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(console, ParseConsoleEncoder);
 }  // namespace
 FTRACE_NS_END

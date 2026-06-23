@@ -14,369 +14,746 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T>
-void block_bio_backmerge_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockBioBackmergeData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint32_t nr_sector {};
+    std::string rwbs {};
+    std::string comm {};
+};
+__attribute__((noinline)) void ParseBlockBioBackmergeData(BlockBioBackmergeData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_sector(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_rwbs(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_sector = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.rwbs = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_bio_backmerge, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                             const EventFormat &format) {
+void ParseBlockBioBackmerge(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockBioBackmergeData eventData {};
+    ParseBlockBioBackmergeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_backmerge_format();
-    block_bio_backmerge_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_bio_backmerge,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
-                                                auto msg = ftraceEvent.mutable_block_bio_backmerge_format();
-                                                block_bio_backmerge_func(msg, data, size, format);
-                                            });
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+}
+void ParseBlockBioBackmergeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockBioBackmergeData eventData {};
+    ParseBlockBioBackmergeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_block_bio_backmerge_format();
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_bio_backmerge, ParseBlockBioBackmerge);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_bio_backmerge, ParseBlockBioBackmergeEncoder);
 
-template <typename T>
-void block_bio_bounce_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockBioBounceData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint32_t nr_sector {};
+    std::string rwbs {};
+    std::string comm {};
+};
+__attribute__((noinline)) void ParseBlockBioBounceData(BlockBioBounceData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_sector(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_rwbs(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_sector = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.rwbs = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_bio_bounce, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                          const EventFormat &format) {
+void ParseBlockBioBounce(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockBioBounceData eventData {};
+    ParseBlockBioBounceData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_bounce_format();
-    block_bio_bounce_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_bio_bounce,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
-                                                auto msg = ftraceEvent.mutable_block_bio_bounce_format();
-                                                block_bio_bounce_func(msg, data, size, format);
-                                            });
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+}
+void ParseBlockBioBounceEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockBioBounceData eventData {};
+    ParseBlockBioBounceData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_block_bio_bounce_format();
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_bio_bounce, ParseBlockBioBounce);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_bio_bounce, ParseBlockBioBounceEncoder);
 
-template <typename T>
-void block_bio_complete_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockBioCompleteData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint32_t nr_sector {};
+    int32_t error {};
+    std::string rwbs {};
+};
+__attribute__((noinline)) void ParseBlockBioCompleteData(BlockBioCompleteData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_sector(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_error(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_rwbs(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_sector = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.error = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.rwbs = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_bio_complete, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                            const EventFormat &format) {
+void ParseBlockBioComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockBioCompleteData eventData {};
+    ParseBlockBioCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_complete_format();
-    block_bio_complete_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_bio_complete,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
-                                                auto msg = ftraceEvent.mutable_block_bio_complete_format();
-                                                block_bio_complete_func(msg, data, size, format);
-                                            });
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_error(eventData.error);
+    msg->set_rwbs(eventData.rwbs);
+}
+void ParseBlockBioCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockBioCompleteData eventData {};
+    ParseBlockBioCompleteData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_block_bio_complete_format();
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_error(eventData.error);
+    msg->set_rwbs(eventData.rwbs);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_bio_complete, ParseBlockBioComplete);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_bio_complete, ParseBlockBioCompleteEncoder);
 
-template <typename T>
-void block_bio_frontmerge_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockBioFrontmergeData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint32_t nr_sector {};
+    std::string rwbs {};
+    std::string comm {};
+};
+__attribute__((noinline)) void ParseBlockBioFrontmergeData(BlockBioFrontmergeData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_sector(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_rwbs(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_sector = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.rwbs = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_bio_frontmerge, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                              const EventFormat &format) {
+void ParseBlockBioFrontmerge(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockBioFrontmergeData eventData {};
+    ParseBlockBioFrontmergeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_frontmerge_format();
-    block_bio_frontmerge_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_bio_frontmerge,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+}
+void ParseBlockBioFrontmergeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockBioFrontmergeData eventData {};
+    ParseBlockBioFrontmergeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_frontmerge_format();
-    block_bio_frontmerge_func(msg, data, size, format);
-});
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_bio_frontmerge, ParseBlockBioFrontmerge);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_bio_frontmerge, ParseBlockBioFrontmergeEncoder);
 
-template <typename T>
-void block_bio_queue_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockBioQueueData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint32_t nr_sector {};
+    std::string rwbs {};
+    std::string comm {};
+};
+__attribute__((noinline)) void ParseBlockBioQueueData(BlockBioQueueData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_sector(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_rwbs(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_sector = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.rwbs = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_bio_queue, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                         const EventFormat &format) {
+void ParseBlockBioQueue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockBioQueueData eventData {};
+    ParseBlockBioQueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_queue_format();
-    block_bio_queue_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_bio_queue, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                                 size_t size, const EventFormat &format) {
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+}
+void ParseBlockBioQueueEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockBioQueueData eventData {};
+    ParseBlockBioQueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_queue_format();
-    block_bio_queue_func(msg, data, size, format);
-});
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_bio_queue, ParseBlockBioQueue);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_bio_queue, ParseBlockBioQueueEncoder);
 
-template <typename T>
-void block_bio_remap_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockBioRemapData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint32_t nr_sector {};
+    uint64_t old_dev {};
+    uint64_t old_sector {};
+    std::string rwbs {};
+};
+__attribute__((noinline)) void ParseBlockBioRemapData(BlockBioRemapData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_sector(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_old_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_old_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_rwbs(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_sector = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.old_dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.old_sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.rwbs = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_bio_remap, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                         const EventFormat &format) {
+void ParseBlockBioRemap(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockBioRemapData eventData {};
+    ParseBlockBioRemapData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_remap_format();
-    block_bio_remap_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_bio_remap, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                                 size_t size, const EventFormat &format) {
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_old_dev(eventData.old_dev);
+    msg->set_old_sector(eventData.old_sector);
+    msg->set_rwbs(eventData.rwbs);
+}
+void ParseBlockBioRemapEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockBioRemapData eventData {};
+    ParseBlockBioRemapData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_remap_format();
-    block_bio_remap_func(msg, data, size, format);
-});
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_old_dev(eventData.old_dev);
+    msg->set_old_sector(eventData.old_sector);
+    msg->set_rwbs(eventData.rwbs);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_bio_remap, ParseBlockBioRemap);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_bio_remap, ParseBlockBioRemapEncoder);
 
-template <typename T>
-void block_dirty_buffer_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockDirtyBufferData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint64_t size {};
+};
+__attribute__((noinline)) void ParseBlockDirtyBufferData(BlockDirtyBufferData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_size(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_dirty_buffer, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                            const EventFormat &format) {
+void ParseBlockDirtyBuffer(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockDirtyBufferData eventData {};
+    ParseBlockDirtyBufferData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_dirty_buffer_format();
-    block_dirty_buffer_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_dirty_buffer,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_size(eventData.size);
+}
+void ParseBlockDirtyBufferEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockDirtyBufferData eventData {};
+    ParseBlockDirtyBufferData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_dirty_buffer_format();
-    block_dirty_buffer_func(msg, data, size, format);
-});
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_size(eventData.size);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_dirty_buffer, ParseBlockDirtyBuffer);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_dirty_buffer, ParseBlockDirtyBufferEncoder);
 
-template <typename T>
-void block_getrq_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockGetrqData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint32_t nr_sector {};
+    std::string rwbs {};
+    std::string comm {};
+};
+__attribute__((noinline)) void ParseBlockGetrqData(BlockGetrqData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_sector(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_rwbs(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_sector = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.rwbs = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_getrq, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                     const EventFormat &format) {
+void ParseBlockGetrq(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockGetrqData eventData {};
+    ParseBlockGetrqData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_getrq_format();
-    block_getrq_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_getrq, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                             size_t size, const EventFormat &format) {
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+}
+void ParseBlockGetrqEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockGetrqData eventData {};
+    ParseBlockGetrqData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_getrq_format();
-    block_getrq_func(msg, data, size, format);
-});
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_getrq, ParseBlockGetrq);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_getrq, ParseBlockGetrqEncoder);
 
-template <typename T>
-void block_plug_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockPlugData {
+    std::string comm {};
+};
+__attribute__((noinline)) void ParseBlockPlugData(BlockPlugData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_plug, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                    const EventFormat &format) {
+void ParseBlockPlug(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockPlugData eventData {};
+    ParseBlockPlugData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_plug_format();
-    block_plug_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_plug, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                            size_t size, const EventFormat &format) {
+    msg->set_comm(eventData.comm);
+}
+void ParseBlockPlugEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockPlugData eventData {};
+    ParseBlockPlugData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_plug_format();
-    block_plug_func(msg, data, size, format);
-});
+    msg->set_comm(eventData.comm);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_plug, ParseBlockPlug);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_plug, ParseBlockPlugEncoder);
 
-template <typename T>
-void block_rq_complete_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockRqCompleteData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint32_t nr_sector {};
+    int32_t error {};
+    std::string rwbs {};
+    std::string cmd {};
+};
+__attribute__((noinline)) void ParseBlockRqCompleteData(BlockRqCompleteData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_sector(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_error(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_rwbs(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_cmd(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_sector = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.error = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.rwbs = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.cmd = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_rq_complete, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                           const EventFormat &format) {
+void ParseBlockRqComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockRqCompleteData eventData {};
+    ParseBlockRqCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_complete_format();
-    block_rq_complete_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_rq_complete,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
-                                                auto msg = ftraceEvent.mutable_block_rq_complete_format();
-                                                block_rq_complete_func(msg, data, size, format);
-                                            });
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_error(eventData.error);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_cmd(eventData.cmd);
+}
+void ParseBlockRqCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockRqCompleteData eventData {};
+    ParseBlockRqCompleteData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_block_rq_complete_format();
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_error(eventData.error);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_cmd(eventData.cmd);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_rq_complete, ParseBlockRqComplete);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_rq_complete, ParseBlockRqCompleteEncoder);
 
-template <typename T>
-void block_rq_insert_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockRqInsertData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint32_t nr_sector {};
+    uint32_t bytes {};
+    std::string rwbs {};
+    std::string comm {};
+    std::string cmd {};
+};
+__attribute__((noinline)) void ParseBlockRqInsertData(BlockRqInsertData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_sector(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_bytes(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_rwbs(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_cmd(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_sector = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.bytes = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.rwbs = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.cmd = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_rq_insert, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                         const EventFormat &format) {
+void ParseBlockRqInsert(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockRqInsertData eventData {};
+    ParseBlockRqInsertData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_insert_format();
-    block_rq_insert_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_rq_insert, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                                 size_t size, const EventFormat &format) {
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_bytes(eventData.bytes);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+    msg->set_cmd(eventData.cmd);
+}
+void ParseBlockRqInsertEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockRqInsertData eventData {};
+    ParseBlockRqInsertData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_insert_format();
-    block_rq_insert_func(msg, data, size, format);
-});
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_bytes(eventData.bytes);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+    msg->set_cmd(eventData.cmd);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_rq_insert, ParseBlockRqInsert);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_rq_insert, ParseBlockRqInsertEncoder);
 
-template <typename T>
-void block_rq_issue_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockRqIssueData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint32_t nr_sector {};
+    uint32_t bytes {};
+    std::string rwbs {};
+    std::string comm {};
+    std::string cmd {};
+};
+__attribute__((noinline)) void ParseBlockRqIssueData(BlockRqIssueData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_sector(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_bytes(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_rwbs(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_cmd(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_sector = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.bytes = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.rwbs = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.cmd = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_rq_issue, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                        const EventFormat &format) {
+void ParseBlockRqIssue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockRqIssueData eventData {};
+    ParseBlockRqIssueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_issue_format();
-    block_rq_issue_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_rq_issue, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                                size_t size, const EventFormat &format) {
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_bytes(eventData.bytes);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+    msg->set_cmd(eventData.cmd);
+}
+void ParseBlockRqIssueEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockRqIssueData eventData {};
+    ParseBlockRqIssueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_issue_format();
-    block_rq_issue_func(msg, data, size, format);
-});
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_bytes(eventData.bytes);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+    msg->set_cmd(eventData.cmd);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_rq_issue, ParseBlockRqIssue);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_rq_issue, ParseBlockRqIssueEncoder);
 
-template <typename T>
-void block_rq_remap_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockRqRemapData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint32_t nr_sector {};
+    uint64_t old_dev {};
+    uint64_t old_sector {};
+    uint32_t nr_bios {};
+    std::string rwbs {};
+};
+__attribute__((noinline)) void ParseBlockRqRemapData(BlockRqRemapData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_sector(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_old_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_old_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_bios(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_rwbs(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_sector = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.old_dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.old_sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_bios = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.rwbs = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_rq_remap, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                        const EventFormat &format) {
+void ParseBlockRqRemap(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockRqRemapData eventData {};
+    ParseBlockRqRemapData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_remap_format();
-    block_rq_remap_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_rq_remap, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                                size_t size, const EventFormat &format) {
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_old_dev(eventData.old_dev);
+    msg->set_old_sector(eventData.old_sector);
+    msg->set_nr_bios(eventData.nr_bios);
+    msg->set_rwbs(eventData.rwbs);
+}
+void ParseBlockRqRemapEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockRqRemapData eventData {};
+    ParseBlockRqRemapData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_remap_format();
-    block_rq_remap_func(msg, data, size, format);
-});
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_old_dev(eventData.old_dev);
+    msg->set_old_sector(eventData.old_sector);
+    msg->set_nr_bios(eventData.nr_bios);
+    msg->set_rwbs(eventData.rwbs);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_rq_remap, ParseBlockRqRemap);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_rq_remap, ParseBlockRqRemapEncoder);
 
-template <typename T>
-void block_rq_requeue_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockRqRequeueData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint32_t nr_sector {};
+    std::string rwbs {};
+    std::string cmd {};
+};
+__attribute__((noinline)) void ParseBlockRqRequeueData(BlockRqRequeueData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nr_sector(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_rwbs(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_cmd(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nr_sector = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.rwbs = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.cmd = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_rq_requeue, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                          const EventFormat &format) {
+void ParseBlockRqRequeue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockRqRequeueData eventData {};
+    ParseBlockRqRequeueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_requeue_format();
-    block_rq_requeue_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_rq_requeue,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_cmd(eventData.cmd);
+}
+void ParseBlockRqRequeueEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockRqRequeueData eventData {};
+    ParseBlockRqRequeueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_requeue_format();
-    block_rq_requeue_func(msg, data, size, format);
-});
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_nr_sector(eventData.nr_sector);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_cmd(eventData.cmd);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_rq_requeue, ParseBlockRqRequeue);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_rq_requeue, ParseBlockRqRequeueEncoder);
 
-template <typename T>
-void block_split_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockSplitData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint64_t new_sector {};
+    std::string rwbs {};
+    std::string comm {};
+};
+__attribute__((noinline)) void ParseBlockSplitData(BlockSplitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_new_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_rwbs(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.new_sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.rwbs = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_split, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                     const EventFormat &format) {
+void ParseBlockSplit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockSplitData eventData {};
+    ParseBlockSplitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_split_format();
-    block_split_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_split, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                             size_t size, const EventFormat &format) {
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_new_sector(eventData.new_sector);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+}
+void ParseBlockSplitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockSplitData eventData {};
+    ParseBlockSplitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_split_format();
-    block_split_func(msg, data, size, format);
-});
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_new_sector(eventData.new_sector);
+    msg->set_rwbs(eventData.rwbs);
+    msg->set_comm(eventData.comm);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_split, ParseBlockSplit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_split, ParseBlockSplitEncoder);
 
-template <typename T>
-void block_touch_buffer_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockTouchBufferData {
+    uint64_t dev {};
+    uint64_t sector {};
+    uint64_t size {};
+};
+__attribute__((noinline)) void ParseBlockTouchBufferData(BlockTouchBufferData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_sector(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_size(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_touch_buffer, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                            const EventFormat &format) {
+void ParseBlockTouchBuffer(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockTouchBufferData eventData {};
+    ParseBlockTouchBufferData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_touch_buffer_format();
-    block_touch_buffer_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_touch_buffer,
-                                             [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                const EventFormat &format) {
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_size(eventData.size);
+}
+void ParseBlockTouchBufferEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockTouchBufferData eventData {};
+    ParseBlockTouchBufferData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_touch_buffer_format();
-    block_touch_buffer_func(msg, data, size, format);
-});
+    msg->set_dev(eventData.dev);
+    msg->set_sector(eventData.sector);
+    msg->set_size(eventData.size);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_touch_buffer, ParseBlockTouchBuffer);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_touch_buffer, ParseBlockTouchBufferEncoder);
 
-template <typename T>
-void block_unplug_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct BlockUnplugData {
+    int32_t nr_rq {};
+    std::string comm {};
+};
+__attribute__((noinline)) void ParseBlockUnplugData(BlockUnplugData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_nr_rq(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.nr_rq = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_unplug, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                      const EventFormat &format) {
+void ParseBlockUnplug(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockUnplugData eventData {};
+    ParseBlockUnplugData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_unplug_format();
-    block_unplug_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_unplug, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                              size_t size, const EventFormat &format) {
+    msg->set_nr_rq(eventData.nr_rq);
+    msg->set_comm(eventData.comm);
+}
+void ParseBlockUnplugEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    BlockUnplugData eventData {};
+    ParseBlockUnplugData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_unplug_format();
-    block_unplug_func(msg, data, size, format);
-});
+    msg->set_nr_rq(eventData.nr_rq);
+    msg->set_comm(eventData.comm);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_unplug, ParseBlockUnplug);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(block_unplug, ParseBlockUnplugEncoder);
 }  // namespace
 FTRACE_NS_END

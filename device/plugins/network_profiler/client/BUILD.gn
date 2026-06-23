@@ -32,6 +32,7 @@ config("network_config") {
 }
 
 ohos_shared_library("libnetwork_profiler") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   branch_protector_ret = "pac_ret"
   output_name = "libnetwork_profiler"
   public_configs = [ ":network_config" ]

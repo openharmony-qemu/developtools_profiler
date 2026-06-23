@@ -14,24 +14,38 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T>
-void rcu_utilization_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct RcuUtilizationData {
+    std::string s {};
+};
+__attribute__((noinline)) void ParseRcuUtilizationData(RcuUtilizationData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_s(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.s = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rcu_utilization, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                         const EventFormat &format) {
+void ParseRcuUtilization(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    RcuUtilizationData eventData {};
+    ParseRcuUtilizationData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rcu_utilization_format();
-    rcu_utilization_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rcu_utilization, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                                 size_t size, const EventFormat &format) {
+    msg->set_s(eventData.s);
+}
+void ParseRcuUtilizationEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    RcuUtilizationData eventData {};
+    ParseRcuUtilizationData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rcu_utilization_format();
-    rcu_utilization_func(msg, data, size, format);
-});
+    msg->set_s(eventData.s);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rcu_utilization, ParseRcuUtilization);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rcu_utilization, ParseRcuUtilizationEncoder);
 }  // namespace
 FTRACE_NS_END
