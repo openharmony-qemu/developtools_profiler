@@ -797,8 +797,11 @@ Status ProfilerService::DestroySession(ServerContext* context,
     }
     if (request->destroy_all()) {
         std::vector<uint32_t> sessionIds;
-        for (const auto& session : sessionContext_) {
-            sessionIds.push_back(session.first);
+        {
+            std::unique_lock<std::mutex> lock(sessionContextMutex_);
+            for (const auto& session : sessionContext_) {
+                sessionIds.push_back(session.first);
+            }
         }
         bool success = true;
         for (const auto& sessionId : sessionIds) {
