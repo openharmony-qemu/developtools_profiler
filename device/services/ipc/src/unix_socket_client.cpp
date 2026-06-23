@@ -32,7 +32,7 @@ UnixSocketClient::~UnixSocketClient() {}
 
 bool UnixSocketClient::Connect(const std::string addrname, ServiceBase& serviceBase, void (*callback)())
 {
-    PROFILER_LOG_ERROR(LOG_CORE, "UnixSocketClient connect");
+    PROFILER_LOG_INFO(LOG_CORE, "UnixSocketClient connect");
     CHECK_TRUE(socketHandle_ == -1, false, "socketHandle_ != -1 Already Connected");
 
     int sock = socket(AF_UNIX, SOCK_STREAM, 0);
