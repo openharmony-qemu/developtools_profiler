@@ -18,7 +18,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <map>
 
 #include "logging.h"
 #include "init_param.h"
@@ -151,16 +150,21 @@ bool FfrtProfilerManager::CheckConfig()
 
 clockid_t FfrtProfilerManager::GetClockId(FfrtProfilerConfig::ClockId clockType)
 {
-    std::map<FfrtProfilerConfig::ClockId, clockid_t> clockMap = {
-        {FfrtProfilerConfig::BOOTTIME, CLOCK_BOOTTIME},
-        {FfrtProfilerConfig::REALTIME, CLOCK_REALTIME},
-        {FfrtProfilerConfig::REALTIME_COARSE, CLOCK_REALTIME_COARSE},
-        {FfrtProfilerConfig::MONOTONIC, CLOCK_MONOTONIC},
-        {FfrtProfilerConfig::MONOTONIC_COARSE, CLOCK_MONOTONIC_COARSE},
-        {FfrtProfilerConfig::MONOTONIC_RAW, CLOCK_MONOTONIC_RAW},
-    };
-
-    return clockMap.find(clockType) != clockMap.end() ? clockMap[clockType] : CLOCK_BOOTTIME;
+    switch (clockType) {
+        case FfrtProfilerConfig::REALTIME:
+            return CLOCK_REALTIME;
+        case FfrtProfilerConfig::REALTIME_COARSE:
+            return CLOCK_REALTIME_COARSE;
+        case FfrtProfilerConfig::MONOTONIC:
+            return CLOCK_MONOTONIC;
+        case FfrtProfilerConfig::MONOTONIC_COARSE:
+            return CLOCK_MONOTONIC_COARSE;
+        case FfrtProfilerConfig::MONOTONIC_RAW:
+            return CLOCK_MONOTONIC_RAW;
+        case FfrtProfilerConfig::BOOTTIME:
+        default:
+            return CLOCK_BOOTTIME;
+    }
 }
 
 bool FfrtProfilerManager::StartFfrtProfiler()
