@@ -160,6 +160,7 @@ ohos_shared_library("libmemory_profiler") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "zlib:libz",
+    "ability_base:configuration",
   ]
   external_deps += [ "faultloggerd:libasync_stack" ]
   defines = [ "ENABLE_HAP_EXTRACTOR" ]
@@ -235,6 +236,7 @@ ohos_executable("native_daemon") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "zlib:libz",
+    "ability_base:configuration",
   ]
   external_deps += [ "faultloggerd:libasync_stack" ]
   defines = [ "ENABLE_HAP_EXTRACTOR" ]
