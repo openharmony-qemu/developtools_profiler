@@ -1681,7 +1681,7 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
         } else {
             for (size_t i = 0; i < item->eventPollerList.size(); ++i) {
                 if (item->eventPollerList[i] && item->eventNotifierList[i]) {
-                    PROFILER_LOG_ERROR(LOG_CORE, "eventPoller unset! num: %zu", i);
+                    PROFILER_LOG_INFO(LOG_CORE, "eventPoller unset! num: %zu", i);
                     item->eventPollerList[i]->RemoveFileDescriptor(item->eventNotifierList[i]->GetFd());
                     item->eventPollerList[i]->Stop();
                     item->eventPollerList[i]->Finalize();
@@ -1929,7 +1929,7 @@ void HookManager::StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, 
         if (item->stackPreprocess == nullptr) {
             continue;
         }
-        PROFILER_LOG_ERROR(LOG_CORE, "StartPluginSession name: %s", item->processName.c_str());
+        PROFILER_LOG_INFO(LOG_CORE, "StartPluginSession name: %s", item->processName.c_str());
         if (!noDataQueue_) {
             item->stackPreprocess->StartTakeResults();
         }
