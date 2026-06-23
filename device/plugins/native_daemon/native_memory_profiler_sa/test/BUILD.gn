@@ -160,6 +160,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "bundle_framework:appexecfwk_core",
     "ability_runtime:app_context",
     "storage_service:storage_manager_acl",
+    "ability_base:configuration",
   ]
 
   if (hiprofiler_use_libunwinder) {
