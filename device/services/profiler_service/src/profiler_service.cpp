@@ -640,9 +640,6 @@ Status ProfilerService::SubscribeProfilerEvt(ServerContext* context,
     CHECK_POINTER_NOTNULL(request, "request ptr invalid!");
     CHECK_POINTER_NOTNULL(writer, "writer ptr invalid!");
 
-    CHECK_POINTER_NOTNULL(request, "request invalid!");
-    CHECK_POINTER_NOTNULL(writer, "writer invalid!");
-
     uint32_t sessionId = request->session_id();
     PROFILER_LOG_INFO(LOG_CORE, "SubscribeProfilerEvt %d %u start", request->request_id(), sessionId);
 
