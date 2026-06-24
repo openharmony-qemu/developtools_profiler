@@ -150,9 +150,9 @@ SymbolsFile *VirtualThread::FindSymbolsFileByName(const std::string &name) const
     return nullptr;
 }
 
+#ifdef HIPERF_DEBUG
 void VirtualThread::ReportVaddrMapMiss(uint64_t vaddr) const
 {
-#ifdef HIPERF_DEBUG
     if (DebugLogger::GetInstance()->GetLogLevel() <= LEVEL_VERBOSE) {
         if (missedRuntimeVaddr_.find(vaddr) == missedRuntimeVaddr_.end()) {
             missedRuntimeVaddr_.insert(vaddr);
@@ -162,8 +162,8 @@ void VirtualThread::ReportVaddrMapMiss(uint64_t vaddr) const
             }
         }
     }
-#endif
 }
+#endif
 
 bool VirtualThread::ReadRoMemory(uint64_t vaddr, uint8_t *data, size_t size) const
 {

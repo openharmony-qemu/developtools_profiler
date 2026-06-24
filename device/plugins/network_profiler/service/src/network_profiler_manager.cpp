@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <map>
 
 #include "logging.h"
 #include "init_param.h"
@@ -158,16 +157,21 @@ bool NetworkProfilerManager::CheckConfig()
 
 clockid_t NetworkProfilerManager::GetClockId(NetworkProfilerConfig::ClockId clockType)
 {
-    std::map<NetworkProfilerConfig::ClockId, clockid_t> clockMap = {
-        {NetworkProfilerConfig::BOOTTIME, CLOCK_BOOTTIME},
-        {NetworkProfilerConfig::REALTIME, CLOCK_REALTIME},
-        {NetworkProfilerConfig::REALTIME_COARSE, CLOCK_REALTIME_COARSE},
-        {NetworkProfilerConfig::MONOTONIC, CLOCK_MONOTONIC},
-        {NetworkProfilerConfig::MONOTONIC_COARSE, CLOCK_MONOTONIC_COARSE},
-        {NetworkProfilerConfig::MONOTONIC_RAW, CLOCK_MONOTONIC_RAW},
-    };
-
-    return clockMap.find(clockType) != clockMap.end() ? clockMap[clockType] : CLOCK_BOOTTIME;
+    switch (clockType) {
+        case NetworkProfilerConfig::REALTIME:
+            return CLOCK_REALTIME;
+        case NetworkProfilerConfig::REALTIME_COARSE:
+            return CLOCK_REALTIME_COARSE;
+        case NetworkProfilerConfig::MONOTONIC:
+            return CLOCK_MONOTONIC;
+        case NetworkProfilerConfig::MONOTONIC_COARSE:
+            return CLOCK_MONOTONIC_COARSE;
+        case NetworkProfilerConfig::MONOTONIC_RAW:
+            return CLOCK_MONOTONIC_RAW;
+        case NetworkProfilerConfig::BOOTTIME:
+        default:
+            return CLOCK_BOOTTIME;
+    }
 }
 
 bool NetworkProfilerManager::StartNetworkProfiler()

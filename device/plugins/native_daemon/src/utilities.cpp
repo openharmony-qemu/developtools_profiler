@@ -483,6 +483,7 @@ bool UncompressFile(const std::string &gzipFile, const std::string &dataFile)
     if (!gzeof(fgz.get())) {
         int rc = 0;
         const char *err = gzerror(fgz.get(), &rc);
+        (void)err;
         if (rc != Z_OK) {
             HLOGE("gzfread return %d:%s", rc, err);
             fclose(fp);

@@ -237,8 +237,10 @@ bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>&
             return true;
 #endif
         }
+#ifdef HIPERF_DEBUG
         int index = callFrameIt - callFrames.begin();
         HLOGV(" (%u)unwind symbol: %*s%s", index, index, "", callFrame.ToSymbolString().c_str());
+#endif
     }
 #ifdef HIPERF_DEBUG_TIME
     auto usedTime = duration_cast<microseconds>(steady_clock::now() - startTime);
