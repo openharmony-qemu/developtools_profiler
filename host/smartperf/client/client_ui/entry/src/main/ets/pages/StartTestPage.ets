@@ -69,12 +69,15 @@ struct StartTestPage {
      ])
 
     var iterator = supportMap.keys()
-    for (var i = 0; i < supportMap.size; i++) {
-      let key = iterator.next().value
-      let val = supportMap.get(key).valueOf()
+    for (let [key, valObj] of supportMap) {
+      if (key == null || valObj == null) {
+        continue;
+      }
+
+      let val = valObj.valueOf();
       this.collectConfigs.push(
         new CollectItem(key, val, val)
-      )
+      );
     }
 
   }

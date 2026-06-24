@@ -98,7 +98,7 @@ HWTEST_F(ControlCallCmdTest, GetResultTest06, TestSize.Level1)
 HWTEST_F(ControlCallCmdTest, TimeDelayTest01, TestSize.Level1)
 {
     OHOS::SmartPerf::ControlCallCmd controlCallCmd;
-    std::string expected = "ResponseTime:-1ms\nCompleteTime:-1ms\nHitchTimeRate:-1.00ms/s ";
+    std::string expected = "ResponseTime:-1ms\nCompleteTime:-1ms\nHitchTimeRate:0.00ms/s ";
     std::string expectedResult = expected + "\nMAX_RENDER_SEQ_MISSED_FRAMES:-1";
     EXPECT_EQ(controlCallCmd.TimeDelay(), expectedResult);
 }
@@ -106,7 +106,7 @@ HWTEST_F(ControlCallCmdTest, TimeDelayTest01, TestSize.Level1)
 HWTEST_F(ControlCallCmdTest, SlideListTest01, TestSize.Level1)
 {
     OHOS::SmartPerf::ControlCallCmd controlCallCmd;
-    std::string expected = "FPS:-1fps\nResponseTime:-1ms\nHitchTimeRate:-1.00ms/s ";
+    std::string expected = "FPS:-1fps\nResponseTime:-1ms\nHitchTimeRate:0.00ms/s ";
     std::string expectedResult = expected + "\nMAX_RENDER_SEQ_MISSED_FRAMES:-1";
     std::string resultStream = controlCallCmd.SlideList();
     EXPECT_EQ(resultStream, expectedResult);
