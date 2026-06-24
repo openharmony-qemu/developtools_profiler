@@ -132,13 +132,14 @@ bool TraceFileParser::ReadContentSection()
 {
     TraceFileContentHeader hdr = {};
     if (fileStream_.read(reinterpret_cast<char*>(&hdr), sizeof(hdr)).gcount() != sizeof(hdr)) {
+        errorMsg_ = "Failed to read content header";
         return false;
     }
     std::vector<uint8_t> data;
     if (hdr.length > 0) {
         data.resize(hdr.length);
         if (fileStream_.read(reinterpret_cast<char*>(data.data()), hdr.length).gcount() != hdr.length()) {
-            errorMsg_ = "Failed to read content data, expected " + std::to_string(contentHeader.length) + " bytes";
+            errorMsg_ = "Failed to read content data, expected " + std::to_string(hdr.length) + " bytes";
             return false;
         }
     }
