@@ -26,6 +26,8 @@
 #include <condition_variable>
 #include <variant>
 #include <numeric>
+#include <cmath>
+#include <inttypes.h>
 #include "hook_record_factory.h"
 #include "hook_record.h"
 #include "logging.h"
@@ -42,130 +44,10 @@
 #include "common.h"
 #include "stack_builder.h"
 #include "unique_stack_table.h"
+#include "stack_preprocess_types.h"
 
 namespace OHOS::Developtools::NativeDaemon {
 using WriterStructPtr = std::unique_ptr<WriterStruct>::pointer;
-
-struct RecordStatistic {
-    uint64_t applyCount {0};
-    uint64_t releaseCount {0};
-    uint64_t applySize {0};
-    uint64_t releaseSize {0};
-    uint64_t nodeId {0};
-    uint32_t tagId {0};
-    RecordStatisticsEvent::MemoryType type {RecordStatisticsEvent::MALLOC};
-    uint32_t nodeType {0};
-    uint32_t callstackId {0};
-    uint32_t stackSize {0};
-    struct timespec ts {0, 0};
-};
-
-struct AllocAddrInfo {
-    uint64_t mallocSize;
-    size_t stackId;
-    struct timespec ts;
-};
-
-struct CallStackKey {
-    uint64_t stackHash;
-    uint64_t nodeId;
-    uint32_t stackSize;
-    uint32_t nodeType;
-    uint32_t tagId;
-
-    bool operator == (const CallStackKey& other) const
-    {
-        return stackHash == other.stackHash &&
-               nodeId == other.nodeId &&
-               stackSize == other.stackSize &&
-               nodeType == other.nodeType &&
-               tagId == other.tagId;
-    }
-};
-
-struct CallStackKeyHash {
-    uint64_t operator()(const CallStackKey& key) const
-    {
-        return key.stackHash;
-    }
-};
-
-struct AsyncCallStackKey {
-    uint64_t stackHash;      // syncStackId ^ (asyncStackId << 32)
-    uint64_t mallocSize;
-    uint64_t nodeId;
-    uint64_t nodeTag;        // (static_cast<uint64_t>(nodeType) << 32) | tagId
-
-    bool operator==(const AsyncCallStackKey& other) const
-    {
-        return memcmp(this, &other, sizeof(AsyncCallStackKey)) == 0;
-    }
-};
-
-struct AsyncCallStackKeyHash {
-    uint64_t operator()(const AsyncCallStackKey& key) const
-    {
-        constexpr uint64_t kMul = 0x9e3779b97f4a7c15ULL;
-        uint64_t h = key.stackHash;
-        h ^= key.mallocSize * kMul;
-        h ^= key.nodeId * (kMul >> 16);
-        h ^= key.nodeTag * (kMul >> 32);
-        return h;
-    }
-};
-
-struct CallStackHash {
-    uint64_t operator()(const std::vector<uint64_t>& stack) const
-    {
-        constexpr uint64_t seed = 0xc70f6907ULL;
-        uint64_t hash = seed;
-        for (uint64_t val : stack) {
-            val ^= val >> 33; // 33 : hash bit
-            val *= 0xff51afd7ed558ccdULL;
-            val ^= val >> 33; // 33 : hash bit
-            val *= 0xc4ceb9fe1a85ec53ULL;
-            val ^= val >> 33; // 33 : hash bit
-            hash ^= val;
-            hash = (hash << 27) | (hash >> 37); // 27: rotate left by 27 bits; 37: rotate right by 37 bits
-            hash = hash * 5 + 0x52dce729; // add a constant
-        }
-        return hash;
-    }
-};
-
-struct NewCallStack {
-    std::vector<uint64_t> callStack;
-    uint32_t nodeType;
-    uint64_t nodeId;
-    std::string tagName;
-
-    // cached callStack hash to avoid repeated accumulation cost
-    mutable uint64_t cachedCallStackHash {0};
-    mutable bool cachedCallStackHashValid {false};
-    uint64_t GetCallStackHash() const
-    {
-        if (!cachedCallStackHashValid) {
-            cachedCallStackHash = CallStackHash{}(callStack);
-            cachedCallStackHashValid = true;
-        }
-        return cachedCallStackHash;
-    }
-
-    bool operator == (const NewCallStack& other) const
-    {
-        return nodeId == other.nodeId &&
-               nodeType == other.nodeType &&
-               tagName == other.tagName &&
-               callStack == other.callStack;
-    }
-};
-
-struct NewCallStackHash {
-    uint64_t operator()(const NewCallStack& key) const
-    {
-        return key.GetCallStackHash();
-    }
-};
 
 class StackPreprocess : public std::enable_shared_from_this<StackPreprocess> {
 public:
@@ -176,14 +58,8 @@ public:
     void SetWriter(const std::shared_ptr<Writer>& writer);
     void SetWriter(const WriterStructPtr& writer);
     void SetWriterForFdSa(uint32_t fd);
-    void SetFactory(std::shared_ptr<HookRecordFactory> factory)
-    {
-        factory_ = factory;
-    }
-    void SetServerCommandCallback(std::function<void(uint32_t)> callback)
-    {
-        serverCommandCallback_ = std::move(callback);
-    }
+    void SetFactory(std::shared_ptr<HookRecordFactory> factory);
+    void SetServerCommandCallback(std::function<void(uint32_t)> callback);
     bool StartTakeResults();
     bool StopTakeResults();
     void FinishTraceFile();
@@ -193,28 +69,10 @@ public:
     void ForceStop();
     void SetDataSourceTerminated(bool dataSourceTerminated = true);
     bool DrainPendingShmemData(const std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock);
-    bool IsDataSourceTerminated() const
-    {
-        return dataSourceTerminated_;
-    }
-    inline void SetPid(int32_t pid)
-    {
-        pid_ = pid;
-    }
-    inline void InitStatisticsTime()
-    {
-        if (hookConfig_.use_file_cache_mode()) {
-            lastCacheStatisticsTime_ = {0, 0};
-        } else {
-            lastStatisticsTime_ = std::chrono::steady_clock::now();
-        }
-    }
-    inline void UpdateStatisticsTime()
-    {
-        if (hookConfig_.use_file_cache_mode()) {
-            lastCacheStatisticsTime_.tv_sec += hookConfig_.statistics_interval();
-        }
-    }
+    bool IsDataSourceTerminated() const;
+    void SetPid(int32_t pid);
+    void InitStatisticsTime();
+    void UpdateStatisticsTime();
     void SetStopTakeData();
     void UpdateLastCacheFileActivityTime();
     void SaveMemTag(uint32_t tagId, const std::string& tagName);
@@ -235,41 +93,11 @@ public:
 #endif
     bool ProcessRawData(const int8_t data[], uint32_t size,
         RawStackPtr rawData, std::shared_ptr<HookRecord> hookRecord);
-    void SetNmdFd(uint32_t fd)
-    {
-        nmdFd_ = fd;
-    }
-    void SetFlushSize(uint64_t size)
-    {
-        double tenth = static_cast<double>(size) / 10.0;
-        flushSize_ = static_cast<uint64_t>(std::ceil(tenth));
-        PROFILER_LOG_INFO(LOG_CORE, "SetFlushSize size: %" PRIu64 ", flushSize_: %" PRIu64 "", size, flushSize_);
-        if (isProtobufSerialize_) {
-            bufferSize_ = flushSize_ << 1;
-            buffer_ = std::make_unique<uint8_t[]>(bufferSize_);
-        }
-    }
-
-    inline void SetIsStartTakeData(bool isStartTakeData)
-    {
-        if (isStartTakeData_ != isStartTakeData) {
-            isStartTakeData_ = isStartTakeData;
-        }
-    }
-
-    inline void SetIsStopTakeData(bool isStopTakeData)
-    {
-        if (isStopTakeData_ != isStopTakeData) {
-            isStopTakeData_ = isStopTakeData;
-        }
-    }
-
-    inline void SetIsCacheFileParseDone(bool isCacheFileParseDone)
-    {
-        if (isCacheFileParseDone_ != isCacheFileParseDone) {
-            isCacheFileParseDone_ = isCacheFileParseDone;
-        }
-    }
+    void SetNmdFd(uint32_t fd);
+    void SetFlushSize(uint64_t size);
+    void SetIsStartTakeData(bool isStartTakeData);
+    void SetIsStopTakeData(bool isStopTakeData);
+    void SetIsCacheFileParseDone(bool isCacheFileParseDone);
 private:
     using CallFrame = OHOS::Developtools::NativeDaemon::CallFrame;
     using DmaFdSizeMap = std::unordered_map<uint32_t, size_t>;
@@ -282,7 +110,7 @@ private:
     };
 
     enum RecordStatisticsLimit : std::size_t {
-        STATISTICS_MAP_SZIE = 100000,
+        STATISTICS_MAP_SIZE = 100000,
         STATISTICS_PERIOD_DATA_SIZE = 100000,
         ALLOC_ADDRMAMP_SIZE = 100000,
         MATCH_ADDRMAMP_SIZE = 100000,
@@ -373,11 +201,25 @@ private:
     bool ReconcileDuplicateMalloc(uint64_t addr, const struct timespec& newTs);
     void SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists = false);
     void UpdateAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
-    bool ResolveTagType(const std::string& tagName, RecordStatistic& record);
+    template <typename T>
+    void UpdateAllocStatistics(std::unordered_map<uint32_t, T>& statisticsMap,
+        const HookRecordPtr& hookRecord, size_t stackId);
+    void UpdateAllocSimplifiedStatistics(const HookRecordPtr& hookRecord, size_t stackId);
+    bool ResolveTagType(const std::string& tagName, RecordStatisticsEvent::MemoryType& type);
+    template <typename T>
+    void FillRecordFromType(T& record, const HookRecordPtr& hookRecord);
+    template <typename T>
+    void RegisterAllocAddress(std::unordered_map<uint32_t, T>& statisticsMap,
+        const HookRecordPtr& hookRecord, size_t stackId);
+    template <typename T>
+    void AddAllocStatistics(std::unordered_map<uint32_t, T>& statisticsMap,
+        const HookRecordPtr& hookRecord, size_t stackId);
     void AddAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
     bool TryProcessCachedAsyncStatistics(std::shared_ptr<HookRecord>& hookRecord);
     uint32_t FindAsyncStatisticsStackIdLocked(const HookRecordPtr& hookRecord);
     void HandleDeleteAddr(uint64_t addr, size_t size);
+    template <typename T>
+    void HandleMoveAddr(std::unordered_map<uint32_t, T>& statisticsMap, uint64_t addr, uint64_t new_addr, size_t size);
     std::vector<uint64_t> FindAddrs(uint64_t addr, size_t size);
     void HandleMoveAddr(uint64_t addr, uint64_t new_addr, size_t size);
     void InitializeGpuData();
@@ -407,6 +249,34 @@ private:
     void LogPerformanceMetrics(const timespec& start, const std::string& operation, uint16_t type, uint32_t fpDepth);
     void LogPerformanceMetrics(const struct timespec& start, const std::string& operation);
     void CleanupFullyReleasedStack(uint32_t stackId);
+    void InitializeFunctionPointers();
+    uint32_t GetNewStackId();
+    bool IsStackIdExistsInStatistics(uint32_t stackId);
+
+    template <typename T>
+    bool FlushRecordStatisticsImpl(std::unordered_map<uint32_t, T>& statisticsMap);
+
+    uint32_t FindAsyncCallStackId(const HookRecordPtr& hookRecord);
+    uint32_t FindSimplifiedAsyncCallStackId(const HookRecordPtr& hookRecord);
+    uint32_t FindFullAsyncCallStackId(const HookRecordPtr& hookRecord);
+    uint32_t FindFullAsyncStatisticsStackId(const HookRecordPtr& hookRecord);
+
+    uint32_t FindSyncCallStackId(std::vector<uint64_t>& callStack, const HookRecordPtr& hookRecord);
+    uint32_t FindSimplifiedSyncCallStackId(std::vector<uint64_t>& callStack, const HookRecordPtr& hookRecord);
+
+    void AddCallStackIndex(uint32_t stackId, RawStackPtr rawData);
+    void AddSimplifiedCallStackIndex(uint32_t stackId, RawStackPtr rawData);
+
+    template <typename T>
+    void UpdateMoveAddrRecord(std::unordered_map<uint32_t, T>& statisticsMap,
+        uint64_t addr, uint64_t newAddr, size_t size);
+    template <typename T>
+    void FindAndUpdateFreeStatisticsLocked(std::unordered_map<uint32_t, T>& statisticsMap,
+        uint32_t stackId, uint32_t mallocSize);
+    void FindAndUpdateFreeStatisticsLocked(uint32_t stackId, uint32_t mallocSize);
+
+    template <typename T, typename StackData>
+    void FlushStatisticsEntry(T* statistics, uint32_t stackId, StackData& stackData);
 private:
     std::chrono::steady_clock::time_point lastStatisticsTime_ = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point lastCacheFileActivityTime_ = std::chrono::steady_clock::now();
@@ -431,12 +301,27 @@ private:
     bool flushBasicData_ {true};
     std::vector<u64> u64regs_;
     std::unordered_map<CallStackKey, uint32_t, CallStackKeyHash> callStackIndex_;
+    std::unordered_map<SimplifiedCallStackKey, uint32_t, SimplifiedCallStackKeyHash>
+        simplifiedCallStackIndex_;
+
+    using FindSyncFunc = uint32_t(StackPreprocess::*)(std::vector<uint64_t>&, const HookRecordPtr&);
+    FindSyncFunc findSyncCallStackIdFunc_ = &StackPreprocess::FindSimplifiedSyncCallStackId;
     std::unordered_map<AsyncCallStackKey, uint32_t, AsyncCallStackKeyHash> asyncCallStackIndex_;
+    std::unordered_map<SimplifiedAsyncCallStackKey, uint32_t, SimplifiedAsyncCallStackKeyHash>
+        simplifiedAsyncCallStackIndex_;
+
+    using FindAsyncFunc = uint32_t(StackPreprocess::*)(const HookRecordPtr&);
+    FindAsyncFunc findAsyncCallStackIdFunc_ = &StackPreprocess::FindSimplifiedAsyncCallStackId;
+    FindAsyncFunc findAsyncStatisticsStackIdFunc_ = &StackPreprocess::FindSimplifiedAsyncCallStackId;
+    using AddIndexFunc = void(StackPreprocess::*)(uint32_t, RawStackPtr);
+    AddIndexFunc addCallStackIndexFunc_ = &StackPreprocess::AddSimplifiedCallStackIndex;
+
     // Key is callStack_, value is call stack id
     std::unordered_map<NewCallStack, uint32_t, NewCallStackHash> callStackMap_;
     std::chrono::seconds statisticsInterval_ {0};
     // Key is call stack id, value is recordstatistic data
     std::unordered_map<uint32_t, RecordStatistic> recordStatisticsMap_;
+    std::unordered_map<uint32_t, SimplifiedRecordStatistics> simplifiedRecordStatisticsMap_;
     // Key is call stack id, value is recordstatistic data pointer
     std::unordered_set<uint32_t> statisticsPeriodSet_;
     // Key is alloc or mmap address, value is ReportEventBaseData list iterator
@@ -455,7 +340,6 @@ private:
     std::mutex jsMapMtx_;
     COMMON::SpinLock spinLock_;
     bool isSaService_{false};
-    std::mutex allocAddrMapMtx_;
     bool isProtobufSerialize_{true};
     WriterStructPtr resultWriter_{nullptr};
     std::variant<BatchNativeHookData, OHOS::Developtools::Profiler::ProtoEncoder::BatchNativeHookData> stackData_;
@@ -482,7 +366,10 @@ private:
     std::atomic_bool finalSnapshotDone_{false};
     std::mutex snapshotMtx_;
     std::condition_variable snapshotCv_;
+    bool discardDestroyedTraces_ = false;
 };
 }
+
+#include "stack_preprocess_inl.h"
 
 #endif // STACK_PREPROCESS_H

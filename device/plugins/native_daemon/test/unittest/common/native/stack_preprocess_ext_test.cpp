@@ -439,6 +439,7 @@ HWTEST_F(StackPreprocessExtTest, NeedBuildIdForMoreScriptExtensionsTest, TestSiz
 HWTEST_F(StackPreprocessExtTest, ReconcileWithSnapshotFreesOnlyStaleAddresses, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     struct timespec ts = {1, 0};
     preprocess.recordStatisticsMap_[1] = RecordStatistic{};
@@ -464,6 +465,7 @@ HWTEST_F(StackPreprocessExtTest, ReconcileWithSnapshotFreesOnlyStaleAddresses, T
 HWTEST_F(StackPreprocessExtTest, ReconcileDuplicateMallocHonorsTimestampOrder, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     struct timespec oldTs = {10, 20};
     preprocess.recordStatisticsMap_[7] = RecordStatistic{};
@@ -491,22 +493,22 @@ HWTEST_F(StackPreprocessExtTest, ResolveTagTypeCoversSpecialAndFallbackTags, Tes
 {
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
-    RecordStatistic record;
+    RecordStatisticsEvent::MemoryType type = RecordStatisticsEvent::MALLOC;
 
-    EXPECT_TRUE(preprocess.ResolveTagType(TAG_RES_GPU_VK, record));
-    EXPECT_EQ(record.type, RecordStatisticsEvent::GPU_VK);
+    EXPECT_TRUE(preprocess.ResolveTagType(TAG_RES_GPU_VK, type));
+    EXPECT_EQ(type, RecordStatisticsEvent::GPU_VK);
 
-    EXPECT_FALSE(preprocess.ResolveTagType(TAG_RES_FD_OPEN, record));
-    EXPECT_EQ(record.type, RecordStatisticsEvent::FD);
+    EXPECT_FALSE(preprocess.ResolveTagType(TAG_RES_FD_OPEN, type));
+    EXPECT_EQ(type, RecordStatisticsEvent::FD);
 
-    EXPECT_TRUE(preprocess.ResolveTagType("ashmem", record));
-    EXPECT_EQ(record.type, RecordStatisticsEvent::ASHMEM);
+    EXPECT_TRUE(preprocess.ResolveTagType("ashmem", type));
+    EXPECT_EQ(type, RecordStatisticsEvent::ASHMEM);
 
-    EXPECT_FALSE(preprocess.ResolveTagType("/system/lib64/libnative.so", record));
-    EXPECT_EQ(record.type, RecordStatisticsEvent::SO);
+    EXPECT_FALSE(preprocess.ResolveTagType("/system/lib64/libnative.so", type));
+    EXPECT_EQ(type, RecordStatisticsEvent::SO);
 
-    EXPECT_FALSE(preprocess.ResolveTagType("anonymous-region", record));
-    EXPECT_EQ(record.type, RecordStatisticsEvent::MEMORY_USING_MSG);
+    EXPECT_FALSE(preprocess.ResolveTagType("anonymous-region", type));
+    EXPECT_EQ(type, RecordStatisticsEvent::MEMORY_USING_MSG);
 }
 
 /*

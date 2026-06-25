@@ -163,6 +163,7 @@ HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest005, 
     config->memLeakLimit_ = 9;
     config->asyncNestingDepth_ = 5;
     config->asyncTaskStackDepth_ = 6;
+    config->arkuiMemTraceEnable_ = true;
     config->gpuRange_[GPU_TYPE_SIZE - 1][GPU_RANGE_SIZE * 2 - 1] = 99;
 
     OHOS::Parcel parcel;
@@ -181,6 +182,7 @@ HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest005, 
     EXPECT_EQ(result->memLeakLimit_, 9u);
     EXPECT_EQ(result->asyncNestingDepth_, 5u);
     EXPECT_EQ(result->asyncTaskStackDepth_, 6u);
+    EXPECT_TRUE(result->arkuiMemTraceEnable_);
     EXPECT_EQ(result->gpuRange_[GPU_TYPE_SIZE - 1][GPU_RANGE_SIZE * 2 - 1], 99u);
 }
 

@@ -16,6 +16,7 @@
 #include "stack_preprocess.h"
 
 #include <elf.h>
+#include <type_traits>
 #include <unistd.h>
 #include <fstream>
 #include <sstream>
@@ -165,22 +166,42 @@ void StackPreprocess::ReconcileWithSnapshot(const std::unordered_set<uint64_t>& 
     spinLock_.Unlock();
 }
 
-void StackPreprocess::HandleMoveAddr(uint64_t addr, uint64_t newAddr, size_t size)
+template <typename T>
+void StackPreprocess::UpdateMoveAddrRecord(
+    std::unordered_map<uint32_t, T>& statisticsMap, uint64_t addr, uint64_t newAddr, size_t size)
+{
+    auto addrIter = allocAddrMap_.find(addr);
+    if (addrIter == allocAddrMap_.end()) {
+        return;
+    }
+    auto recordIter = statisticsMap.find(addrIter->second.stackId);
+    if (recordIter == statisticsMap.end()) {
+        return;
+    }
+    auto& record = recordIter->second;
+    record.applySize += (size - allocAddrMap_[addr].mallocSize);
+    allocAddrMap_[newAddr] = AllocAddrInfo{size, record.callstackId, addrIter->second.ts};
+    allocAddrMap_.erase(addr);
+    addrSet_.insert(newAddr);
+    addrSet_.erase(addr);
+}
+
+template <typename T>
+inline void StackPreprocess::HandleMoveAddr(
+    std::unordered_map<uint32_t, T>& statisticsMap, uint64_t addr, uint64_t newAddr, size_t size)
 {
     spinLock_.Lock();
-    auto addrIter = allocAddrMap_.find(addr);
-    if (addrIter != allocAddrMap_.end()) {
-        auto recordIter = recordStatisticsMap_.find(addrIter->second.stackId);
-        if (recordIter != recordStatisticsMap_.end()) {
-            auto& record = recordIter->second;
-            record.applySize += (size - allocAddrMap_[addr].mallocSize);
-            allocAddrMap_[newAddr] = AllocAddrInfo{size, record.callstackId, addrIter->second.ts};
-            allocAddrMap_.erase(addr);
-            addrSet_.insert(newAddr);
-            addrSet_.erase(addr);
-        }
-    }
+    UpdateMoveAddrRecord(statisticsMap, addr, newAddr, size);
     spinLock_.Unlock();
+}
+
+void StackPreprocess::HandleMoveAddr(uint64_t addr, uint64_t newAddr, size_t size)
+{
+    if (!hookConfig_.arkui_mem_trace_enable()) {
+        HandleMoveAddr(simplifiedRecordStatisticsMap_, addr, newAddr, size);
+    } else {
+        HandleMoveAddr(recordStatisticsMap_, addr, newAddr, size);
+    }
 }
 
 StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,
@@ -204,10 +225,15 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const
 
     if (hookConfig_.statistics_interval() > 0) {
         statisticsInterval_ = std::chrono::seconds(hookConfig_.statistics_interval());
-        recordStatisticsMap_.reserve(STATISTICS_MAP_SZIE);
+        if (!hookConfig_.arkui_mem_trace_enable()) {
+            simplifiedRecordStatisticsMap_.reserve(STATISTICS_MAP_SIZE);
+        } else {
+            recordStatisticsMap_.reserve(STATISTICS_MAP_SIZE);
+        }
         statisticsPeriodSet_.reserve(STATISTICS_PERIOD_DATA_SIZE);
         allocAddrMap_.reserve(ALLOC_ADDRMAMP_SIZE);
     }
+    InitializeFunctionPointers();
     if (hookConfig_.malloc_free_matching_interval() > 0) {
         applyAndReleaseMatchInterval_ = std::chrono::seconds(hookConfig_.malloc_free_matching_interval());
         applyAndReleaseMatchIntervallMap_.reserve(MATCH_ADDRMAMP_SIZE);
@@ -1042,6 +1068,9 @@ bool StackPreprocess::BuildCallFrames(const std::shared_ptr<HookRecord>& hookRec
 bool StackPreprocess::ProcessRegularStackData(std::shared_ptr<HookRecord>& hookRecord,
                                               RawStackPtr& rawData)
 {
+    if (rawData == nullptr) {
+        return false;
+    }
 #ifdef PERFORMANCE_DEBUG
     struct timespec start = {};
     clock_gettime(CLOCK_REALTIME, &start);
@@ -1082,6 +1111,15 @@ bool StackPreprocess::ProcessRegularStackData(std::shared_ptr<HookRecord>& hookR
     return true;
 }
 
+inline bool StackPreprocess::IsStackIdExistsInStatistics(uint32_t stackId)
+{
+    if (!hookConfig_.arkui_mem_trace_enable()) {
+        return simplifiedRecordStatisticsMap_.find(stackId) != simplifiedRecordStatisticsMap_.end();
+    } else {
+        return recordStatisticsMap_.find(stackId) != recordStatisticsMap_.end();
+    }
+}
+
 bool StackPreprocess::TryProcessCachedAsyncStatistics(std::shared_ptr<HookRecord>& hookRecord)
 {
     uint16_t type = hookRecord->GetType();
@@ -1104,7 +1142,7 @@ bool StackPreprocess::TryProcessCachedAsyncStatistics(std::shared_ptr<HookRecord
         spinLock_.Unlock();
         return false;
     }
-    bool isExists = (recordStatisticsMap_.find(stackId) != recordStatisticsMap_.end());
+    bool isExists = IsStackIdExistsInStatistics(stackId);
     SetAllocStatisticsData(hookRecord, stackId, isExists);
     spinLock_.Unlock();
     ReportOfflineSymbolizationData();
@@ -1409,28 +1447,85 @@ inline void StackPreprocess::FillCallStack(std::vector<CallFrame>& callFrames, s
     }
 }
 
-inline uint32_t StackPreprocess::FindCallStackId(std::vector<uint64_t>& callStack, const HookRecordPtr& hookRecord)
+uint32_t StackPreprocess::FindAsyncCallStackId(const HookRecordPtr& hookRecord)
+{
+    auto rawData = hookRecord->GetRawStack();
+    const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
+    uint64_t asyncHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
+    AsyncCallStackKey asyncKey = {asyncHash, rawData->stackContext->mallocSize,
+        rawData->stackContext->tagId};
+    auto it = asyncCallStackIndex_.find(asyncKey);
+    return it != asyncCallStackIndex_.end() ? it->second : 0;
+}
+
+uint32_t StackPreprocess::FindSimplifiedAsyncCallStackId(const HookRecordPtr& hookRecord)
+{
+    auto rawData = hookRecord->GetRawStack();
+    const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
+    uint64_t asyncHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
+    SimplifiedAsyncCallStackKey asyncKey = {asyncHash, rawData->stackContext->mallocSize,
+        rawData->stackContext->tagId};
+    auto it = simplifiedAsyncCallStackIndex_.find(asyncKey);
+    return it != simplifiedAsyncCallStackIndex_.end() ? it->second : 0;
+}
+
+uint32_t StackPreprocess::FindFullAsyncCallStackId(const HookRecordPtr& hookRecord)
+{
+    auto rawData = hookRecord->GetRawStack();
+    const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
+    uint64_t asyncHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
+    AsyncCallStackKey asyncKey = {asyncHash, rawData->stackContext->mallocSize,
+        rawData->stackContext->tagId};
+    auto it = asyncCallStackIndex_.find(asyncKey);
+    return it != asyncCallStackIndex_.end() ? it->second : 0;
+}
+
+uint32_t StackPreprocess::FindFullAsyncStatisticsStackId(const HookRecordPtr& hookRecord)
+{
+    auto rawData = hookRecord->GetRawStack();
+    CHECK_NOTNULL(rawData, 0, "rawData is nullptr");
+    CHECK_NOTNULL(rawData->stackContext, 0, "stackContext is nullptr");
+    const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
+    uint64_t stackHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
+    AsyncCallStackKey key = {stackHash, rawData->stackContext->mallocSize,
+        rawData->stackContext->tagId};
+    auto it = asyncCallStackIndex_.find(key);
+    return it != asyncCallStackIndex_.end() ? it->second : 0;
+}
+
+
+uint32_t StackPreprocess::FindSyncCallStackId(std::vector<uint64_t>& callStack, const HookRecordPtr& hookRecord)
+{
+    auto rawData = hookRecord->GetRawStack();
+    uint64_t stackHash = CallStackHash{}(callStack);
+    uint32_t stackSize = static_cast<uint32_t>(callStack.size());
+    uint64_t nodeId = hookConfig_.arkui_mem_trace_enable() ? rawData->stackContext->nodeId : 0;
+    uint32_t nodeType = hookConfig_.arkui_mem_trace_enable() ? rawData->stackContext->nodeType : 0;
+    CallStackKey key = {stackHash, nodeId, stackSize, nodeType, rawData->stackContext->tagId};
+    auto itStack = callStackIndex_.find(key);
+    return itStack != callStackIndex_.end() ? itStack->second : 0;
+}
+
+uint32_t StackPreprocess::FindSimplifiedSyncCallStackId(
+    std::vector<uint64_t>& callStack, const HookRecordPtr& hookRecord)
+{
+    auto rawData = hookRecord->GetRawStack();
+    uint64_t stackHash = CallStackHash{}(callStack);
+    uint32_t stackSize = static_cast<uint32_t>(callStack.size());
+    SimplifiedCallStackKey key = {stackHash, stackSize, rawData->stackContext->tagId};
+    auto itStack = simplifiedCallStackIndex_.find(key);
+    return itStack != simplifiedCallStackIndex_.end() ? itStack->second : 0;
+}
+
+uint32_t StackPreprocess::FindCallStackId(std::vector<uint64_t>& callStack, const HookRecordPtr& hookRecord)
 {
     auto rawData = hookRecord->GetRawStack();
 
     if (hookConfig_.async_stack_enable() && rawData->stackContext->type != FREE_ARKTS &&
         rawData->stackContext->type != MALLOC_ARKTS && rawData->stackContext->type != PR_SET_VMA_MSG) {
-        const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
-        uint64_t asyncHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
-        uint64_t nodeTag = (static_cast<uint64_t>(rawData->stackContext->nodeType) << 32) |
-            rawData->stackContext->tagId;
-        AsyncCallStackKey asyncKey = {asyncHash, rawData->stackContext->mallocSize,
-            rawData->stackContext->nodeId, nodeTag};
-        auto it = asyncCallStackIndex_.find(asyncKey);
-        return it != asyncCallStackIndex_.end() ? it->second : 0;
-    }
-
-    uint64_t stackHash = CallStackHash{}(callStack);
-    uint32_t stackSize = static_cast<uint32_t>(callStack.size());
-    CallStackKey key = {stackHash, rawData->stackContext->nodeId, stackSize,
-        rawData->stackContext->nodeType, rawData->stackContext->tagId};
-    auto itStack = callStackIndex_.find(key);
-    return itStack != callStackIndex_.end() ? itStack->second : 0;
+            return (this->*findAsyncCallStackIdFunc_)(hookRecord);
+        }
+    return (this->*findSyncCallStackIdFunc_)(callStack, hookRecord);
 }
 
 uint32_t StackPreprocess::FindAsyncStatisticsStackIdLocked(const HookRecordPtr& hookRecord)
@@ -1438,14 +1533,52 @@ uint32_t StackPreprocess::FindAsyncStatisticsStackIdLocked(const HookRecordPtr& 
     auto rawData = hookRecord->GetRawStack();
     CHECK_NOTNULL(rawData, 0, "rawData is nullptr");
     CHECK_NOTNULL(rawData->stackContext, 0, "stackContext is nullptr");
-    const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
-    uint64_t stackHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
-    uint64_t nodeTag = (static_cast<uint64_t>(rawData->stackContext->nodeType) << 32) |
-        rawData->stackContext->tagId;
-    AsyncCallStackKey key = {stackHash, rawData->stackContext->mallocSize,
-        rawData->stackContext->nodeId, nodeTag};
-    auto it = asyncCallStackIndex_.find(key);
-    return it != asyncCallStackIndex_.end() ? it->second : 0;
+    return (this->*findAsyncStatisticsStackIdFunc_)(hookRecord);
+}
+
+inline uint32_t StackPreprocess::GetNewStackId()
+{
+    if (!hookConfig_.arkui_mem_trace_enable()) {
+        return hookConfig_.async_stack_enable() ? simplifiedAsyncCallStackIndex_.size() + 1 :
+            simplifiedCallStackIndex_.size() + 1;
+    } else {
+        return hookConfig_.async_stack_enable() ? asyncCallStackIndex_.size() + 1 :
+            callStackIndex_.size() + 1;
+    }
+}
+
+void StackPreprocess::AddCallStackIndex(uint32_t stackId, RawStackPtr rawData)
+{
+    if (hookConfig_.async_stack_enable()) {
+        const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
+        uint64_t stackHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
+        AsyncCallStackKey key = {stackHash, rawData->stackContext->mallocSize,
+            rawData->stackContext->tagId};
+            asyncCallStackIndex_[key] = stackId;
+    } else {
+        uint64_t stackHash = CallStackHash{}(g_callStack);
+        uint32_t stackSize = static_cast<uint32_t>(g_callStack.size());
+        uint64_t nodeId = hookConfig_.arkui_mem_trace_enable() ? rawData->stackContext->nodeId : 0;
+        uint32_t nodeType = hookConfig_.arkui_mem_trace_enable() ? rawData->stackContext->nodeType : 0;
+        CallStackKey key = {stackHash, nodeId, stackSize, nodeType, rawData->stackContext->tagId};
+        callStackIndex_[key] = stackId;
+    }
+}
+
+void StackPreprocess::AddSimplifiedCallStackIndex(uint32_t stackId, RawStackPtr rawData)
+{
+    if (hookConfig_.async_stack_enable()) {
+        const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
+        uint64_t stackHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
+        SimplifiedAsyncCallStackKey asyncKey = {stackHash, rawData->stackContext->mallocSize,
+            rawData->stackContext->tagId};
+        simplifiedAsyncCallStackIndex_[asyncKey] = stackId;
+    } else {
+        uint64_t stackHash = CallStackHash{}(g_callStack);
+        uint32_t stackSize = static_cast<uint32_t>(g_callStack.size());
+        SimplifiedCallStackKey key = {stackHash, stackSize, rawData->stackContext->tagId};
+        simplifiedCallStackIndex_[key] = stackId;
+    }
 }
 
 /**
@@ -1458,7 +1591,7 @@ inline uint32_t StackPreprocess::SetCallStackMap(T& stackData, const HookRecordP
     uint32_t stackId = 0;
     auto hookData = stackData.add_events();
     auto stackmap = hookData->mutable_stack_map();
-    stackId = hookConfig_.async_stack_enable() ? asyncCallStackIndex_ .size() + 1 : callStackIndex_.size() + 1;
+    stackId = GetNewStackId();
     stackmap->set_id(stackId);
     // offline symbolization use ip, other use frame_map_id
     if (hookConfig_.offline_symbolization()) {
@@ -1482,22 +1615,7 @@ inline uint32_t StackPreprocess::SetCallStackMap(T& stackData, const HookRecordP
     auto rawData = hookRecord->GetRawStack();
     CHECK_NOTNULL(rawData, 0, "StackPreprocess rawData is nullptr");
 
-    if (hookConfig_.async_stack_enable()) {
-        const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
-        uint64_t asyncHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
-        uint64_t nodeTag = (static_cast<uint64_t>(rawData->stackContext->nodeType) << 32) |
-            rawData->stackContext->tagId;
-        AsyncCallStackKey asyncKey = {asyncHash, rawData->stackContext->mallocSize,
-            rawData->stackContext->nodeId, nodeTag};
-        asyncCallStackIndex_[asyncKey] = stackId;
-    } else {
-        uint64_t stackHash = CallStackHash{}(g_callStack);
-        uint32_t stackSize = static_cast<uint32_t>(g_callStack.size());
-        CallStackKey key = {stackHash, rawData->stackContext->nodeId, stackSize,
-        rawData->stackContext->nodeType, rawData->stackContext->tagId};
-    callStackIndex_[key] = stackId;
-    }
-
+    (this->*addCallStackIndexFunc_)(stackId, rawData);
     return stackId;
 }
 
@@ -1643,14 +1761,9 @@ void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, s
         ++napiIndex_;
     }
     spinLock_.Lock();
-    // by call stack id set alloc statistics data.
     uint32_t stackId = FindCallStackId(g_callStack, hookRecord);
     if (stackId > 0) {
-        if (recordStatisticsMap_.find(stackId) != recordStatisticsMap_.end()) {
-            SetAllocStatisticsData(hookRecord, stackId, true);
-        } else {
-            SetAllocStatisticsData(hookRecord, stackId);
-        }
+        SetAllocStatisticsData(hookRecord, IsStackIdExistsInStatistics(stackId));
     } else {
         stackId = SetCallStackMap(stackData, hookRecord);
         statisticsModelFlushCallstack_ = true;
@@ -1855,19 +1968,35 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
     hookRecord->SerializeData(hookData, hookInfo);
 }
 
+template <typename T>
+inline void StackPreprocess::FindAndUpdateFreeStatisticsLocked(
+    std::unordered_map<uint32_t, T>& statisticsMap, uint32_t stackId, uint32_t mallocSize)
+{
+    auto recordIter = statisticsMap.find(stackId);
+    if (recordIter != statisticsMap.end()) {
+        auto& record = recordIter->second;
+        ++record.releaseCount;
+        record.releaseSize += mallocSize;
+        statisticsPeriodSet_.insert(record.callstackId);
+    }
+}
+
+inline void StackPreprocess::FindAndUpdateFreeStatisticsLocked(uint32_t stackId, uint32_t mallocSize)
+{
+    if (!hookConfig_.arkui_mem_trace_enable()) {
+        FindAndUpdateFreeStatisticsLocked(simplifiedRecordStatisticsMap_, stackId, mallocSize);
+    } else {
+        FindAndUpdateFreeStatisticsLocked(recordStatisticsMap_, stackId, mallocSize);
+    }
+}
+
 bool StackPreprocess::SetFreeStatisticsDataLocked(uint64_t addr)
 {
     auto addrIter = allocAddrMap_.find(addr);
     if (addrIter == allocAddrMap_.end()) {
         return false;
     }
-    auto recordIter = recordStatisticsMap_.find(addrIter->second.stackId);
-    if (recordIter != recordStatisticsMap_.end()) {
-        auto& record = recordIter->second;
-        ++record.releaseCount;
-        record.releaseSize += addrIter->second.mallocSize;
-        statisticsPeriodSet_.insert(record.callstackId);
-    }
+    FindAndUpdateFreeStatisticsLocked(addrIter->second.stackId, addrIter->second.mallocSize);
     allocAddrMap_.erase(addr);
     auto addrSetIter = addrSet_.find(addr);
     if (addrSetIter != addrSet_.end()) {
@@ -1904,15 +2033,19 @@ bool StackPreprocess::ReconcileDuplicateMalloc(uint64_t addr, const struct times
     return true;
 }
 
-void StackPreprocess::UpdateAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId)
+template <typename T>
+void StackPreprocess::UpdateAllocStatistics(
+    std::unordered_map<uint32_t, T>& statisticsMap, const HookRecordPtr& hookRecord, size_t stackId)
 {
-    auto recordIter = recordStatisticsMap_.find(stackId);
-    if (recordIter != recordStatisticsMap_.end()) {
+    auto recordIter = statisticsMap.find(stackId);
+    if (recordIter != statisticsMap.end()) {
         auto& record = recordIter->second;
         auto rawStack = hookRecord->GetRawStack();
         ++record.applyCount;
         record.applySize += rawStack->stackContext->mallocSize;
-        record.ts = rawStack->stackContext->ts;
+        if constexpr (std::is_same_v<T, RecordStatistic>) {
+            record.ts = rawStack->stackContext->ts;
+        }
         allocAddrMap_[hookRecord->GetAddr()] =
             AllocAddrInfo{rawStack->stackContext->mallocSize, stackId, rawStack->stackContext->ts};
         if (hookRecord->GetType() == MEMORY_USING_MSG) {
@@ -1922,40 +2055,44 @@ void StackPreprocess::UpdateAllocStatistics(const HookRecordPtr& hookRecord, siz
     }
 }
 
-bool StackPreprocess::ResolveTagType(const std::string& tagName, RecordStatistic& record)
+void StackPreprocess::UpdateAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId)
+{
+    if (!hookConfig_.arkui_mem_trace_enable()) {
+        UpdateAllocStatistics(simplifiedRecordStatisticsMap_, hookRecord, stackId);
+    } else {
+        UpdateAllocStatistics(recordStatisticsMap_, hookRecord, stackId);
+    }
+}
+
+bool StackPreprocess::ResolveTagType(const std::string& tagName, RecordStatisticsEvent::MemoryType& type)
 {
     for (const auto& item : g_tagMappings) {
         if (tagName == item.tagName) {
-            record.type = item.type;
+            type = item.type;
             return item.needNodeInfo;
         }
     }
     if (tagName == "ashmem") {
-        record.type = RecordStatisticsEvent::ASHMEM;
+        type = RecordStatisticsEvent::ASHMEM;
         return true;
     }
     if (tagName.find(".so") != std::string::npos) {
-        record.type = RecordStatisticsEvent::SO;
+        type = RecordStatisticsEvent::SO;
     } else {
-        record.type = RecordStatisticsEvent::MEMORY_USING_MSG;
+        type = RecordStatisticsEvent::MEMORY_USING_MSG;
     }
     return false;
 }
 
-void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId)
+template <typename T>
+void StackPreprocess::FillRecordFromType(T& record, const HookRecordPtr& hookRecord)
 {
     auto rawStack = hookRecord->GetRawStack();
-    RecordStatistic record;
-    record.callstackId = stackId;
-    record.applyCount = 1;
-    record.applySize = rawStack->stackContext->mallocSize;
-    record.ts = rawStack->stackContext->ts;
-
     switch (hookRecord->GetType()) {
         case MALLOC_MSG:
             record.type = RecordStatisticsEvent::MALLOC;
-            record.nodeType = rawStack->stackContext->nodeType;
-            record.nodeId = rawStack->stackContext->nodeId;
+            record.SetNodeType(rawStack->stackContext->nodeType);
+            record.SetNodeId(rawStack->stackContext->nodeId);
             break;
         case MMAP_MSG:
             record.type = RecordStatisticsEvent::MMAP;
@@ -1967,10 +2104,12 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
         case MEMORY_USING_MSG: {
             std::string tagName;
             GetMemTag(rawStack->stackContext->tagId, tagName);
-            bool needNodeInfo = ResolveTagType(tagName, record);
+            RecordStatisticsEvent::MemoryType memType = RecordStatisticsEvent::MALLOC;
+            bool needNodeInfo = ResolveTagType(tagName, memType);
+            record.type = memType;
             if (needNodeInfo) {
-                record.nodeType = rawStack->stackContext->nodeType;
-                record.nodeId = rawStack->stackContext->nodeId;
+                record.SetNodeType(rawStack->stackContext->nodeType);
+                record.SetNodeId(rawStack->stackContext->nodeId);
             }
             record.tagId = rawStack->stackContext->tagId;
             break;
@@ -1979,13 +2118,41 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
             PROFILER_LOG_ERROR(LOG_CORE, "SetAllocStatisticsData event type error");
             break;
     }
-    recordStatisticsMap_.emplace(stackId, record);
+}
+
+template <typename T>
+void StackPreprocess::RegisterAllocAddress(std::unordered_map<uint32_t, T>& statisticsMap,
+    const HookRecordPtr& hookRecord, size_t stackId)
+{
+    T record;
+    record.callstackId = stackId;
+    record.applyCount = 1;
+    auto rawStack = hookRecord->GetRawStack();
+    record.applySize = rawStack->stackContext->mallocSize;
+    FillRecordFromType(record, hookRecord);
+    statisticsMap[stackId] = record;
     allocAddrMap_[hookRecord->GetAddr()] =
         AllocAddrInfo{rawStack->stackContext->mallocSize, stackId, rawStack->stackContext->ts};
     if (hookRecord->GetType() == MEMORY_USING_MSG) {
         addrSet_.insert(hookRecord->GetAddr());
     }
     statisticsPeriodSet_.insert(stackId);
+}
+
+template <typename T>
+inline void StackPreprocess::AddAllocStatistics(std::unordered_map<uint32_t, T>& statisticsMap,
+    const HookRecordPtr& hookRecord, size_t stackId)
+{
+    RegisterAllocAddress(statisticsMap, hookRecord, stackId);
+}
+
+void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId)
+{
+    if (!hookConfig_.arkui_mem_trace_enable()) {
+        AddAllocStatistics(simplifiedRecordStatisticsMap_, hookRecord, stackId);
+    } else {
+        AddAllocStatistics(recordStatisticsMap_, hookRecord, stackId);
+    }
 }
 
 void StackPreprocess::SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists)
@@ -2338,14 +2505,64 @@ void StackPreprocess::GetSymbols(const std::string& filePath, ElfSymbolTable& sy
 
 void StackPreprocess::CleanupFullyReleasedStack(uint32_t stackId)
 {
-    auto recordIt = recordStatisticsMap_.find(stackId);
-    if (recordIt == recordStatisticsMap_.end()) {
-        return;
+    if (!hookConfig_.arkui_mem_trace_enable()) {
+        auto recordIt = simplifiedRecordStatisticsMap_.find(stackId);
+        if (recordIt != simplifiedRecordStatisticsMap_.end()) {
+            simplifiedRecordStatisticsMap_.erase(recordIt);
+        }
+    } else {
+        auto recordIt = recordStatisticsMap_.find(stackId);
+        if (recordIt != recordStatisticsMap_.end()) {
+            recordStatisticsMap_.erase(recordIt);
+        }
     }
-    recordStatisticsMap_.erase(recordIt);
 }
 
-bool StackPreprocess::FlushRecordStatistics()
+void StackPreprocess::InitializeFunctionPointers()
+{
+    if (!hookConfig_.arkui_mem_trace_enable()) {
+        findSyncCallStackIdFunc_ = &StackPreprocess::FindSimplifiedSyncCallStackId;
+        findAsyncCallStackIdFunc_ = &StackPreprocess::FindSimplifiedAsyncCallStackId;
+        findAsyncStatisticsStackIdFunc_ = &StackPreprocess::FindSimplifiedAsyncCallStackId;
+        addCallStackIndexFunc_ = &StackPreprocess::AddSimplifiedCallStackIndex;
+    } else {
+        findSyncCallStackIdFunc_ = &StackPreprocess::FindSyncCallStackId;
+        findAsyncCallStackIdFunc_ = &StackPreprocess::FindFullAsyncCallStackId;
+        findAsyncStatisticsStackIdFunc_ = &StackPreprocess::FindFullAsyncStatisticsStackId;
+        addCallStackIndexFunc_ = &StackPreprocess::AddCallStackIndex;
+    }
+}
+
+template <typename T, typename StackData>
+void StackPreprocess::FlushStatisticsEntry(T* statistics, uint32_t stackId, StackData& stackData)
+{
+    auto hookData = stackData.add_events();
+    if (hookConfig_.use_file_cache_mode()) {
+        hookData->set_tv_sec(lastCacheStatisticsTime_.tv_sec);
+        hookData->set_tv_nsec(lastCacheStatisticsTime_.tv_nsec);
+    } else {
+        struct timespec ts;
+        clock_gettime(hookDataClockId_, &ts);
+        hookData->set_tv_sec(ts.tv_sec);
+        hookData->set_tv_nsec(ts.tv_nsec);
+    }
+    auto recordEvent = hookData->mutable_statistics_event();
+    recordEvent->set_pid(pid_);
+    recordEvent->set_callstack_id(stackId);
+    recordEvent->set_type(statistics->type);
+    recordEvent->set_apply_count(statistics->applyCount);
+    recordEvent->set_release_count(statistics->releaseCount);
+    recordEvent->set_apply_size(statistics->applySize);
+    recordEvent->set_release_size(statistics->releaseSize);
+    std::string tagName;
+    GetMemTag(statistics->tagId, tagName);
+    recordEvent->set_tag_name(tagName);
+    recordEvent->set_node_type(statistics->GetNodeType());
+    recordEvent->set_node_id(statistics->GetNodeId());
+}
+
+template <typename T>
+bool StackPreprocess::FlushRecordStatisticsImpl(std::unordered_map<uint32_t, T>& statisticsMap)
 {
     spinLock_.Lock();
     std::lock_guard<std::mutex> guard(mtx_);
@@ -2356,35 +2573,15 @@ bool StackPreprocess::FlushRecordStatistics()
     std::visit([&](auto& stackData) { FlushData(stackData); }, stackData_);
     std::visit(
         [&](auto& stackData) {
-            struct timespec ts;
-            clock_gettime(hookDataClockId_, &ts);
             uint32_t count = 0;
             for (auto& stackId : statisticsPeriodSet_) {
-                auto iter = recordStatisticsMap_.find(stackId);
-                if (iter != recordStatisticsMap_.end()) {
-                    auto statistics = &iter->second;
-                    auto hookData = stackData.add_events();
-                    if (hookConfig_.use_file_cache_mode()) {
-                        hookData->set_tv_sec(lastCacheStatisticsTime_.tv_sec);
-                        hookData->set_tv_nsec(lastCacheStatisticsTime_.tv_nsec);
-                    } else {
-                        hookData->set_tv_sec(ts.tv_sec);
-                        hookData->set_tv_nsec(ts.tv_nsec);
-                    }
-                    auto recordEvent = hookData->mutable_statistics_event();
-                    recordEvent->set_pid(pid_);
-                    recordEvent->set_callstack_id(stackId);
-                    recordEvent->set_type(statistics->type);
-                    recordEvent->set_apply_count(statistics->applyCount);
-                    recordEvent->set_release_count(statistics->releaseCount);
-                    recordEvent->set_apply_size(statistics->applySize);
-                    recordEvent->set_release_size(statistics->releaseSize);
-                    std::string tagName;
-                    GetMemTag(statistics->tagId, tagName);
-                    recordEvent->set_tag_name(tagName);
-                    recordEvent->set_node_type(statistics->nodeType);
-                    recordEvent->set_node_id(statistics->nodeId);
+                auto iter = statisticsMap.find(stackId);
+                if (iter == statisticsMap.end()) {
+                    continue;
                 }
+                auto statistics = &iter->second;
+                // if the stack is not created in this period, data will not write to file.
+                FlushStatisticsEntry(statistics, stackId, stackData);
                 if (++count % STATISTICS_PERIOD_DATA_FLUSH_BATCH == 0) {
                     FlushData(stackData);
                     count = 0;
@@ -2396,6 +2593,15 @@ bool StackPreprocess::FlushRecordStatistics()
     statisticsPeriodSet_.clear();
     spinLock_.Unlock();
     return true;
+}
+
+__attribute__((noinline)) bool StackPreprocess::FlushRecordStatistics()
+{
+    if (!hookConfig_.arkui_mem_trace_enable()) {
+        return FlushRecordStatisticsImpl<SimplifiedRecordStatistics>(simplifiedRecordStatisticsMap_);
+    } else {
+        return FlushRecordStatisticsImpl<RecordStatistic>(recordStatisticsMap_);
+    }
 }
 
 void StackPreprocess::SaveMemTag(uint32_t tagId, const std::string& tagName)

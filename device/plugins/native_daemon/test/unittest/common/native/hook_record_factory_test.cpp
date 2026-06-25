@@ -694,8 +694,8 @@ HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_NonPendingTagId, TestSize.
  */
 HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_TooSmallSize, TestSize.Level0)
 {
-    uint32_t smallSize = sizeof(uint32_t);
-    std::vector<int8_t> buffer(smallSize, 0);
+    uint32_t smallSize = sizeof(uint32_t) + 1;
+    std::vector<int8_t> buffer(sizeof(BaseStackRawData), 0);
     BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
     baseData->type = MMAP_FILE_PAGE_MSG;
     baseData->tagId = TAG_ID_PENDING;

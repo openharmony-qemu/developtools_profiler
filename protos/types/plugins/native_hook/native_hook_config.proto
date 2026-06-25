@@ -76,4 +76,5 @@ message NativeHookConfig {
     repeated string filter_lib_list = 41;
     uint32 async_nesting_depth = 42;
     uint32 async_task_stack_depth = 43;
+    bool arkui_mem_trace_enable = 44;
 }
