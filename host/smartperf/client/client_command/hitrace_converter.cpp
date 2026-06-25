@@ -197,10 +197,10 @@ bool TraceFileParser::ReadContentSection()
             if (line.find("KERNEL_VERSION:") == 0) {
                 metadata_.kernelVersion = line.substr(kernelPrefixLen);
             } else if (line.find("UNIX_TIME_MS:") == 0) {
-                std::string unixTimeMsLine = line.substr(unixPrefixLen)
+                std::string unixTimeMsLine = line.substr(unixPrefixLen);
                 metadata_.unixTimeMs = SPUtilesTye::StringToSometype<uint64_t>(unixTimeMsLine);
             } else if (line.find("BOOT_TIME_MS:") == 0) {
-                std::string bootTimeMsLine = line.substr(bootPrefixLen)
+                std::string bootTimeMsLine = line.substr(bootPrefixLen);
                 metadata_.bootTimeMs = SPUtilesTye::StringToSometype<uint64_t>(bootTimeMsLine);
             }
 
