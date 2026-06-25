@@ -137,6 +137,14 @@ public:
         lastPid_ = config == nullptr ? -1 : config->pid_;
         return RET_OK;
     }
+    int32_t DumpDataAsync(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+        const sptr<IRemoteObject>& callback) override
+    {
+        lastFd_ = fd;
+        lastPid_ = config == nullptr ? -1 : config->pid_;
+        callbackIsNull_ = callback == nullptr;
+        return RET_OK;
+    }
 
     int32_t lastPid_ = -1;
     uint32_t lastFd_ = 0;
@@ -148,12 +156,14 @@ public:
 
 class TestNativeMemoryProfilerSaCallbackStub : public NativeMemoryProfilerSaCallbackStub {
 public:
-    void OnProfilingResult(int32_t errorCode, const std::string& filePath) override
+    void OnProfilingResult(int32_t pid, int32_t errorCode, const std::string& filePath) override
     {
+        pid_ = pid;
         errorCode_ = errorCode;
         filePath_ = filePath;
     }
 
+    int32_t pid_ = 0;
     int32_t errorCode_ = 0;
     std::string filePath_;
 };
@@ -458,9 +468,11 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaCallbackStubDispatchesResult, Test
 
     OHOS::MessageParcel validData;
     ASSERT_TRUE(validData.WriteInterfaceToken(INativeMemoryProfilerSaCallback::GetDescriptor()));
+    ASSERT_TRUE(validData.WriteInt32(8));
     ASSERT_TRUE(validData.WriteInt32(7));
     ASSERT_TRUE(validData.WriteString("/data/local/tmp/result.htrace"));
     EXPECT_EQ(stub->OnRemoteRequest(0, validData, reply, option), OHOS::ERR_NONE);
+    EXPECT_EQ(stub->pid_, 8);
     EXPECT_EQ(stub->errorCode_, 7);
     EXPECT_EQ(stub->filePath_, "/data/local/tmp/result.htrace");
 }
@@ -476,7 +488,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaCallbackProxyHandlesRemotePaths, T
     OHOS::sptr<NativeMemoryProfilerSaCallbackProxy> nullProxy =
         new (std::nothrow) NativeMemoryProfilerSaCallbackProxy(nullptr);
     ASSERT_NE(nullProxy, nullptr);
-    nullProxy->OnProfilingResult(1, "/data/local/tmp/null.htrace");
+    nullProxy->OnProfilingResult(1, 1, "/data/local/tmp/null.htrace");
 
     OHOS::sptr<TestNativeMemoryProfilerSaCallbackStub> callback =
         new (std::nothrow) TestNativeMemoryProfilerSaCallbackStub();
@@ -485,8 +497,9 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaCallbackProxyHandlesRemotePaths, T
         new (std::nothrow) NativeMemoryProfilerSaCallbackProxy(callback->AsObject());
     ASSERT_NE(proxy, nullptr);
 
-    proxy->OnProfilingResult(9, "/data/local/tmp/proxy.htrace");
+    proxy->OnProfilingResult(8, 9, "/data/local/tmp/proxy.htrace");
 
+    EXPECT_EQ(callback->pid_, 8);
     EXPECT_EQ(callback->errorCode_, 9);
     EXPECT_EQ(callback->filePath_, "/data/local/tmp/proxy.htrace");
 }

@@ -78,10 +78,14 @@ public:
     using ProfilingCallback = std::function<void(int32_t, const std::string&)>;
     static int32_t StartMemProfiler(uint32_t duration, SimplifiedMemConfig& config, ProfilingCallback callback);
     static int32_t StartProfilerByType(int32_t type, MemAPIConfig *inputConfig, ProfilingCallback callback);
-    static void SetProfilingCallback(ProfilingCallback callback);
     static int32_t GetGwpAsan(int fd, pid_t pid, GwpAsanConfig& config);
     static sptr<IRemoteObject> GetRemoteService();
     static int32_t Prepare();
+    using ProfilingDumpCallback = std::function<void(int32_t)>;
+    static int32_t StartAsync(int fd, pid_t pid, uint32_t duration, MemSaConfig& saConfig,
+        ProfilingDumpCallback callback);
+    static int32_t StartAsync(int fd, pid_t pid, uint32_t duration, SimplifiedMemConfig& config,
+        ProfilingDumpCallback callback);
     
 private:
     static int32_t StartByType(int32_t type, std::shared_ptr<NativeMemoryProfilerSaConfig>& config,

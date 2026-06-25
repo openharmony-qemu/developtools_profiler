@@ -26,8 +26,7 @@ public:
     NativeMemoryProfilerSaCallbackStub() = default;
     ~NativeMemoryProfilerSaCallbackStub() override = default;
 
-    int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply,
-        MessageOption& option) override;
+    int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

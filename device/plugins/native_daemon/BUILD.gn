@@ -266,6 +266,7 @@ ohos_executable("native_daemon_client") {
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_proxy.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_lazyload_callback.cpp",
     "../../base/src/common.cpp",
+    "../../base/src/schedule_task_manager.cpp",
     "native_daemon_client.cpp",
   ]
 
@@ -310,6 +311,7 @@ ohos_shared_library("libnative_daemon_client") {
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_proxy.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_lazyload_callback.cpp",
     "../../base/src/common.cpp",
+    "../../base/src/schedule_task_manager.cpp",
   ]
 
   external_deps = [
