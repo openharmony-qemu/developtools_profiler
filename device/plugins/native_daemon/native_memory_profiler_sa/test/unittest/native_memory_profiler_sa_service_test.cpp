@@ -472,7 +472,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaCallbackStubDispatchesResult, Test
     ASSERT_TRUE(validData.WriteInt32(7));
     ASSERT_TRUE(validData.WriteString("/data/local/tmp/result.htrace"));
     EXPECT_EQ(stub->OnRemoteRequest(0, validData, reply, option), OHOS::ERR_NONE);
-    EXPECT_EQ(stub->errorCode_, 8);
+    EXPECT_EQ(stub->pid_, 8);
     EXPECT_EQ(stub->errorCode_, 7);
     EXPECT_EQ(stub->filePath_, "/data/local/tmp/result.htrace");
 }
@@ -497,9 +497,9 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaCallbackProxyHandlesRemotePaths, T
         new (std::nothrow) NativeMemoryProfilerSaCallbackProxy(callback->AsObject());
     ASSERT_NE(proxy, nullptr);
 
-    proxy->OnProfilingResult(9, 9, "/data/local/tmp/proxy.htrace");
+    proxy->OnProfilingResult(8, 9, "/data/local/tmp/proxy.htrace");
 
-    EXPECT_EQ(callback->pid_, 9);
+    EXPECT_EQ(callback->pid_, 8);
     EXPECT_EQ(callback->errorCode_, 9);
     EXPECT_EQ(callback->filePath_, "/data/local/tmp/proxy.htrace");
 }
