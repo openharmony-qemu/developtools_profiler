@@ -468,9 +468,11 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaCallbackStubDispatchesResult, Test
 
     OHOS::MessageParcel validData;
     ASSERT_TRUE(validData.WriteInterfaceToken(INativeMemoryProfilerSaCallback::GetDescriptor()));
+    ASSERT_TRUE(validData.WriteInt32(8));
     ASSERT_TRUE(validData.WriteInt32(7));
     ASSERT_TRUE(validData.WriteString("/data/local/tmp/result.htrace"));
     EXPECT_EQ(stub->OnRemoteRequest(0, validData, reply, option), OHOS::ERR_NONE);
+    EXPECT_EQ(stub->errorCode_, 8);
     EXPECT_EQ(stub->errorCode_, 7);
     EXPECT_EQ(stub->filePath_, "/data/local/tmp/result.htrace");
 }
