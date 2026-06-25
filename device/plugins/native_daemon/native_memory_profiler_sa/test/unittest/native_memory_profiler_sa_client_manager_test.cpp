@@ -603,10 +603,7 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StopWithPathAndCallbackCleanup
 {
     using namespace OHOS::Developtools::NativeDaemon;
     std::string filePath;
-    NativeMemoryProfilerSaClientManager::SetProfilingCallback(
-        [](int32_t, const std::string&) {});
     EXPECT_NE(NativeMemoryProfilerSaClientManager::Stop(filePath), RET_OK);
-    NativeMemoryProfilerSaClientManager::SetProfilingCallback(nullptr);
     EXPECT_TRUE(filePath.empty());
 }
 

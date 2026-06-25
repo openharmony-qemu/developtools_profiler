@@ -16,6 +16,8 @@
 #include "native_memory_profiler_sa_callback_stub.h"
 
 #include "string_ex.h"
+#include "logging.h"
+#include "define_macro.h"
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
@@ -27,15 +29,21 @@ int32_t NativeMemoryProfilerSaCallbackStub::OnRemoteRequest(uint32_t code, Messa
 {
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != GetDescriptor()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Invalid descriptor");
         return ERR_INVALID_STATE;
     }
     if (code != ON_PROFILING_RESULT) {
         return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
     }
 
-    int32_t errorCode = data.ReadInt32();
-    std::string filePath = data.ReadString();
-    OnProfilingResult(errorCode, filePath);
+    int32_t pid = 0;
+    int32_t errorCode = 0;
+    std::string filePath;
+    if (!data.ReadInt32(pid) || !data.ReadInt32(errorCode) || !data.ReadString(filePath)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "read data FAIL");
+        return RET_ERR;
+    }
+    OnProfilingResult(pid, errorCode, filePath);
     return ERR_NONE;
 }
 } // namespace OHOS::Developtools::NativeDaemon

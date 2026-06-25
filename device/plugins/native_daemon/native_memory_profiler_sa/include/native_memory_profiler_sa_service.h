@@ -66,6 +66,8 @@ public:
     int32_t Stop() override;
     int32_t StopSync() override;
     int32_t DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override;
+    int32_t DumpDataAsync(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+        const sptr<IRemoteObject>& callback) override;
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, MessageParcel &reply) override;
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
                   std::string& replyStats) override { return 0; }
