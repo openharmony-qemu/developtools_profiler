@@ -53,7 +53,7 @@ constexpr uint32_t DEFINE_MIN_FILTER_SIZE = 1; // bytes
 constexpr uint32_t DEFINE_MAX_STACK_DEPTH = 30;
 constexpr uint32_t DEFINE_MAX_STATISTICS_INTERVAL = 3600; // seconds
 constexpr uint32_t DEFINE_MIN_SAMPLE_INTERVAL = 384; // bytes
-constexpr uint32_t ASYNC_REQUEST_TIMEOUT_DELTA = 3; // seconds
+constexpr uint32_t ASYNC_REQUEST_TIMEOUT_DELTA = 5; // seconds
 constexpr int32_t TIME_BASE = 1000;
 constexpr int32_t MAX_MEM_PROFILER_USE_COUNT_PER_DAY = 2;
 constexpr int HOURS_PER_DAY = 24;
@@ -176,8 +176,7 @@ public:
                 NotifyProfilingResult(pid, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR), "");
             },
             (request->duration + ASYNC_REQUEST_TIMEOUT_DELTA) * TIME_BASE,
-            true
-        );
+            true);
         CHECK_TRUE(timeoutFd != -1, NO_RETVAL, "Profiler async request create monitor for %d FAIL", pid);
         request->timeoutFd = timeoutFd;
     }
@@ -206,16 +205,16 @@ static void NotifyProfilingResult(int32_t pid, int32_t errorCode, const std::str
     std::shared_ptr<AsyncHookRequest> request = g_profilerAsyncReqMgr.TakeOutRequest(pid);
     CHECK_NOTNULL(request, NO_RETVAL, "no async req found for pid %d", pid);
     std::visit([pid, errorCode, filepath](auto& callback) {
-        CHECK_TRUE(callback, NO_RETVAL, "invalid callback for pid %d", pid);
-        using T = std::decay_t<decltype(callback)>;
-        if constexpr (std::is_same_v<T, NativeMemoryProfilerSaClientManager::ProfilingCallback>) {
-            callback(errorCode, filepath);
-        } else if constexpr (std::is_same_v<T, NativeMemoryProfilerSaClientManager::ProfilingDumpCallback>) {
-            callback(errorCode);
-        } else {
-            PROFILER_LOG_ERROR(LOG_CORE, "invalid callback for pid %d", pid);
-        }
-    }, request->callbackVar);
+            CHECK_TRUE(callback, NO_RETVAL, "invalid callback for pid %d", pid);
+            using T = std::decay_t<decltype(callback)>;
+            if constexpr (std::is_same_v<T, NativeMemoryProfilerSaClientManager::ProfilingCallback>) {
+                callback(errorCode, filepath);
+            } else if constexpr (std::is_same_v<T, NativeMemoryProfilerSaClientManager::ProfilingDumpCallback>) {
+                callback(errorCode);
+            } else {
+                PROFILER_LOG_ERROR(LOG_CORE, "invalid callback for pid %d", pid);
+            }
+        }, request->callbackVar);
 }
 
 class NativeMemoryProfilerSaResultCallback final : public NativeMemoryProfilerSaCallbackStub {
