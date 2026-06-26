@@ -536,6 +536,7 @@ int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint3
     config->asyncFlag_ = saConfig.asyncFlag;
     config->traceMask_ = saConfig.mask;
     config->shareMemorySize_ = CALL_STACK_SMS;
+    config->enableFileCacheMode_ = true;
     std::vector<std::vector<uint64_t>> gpuRange;
     if (!saConfig.hookSizes.empty()) {
         gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_VK]));
@@ -572,6 +573,7 @@ int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint3
     CHECK_TRUE(callback, RET_ERR, "NativeMemoryProfilerSaClientManager: invalid callback with SimplifiedMemConfig");
     std::shared_ptr<NativeMemoryProfilerSaConfig> nConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
     nConfig->pid_ = static_cast<int32_t>(pid);
+    nConfig->enableFileCacheMode_ = true;
     CHECK_TRUE(ParseSimplifiedConfig(nConfig, config, duration) == RET_OK,
         RET_ERR, "NativeMemoryProfilerSaClientManager: Parse simplified config failed");
     CHECK_TRUE(g_profilerAsyncReqMgr.TryAddRequest(nConfig->pid_, duration, callback, fd, ""), RET_ERR,
