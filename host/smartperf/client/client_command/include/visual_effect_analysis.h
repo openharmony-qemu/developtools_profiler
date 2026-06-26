@@ -65,7 +65,6 @@ private:
     VisualEffectAnalysis() {};
     VisualEffectAnalysis(const VisualEffectAnalysis &);
     VisualEffectAnalysis &operator = (const VisualEffectAnalysis &);
-
     std::vector <std::string> cpuData_ = {};
     std::vector <std::string> ddrData_ = {};
     std::map <std::string, std::string> dynamic_Effect_Rs_Data_ = {};

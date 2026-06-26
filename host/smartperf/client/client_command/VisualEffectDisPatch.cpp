@@ -58,6 +58,7 @@ std::map<std::string, std::string> &VisualEffectDisPatch::GetVisualEffectDisPatc
 void VisualEffectDisPatch::SetVisualEffectDisPatchType(int32_t type)
 {
     type_ = type;
+    LOGD("VisualEffectDisPatch type_ = %d", type_);
 }
 
 void VisualEffectDisPatch::SetCollectNum()

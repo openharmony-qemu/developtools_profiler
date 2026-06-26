@@ -45,7 +45,6 @@ void HiperfTest::SetUp()
 void HiperfTest::TearDown()
 {
 }
-
 /**
  * @tc.name: HiperfTest_GetInstance_001
  * @tc.desc:：验证 GetInstance 返回单例实例

@@ -31,7 +31,6 @@ public:
     void SetUp() {}
     void TearDown() {}
 };
-
 HWTEST_F(SpThreadSocketTest, MapToString_001, TestSize.Level1)
 {
     SpThreadSocket socket;

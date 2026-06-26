@@ -46,7 +46,6 @@ void TaskManagerTest::SetUp()
 void TaskManagerTest::TearDown()
 {
 }
-
 /**
 * @tc.name: TaskManagerTest_Constructor_001
 * @tc.desc:：验证 TaskManager 构造函数创建实例

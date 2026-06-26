@@ -357,6 +357,7 @@ void VisualEffectAnalysis::GetCpuIdFre(const std::string &line)
         GetCpuFre(line, cluster);
     }
 }
+
 void VisualEffectAnalysis::GetDdrIdFre(const std::string &line)
 {
     if (line.find("ddr_cluster") != std::string::npos) {

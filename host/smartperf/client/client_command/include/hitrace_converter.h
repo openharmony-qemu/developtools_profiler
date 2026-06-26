@@ -84,6 +84,7 @@ public:
     const TraceMetadata& GetMetadata() const;
     const std::map<int, CpuTraceData>& GetCpuTraces() const;
     const std::vector<uint8_t>& GetEventFormats() const;
+    const std::vector<uint8_t>& GetBaseInfo() const;
     const std::vector<uint8_t>& GetCmdLines() const;
     const std::vector<uint8_t>& GetTgids() const;
     uint64_t GetTraceStartTime() const;

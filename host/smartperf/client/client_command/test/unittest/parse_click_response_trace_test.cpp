@@ -38,7 +38,6 @@ public:
     void SetUp() {}
     void TearDown() {}
 };
-
 /**
  * @tc.name: ParseClickResponseTraceTest_ParseResponseTrace_001
  * @tc.desc: 验证 ParseResponseTrace 当文件打开失败时

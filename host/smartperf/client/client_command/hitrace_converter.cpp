@@ -25,6 +25,7 @@
 #include "include/hitrace_converter.h"
 #include "include/sp_log.h"
 #include "include/common.h"
+#include "include/sp_utils.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -32,6 +33,11 @@ TraceFileParser::TraceFileParser(const std::string& filePath) : filePath_(filePa
 
 bool TraceFileParser::Parse()
 {
+    char outPutPathChar[PATH_MAX] = {0x00};
+    if (realpath(filePath_.c_str(), outPutPathChar) == nullptr) {
+        LOGE("data dir %s is nullptr", filePath_.c_str());
+        return false;
+    }
     fileStream_.open(filePath_, std::ios::binary | std::ios::in);
     if (!fileStream_.is_open()) {
         errorMsg_ = "Failed to open file: " + filePath_;
@@ -87,6 +93,11 @@ const std::vector<uint8_t>& TraceFileParser::GetEventFormats() const
     return eventFormats_;
 }
 
+const std::vector<uint8_t>& TraceFileParser::GetBaseInfo() const
+{
+    return {};
+}
+
 const std::vector<uint8_t>& TraceFileParser::GetCmdLines() const
 {
     return cmdLines_;
@@ -119,47 +130,44 @@ bool TraceFileParser::ReadFileHeader()
 
 bool TraceFileParser::ReadContentSection()
 {
-    TraceFileContentHeader contentHeader = {};
-    fileStream_.read(reinterpret_cast<char*>(&contentHeader), sizeof(TraceFileContentHeader));
-    if (fileStream_.gcount() != sizeof(TraceFileContentHeader)) {
+    TraceFileContentHeader hdr = {};
+    if (fileStream_.read(reinterpret_cast<char*>(&hdr), sizeof(hdr)).gcount() != sizeof(hdr)) {
+        errorMsg_ = "Failed to read content header";
         return false;
     }
-
-    std::vector<uint8_t> contentData(contentHeader.length);
-    if (contentHeader.length > 0) {
-        fileStream_.read(reinterpret_cast<char*>(contentData.data()), contentHeader.length);
-        if (static_cast<uint32_t>(fileStream_.gcount()) != contentHeader.length) {
-            errorMsg_ = "Failed to read content data, expected " + std::to_string(contentHeader.length) + " bytes";
+    std::vector<uint8_t> data;
+    if (hdr.length > 0) {
+        data.resize(hdr.length);
+        if (fileStream_.read(reinterpret_cast<char*>(data.data()), hdr.length).gcount() != hdr.length) {
+            errorMsg_ = "Failed to read content data, expected " + std::to_string(hdr.length) + " bytes";
             return false;
         }
     }
-    switch (contentHeader.type) {
+    switch (hdr.type) {
         case CONTENT_TYPE_BASE_INFO:
-            ParseBaseInfo(contentData);
+            ParseBaseInfo(data);
             break;
         case CONTENT_TYPE_EVENTS_FORMAT:
-            eventFormats_ = std::move(contentData);
+            eventFormats_ = std::move(data);
             break;
         case CONTENT_TYPE_CMDLINES:
-            cmdLines_ = std::move(contentData);
+            cmdLines_ = std::move(data);
             break;
         case CONTENT_TYPE_TGIDS:
-            tgids_ = std::move(contentData);
+            tgids_ = std::move(data);
             break;
         default:
-            if (contentHeader.type >= CONTENT_TYPE_CPU_RAW) {
-                int cpuId = contentHeader.type - CONTENT_TYPE_CPU_RAW;
+            if (hdr.type >= CONTENT_TYPE_CPU_RAW) {
+                int cpuId = hdr.type - CONTENT_TYPE_CPU_RAW;
                 CpuTraceData cpuData;
                 cpuData.cpuId = cpuId;
-                cpuData.data = std::move(contentData);
-
+                cpuData.data = std::move(data);
                 uint64_t firstTs = 0;
                 uint64_t lastTs = 0;
                 ParsePageTimestamps(cpuData.data, firstTs, lastTs);
                 cpuData.firstTimestamp = firstTs;
                 cpuData.lastTimestamp = lastTs;
                 cpuTraces_[cpuId] = std::move(cpuData);
-
                 if (traceStartTime_ == 0 || firstTs < traceStartTime_) {
                     traceStartTime_ = firstTs;
                 }
@@ -169,7 +177,6 @@ bool TraceFileParser::ReadContentSection()
             }
             break;
     }
-
     return true;
 }
 
@@ -190,9 +197,11 @@ bool TraceFileParser::ReadContentSection()
             if (line.find("KERNEL_VERSION:") == 0) {
                 metadata_.kernelVersion = line.substr(kernelPrefixLen);
             } else if (line.find("UNIX_TIME_MS:") == 0) {
-                metadata_.unixTimeMs = std::stoull(line.substr(unixPrefixLen));
+                std::string unixTimeMsLine = line.substr(unixPrefixLen);
+                metadata_.unixTimeMs = SPUtilesTye::StringToSometype<uint64_t>(unixTimeMsLine);
             } else if (line.find("BOOT_TIME_MS:") == 0) {
-                metadata_.bootTimeMs = std::stoull(line.substr(bootPrefixLen));
+                std::string bootTimeMsLine = line.substr(bootPrefixLen);
+                metadata_.bootTimeMs = SPUtilesTye::StringToSometype<uint64_t>(bootTimeMsLine);
             }
 
             pos = lineEnd + 1;
@@ -272,6 +281,11 @@ bool TraceClipper::ClipByTimeRange(uint64_t startTimeNs, uint64_t endTimeNs)
 
 bool TraceClipper::SaveToFile(const std::string& outputPath)
 {
+    char outPutPathChar[PATH_MAX] = {0x00};
+    if (realpath(outputPath.c_str(), outPutPathChar) == nullptr) {
+        LOGE("data dir %s is nullptr", outputPath.c_str());
+        return false;
+    }
     std::ofstream outFile(outputPath, std::ios::binary | std::ios::trunc);
     if (!outFile.is_open()) {
         errorMsg_ = "Failed to create output file: " + outputPath;
@@ -293,7 +307,8 @@ bool TraceClipper::SaveToFile(const std::string& outputPath)
         }
     };
 
-    writeContentSection(CONTENT_TYPE_BASE_INFO, std::vector<uint8_t>());
+    std::vector<uint8_t> baseInfoData = parser_->GetBaseInfo();
+    writeContentSection(CONTENT_TYPE_BASE_INFO, baseInfoData);
     writeContentSection(CONTENT_TYPE_EVENTS_FORMAT, parser_->GetEventFormats());
     writeContentSection(CONTENT_TYPE_CMDLINES, parser_->GetCmdLines());
     writeContentSection(CONTENT_TYPE_TGIDS, parser_->GetTgids());

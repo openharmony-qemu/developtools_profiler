@@ -108,7 +108,8 @@ std::string ControlCallCmd::TimeDelay()
     double rateResult = srt.StallingRateResult(traceName);
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(two) << rateResult;
-    return resultTime + "HitchTimeRate:" + ss.str() + "ms/s \n" + maxFrame;
+    HitchTimeRateData(ss);
+    return resultTime + "HitchTimeRate:" + ssResult_ + "ms/s \n" + maxFrame;
 }
 std::string ControlCallCmd::SlideList()
 {
@@ -155,8 +156,8 @@ std::string ControlCallCmd::SlideList()
         double stallingRateResult = srt.StallingRateResult(traceName);
         std::ostringstream ss;
         ss << std::fixed << std::setprecision(two) << stallingRateResult;
-        std::string ssResult = ss.str();
-        std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";
+        HitchTimeRateData(ss);
+        std::string hitchTimeRate = "HitchTimeRate:" + ssResult_ + "ms/s \n";
         resultStream = "FPS:" + streamFps.str() + "fps\n" + responseSlide + hitchTimeRate + maxFrame;
     }
     return resultStream;
@@ -223,7 +224,7 @@ double ControlCallCmd::CompleteTime()
     LOGD("CompleteTime = %d", time);
     return time;
 }
-std::string ControlCallCmd::GetAppStartTime() const
+std::string ControlCallCmd::GetAppStartTime()
 {
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
@@ -256,8 +257,8 @@ std::string ControlCallCmd::GetAppStartTime() const
     double stallingRateResult2 = srt.StallingRateResult(traceName);
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(two) << stallingRateResult2;
-    std::string ssResult = ss.str();
-    std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";
+    HitchTimeRateData(ss);
+    std::string hitchTimeRate = "HitchTimeRate:" + ssResult_ + "ms/s \n";
     resultStream = resultStream + hitchTimeRate + resultStream2;
     return resultStream;
 }
@@ -265,6 +266,14 @@ void ControlCallCmd::IsohTest(const std::vector<std::string>& v)
 {
     if (v[ohType] == "ohtest") {
         isOhTest = true;
+    }
+}
+
+void ControlCallCmd::HitchTimeRateData(std::ostringstream &ss)
+{
+    ssResult_ = ss.str();
+    if (ssResult_.find("-1") != std::string::npos) {
+        ssResult_ = "0.00";
     }
 }
 }

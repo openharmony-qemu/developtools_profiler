@@ -55,14 +55,14 @@ HWTEST_F(ControlCallCmdTest, GetResultTest01, TestSize.Level1)
 {
     ControlCallCmd cmd;
     time = cmd.ResponseTime();
-    std::vector<std::string> v = {"", "", "responseTime"};
+    std::vector<std::string> v = {"responseTime"};
     EXPECT_EQ("", cmd.GetResult(v));
 }
 
 HWTEST_F(ControlCallCmdTest, GetResultTest02, TestSize.Level1)
 {
     ControlCallCmd cmd;
-    std::vector<std::string> v = {"", "", "completeTime"};
+    std::vector<std::string> v = {"completeTime"};
     time = cmd.CompleteTime();
     EXPECT_EQ("", cmd.GetResult(v));
 }
@@ -70,7 +70,7 @@ HWTEST_F(ControlCallCmdTest, GetResultTest02, TestSize.Level1)
 HWTEST_F(ControlCallCmdTest, GetResultTest03, TestSize.Level1)
 {
     ControlCallCmd cmd;
-    std::vector<std::string> v = {"", "", "frameLoss"};
+    std::vector<std::string> v = {"frameLoss"};
     EXPECT_EQ("", cmd.GetResult(v));
 }
 
@@ -98,7 +98,7 @@ HWTEST_F(ControlCallCmdTest, GetResultTest06, TestSize.Level1)
 HWTEST_F(ControlCallCmdTest, TimeDelayTest01, TestSize.Level1)
 {
     OHOS::SmartPerf::ControlCallCmd controlCallCmd;
-    std::string expected = "ResponseTime:-1ms\nCompleteTime:-1ms\nHitchTimeRate:-1.00ms/s ";
+    std::string expected = "ResponseTime:-1ms\nCompleteTime:-1ms\nHitchTimeRate:0.00ms/s ";
     std::string expectedResult = expected + "\nMAX_RENDER_SEQ_MISSED_FRAMES:-1";
     EXPECT_EQ(controlCallCmd.TimeDelay(), expectedResult);
 }
@@ -106,7 +106,7 @@ HWTEST_F(ControlCallCmdTest, TimeDelayTest01, TestSize.Level1)
 HWTEST_F(ControlCallCmdTest, SlideListTest01, TestSize.Level1)
 {
     OHOS::SmartPerf::ControlCallCmd controlCallCmd;
-    std::string expected = "FPS:-1fps\nResponseTime:-1ms\nHitchTimeRate:-1.00ms/s ";
+    std::string expected = "FPS:-1fps\nResponseTime:-1ms\nHitchTimeRate:0.00ms/s ";
     std::string expectedResult = expected + "\nMAX_RENDER_SEQ_MISSED_FRAMES:-1";
     std::string resultStream = controlCallCmd.SlideList();
     EXPECT_EQ(resultStream, expectedResult);

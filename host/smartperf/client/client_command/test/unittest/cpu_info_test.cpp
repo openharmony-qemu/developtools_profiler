@@ -45,7 +45,6 @@ void CPUInfoTest::SetUp()
 void CPUInfoTest::TearDown()
 {
 }
-
 /**
  * @tc.name: CPUInfoTest_GetInstance_001
  * @tc.desc: 验证 GetInstance 返回单例实例

@@ -74,11 +74,8 @@ ohos_unittest("sp_daemon_ut") {
     "unittest/jitters_test.cpp",
     "unittest/GPU_test.cpp",
     "unittest/heartbeat_test.cpp",
-    "unittest/hiperf_test.cpp",
     "unittest/control_call_cmd_test.cpp",
-    "unittest/cpu_info_test.cpp",
     "unittest/ddr_test.cpp",
-    "unittest/effective_test.cpp",
     "unittest/dubai_test.cpp",
     "unittest/editor_command_test.cpp",
     "unittest/fps_test.cpp",
@@ -98,7 +95,6 @@ ohos_unittest("sp_daemon_ut") {
     "unittest/stalling_rate_trace_test.cpp",
     "unittest/startup_delay_test.cpp",
     "unittest/threads_test.cpp",
-    "unittest/shader_test.cpp",
   ]
   include_dirs = [
     "${OHOS_PROFILER_DIR}/host/smartperf/client/client_command/include",

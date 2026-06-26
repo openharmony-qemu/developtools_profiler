@@ -45,7 +45,6 @@ void EffectiveTest::SetUp()
 void EffectiveTest::TearDown()
 {
 }
-
 /**
 * @tc.name: EffectiveTest_GetInstance_001
 * @tc.desc:：验证 GetInstance 返回单例实例

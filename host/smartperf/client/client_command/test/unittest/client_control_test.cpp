@@ -44,7 +44,6 @@ void ClientControlTest::SetUp()
 void ClientControlTest::TearDown()
 {
 }
-
 /**
  * @tc.name: ClientControlTest_SocketStart_001
  * @tc.desc:：验证 SocketStart 使用有效参数
