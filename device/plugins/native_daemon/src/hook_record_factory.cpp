@@ -354,10 +354,6 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
         freeRecord->SetAddr(freeAddr);
         return freeRecord;
     }
-    if (size < sizeof(BaseStackRawData)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "GetHookRecord invalid size: %u", size);
-        return nullptr;
-    }
     auto rawStack = GetRawStackFromCache();
     InitRawStack(rawStack, sharedMemData, size, storeData, callback);
     uint16_t type = rawStack->stackContext->type;

@@ -26,7 +26,7 @@ public:
     explicit NativeMemoryProfilerSaCallbackProxy(const sptr<IRemoteObject>& impl);
     ~NativeMemoryProfilerSaCallbackProxy() override = default;
 
-    void OnProfilingResult(int32_t errorCode, const std::string& filePath) override;
+    void OnProfilingResult(int32_t pid, int32_t errorCode, const std::string& filePath) override;
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

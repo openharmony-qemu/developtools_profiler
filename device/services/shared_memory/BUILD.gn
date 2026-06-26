@@ -23,6 +23,7 @@ config("shared_memory_config") {
 }
 
 ohos_source_set("shared_memory_source") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   sources = [
     "src/share_memory_allocator.cpp",
     "src/share_memory_block.cpp",
@@ -45,6 +46,7 @@ ohos_source_set("shared_memory_source") {
 }
 
 ohos_source_set("shared_memory_source_cfi") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   sources = [
     "src/share_memory_allocator.cpp",
     "src/share_memory_block.cpp",
@@ -74,6 +76,7 @@ ohos_source_set("shared_memory_source_cfi") {
 }
 
 ohos_shared_library("shared_memory") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   deps = [ ":shared_memory_source" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
@@ -88,6 +91,7 @@ ohos_shared_library("shared_memory") {
 }
 
 ohos_static_library("shared_memory_lite") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   sources = [
     "src/share_memory_allocator.cpp",
     "src/share_memory_block.cpp",

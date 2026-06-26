@@ -108,6 +108,29 @@ int32_t NativeMemoryProfilerSaProxy::DumpData(uint32_t fd, std::shared_ptr<Nativ
     return RET_OK;
 }
 
+int32_t NativeMemoryProfilerSaProxy::DumpDataAsync(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+    const sptr<IRemoteObject>& callback)
+{
+    CHECK_NOTNULL(config, RET_ERR, "config is NULL");
+    CHECK_NOTNULL(callback, RET_ERR, "callback is NULL");
+    MessageParcel data;
+    CHECK_TRUE(data.WriteInterfaceToken(NativeMemoryProfilerSaProxy::GetDescriptor()), RET_ERR, "write token FAIL");
+    CHECK_TRUE(config->Marshalling(data), RET_ERR, "DumpDataAsync marshalling FAIL");
+    CHECK_TRUE(data.WriteFileDescriptor(fd), RET_ERR, "DumpDataAsync write fd FAIL");
+    CHECK_TRUE(data.WriteRemoteObject(callback), RET_ERR, "DumpDataAsync write callback object FAIL");
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    CHECK_NOTNULL(remote, RET_ERR, "remote is nullptr");
+    int32_t ret = remote->SendRequest(static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::DUMP_DATA_ASYNC),
+        data, reply, option);
+    if (ret != RET_OK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "DumpDataAsync FAIL, ret: %d", ret);
+    }
+    return ret;
+}
+
 void NativeMemoryProfilerSaProxy::HandleTimeout()
 {
     int pidVal = 0;

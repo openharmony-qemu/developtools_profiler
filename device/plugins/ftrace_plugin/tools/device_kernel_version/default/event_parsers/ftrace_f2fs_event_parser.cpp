@@ -14,90 +14,198 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T> void f2fs_sync_file_enter_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct F2fsSyncFileEnterData {
+    uint64_t dev {};
+    uint64_t ino {};
+    uint64_t pino {};
+    uint32_t mode {};
+    uint64_t size {};
+    uint32_t nlink {};
+    uint64_t blocks {};
+    uint32_t advise {};
+};
+__attribute__((noinline)) void ParseF2fsSyncFileEnterData(F2fsSyncFileEnterData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_pino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_mode(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_size(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_nlink(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_blocks(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_advise(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.pino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.nlink = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.blocks = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.advise = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_sync_file_enter,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_f2fs_sync_file_enter_format();
-        f2fs_sync_file_enter_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_sync_file_enter,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_f2fs_sync_file_enter_format();
-        f2fs_sync_file_enter_func(msg, data, size, format);
-    });
+void ParseF2fsSyncFileEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    F2fsSyncFileEnterData eventData {};
+    ParseF2fsSyncFileEnterData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_f2fs_sync_file_enter_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_pino(eventData.pino);
+    msg->set_mode(eventData.mode);
+    msg->set_size(eventData.size);
+    msg->set_nlink(eventData.nlink);
+    msg->set_blocks(eventData.blocks);
+    msg->set_advise(eventData.advise);
+}
+void ParseF2fsSyncFileEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    F2fsSyncFileEnterData eventData {};
+    ParseF2fsSyncFileEnterData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_f2fs_sync_file_enter_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_pino(eventData.pino);
+    msg->set_mode(eventData.mode);
+    msg->set_size(eventData.size);
+    msg->set_nlink(eventData.nlink);
+    msg->set_blocks(eventData.blocks);
+    msg->set_advise(eventData.advise);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_sync_file_enter, ParseF2fsSyncFileEnter);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_sync_file_enter, ParseF2fsSyncFileEnterEncoder);
 
-template <typename T> void f2fs_sync_file_exit_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct F2fsSyncFileExitData {
+    uint64_t dev {};
+    uint64_t ino {};
+    int32_t cp_reason {};
+    int32_t datasync {};
+    int32_t ret {};
+};
+__attribute__((noinline)) void ParseF2fsSyncFileExitData(F2fsSyncFileExitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_cp_reason(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_datasync(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_ret(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.cp_reason = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.datasync = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_sync_file_exit,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_f2fs_sync_file_exit_format();
-        f2fs_sync_file_exit_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_sync_file_exit,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_f2fs_sync_file_exit_format();
-        f2fs_sync_file_exit_func(msg, data, size, format);
-    });
+void ParseF2fsSyncFileExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    F2fsSyncFileExitData eventData {};
+    ParseF2fsSyncFileExitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_f2fs_sync_file_exit_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_cp_reason(eventData.cp_reason);
+    msg->set_datasync(eventData.datasync);
+    msg->set_ret(eventData.ret);
+}
+void ParseF2fsSyncFileExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    F2fsSyncFileExitData eventData {};
+    ParseF2fsSyncFileExitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_f2fs_sync_file_exit_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_cp_reason(eventData.cp_reason);
+    msg->set_datasync(eventData.datasync);
+    msg->set_ret(eventData.ret);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_sync_file_exit, ParseF2fsSyncFileExit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_sync_file_exit, ParseF2fsSyncFileExitEncoder);
 
-template <typename T> void f2fs_write_begin_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct F2fsWriteBeginData {
+    uint64_t dev {};
+    uint64_t ino {};
+    uint64_t pos {};
+    uint32_t len {};
+    uint32_t flags {};
+};
+__attribute__((noinline)) void ParseF2fsWriteBeginData(F2fsWriteBeginData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_pos(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.pos = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_write_begin,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_f2fs_write_begin_format();
-        f2fs_write_begin_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_write_begin,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_f2fs_write_begin_format();
-        f2fs_write_begin_func(msg, data, size, format);
-    });
+void ParseF2fsWriteBegin(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    F2fsWriteBeginData eventData {};
+    ParseF2fsWriteBeginData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_f2fs_write_begin_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_pos(eventData.pos);
+    msg->set_len(eventData.len);
+    msg->set_flags(eventData.flags);
+}
+void ParseF2fsWriteBeginEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    F2fsWriteBeginData eventData {};
+    ParseF2fsWriteBeginData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_f2fs_write_begin_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_pos(eventData.pos);
+    msg->set_len(eventData.len);
+    msg->set_flags(eventData.flags);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_write_begin, ParseF2fsWriteBegin);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_write_begin, ParseF2fsWriteBeginEncoder);
 
-template <typename T> void f2fs_write_end_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct F2fsWriteEndData {
+    uint64_t dev {};
+    uint64_t ino {};
+    uint64_t pos {};
+    uint32_t len {};
+    uint32_t copied {};
+};
+__attribute__((noinline)) void ParseF2fsWriteEndData(F2fsWriteEndData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_pos(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_len(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_copied(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.pos = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.copied = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_write_end,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_f2fs_write_end_format();
-        f2fs_write_end_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_write_end,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_f2fs_write_end_format();
-        f2fs_write_end_func(msg, data, size, format);
-    });
+void ParseF2fsWriteEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    F2fsWriteEndData eventData {};
+    ParseF2fsWriteEndData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_f2fs_write_end_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_pos(eventData.pos);
+    msg->set_len(eventData.len);
+    msg->set_copied(eventData.copied);
+}
+void ParseF2fsWriteEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    F2fsWriteEndData eventData {};
+    ParseF2fsWriteEndData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_f2fs_write_end_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_pos(eventData.pos);
+    msg->set_len(eventData.len);
+    msg->set_copied(eventData.copied);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_write_end, ParseF2fsWriteEnd);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_write_end, ParseF2fsWriteEndEncoder);
 } // namespace
 FTRACE_NS_END

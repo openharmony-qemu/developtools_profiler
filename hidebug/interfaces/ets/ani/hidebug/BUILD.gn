@@ -46,6 +46,7 @@ ohos_shared_library("hidebug_ani") {
     "runtime_core:ani",
     "runtime_core:libarkruntime",
     "samgr:samgr_proxy",
+    "ability_base:configuration",
   ]
 
   subsystem_name = "developtools"

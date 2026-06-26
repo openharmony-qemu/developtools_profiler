@@ -25,7 +25,7 @@ class INativeMemoryProfilerSaCallback : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.NativeMemory.INativeMemoryProfilerSaCallback");
 
-    virtual void OnProfilingResult(int32_t errorCode, const std::string& filePath) = 0;
+    virtual void OnProfilingResult(int32_t pid, int32_t errorCode, const std::string& filePath) = 0;
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 
 ohos_source_set("hiebpfplugin_source") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   sources = [
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_helper.cpp",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_writer.cpp",
@@ -28,9 +29,9 @@ ohos_source_set("hiebpfplugin_source") {
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
   ]
   deps = [
+    "../../base:libhiprofiler_base",
     "${OHOS_PROFILER_DIR}/protos/services:common_types_lite_proto",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hiebpf_data:hiebpf_data_cpp",
-    "../../base:hiprofiler_base",
   ]
 
   if (current_toolchain != host_toolchain) {
@@ -52,6 +53,7 @@ ohos_source_set("hiebpfplugin_source") {
 }
 
 ohos_shared_library("hiebpfplugin") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   output_name = "hiebpfplugin"
   version_script = "libhiebpf_plugin.map"
   deps = [ ":hiebpfplugin_source" ]
@@ -67,8 +69,12 @@ ohos_shared_library("hiebpfplugin") {
 }
 
 group("ebpf_targets") {
+  deps = [ ":hiebpfplugin" ]
+}
+
+group("ebpf_debug_targets") {
+  testonly = true
   deps = [
-    ":hiebpfplugin",
     "tools:ebpf_converter",
   ]
   if (!use_libfuzzer) {

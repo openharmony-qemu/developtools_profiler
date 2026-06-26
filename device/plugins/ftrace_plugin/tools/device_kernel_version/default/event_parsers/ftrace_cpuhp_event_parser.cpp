@@ -14,64 +14,130 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T> void cpuhp_enter_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct CpuhpEnterData {
+    uint32_t cpu {};
+    int32_t target {};
+    int32_t idx {};
+    uint64_t fun {};
+};
+__attribute__((noinline)) void ParseCpuhpEnterData(CpuhpEnterData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_cpu(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_target(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_idx(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_fun(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.cpu = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.target = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.idx = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.fun = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cpuhp_enter,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_cpuhp_enter_format();
-        cpuhp_enter_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cpuhp_enter,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_cpuhp_enter_format();
-        cpuhp_enter_func(msg, data, size, format);
-    });
+void ParseCpuhpEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    CpuhpEnterData eventData {};
+    ParseCpuhpEnterData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_cpuhp_enter_format();
+    msg->set_cpu(eventData.cpu);
+    msg->set_target(eventData.target);
+    msg->set_idx(eventData.idx);
+    msg->set_fun(eventData.fun);
+}
+void ParseCpuhpEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    CpuhpEnterData eventData {};
+    ParseCpuhpEnterData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_cpuhp_enter_format();
+    msg->set_cpu(eventData.cpu);
+    msg->set_target(eventData.target);
+    msg->set_idx(eventData.idx);
+    msg->set_fun(eventData.fun);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cpuhp_enter, ParseCpuhpEnter);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cpuhp_enter, ParseCpuhpEnterEncoder);
 
-template <typename T> void cpuhp_exit_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct CpuhpExitData {
+    uint32_t cpu {};
+    int32_t state {};
+    int32_t idx {};
+    int32_t ret {};
+};
+__attribute__((noinline)) void ParseCpuhpExitData(CpuhpExitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_cpu(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_state(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_idx(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_ret(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    eventData.cpu = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.state = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.idx = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cpuhp_exit,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_cpuhp_exit_format();
-        cpuhp_exit_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cpuhp_exit,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_cpuhp_exit_format();
-        cpuhp_exit_func(msg, data, size, format);
-    });
+void ParseCpuhpExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    CpuhpExitData eventData {};
+    ParseCpuhpExitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_cpuhp_exit_format();
+    msg->set_cpu(eventData.cpu);
+    msg->set_state(eventData.state);
+    msg->set_idx(eventData.idx);
+    msg->set_ret(eventData.ret);
+}
+void ParseCpuhpExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    CpuhpExitData eventData {};
+    ParseCpuhpExitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_cpuhp_exit_format();
+    msg->set_cpu(eventData.cpu);
+    msg->set_state(eventData.state);
+    msg->set_idx(eventData.idx);
+    msg->set_ret(eventData.ret);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cpuhp_exit, ParseCpuhpExit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cpuhp_exit, ParseCpuhpExitEncoder);
 
-template <typename T> void cpuhp_multi_enter_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct CpuhpMultiEnterData {
+    uint32_t cpu {};
+    int32_t target {};
+    int32_t idx {};
+    uint64_t fun {};
+};
+__attribute__((noinline)) void ParseCpuhpMultiEnterData(CpuhpMultiEnterData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_cpu(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_target(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_idx(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_fun(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.cpu = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.target = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.idx = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.fun = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cpuhp_multi_enter,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_cpuhp_multi_enter_format();
-        cpuhp_multi_enter_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cpuhp_multi_enter,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_cpuhp_multi_enter_format();
-        cpuhp_multi_enter_func(msg, data, size, format);
-    });
+void ParseCpuhpMultiEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    CpuhpMultiEnterData eventData {};
+    ParseCpuhpMultiEnterData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_cpuhp_multi_enter_format();
+    msg->set_cpu(eventData.cpu);
+    msg->set_target(eventData.target);
+    msg->set_idx(eventData.idx);
+    msg->set_fun(eventData.fun);
+}
+void ParseCpuhpMultiEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    CpuhpMultiEnterData eventData {};
+    ParseCpuhpMultiEnterData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_cpuhp_multi_enter_format();
+    msg->set_cpu(eventData.cpu);
+    msg->set_target(eventData.target);
+    msg->set_idx(eventData.idx);
+    msg->set_fun(eventData.fun);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cpuhp_multi_enter, ParseCpuhpMultiEnter);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cpuhp_multi_enter, ParseCpuhpMultiEnterEncoder);
 } // namespace
 FTRACE_NS_END

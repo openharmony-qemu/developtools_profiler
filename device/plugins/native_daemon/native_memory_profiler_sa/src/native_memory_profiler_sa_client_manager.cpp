@@ -17,12 +17,14 @@
 #include "memory_trace.h"
 #include "native_memory_profiler_sa_callback_stub.h"
 #include "native_memory_profiler_sa_proxy.h"
+#include "schedule_task_manager.h"
 #include "common.h"
 
 #include "logging.h"
 
 #include <fstream>
 #include <functional>
+#include <variant>
 #include <iostream>
 #include <mutex>
 #include <sstream>
@@ -51,11 +53,41 @@ constexpr uint32_t DEFINE_MIN_FILTER_SIZE = 1; // bytes
 constexpr uint32_t DEFINE_MAX_STACK_DEPTH = 30;
 constexpr uint32_t DEFINE_MAX_STATISTICS_INTERVAL = 3600; // seconds
 constexpr uint32_t DEFINE_MIN_SAMPLE_INTERVAL = 384; // bytes
+constexpr uint32_t ASYNC_REQUEST_TIMEOUT_DELTA = 5; // seconds
+constexpr int32_t TIME_BASE = 1000;
 constexpr int32_t MAX_MEM_PROFILER_USE_COUNT_PER_DAY = 2;
 constexpr int HOURS_PER_DAY = 24;
 const std::string MEM_PROFILER_COUNT_FILE_NAME = "/MemProfilerCount";
 const std::string FILE_SUFFIX = ".htrace";
 const std::vector<std::string> resourceTypeValues = { "fd", "thread", "native", "gpu", "global_handle" };
+
+using ProfilingCallbackVar = std::variant<
+    NativeMemoryProfilerSaClientManager::ProfilingCallback,
+    NativeMemoryProfilerSaClientManager::ProfilingDumpCallback
+>;
+
+struct AsyncHookRequest {
+    int32_t pid;
+    uint32_t duration;
+    ProfilingCallbackVar callbackVar;
+    int fd;
+    std::string filepath;
+    int32_t timeoutFd;
+    AsyncHookRequest(int32_t pid, uint32_t duration, NativeMemoryProfilerSaClientManager::ProfilingCallback callback,
+        int fd, const std::string& filepath) : pid(pid), duration(duration), fd(fd), filepath(filepath)
+    {
+        timeoutFd = -1;
+        callbackVar = callback;
+    }
+
+    AsyncHookRequest(int32_t pid, uint32_t duration,
+        NativeMemoryProfilerSaClientManager::ProfilingDumpCallback callback, int fd,
+        const std::string& filepath) : pid(pid), duration(duration), fd(fd), filepath(filepath)
+    {
+        timeoutFd = -1;
+        callbackVar = callback;
+    }
+};
 
 void ParseMemStatsFromString(std::string& stats, std::vector<SimplifiedMemStats>& memStats)
 {
@@ -87,31 +119,110 @@ void SetDefaultGpuRange(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 }
 }
 
-static std::mutex g_profilingCallbackMutex;
-static std::mutex g_countFileMutex;
-static NativeMemoryProfilerSaClientManager::ProfilingCallback g_profilingCallback = nullptr;
-static std::string g_currentFilePath;
-static int32_t g_currentType = 0;
+static void NotifyProfilingResult(int32_t pid, int32_t errorCode, const std::string& filepath);
+class NativeMemoryProfilerAsyncRequestManager {
+public:
+    bool TryAddRequest(int32_t pid, uint32_t duration,
+        NativeMemoryProfilerSaClientManager::ProfilingCallback callback, int fd, const std::string& filepath)
+    {
+        std::lock_guard<std::mutex> lock(requestsMutex_);
+        auto request = std::make_shared<AsyncHookRequest>(pid, duration, callback, fd, filepath);
+        return requests_.insert(std::make_pair(pid, request)).second;
+    }
 
-static NativeMemoryProfilerSaClientManager::ProfilingCallback TakeProfilingCallback(std::string& filePath)
+    bool TryAddRequest(int32_t pid, uint32_t duration,
+        NativeMemoryProfilerSaClientManager::ProfilingDumpCallback callback, int fd, const std::string& filepath)
+    {
+        std::lock_guard<std::mutex> lock(requestsMutex_);
+        auto request = std::make_shared<AsyncHookRequest>(pid, duration, callback, fd, filepath);
+        return requests_.insert(std::make_pair(pid, request)).second;
+    }
+
+    void DeleteRequest(int32_t pid)
+    {
+        std::lock_guard<std::mutex> lock(requestsMutex_);
+        requests_.erase(pid);
+    }
+
+    std::shared_ptr<AsyncHookRequest> TakeOutRequest(int32_t pid)
+    {
+        std::shared_ptr<AsyncHookRequest> result = nullptr;
+        std::lock_guard<std::mutex> lock(requestsMutex_);
+        auto it = requests_.find(pid);
+        if (it != requests_.end()) {
+            result = it->second;
+            requests_.erase(pid);
+        }
+        if (result != nullptr && result->timeoutFd != -1) {
+            timeoutTaskMgr_.UnscheduleTask(result->timeoutFd);
+        }
+        return result;
+    }
+
+    void CreateTimeoutMonitor(int32_t pid)
+    {
+        std::lock_guard<std::mutex> lock(requestsMutex_);
+        auto it = requests_.find(pid);
+        CHECK_TRUE(it != requests_.end(), NO_RETVAL, "no async req found for pid:%d", pid);
+        std::shared_ptr<AsyncHookRequest> request = it->second;
+        CHECK_NOTNULL(request, NO_RETVAL, "no async req found for pid:%d", pid);
+        if (request->duration == 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "not set duration");
+            return;
+        }
+        int32_t timeoutFd = timeoutTaskMgr_.ScheduleTask(
+            [pid] {
+                PROFILER_LOG_WARN(LOG_CORE, "Profiler async request timeout");
+                NotifyProfilingResult(pid, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR), "");
+            },
+            (request->duration + ASYNC_REQUEST_TIMEOUT_DELTA) * TIME_BASE,
+            true);
+        CHECK_TRUE(timeoutFd != -1, NO_RETVAL, "Profiler async request create monitor for %d FAIL", pid);
+        request->timeoutFd = timeoutFd;
+    }
+
+    std::string GetFilepath(int32_t pid)
+    {
+        std::lock_guard<std::mutex> lock(requestsMutex_);
+        auto it = requests_.find(pid);
+        CHECK_TRUE(it != requests_.end(), "", "no async req found for pid:%d", pid);
+        std::shared_ptr<AsyncHookRequest> request = it->second;
+        CHECK_NOTNULL(request, "", "no async req found for pid:%d", pid);
+        return request->filepath;
+    }
+
+private:
+    std::unordered_map<int32_t, std::shared_ptr<AsyncHookRequest>> requests_;
+    std::mutex requestsMutex_;
+    ScheduleTaskManager timeoutTaskMgr_;
+};
+
+static std::mutex g_countFileMutex;
+static NativeMemoryProfilerAsyncRequestManager g_profilerAsyncReqMgr;
+
+static void NotifyProfilingResult(int32_t pid, int32_t errorCode, const std::string& filepath)
 {
-    std::lock_guard<std::mutex> lock(g_profilingCallbackMutex);
-    filePath = g_currentFilePath;
-    NativeMemoryProfilerSaClientManager::ProfilingCallback callback = g_profilingCallback;
-    g_profilingCallback = nullptr;
-    g_currentFilePath.clear();
-    return callback;
+    std::shared_ptr<AsyncHookRequest> request = g_profilerAsyncReqMgr.TakeOutRequest(pid);
+    CHECK_NOTNULL(request, NO_RETVAL, "no async req found for pid %d", pid);
+    std::visit([pid, errorCode, filepath](auto& callback) {
+            CHECK_TRUE(callback, NO_RETVAL, "invalid callback for pid %d", pid);
+            using T = std::decay_t<decltype(callback)>;
+            if constexpr (std::is_same_v<T, NativeMemoryProfilerSaClientManager::ProfilingCallback>) {
+                callback(errorCode, filepath);
+            } else if constexpr (std::is_same_v<T, NativeMemoryProfilerSaClientManager::ProfilingDumpCallback>) {
+                callback(errorCode);
+            } else {
+                PROFILER_LOG_ERROR(LOG_CORE, "invalid callback for pid %d", pid);
+            }
+        }, request->callbackVar);
 }
 
 class NativeMemoryProfilerSaResultCallback final : public NativeMemoryProfilerSaCallbackStub {
 public:
-    void OnProfilingResult(int32_t errorCode, const std::string& filePath) override
+    void OnProfilingResult(int32_t pid, int32_t errorCode, const std::string& filePath) override
     {
-        std::string currentPath;
-        NativeMemoryProfilerSaClientManager::ProfilingCallback callback = TakeProfilingCallback(currentPath);
-        if (callback != nullptr) {
-            callback(errorCode, filePath);
-        }
+        PROFILER_LOG_DEBUG(LOG_CORE, "OnProfilingResult CALL, pid: %d, errorCode: %d", pid, errorCode);
+        NotifyProfilingResult(pid, errorCode, filePath);
     }
 };
 
@@ -231,7 +342,7 @@ int32_t NativeMemoryProfilerSaClientManager::Stop()
 
 int32_t NativeMemoryProfilerSaClientManager::Stop(std::string& filePath)
 {
-    filePath = g_currentFilePath;
+    filePath = g_profilerAsyncReqMgr.GetFilepath(getpid());
     return Stop();
 }
 
@@ -405,6 +516,85 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
     });
 }
 
+int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint32_t duration, MemSaConfig& saConfig,
+    ProfilingDumpCallback callback)
+{
+    CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
+    CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid pid with MemSaConfig");
+    CHECK_TRUE(callback, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid callback with MemSaConfig");
+    CHECK_TRUE(g_profilerAsyncReqMgr.TryAddRequest(static_cast<int32_t>(pid), duration, callback, fd, ""), RET_ERR,
+        "NativeMemoryProfilerSaClientManager: Started already with MemSaConfig for pid:%d", pid);
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    config->pid_ = static_cast<int32_t>(pid);
+    config->duration_ = duration;
+    config->statisticsInterval_ = FIVE_MINUTES;
+    config->jsStackReport_ = true;
+    config->mallocDisable_ = true;
+    config->mmapDisable_ = true;
+    config->memtraceEnable_ = true;
+    config->asyncStackEnable_ = saConfig.asyncStackEnable;
+    config->asyncFlag_ = saConfig.asyncFlag;
+    config->traceMask_ = saConfig.mask;
+    config->shareMemorySize_ = CALL_STACK_SMS;
+    std::vector<std::vector<uint64_t>> gpuRange;
+    if (!saConfig.hookSizes.empty()) {
+        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_VK]));
+        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_GLES_IMAGE]));
+        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_GLES_BUFFER]));
+        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_CL_IMAGE]));
+        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_CL_BUFFER]));
+        std::swap(config->gpuRange_, gpuRange);
+    }
+    sptr<IRemoteObject> callbackObject = GetProfilingResultCallbackObject();
+    if (callbackObject == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "get callback object FAIL");
+        g_profilerAsyncReqMgr.DeleteRequest(config->pid_);
+        return RET_ERR;
+    }
+
+    int32_t result = InvokeWithProxy([fd, &config, &callbackObject](NativeMemoryProfilerSaProxy& proxy) {
+        return proxy.DumpDataAsync(fd, config, callbackObject);
+    });
+    if (result != RET_OK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "invoke FAIL");
+        g_profilerAsyncReqMgr.DeleteRequest(config->pid_);
+    } else {
+        g_profilerAsyncReqMgr.CreateTimeoutMonitor(config->pid_);
+    }
+    return result;
+}
+
+int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint32_t duration,
+    SimplifiedMemConfig& config, ProfilingDumpCallback callback)
+{
+    CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
+    CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Simplified Start invalid pid");
+    CHECK_TRUE(callback, RET_ERR, "NativeMemoryProfilerSaClientManager: invalid callback with SimplifiedMemConfig");
+    std::shared_ptr<NativeMemoryProfilerSaConfig> nConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
+    nConfig->pid_ = static_cast<int32_t>(pid);
+    CHECK_TRUE(ParseSimplifiedConfig(nConfig, config, duration) == RET_OK,
+        RET_ERR, "NativeMemoryProfilerSaClientManager: Parse simplified config failed");
+    CHECK_TRUE(g_profilerAsyncReqMgr.TryAddRequest(nConfig->pid_, duration, callback, fd, ""), RET_ERR,
+        "NativeMemoryProfilerSaClientManager: Started already with SimplifiedMemConfig for pid:%d", pid);
+    sptr<IRemoteObject> callbackObject = GetProfilingResultCallbackObject();
+    if (callbackObject == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "get callback object FAIL");
+        g_profilerAsyncReqMgr.DeleteRequest(nConfig->pid_);
+        return RET_ERR;
+    }
+
+    int32_t result = InvokeWithProxy([fd, &nConfig, &callbackObject](NativeMemoryProfilerSaProxy& proxy) {
+        return proxy.DumpDataAsync(fd, nConfig, callbackObject);
+    });
+    if (result != RET_OK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "invoke FAIL");
+        g_profilerAsyncReqMgr.DeleteRequest(nConfig->pid_);
+    } else {
+        g_profilerAsyncReqMgr.CreateTimeoutMonitor(nConfig->pid_);
+    }
+    return result;
+}
+
 int32_t NativeMemoryProfilerSaClientManager::StartMemProfiler(uint32_t duration, SimplifiedMemConfig& config,
     ProfilingCallback callback)
 {
@@ -465,18 +655,22 @@ int32_t NativeMemoryProfilerSaClientManager::StartByType(int32_t type,
     config->typeFileName_ = filename;
     config->startType_ = 1; // 1:API
 
+    if (!g_profilerAsyncReqMgr.TryAddRequest(config->pid_, config->duration_, callback, -1, fullPath)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "StartByType already started for pid: %d", config->pid_);
+        (void)unlink(fullPath.c_str());
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ALREADY_STARTED);
+    }
+
     if (!UpdateMemProfilerUserCount()) {
         (void)unlink(fullPath.c_str());
+        g_profilerAsyncReqMgr.DeleteRequest(config->pid_);
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG);
     }
 
-    g_currentType = type;
-    g_currentFilePath = fullPath;
-    SetProfilingCallback(callback);
     sptr<IRemoteObject> callbackObject = GetProfilingResultCallbackObject();
     if (callbackObject == nullptr) {
-        SetProfilingCallback(nullptr);
         (void)unlink(fullPath.c_str());
+        g_profilerAsyncReqMgr.DeleteRequest(config->pid_);
         if (!RollbackMemProfilerUserCount()) {
             PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: rollback count failed");
         }
@@ -490,13 +684,14 @@ int32_t NativeMemoryProfilerSaClientManager::StartByType(int32_t type,
     int32_t retStart = StartPidVoid(config, callbackObject);
     if (retStart != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: StartPidVoid failed");
-        SetProfilingCallback(nullptr);
         (void)unlink(fullPath.c_str());
+        g_profilerAsyncReqMgr.DeleteRequest(config->pid_);
         if (!RollbackMemProfilerUserCount()) {
             PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: rollback count failed");
         }
         return retStart;
     }
+    g_profilerAsyncReqMgr.CreateTimeoutMonitor(config->pid_);
     return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS);
 }
 
@@ -866,15 +1061,6 @@ int32_t NativeMemoryProfilerSaClientManager::GetGwpAsan(int fd, pid_t pid, GwpAs
     return InvokeWithProxy([fd, &config](NativeMemoryProfilerSaProxy& proxy) {
         return proxy.DumpData(fd, config);
     });
-}
-
-void NativeMemoryProfilerSaClientManager::SetProfilingCallback(ProfilingCallback callback)
-{
-    std::lock_guard<std::mutex> lock(g_profilingCallbackMutex);
-    g_profilingCallback = callback;
-    if (callback == nullptr) {
-        g_currentFilePath.clear();
-    }
 }
 
 std::string NativeMemoryProfilerSaClientManager::CreateFileAndGrantPermission(std::string& filename)

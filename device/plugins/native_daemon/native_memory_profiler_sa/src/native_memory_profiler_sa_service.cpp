@@ -308,11 +308,10 @@ int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfile
     if (config == nullptr) {
         return RET_ERR;
     }
-    auto args = GetCmdArgs(config);
     if (config->startType_ != START_TYPE_API && !HasProfilingPermission()) {
         PROFILER_LOG_ERROR(LOG_CORE, "Start failed, no profiling permission!");
-        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
-            "no profiling permission");
+        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", GetCmdArgs(config),
+            COMMON::ErrorType::RET_NO_PERMISSION, "no profiling permission");
         return RET_ERR;
     }
     if (config->startType_ == START_TYPE_API &&
@@ -539,6 +538,42 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
     }
     return RET_OK;
 }
+
+int32_t NativeMemoryProfilerSaService::DumpDataAsync(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+    const sptr<IRemoteObject>& callback)
+{
+    if (config == nullptr || callback == nullptr) {
+        return RET_ERR;
+    }
+    auto args = GetCmdArgs(config);
+    if (config->startType_ != START_TYPE_API && !HasProfilingPermission()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Start failed, no profiling permission!");
+        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
+            "no profiling permission");
+        return RET_ERR;
+    }
+    if (config->startType_ == START_TYPE_API &&
+        config->pid_ != static_cast<int32_t>(IPCSkeleton::GetCallingPid())) {
+        PROFILER_LOG_ERROR(LOG_CORE, "DumpData failed, api pid mismatch!");
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
+    }
+    if (IsNativeDeamonRunning()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Native Daemon is already running,errorcode is:%d.",
+            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
+        return RET_ERR; // inner interface error
+    }
+    if (ApplyNmdConfig(config, fd)) {
+        return RET_OK;
+    }
+    ApplyMemtraceConfig(config);
+    std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
+    if (StartHookLock(config, fd, hook, args, callback) != RET_OK) {
+        close(fd);
+        return RET_ERR;
+    }
+    return RET_OK;
+}
+
 
 void NativeMemoryProfilerSaService::CloseSocketFd(pid_t pid)
 {
@@ -1394,8 +1429,9 @@ void NativeMemoryProfilerSaService::NotifyProfilingResult(const std::shared_ptr<
     if (config == nullptr || config->callback == nullptr) {
         return;
     }
+    PROFILER_LOG_DEBUG(LOG_CORE, "NotifyProfilingResult pid:%d, startType:%u", config->pid, config->startType);
     NativeMemoryProfilerSaCallbackProxy callback(config->callback);
-    callback.OnProfilingResult(errorCode, filePath);
+    callback.OnProfilingResult(config->pid, errorCode, filePath);
 }
 
 int32_t NativeMemoryProfilerSaService::CopyApiCollectorFile(uint32_t pid, std::shared_ptr<TaskConfig> config,

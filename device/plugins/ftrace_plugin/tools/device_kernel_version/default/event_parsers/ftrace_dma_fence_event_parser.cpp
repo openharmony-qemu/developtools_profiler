@@ -14,140 +14,290 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T> void dma_fence_destroy_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct DmaFenceDestroyData {
+    std::string driver {};
+    std::string timeline {};
+    uint32_t context {};
+    uint32_t seqno {};
+};
+__attribute__((noinline)) void ParseDmaFenceDestroyData(DmaFenceDestroyData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_driver(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_timeline(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_context(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_seqno(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.context = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.seqno = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_destroy,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_dma_fence_destroy_format();
-        dma_fence_destroy_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_destroy,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_dma_fence_destroy_format();
-        dma_fence_destroy_func(msg, data, size, format);
-    });
+void ParseDmaFenceDestroy(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    DmaFenceDestroyData eventData {};
+    ParseDmaFenceDestroyData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_dma_fence_destroy_format();
+    msg->set_driver(eventData.driver);
+    msg->set_timeline(eventData.timeline);
+    msg->set_context(eventData.context);
+    msg->set_seqno(eventData.seqno);
+}
+void ParseDmaFenceDestroyEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    DmaFenceDestroyData eventData {};
+    ParseDmaFenceDestroyData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_dma_fence_destroy_format();
+    msg->set_driver(eventData.driver);
+    msg->set_timeline(eventData.timeline);
+    msg->set_context(eventData.context);
+    msg->set_seqno(eventData.seqno);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_destroy, ParseDmaFenceDestroy);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_destroy, ParseDmaFenceDestroyEncoder);
 
-template <typename T> void dma_fence_emit_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct DmaFenceEmitData {
+    std::string driver {};
+    std::string timeline {};
+    uint32_t context {};
+    uint32_t seqno {};
+};
+__attribute__((noinline)) void ParseDmaFenceEmitData(DmaFenceEmitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_driver(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_timeline(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_context(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_seqno(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.context = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.seqno = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_emit,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_dma_fence_emit_format();
-        dma_fence_emit_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_emit,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_dma_fence_emit_format();
-        dma_fence_emit_func(msg, data, size, format);
-    });
+void ParseDmaFenceEmit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    DmaFenceEmitData eventData {};
+    ParseDmaFenceEmitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_dma_fence_emit_format();
+    msg->set_driver(eventData.driver);
+    msg->set_timeline(eventData.timeline);
+    msg->set_context(eventData.context);
+    msg->set_seqno(eventData.seqno);
+}
+void ParseDmaFenceEmitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    DmaFenceEmitData eventData {};
+    ParseDmaFenceEmitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_dma_fence_emit_format();
+    msg->set_driver(eventData.driver);
+    msg->set_timeline(eventData.timeline);
+    msg->set_context(eventData.context);
+    msg->set_seqno(eventData.seqno);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_emit, ParseDmaFenceEmit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_emit, ParseDmaFenceEmitEncoder);
 
-template <typename T> void dma_fence_enable_signal_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct DmaFenceEnableSignalData {
+    std::string driver {};
+    std::string timeline {};
+    uint32_t context {};
+    uint32_t seqno {};
+};
+__attribute__((noinline)) void ParseDmaFenceEnableSignalData(DmaFenceEnableSignalData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_driver(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_timeline(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_context(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_seqno(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.context = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.seqno = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_enable_signal,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_dma_fence_enable_signal_format();
-        dma_fence_enable_signal_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_enable_signal,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_dma_fence_enable_signal_format();
-        dma_fence_enable_signal_func(msg, data, size, format);
-    });
+void ParseDmaFenceEnableSignal(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    DmaFenceEnableSignalData eventData {};
+    ParseDmaFenceEnableSignalData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_dma_fence_enable_signal_format();
+    msg->set_driver(eventData.driver);
+    msg->set_timeline(eventData.timeline);
+    msg->set_context(eventData.context);
+    msg->set_seqno(eventData.seqno);
+}
+void ParseDmaFenceEnableSignalEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    DmaFenceEnableSignalData eventData {};
+    ParseDmaFenceEnableSignalData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_dma_fence_enable_signal_format();
+    msg->set_driver(eventData.driver);
+    msg->set_timeline(eventData.timeline);
+    msg->set_context(eventData.context);
+    msg->set_seqno(eventData.seqno);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_enable_signal, ParseDmaFenceEnableSignal);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_enable_signal, ParseDmaFenceEnableSignalEncoder);
 
-template <typename T> void dma_fence_init_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct DmaFenceInitData {
+    std::string driver {};
+    std::string timeline {};
+    uint32_t context {};
+    uint32_t seqno {};
+};
+__attribute__((noinline)) void ParseDmaFenceInitData(DmaFenceInitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_driver(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_timeline(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_context(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_seqno(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.context = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.seqno = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_init,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_dma_fence_init_format();
-        dma_fence_init_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_init,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_dma_fence_init_format();
-        dma_fence_init_func(msg, data, size, format);
-    });
+void ParseDmaFenceInit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    DmaFenceInitData eventData {};
+    ParseDmaFenceInitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_dma_fence_init_format();
+    msg->set_driver(eventData.driver);
+    msg->set_timeline(eventData.timeline);
+    msg->set_context(eventData.context);
+    msg->set_seqno(eventData.seqno);
+}
+void ParseDmaFenceInitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    DmaFenceInitData eventData {};
+    ParseDmaFenceInitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_dma_fence_init_format();
+    msg->set_driver(eventData.driver);
+    msg->set_timeline(eventData.timeline);
+    msg->set_context(eventData.context);
+    msg->set_seqno(eventData.seqno);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_init, ParseDmaFenceInit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_init, ParseDmaFenceInitEncoder);
 
-template <typename T> void dma_fence_signaled_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct DmaFenceSignaledData {
+    std::string driver {};
+    std::string timeline {};
+    uint32_t context {};
+    uint32_t seqno {};
+};
+__attribute__((noinline)) void ParseDmaFenceSignaledData(DmaFenceSignaledData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_driver(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_timeline(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_context(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_seqno(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.context = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.seqno = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_signaled,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_dma_fence_signaled_format();
-        dma_fence_signaled_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_signaled,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_dma_fence_signaled_format();
-        dma_fence_signaled_func(msg, data, size, format);
-    });
+void ParseDmaFenceSignaled(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    DmaFenceSignaledData eventData {};
+    ParseDmaFenceSignaledData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_dma_fence_signaled_format();
+    msg->set_driver(eventData.driver);
+    msg->set_timeline(eventData.timeline);
+    msg->set_context(eventData.context);
+    msg->set_seqno(eventData.seqno);
+}
+void ParseDmaFenceSignaledEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    DmaFenceSignaledData eventData {};
+    ParseDmaFenceSignaledData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_dma_fence_signaled_format();
+    msg->set_driver(eventData.driver);
+    msg->set_timeline(eventData.timeline);
+    msg->set_context(eventData.context);
+    msg->set_seqno(eventData.seqno);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_signaled, ParseDmaFenceSignaled);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_signaled, ParseDmaFenceSignaledEncoder);
 
-template <typename T> void dma_fence_wait_end_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct DmaFenceWaitEndData {
+    std::string driver {};
+    std::string timeline {};
+    uint32_t context {};
+    uint32_t seqno {};
+};
+__attribute__((noinline)) void ParseDmaFenceWaitEndData(DmaFenceWaitEndData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_driver(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_timeline(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_context(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_seqno(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.context = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.seqno = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_wait_end,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_dma_fence_wait_end_format();
-        dma_fence_wait_end_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_wait_end,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_dma_fence_wait_end_format();
-        dma_fence_wait_end_func(msg, data, size, format);
-    });
+void ParseDmaFenceWaitEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    DmaFenceWaitEndData eventData {};
+    ParseDmaFenceWaitEndData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_dma_fence_wait_end_format();
+    msg->set_driver(eventData.driver);
+    msg->set_timeline(eventData.timeline);
+    msg->set_context(eventData.context);
+    msg->set_seqno(eventData.seqno);
+}
+void ParseDmaFenceWaitEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    DmaFenceWaitEndData eventData {};
+    ParseDmaFenceWaitEndData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_dma_fence_wait_end_format();
+    msg->set_driver(eventData.driver);
+    msg->set_timeline(eventData.timeline);
+    msg->set_context(eventData.context);
+    msg->set_seqno(eventData.seqno);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_wait_end, ParseDmaFenceWaitEnd);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_wait_end, ParseDmaFenceWaitEndEncoder);
 
-template <typename T> void dma_fence_wait_start_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct DmaFenceWaitStartData {
+    std::string driver {};
+    std::string timeline {};
+    uint32_t context {};
+    uint32_t seqno {};
+};
+__attribute__((noinline)) void ParseDmaFenceWaitStartData(DmaFenceWaitStartData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_driver(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_timeline(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
-    msg->set_context(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_seqno(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
+    eventData.context = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.seqno = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_wait_start,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_dma_fence_wait_start_format();
-        dma_fence_wait_start_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_wait_start,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_dma_fence_wait_start_format();
-        dma_fence_wait_start_func(msg, data, size, format);
-    });
+void ParseDmaFenceWaitStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    DmaFenceWaitStartData eventData {};
+    ParseDmaFenceWaitStartData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_dma_fence_wait_start_format();
+    msg->set_driver(eventData.driver);
+    msg->set_timeline(eventData.timeline);
+    msg->set_context(eventData.context);
+    msg->set_seqno(eventData.seqno);
+}
+void ParseDmaFenceWaitStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    DmaFenceWaitStartData eventData {};
+    ParseDmaFenceWaitStartData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_dma_fence_wait_start_format();
+    msg->set_driver(eventData.driver);
+    msg->set_timeline(eventData.timeline);
+    msg->set_context(eventData.context);
+    msg->set_seqno(eventData.seqno);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_wait_start, ParseDmaFenceWaitStart);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_wait_start, ParseDmaFenceWaitStartEncoder);
 } // namespace
 FTRACE_NS_END

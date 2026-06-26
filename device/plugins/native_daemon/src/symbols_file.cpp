@@ -362,9 +362,11 @@ private:
 
         AdjustSymbols();
         HLOGD("%zu symbols loadded from elf '%s'.", symbols_.size(), elfPath.c_str());
+#ifdef HIPERF_DEBUG
         for (auto& symbol: symbols_) {
             HLOGD("symbol %s", symbol.ToDebugString().c_str());
         }
+#endif
         if (buildId_.empty()) {
             HLOGD("buildId not found from elf '%s'.", elfPath.c_str());
             // dont failed. some time the lib have not got the build id
@@ -594,15 +596,19 @@ public:
                 buildId_ = DfxElf::GetBuildId((uint64_t)notes.data(), (uint64_t)notes.size());
             }
 
+#ifdef HIPERF_DEBUG
             const auto startTime = std::chrono::steady_clock::now();
+#endif
             if (!LoadKernelSyms()) {
                 printf("parse kalsyms failed.\n");
                 return false;
             } else {
+#ifdef HIPERF_DEBUG
                 const auto thisTime = std::chrono::steady_clock::now();
                 const auto usedTimeMsTick =
                     std::chrono::duration_cast<std::chrono::milliseconds>(thisTime - startTime);
                 HLOGV("Load kernel symbols (total %" PRId64 " ms)\n", (int64_t)usedTimeMsTick.count());
+#endif
                 // load complete
                 return true;
             }

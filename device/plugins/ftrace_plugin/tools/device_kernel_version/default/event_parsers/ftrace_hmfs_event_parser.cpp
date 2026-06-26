@@ -14,89 +14,194 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T> void hmfs_read_enter_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct HmfsReadEnterData {
+    uint64_t dev {};
+    uint64_t ino {};
+    uint64_t off {};
+    uint64_t size {};
+    uint64_t i_size {};
+    std::string name {};
+};
+__attribute__((noinline)) void ParseHmfsReadEnterData(HmfsReadEnterData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_off(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_size(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_i_size(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.off = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.i_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hmfs_read_enter,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_hmfs_read_enter_format();
-        hmfs_read_enter_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hmfs_read_enter,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_hmfs_read_enter_format();
-        hmfs_read_enter_func(msg, data, size, format);
-    });
+void ParseHmfsReadEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HmfsReadEnterData eventData {};
+    ParseHmfsReadEnterData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_hmfs_read_enter_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_off(eventData.off);
+    msg->set_size(eventData.size);
+    msg->set_i_size(eventData.i_size);
+    msg->set_name(eventData.name);
+}
+void ParseHmfsReadEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HmfsReadEnterData eventData {};
+    ParseHmfsReadEnterData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_hmfs_read_enter_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_off(eventData.off);
+    msg->set_size(eventData.size);
+    msg->set_i_size(eventData.i_size);
+    msg->set_name(eventData.name);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hmfs_read_enter, ParseHmfsReadEnter);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hmfs_read_enter, ParseHmfsReadEnterEncoder);
 
-template <typename T> void hmfs_read_exit_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct HmfsReadExitData {
+    uint64_t dev {};
+    uint64_t ino {};
+    uint64_t off {};
+    uint64_t size {};
+    int64_t res {};
+};
+__attribute__((noinline)) void ParseHmfsReadExitData(HmfsReadExitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_off(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_size(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_res(FtraceFieldParser::ParseIntField<int64_t>(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.off = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.res = FtraceFieldParser::ParseIntField<int64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hmfs_read_exit,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_hmfs_read_exit_format();
-        hmfs_read_exit_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hmfs_read_exit,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_hmfs_read_exit_format();
-        hmfs_read_exit_func(msg, data, size, format);
-    });
+void ParseHmfsReadExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HmfsReadExitData eventData {};
+    ParseHmfsReadExitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_hmfs_read_exit_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_off(eventData.off);
+    msg->set_size(eventData.size);
+    msg->set_res(eventData.res);
+}
+void ParseHmfsReadExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HmfsReadExitData eventData {};
+    ParseHmfsReadExitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_hmfs_read_exit_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_off(eventData.off);
+    msg->set_size(eventData.size);
+    msg->set_res(eventData.res);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hmfs_read_exit, ParseHmfsReadExit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hmfs_read_exit, ParseHmfsReadExitEncoder);
 
-template <typename T> void hmfs_write_enter_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct HmfsWriteEnterData {
+    uint64_t dev {};
+    uint64_t ino {};
+    uint64_t off {};
+    uint64_t size {};
+    uint64_t i_size {};
+    std::string name {};
+};
+__attribute__((noinline)) void ParseHmfsWriteEnterData(HmfsWriteEnterData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_off(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_size(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_i_size(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_name(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.off = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.i_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hmfs_write_enter,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_hmfs_write_enter_format();
-        hmfs_write_enter_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hmfs_write_enter,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_hmfs_write_enter_format();
-        hmfs_write_enter_func(msg, data, size, format);
-    });
+void ParseHmfsWriteEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HmfsWriteEnterData eventData {};
+    ParseHmfsWriteEnterData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_hmfs_write_enter_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_off(eventData.off);
+    msg->set_size(eventData.size);
+    msg->set_i_size(eventData.i_size);
+    msg->set_name(eventData.name);
+}
+void ParseHmfsWriteEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HmfsWriteEnterData eventData {};
+    ParseHmfsWriteEnterData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_hmfs_write_enter_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_off(eventData.off);
+    msg->set_size(eventData.size);
+    msg->set_i_size(eventData.i_size);
+    msg->set_name(eventData.name);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hmfs_write_enter, ParseHmfsWriteEnter);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hmfs_write_enter, ParseHmfsWriteEnterEncoder);
 
-template <typename T> void hmfs_write_exit_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct HmfsWriteExitData {
+    uint64_t dev {};
+    uint64_t ino {};
+    uint64_t off {};
+    uint64_t size {};
+    int64_t res {};
+};
+__attribute__((noinline)) void ParseHmfsWriteExitData(HmfsWriteExitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_dev(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ino(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_off(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_size(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_res(FtraceFieldParser::ParseIntField<int64_t>(format.fields, i++, data, size));
+    eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.off = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.res = FtraceFieldParser::ParseIntField<int64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hmfs_write_exit,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_hmfs_write_exit_format();
-        hmfs_write_exit_func(msg, data, size, format);
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hmfs_write_exit,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_hmfs_write_exit_format();
-        hmfs_write_exit_func(msg, data, size, format);
-    });
+void ParseHmfsWriteExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HmfsWriteExitData eventData {};
+    ParseHmfsWriteExitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_hmfs_write_exit_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_off(eventData.off);
+    msg->set_size(eventData.size);
+    msg->set_res(eventData.res);
+}
+void ParseHmfsWriteExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    HmfsWriteExitData eventData {};
+    ParseHmfsWriteExitData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_hmfs_write_exit_format();
+    msg->set_dev(eventData.dev);
+    msg->set_ino(eventData.ino);
+    msg->set_off(eventData.off);
+    msg->set_size(eventData.size);
+    msg->set_res(eventData.res);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hmfs_write_exit, ParseHmfsWriteExit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(hmfs_write_exit, ParseHmfsWriteExitEncoder);
 } // namespace
 FTRACE_NS_END

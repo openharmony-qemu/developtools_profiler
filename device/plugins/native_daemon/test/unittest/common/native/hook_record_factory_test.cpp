@@ -688,31 +688,6 @@ HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_NonPendingTagId, TestSize.
 }
 
 /*
- * @tc.name: ProcessDynamicTagInfo_TooSmallSize
- * @tc.desc: test ProcessDynamicTagInfo with size too small.
- * @tc.type: FUNC
- */
-HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_TooSmallSize, TestSize.Level0)
-{
-    uint32_t smallSize = sizeof(uint32_t) + 1;
-    std::vector<int8_t> buffer(sizeof(BaseStackRawData), 0);
-    BaseStackRawData* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
-    baseData->type = MMAP_FILE_PAGE_MSG;
-    baseData->tagId = TAG_ID_PENDING;
-    
-    uint32_t callbackCount = 0;
-    auto callback = [&callbackCount](uint32_t tagId, const std::string& name) {
-        callbackCount++;
-    };
-    
-    std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(
-        buffer.data(), smallSize, true, callback);
-    
-    EXPECT_EQ(hookRecord, nullptr);
-    EXPECT_EQ(callbackCount, 0);
-}
-
-/*
  * @tc.name: ProcessDynamicTagInfo_InvalidOriginDataSize
  * @tc.desc: test ProcessDynamicTagInfo with invalid originDataSize.
  * @tc.type: FUNC

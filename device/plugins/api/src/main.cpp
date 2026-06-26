@@ -31,7 +31,7 @@
 namespace {
 const int SLEEP_ONE_SECOND = 1000;
 
-std::vector<std::string> presetPluginVec = {
+constexpr const char* PRESET_PLUGIN_LIST[] = {
     "libcpudataplugin.z.so",
     "libgpudataplugin.z.so",
     "libdiskiodataplugin.z.so",
@@ -79,12 +79,11 @@ int main(int argc, char* argv[])
     pluginManager->SetCommandPoller(commandPoller);
 
     // add preset plugin
-    for (size_t i = 0; i < presetPluginVec.size(); i++) {
-        const std::string pluginPath = presetPluginVec[i];
+    for (const char* pluginPath : PRESET_PLUGIN_LIST) {
         if (pluginManager->AddPlugin(pluginPath)) {
-            PROFILER_LOG_INFO(LOG_CORE, "add preset plugin %s success!", pluginPath.c_str());
+            PROFILER_LOG_INFO(LOG_CORE, "add preset plugin %s success!", pluginPath);
         } else {
-            PROFILER_LOG_INFO(LOG_CORE, "add preset plugin %s failed!", pluginPath.c_str());
+            PROFILER_LOG_INFO(LOG_CORE, "add preset plugin %s failed!", pluginPath);
         }
     }
 

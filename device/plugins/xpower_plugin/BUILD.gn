@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 
 ohos_shared_library("xpowerplugin") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   output_name = "xpowerplugin"
   version_script = "libxpower_plugin.map"
   sources = [

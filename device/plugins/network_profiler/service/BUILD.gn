@@ -28,6 +28,7 @@ config("network_profiler_service_config") {
 }
 
 ohos_source_set("network_profiler_service") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   public_configs = [ ":network_profiler_service_config" ]
 
   sources = [
@@ -65,6 +66,7 @@ ohos_source_set("network_profiler_service") {
 }
 
 ohos_source_set("network_profiler_service_cfi") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   public_configs = [ ":network_profiler_service_config" ]
 
   sanitize = {

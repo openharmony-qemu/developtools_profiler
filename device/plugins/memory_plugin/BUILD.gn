@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 
 ohos_source_set("memdataplugin_source") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   sources = [
@@ -51,6 +52,7 @@ ohos_source_set("memdataplugin_source") {
 }
 
 ohos_shared_library("memdataplugin") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   output_name = "memdataplugin"
   version_script = "libmemory_plugin.map"
   deps = [ ":memdataplugin_source" ]

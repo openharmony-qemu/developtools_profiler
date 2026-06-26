@@ -14,304 +14,596 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T> void kfree_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct KfreeData {
+    uint64_t call_site {};
+    uint64_t ptr {};
+};
+__attribute__((noinline)) void ParseKfreeData(KfreeData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_call_site(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ptr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(kfree,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_kfree_format();
-        if (msg != nullptr) {
-            kfree_func(msg, data, size, format);
-        }
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(kfree,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_kfree_format();
-        if (msg != nullptr) {
-            kfree_func(msg, data, size, format);
-        }
-    });
+void ParseKfree(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    KfreeData eventData {};
+    ParseKfreeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_kfree_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_call_site(eventData.call_site);
+    msg->set_ptr(eventData.ptr);
+}
+void ParseKfreeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    KfreeData eventData {};
+    ParseKfreeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_kfree_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_call_site(eventData.call_site);
+    msg->set_ptr(eventData.ptr);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(kfree, ParseKfree);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(kfree, ParseKfreeEncoder);
 
-template <typename T> void kmalloc_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct KmallocData {
+    uint64_t call_site {};
+    uint64_t ptr {};
+    uint64_t bytes_req {};
+    uint64_t bytes_alloc {};
+    uint32_t gfp_flags {};
+};
+__attribute__((noinline)) void ParseKmallocData(KmallocData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_call_site(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ptr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_bytes_req(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_bytes_alloc(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_gfp_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.bytes_req = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.bytes_alloc = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.gfp_flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(kmalloc,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_kmalloc_format();
-        if (msg != nullptr) {
-            kmalloc_func(msg, data, size, format);
-        }
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(kmalloc,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_kmalloc_format();
-        if (msg != nullptr) {
-            kmalloc_func(msg, data, size, format);
-        }
-    });
+void ParseKmalloc(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    KmallocData eventData {};
+    ParseKmallocData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_kmalloc_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_call_site(eventData.call_site);
+    msg->set_ptr(eventData.ptr);
+    msg->set_bytes_req(eventData.bytes_req);
+    msg->set_bytes_alloc(eventData.bytes_alloc);
+    msg->set_gfp_flags(eventData.gfp_flags);
+}
+void ParseKmallocEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    KmallocData eventData {};
+    ParseKmallocData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_kmalloc_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_call_site(eventData.call_site);
+    msg->set_ptr(eventData.ptr);
+    msg->set_bytes_req(eventData.bytes_req);
+    msg->set_bytes_alloc(eventData.bytes_alloc);
+    msg->set_gfp_flags(eventData.gfp_flags);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(kmalloc, ParseKmalloc);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(kmalloc, ParseKmallocEncoder);
 
-template <typename T> void kmalloc_node_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct KmallocNodeData {
+    uint64_t call_site {};
+    uint64_t ptr {};
+    uint64_t bytes_req {};
+    uint64_t bytes_alloc {};
+    uint32_t gfp_flags {};
+    int32_t node {};
+};
+__attribute__((noinline)) void ParseKmallocNodeData(KmallocNodeData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_call_site(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ptr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_bytes_req(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_bytes_alloc(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_gfp_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_node(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.bytes_req = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.bytes_alloc = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.gfp_flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.node = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(kmalloc_node,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_kmalloc_node_format();
-        if (msg != nullptr) {
-            kmalloc_node_func(msg, data, size, format);
-        }
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(kmalloc_node,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_kmalloc_node_format();
-        if (msg != nullptr) {
-            kmalloc_node_func(msg, data, size, format);
-        }
-    });
+void ParseKmallocNode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    KmallocNodeData eventData {};
+    ParseKmallocNodeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_kmalloc_node_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_call_site(eventData.call_site);
+    msg->set_ptr(eventData.ptr);
+    msg->set_bytes_req(eventData.bytes_req);
+    msg->set_bytes_alloc(eventData.bytes_alloc);
+    msg->set_gfp_flags(eventData.gfp_flags);
+    msg->set_node(eventData.node);
+}
+void ParseKmallocNodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    KmallocNodeData eventData {};
+    ParseKmallocNodeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_kmalloc_node_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_call_site(eventData.call_site);
+    msg->set_ptr(eventData.ptr);
+    msg->set_bytes_req(eventData.bytes_req);
+    msg->set_bytes_alloc(eventData.bytes_alloc);
+    msg->set_gfp_flags(eventData.gfp_flags);
+    msg->set_node(eventData.node);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(kmalloc_node, ParseKmallocNode);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(kmalloc_node, ParseKmallocNodeEncoder);
 
-template <typename T> void kmem_cache_alloc_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct KmemCacheAllocData {
+    uint64_t call_site {};
+    uint64_t ptr {};
+    uint64_t bytes_req {};
+    uint64_t bytes_alloc {};
+    uint32_t gfp_flags {};
+};
+__attribute__((noinline)) void ParseKmemCacheAllocData(KmemCacheAllocData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_call_site(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ptr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_bytes_req(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_bytes_alloc(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_gfp_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.bytes_req = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.bytes_alloc = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.gfp_flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(kmem_cache_alloc,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_kmem_cache_alloc_format();
-        if (msg != nullptr) {
-            kmem_cache_alloc_func(msg, data, size, format);
-        }
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(kmem_cache_alloc,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_kmem_cache_alloc_format();
-        if (msg != nullptr) {
-            kmem_cache_alloc_func(msg, data, size, format);
-        }
-    });
+void ParseKmemCacheAlloc(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    KmemCacheAllocData eventData {};
+    ParseKmemCacheAllocData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_kmem_cache_alloc_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_call_site(eventData.call_site);
+    msg->set_ptr(eventData.ptr);
+    msg->set_bytes_req(eventData.bytes_req);
+    msg->set_bytes_alloc(eventData.bytes_alloc);
+    msg->set_gfp_flags(eventData.gfp_flags);
+}
+void ParseKmemCacheAllocEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    KmemCacheAllocData eventData {};
+    ParseKmemCacheAllocData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_kmem_cache_alloc_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_call_site(eventData.call_site);
+    msg->set_ptr(eventData.ptr);
+    msg->set_bytes_req(eventData.bytes_req);
+    msg->set_bytes_alloc(eventData.bytes_alloc);
+    msg->set_gfp_flags(eventData.gfp_flags);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(kmem_cache_alloc, ParseKmemCacheAlloc);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(kmem_cache_alloc, ParseKmemCacheAllocEncoder);
 
-template <typename T> void kmem_cache_alloc_node_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct KmemCacheAllocNodeData {
+    uint64_t call_site {};
+    uint64_t ptr {};
+    uint64_t bytes_req {};
+    uint64_t bytes_alloc {};
+    uint32_t gfp_flags {};
+    int32_t node {};
+};
+__attribute__((noinline)) void ParseKmemCacheAllocNodeData(KmemCacheAllocNodeData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_call_site(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ptr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_bytes_req(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_bytes_alloc(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_gfp_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_node(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.bytes_req = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.bytes_alloc = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.gfp_flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.node = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(kmem_cache_alloc_node,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_kmem_cache_alloc_node_format();
-        if (msg != nullptr) {
-            kmem_cache_alloc_node_func(msg, data, size, format);
-        }
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(kmem_cache_alloc_node,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_kmem_cache_alloc_node_format();
-        if (msg != nullptr) {
-            kmem_cache_alloc_node_func(msg, data, size, format);
-        }
-    });
+void ParseKmemCacheAllocNode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    KmemCacheAllocNodeData eventData {};
+    ParseKmemCacheAllocNodeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_kmem_cache_alloc_node_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_call_site(eventData.call_site);
+    msg->set_ptr(eventData.ptr);
+    msg->set_bytes_req(eventData.bytes_req);
+    msg->set_bytes_alloc(eventData.bytes_alloc);
+    msg->set_gfp_flags(eventData.gfp_flags);
+    msg->set_node(eventData.node);
+}
+void ParseKmemCacheAllocNodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    KmemCacheAllocNodeData eventData {};
+    ParseKmemCacheAllocNodeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_kmem_cache_alloc_node_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_call_site(eventData.call_site);
+    msg->set_ptr(eventData.ptr);
+    msg->set_bytes_req(eventData.bytes_req);
+    msg->set_bytes_alloc(eventData.bytes_alloc);
+    msg->set_gfp_flags(eventData.gfp_flags);
+    msg->set_node(eventData.node);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(kmem_cache_alloc_node, ParseKmemCacheAllocNode);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(kmem_cache_alloc_node, ParseKmemCacheAllocNodeEncoder);
 
-template <typename T> void kmem_cache_free_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct KmemCacheFreeData {
+    uint64_t call_site {};
+    uint64_t ptr {};
+};
+__attribute__((noinline)) void ParseKmemCacheFreeData(KmemCacheFreeData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_call_site(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ptr(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(kmem_cache_free,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_kmem_cache_free_format();
-        if (msg != nullptr) {
-            kmem_cache_free_func(msg, data, size, format);
-        }
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(kmem_cache_free,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_kmem_cache_free_format();
-        if (msg != nullptr) {
-            kmem_cache_free_func(msg, data, size, format);
-        }
-    });
+void ParseKmemCacheFree(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    KmemCacheFreeData eventData {};
+    ParseKmemCacheFreeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_kmem_cache_free_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_call_site(eventData.call_site);
+    msg->set_ptr(eventData.ptr);
+}
+void ParseKmemCacheFreeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    KmemCacheFreeData eventData {};
+    ParseKmemCacheFreeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_kmem_cache_free_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_call_site(eventData.call_site);
+    msg->set_ptr(eventData.ptr);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(kmem_cache_free, ParseKmemCacheFree);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(kmem_cache_free, ParseKmemCacheFreeEncoder);
 
-template <typename T> void mm_page_alloc_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct MmPageAllocData {
+    uint64_t pfn {};
+    uint32_t order {};
+    uint32_t gfp_flags {};
+    int32_t migratetype {};
+};
+__attribute__((noinline)) void ParseMmPageAllocData(MmPageAllocData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_order(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_gfp_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_migratetype(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.order = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.gfp_flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.migratetype = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_page_alloc,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_mm_page_alloc_format();
-        if (msg != nullptr) {
-            mm_page_alloc_func(msg, data, size, format);
-        }
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_page_alloc,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_mm_page_alloc_format();
-        if (msg != nullptr) {
-            mm_page_alloc_func(msg, data, size, format);
-        }
-    });
+void ParseMmPageAlloc(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmPageAllocData eventData {};
+    ParseMmPageAllocData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_mm_page_alloc_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_pfn(eventData.pfn);
+    msg->set_order(eventData.order);
+    msg->set_gfp_flags(eventData.gfp_flags);
+    msg->set_migratetype(eventData.migratetype);
+}
+void ParseMmPageAllocEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmPageAllocData eventData {};
+    ParseMmPageAllocData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_mm_page_alloc_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_pfn(eventData.pfn);
+    msg->set_order(eventData.order);
+    msg->set_gfp_flags(eventData.gfp_flags);
+    msg->set_migratetype(eventData.migratetype);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_page_alloc, ParseMmPageAlloc);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_page_alloc, ParseMmPageAllocEncoder);
 
-template <typename T> void mm_page_alloc_extfrag_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct MmPageAllocExtfragData {
+    uint64_t pfn {};
+    int32_t alloc_order {};
+    int32_t fallback_order {};
+    int32_t alloc_migratetype {};
+    int32_t fallback_migratetype {};
+    int32_t change_ownership {};
+};
+__attribute__((noinline)) void ParseMmPageAllocExtfragData(MmPageAllocExtfragData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_alloc_order(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_fallback_order(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_alloc_migratetype(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_fallback_migratetype(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_change_ownership(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.alloc_order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.fallback_order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.alloc_migratetype = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.fallback_migratetype = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.change_ownership = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_page_alloc_extfrag,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_mm_page_alloc_extfrag_format();
-        if (msg != nullptr) {
-            mm_page_alloc_extfrag_func(msg, data, size, format);
-        }
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_page_alloc_extfrag,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_mm_page_alloc_extfrag_format();
-        if (msg != nullptr) {
-            mm_page_alloc_extfrag_func(msg, data, size, format);
-        }
-    });
+void ParseMmPageAllocExtfrag(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmPageAllocExtfragData eventData {};
+    ParseMmPageAllocExtfragData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_mm_page_alloc_extfrag_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_pfn(eventData.pfn);
+    msg->set_alloc_order(eventData.alloc_order);
+    msg->set_fallback_order(eventData.fallback_order);
+    msg->set_alloc_migratetype(eventData.alloc_migratetype);
+    msg->set_fallback_migratetype(eventData.fallback_migratetype);
+    msg->set_change_ownership(eventData.change_ownership);
+}
+void ParseMmPageAllocExtfragEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmPageAllocExtfragData eventData {};
+    ParseMmPageAllocExtfragData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_mm_page_alloc_extfrag_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_pfn(eventData.pfn);
+    msg->set_alloc_order(eventData.alloc_order);
+    msg->set_fallback_order(eventData.fallback_order);
+    msg->set_alloc_migratetype(eventData.alloc_migratetype);
+    msg->set_fallback_migratetype(eventData.fallback_migratetype);
+    msg->set_change_ownership(eventData.change_ownership);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_page_alloc_extfrag, ParseMmPageAllocExtfrag);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_page_alloc_extfrag, ParseMmPageAllocExtfragEncoder);
 
-template <typename T>
-void mm_page_alloc_zone_locked_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct MmPageAllocZoneLockedData {
+    uint64_t pfn {};
+    uint32_t order {};
+    int32_t migratetype {};
+};
+__attribute__((noinline)) void ParseMmPageAllocZoneLockedData(MmPageAllocZoneLockedData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_order(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_migratetype(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.order = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.migratetype = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_page_alloc_zone_locked,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_mm_page_alloc_zone_locked_format();
-        if (msg != nullptr) {
-            mm_page_alloc_zone_locked_func(msg, data, size, format);
-        }
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_page_alloc_zone_locked,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_mm_page_alloc_zone_locked_format();
-        if (msg != nullptr) {
-            mm_page_alloc_zone_locked_func(msg, data, size, format);
-        }
-    });
+void ParseMmPageAllocZoneLocked(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmPageAllocZoneLockedData eventData {};
+    ParseMmPageAllocZoneLockedData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_mm_page_alloc_zone_locked_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_pfn(eventData.pfn);
+    msg->set_order(eventData.order);
+    msg->set_migratetype(eventData.migratetype);
+}
+void ParseMmPageAllocZoneLockedEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmPageAllocZoneLockedData eventData {};
+    ParseMmPageAllocZoneLockedData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_mm_page_alloc_zone_locked_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_pfn(eventData.pfn);
+    msg->set_order(eventData.order);
+    msg->set_migratetype(eventData.migratetype);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_page_alloc_zone_locked, ParseMmPageAllocZoneLocked);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_page_alloc_zone_locked, ParseMmPageAllocZoneLockedEncoder);
 
-template <typename T> void mm_page_free_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct MmPageFreeData {
+    uint64_t pfn {};
+    uint32_t order {};
+};
+__attribute__((noinline)) void ParseMmPageFreeData(MmPageFreeData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_order(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.order = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_page_free,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_mm_page_free_format();
-        if (msg != nullptr) {
-            mm_page_free_func(msg, data, size, format);
-        }
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_page_free,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_mm_page_free_format();
-        if (msg != nullptr) {
-            mm_page_free_func(msg, data, size, format);
-        }
-    });
+void ParseMmPageFree(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmPageFreeData eventData {};
+    ParseMmPageFreeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_mm_page_free_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_pfn(eventData.pfn);
+    msg->set_order(eventData.order);
+}
+void ParseMmPageFreeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmPageFreeData eventData {};
+    ParseMmPageFreeData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_mm_page_free_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_pfn(eventData.pfn);
+    msg->set_order(eventData.order);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_page_free, ParseMmPageFree);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_page_free, ParseMmPageFreeEncoder);
 
-template <typename T> void mm_page_free_batched_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct MmPageFreeBatchedData {
+    uint64_t pfn {};
+};
+__attribute__((noinline)) void ParseMmPageFreeBatchedData(MmPageFreeBatchedData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_page_free_batched,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_mm_page_free_batched_format();
-        if (msg != nullptr) {
-            mm_page_free_batched_func(msg, data, size, format);
-        }
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_page_free_batched,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_mm_page_free_batched_format();
-        if (msg != nullptr) {
-            mm_page_free_batched_func(msg, data, size, format);
-        }
-    });
+void ParseMmPageFreeBatched(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmPageFreeBatchedData eventData {};
+    ParseMmPageFreeBatchedData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_mm_page_free_batched_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_pfn(eventData.pfn);
+}
+void ParseMmPageFreeBatchedEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmPageFreeBatchedData eventData {};
+    ParseMmPageFreeBatchedData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_mm_page_free_batched_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_pfn(eventData.pfn);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_page_free_batched, ParseMmPageFreeBatched);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_page_free_batched, ParseMmPageFreeBatchedEncoder);
 
-template <typename T> void mm_page_pcpu_drain_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct MmPagePcpuDrainData {
+    uint64_t pfn {};
+    uint32_t order {};
+    int32_t migratetype {};
+};
+__attribute__((noinline)) void ParseMmPagePcpuDrainData(MmPagePcpuDrainData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_pfn(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_order(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_migratetype(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.order = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.migratetype = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_page_pcpu_drain,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_mm_page_pcpu_drain_format();
-        if (msg != nullptr) {
-            mm_page_pcpu_drain_func(msg, data, size, format);
-        }
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_page_pcpu_drain,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_mm_page_pcpu_drain_format();
-        if (msg != nullptr) {
-            mm_page_pcpu_drain_func(msg, data, size, format);
-        }
-    });
+void ParseMmPagePcpuDrain(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmPagePcpuDrainData eventData {};
+    ParseMmPagePcpuDrainData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_mm_page_pcpu_drain_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_pfn(eventData.pfn);
+    msg->set_order(eventData.order);
+    msg->set_migratetype(eventData.migratetype);
+}
+void ParseMmPagePcpuDrainEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    MmPagePcpuDrainData eventData {};
+    ParseMmPagePcpuDrainData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_mm_page_pcpu_drain_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_pfn(eventData.pfn);
+    msg->set_order(eventData.order);
+    msg->set_migratetype(eventData.migratetype);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_page_pcpu_drain, ParseMmPagePcpuDrain);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_page_pcpu_drain, ParseMmPagePcpuDrainEncoder);
 
-template <typename T> void rss_stat_func(T& msg, uint8_t data[], size_t size, const EventFormat& format)
+struct RssStatData {
+    uint32_t mm_id {};
+    uint32_t curr {};
+    int32_t member {};
+    uint64_t size {};
+};
+__attribute__((noinline)) void ParseRssStatData(RssStatData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_mm_id(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_curr(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
-    msg->set_member(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_size(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.mm_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.curr = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
+    eventData.member = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
+    eventData.size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rss_stat,
-    [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_rss_stat_format();
-        if (msg != nullptr) {
-            rss_stat_func(msg, data, size, format);
-        }
-    });
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rss_stat,
-    [](ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
-        auto msg = ftraceEvent.mutable_rss_stat_format();
-        if (msg != nullptr) {
-            rss_stat_func(msg, data, size, format);
-        }
-    });
+void ParseRssStat(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    RssStatData eventData {};
+    ParseRssStatData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_rss_stat_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_mm_id(eventData.mm_id);
+    msg->set_curr(eventData.curr);
+    msg->set_member(eventData.member);
+    msg->set_size(eventData.size);
+}
+void ParseRssStatEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    RssStatData eventData {};
+    ParseRssStatData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_rss_stat_format();
+    if (msg == nullptr) {
+        return;
+    }
+    msg->set_mm_id(eventData.mm_id);
+    msg->set_curr(eventData.curr);
+    msg->set_member(eventData.member);
+    msg->set_size(eventData.size);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rss_stat, ParseRssStat);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rss_stat, ParseRssStatEncoder);
 } // namespace
 FTRACE_NS_END

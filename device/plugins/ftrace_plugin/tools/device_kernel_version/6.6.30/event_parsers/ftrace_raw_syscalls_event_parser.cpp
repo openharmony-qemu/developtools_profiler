@@ -14,46 +14,78 @@
  */
 #include "sub_event_parser.h"
 
+#include <string>
+#include <vector>
+
 FTRACE_NS_BEGIN
 namespace {
 using namespace OHOS::Developtools::Profiler;
-template <typename T>
-void sys_enter_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct SysEnterData {
+    uint64_t id {};
+    std::vector<uint64_t> args {};
+};
+__attribute__((noinline)) void ParseSysEnterData(SysEnterData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_id(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    std::vector<uint64_t> retvalVec = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, i++, data, size);
-    for (size_t i = 0; i < retvalVec.size(); i++) {
-        msg->add_args(retvalVec[i]);
+    eventData.id = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.args = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, i++, data, size);
+}
+void ParseSysEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    SysEnterData eventData {};
+    ParseSysEnterData(eventData, data, size, format);
+    auto msg = ftraceEvent.mutable_sys_enter_format();
+    msg->set_id(eventData.id);
+    for (size_t i = 0; i < eventData.args.size(); i++) {
+        msg->add_args(eventData.args[i]);
     }
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sys_enter, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                   const EventFormat &format) {
+void ParseSysEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    SysEnterData eventData {};
+    ParseSysEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sys_enter_format();
-    sys_enter_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sys_enter, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                           size_t size, const EventFormat &format) {
-    auto msg = ftraceEvent.mutable_sys_enter_format();
-    sys_enter_func(msg, data, size, format);
-});
+    msg->set_id(eventData.id);
+    for (size_t i = 0; i < eventData.args.size(); i++) {
+        msg->add_args(eventData.args[i]);
+    }
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sys_enter, ParseSysEnter);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sys_enter, ParseSysEnterEncoder);
 
-template <typename T>
-void sys_exit_func(T &msg, uint8_t data[], size_t size, const EventFormat &format)
+struct SysExitData {
+    uint64_t id {};
+    uint64_t ret {};
+};
+__attribute__((noinline)) void ParseSysExitData(SysExitData& eventData, uint8_t data[], size_t size,
+                                             const EventFormat& format)
 {
     int i = 0;
-    msg->set_id(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_ret(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    eventData.id = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
+    eventData.ret = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sys_exit, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
-                                                  const EventFormat &format) {
+void ParseSysExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    SysExitData eventData {};
+    ParseSysExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sys_exit_format();
-    sys_exit_func(msg, data, size, format);
-});
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sys_exit, [](ProtoEncoder::FtraceEvent &ftraceEvent, uint8_t data[],
-                                                          size_t size, const EventFormat &format) {
+    msg->set_id(eventData.id);
+    msg->set_ret(eventData.ret);
+}
+void ParseSysExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+                               const EventFormat& format)
+{
+    SysExitData eventData {};
+    ParseSysExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sys_exit_format();
-    sys_exit_func(msg, data, size, format);
-});
+    msg->set_id(eventData.id);
+    msg->set_ret(eventData.ret);
+}
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sys_exit, ParseSysExit);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sys_exit, ParseSysExitEncoder);
 }  // namespace
 FTRACE_NS_END

@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 
 ohos_source_set("hidumpplugin_source") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   sources = [
     "src/hidump_module.cpp",
     "src/hidump_plugin.cpp",
@@ -45,6 +46,7 @@ ohos_source_set("hidumpplugin_source") {
 }
 
 ohos_shared_library("hidumpplugin") {
+  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   output_name = "hidumpplugin"
   version_script = "libhidump_plugin.map"
   deps = [ ":hidumpplugin_source" ]
