@@ -566,6 +566,7 @@ int32_t NativeMemoryProfilerSaService::DumpDataAsync(uint32_t fd, std::shared_pt
         return RET_OK;
     }
     ApplyMemtraceConfig(config);
+    RefreshFileCacheModeConfig(config);
     std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
     if (StartHookLock(config, fd, hook, args, callback) != RET_OK) {
         close(fd);
