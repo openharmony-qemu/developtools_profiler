@@ -91,6 +91,7 @@ private:
     static int32_t StopHookByType(uint32_t pid, std::string& name, int32_t finishErrorCode, bool isAsync);
     static bool TryBeginStopHook(uint32_t pid);
     static void EndStopHook(uint32_t pid);
+    static bool IsAsyncRequest(uint32_t pid);
     int32_t CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
     int32_t CheckTaskLimit(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     int32_t CheckStartupModeConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);

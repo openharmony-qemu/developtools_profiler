@@ -448,6 +448,9 @@ bool StackPreprocess::StopTakeResults()
         }
     } else {
         PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults: enter file cache stop task, pid %d", pid_);
+        if (pid_ < 0) {
+            isStartTakeData_ = true;
+        }
         StopCacheFileTask();
     }
 

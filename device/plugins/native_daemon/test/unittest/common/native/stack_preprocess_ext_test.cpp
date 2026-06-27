@@ -302,6 +302,7 @@ HWTEST_F(StackPreprocessExtTest, StopTakeResultsInFileCacheModeStopsAfterInactiv
     NativeHookConfig hookConfig;
     hookConfig.set_use_file_cache_mode(true);
     StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.pid_ = 1;
     bool result = false;
 
     std::thread worker([&preprocess, &result]() { result = preprocess.StopTakeResults(); });

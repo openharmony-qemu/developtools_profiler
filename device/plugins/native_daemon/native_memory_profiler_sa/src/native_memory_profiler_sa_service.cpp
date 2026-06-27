@@ -211,7 +211,7 @@ void NativeMemoryProfilerSaService::ClientDisconnectCallback(int socketFd)
         PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
         return;
     }
-    bool isAPI = false;
+    bool isAsync = false;
     std::string name = "";
     // Lock the mutex to ensure safe access to the shared resource g_pidCtx
     {
@@ -226,7 +226,7 @@ void NativeMemoryProfilerSaService::ClientDisconnectCallback(int socketFd)
                 "ClientDisconnectCallback: config not found for pid %d, skip cleanup", pidval);
             return;
         }
-        isAPI = (config->startType == START_TYPE_API);
+        isAsync = config->callback != nullptr;
         name = config->processName;
     }
     {
@@ -240,7 +240,7 @@ void NativeMemoryProfilerSaService::ClientDisconnectCallback(int socketFd)
     }
     // Note: The same mutex g_mtx is also used in the StopHook function.
     // Be cautious to avoid potential deadlocks.
-    StopHookByType(pidval, name, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), isAPI);
+    StopHookByType(pidval, name, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), isAsync);
 }
 
 bool NativeMemoryProfilerSaService::StartServiceAbility()
@@ -492,7 +492,8 @@ int32_t NativeMemoryProfilerSaService::Stop(uint32_t pid)
         PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
         return RET_ERR;
     }
-    (void)StopHook(pid, "", static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS));
+    std::string name;
+    (void)StopHookByType(pid, name, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), IsAsyncRequest(pid));
     return RET_OK;
 }
 
@@ -695,6 +696,18 @@ void NativeMemoryProfilerSaService::EndStopHook(uint32_t pid)
     g_stoppingPids.erase(pid);
 }
 
+bool NativeMemoryProfilerSaService::IsAsyncRequest(uint32_t pid)
+{
+    std::lock_guard<std::mutex> guard(g_mtx);
+    std::shared_ptr<TaskConfig> config = nullptr;
+    if (auto taskIter = g_pidCtx.find(pid); taskIter != g_pidCtx.end()) {
+        config = taskIter->second;
+    }
+    bool async = isAsync = config && config->callback;
+    PROFILER_LOG_ERROR(LOG_CORE, "pid %d hasCallback:%d", pid, async);
+    return async;
+}
+
 std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
     std::stringstream args;
@@ -792,14 +805,14 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         hook->WriteHookConfig();
     }
     hook->StartPluginSession(&g_pidInfo);
-
+    bool isAsync = callback != nullptr;
     int32_t timerFd = g_scheduleTaskManager.ScheduleTask(
-        [config, filePath = config->filePath_] {
+        [config, filePath = config->filePath_, isAsync] {
             PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService:This task will be stopped.errorcode is:%d.",
                 static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION));
             int32_t retStop = StopHookByType(config->pid_, config->processName_,
                 static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION),
-                config->startType_ == START_TYPE_API);
+                isAsync);
             if (retStop != RET_OK) {
                 PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService StopHook failed");
             }
