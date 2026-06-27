@@ -570,7 +570,7 @@ HWTEST_F(HookManagerExtTest, DrainPendingSharedMemoryNoQueueSkipsNullBlocks, Tes
     ASSERT_TRUE(ctx != nullptr);
     hookManager_->noDataQueue_ = true;
     ctx->shareMemoryBlockList.push_back(nullptr);
-    AppendSharedMemoryRecord(ctx, MALLOC_MSG);
+    AppendSharedMemoryRecord(ctx, MEMORY_TAG);
 
     EXPECT_TRUE(hookManager_->DrainPendingSharedMemory(ctx));
 }

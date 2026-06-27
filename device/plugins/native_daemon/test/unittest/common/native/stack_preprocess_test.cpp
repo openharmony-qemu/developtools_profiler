@@ -649,6 +649,7 @@ HWTEST_F(StackPreprocessTest, CallStackHash02, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     hookConfig.set_fp_unwind(true);
+    hookConfig.set_arkui_mem_trace_enable(true);
     StackPreprocess preprocess(nullptr, hookConfig, 0);
 
     preprocess.SaveMemTag(0, "tagA");
@@ -806,6 +807,7 @@ HWTEST_F(StackPreprocessTest, CallStackHash07, TestSize.Level0)
 HWTEST_F(StackPreprocessTest, AsyncCallStackKeyTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
     hookConfig.set_statistics_interval(10);
     hookConfig.set_async_stack_enable(true);
     hookConfig.set_fp_unwind(true);
@@ -839,6 +841,7 @@ HWTEST_F(StackPreprocessTest, AsyncCallStackKeyTest, TestSize.Level0)
 HWTEST_F(StackPreprocessTest, AsyncStatisticsLookupTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
     hookConfig.set_statistics_interval(10);
     hookConfig.set_async_stack_enable(true);
     hookConfig.set_fp_unwind(true);
@@ -918,6 +921,7 @@ HWTEST_F(StackPreprocessTest, GetCallStackIdOfflineEmptyDwarfStackStartsAtFirstF
 HWTEST_F(StackPreprocessTest, SetAllocStatisticsFrameAddsNapiFrame, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
     hookConfig.set_statistics_interval(10);
     hookConfig.set_fp_unwind(true);
     hookConfig.set_js_stack_report(NAPI_CALL_STACK);
@@ -985,6 +989,7 @@ HWTEST_F(StackPreprocessTest, SetAllocStatisticsFrameOfflineAddsMaskedNapiFrame,
 HWTEST_F(StackPreprocessTest, TryProcessCachedAsyncStatisticsWithoutFileModeTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
     hookConfig.set_statistics_interval(10);
     hookConfig.set_async_stack_enable(true);
     hookConfig.set_fp_unwind(true);
@@ -1935,6 +1940,7 @@ HWTEST_F(StackPreprocessTest, SetFreeStatisticsDataMultipleTest, TestSize.Level0
 HWTEST_F(StackPreprocessTest, SetAllocStatisticsDataNewTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
     StackPreprocess preprocess(nullptr, hookConfig, 0);
 
     // First allocation of address
@@ -1962,6 +1968,7 @@ HWTEST_F(StackPreprocessTest, SetAllocStatisticsDataNewTest, TestSize.Level0)
 HWTEST_F(StackPreprocessTest, UpdateAllocStatisticsSameSizeTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
     StackPreprocess preprocess(nullptr, hookConfig, 0);
 
     // First allocation
@@ -1997,6 +2004,7 @@ HWTEST_F(StackPreprocessTest, UpdateAllocStatisticsSameSizeTest, TestSize.Level0
 HWTEST_F(StackPreprocessTest, UpdateAllocStatisticsDifferentSizeTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
     StackPreprocess preprocess(nullptr, hookConfig, 0);
 
     // First allocation
@@ -2038,6 +2046,7 @@ HWTEST_F(StackPreprocessTest, UpdateAllocStatisticsDifferentSizeTest, TestSize.L
 HWTEST_F(StackPreprocessTest, AddAllocStatisticsMallocTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
     StackPreprocess preprocess(nullptr, hookConfig, 0);
 
     auto rawStack = std::make_shared<RawStack>();
@@ -2065,6 +2074,7 @@ HWTEST_F(StackPreprocessTest, AddAllocStatisticsMallocTest, TestSize.Level0)
 HWTEST_F(StackPreprocessTest, AddAllocStatisticsMmapTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
     StackPreprocess preprocess(nullptr, hookConfig, 0);
 
     auto rawStack = std::make_shared<RawStack>();
@@ -2090,6 +2100,7 @@ HWTEST_F(StackPreprocessTest, AddAllocStatisticsMmapTest, TestSize.Level0)
 HWTEST_F(StackPreprocessTest, AddAllocStatisticsWithTagTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
     StackPreprocess preprocess(nullptr, hookConfig, 0);
 
     // Use MEMORY_USING_MSG type to support tagId setting
