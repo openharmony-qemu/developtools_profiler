@@ -1763,7 +1763,7 @@ void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, s
     spinLock_.Lock();
     uint32_t stackId = FindCallStackId(g_callStack, hookRecord);
     if (stackId > 0) {
-        SetAllocStatisticsData(hookRecord, IsStackIdExistsInStatistics(stackId));
+        SetAllocStatisticsData(hookRecord, stackId, IsStackIdExistsInStatistics(stackId));
     } else {
         stackId = SetCallStackMap(stackData, hookRecord);
         statisticsModelFlushCallstack_ = true;
