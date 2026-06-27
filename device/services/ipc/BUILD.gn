@@ -33,7 +33,7 @@ ohos_source_set("ipc") {
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "init:libbegetutil",
-    "protobuf:protobuf_lite_static",
+    "protobuf:protobuf",
   ]
 
   if (current_toolchain != host_toolchain) {
@@ -68,7 +68,7 @@ ohos_source_set("ipc_cfi") {
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "init:libbegetutil",
-    "protobuf:protobuf_lite_static",
+    "protobuf:protobuf",
   ]
 
   if (current_toolchain != host_toolchain) {
