@@ -703,7 +703,7 @@ bool NativeMemoryProfilerSaService::IsAsyncRequest(uint32_t pid)
     if (auto taskIter = g_pidCtx.find(pid); taskIter != g_pidCtx.end()) {
         config = taskIter->second;
     }
-    bool async = isAsync = config && config->callback;
+    bool async = config && config->callback;
     PROFILER_LOG_ERROR(LOG_CORE, "pid %d hasCallback:%d", pid, async);
     return async;
 }
