@@ -95,7 +95,6 @@ private:
     bool ReadContentSection();
     void ParseBaseInfo(const std::vector<uint8_t>& data);
     bool ParsePageTimestamps(const std::vector<uint8_t>& data, uint64_t& firstTs, uint64_t& lastTs);
-
     std::string filePath_;
     std::ifstream fileStream_;
     bool isValid_ = false;

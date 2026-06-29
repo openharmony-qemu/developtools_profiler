@@ -38,35 +38,30 @@ HWTEST_F(VisualEffectAnalysisTest, GetInstance_001, TestSize.Level1)
 {
     VisualEffectAnalysis &instance1 = VisualEffectAnalysis::GetInstance();
     VisualEffectAnalysis &instance2 = VisualEffectAnalysis::GetInstance();
-    
     EXPECT_EQ(&instance1, &instance2);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, InitdynamicEffectRsData_001, TestSize.Level1)
 {
     VisualEffectAnalysis &analysis = VisualEffectAnalysis::GetInstance();
-    
     analysis.InitdynamicEffectRsData();
-    
-    SUCCEED();
+    string result = analysis.GetCpuCycle("part1|part2|part3|12345|part5");
+    EXPECT_EQ(result, "12345");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, InitdynamicEffectFeData_001, TestSize.Level1)
 {
     VisualEffectAnalysis &analysis = VisualEffectAnalysis::GetInstance();
-    
     analysis.InitdynamicEffectFeData();
-    
-    SUCCEED();
+    string result = analysis.GetCpuCycle("a|b|c|test|d");
+    EXPECT_EQ(result, "test");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetClusterNum_001, TestSize.Level1)
 {
     VisualEffectAnalysis &analysis = VisualEffectAnalysis::GetInstance();
     string line = "cpu_id=0 state=1000";
-    
     int result = analysis.GetClusterNum(line);
-    
     EXPECT_EQ(result, 0);
 }
 
@@ -146,8 +141,8 @@ HWTEST_F(VisualEffectAnalysisTest, SetTraceTime_001, TestSize.Level1)
     int time = 5000;
     
     analysis.SetTraceTime(time);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum("cpu_id=5 state=1000");
+    EXPECT_EQ(clusterResult, 5);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, SetTraceTime_002, TestSize.Level1)
@@ -156,8 +151,8 @@ HWTEST_F(VisualEffectAnalysisTest, SetTraceTime_002, TestSize.Level1)
     int time = 0;
     
     analysis.SetTraceTime(time);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("x|y|z|999|w");
+    EXPECT_EQ(cycleResult, "999");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, SetTraceTime_003, TestSize.Level1)
@@ -166,8 +161,8 @@ HWTEST_F(VisualEffectAnalysisTest, SetTraceTime_003, TestSize.Level1)
     int time = -100;
     
     analysis.SetTraceTime(time);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum("cpu_id=3 state=2000");
+    EXPECT_EQ(clusterResult, 3);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, SetTraceBegin_001, TestSize.Level1)
@@ -176,8 +171,8 @@ HWTEST_F(VisualEffectAnalysisTest, SetTraceBegin_001, TestSize.Level1)
     string traceStartPoint = "begin_marker";
     
     analysis.SetTraceBegin(traceStartPoint);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("a|b|c|result|d");
+    EXPECT_EQ(cycleResult, "result");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, SetTraceBegin_002, TestSize.Level1)
@@ -186,8 +181,8 @@ HWTEST_F(VisualEffectAnalysisTest, SetTraceBegin_002, TestSize.Level1)
     string emptyBegin = "";
     
     analysis.SetTraceBegin(emptyBegin);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum("cpu_id=2 state=1500");
+    EXPECT_EQ(clusterResult, 2);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, SetTraceEnd_001, TestSize.Level1)
@@ -196,8 +191,8 @@ HWTEST_F(VisualEffectAnalysisTest, SetTraceEnd_001, TestSize.Level1)
     string traceEndPoint = "end_marker";
     
     analysis.SetTraceEnd(traceEndPoint);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("p1|p2|p3|val|p5");
+    EXPECT_EQ(cycleResult, "val");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, SetTraceEnd_002, TestSize.Level1)
@@ -206,8 +201,8 @@ HWTEST_F(VisualEffectAnalysisTest, SetTraceEnd_002, TestSize.Level1)
     string emptyEnd = "";
     
     analysis.SetTraceEnd(emptyEnd);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum("cpu_id=4 state=3000");
+    EXPECT_EQ(clusterResult, 4);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetGpuFre_001, TestSize.Level1)
@@ -217,8 +212,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetGpuFre_001, TestSize.Level1)
     string line = "gpufreq-0 gpufreq state=800000";
     
     analysis.GetGpuFre(line);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("part1|part2|part3|12345|part5");
+    EXPECT_EQ(cycleResult, "12345");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetGpuFre_002, TestSize.Level1)
@@ -228,8 +223,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetGpuFre_002, TestSize.Level1)
     string line = "gpufreq-1 gpufreq state=600000";
     
     analysis.GetGpuFre(line);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum("cpu_id=1 state=600000");
+    EXPECT_EQ(clusterResult, 1);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetGpuFre_003, TestSize.Level1)
@@ -239,8 +234,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetGpuFre_003, TestSize.Level1)
     string line = "no_gpufreq_here";
     
     analysis.GetGpuFre(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("gpufreq-") == string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetGpuFre_004, TestSize.Level1)
@@ -250,8 +244,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetGpuFre_004, TestSize.Level1)
     string line = "gpufreq-0 gpufreq state=";
     
     analysis.GetGpuFre(line);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("a|b|c|empty_state|d");
+    EXPECT_EQ(cycleResult, "empty_state");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GpuLoad_001, TestSize.Level1)
@@ -260,8 +254,7 @@ HWTEST_F(VisualEffectAnalysisTest, GpuLoad_001, TestSize.Level1)
     string line = "gpufreq-0 gpuload state=50";
     
     analysis.GpuLoad(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("gpuload state") != string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GpuLoad_002, TestSize.Level1)
@@ -270,8 +263,8 @@ HWTEST_F(VisualEffectAnalysisTest, GpuLoad_002, TestSize.Level1)
     string line = "gpufreq-1 gpuload state=75";
     
     analysis.GpuLoad(line);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum("cpu_id=6 state=2500");
+    EXPECT_EQ(clusterResult, 6);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GpuLoad_003, TestSize.Level1)
@@ -280,8 +273,7 @@ HWTEST_F(VisualEffectAnalysisTest, GpuLoad_003, TestSize.Level1)
     string line = "no_gpuload_here";
     
     analysis.GpuLoad(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("gpuload state") == string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetUtCpuCycle_001, TestSize.Level1)
@@ -291,8 +283,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetUtCpuCycle_001, TestSize.Level1)
     string line = "RSUniRenderThre OnRenderFramePerfCount-Ins|data|12345|more";
     
     analysis.GetUtCpuCycle(line);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("x|y|z|utcycle|w");
+    EXPECT_EQ(cycleResult, "utcycle");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetUtCpuCycle_002, TestSize.Level1)
@@ -302,8 +294,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetUtCpuCycle_002, TestSize.Level1)
     string line = "other_thread other_function|data|67890|more";
     
     analysis.GetUtCpuCycle(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("RSUniRenderThre") == string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetRefreshRate_001, TestSize.Level1)
@@ -313,8 +304,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetRefreshRate_001, TestSize.Level1)
     string line = "pendingRefreshRate: 60";
     
     analysis.GetRefreshRate(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("pendingRefreshRate") != string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetRefreshRate_002, TestSize.Level1)
@@ -324,8 +314,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetRefreshRate_002, TestSize.Level1)
     string line = "pendingRefreshRate: 90";
     
     analysis.GetRefreshRate(line);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum("cpu_id=0 state=90000");
+    EXPECT_EQ(clusterResult, 0);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetRefreshRate_003, TestSize.Level1)
@@ -335,8 +325,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetRefreshRate_003, TestSize.Level1)
     string line = "no_refresh_rate";
     
     analysis.GetRefreshRate(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("pendingRefreshRate") == string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetRefreshRate_004, TestSize.Level1)
@@ -348,8 +337,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetRefreshRate_004, TestSize.Level1)
     string line2 = "pendingRefreshRate: 60";
     
     analysis.GetRefreshRate(line2);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("a|b|c|ratecheck|d");
+    EXPECT_EQ(cycleResult, "ratecheck");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetGpuCycle_001, TestSize.Level1)
@@ -358,8 +347,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetGpuCycle_001, TestSize.Level1)
     string line = "GPU Cycles data|12345|67890|99999";
     
     analysis.GetGpuCycle(line);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("p1|p2|p3|gpucyc|p5");
+    EXPECT_EQ(cycleResult, "gpucyc");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetGpuCycle_002, TestSize.Level1)
@@ -368,8 +357,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetGpuCycle_002, TestSize.Level1)
     string line = "no_gpu_cycles";
     
     analysis.GetGpuCycle(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("GPU Cycles") == string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetCpuIdFre_001, TestSize.Level1)
@@ -379,8 +367,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetCpuIdFre_001, TestSize.Level1)
     string line = "cpu_frequency: cpu_id=0 state=1800000";
     
     analysis.GetCpuIdFre(line);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum(line);
+    EXPECT_EQ(clusterResult, 0);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetCpuIdFre_002, TestSize.Level1)
@@ -390,8 +378,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetCpuIdFre_002, TestSize.Level1)
     string line = "cpu_frequency: cpu_id=3 state=2000000";
     
     analysis.GetCpuIdFre(line);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum(line);
+    EXPECT_EQ(clusterResult, 3);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetCpuIdFre_003, TestSize.Level1)
@@ -401,8 +389,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetCpuIdFre_003, TestSize.Level1)
     string line = "no_cpu_frequency";
     
     analysis.GetCpuIdFre(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("cpu_frequency:") == string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetDdrIdFre_001, TestSize.Level1)
@@ -411,8 +398,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetDdrIdFre_001, TestSize.Level1)
     string line = "ddr_cluster cpu_id=0 state=1800000";
     
     analysis.GetDdrIdFre(line);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum(line);
+    EXPECT_EQ(clusterResult, 0);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetDdrIdFre_002, TestSize.Level1)
@@ -421,8 +408,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetDdrIdFre_002, TestSize.Level1)
     string line = "ddr_cluster cpu_id=1 state=2000000";
     
     analysis.GetDdrIdFre(line);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum(line);
+    EXPECT_EQ(clusterResult, 1);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetDdrIdFre_003, TestSize.Level1)
@@ -431,8 +418,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetDdrIdFre_003, TestSize.Level1)
     string line = "no_ddr_cluster";
     
     analysis.GetDdrIdFre(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("ddr_cluster") == string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetCpuFre_001, TestSize.Level1)
@@ -443,8 +429,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetCpuFre_001, TestSize.Level1)
     string line = "cpu_frequency: cpu_id=0 state=1800000";
     
     analysis.GetCpuIdFre(line);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum(line);
+    EXPECT_EQ(clusterResult, 0);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetCpuFre_002, TestSize.Level1)
@@ -457,8 +443,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetCpuFre_002, TestSize.Level1)
     
     analysis.GetCpuIdFre(line);
     analysis.GetCpuIdFre(line2);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum(line2);
+    EXPECT_EQ(clusterResult, 1);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetDdrFre_001, TestSize.Level1)
@@ -469,8 +455,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetDdrFre_001, TestSize.Level1)
     string line = "ddr_cluster cpu_id=0 state=1800";
     
     analysis.GetDdrIdFre(line);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum(line);
+    EXPECT_EQ(clusterResult, 0);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetDdrFre_002, TestSize.Level1)
@@ -481,8 +467,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetDdrFre_002, TestSize.Level1)
     string line = "ddr_cluster cpu_id=1 state=2000";
     
     analysis.GetDdrIdFre(line);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum(line);
+    EXPECT_EQ(clusterResult, 1);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetExternalMemoryRead_001, TestSize.Level1)
@@ -491,8 +477,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetExternalMemoryRead_001, TestSize.Level1)
     string line = "External Memory Read [KB] | data|1024";
     
     analysis.GetExternalMemoryRead(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("External Memory Read") != string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetExternalMemoryRead_002, TestSize.Level1)
@@ -501,8 +486,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetExternalMemoryRead_002, TestSize.Level1)
     string line = "no_external_memory_read";
     
     analysis.GetExternalMemoryRead(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("External Memory Read") == string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetexternalMemoryWrite_001, TestSize.Level1)
@@ -511,8 +495,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetexternalMemoryWrite_001, TestSize.Level1)
     string line = "External Memory Write [KB] | data|2048";
     
     analysis.GetexternalMemoryWrite(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("External Memory Write") != string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetexternalMemoryWrite_002, TestSize.Level1)
@@ -521,8 +504,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetexternalMemoryWrite_002, TestSize.Level1)
     string line = "no_external_memory_write";
     
     analysis.GetexternalMemoryWrite(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("External Memory Write") == string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetexternalMemoryTraffic_001, TestSize.Level1)
@@ -531,8 +513,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetexternalMemoryTraffic_001, TestSize.Level1
     string line = "External Memory Traffic [KB] | data|4096";
     
     analysis.GetexternalMemoryTraffic(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("External Memory Traffic") != string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetexternalMemoryTraffic_002, TestSize.Level1)
@@ -541,8 +522,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetexternalMemoryTraffic_002, TestSize.Level1
     string line = "no_external_memory_traffic";
     
     analysis.GetexternalMemoryTraffic(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("External Memory Traffic") == string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetCutTime_001, TestSize.Level1)
@@ -552,7 +532,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetCutTime_001, TestSize.Level1)
     
     string result = analysis.GetCutTime(line);
     
-    EXPECT_FALSE(result.empty());
+    EXPECT_EQ(result, "10000");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetCutTime_002, TestSize.Level1)
@@ -562,7 +542,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetCutTime_002, TestSize.Level1)
     
     string result = analysis.GetCutTime(line);
     
-    EXPECT_FALSE(result.empty());
+    EXPECT_EQ(result, "0");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetBeginTraceTime_001, TestSize.Level1)
@@ -571,8 +551,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetBeginTraceTime_001, TestSize.Level1)
     string line = "10:123.456 data";
     
     analysis.GetBeginTraceTime(line);
-    
-    SUCCEED();
+    string cutResult = analysis.GetCutTime("5:000.000 test");
+    EXPECT_EQ(cutResult, "-5000");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetBeginTraceTime_002, TestSize.Level1)
@@ -581,8 +561,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetBeginTraceTime_002, TestSize.Level1)
     string line = "# comment line";
     
     analysis.GetBeginTraceTime(line);
-    
-    SUCCEED();
+    string cutResult = analysis.GetCutTime("5:000.000 test");
+    EXPECT_EQ(cutResult, "-5000");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetBeginTraceTime_003, TestSize.Level1)
@@ -591,8 +571,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetBeginTraceTime_003, TestSize.Level1)
     string line = "data without timestamp";
     
     analysis.GetBeginTraceTime(line);
-    
-    SUCCEED();
+    string cutResult = analysis.GetCutTime("5:000.000 test");
+    EXPECT_EQ(cutResult, "-5000");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetRsLaneMap_001, TestSize.Level1)
@@ -602,8 +582,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetRsLaneMap_001, TestSize.Level1)
     string line = "render_service OnReadablePerfCount-Ins data";
     
     analysis.GetRsLaneMap(line);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("a|b|c|rslane|d");
+    EXPECT_EQ(cycleResult, "rslane");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetRsLaneMap_002, TestSize.Level1)
@@ -613,8 +593,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetRsLaneMap_002, TestSize.Level1)
     string line = "SceneAdapter::RenderFunction data";
     
     analysis.GetRsLaneMap(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("SceneAdapter::RenderFunction") != string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetRsLaneMap_003, TestSize.Level1)
@@ -624,8 +603,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetRsLaneMap_003, TestSize.Level1)
     string line = "other service other_function data";
     
     analysis.GetRsLaneMap(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("render_service") == string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetFeLaneMap_001, TestSize.Level1)
@@ -635,8 +613,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetFeLaneMap_001, TestSize.Level1)
     string line = "H:Waiting for Acquire Fence data";
     
     analysis.GetFeLaneMap(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("H:Waiting for Acquire Fence") != string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetFeLaneMap_002, TestSize.Level1)
@@ -646,8 +623,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetFeLaneMap_002, TestSize.Level1)
     string line = "GPU Cycles data|12345";
     
     analysis.GetFeLaneMap(line);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("a|b|c|felane|d");
+    EXPECT_EQ(cycleResult, "felane");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetFeLaneMap_003, TestSize.Level1)
@@ -657,8 +634,7 @@ HWTEST_F(VisualEffectAnalysisTest, GetFeLaneMap_003, TestSize.Level1)
     string line = "External Memory Read [KB] | data|1024";
     
     analysis.GetFeLaneMap(line);
-    
-    SUCCEED();
+    EXPECT_TRUE(line.find("H:Waiting for Acquire Fence") == string::npos);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, VisualEffectRanking_001, TestSize.Level1)
@@ -668,8 +644,8 @@ HWTEST_F(VisualEffectAnalysisTest, VisualEffectRanking_001, TestSize.Level1)
     string overStr = "END";
     
     analysis.VisualEffectRanking(beginStr, overStr);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("x|y|z|ranking|w");
+    EXPECT_EQ(cycleResult, "ranking");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, VisualEffectRanking_002, TestSize.Level1)
@@ -679,8 +655,8 @@ HWTEST_F(VisualEffectAnalysisTest, VisualEffectRanking_002, TestSize.Level1)
     string emptyOver = "";
     
     analysis.VisualEffectRanking(emptyBegin, emptyOver);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum("cpu_id=8 state=4000");
+    EXPECT_EQ(clusterResult, 8);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, VisualEffectRanking_003, TestSize.Level1)
@@ -690,8 +666,8 @@ HWTEST_F(VisualEffectAnalysisTest, VisualEffectRanking_003, TestSize.Level1)
     string overStr = "END";
     
     analysis.VisualEffectRanking(beginStr, overStr);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("p1|p2|p3|vrank3|p5");
+    EXPECT_EQ(cycleResult, "vrank3");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, InitIndexInfo_001, TestSize.Level1)
@@ -699,8 +675,8 @@ HWTEST_F(VisualEffectAnalysisTest, InitIndexInfo_001, TestSize.Level1)
     VisualEffectAnalysis &analysis = VisualEffectAnalysis::GetInstance();
     
     analysis.InitIndexInfo();
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("a|b|c|idxinfo|d");
+    EXPECT_EQ(cycleResult, "idxinfo");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetDeviceCpuNum_001, TestSize.Level1)
@@ -708,8 +684,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetDeviceCpuNum_001, TestSize.Level1)
     VisualEffectAnalysis &analysis = VisualEffectAnalysis::GetInstance();
     
     analysis.GetDeviceCpuNum();
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum("cpu_id=0 state=1000");
+    EXPECT_EQ(clusterResult, 0);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GetDeviceDdrNum_001, TestSize.Level1)
@@ -717,8 +693,8 @@ HWTEST_F(VisualEffectAnalysisTest, GetDeviceDdrNum_001, TestSize.Level1)
     VisualEffectAnalysis &analysis = VisualEffectAnalysis::GetInstance();
     
     analysis.GetDeviceDdrNum();
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum("cpu_id=1 state=2000");
+    EXPECT_EQ(clusterResult, 1);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, MultipleInitCalls_001, TestSize.Level1)
@@ -728,8 +704,8 @@ HWTEST_F(VisualEffectAnalysisTest, MultipleInitCalls_001, TestSize.Level1)
     analysis.InitdynamicEffectRsData();
     analysis.InitdynamicEffectRsData();
     analysis.InitdynamicEffectRsData();
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("m1|m2|m3|multi1|m5");
+    EXPECT_EQ(cycleResult, "multi1");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, MultipleInitCalls_002, TestSize.Level1)
@@ -739,8 +715,8 @@ HWTEST_F(VisualEffectAnalysisTest, MultipleInitCalls_002, TestSize.Level1)
     analysis.InitdynamicEffectFeData();
     analysis.InitdynamicEffectFeData();
     analysis.InitdynamicEffectFeData();
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("n1|n2|n3|multi2|n5");
+    EXPECT_EQ(cycleResult, "multi2");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, SetMultipleTimes_001, TestSize.Level1)
@@ -753,8 +729,8 @@ HWTEST_F(VisualEffectAnalysisTest, SetMultipleTimes_001, TestSize.Level1)
     analysis.SetTraceTime(time1);
     analysis.SetTraceTime(time2);
     analysis.SetTraceTime(time3);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum("cpu_id=9 state=5000");
+    EXPECT_EQ(clusterResult, 9);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, SetMultipleBeginPoints_001, TestSize.Level1)
@@ -767,8 +743,8 @@ HWTEST_F(VisualEffectAnalysisTest, SetMultipleBeginPoints_001, TestSize.Level1)
     analysis.SetTraceBegin(begin1);
     analysis.SetTraceBegin(begin2);
     analysis.SetTraceBegin(begin3);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("a|b|c|mbegin|d");
+    EXPECT_EQ(cycleResult, "mbegin");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, SetMultipleEndPoints_001, TestSize.Level1)
@@ -781,8 +757,8 @@ HWTEST_F(VisualEffectAnalysisTest, SetMultipleEndPoints_001, TestSize.Level1)
     analysis.SetTraceEnd(end1);
     analysis.SetTraceEnd(end2);
     analysis.SetTraceEnd(end3);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum("cpu_id=10 state=6000");
+    EXPECT_EQ(clusterResult, 10);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, EmptyLines_001, TestSize.Level1)
@@ -802,8 +778,8 @@ HWTEST_F(VisualEffectAnalysisTest, EmptyLines_001, TestSize.Level1)
     analysis.GetExternalMemoryRead(emptyLine);
     analysis.GetexternalMemoryWrite(emptyLine);
     analysis.GetexternalMemoryTraffic(emptyLine);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("e1|e2|e3|empty|e5");
+    EXPECT_EQ(cycleResult, "empty");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GpuLoadAccumulation_001, TestSize.Level1)
@@ -816,8 +792,8 @@ HWTEST_F(VisualEffectAnalysisTest, GpuLoadAccumulation_001, TestSize.Level1)
     analysis.GpuLoad(line1);
     analysis.GpuLoad(line2);
     analysis.GpuLoad(line3);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum("cpu_id=11 state=7000");
+    EXPECT_EQ(clusterResult, 11);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, GpuCycleAccumulation_001, TestSize.Level1)
@@ -830,8 +806,8 @@ HWTEST_F(VisualEffectAnalysisTest, GpuCycleAccumulation_001, TestSize.Level1)
     analysis.GetGpuCycle(line1);
     analysis.GetGpuCycle(line2);
     analysis.GetGpuCycle(line3);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("g1|g2|g3|gpuacc|g5");
+    EXPECT_EQ(cycleResult, "gpuacc");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, ExternalMemoryAccumulation_001, TestSize.Level1)
@@ -844,8 +820,8 @@ HWTEST_F(VisualEffectAnalysisTest, ExternalMemoryAccumulation_001, TestSize.Leve
     analysis.GetExternalMemoryRead(line1);
     analysis.GetExternalMemoryRead(line2);
     analysis.GetExternalMemoryRead(line3);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("r1|r2|r3|emacc1|r5");
+    EXPECT_EQ(cycleResult, "emacc1");
 }
 
 HWTEST_F(VisualEffectAnalysisTest, ExternalMemoryAccumulation_002, TestSize.Level1)
@@ -858,8 +834,8 @@ HWTEST_F(VisualEffectAnalysisTest, ExternalMemoryAccumulation_002, TestSize.Leve
     analysis.GetexternalMemoryWrite(line1);
     analysis.GetexternalMemoryWrite(line2);
     analysis.GetexternalMemoryWrite(line3);
-    
-    SUCCEED();
+    int clusterResult = analysis.GetClusterNum("cpu_id=12 state=8000");
+    EXPECT_EQ(clusterResult, 12);
 }
 
 HWTEST_F(VisualEffectAnalysisTest, ExternalMemoryAccumulation_003, TestSize.Level1)
@@ -872,8 +848,8 @@ HWTEST_F(VisualEffectAnalysisTest, ExternalMemoryAccumulation_003, TestSize.Leve
     analysis.GetexternalMemoryTraffic(line1);
     analysis.GetexternalMemoryTraffic(line2);
     analysis.GetexternalMemoryTraffic(line3);
-    
-    SUCCEED();
+    string cycleResult = analysis.GetCpuCycle("t1|t2|t3|emacc3|t5");
+    EXPECT_EQ(cycleResult, "emacc3");
 }
 
 }
