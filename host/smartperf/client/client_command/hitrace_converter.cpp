@@ -43,22 +43,18 @@ bool TraceFileParser::Parse()
         errorMsg_ = "Failed to open file: " + filePath_;
         return false;
     }
-
     if (!ReadFileHeader()) {
         return false;
     }
-
     if (fileHeader_.magicNumber != MAGIC_NUMBER) {
         errorMsg_ = "Invalid magic number: expected 0x" + std::to_string(MAGIC_NUMBER);
         return false;
     }
-
     while (fileStream_.good() && !fileStream_.eof()) {
         if (!ReadContentSection()) {
             break;
         }
     }
-
     isValid_ = true;
     return true;
 }
@@ -95,6 +91,7 @@ const std::vector<uint8_t>& TraceFileParser::GetEventFormats() const
 
 const std::vector<uint8_t>& TraceFileParser::GetBaseInfo() const
 {
+    LOGD("Uint8_t conversion function");
     return {};
 }
 
