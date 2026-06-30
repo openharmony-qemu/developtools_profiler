@@ -50,6 +50,7 @@ group("hiprofiler_targets") {
         "plugins/native_daemon:libmemory_profiler",
         "plugins/native_daemon:memory_profiler_client",
         "plugins/native_hook:native_hook",
+        "plugins/native_hook:nativetest_so",
       ]
     }
   }
