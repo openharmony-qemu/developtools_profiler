@@ -272,8 +272,8 @@ private:
         uint64_t addr, uint64_t newAddr, size_t size);
     template <typename T>
     void FindAndUpdateFreeStatisticsLocked(std::unordered_map<uint32_t, T>& statisticsMap,
-        uint32_t stackId, uint32_t mallocSize);
-    void FindAndUpdateFreeStatisticsLocked(uint32_t stackId, uint32_t mallocSize);
+        uint32_t stackId, uint64_t mallocSize);
+    void FindAndUpdateFreeStatisticsLocked(uint32_t stackId, uint64_t mallocSize);
 
     template <typename T, typename StackData>
     void FlushStatisticsEntry(T* statistics, uint32_t stackId, StackData& stackData);

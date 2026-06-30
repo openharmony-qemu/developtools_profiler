@@ -1970,7 +1970,7 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
 
 template <typename T>
 inline void StackPreprocess::FindAndUpdateFreeStatisticsLocked(
-    std::unordered_map<uint32_t, T>& statisticsMap, uint32_t stackId, uint32_t mallocSize)
+    std::unordered_map<uint32_t, T>& statisticsMap, uint32_t stackId, uint64_t mallocSize)
 {
     auto recordIter = statisticsMap.find(stackId);
     if (recordIter != statisticsMap.end()) {
@@ -1981,7 +1981,7 @@ inline void StackPreprocess::FindAndUpdateFreeStatisticsLocked(
     }
 }
 
-inline void StackPreprocess::FindAndUpdateFreeStatisticsLocked(uint32_t stackId, uint32_t mallocSize)
+inline void StackPreprocess::FindAndUpdateFreeStatisticsLocked(uint32_t stackId, uint64_t mallocSize)
 {
     if (!hookConfig_.arkui_mem_trace_enable()) {
         FindAndUpdateFreeStatisticsLocked(simplifiedRecordStatisticsMap_, stackId, mallocSize);
