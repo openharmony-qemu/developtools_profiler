@@ -82,6 +82,7 @@ bool SendFileCacheFd(SocketContext &context, HookManager& hookMgr, int32_t pid, 
     HookCacheFileMsg cacheFileMsg(pid, fileIndex, CACHE_FILE_CREATED);
     bool ret = context.SendHookConfig(reinterpret_cast<uint8_t*>(&cacheFileMsg), sizeof(cacheFileMsg)) &&
         context.SendFileDescriptor(cacheFd);
+    hookMgr.RotateCacheFdOnReturn(pid, fileIndex, cacheFd);
     close(cacheFd);
     return ret;
 }
@@ -90,7 +91,7 @@ void SendHookCommand(pid_t pid, uint32_t cmd)
 {
     std::unique_lock<std::mutex> lock(g_pidFdMtx);
     auto it = g_pidFds.find(pid);
-    if (it == g_pidFds.end() || it->second <= 0) {
+    if (it == g_pidFds.end() || it->second < 0) {
         return;
     }
     int sockFd = it->second;
@@ -116,6 +117,7 @@ bool SendInitialFileCacheFds(SocketContext &context, HookManager& hookMgr, int32
             return false;
         }
         bool ret = context.SendFileDescriptor(cacheFd);
+        hookMgr.SaveInitialCacheFds(pid, fileIndex, cacheFd);
         close(cacheFd);
         if (!ret) {
             return false;
@@ -1126,11 +1128,14 @@ bool NativeMemoryProfilerSaService::ReceiveCacheFileMsg(SocketContext &context, 
                     close(cacheFd);
                     return false;
                 }
-                if (!iter->second->hookMgr->IsCacheFileStopRequested(cacheFileMsg.hookPid) &&
-                    !SendFileCacheFd(context, *(iter->second->hookMgr),
-                    cacheFileMsg.hookPid, cacheFileMsg.fileIndex)) {
-                    PROFILER_LOG_ERROR(LOG_CORE, "ReceiveCacheFileMsg replenish fd failed");
-                    return false;
+                if (!iter->second->hookMgr->IsCacheFileStopRequested(cacheFileMsg.hookPid)) {
+                    if (!SendFileCacheFd(context, *(iter->second->hookMgr), cacheFileMsg.hookPid,
+                        cacheFileMsg.fileIndex)) {
+                        PROFILER_LOG_ERROR(LOG_CORE, "ReceiveCacheFileMsg replenish fd failed");
+                        return false;
+                    }
+                } else {
+                    iter->second->hookMgr->RotateCacheFdOnReturn(cacheFileMsg.hookPid, cacheFileMsg.fileIndex, -1);
                 }
             } else if (cacheFileMsg.msgType == CACHE_FILE_STOP) {
                 return iter->second->hookMgr->HandleCacheFileStopByPid(cacheFileMsg.hookPid);

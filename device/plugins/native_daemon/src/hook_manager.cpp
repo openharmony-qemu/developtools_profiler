@@ -145,6 +145,7 @@ HookManager::~HookManager()
         if (item->stackData != nullptr) {
             item->stackData = nullptr;
         }
+        item->CloseAllCacheFds();
     }
 }
 
@@ -1236,6 +1237,99 @@ void HookManager::HookManagerCtx::PopFrontFdQueue()
     }
 }
 
+void HookManager::HookManagerCtx::SetCurrentActiveCacheFd(uint16_t fileIndex, int fd)
+{
+    std::lock_guard<std::mutex> lock(activeCacheFdMtx);
+    if (currentActiveCacheFd >= 0) {
+        close(currentActiveCacheFd);
+    }
+    currentActiveCacheFd = fd;
+    currentActiveFileIndex = fileIndex;
+}
+
+void HookManager::HookManagerCtx::AddPendingCacheFd(uint16_t fileIndex, int fd)
+{
+    std::lock_guard<std::mutex> lock(activeCacheFdMtx);
+    auto it = pendingCacheFds.find(fileIndex);
+    if (it != pendingCacheFds.end() && it->second >= 0) {
+        close(it->second);
+    }
+    pendingCacheFds[fileIndex] = fd;
+}
+
+void HookManager::HookManagerCtx::RotateActiveCacheFd(uint16_t returnedFileIndex, int newFd)
+{
+    std::lock_guard<std::mutex> lock(activeCacheFdMtx);
+    if (currentActiveCacheFd >= 0) {
+        close(currentActiveCacheFd);
+        currentActiveCacheFd = -1;
+    }
+    uint16_t nextActiveIndex = (returnedFileIndex + 1) % FILE_CACHE_FD_COUNT;
+    auto it = pendingCacheFds.find(nextActiveIndex);
+    if (it != pendingCacheFds.end() && it->second >= 0) {
+        currentActiveCacheFd = it->second;
+        currentActiveFileIndex = nextActiveIndex;
+        pendingCacheFds.erase(it);
+    }
+    
+    if (newFd >= 0) {
+        auto pendingIt = pendingCacheFds.find(returnedFileIndex);
+        if (pendingIt != pendingCacheFds.end() && pendingIt->second >= 0) {
+            close(pendingIt->second);
+        }
+        pendingCacheFds[returnedFileIndex] = newFd;
+    }
+}
+
+void HookManager::HookManagerCtx::CloseAllCacheFds()
+{
+    std::lock_guard<std::mutex> lock(activeCacheFdMtx);
+    if (currentActiveCacheFd >= 0) {
+        close(currentActiveCacheFd);
+        currentActiveCacheFd = -1;
+    }
+    for (auto& [index, fd] : pendingCacheFds) {
+        if (fd >= 0) {
+            close(fd);
+        }
+    }
+    pendingCacheFds.clear();
+}
+
+void HookManager::HookManagerCtx::ProcessPendingCacheFdOnDisconnect()
+{
+    std::lock_guard<std::mutex> lock(activeCacheFdMtx);
+    if (currentActiveCacheFd >= 0) {
+        PROFILER_LOG_INFO(LOG_CORE,
+            "ProcessPendingCacheFdOnDisconnect: processing active cache fd %d (index %u)",
+            currentActiveCacheFd, currentActiveFileIndex);
+        struct stat st;
+        if (fstat(currentActiveCacheFd, &st) == 0 && st.st_size > 0) {
+            PushBackFdQueue(currentActiveCacheFd);
+            PROFILER_LOG_INFO(LOG_CORE,
+                "ProcessPendingCacheFdOnDisconnect: add incomplete cache fd to queue (size %" PRId64 ")", st.st_size);
+            currentActiveCacheFd = -1;
+        } else {
+            close(currentActiveCacheFd);
+            currentActiveCacheFd = -1;
+            PROFILER_LOG_INFO(LOG_CORE,
+                "ProcessPendingCacheFdOnDisconnect: skipped empty cache fd, closed directly");
+        }
+    }
+    if (readyFileNotifier != nullptr && GetFdQueueSize() > 0) {
+        readyFileNotifier->Post(1);
+    }
+
+    for (auto& [index, fd] : pendingCacheFds) {
+        if (fd >= 0) {
+            close(fd);
+            PROFILER_LOG_INFO(LOG_CORE,
+                "ProcessPendingCacheFdOnDisconnect: closed pending cache fd %d (index %u)", fd, index);
+        }
+    }
+    pendingCacheFds.clear();
+}
+
 void HookManager::FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                                      std::shared_ptr<HookRecord>& hookRecord)
 {
@@ -2157,6 +2251,9 @@ bool HookManager::HandleClientDisconnectedByPid(pid_t pid)
         FinalizeSharedMemoryTermination(item);
         return true;
     }
+    
+    item->ProcessPendingCacheFdOnDisconnect();
+    
     item->cacheFileClientDisconnected = true;
     return FinalizeCacheFileStop(item);
 }
@@ -2173,5 +2270,45 @@ bool HookManager::IsCacheFileStopRequested(pid_t pid)
 {
     auto item = FindHookContext(pid, "");
     return item != nullptr && item->cacheFileStopRequested;
+}
+
+void HookManager::SaveInitialCacheFds(pid_t pid, uint16_t fileIndex, int fd)
+{
+    if (fd < 0 || fileIndex >= FILE_CACHE_FD_COUNT) {
+        PROFILER_LOG_ERROR(LOG_CORE, "SaveInitialCacheFds:invalid fd %d or fileIndex %d", fd, fileIndex);
+        return;
+    }
+
+    auto item = FindHookContext(pid, "");
+    if (item == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "SaveInitialCacheFds:context not found for pid %d", pid);
+        return;
+    }
+    int dupFd = dup(fd);
+    if (fileIndex == 0) {
+        item->SetCurrentActiveCacheFd(fileIndex, dupFd);
+    } else {
+        item->AddPendingCacheFd(fileIndex, dupFd);
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "SaveInitialCacheFds: pid:%d dupFd:%d", pid, dupFd);
+}
+
+void HookManager::RotateCacheFdOnReturn(pid_t pid, uint16_t returnedFileIndex, int fd)
+{
+    auto item = FindHookContext(pid, "");
+    if (item == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "RotateCacheFdOnReturn: context not found for pid %d", pid);
+        return;
+    }
+    if (fd < 0 || returnedFileIndex >= FILE_CACHE_FD_COUNT) {
+        item->SetCurrentActiveCacheFd(0, -1);
+        PROFILER_LOG_INFO(LOG_CORE, "RotateCacheFdOnReturn:invalid fd %d or fileIndex %d", fd, returnedFileIndex);
+        return;
+    }
+
+    int dupFd = dup(fd);
+    item->RotateActiveCacheFd(returnedFileIndex, dupFd);
+    PROFILER_LOG_INFO(LOG_CORE, "RotateCacheFdOnReturn: pid:%d returnedIndex:%u dupFd:%d",
+        pid, returnedFileIndex, dupFd);
 }
 }

@@ -1844,4 +1844,537 @@ HWTEST_F(HookManagerExtTest, GetSimplifiedNmdResult, TestSize.Level0)
     EXPECT_TRUE(!result.empty());
     EXPECT_TRUE(result == nmdResultString);
 }
+
+/*
+ * @tc.name: SetCurrentActiveCacheFdBasic
+ * @tc.desc: test SetCurrentActiveCacheFd sets active fd and file index correctly.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, SetCurrentActiveCacheFdBasic, TestSize.Level0)
+{
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPath[] = "/data/local/tmp/test_cache_fd_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    EXPECT_EQ(unlink(tempPath), 0);
+
+    ctx->SetCurrentActiveCacheFd(0, fd);
+
+    EXPECT_EQ(ctx->currentActiveCacheFd, fd);
+    EXPECT_EQ(ctx->currentActiveFileIndex, 0);
+    EXPECT_EQ(ctx->pendingCacheFds.size(), 0u);
+}
+
+/*
+ * @tc.name: SetCurrentActiveCacheFdClosesPreviousFd
+ * @tc.desc: test SetCurrentActiveCacheFd closes the previous active fd when setting a new one.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, SetCurrentActiveCacheFdClosesPreviousFd, TestSize.Level0)
+{
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPath1[] = "/data/local/tmp/test_cache_fd1_XXXXXX";
+    int fd1 = mkstemp(tempPath1);
+    ASSERT_GE(fd1, 0);
+    EXPECT_EQ(unlink(tempPath1), 0);
+
+    char tempPath2[] = "/data/local/tmp/test_cache_fd2_XXXXXX";
+    int fd2 = mkstemp(tempPath2);
+    ASSERT_GE(fd2, 0);
+    EXPECT_EQ(unlink(tempPath2), 0);
+
+    ctx->SetCurrentActiveCacheFd(0, fd1);
+    EXPECT_EQ(ctx->currentActiveCacheFd, fd1);
+
+    ctx->SetCurrentActiveCacheFd(1, fd2);
+    EXPECT_EQ(ctx->currentActiveCacheFd, fd2);
+    EXPECT_EQ(ctx->currentActiveFileIndex, 1);
+}
+
+/*
+ * @tc.name: AddPendingCacheFdBasic
+ * @tc.desc: test AddPendingCacheFd adds pending fd to the map correctly.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, AddPendingCacheFdBasic, TestSize.Level0)
+{
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPath[] = "/data/local/tmp/test_pending_fd_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    EXPECT_EQ(unlink(tempPath), 0);
+
+    ctx->AddPendingCacheFd(1, fd);
+
+    EXPECT_EQ(ctx->pendingCacheFds.size(), 1u);
+    EXPECT_EQ(ctx->pendingCacheFds[1], fd);
+}
+
+/*
+ * @tc.name: AddPendingCacheFdReplacesExisting
+ * @tc.desc: test AddPendingCacheFd replaces existing pending fd and closes the old one.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, AddPendingCacheFdReplacesExisting, TestSize.Level0)
+{
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPath1[] = "/data/local/tmp/test_pending_fd1_XXXXXX";
+    int fd1 = mkstemp(tempPath1);
+    ASSERT_GE(fd1, 0);
+    EXPECT_EQ(unlink(tempPath1), 0);
+
+    char tempPath2[] = "/data/local/tmp/test_pending_fd2_XXXXXX";
+    int fd2 = mkstemp(tempPath2);
+    ASSERT_GE(fd2, 0);
+    EXPECT_EQ(unlink(tempPath2), 0);
+
+    ctx->AddPendingCacheFd(1, fd1);
+    EXPECT_EQ(ctx->pendingCacheFds[1], fd1);
+
+    ctx->AddPendingCacheFd(1, fd2);
+    EXPECT_EQ(ctx->pendingCacheFds[1], fd2);
+    EXPECT_EQ(ctx->pendingCacheFds.size(), 1u);
+}
+
+/*
+ * @tc.name: RotateActiveCacheFdBasic
+ * @tc.desc: test RotateActiveCacheFd rotates active fd to the next index.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, RotateActiveCacheFdBasic, TestSize.Level0)
+{
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPathActive[] = "/data/local/tmp/test_active_fd_XXXXXX";
+    int activeFd = mkstemp(tempPathActive);
+    ASSERT_GE(activeFd, 0);
+    EXPECT_EQ(unlink(tempPathActive), 0);
+
+    char tempPathPending[] = "/data/local/tmp/test_pending_next_XXXXXX";
+    int pendingFd = mkstemp(tempPathPending);
+    ASSERT_GE(pendingFd, 0);
+    EXPECT_EQ(unlink(tempPathPending), 0);
+
+    ctx->SetCurrentActiveCacheFd(0, activeFd);
+    ctx->AddPendingCacheFd(1, pendingFd);
+
+    int newFd = -1;
+    ctx->RotateActiveCacheFd(0, newFd);
+
+    EXPECT_EQ(ctx->currentActiveCacheFd, pendingFd);
+    EXPECT_EQ(ctx->currentActiveFileIndex, 1);
+    EXPECT_EQ(ctx->pendingCacheFds.size(), 0u);
+}
+
+/*
+ * @tc.name: RotateActiveCacheFdWithNewFd
+ * @tc.desc: test RotateActiveCacheFd stores the new fd as pending for the returned index.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, RotateActiveCacheFdWithNewFd, TestSize.Level0)
+{
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPathActive[] = "/data/local/tmp/test_active_new_XXXXXX";
+    int activeFd = mkstemp(tempPathActive);
+    ASSERT_GE(activeFd, 0);
+    EXPECT_EQ(unlink(tempPathActive), 0);
+
+    char tempPathPending[] = "/data/local/tmp/test_pending_new_XXXXXX";
+    int pendingFd = mkstemp(tempPathPending);
+    ASSERT_GE(pendingFd, 0);
+    EXPECT_EQ(unlink(tempPathPending), 0);
+
+    char tempPathNew[] = "/data/local/tmp/test_new_fd_XXXXXX";
+    int newFd = mkstemp(tempPathNew);
+    ASSERT_GE(newFd, 0);
+    EXPECT_EQ(unlink(tempPathNew), 0);
+
+    ctx->SetCurrentActiveCacheFd(0, activeFd);
+    ctx->AddPendingCacheFd(1, pendingFd);
+
+    ctx->RotateActiveCacheFd(0, newFd);
+
+    EXPECT_EQ(ctx->currentActiveCacheFd, pendingFd);
+    EXPECT_EQ(ctx->currentActiveFileIndex, 1);
+    EXPECT_EQ(ctx->pendingCacheFds.size(), 1u);
+    EXPECT_EQ(ctx->pendingCacheFds[0], newFd);
+
+    close(newFd);
+}
+
+/*
+ * @tc.name: RotateActiveCacheFdWrapsIndex
+ * @tc.desc: test RotateActiveCacheFd wraps index correctly using modulo FILE_CACHE_FD_COUNT.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, RotateActiveCacheFdWrapsIndex, TestSize.Level0)
+{
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPathActive[] = "/data/local/tmp/test_wrap_active_XXXXXX";
+    int activeFd = mkstemp(tempPathActive);
+    ASSERT_GE(activeFd, 0);
+    EXPECT_EQ(unlink(tempPathActive), 0);
+
+    char tempPathPending[] = "/data/local/tmp/test_wrap_pending_XXXXXX";
+    int pendingFd = mkstemp(tempPathPending);
+    ASSERT_GE(pendingFd, 0);
+    EXPECT_EQ(unlink(tempPathPending), 0);
+
+    uint16_t lastIndex = FILE_CACHE_FD_COUNT - 1;
+    ctx->SetCurrentActiveCacheFd(lastIndex, activeFd);
+    ctx->AddPendingCacheFd(0, pendingFd);
+
+    ctx->RotateActiveCacheFd(lastIndex, -1);
+
+    EXPECT_EQ(ctx->currentActiveCacheFd, pendingFd);
+    EXPECT_EQ(ctx->currentActiveFileIndex, 0);
+}
+
+/*
+ * @tc.name: RotateActiveCacheFdNoPendingFd
+ * @tc.desc: test RotateActiveCacheFd clears active fd when no pending fd exists for next index.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, RotateActiveCacheFdNoPendingFd, TestSize.Level0)
+{
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPathActive[] = "/data/local/tmp/test_no_pending_XXXXXX";
+    int activeFd = mkstemp(tempPathActive);
+    ASSERT_GE(activeFd, 0);
+    EXPECT_EQ(unlink(tempPathActive), 0);
+
+    ctx->SetCurrentActiveCacheFd(0, activeFd);
+
+    ctx->RotateActiveCacheFd(0, -1);
+
+    EXPECT_EQ(ctx->currentActiveCacheFd, -1);
+}
+
+/*
+ * @tc.name: CloseAllCacheFdsBasic
+ * @tc.desc: test CloseAllCacheFds closes active and pending fds.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, CloseAllCacheFdsBasic, TestSize.Level0)
+{
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    std::vector<int> allFds;
+    for (int i = 0; i < FILE_CACHE_FD_COUNT; ++i) {
+        char tempPath[] = "/data/local/tmp/test_close_all_XXXXXX";
+        int fd = mkstemp(tempPath);
+        ASSERT_GE(fd, 0);
+        EXPECT_EQ(unlink(tempPath), 0);
+        allFds.push_back(fd);
+    }
+
+    ctx->SetCurrentActiveCacheFd(0, allFds[0]);
+    ctx->AddPendingCacheFd(1, allFds[1]);
+    ctx->AddPendingCacheFd(2, allFds[2]);
+
+    ctx->CloseAllCacheFds();
+
+    EXPECT_EQ(ctx->currentActiveCacheFd, -1);
+    EXPECT_EQ(ctx->pendingCacheFds.size(), 0u);
+}
+
+/*
+ * @tc.name: CloseAllCacheFdsNoActiveFd
+ * @tc.desc: test CloseAllCacheFds handles case where there is no active fd.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, CloseAllCacheFdsNoActiveFd, TestSize.Level0)
+{
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPath[] = "/data/local/tmp/test_close_no_active_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    EXPECT_EQ(unlink(tempPath), 0);
+
+    ctx->currentActiveCacheFd = -1;
+    ctx->AddPendingCacheFd(1, fd);
+
+    ctx->CloseAllCacheFds();
+
+    EXPECT_EQ(ctx->currentActiveCacheFd, -1);
+    EXPECT_EQ(ctx->pendingCacheFds.size(), 0u);
+}
+
+/*
+ * @tc.name: ProcessPendingCacheFdOnDisconnectWithActiveFd
+ * @tc.desc: test ProcessPendingCacheFdOnDisconnect queues active fd with content and clears state.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, ProcessPendingCacheFdOnDisconnectWithActiveFd, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPath[] = "/data/local/tmp/test_disconnect_active_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    EXPECT_EQ(unlink(tempPath), 0);
+
+    const char* content = "test content";
+    EXPECT_GT(write(fd, content, strlen(content)), 0);
+    EXPECT_EQ(lseek(fd, 0, SEEK_SET), 0);
+
+    ctx->SetCurrentActiveCacheFd(0, fd);
+
+    ctx->ProcessPendingCacheFdOnDisconnect();
+
+    EXPECT_EQ(ctx->currentActiveCacheFd, -1);
+    EXPECT_EQ(ctx->GetFdQueueSize(), 1u);
+
+    int queuedFd = ctx->GetFdQueueFront();
+    EXPECT_GE(queuedFd, 0);
+    ctx->PopFrontFdQueue();
+    close(queuedFd);
+}
+
+/*
+ * @tc.name: ProcessPendingCacheFdOnDisconnectEmptyFd
+ * @tc.desc: test ProcessPendingCacheFdOnDisconnect closes empty active fd without queuing.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, ProcessPendingCacheFdOnDisconnectEmptyFd, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPath[] = "/data/local/tmp/test_disconnect_empty_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    EXPECT_EQ(unlink(tempPath), 0);
+
+    ctx->SetCurrentActiveCacheFd(0, fd);
+
+    ctx->ProcessPendingCacheFdOnDisconnect();
+
+    EXPECT_EQ(ctx->currentActiveCacheFd, -1);
+    EXPECT_EQ(ctx->GetFdQueueSize(), 0u);
+}
+
+/*
+ * @tc.name: ProcessPendingCacheFdOnDisconnectClearsPendingFds
+ * @tc.desc: test ProcessPendingCacheFdOnDisconnect closes and clears pending fds.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, ProcessPendingCacheFdOnDisconnectClearsPendingFds, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    std::vector<int> pendingFds;
+    for (int i = 1; i < FILE_CACHE_FD_COUNT; ++i) {
+        char tempPath[] = "/data/local/tmp/test_disconnect_pending_XXXXXX";
+        int fd = mkstemp(tempPath);
+        ASSERT_GE(fd, 0);
+        EXPECT_EQ(unlink(tempPath), 0);
+        pendingFds.push_back(fd);
+        ctx->AddPendingCacheFd(static_cast<uint16_t>(i), fd);
+    }
+
+    ctx->ProcessPendingCacheFdOnDisconnect();
+
+    EXPECT_EQ(ctx->pendingCacheFds.size(), 0u);
+}
+
+/*
+ * @tc.name: SaveInitialCacheFdsFirstIndexSetsActive
+ * @tc.desc: test SaveInitialCacheFds sets active fd when fileIndex is 0.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, SaveInitialCacheFdsFirstIndexSetsActive, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPath[] = "/data/local/tmp/test_save_initial_active_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    EXPECT_EQ(unlink(tempPath), 0);
+
+    hookManager_->SaveInitialCacheFds(TEST_PID, 0, fd);
+
+    EXPECT_GE(ctx->currentActiveCacheFd, 0);
+    EXPECT_NE(ctx->currentActiveCacheFd, fd);
+    EXPECT_EQ(ctx->currentActiveFileIndex, 0);
+
+    close(ctx->currentActiveCacheFd);
+}
+
+/*
+ * @tc.name: SaveInitialCacheFdsOtherIndexAddsPending
+ * @tc.desc: test SaveInitialCacheFds adds pending fd when fileIndex is not 0.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, SaveInitialCacheFdsOtherIndexAddsPending, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPath[] = "/data/local/tmp/test_save_initial_pending_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    EXPECT_EQ(unlink(tempPath), 0);
+
+    hookManager_->SaveInitialCacheFds(TEST_PID, 1, fd);
+
+    EXPECT_EQ(ctx->pendingCacheFds.size(), 1u);
+    EXPECT_NE(ctx->pendingCacheFds[1], fd);
+
+    close(ctx->pendingCacheFds[1]);
+}
+
+/*
+ * @tc.name: SaveInitialCacheFdsInvalidFd
+ * @tc.desc: test SaveInitialCacheFds ignores invalid fd.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, SaveInitialCacheFdsInvalidFd, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    hookManager_->SaveInitialCacheFds(TEST_PID, 0, -1);
+
+    EXPECT_EQ(ctx->currentActiveCacheFd, -1);
+    EXPECT_EQ(ctx->pendingCacheFds.size(), 0u);
+}
+
+/*
+ * @tc.name: SaveInitialCacheFdsInvalidFileIndex
+ * @tc.desc: test SaveInitialCacheFds ignores invalid fileIndex.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, SaveInitialCacheFdsInvalidFileIndex, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPath[] = "/data/local/tmp/test_save_invalid_idx_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    EXPECT_EQ(unlink(tempPath), 0);
+
+    hookManager_->SaveInitialCacheFds(TEST_PID, FILE_CACHE_FD_COUNT + 1, fd);
+
+    EXPECT_EQ(ctx->currentActiveCacheFd, -1);
+    EXPECT_EQ(ctx->pendingCacheFds.size(), 0u);
+
+    close(fd);
+}
+
+/*
+ * @tc.name: SaveInitialCacheFdsMissingContext
+ * @tc.desc: test SaveInitialCacheFds does nothing when context is not found.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, SaveInitialCacheFdsMissingContext, TestSize.Level0)
+{
+    char tempPath[] = "/data/local/tmp/test_save_missing_ctx_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    EXPECT_EQ(unlink(tempPath), 0);
+
+    hookManager_->SaveInitialCacheFds(TEST_PID + 100, 0, fd);
+
+    close(fd);
+}
+
+/*
+ * @tc.name: RotateCacheFdOnReturnBasic
+ * @tc.desc: test RotateCacheFdOnReturn rotates cache fd on return correctly.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, RotateCacheFdOnReturnBasic, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPathActive[] = "/data/local/tmp/test_rotate_active_XXXXXX";
+    int activeFd = mkstemp(tempPathActive);
+    ASSERT_GE(activeFd, 0);
+    EXPECT_EQ(unlink(tempPathActive), 0);
+
+    char tempPathPending[] = "/data/local/tmp/test_rotate_pending_XXXXXX";
+    int pendingFd = mkstemp(tempPathPending);
+    ASSERT_GE(pendingFd, 0);
+    EXPECT_EQ(unlink(tempPathPending), 0);
+
+    char tempPathReturn[] = "/data/local/tmp/test_rotate_return_XXXXXX";
+    int returnFd = mkstemp(tempPathReturn);
+    ASSERT_GE(returnFd, 0);
+    EXPECT_EQ(unlink(tempPathReturn), 0);
+
+    ctx->SetCurrentActiveCacheFd(0, activeFd);
+    ctx->AddPendingCacheFd(1, pendingFd);
+
+    hookManager_->RotateCacheFdOnReturn(TEST_PID, 0, returnFd);
+
+    EXPECT_EQ(ctx->currentActiveCacheFd, pendingFd);
+    EXPECT_EQ(ctx->currentActiveFileIndex, 1);
+    EXPECT_EQ(ctx->pendingCacheFds.size(), 1u);
+
+    close(ctx->pendingCacheFds[0]);
+}
+
+/*
+ * @tc.name: RotateCacheFdOnReturnInvalidFileIndex
+ * @tc.desc: test RotateCacheFdOnReturn clears active fd when fileIndex is invalid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, RotateCacheFdOnReturnInvalidFileIndex, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    char tempPathActive[] = "/data/local/tmp/test_rotate_invalid_idx_XXXXXX";
+    int activeFd = mkstemp(tempPathActive);
+    ASSERT_GE(activeFd, 0);
+    EXPECT_EQ(unlink(tempPathActive), 0);
+
+    ctx->SetCurrentActiveCacheFd(0, activeFd);
+
+    hookManager_->RotateCacheFdOnReturn(TEST_PID, FILE_CACHE_FD_COUNT + 1, -1);
+
+    EXPECT_EQ(ctx->currentActiveCacheFd, -1);
+    EXPECT_EQ(ctx->currentActiveFileIndex, 0);
+}
+
+/*
+ * @tc.name: RotateCacheFdOnReturnMissingContext
+ * @tc.desc: test RotateCacheFdOnReturn does nothing when context is not found.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, RotateCacheFdOnReturnMissingContext, TestSize.Level0)
+{
+    char tempPath[] = "/data/local/tmp/test_rotate_missing_ctx_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    EXPECT_EQ(unlink(tempPath), 0);
+
+    hookManager_->RotateCacheFdOnReturn(TEST_PID + 100, 0, fd);
+
+    close(fd);
+}
 } // namespace

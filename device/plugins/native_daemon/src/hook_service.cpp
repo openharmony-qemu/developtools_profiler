@@ -44,9 +44,11 @@ bool HookService::SendFileCacheFd(SocketContext &context, int32_t pid, uint16_t 
     if (cacheFd < 0) {
         return false;
     }
+    
     HookCacheFileMsg cacheFileMsg(pid, fileIndex, CACHE_FILE_CREATED);
     bool ret = context.SendHookConfig(reinterpret_cast<uint8_t*>(&cacheFileMsg), sizeof(cacheFileMsg)) &&
         context.SendFileDescriptor(cacheFd);
+    hookMgr_->RotateCacheFdOnReturn(pid, fileIndex, cacheFd);
     close(cacheFd);
     return ret;
 }
@@ -62,6 +64,7 @@ bool HookService::SendInitialFileCacheFds(SocketContext &context, int32_t pid, c
             return false;
         }
         bool ret = context.SendFileDescriptor(cacheFd);
+        hookMgr_->SaveInitialCacheFds(pid, fileIndex, cacheFd);
         close(cacheFd);
         if (!ret) {
             PROFILER_LOG_ERROR(LOG_CORE, "SendInitialFileCacheFds failed, pid:%d index:%u", pid, fileIndex);
@@ -345,7 +348,6 @@ void HookService::ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf)
     }
 
     HookCacheFileMsg cacheFileMsg = *reinterpret_cast<HookCacheFileMsg *>(const_cast<int8_t*>(buf));
-    // in file cache mode, receive cached file fd from native_hook
     std::lock_guard<std::mutex> lock(mtx_);
     if (cacheFileMsg.msgType == CACHE_FILE_READY) {
         int cacheFd = context.ReceiveFileDiscriptor();
@@ -355,10 +357,13 @@ void HookService::ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf)
         }
         PROFILER_LOG_INFO(LOG_CORE, "ReceiveCacheFileMsg pid:%d ready index %u",
             cacheFileMsg.hookPid, cacheFileMsg.fileIndex);
-        if (!hookMgr_->IsCacheFileStopRequested(cacheFileMsg.hookPid) &&
-            !SendFileCacheFd(context, cacheFileMsg.hookPid, cacheFileMsg.fileIndex)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ReceiveCacheFileMsg replenish fd failed, pid:%d index:%u",
-                cacheFileMsg.hookPid, cacheFileMsg.fileIndex);
+        if (!hookMgr_->IsCacheFileStopRequested(cacheFileMsg.hookPid)) {
+            if (!SendFileCacheFd(context, cacheFileMsg.hookPid, cacheFileMsg.fileIndex)) {
+                PROFILER_LOG_ERROR(LOG_CORE, "ReceiveCacheFileMsg replenish fd failed, pid:%d index:%u",
+                    cacheFileMsg.hookPid, cacheFileMsg.fileIndex);
+            }
+        } else {
+            hookMgr_->RotateCacheFdOnReturn(cacheFileMsg.hookPid, cacheFileMsg.fileIndex, -1);
         }
         return;
     }
