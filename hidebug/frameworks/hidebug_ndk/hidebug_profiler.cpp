@@ -163,5 +163,9 @@ HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type,
 HiDebug_ErrorCode OH_HiDebug_StopProfiler()
 {
     int32_t retStop = OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaClientManager::Stop();
-    return ConvertProfilerErrorCode(retStop);
+    if (retStop != 0) {
+        HiDebug_ErrorCode ret = ConvertProfilerErrorCode(retStop);
+        return ret;
+    }
+    return HIDEBUG_RES_PROF_SUCCESS;
 }
