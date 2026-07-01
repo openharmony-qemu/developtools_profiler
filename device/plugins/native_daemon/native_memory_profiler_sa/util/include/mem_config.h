@@ -16,6 +16,7 @@
 #ifndef MEM_CONFIG_H
 #define MEM_CONFIG_H
 
+#include <map>
 #include <string>
 #include <sys/types.h>
 
@@ -64,21 +65,30 @@ struct SimplifiedMemConfig {
     size_t secondLargestSize = 0;
     size_t maxGrowthSize = 0;
     size_t sampleSize = 0;
-    bool asyncStackEnable = false;
-    uint64_t asyncFlag = 0;
+    bool asyncStackEnable = true;
+    uint64_t asyncFlag = 0x143010304;   // ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
+                                        // ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROFILER | ASYNC_TYPE_CUSTOMIZE |
+                                        // ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL;
     std::string targetSoName;
     bool responseLibraryMode = false;
-    bool nestedAsyncStackEnable = false;
-    uint32_t asyncNestingDepth = 0;
-    uint32_t asyncTaskStackDepth = 0;
+    bool nestedAsyncStackEnable = true;
+    uint32_t asyncNestingDepth = 1;     // default: 1, ranges: [1, 16]
+    uint32_t asyncTaskStackDepth = 16;  // default: 16, ranges: [1, 256]
 };
 
+using Range = std::pair<uint64_t, uint64_t>;
+
 struct MemAPIConfig {
-    uint32_t maxDuration;
-    uint32_t filterSize;
-    uint32_t maxStackDepth;
-    uint32_t statisticsInterval;
-    uint32_t sampleInterval;
+    uint32_t maxDuration = 0;
+    uint32_t filterSize = 0;
+    uint32_t maxStackDepth = 0;
+    uint32_t statisticsInterval = 0;
+    uint32_t sampleInterval = 0;
+    std::map<std::string, std::pair<Range, Range>> hookSizes;
+    bool asyncStackEnable = true;
+    bool nestedAsyncStackEnable = true;
+    uint32_t asyncNestingDepth = 1;     // default: 1, ranges: [1, 16]
+    uint32_t asyncTaskStackDepth = 16;  // default: 16, ranges: [1, 256]
 };
 
 } // namespace NativeDaemon

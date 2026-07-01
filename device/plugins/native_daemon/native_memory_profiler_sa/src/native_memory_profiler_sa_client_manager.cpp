@@ -712,7 +712,6 @@ int32_t NativeMemoryProfilerSaClientManager::ParseResType(int32_t type,
     }
 
     config->shareMemorySize_ = CALL_STACK_SMS;
-    config->asyncStackEnable_ = false;
     if (internalType == InternalResourceType::OH_RES_TYPE_GPU) {
         config->traceMask_ = RES_GPU_MASK;
         SetDefaultGpuRange(config);
@@ -738,6 +737,31 @@ int32_t NativeMemoryProfilerSaClientManager::ParseNormalConfig(
     config->sampleInterval_ = inputConfig->sampleInterval;
     config->filterSize_ = static_cast<int32_t>(inputConfig->filterSize);
     config->statisticsInterval_ = inputConfig->statisticsInterval;
+    config->asyncStackEnable_ = inputConfig->asyncStackEnable;
+    config->nestedAsyncStackEnable_ = inputConfig->nestedAsyncStackEnable;
+    config->asyncNestingDepth_ = inputConfig->asyncNestingDepth;
+    config->asyncTaskStackDepth_ = inputConfig->asyncTaskStackDepth;
+    if (config->traceMask_ == RES_GPU_MASK && !inputConfig->hookSizes.empty()) {
+        std::vector<std::vector<uint64_t>> gpuRange;
+        gpuRange.push_back(ConvertToVec(inputConfig->hookSizes[TAG_RES_GPU_VK]));
+        gpuRange.push_back(ConvertToVec(inputConfig->hookSizes[TAG_RES_GPU_GLES_IMAGE]));
+        gpuRange.push_back(ConvertToVec(inputConfig->hookSizes[TAG_RES_GPU_GLES_BUFFER]));
+        gpuRange.push_back(ConvertToVec(inputConfig->hookSizes[TAG_RES_GPU_CL_IMAGE]));
+        gpuRange.push_back(ConvertToVec(inputConfig->hookSizes[TAG_RES_GPU_CL_BUFFER]));
+        std::swap(config->gpuRange_, gpuRange);
+    }
+    if (inputConfig->asyncStackEnable && inputConfig->nestedAsyncStackEnable) {
+        config->asyncFlag_ = 0x143010304;   // ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
+                                            // ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROFILER | ASYNC_TYPE_CUSTOMIZE |
+                                            // ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL;
+    } else if (inputConfig->asyncStackEnable) {
+        config->asyncFlag_ = 0x1070F0304;   // ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
+                                            // ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROMISE | ASYNC_TYPE_CUSTOMIZE |
+                                            // ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL |
+                                            // ASYNC_TYPE_ARKTS_STA_LAUNCH | ASYNC_TYPE_ARKWEB | ASYNC_TYPE_JSVM;
+    } else {
+        config->asyncFlag_ = 0x0;
+    }
     return RET_OK;
 }
 
