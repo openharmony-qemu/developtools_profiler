@@ -92,7 +92,7 @@ const std::vector<uint8_t>& TraceFileParser::GetEventFormats() const
 const std::vector<uint8_t>& TraceFileParser::GetBaseInfo() const
 {
     LOGD("Uint8_t conversion function");
-    return {};
+    return baseInfo_;
 }
 
 const std::vector<uint8_t>& TraceFileParser::GetCmdLines() const
@@ -133,7 +133,7 @@ bool TraceFileParser::ReadContentSection()
         return false;
     }
     std::vector<uint8_t> data;
-    if (hdr.length > 0) {
+    if (hdr.length > 0 && hdr.length <= MAX_CONTENT_LENGTH) {
         data.resize(hdr.length);
         if (fileStream_.read(reinterpret_cast<char*>(data.data()), hdr.length).gcount() != hdr.length) {
             errorMsg_ = "Failed to read content data, expected " + std::to_string(hdr.length) + " bytes";
