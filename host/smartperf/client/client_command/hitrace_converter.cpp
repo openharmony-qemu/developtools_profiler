@@ -38,7 +38,7 @@ bool TraceFileParser::Parse()
         LOGE("data dir %s is nullptr", filePath_.c_str());
         return false;
     }
-    fileStream_.open(filePath_, std::ios::binary | std::ios::in);
+    fileStream_.open(outPutPathChar, std::ios::binary | std::ios::in);
     if (!fileStream_.is_open()) {
         errorMsg_ = "Failed to open file: " + filePath_;
         return false;
@@ -283,7 +283,7 @@ bool TraceClipper::SaveToFile(const std::string& outputPath)
         LOGE("data dir %s is nullptr", outputPath.c_str());
         return false;
     }
-    std::ofstream outFile(outputPath, std::ios::binary | std::ios::trunc);
+    std::ofstream outFile(outPutPathChar, std::ios::binary | std::ios::trunc);
     if (!outFile.is_open()) {
         errorMsg_ = "Failed to create output file: " + outputPath;
         return false;
