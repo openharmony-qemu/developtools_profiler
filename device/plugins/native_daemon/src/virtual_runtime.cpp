@@ -208,6 +208,7 @@ bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>&
         GetSymbol(symbol, callFrame, pid, tid, perfCallchainContext);
         if (symbol.IsValid()) {
             MakeCallFrame(symbol, callFrame);
+            MaskArktsFrame(callFrame);
         } else {
 #ifdef TRY_UNWIND_TWICE
             if (first) {
@@ -669,12 +670,8 @@ bool VirtualRuntime::IsArktsMap(const std::shared_ptr<DfxMap>& map) const
         return false;
     }
     const std::string& name = map->name;
-
-    if (IsArkJsFile(name) || IsArkwebV8File(name) || (name.find("stub.an") != std::string::npos)) {
-        return true;
-    }
-
-    return false;
+    return IsArkJsFile(name) || IsArkwebV8File(name) ||
+           (name.find("stub.an") != std::string::npos);
 }
 
 
@@ -697,6 +694,22 @@ std::shared_ptr<DfxMap> VirtualRuntime::FindArktsMapByAddr(uint64_t ip) const
     }
 
     return nullptr;
+}
+
+void VirtualRuntime::MaskArktsFrame(CallFrame& callFrame)
+{
+    if (hookConfig_.js_stack_report() != 0) {
+        return;
+    }
+    auto [curMaps, mapIdx] = FindMap(callFrame.ip_);
+    if (curMaps == nullptr || mapIdx >= curMaps->GetMaps().size()) {
+        return;
+    }
+    if (!IsArktsMap(curMaps->GetMaps()[mapIdx])) {
+        return;
+    }
+    callFrame.symbolName_ = "[UnparsedJsFrame]";
+    callFrame.filePath_ = "[UnparsedJsFrame]";
 }
 
 uint64_t VirtualRuntime::GetAdltBase(const std::string& path) const

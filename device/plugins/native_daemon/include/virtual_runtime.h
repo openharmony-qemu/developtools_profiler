@@ -97,6 +97,7 @@ public:
     // ArkTS related
     bool IsArktsMap(const std::shared_ptr<DfxMap>& map) const;
     std::shared_ptr<DfxMap> FindArktsMapByAddr(uint64_t ip) const;
+    void MaskArktsFrame(CallFrame& callFrame);
     bool SymbolizeFrame(CallFrame& callFrame, pid_t pid, pid_t tid);
     
     bool ArktsGetSymbolCache(CallFrame& callFrame, DfxSymbol &symbol);
