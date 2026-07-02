@@ -2000,6 +2000,13 @@ bool StackPreprocess::SetFreeStatisticsDataLocked(uint64_t addr)
         return false;
     }
     FindAndUpdateFreeStatisticsLocked(addrIter->second.stackId, addrIter->second.mallocSize);
+    if (hookConfig_.arkui_mem_trace_enable()) {
+        auto recordIter = recordStatisticsMap_.find(addrIter->second.stackId);
+        if (recordIter != recordStatisticsMap_.end()) {
+            auto& addrs = recordIter->second.addrs;
+            addrs.erase(std::remove(addrs.begin(), addrs.end(), addr), addrs.end());
+        }
+    }
     allocAddrMap_.erase(addr);
     auto addrSetIter = addrSet_.find(addr);
     if (addrSetIter != addrSet_.end()) {
@@ -2048,6 +2055,11 @@ void StackPreprocess::UpdateAllocStatistics(
         record.applySize += rawStack->stackContext->mallocSize;
         if constexpr (std::is_same_v<T, RecordStatistic>) {
             record.ts = rawStack->stackContext->ts;
+            if (record.type == RecordStatisticsEvent::MALLOC ||
+                record.type == RecordStatisticsEvent::ARK_GLOBAL_HANDLE ||
+                record.type == RecordStatisticsEvent::ARK_LOCAL_HANDLE) {
+                record.addrs.push_back(hookRecord->GetAddr());
+            }
         }
         allocAddrMap_[hookRecord->GetAddr()] =
             AllocAddrInfo{rawStack->stackContext->mallocSize, stackId, rawStack->stackContext->ts};
@@ -2096,6 +2108,9 @@ void StackPreprocess::FillRecordFromType(T& record, const HookRecordPtr& hookRec
             record.type = RecordStatisticsEvent::MALLOC;
             record.SetNodeType(rawStack->stackContext->nodeType);
             record.SetNodeId(rawStack->stackContext->nodeId);
+            if constexpr (std::is_same_v<T, RecordStatistic>) {
+                record.addrs.push_back(hookRecord->GetAddr());
+            }
             break;
         case MMAP_MSG:
             record.type = RecordStatisticsEvent::MMAP;
@@ -2115,6 +2130,12 @@ void StackPreprocess::FillRecordFromType(T& record, const HookRecordPtr& hookRec
                 record.SetNodeId(rawStack->stackContext->nodeId);
             }
             record.tagId = rawStack->stackContext->tagId;
+            if constexpr (std::is_same_v<T, RecordStatistic>) {
+                if (memType == RecordStatisticsEvent::ARK_GLOBAL_HANDLE ||
+                    memType == RecordStatisticsEvent::ARK_LOCAL_HANDLE) {
+                    record.addrs.push_back(hookRecord->GetAddr());
+                }
+            }
             break;
         }
         default:
@@ -2562,6 +2583,11 @@ void StackPreprocess::FlushStatisticsEntry(T* statistics, uint32_t stackId, Stac
     recordEvent->set_tag_name(tagName);
     recordEvent->set_node_type(statistics->GetNodeType());
     recordEvent->set_node_id(statistics->GetNodeId());
+    if constexpr (std::is_same_v<T, RecordStatistic>) {
+        for (auto addr : statistics->addrs) {
+            recordEvent->add_addr(addr);
+        }
+    }
 }
 
 template <typename T>

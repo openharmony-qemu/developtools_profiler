@@ -214,6 +214,7 @@ message TraceFreeRegionEvent {
 message RecordStatisticsEvent {
     uint32 pid = 1;
     uint32 callstack_id = 2;
+    repeated uint64 addr = 11;
     enum MemoryType {
         MALLOC = 0;
         MMAP = 1;

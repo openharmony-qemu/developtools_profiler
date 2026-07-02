@@ -39,6 +39,7 @@ struct RecordStatistic {
     void SetNodeType(uint32_t val);
     uint32_t stackSize {0};
     struct timespec ts {0, 0};
+    std::vector<uint64_t> addrs;
 };
 
 struct SimplifiedRecordStatistics {
