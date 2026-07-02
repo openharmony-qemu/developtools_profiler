@@ -38,7 +38,7 @@ bool TraceFileParser::Parse()
         LOGE("data dir %s is nullptr", filePath_.c_str());
         return false;
     }
-    fileStream_.open(filePath_, std::ios::binary | std::ios::in);
+    fileStream_.open(outPutPathChar, std::ios::binary | std::ios::in);
     if (!fileStream_.is_open()) {
         errorMsg_ = "Failed to open file: " + filePath_;
         return false;
@@ -92,7 +92,7 @@ const std::vector<uint8_t>& TraceFileParser::GetEventFormats() const
 const std::vector<uint8_t>& TraceFileParser::GetBaseInfo() const
 {
     LOGD("Uint8_t conversion function");
-    return {};
+    return baseInfo_;
 }
 
 const std::vector<uint8_t>& TraceFileParser::GetCmdLines() const
@@ -133,7 +133,7 @@ bool TraceFileParser::ReadContentSection()
         return false;
     }
     std::vector<uint8_t> data;
-    if (hdr.length > 0) {
+    if (hdr.length > 0 && hdr.length <= MAX_CONTENT_LENGTH) {
         data.resize(hdr.length);
         if (fileStream_.read(reinterpret_cast<char*>(data.data()), hdr.length).gcount() != hdr.length) {
             errorMsg_ = "Failed to read content data, expected " + std::to_string(hdr.length) + " bytes";
@@ -283,7 +283,7 @@ bool TraceClipper::SaveToFile(const std::string& outputPath)
         LOGE("data dir %s is nullptr", outputPath.c_str());
         return false;
     }
-    std::ofstream outFile(outputPath, std::ios::binary | std::ios::trunc);
+    std::ofstream outFile(outPutPathChar, std::ios::binary | std::ios::trunc);
     if (!outFile.is_open()) {
         errorMsg_ = "Failed to create output file: " + outputPath;
         return false;

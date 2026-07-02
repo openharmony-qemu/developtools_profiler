@@ -30,6 +30,7 @@ constexpr uint16_t VERSION_NUMBER = 1;
 constexpr size_t PAGE_SIZE = 4096;
 constexpr uint64_t MS_TO_NS = 1000000;
 constexpr uint64_t S_TO_NS = 1000000000;
+constexpr uint32_t MAX_CONTENT_LENGTH = 100 * 1024 * 1024;
 
 enum ContentType : uint8_t {
     CONTENT_TYPE_DEFAULT = 0,
@@ -102,6 +103,7 @@ private:
     TraceFileHeader fileHeader_ = {};
     TraceMetadata metadata_ = {};
     std::map<int, CpuTraceData> cpuTraces_;
+    std::vector<uint8_t> baseInfo_;
     std::vector<uint8_t> eventFormats_;
     std::vector<uint8_t> cmdLines_;
     std::vector<uint8_t> tgids_;
