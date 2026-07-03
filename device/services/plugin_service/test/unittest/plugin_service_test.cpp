@@ -931,4 +931,185 @@ HWTEST_F(UnitTestPluginService, PluginService_SessionConfig, TestSize.Level1)
     EXPECT_TRUE(pluginService_->AddPluginInfo(plugin));
 }
 
+/**
+ * @tc.name: EpollThreadRefCountSingleSession
+ * @tc.desc: Test StartEpollThread and StopEpollThread with single session
+ * @tc.type: FUNC
+ */
+HWTEST_F(UnitTestPluginService, EpollThreadRefCountSingleSession, TestSize.Level1)
+{
+    // Test initial state
+    ASSERT_EQ(pluginService_->activeSessionCount_, 0u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, false);
+    
+    // Test: single session start - poller should start
+    ASSERT_TRUE(pluginService_->StartEpollThread());
+    ASSERT_EQ(pluginService_->activeSessionCount_, 1u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);
+    
+    // Test: single session stop - poller should stop
+    ASSERT_TRUE(pluginService_->StopEpollThread());
+    ASSERT_EQ(pluginService_->activeSessionCount_, 0u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, false);
+}
+
+/**
+ * @tc.name: EpollThreadRefCountMultipleSessions
+ * @tc.desc: Test StartEpollThread and StopEpollThread with multiple sessions
+ * @tc.type: FUNC
+ */
+HWTEST_F(UnitTestPluginService, EpollThreadRefCountMultipleSessions, TestSize.Level1)
+{
+    ASSERT_EQ(pluginService_->activeSessionCount_, 0u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, false);
+    
+    // Test: two sessions start in sequence
+    ASSERT_TRUE(pluginService_->StartEpollThread());  // count: 0 -> 1, poller starts
+    ASSERT_EQ(pluginService_->activeSessionCount_, 1u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);  // poller started
+    
+    ASSERT_TRUE(pluginService_->StartEpollThread());  // count: 1 -> 2, poller keeps running
+    ASSERT_EQ(pluginService_->activeSessionCount_, 2u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);  // poller still started
+    
+    // Test: first session stop, poller should keep running
+    ASSERT_TRUE(pluginService_->StopEpollThread());   // count: 2 -> 1
+    ASSERT_EQ(pluginService_->activeSessionCount_, 1u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);
+    
+    // Test: second session stop, poller should stop
+    ASSERT_TRUE(pluginService_->StopEpollThread());   // count: 1 -> 0, poller stops
+    ASSERT_EQ(pluginService_->activeSessionCount_, 0u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, false);
+}
+
+/**
+ * @tc.name: EpollThreadRefCountReverseStopOrder
+ * @tc.desc: Test multiple sessions stopped in reverse order
+ * @tc.type: FUNC
+ */
+HWTEST_F(UnitTestPluginService, EpollThreadRefCountReverseStopOrder, TestSize.Level1)
+{
+    ASSERT_EQ(pluginService_->activeSessionCount_, 0u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, false);
+    
+    // Start three sessions
+    ASSERT_TRUE(pluginService_->StartEpollThread());  // count: 0 -> 1, poller starts
+    ASSERT_EQ(pluginService_->activeSessionCount_, 1u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);
+    
+    ASSERT_TRUE(pluginService_->StartEpollThread());  // count: 1 -> 2
+    ASSERT_EQ(pluginService_->activeSessionCount_, 2u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);
+    
+    ASSERT_TRUE(pluginService_->StartEpollThread());  // count: 2 -> 3
+    ASSERT_EQ(pluginService_->activeSessionCount_, 3u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);
+    
+    // Stop in reverse order
+    ASSERT_TRUE(pluginService_->StopEpollThread());   // count: 3 -> 2
+    ASSERT_EQ(pluginService_->activeSessionCount_, 2u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);  // poller keeps running
+    
+    ASSERT_TRUE(pluginService_->StopEpollThread());   // count: 2 -> 1
+    ASSERT_EQ(pluginService_->activeSessionCount_, 1u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);  // poller keeps running
+    
+    ASSERT_TRUE(pluginService_->StopEpollThread());   // count: 1 -> 0, poller stops
+    ASSERT_EQ(pluginService_->activeSessionCount_, 0u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, false);
+}
+
+/**
+ * @tc.name: EpollThreadRefCountOverStop
+ * @tc.desc: Test StopEpollThread called more times than StartEpollThread
+ * @tc.type: FUNC
+ */
+HWTEST_F(UnitTestPluginService, EpollThreadRefCountOverStop, TestSize.Level1)
+{
+    ASSERT_EQ(pluginService_->activeSessionCount_, 0u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, false);
+    
+    // Start once - poller starts
+    ASSERT_TRUE(pluginService_->StartEpollThread());
+    ASSERT_EQ(pluginService_->activeSessionCount_, 1u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);
+    
+    // Stop once (normal) - poller stops
+    ASSERT_TRUE(pluginService_->StopEpollThread());
+    ASSERT_EQ(pluginService_->activeSessionCount_, 0u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, false);
+    
+    // Stop again (over stop) - should handle gracefully
+    ASSERT_TRUE(pluginService_->StopEpollThread());   // count remains 0
+    ASSERT_EQ(pluginService_->activeSessionCount_, 0u);  // should remain 0
+    ASSERT_EQ(pluginService_->isPollerStarted_, false);
+    
+    // Third over stop - still handle gracefully
+    ASSERT_TRUE(pluginService_->StopEpollThread());
+    ASSERT_EQ(pluginService_->activeSessionCount_, 0u);  // remain 0
+}
+
+/**
+ * @tc.name: EpollThreadRefCountInterleavedStartStop
+ * @tc.desc: Test interleaved StartEpollThread and StopEpollThread calls
+ * @tc.type: FUNC
+ */
+HWTEST_F(UnitTestPluginService, EpollThreadRefCountInterleavedStartStop, TestSize.Level1)
+{
+    ASSERT_EQ(pluginService_->activeSessionCount_, 0u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, false);
+    
+    // Interleaved sequence - poller starts on first Start
+    ASSERT_TRUE(pluginService_->StartEpollThread());  // count: 0 -> 1, poller starts
+    ASSERT_EQ(pluginService_->activeSessionCount_, 1u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);  // started
+    
+    ASSERT_TRUE(pluginService_->StartEpollThread());  // count: 1 -> 2
+    ASSERT_EQ(pluginService_->activeSessionCount_, 2u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);  // keeps started
+    
+    ASSERT_TRUE(pluginService_->StopEpollThread());   // count: 2 -> 1
+    ASSERT_EQ(pluginService_->activeSessionCount_, 1u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);  // keeps running
+    
+    ASSERT_TRUE(pluginService_->StartEpollThread());  // count: 1 -> 2
+    ASSERT_EQ(pluginService_->activeSessionCount_, 2u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);  // already started
+    
+    ASSERT_TRUE(pluginService_->StopEpollThread());   // count: 2 -> 1
+    ASSERT_EQ(pluginService_->activeSessionCount_, 1u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);  // keeps running
+    
+    ASSERT_TRUE(pluginService_->StopEpollThread());   // count: 1 -> 0, poller stops
+    ASSERT_EQ(pluginService_->activeSessionCount_, 0u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, false);
+}
+
+/**
+ * @tc.name: EpollThreadRefCountRestartAfterStop
+ * @tc.desc: Test restarting eventPoller after all sessions stopped
+ * @tc.type: FUNC
+ */
+HWTEST_F(UnitTestPluginService, EpollThreadRefCountRestartAfterStop, TestSize.Level1)
+{
+    // First cycle: start and stop
+    ASSERT_TRUE(pluginService_->StartEpollThread());
+    ASSERT_EQ(pluginService_->activeSessionCount_, 1u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);
+    
+    ASSERT_TRUE(pluginService_->StopEpollThread());
+    ASSERT_EQ(pluginService_->activeSessionCount_, 0u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, false);
+    
+    // Second cycle: restart after complete stop
+    ASSERT_TRUE(pluginService_->StartEpollThread());  // should restart successfully
+    ASSERT_EQ(pluginService_->activeSessionCount_, 1u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, true);  // should be true (already started)
+    
+    ASSERT_TRUE(pluginService_->StopEpollThread());
+    ASSERT_EQ(pluginService_->activeSessionCount_, 0u);
+    ASSERT_EQ(pluginService_->isPollerStarted_, false);
+}
+
 } // namespace

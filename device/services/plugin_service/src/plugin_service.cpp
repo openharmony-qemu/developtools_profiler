@@ -54,6 +54,9 @@ PluginService::PluginService()
 
 PluginService::~PluginService()
 {
+    std::lock_guard<std::mutex> lock(pollerMutex_);
+    activeSessionCount_ = 0;
+    
     if (eventPoller_) {
         eventPoller_->Stop();
         eventPoller_->Finalize();
@@ -62,18 +65,58 @@ PluginService::~PluginService()
 
 bool PluginService::StartEpollThread()
 {
-    if (eventPoller_) {
-        return eventPoller_->Start();
+    std::lock_guard<std::mutex> lock(pollerMutex_);
+    activeSessionCount_++;
+    PROFILER_LOG_INFO(LOG_CORE, "StartEpollThread: activeSessionCount=%u (increased)", activeSessionCount_);
+    if (!isPollerStarted_) {
+        if (!eventPoller_) {
+            PROFILER_LOG_ERROR(LOG_CORE, "StartEpollThread: eventPoller is null!");
+            return false;
+        }
+        PROFILER_LOG_INFO(LOG_CORE, "StartEpollThread: starting eventPoller");
+        bool ret = eventPoller_->Start();
+        if (!ret) {
+            PROFILER_LOG_ERROR(LOG_CORE, "StartEpollThread: starting eventPoller failed!");
+            return false;
+        }
+        isPollerStarted_ = true;
+        return true;
     }
-    return false;
+    PROFILER_LOG_INFO(LOG_CORE, "StartEpollThread: eventPoller already running, %u active sessions",
+        activeSessionCount_);
+    return true;
 }
 
 bool PluginService::StopEpollThread()
 {
-    if (eventPoller_) {
-        return eventPoller_->Stop();
+    std::lock_guard<std::mutex> lock(pollerMutex_);
+    if (activeSessionCount_ == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "StopEpollThread: count already zero");
+        return true;
     }
-    return false;
+    activeSessionCount_--;
+    PROFILER_LOG_INFO(LOG_CORE, "StopEpollThread: activeSessionCount=%u (decreased)", activeSessionCount_);
+
+    if (!isPollerStarted_) {
+        PROFILER_LOG_WARN(LOG_CORE, "StopEpollThread: eventPoller is not started");
+        return true;
+    }
+    if (activeSessionCount_ == 0) {
+        if (eventPoller_) {
+            PROFILER_LOG_INFO(LOG_CORE, "StopEpollThread: all sessions stopped, stopping eventPoller");
+            bool ret = eventPoller_->Stop();
+            if (ret) {
+                isPollerStarted_ = false;
+            }
+            return ret;
+        } else {
+            PROFILER_LOG_ERROR(LOG_CORE, "StopEpollThread: eventPoller is null!");
+            return false;
+        }
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "StopEpollThread: %u sessions still active, keep eventPoller running",
+        activeSessionCount_);
+    return true;
 }
 
 void PluginService::SetPluginSessionManager(const PluginSessionManagerPtr& pluginSessionManager)
