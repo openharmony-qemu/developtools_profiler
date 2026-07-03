@@ -22,6 +22,7 @@
 #include "hidebug/hidebug.h"
 #include "hidebug/hidebug_type.h"
 #include "hidebug_native_interface.h"
+#include "hidebug_util.h"
 
 using namespace testing::ext;
 
