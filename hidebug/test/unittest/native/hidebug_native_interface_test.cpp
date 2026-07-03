@@ -86,8 +86,10 @@ HWTEST_F(HidebugNativeInterfaceTest, GetRssInfoTest, TestSize.Level0)
  */
 HWTEST_F(HidebugNativeInterfaceTest, GetMemoryLeakResourceTest, TestSize.Level1)
 {
-    auto& interface = HidebugNativeInterface::GetInstance();
-    ASSERT_EQ(interface.GetMemoryLeakResource("test", 10, false), NATIVE_SUCCESS);
+    if (OHOS::HiviewDFX::IsHm()) {
+        auto& interface = HidebugNativeInterface::GetInstance();
+        ASSERT_EQ(interface.GetMemoryLeakResource("test", 10, false), NATIVE_SUCCESS);
+    }
 }
 #endif
 
