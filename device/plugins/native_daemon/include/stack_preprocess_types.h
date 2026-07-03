@@ -54,6 +54,7 @@ struct SimplifiedRecordStatistics {
     void SetNodeId(uint64_t val);
     uint32_t GetNodeType() const;
     void SetNodeType(uint32_t val);
+    std::vector<uint64_t> addrs;
 };
 
 struct AllocAddrInfo {
