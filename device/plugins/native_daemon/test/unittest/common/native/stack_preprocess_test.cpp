@@ -2473,4 +2473,235 @@ HWTEST_F(StackPreprocessTest, SetEventFrameMmapSetsTypeAndSkipsZeroStackId, Test
     EXPECT_EQ(mmapEvent.thread_name_id(), rawStack.tid);
     EXPECT_EQ(mmapEvent.stack_id(), 0u);
 }
+
+/*
+@tc.name: AddAllocStatisticsMallocCollectsAddrTest
+@tc.desc: AddAllocStatistics with MALLOC type should collect addr in full mode.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, AddAllocStatisticsMallocCollectsAddrTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    preprocess.AddAllocStatistics(hookRecord, 1);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].type, RecordStatisticsEvent::MALLOC);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].addrs.size(), 1u);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].addrs[0], 0x1000);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: AddAllocStatisticsMallocAddrSimplifiedTest
+@tc.desc: AddAllocStatistics with MALLOC type should collect addr in simplified mode.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, AddAllocStatisticsMallocAddrSimplifiedTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig; // arkui_mem_trace_enable defaults to false -> simplified mode
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x2000);
+    rawStack->stackContext->mallocSize = 64;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    preprocess.AddAllocStatistics(hookRecord, 1);
+    EXPECT_EQ(preprocess.simplifiedRecordStatisticsMap_[1].type, RecordStatisticsEvent::MALLOC);
+    EXPECT_EQ(preprocess.simplifiedRecordStatisticsMap_[1].addrs.size(), 1u);
+    EXPECT_EQ(preprocess.simplifiedRecordStatisticsMap_[1].addrs[0], 0x2000);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: UpdateAllocStatisticsCollectsAddrTest
+@tc.desc: UpdateAllocStatistics should collect addr for MALLOC type on update path.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, UpdateAllocStatisticsCollectsAddrTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack1 = std::make_shared<RawStack>();
+    rawStack1->stackContext = new BaseStackRawData();
+    rawStack1->stackContext->type = MALLOC_MSG;
+    rawStack1->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack1->stackContext->mallocSize = 64;
+    auto hookRecord1 = std::make_shared<HookRecord>(rawStack1);
+    preprocess.SetAllocStatisticsData(hookRecord1, 1);
+
+    auto rawStack2 = std::make_shared<RawStack>();
+    rawStack2->stackContext = new BaseStackRawData();
+    rawStack2->stackContext->type = MALLOC_MSG;
+    rawStack2->stackContext->addr = reinterpret_cast<void*>(0x2000);
+    rawStack2->stackContext->mallocSize = 64;
+    auto hookRecord2 = std::make_shared<HookRecord>(rawStack2);
+    preprocess.UpdateAllocStatistics(hookRecord2, 1);
+
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].addrs.size(), 2u);
+
+    delete rawStack1->stackContext;
+    delete rawStack2->stackContext;
+}
+
+/*
+@tc.name: AddAllocStatisticsMmapNoAddrTest
+@tc.desc: AddAllocStatistics with MMAP type should not collect addr.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, AddAllocStatisticsMmapNoAddrTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MMAP_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 4096;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    preprocess.AddAllocStatistics(hookRecord, 1);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].type, RecordStatisticsEvent::MMAP);
+    EXPECT_TRUE(preprocess.recordStatisticsMap_[1].addrs.empty());
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: SetFreeStatisticsDataRemovesAddrTest
+@tc.desc: SetFreeStatisticsData should remove addr from record in full mode.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetFreeStatisticsDataRemovesAddrTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.SetAllocStatisticsData(hookRecord, 1);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].addrs.size(), 1u);
+
+    bool result = preprocess.SetFreeStatisticsData(0x1000);
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(preprocess.recordStatisticsMap_[1].addrs.empty());
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: SetFreeStatisticsDataRemovesAddrSimplifiedTest
+@tc.desc: SetFreeStatisticsData should remove addr from record in simplified mode.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetFreeStatisticsDataRemovesAddrSimplifiedTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig; // simplified mode
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.SetAllocStatisticsData(hookRecord, 1);
+    EXPECT_EQ(preprocess.simplifiedRecordStatisticsMap_[1].addrs.size(), 1u);
+
+    bool result = preprocess.SetFreeStatisticsData(0x1000);
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(preprocess.simplifiedRecordStatisticsMap_[1].addrs.empty());
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: AddAllocStatisticsArkHandleCollectsAddrTest
+@tc.desc: AddAllocStatistics with ARK_GLOBAL_HANDLE tag should collect addr.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, AddAllocStatisticsArkHandleCollectsAddrTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.InitializeGpuData(); // ensure ARK handle tag registered
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MEMORY_USING_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x3000);
+    rawStack->stackContext->mallocSize = 64;
+    rawStack->stackContext->tagId = ARK_GLOBAL_HANDLE_INDEX + 1;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    preprocess.AddAllocStatistics(hookRecord, 1);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].type, RecordStatisticsEvent::ARK_GLOBAL_HANDLE);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].addrs.size(), 1u);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].addrs[0], 0x3000);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: FlushRecordStatisticsWithAddrTest
+@tc.desc: FlushRecordStatistics should run flush path (incl add_addr) without crash when addr collected.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, FlushRecordStatisticsWithAddrTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
+    hookConfig.set_statistics_interval(10);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.SetAllocStatisticsData(hookRecord, 1);
+    EXPECT_FALSE(preprocess.statisticsPeriodSet_.empty());
+
+    bool result = preprocess.FlushRecordStatistics();
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(preprocess.statisticsPeriodSet_.empty());
+
+    // verify addr is flushed into statistics_event
+    auto* batchData = std::get_if<BatchNativeHookData>(&preprocess.stackData_);
+    ASSERT_NE(batchData, nullptr);
+    bool foundAddr = false;
+    for (const auto& evt : batchData->events()) {
+        if (evt.has_statistics_event() && evt.statistics_event().addr_size() > 0) {
+            EXPECT_EQ(evt.statistics_event().addr(0), 0x1000);
+            foundAddr = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(foundAddr);
+
+    delete rawStack->stackContext;
+}
 }
