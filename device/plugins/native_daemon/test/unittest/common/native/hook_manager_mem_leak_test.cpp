@@ -709,4 +709,41 @@ HWTEST_F(HookManagerMemLeakTest, HandleMemLeakDone_AlreadyFinished, TestSize.Lev
     hookManager_->memLeakDumpDone_ = true;
     EXPECT_TRUE(hookManager_->HandleMemLeakDone());
 }
+
+/*
+ * @tc.name: SetHookConfigExt_discardDestoryedTraces
+ * @tc.desc: test SetHookConfigExt propagates discardDestoryedTraces_ to hookConfig_.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, SetHookConfigExt_discardDestoryedTraces, TestSize.Level0)
+{
+    auto saConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
+    saConfig->pid_ = TEST_PID;
+    saConfig->processName_ = TEST_PROCESS_NAME;
+    saConfig->discardDestoryedTraces_ = true;
+    hookManager_->SetHookConfig(saConfig);
+    EXPECT_TRUE(hookManager_->hookConfig_.discard_destoryed_traces());
+
+    saConfig->discardDestoryedTraces_ = false;
+    hookManager_->SetHookConfig(saConfig);
+    EXPECT_FALSE(hookManager_->hookConfig_.discard_destoryed_traces());
+}
+
+/*
+ * @tc.name: GetClientConfig_discardDestoryedTraces
+ * @tc.desc: test GetClientConfig propagates discard_destoryed_traces to clientConfig.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, GetClientConfig_discardDestoryedTraces, TestSize.Level0)
+{
+    auto saConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
+    saConfig->pid_ = TEST_PID;
+    saConfig->processName_ = TEST_PROCESS_NAME;
+    saConfig->discardDestoryedTraces_ = true;
+    hookManager_->SetHookConfig(saConfig);
+
+    ClientConfig clientConfig;
+    hookManager_->GetClientConfig(clientConfig);
+    EXPECT_TRUE(clientConfig.discardDestoryedTraces);
+}
 } // namespace

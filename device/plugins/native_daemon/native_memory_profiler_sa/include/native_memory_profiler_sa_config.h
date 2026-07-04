@@ -96,6 +96,7 @@ public:
     uint32_t asyncNestingDepth_{0};
     uint32_t asyncTaskStackDepth_{0};
     bool arkuiMemTraceEnable_{false};
+    bool discardDestoryedTraces_{false};
 };
 } // namespace OHOS::Developtools::NativeDaemon
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_H

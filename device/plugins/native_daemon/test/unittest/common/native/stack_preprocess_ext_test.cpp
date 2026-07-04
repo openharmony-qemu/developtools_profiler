@@ -847,6 +847,46 @@ HWTEST_F(StackPreprocessExtTest, FlushRecordStatisticsTest, TestSize.Level0)
 }
 
 /*
+@tc.name: StackPreprocessCtor_discardDestoryedTraces
+@tc.desc: test StackPreprocess constructor reads discard_destoryed_traces from hookConfig.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, StackPreprocessCtor_discardDestoryedTraces, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(1);
+    hookConfig.set_discard_destoryed_traces(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    EXPECT_TRUE(preprocess.discardDestoryedTraces_);
+}
+
+/*
+@tc.name: FlushRecordStatistics_discardDestoryedTraces
+@tc.desc: test FlushRecordStatistics discards destroyed traces created in current period.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, FlushRecordStatistics_discardDestoryedTraces, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(1);
+    hookConfig.set_discard_destoryed_traces(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    constexpr uint32_t stackId = 100;
+    SimplifiedRecordStatistics stat;
+    stat.applySize = 64;
+    stat.releaseSize = 64; // applySize == releaseSize means destroyed
+    stat.createInCurPeriod = true;
+    preprocess.simplifiedRecordStatisticsMap_[stackId] = stat;
+    preprocess.statisticsPeriodSet_.insert(stackId);
+
+    EXPECT_EQ(preprocess.simplifiedRecordStatisticsMap_.count(stackId), 1u);
+    preprocess.FlushRecordStatistics();
+    // shouldClean hits: destroyed trace created in current period is discarded (erased without writing)
+    EXPECT_EQ(preprocess.simplifiedRecordStatisticsMap_.count(stackId), 0u);
+}
+
+/*
 @tc.name: FlushRecordApplyAndReleaseMatchDataTest
 @tc.desc: test FlushRecordApplyAndReleaseMatchData method.
 @tc.type: FUNC

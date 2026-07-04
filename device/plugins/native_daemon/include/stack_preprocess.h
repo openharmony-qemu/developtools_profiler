@@ -85,6 +85,10 @@ public:
         std::vector<CallFrame>& callFrames);
     void TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&, const std::shared_ptr<ShareMemoryBlock>&);
     void TakeResultsFromCacheFile(int fd);
+    void SetValidLiveData(const std::unordered_map<void*, struct timespec>* liveData)
+    {
+        validLiveDataPtr_ = liveData;
+    }
     void InitializeDirector();
 #ifdef NATIVE_DAEMON_UNITTEST
     static std::shared_ptr<BuildStackDirector> GetDirectorForTest();
@@ -371,7 +375,8 @@ private:
     std::atomic_bool finalSnapshotDone_{false};
     std::mutex snapshotMtx_;
     std::condition_variable snapshotCv_;
-    bool discardDestroyedTraces_ = false;
+    bool discardDestoryedTraces_ = false;
+    const std::unordered_map<void*, struct timespec>* validLiveDataPtr_ = nullptr;
 };
 }
 

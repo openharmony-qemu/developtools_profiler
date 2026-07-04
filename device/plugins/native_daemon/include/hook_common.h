@@ -30,6 +30,7 @@
 #include <limits.h>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #define MAX_THREAD_NAME (32)
@@ -200,6 +201,23 @@ struct alignas(8) BaseStackRawData { // 8 is 8 bit
     uint64_t nodeId;
 };
 
+inline bool TsLess(const struct timespec& a, const struct timespec& b)
+{
+    return std::tie(a.tv_sec, a.tv_nsec) < std::tie(b.tv_sec, b.tv_nsec);
+}
+
+inline bool IsArkGlobalHandleRecord(const BaseStackRawData* data)
+{
+    return data->tagId == OHOS::Developtools::NativeDaemon::ARK_GLOBAL_HANDLE_INDEX + 1;
+}
+
+inline bool ShouldSkipRecord(const BaseStackRawData* data,
+    const std::unordered_map<void*, struct timespec>& liveData)
+{
+    auto iter = liveData.find(data->addr);
+    return iter == liveData.end() || TsLess(data->ts, iter->second);
+}
+
 struct alignas(8) AsyncStackData : public BaseStackRawData { // 8 is 8 bit
     uint64_t syncStackId;
     uint64_t asyncStackId;
@@ -312,6 +330,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         asyncNestingDepth = 0;
         asyncTaskStackDepth = 0;
         arkuiMemTraceEnable = false;
+        discardDestoryedTraces = false;
     }
 
     std::string ToString()
@@ -329,6 +348,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", uniqueStackTableSize: " << uniqueStackTableSize
             << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable
             << ", arkuiMemTraceEnable: " << arkuiMemTraceEnable
+            << ", discardDestoryedTraces: " << discardDestoryedTraces
             << ", jsStackReport: "
             << arktsConfig.jsStackReport << ", maxJsStackDepth: "
             << std::to_string(arktsConfig.maxJsStackDepth) << ", filterNapiName: "
@@ -394,6 +414,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     uint32_t asyncNestingDepth = 0;
     uint32_t asyncTaskStackDepth = 0;
     bool arkuiMemTraceEnable = false;
+    bool discardDestoryedTraces = false;
 };
 
 struct alignas(8) ClientConfigIpc { // 8 is 8 bit
@@ -441,6 +462,7 @@ struct alignas(8) ClientConfigIpc { // 8 is 8 bit
     uint32_t asyncNestingDepth = 0;
     uint32_t asyncTaskStackDepth = 0;
     bool arkuiMemTraceEnable = false;
+    bool discardDestoryedTraces = false;
 };
 
 inline bool CopyClientConfigString(char* dest, size_t destSize, const std::string& src)
@@ -504,6 +526,7 @@ inline void CopyClientConfigExtToIpc(const ClientConfig& config, ClientConfigIpc
     ipc.secondLargestSize = config.secondLargestSize;
     ipc.maxGrowthSize = config.maxGrowthSize;
     ipc.arkuiMemTraceEnable = config.arkuiMemTraceEnable;
+    ipc.discardDestoryedTraces = config.discardDestoryedTraces;
 }
 
 inline void CopyClientConfigTailToIpc(const ClientConfig& config, ClientConfigIpc& ipc)
@@ -589,6 +612,7 @@ inline void CopyClientConfigExtFromIpc(const ClientConfigIpc& ipc, ClientConfig&
     config.secondLargestSize = ipc.secondLargestSize;
     config.maxGrowthSize = ipc.maxGrowthSize;
     config.arkuiMemTraceEnable = ipc.arkuiMemTraceEnable;
+    config.discardDestoryedTraces = ipc.discardDestoryedTraces;
 }
 
 inline void CopyClientConfigTailFromIpc(const ClientConfigIpc& ipc, ClientConfig& config)
