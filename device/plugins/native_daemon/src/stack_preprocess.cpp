@@ -180,6 +180,12 @@ void StackPreprocess::UpdateMoveAddrRecord(
     }
     auto& record = recordIter->second;
     record.applySize += (size - allocAddrMap_[addr].mallocSize);
+    if (NeedCollectAddr(record.type)) {
+        auto addrPos = std::find(record.addrs.begin(), record.addrs.end(), addr);
+        if (addrPos != record.addrs.end()) {
+            *addrPos = newAddr;
+        }
+    }
     allocAddrMap_[newAddr] = AllocAddrInfo{size, record.callstackId, addrIter->second.ts};
     allocAddrMap_.erase(addr);
     addrSet_.insert(newAddr);
@@ -1993,6 +1999,26 @@ inline void StackPreprocess::FindAndUpdateFreeStatisticsLocked(uint32_t stackId,
     }
 }
 
+template <typename T>
+inline void StackPreprocess::RemoveFreeAddrFromStatisticsLocked(
+    std::unordered_map<uint32_t, T>& statisticsMap, uint64_t addr, uint32_t stackId)
+{
+    auto recordIter = statisticsMap.find(stackId);
+    if (recordIter != statisticsMap.end()) {
+        auto& addrs = recordIter->second.addrs;
+        addrs.erase(std::remove(addrs.begin(), addrs.end(), addr), addrs.end());
+    }
+}
+
+void StackPreprocess::RemoveFreeAddrFromStatisticsLocked(uint64_t addr, uint32_t stackId)
+{
+    if (!hookConfig_.arkui_mem_trace_enable()) {
+        RemoveFreeAddrFromStatisticsLocked(simplifiedRecordStatisticsMap_, addr, stackId);
+    } else {
+        RemoveFreeAddrFromStatisticsLocked(recordStatisticsMap_, addr, stackId);
+    }
+}
+
 bool StackPreprocess::SetFreeStatisticsDataLocked(uint64_t addr)
 {
     auto addrIter = allocAddrMap_.find(addr);
@@ -2000,6 +2026,7 @@ bool StackPreprocess::SetFreeStatisticsDataLocked(uint64_t addr)
         return false;
     }
     FindAndUpdateFreeStatisticsLocked(addrIter->second.stackId, addrIter->second.mallocSize);
+    RemoveFreeAddrFromStatisticsLocked(addr, addrIter->second.stackId);
     allocAddrMap_.erase(addr);
     auto addrSetIter = addrSet_.find(addr);
     if (addrSetIter != addrSet_.end()) {
@@ -2049,6 +2076,9 @@ void StackPreprocess::UpdateAllocStatistics(
         if constexpr (std::is_same_v<T, RecordStatistic>) {
             record.ts = rawStack->stackContext->ts;
         }
+        if (NeedCollectAddr(record.type)) {
+            record.addrs.push_back(hookRecord->GetAddr());
+        }
         allocAddrMap_[hookRecord->GetAddr()] =
             AllocAddrInfo{rawStack->stackContext->mallocSize, stackId, rawStack->stackContext->ts};
         if (hookRecord->GetType() == MEMORY_USING_MSG) {
@@ -2087,6 +2117,13 @@ bool StackPreprocess::ResolveTagType(const std::string& tagName, RecordStatistic
     return false;
 }
 
+bool StackPreprocess::NeedCollectAddr(RecordStatisticsEvent::MemoryType type)
+{
+    return type == RecordStatisticsEvent::MALLOC ||
+           type == RecordStatisticsEvent::ARK_GLOBAL_HANDLE ||
+           type == RecordStatisticsEvent::ARK_LOCAL_HANDLE;
+}
+
 template <typename T>
 void StackPreprocess::FillRecordFromType(T& record, const HookRecordPtr& hookRecord)
 {
@@ -2096,6 +2133,7 @@ void StackPreprocess::FillRecordFromType(T& record, const HookRecordPtr& hookRec
             record.type = RecordStatisticsEvent::MALLOC;
             record.SetNodeType(rawStack->stackContext->nodeType);
             record.SetNodeId(rawStack->stackContext->nodeId);
+            record.addrs.push_back(hookRecord->GetAddr());
             break;
         case MMAP_MSG:
             record.type = RecordStatisticsEvent::MMAP;
@@ -2115,6 +2153,9 @@ void StackPreprocess::FillRecordFromType(T& record, const HookRecordPtr& hookRec
                 record.SetNodeId(rawStack->stackContext->nodeId);
             }
             record.tagId = rawStack->stackContext->tagId;
+            if (NeedCollectAddr(memType)) {
+                record.addrs.push_back(hookRecord->GetAddr());
+            }
             break;
         }
         default:
@@ -2562,6 +2603,9 @@ void StackPreprocess::FlushStatisticsEntry(T* statistics, uint32_t stackId, Stac
     recordEvent->set_tag_name(tagName);
     recordEvent->set_node_type(statistics->GetNodeType());
     recordEvent->set_node_id(statistics->GetNodeId());
+    for (auto addr : statistics->addrs) {
+        recordEvent->add_addr(addr);
+    }
 }
 
 template <typename T>

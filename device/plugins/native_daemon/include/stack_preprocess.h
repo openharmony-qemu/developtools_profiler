@@ -197,6 +197,10 @@ private:
     bool HandleNoStackEvent(HookRecordPtr& hookRecord);
     bool SetFreeStatisticsData(uint64_t addr);
     bool SetFreeStatisticsDataLocked(uint64_t addr);
+    template <typename T>
+    void RemoveFreeAddrFromStatisticsLocked(std::unordered_map<uint32_t, T>& statisticsMap,
+        uint64_t addr, uint32_t stackId);
+    void RemoveFreeAddrFromStatisticsLocked(uint64_t addr, uint32_t stackId);
     void ReconcileWithSnapshot(const std::unordered_set<uint64_t>& aliveAddrs);
     bool ReconcileDuplicateMalloc(uint64_t addr, const struct timespec& newTs);
     void SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists = false);
@@ -206,6 +210,7 @@ private:
         const HookRecordPtr& hookRecord, size_t stackId);
     void UpdateAllocSimplifiedStatistics(const HookRecordPtr& hookRecord, size_t stackId);
     bool ResolveTagType(const std::string& tagName, RecordStatisticsEvent::MemoryType& type);
+    static bool NeedCollectAddr(RecordStatisticsEvent::MemoryType type);
     template <typename T>
     void FillRecordFromType(T& record, const HookRecordPtr& hookRecord);
     template <typename T>

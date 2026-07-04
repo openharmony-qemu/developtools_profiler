@@ -246,6 +246,7 @@ message RecordStatisticsEvent {
     string tag_name = 8;
     uint32 node_type = 9;
     uint64 node_id = 10;
+    repeated uint64 addr = 11;
 }
 
 message NativeHookData {
