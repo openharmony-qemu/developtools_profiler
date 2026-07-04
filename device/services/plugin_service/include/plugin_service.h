@@ -139,6 +139,9 @@ private:
     TraceFileWriterPtr traceWriter_ = nullptr;
     uint32_t dataFlushSize_ = 0;
     bool isProtobufSerialize_ = true;
+    uint32_t activeSessionCount_ = 0;
+    bool isPollerStarted_ = false;
+    std::mutex pollerMutex_;
 };
 
 #endif // PLUGIN_SERVICE_H
