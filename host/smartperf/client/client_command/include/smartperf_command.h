@@ -62,6 +62,8 @@ public:
         " -server         start a process to listen to the socket message of the start and stop commands \n"
         " -clear          clear the process ID \n"
         " -ohtestfps      used by the vilidator to obtain the fps, the collection times can be set \n"
+        " -editorServer:xxx   start a process to listen to the socket message of the editor \n"
+        " -deviceServer:xxx   start a process to listen to the socket message of the device \n"
         " -recordcapacity get the battery level difference \n"
         " --version       get version \n"
         " --help          get help \n"
