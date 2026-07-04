@@ -2704,4 +2704,162 @@ HWTEST_F(StackPreprocessTest, FlushRecordStatisticsWithAddrTest, TestSize.Level0
 
     delete rawStack->stackContext;
 }
+
+/*
+@tc.name: AddAllocStatisticsArkLocalHandleCollectsAddrTest
+@tc.desc: AddAllocStatistics with ARK_LOCAL_HANDLE tag should collect addr.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, AddAllocStatisticsArkLocalHandleCollectsAddrTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.InitializeGpuData(); // ensure ARK handle tag registered
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MEMORY_USING_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x4000);
+    rawStack->stackContext->mallocSize = 64;
+    rawStack->stackContext->tagId = ARK_LOCAL_HANDLE_INDEX + 1;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    preprocess.AddAllocStatistics(hookRecord, 1);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].type, RecordStatisticsEvent::ARK_LOCAL_HANDLE);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].addrs.size(), 1u);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].addrs[0], 0x4000);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: FlushRecordStatisticsWithMultiAddrTest
+@tc.desc: FlushRecordStatistics should flush all accumulated addrs into statistics_event.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, FlushRecordStatisticsWithMultiAddrTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
+    hookConfig.set_statistics_interval(10);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // first alloc -> addr 0x1000
+    auto rawStack1 = std::make_shared<RawStack>();
+    rawStack1->stackContext = new BaseStackRawData();
+    rawStack1->stackContext->type = MALLOC_MSG;
+    rawStack1->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack1->stackContext->mallocSize = 64;
+    auto hookRecord1 = std::make_shared<HookRecord>(rawStack1);
+    preprocess.SetAllocStatisticsData(hookRecord1, 1);
+
+    // update -> addr 0x2000 accumulated
+    auto rawStack2 = std::make_shared<RawStack>();
+    rawStack2->stackContext = new BaseStackRawData();
+    rawStack2->stackContext->type = MALLOC_MSG;
+    rawStack2->stackContext->addr = reinterpret_cast<void*>(0x2000);
+    rawStack2->stackContext->mallocSize = 64;
+    auto hookRecord2 = std::make_shared<HookRecord>(rawStack2);
+    preprocess.UpdateAllocStatistics(hookRecord2, 1);
+
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].addrs.size(), 2u);
+
+    bool result = preprocess.FlushRecordStatistics();
+    EXPECT_TRUE(result);
+
+    // verify both addrs flushed into the same statistics_event
+    auto* batchData = std::get_if<BatchNativeHookData>(&preprocess.stackData_);
+    ASSERT_NE(batchData, nullptr);
+    bool found = false;
+    for (const auto& evt : batchData->events()) {
+        if (evt.has_statistics_event() && evt.statistics_event().callstack_id() == 1) {
+            EXPECT_EQ(evt.statistics_event().addr_size(), 2u);
+            EXPECT_EQ(evt.statistics_event().addr(0), 0x1000);
+            EXPECT_EQ(evt.statistics_event().addr(1), 0x2000);
+            found = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(found);
+
+    delete rawStack1->stackContext;
+    delete rawStack2->stackContext;
+}
+
+/*
+@tc.name: HandleMoveAddrReplacesAddrInStatisticsTest
+@tc.desc: HandleMoveAddr should replace old addr with newAddr in record.addrs.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleMoveAddrReplacesAddrInStatisticsTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.SetAllocStatisticsData(hookRecord, 1);
+    ASSERT_EQ(preprocess.recordStatisticsMap_[1].addrs.size(), 1u);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].addrs[0], 0x1000);
+
+    // move 0x1000 -> 0x2000
+    preprocess.HandleMoveAddr(0x1000, 0x2000, 128);
+
+    // addrs replaced: old 0x1000 gone, new 0x2000 present
+    ASSERT_EQ(preprocess.recordStatisticsMap_[1].addrs.size(), 1u);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].addrs[0], 0x2000);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: HandleMoveAddrFlushAndFreeTest
+@tc.desc: After move, flush should report newAddr (not stale oldAddr) and free(newAddr) should remove it from addrs.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleMoveAddrFlushAndFreeTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_arkui_mem_trace_enable(true);
+    hookConfig.set_statistics_interval(10);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.SetAllocStatisticsData(hookRecord, 1);
+
+    // move 0x1000 -> 0x2000
+    preprocess.HandleMoveAddr(0x1000, 0x2000, 128);
+
+    // flush should report newAddr 0x2000, not stale 0x1000
+    EXPECT_TRUE(preprocess.FlushRecordStatistics());
+    auto* batchData = std::get_if<BatchNativeHookData>(&preprocess.stackData_);
+    ASSERT_NE(batchData, nullptr);
+    bool found = false;
+    for (const auto& evt : batchData->events()) {
+        if (evt.has_statistics_event() && evt.statistics_event().callstack_id() == 1) {
+            ASSERT_EQ(evt.statistics_event().addr_size(), 1u);
+            EXPECT_EQ(evt.statistics_event().addr(0), 0x2000);
+            found = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(found);
+
+    // free(newAddr) should remove it from addrs (proves newAddr is findable after move)
+    EXPECT_TRUE(preprocess.SetFreeStatisticsData(0x2000));
+    EXPECT_TRUE(preprocess.recordStatisticsMap_[1].addrs.empty());
+
+    delete rawStack->stackContext;
+}
 }

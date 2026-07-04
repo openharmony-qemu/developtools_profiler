@@ -180,6 +180,12 @@ void StackPreprocess::UpdateMoveAddrRecord(
     }
     auto& record = recordIter->second;
     record.applySize += (size - allocAddrMap_[addr].mallocSize);
+    if (NeedCollectAddr(record.type)) {
+        auto addrPos = std::find(record.addrs.begin(), record.addrs.end(), addr);
+        if (addrPos != record.addrs.end()) {
+            *addrPos = newAddr;
+        }
+    }
     allocAddrMap_[newAddr] = AllocAddrInfo{size, record.callstackId, addrIter->second.ts};
     allocAddrMap_.erase(addr);
     addrSet_.insert(newAddr);
@@ -1993,6 +1999,26 @@ inline void StackPreprocess::FindAndUpdateFreeStatisticsLocked(uint32_t stackId,
     }
 }
 
+template <typename T>
+inline void StackPreprocess::RemoveFreeAddrFromStatisticsLocked(
+    std::unordered_map<uint32_t, T>& statisticsMap, uint64_t addr, uint32_t stackId)
+{
+    auto recordIter = statisticsMap.find(stackId);
+    if (recordIter != statisticsMap.end()) {
+        auto& addrs = recordIter->second.addrs;
+        addrs.erase(std::remove(addrs.begin(), addrs.end(), addr), addrs.end());
+    }
+}
+
+void StackPreprocess::RemoveFreeAddrFromStatisticsLocked(uint64_t addr, uint32_t stackId)
+{
+    if (!hookConfig_.arkui_mem_trace_enable()) {
+        RemoveFreeAddrFromStatisticsLocked(simplifiedRecordStatisticsMap_, addr, stackId);
+    } else {
+        RemoveFreeAddrFromStatisticsLocked(recordStatisticsMap_, addr, stackId);
+    }
+}
+
 bool StackPreprocess::SetFreeStatisticsDataLocked(uint64_t addr)
 {
     auto addrIter = allocAddrMap_.find(addr);
@@ -2000,19 +2026,7 @@ bool StackPreprocess::SetFreeStatisticsDataLocked(uint64_t addr)
         return false;
     }
     FindAndUpdateFreeStatisticsLocked(addrIter->second.stackId, addrIter->second.mallocSize);
-    if (hookConfig_.arkui_mem_trace_enable()) {
-        auto recordIter = recordStatisticsMap_.find(addrIter->second.stackId);
-        if (recordIter != recordStatisticsMap_.end()) {
-            auto& addrs = recordIter->second.addrs;
-            addrs.erase(std::remove(addrs.begin(), addrs.end(), addr), addrs.end());
-        }
-    } else {
-        auto recordIter = simplifiedRecordStatisticsMap_.find(addrIter->second.stackId);
-        if (recordIter != simplifiedRecordStatisticsMap_.end()) {
-            auto& addrs = recordIter->second.addrs;
-            addrs.erase(std::remove(addrs.begin(), addrs.end(), addr), addrs.end());
-        }
-    }
+    RemoveFreeAddrFromStatisticsLocked(addr, addrIter->second.stackId);
     allocAddrMap_.erase(addr);
     auto addrSetIter = addrSet_.find(addr);
     if (addrSetIter != addrSet_.end()) {
@@ -2062,9 +2076,7 @@ void StackPreprocess::UpdateAllocStatistics(
         if constexpr (std::is_same_v<T, RecordStatistic>) {
             record.ts = rawStack->stackContext->ts;
         }
-        if (record.type == RecordStatisticsEvent::MALLOC ||
-            record.type == RecordStatisticsEvent::ARK_GLOBAL_HANDLE ||
-            record.type == RecordStatisticsEvent::ARK_LOCAL_HANDLE) {
+        if (NeedCollectAddr(record.type)) {
             record.addrs.push_back(hookRecord->GetAddr());
         }
         allocAddrMap_[hookRecord->GetAddr()] =
@@ -2105,6 +2117,13 @@ bool StackPreprocess::ResolveTagType(const std::string& tagName, RecordStatistic
     return false;
 }
 
+bool StackPreprocess::NeedCollectAddr(RecordStatisticsEvent::MemoryType type)
+{
+    return type == RecordStatisticsEvent::MALLOC ||
+           type == RecordStatisticsEvent::ARK_GLOBAL_HANDLE ||
+           type == RecordStatisticsEvent::ARK_LOCAL_HANDLE;
+}
+
 template <typename T>
 void StackPreprocess::FillRecordFromType(T& record, const HookRecordPtr& hookRecord)
 {
@@ -2134,8 +2153,7 @@ void StackPreprocess::FillRecordFromType(T& record, const HookRecordPtr& hookRec
                 record.SetNodeId(rawStack->stackContext->nodeId);
             }
             record.tagId = rawStack->stackContext->tagId;
-            if (memType == RecordStatisticsEvent::ARK_GLOBAL_HANDLE ||
-                memType == RecordStatisticsEvent::ARK_LOCAL_HANDLE) {
+            if (NeedCollectAddr(memType)) {
                 record.addrs.push_back(hookRecord->GetAddr());
             }
             break;
