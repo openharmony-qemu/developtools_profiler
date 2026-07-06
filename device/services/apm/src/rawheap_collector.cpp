@@ -29,6 +29,8 @@
 namespace {
 const std::string SRC_RAWHEAP_FILE_DIR = "/data/log/faultlog/temp";
 const std::string DEST_RAWHEAP_FILE_DIR = "/data/local/tmp";
+constexpr int WAIT_FOR_RAWHEP_FILE_READY_TOTAL = 5;
+constexpr int WAIT_FOR_RAWHEP_FILE_WRITE_DONE = 5;
 }
 
 bool RawheapCollector::Collect(std::shared_ptr<IDataStorage> storage)
@@ -59,14 +61,14 @@ bool RawheapCollector::Collect(std::shared_ptr<IDataStorage> storage)
     int waitSeconds = 0;
     std::string file;
     std::string prefix = "jsheap-" + std::to_string(pid_) + "-" + std::to_string(tid_) + "-";
-    while (waitSeconds < 5 && file.empty()) {
+    while (waitSeconds < WAIT_FOR_RAWHEP_FILE_READY_TOTAL && file.empty()) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         file = COMMON::GetLatestFileStartWithPrefix(SRC_RAWHEAP_FILE_DIR, prefix);
         waitSeconds++;
     }
     CHECK_TRUE(!file.empty(), false, "Dump rawheap file fail");
     PROFILER_LOG_DEBUG(LOG_CORE,  "Dump rawheap file succless, pid: %u", pid_);
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(std::chrono::seconds(WAIT_FOR_RAWHEP_FILE_WRITE_DONE));
     std::string srcPath = SRC_RAWHEAP_FILE_DIR + "/" + file;
     std::string destPath = DEST_RAWHEAP_FILE_DIR + "/" + file + ".rawheap";
     CHECK_TRUE(COMMON::CopyFileFastFromPath(srcPath, destPath), false, "copy rawheap file fail");

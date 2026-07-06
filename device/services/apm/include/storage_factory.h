@@ -22,7 +22,7 @@
 
 #include "i_data_storage.h"
 
-class StorageFactory{
+class StorageFactory {
 public:
     static std::shared_ptr<IDataStorage> Create(std::string &destination);
 
