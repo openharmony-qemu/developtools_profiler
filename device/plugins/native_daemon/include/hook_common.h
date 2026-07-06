@@ -218,6 +218,16 @@ inline bool ShouldSkipRecord(const BaseStackRawData* data,
     return iter == liveData.end() || TsLess(data->ts, iter->second);
 }
 
+inline bool IsAllocRecord(const BaseStackRawData* data)
+{
+    return data->type == MALLOC_MSG || data->type == MEMORY_USING_MSG;
+}
+
+inline bool IsFreeRecord(const BaseStackRawData* data)
+{
+    return data->type == FREE_MSG || data->type == MEMORY_UNUSING_MSG;
+}
+
 struct alignas(8) AsyncStackData : public BaseStackRawData { // 8 is 8 bit
     uint64_t syncStackId;
     uint64_t asyncStackId;
