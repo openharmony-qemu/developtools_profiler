@@ -55,9 +55,9 @@ inline void ApplyLiveDataByType(const BaseStackRawData* data,
     std::unordered_map<void*, struct timespec>::iterator iter,
     std::unordered_map<void*, struct timespec>& liveData)
 {
-    if (data->type == MEMORY_USING_MSG) {
+    if (IsAllocRecord(data)) {
         iter->second = data->ts;
-    } else if (data->type == MEMORY_UNUSING_MSG) {
+    } else if (IsFreeRecord(data)) {
         liveData.erase(iter);
     }
 }
@@ -67,7 +67,7 @@ inline void UpdateLiveData(const BaseStackRawData* data,
 {
     auto iter = liveData.find(data->addr);
     if (iter == liveData.end()) {
-        if (data->type == MEMORY_USING_MSG) {
+        if (IsAllocRecord(data)) {
             liveData[data->addr] = data->ts;
         }
         return;
@@ -1711,13 +1711,13 @@ bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& 
         totalRecord_++;
         if (shouldSkipGlobalFreed_) {
             auto* tmpRawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
-            if (IsArkGlobalHandleRecord(tmpRawData) && ShouldSkipRecord(tmpRawData, validLiveData_)) {
+            if ((IsAllocRecord(tmpRawData) || IsFreeRecord(tmpRawData)) &&
+                ShouldSkipRecord(tmpRawData, validLiveData_)) {
                 offset += totalSize;
                 skipRecord_++;
                 continue;
             }
         }
-
         if (!TakeDataHandler(hookCtx, hookRecord, rawStack, dataPtr, totalSize)) {
             PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer TakeDataHandler failed, skip current record");
             offset += totalSize;
@@ -1758,7 +1758,7 @@ bool HookManager::RefreshValidLiveDataFromBuffer(uint8_t* buffer, uint32_t total
 
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + offset);
         auto* rawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
-        if (IsArkGlobalHandleRecord(rawData)) {
+        if (IsAllocRecord(rawData) || IsFreeRecord(rawData)) {
             UpdateLiveData(rawData, validLiveData_);
         }
         offset += totalSize;

@@ -746,4 +746,41 @@ HWTEST_F(HookManagerMemLeakTest, GetClientConfig_discardDestoryedTraces, TestSiz
     hookManager_->GetClientConfig(clientConfig);
     EXPECT_TRUE(clientConfig.discardDestoryedTraces);
 }
+
+/*
+ * @tc.name: RefreshValidLiveDataFromFile_DiscardMallocFreed
+ * @tc.desc: test RefreshValidLiveDataFromFile builds validLiveData_ where malloc matched by free is removed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, RefreshValidLiveDataFromFile_DiscardMallocFreed, TestSize.Level0)
+{
+    char path[] = "/data/local/tmp/test_malloc_dedup_XXXXXX";
+    int fd = mkstemp(path);
+    ASSERT_GE(fd, 0);
+    unlink(path);
+
+    BaseStackRawData mallocRec{};
+    mallocRec.type = MALLOC_MSG;
+    mallocRec.addr = reinterpret_cast<void*>(0x1234);
+    mallocRec.ts = {1, 0};
+    BaseStackRawData freeRec{};
+    freeRec.type = FREE_MSG;
+    freeRec.addr = reinterpret_cast<void*>(0x1234);
+    freeRec.ts = {2, 0};
+
+    uint32_t mallocSize = sizeof(BaseStackRawData);
+    ASSERT_TRUE(write(fd, &mallocSize, sizeof(uint32_t)) == sizeof(uint32_t));
+    ASSERT_TRUE(write(fd, &mallocRec, sizeof(BaseStackRawData)) == sizeof(BaseStackRawData));
+    uint32_t freeSize = sizeof(BaseStackRawData);
+    ASSERT_TRUE(write(fd, &freeSize, sizeof(uint32_t)) == sizeof(uint32_t));
+    ASSERT_TRUE(write(fd, &freeRec, sizeof(BaseStackRawData)) == sizeof(BaseStackRawData));
+
+    hookManager_->shouldSkipGlobalFreed_ = true;
+    hookManager_->validLiveData_.clear();
+    hookManager_->RefreshValidLiveDataFromFile(fd);
+    close(fd);
+
+    EXPECT_EQ(hookManager_->validLiveData_.count(reinterpret_cast<void*>(0x1234)), 0u);
+    EXPECT_TRUE(ShouldSkipRecord(&mallocRec, hookManager_->validLiveData_));
+}
 } // namespace
