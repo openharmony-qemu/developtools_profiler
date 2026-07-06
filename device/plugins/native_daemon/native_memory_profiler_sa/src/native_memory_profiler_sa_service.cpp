@@ -790,8 +790,6 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     hook->SetGwpFd(config->gwpAsanHoldTime_ > 0 ? fd : 0);
     hook->SetMemLeakFd(config->nativeOrphanSnapshotsEnable_ ? static_cast<int>(fd) : -1);
     hook->SetSaMode(true);
-    // Force enable discard_destoryed_traces for all SA-driven entry points (sa_client/hidebug/Start inner API).
-    config->discardDestoryedTraces_ = true;
     hook->SetHookConfig(config);
     hook->SetSaServiceConfig(true, config->hookstandalone_);
     if (config->pid_ > 0) {
