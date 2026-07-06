@@ -943,4 +943,39 @@ HWTEST_F(HookManagerTest, FormatGwpAsanOutputEmptyFrameMap, TestSize.Level0)
         "size:256 bytes", "alloc_time:1000 ms"
     }));
 }
+
+/*
+ * @tc.name: ScanFileForLiveData_ReadError
+ * @tc.desc: Test ScanFileForLiveData with invalid fd to cover ProcessFileChunk error path
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ScanFileForLiveData_ReadError, TestSize.Level0)
+{
+    HookManager hookManager;
+    uint64_t readfileSize = 0;
+    hookManager.ScanFileForLiveData(-1, readfileSize);
+}
+
+/*
+ * @tc.name: ScanFileForLiveData_InvalidData
+ * @tc.desc: Test ScanFileForLiveData with invalid data size to cover ProcessFileChunk parse path
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ScanFileForLiveData_InvalidData, TestSize.Level0)
+{
+    HookManager hookManager;
+    uint64_t readfileSize = 0;
+
+    char path[] = "/tmp/test_hook_manager_XXXXXX";
+    int fd = mkstemp(path);
+    ASSERT_GE(fd, 0);
+    unlink(path);
+
+    uint32_t size = 0;
+    write(fd, &size, sizeof(uint32_t));
+    lseek(fd, 0, SEEK_SET);
+
+    hookManager.ScanFileForLiveData(fd, readfileSize);
+    close(fd);
+}
 } // namespace

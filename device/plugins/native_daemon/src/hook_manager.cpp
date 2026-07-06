@@ -51,6 +51,32 @@
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
+inline void ApplyLiveDataByType(const BaseStackRawData* data,
+    std::unordered_map<void*, struct timespec>::iterator iter,
+    std::unordered_map<void*, struct timespec>& liveData)
+{
+    if (data->type == MEMORY_USING_MSG) {
+        iter->second = data->ts;
+    } else if (data->type == MEMORY_UNUSING_MSG) {
+        liveData.erase(iter);
+    }
+}
+
+inline void UpdateLiveData(const BaseStackRawData* data,
+    std::unordered_map<void*, struct timespec>& liveData)
+{
+    auto iter = liveData.find(data->addr);
+    if (iter == liveData.end()) {
+        if (data->type == MEMORY_USING_MSG) {
+            liveData[data->addr] = data->ts;
+        }
+        return;
+    }
+    if (TsLess(iter->second, data->ts)) {
+        ApplyLiveDataByType(data, iter, liveData);
+    }
+}
+
 constexpr int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
 constexpr uint32_t PAGE_BYTES = 4096;
 constexpr uint32_t SHMEM_DRAIN_POLL_MS = 10;
@@ -81,6 +107,11 @@ constexpr uint64_t ALL_NESTED_MASK_TYPE = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFR
 const std::string MEM_LEAK_FILE_PERFIX = "memleak-native-orphansnapshot-";
 const std::string MEM_LEAK_FILE_SUFFIX = ".txt";
 const std::string MEM_LEAK_FILE_PATH = "/data/local/tmp/";
+
+// Constant definitions
+constexpr uint32_t VALID_LIVE_DATA_RESERVE_COUNT = 9 * 1024 * 1024;
+constexpr uint32_t FILE_CACHE_READ_BUFFER_SIZE = 4 * 1024 * 1024;
+
 #ifndef __aarch64__
 constexpr uint32_t MAX_MAP_BUFFER_SIZE = 2147479552;
 #endif
@@ -541,6 +572,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.asyncNestingDepth = hookConfig_.async_nesting_depth();
     clientConfig.asyncTaskStackDepth = hookConfig_.async_task_stack_depth();
     clientConfig.arkuiMemTraceEnable = hookConfig_.arkui_mem_trace_enable();
+    clientConfig.discardDestoryedTraces = hookConfig_.discard_destoryed_traces();
     GetClientConfigExt(clientConfig);
 }
 
@@ -579,6 +611,15 @@ bool HookManager::HandleFileCacheHookContext(const std::shared_ptr<HookManagerCt
     ctx->readyFilePoller->Start();
     ctx->cacheFileStopReceived = false;
     ctx->cacheFileStopRequested = false;
+
+    shouldSkipGlobalFreed_ = hookConfig_.discard_destoryed_traces();
+    if (shouldSkipGlobalFreed_) {
+        totalRecord_ = 0;
+        skipRecord_ = 0;
+        validLiveData_.clear();
+        validLiveData_.reserve(VALID_LIVE_DATA_RESERVE_COUNT);
+    }
+
     return true;
 }
 
@@ -638,7 +679,12 @@ void HookManager::HandleReadyCacheFile(const std::shared_ptr<HookManagerCtx>& ct
     }
     int frontFd = ctx->GetFdQueueFront();
     ctx->cacheFileParsing = true;
+    if (shouldSkipGlobalFreed_) {
+        validLiveData_.clear();
+        RefreshValidLiveDataFromFile(frontFd);
+    }
     if (noDataQueue_) {
+        ctx->stackPreprocess->SetValidLiveData(shouldSkipGlobalFreed_ ? &validLiveData_ : nullptr);
         ctx->stackPreprocess->TakeResultsFromCacheFile(frontFd);
     } else {
         ReadFromCacheFile(ctx, frontFd);
@@ -1322,9 +1368,10 @@ void HookManager::HookManagerCtx::ProcessPendingCacheFdOnDisconnect()
 
     for (auto& [index, fd] : pendingCacheFds) {
         if (fd >= 0) {
-            close(fd);
             PROFILER_LOG_INFO(LOG_CORE,
                 "ProcessPendingCacheFdOnDisconnect: closed pending cache fd %d (index %u)", fd, index);
+            close(fd);
+            fd = -1;
         }
     }
     pendingCacheFds.clear();
@@ -1660,6 +1707,17 @@ bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& 
         std::shared_ptr<HookRecord> hookRecord = nullptr;
         std::shared_ptr<RawStack> rawStack = nullptr;
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + offset);
+
+        totalRecord_++;
+        if (shouldSkipGlobalFreed_) {
+            auto* tmpRawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
+            if (IsArkGlobalHandleRecord(tmpRawData) && ShouldSkipRecord(tmpRawData, validLiveData_)) {
+                offset += totalSize;
+                skipRecord_++;
+                continue;
+            }
+        }
+
         if (!TakeDataHandler(hookCtx, hookRecord, rawStack, dataPtr, totalSize)) {
             PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer TakeDataHandler failed, skip current record");
             offset += totalSize;
@@ -1675,6 +1733,118 @@ bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& 
     return true;
 }
 
+bool HookManager::RefreshValidLiveDataFromBuffer(uint8_t* buffer, uint32_t totalAvail,
+                                                 uint32_t& offset, uint64_t& fileSize)
+{
+    while (offset + sizeof(uint32_t) <= totalAvail) {
+        uint32_t totalSize = 0;
+        errno_t ret = memcpy_s(&totalSize, sizeof(uint32_t), buffer + offset, sizeof(uint32_t));
+        if (ret != EOK) {
+            PROFILER_LOG_ERROR(LOG_CORE, "RefreshValidLiveDataFromBuffer memcpy_s failed, ret=%d", ret);
+            return false;
+        }
+
+        if (totalSize == 0 || totalSize > DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES) {
+            PROFILER_LOG_ERROR(LOG_CORE, "RefreshValidLiveDataFromBuffer invalid totalSize=%u", totalSize);
+            return false;
+        }
+
+        if (offset + sizeof(uint32_t) + totalSize > totalAvail) {
+            break;
+        }
+
+        offset += sizeof(uint32_t);
+        fileSize += sizeof(uint32_t) + totalSize;
+
+        const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + offset);
+        auto* rawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
+        if (IsArkGlobalHandleRecord(rawData)) {
+            UpdateLiveData(rawData, validLiveData_);
+        }
+        offset += totalSize;
+    }
+    return true;
+}
+
+uint32_t HookManager::HandleRemainData(uint8_t* buffer, uint32_t totalAvail, uint32_t offset,
+                                       int fd, uint64_t& readfileSize)
+{
+    uint32_t remain = totalAvail - offset;
+    if (remain > 0) {
+        if (offset == 0) {
+            uint32_t oversizeRecord = 0;
+            if (memcpy_s(&oversizeRecord, sizeof(uint32_t), buffer,
+                         sizeof(uint32_t)) != EOK) {
+                return static_cast<uint32_t>(-1);
+            }
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "ScanFileForLiveData record too large, size=%u, skipping",
+                              oversizeRecord);
+            off_t skipBytes = static_cast<off_t>(oversizeRecord) + sizeof(uint32_t) - remain;
+            if (lseek(fd, skipBytes, SEEK_CUR) < 0) return static_cast<uint32_t>(-1);
+            readfileSize += sizeof(uint32_t) + oversizeRecord;
+            return 0;
+        }
+        if (memmove_s(buffer, FILE_CACHE_READ_BUFFER_SIZE, buffer + offset,
+                      remain) != EOK) {
+            return static_cast<uint32_t>(-1);
+        }
+    }
+    return remain;
+}
+
+void HookManager::RefreshValidLiveDataFromFile(int fd)
+{
+    if (fd < 0) {
+        PROFILER_LOG_INFO(LOG_CORE, "RefreshValidLiveDataFromFile parse all cache file done.");
+        return;
+    }
+    uint64_t readfileSize = 0;
+    lseek(fd, 0, SEEK_SET);
+    ScanFileForLiveData(fd, readfileSize);
+}
+
+bool HookManager::ProcessFileChunk(int fd, uint8_t* buffer, uint32_t& remainSize, uint64_t& readfileSize)
+{
+    ssize_t bytesRead = read(fd, buffer + remainSize, FILE_CACHE_READ_BUFFER_SIZE - remainSize);
+    if (bytesRead < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ScanFileForLiveData read failed errno=%d", errno);
+        return false;
+    }
+
+    if (bytesRead == 0) {
+        if (remainSize > 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ScanFileForLiveData incomplete record, size=%u", remainSize);
+        }
+        return false;
+    }
+
+    uint32_t totalAvail = remainSize + static_cast<uint32_t>(bytesRead);
+    uint32_t offset = 0;
+    if (!RefreshValidLiveDataFromBuffer(buffer, totalAvail, offset, readfileSize)) {
+        return false;
+    }
+
+    uint32_t newRemain = HandleRemainData(buffer, totalAvail, offset, fd, readfileSize);
+    if (newRemain == static_cast<uint32_t>(-1)) {
+        return false;
+    }
+
+    remainSize = newRemain;
+    return true;
+}
+
+void HookManager::ScanFileForLiveData(int fd, uint64_t& readfileSize)
+{
+    auto readBuffer = std::make_unique<uint8_t[]>(FILE_CACHE_READ_BUFFER_SIZE);
+    uint32_t remainSize = 0;
+
+    bool keepReading = true;
+    while (keepReading) {
+        keepReading = ProcessFileChunk(fd, readBuffer.get(), remainSize, readfileSize);
+    }
+}
+
 void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd)
 {
     if (fd < 0) {
@@ -1688,6 +1858,8 @@ void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookC
     uint64_t readfileSize = 0;
     bool ret = false;
     bool hasError = false;
+    totalRecord_ = 0;
+    skipRecord_ = 0;
     lseek(fd, 0, SEEK_SET);
 
     while (!hasError) {
@@ -1747,6 +1919,9 @@ void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookC
     FlushPendingRawStackArray(hookCtx);
     close(fd);
     PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile [%" PRIu64 "]completed, ret %d.", readfileSize, ret);
+    PROFILER_LOG_INFO(LOG_CORE, "total record %zu, skip record %zu, ratio %f,",
+        totalRecord_, skipRecord_,
+        static_cast<double>(skipRecord_) / static_cast<double>(totalRecord_));
 }
 
 bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
@@ -2001,6 +2176,7 @@ void HookManager::SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaC
     hookConfig_.set_async_nesting_depth(config->asyncNestingDepth_);
     hookConfig_.set_async_task_stack_depth(config->asyncTaskStackDepth_);
     hookConfig_.set_arkui_mem_trace_enable(config->arkuiMemTraceEnable_);
+    hookConfig_.set_discard_destoryed_traces(config->discardDestoryedTraces_);
     SetMemLeakFormat(config->memLeakFormat_);
     memLeakLimit_ = config->memLeakLimit_;
     largestSize_ = config->largestSize_;
