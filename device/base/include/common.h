@@ -83,9 +83,11 @@ std::string GetBundleNameByPid(int32_t pid);
 std::string GetFullTracePath(pid_t uid, pid_t pid, const std::string& processName, const std::string& filename);
 double GetFreeRomPercent(const std::string path = DEFAULT_RW_DIR);
 bool CopyFileFast(uint32_t srcFd, const std::string& destPath);
+bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPath);
 bool CleanOldenFiles(const std::string& path);
 bool CleanCmdOldenTraceFiles(const std::string& path);
 bool CreateFile(const std::string& filePath);
+std::string GetLatestFileStartWithPrefix(const std::string &diretory, const std::string &prefix);
 
 class SpinLock {
 public:

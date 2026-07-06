@@ -30,7 +30,10 @@ config("profiler_service_config") {
 }
 
 ohos_source_set("profiler_service") {
-  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
+  configs = [ 
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config",
+    "${OHOS_PROFILER_DIR}/device/services/apm:profiler_apm_config",
+  ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   sources = [
@@ -87,13 +90,17 @@ ohos_prebuilt_etc("hiprofiler.para.dac") {
 }
 
 ohos_executable("hiprofilerd") {
-  configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
+  configs = [ 
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config",
+    "${OHOS_PROFILER_DIR}/device/services/apm:profiler_apm_config",
+  ]
   sources = [ "src/main.cpp" ]
   deps = [
     ":hiprofiler.para",
     ":hiprofiler.para.dac",
     ":hiprofilerd.cfg",
     ":profiler_service",
+    "../apm:profiler_apm",
     "../../base:libhiprofiler_base",
     "../plugin_service:hiprofiler_plugin_service",
   ]
@@ -109,6 +116,11 @@ ohos_executable("hiprofilerd") {
       "grpc:grpcxx",
       "openssl:libcrypto_shared",
       "protobuf:protobuf_lite",
+      "safwk:system_ability_fwk",
+      "ipc:ipc_core",
+      "samgr:samgr_proxy",
+      "ability_runtime:app_manager",
+      "zlib:libz",
     ]
   }
   install_enable = true
