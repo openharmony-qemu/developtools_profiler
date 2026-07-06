@@ -966,7 +966,7 @@ HWTEST_F(HookManagerTest, ScanFileForLiveData_InvalidData, TestSize.Level0)
     HookManager hookManager;
     uint64_t readfileSize = 0;
 
-    char path[] = "/tmp/test_hook_manager_XXXXXX";
+    char path[] = "/data/local/tmp/test_hook_manager_XXXXXX";
     int fd = mkstemp(path);
     ASSERT_GE(fd, 0);
     unlink(path);
