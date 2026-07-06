@@ -28,7 +28,7 @@
 
 namespace {
 const std::string SRC_RAWHEAP_FILE_DIR = "/data/log/faultlog/temp";
-const std::string DEST_RAWHEAP_FILE_DIR = "/data/log/faultlog/temp";
+const std::string DEST_RAWHEAP_FILE_DIR = "/data/local/tmp";
 }
 
 bool RawheapCollector::Collect(std::shared_ptr<IDataStorage> storage)

@@ -31,13 +31,14 @@ ZipStorage::ZipStorage(std::string zipFilePath)
 ZipStorage::~ZipStorage()
 {
     if (zipFile_ != nullptr) {
-        zipCloseFileInZip(zipFile_);
+        zipClose(zipFile_, NULL);
         zipFile_ = nullptr;
     }
 }
 
 bool ZipStorage::AddFile(const std::string &filepath)
 {
+    PROFILER_LOG_DEBUG(LOG_CORE,  "Start storage file:%s", filepath.c_str());
     if (zipFile_ == nullptr) {
         zipFile_ = zipOpen64(zipFilePath_.c_str(), APPEND_STATUS_CREATE);
         if (zipFile_ == nullptr) {
@@ -64,6 +65,7 @@ bool ZipStorage::AddFile(const std::string &filepath)
     if (fs::file_size(realFilePath) > 0) {
         result = WriteFileToZip(file);
     }
+    zipCloseFileInZip(zipFile_);
     file.close();
     return result;
 }
@@ -79,7 +81,8 @@ bool ZipStorage::WriteFileToZip(std::ifstream &file)
         }
         auto bytesRead = file.gcount();
         if (bytesRead < 0) {
-            PROFILER_LOG_ERROR(LOG_CORE,  "read file bytes error,bytesRead:%d", bytesRead);
+            long size = bytesRead;
+            PROFILER_LOG_ERROR(LOG_CORE,  "read file bytes error,bytesRead:%ld", size);
             return false;
         }
         if (bytesRead == 0) {

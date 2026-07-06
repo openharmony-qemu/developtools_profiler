@@ -39,7 +39,7 @@ bool ApmCollectMgr::Collect()
 {
     CHECK_TRUE(collectors_.size() > 0, false, "none collector exists");
     for (auto& collector : collectors_) {
-        if (!collector || collector->Collect(storage_)) {
+        if (!collector || !collector->Collect(storage_)) {
             PROFILER_LOG_ERROR(LOG_CORE, "collector collect fail");
             return false;
         }

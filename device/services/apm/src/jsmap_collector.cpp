@@ -28,7 +28,7 @@
 
 namespace {
 const std::string SRC_JSMAP_FILE_DIR = "/data/log/faultlog/temp";
-const std::string DEST_JSMAP_FILE_DIR = "/data/log/faultlog/temp";
+const std::string DEST_JSMAP_FILE_DIR = "/data/local/tmp";
 }
 
 bool JsmapCollector::Collect(std::shared_ptr<IDataStorage> storage)
@@ -52,7 +52,7 @@ bool JsmapCollector::Collect(std::shared_ptr<IDataStorage> storage)
 
     int waitSeconds = 0;
     std::string file;
-    std::string prefix = "js_map-" + std::to_string(pid_) + "-" + std::to_string(tid_) + "-";
+    std::string prefix = "js_map-" + std::to_string(pid_) + "-";
     while (waitSeconds < 5 && file.empty()) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         file = COMMON::GetLatestFileStartWithPrefix(SRC_JSMAP_FILE_DIR, prefix);
