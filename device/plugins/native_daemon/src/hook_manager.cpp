@@ -855,6 +855,7 @@ void HookManager::StopTargetProcess(const std::shared_ptr<HookManagerCtx>& item)
     PROFILER_LOG_INFO(LOG_CORE, "StopTargetProcess: begin stop pid %d, fileCacheMode %d", pid,
         hookConfig_.use_file_cache_mode());
     StopSignalProcess(pid);
+    UpdateFreezeExcludedPid(false, static_cast<int32_t>(item->pid), getpid());
     if (hookConfig_.use_file_cache_mode()) {
         StopFileCacheProcess(item);
         return;
@@ -862,7 +863,6 @@ void HookManager::StopTargetProcess(const std::shared_ptr<HookManagerCtx>& item)
     if (!SendStopCommandIfConnected(pid)) {
         PrepareImmediateStop(item);
     }
-    UpdateFreezeExcludedPid(false, static_cast<int32_t>(item->pid), getpid());
     PROFILER_LOG_INFO(LOG_CORE, "StopTargetProcess: finish stop dispatch pid %d", pid);
 }
 
