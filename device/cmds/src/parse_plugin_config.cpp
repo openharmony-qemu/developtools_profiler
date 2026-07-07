@@ -35,6 +35,7 @@
 
 namespace {
 constexpr int REMAINDER = 2;
+const std::string TAG_RES_COMPOSITE_HEAP = "RES_COMPOSITE_HEAP";
 }
 
 ParsePluginConfig::ParsePluginConfig()
@@ -288,7 +289,8 @@ bool ParsePluginConfig::CheckRestraceTag(std::unique_ptr<ForStandard::NativeHook
         TAG_RES_GPU_CL_IMAGE,     TAG_RES_GPU_CL_BUFFER, TAG_RES_GPU_ALL,          TAG_RES_DMABUF,
         TAG_RES_ARKTS_HEAP_MASK,  TAG_RES_JS_HEAP_MASK,  TAG_RES_KOTLIN_HEAP_MASK, TAG_RES_SO_MASK,
         TAG_RES_ASHMEM_MASK,      TAG_RES_DMABUF_MASK,   TAG_RES_ARK_GLOBAL_HANDLE, TAG_RES_ARKTS_STATIC_HEAP,
-        TAG_RES_ARK_LOCAL_HANDLE, TAG_RES_VMA_ARKWEB, TAG_RES_DART_HEAP, TAG_RES_RN_HERMES_HEAP};
+        TAG_RES_ARK_LOCAL_HANDLE, TAG_RES_VMA_ARKWEB, TAG_RES_DART_HEAP, TAG_RES_RN_HERMES_HEAP,
+        TAG_RES_COMPOSITE_HEAP};
     for (int i = 0; i < hookConfig->restrace_tag_size(); ++i) {
         if (std::find(resTagVect.begin(), resTagVect.end(), hookConfig->restrace_tag(i)) == resTagVect.end()) {
             printf("invalid restrace tag: %s\n", hookConfig->restrace_tag(i).c_str());

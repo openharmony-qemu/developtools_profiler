@@ -65,6 +65,7 @@ constexpr int DEFAULT_KEEP_ALIVE_DELTA = 3000;
 constexpr uint64_t CHECK_HEARTBEAT_INTERVAL = 500;
 constexpr long BYTE_PER_KB = 1024;
 const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
+const std::string TAG_RES_COMPOSITE_HEAP = "RES_COMPOSITE_HEAP";
 #ifdef  PERFORMANCE_DEBUG
 constexpr uint64_t S_TO_NS = 1000 * 1000 * 1000;
 #endif
@@ -249,6 +250,17 @@ bool ProfilerService::SessionContext::CollectApm()
     int pidValue = 0;
     if (processName.empty()) {
         PROFILER_LOG_DEBUG(LOG_CORE, "no nativehook plugin");
+        return false;
+    }
+    bool apmEnabled = false;
+    for (const auto& tag: hookConfig.restrace_tag()) {
+        if (tag == TAG_RES_COMPOSITE_HEAP) {
+            apmEnabled = true;
+            break;
+        }
+    }
+    if (!apmEnabled) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "apm tag not enabled");
         return false;
     }
     CHECK_TRUE(COMMON::IsProcessExist(processName, pidValue), false, "process %s not exist", processName.c_str());
