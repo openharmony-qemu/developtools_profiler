@@ -272,10 +272,6 @@ bool ProfilerService::SessionContext::CollectApm()
     } else {
         pathDir = ".";
     }
-#ifdef PERFORMANCE_DEBUG
-    struct timespec start = {};
-    clock_gettime(CLOCK_REALTIME, &start);
-#endif
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
     ApmCollectMgr apmMgr(pathDir + "/hiprofiler_data_" + std::to_string(ms) + ".zip");
@@ -283,14 +279,7 @@ bool ProfilerService::SessionContext::CollectApm()
     apmMgr.RegisterCollector(std::static_pointer_cast<IDataCollector>(std::make_shared<JsmapCollector>(pid, pid)));
     apmMgr.RegisterCollector(
         std::static_pointer_cast<IDataCollector>(std::make_shared<TraceCollector>(sessionConfig.result_file())));
-    bool result = apmMgr.Collect();
-#ifdef PERFORMANCE_DEBUG
-    struct timespec end = {};
-    clock_gettime(CLOCK_REALTIME, &end);
-    uint64_t costTime = (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
-    PROFILER_LOG_INFO(LOG_CORE, "Collect cost time  %" PRIu64 " ns", costTime);
-#endif
-    return result;
+    return apmMgr.Collect();
 }
 
 namespace {
