@@ -62,6 +62,7 @@ namespace {
 constexpr int MIN_SESSION_TIMEOUT_MS = 1000;
 constexpr int MAX_SESSION_TIMEOUT_MS = 1000 * 3600;
 constexpr int DEFAULT_KEEP_ALIVE_DELTA = 3000;
+constexpr int PLUGIN_SESSION_STOP_TIMEOUT_SECONDS = 60;
 constexpr uint64_t CHECK_HEARTBEAT_INTERVAL = 500;
 constexpr long BYTE_PER_KB = 1024;
 const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
@@ -196,7 +197,7 @@ bool ProfilerService::SessionContext::StopPluginSessions(bool timerTask)
             } else {
                 CHECK_NOTNULL(stopSem, false, "stopSem is NULL");
                 PROFILER_LOG_DEBUG(LOG_CORE, "PluginSessions is stopping, waitting stop done");
-                bool result = stopSem->TimedWait(60);
+                bool result = stopSem->TimedWait(PLUGIN_SESSION_STOP_TIMEOUT_SECONDS);
                 PROFILER_LOG_DEBUG(LOG_CORE, "PluginSessions stoped, result:%d", result);
                 return result;
             }

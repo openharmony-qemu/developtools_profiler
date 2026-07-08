@@ -1,4 +1,4 @@
-# Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.
+# Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -45,11 +45,8 @@ ohos_source_set("profiler_apm") {
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
-    #"hisysevent:libhisysevent",
-    #"init:libbegetutil",
     "safwk:system_ability_fwk",
     "ipc:ipc_core",
-    #"os_account:os_account_innerkits",
     "samgr:samgr_proxy",
     "ability_runtime:app_manager",
     "zlib:libz",
