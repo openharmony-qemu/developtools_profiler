@@ -64,10 +64,10 @@ ohos_source_set("profiler_service") {
     "openssl:libcrypto_shared",
     "protobuf:protobuf_lite",
     "safwk:system_ability_fwk",
- 	  "ipc:ipc_core",
- 	  "samgr:samgr_proxy",
- 	  "ability_runtime:app_manager",
- 	  "zlib:libz",
+    "ipc:ipc_core",
+    "samgr:samgr_proxy",
+    "ability_runtime:app_manager",
+    "zlib:libz",
   ]
   defines = [ "OPENSSL_SUPPRESS_DEPRECATED" ]
   if (hiprofiler_sandbox_log_path_mapping) {
