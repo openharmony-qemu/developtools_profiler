@@ -48,10 +48,12 @@ ohos_source_set("profiler_service") {
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_proto",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hiperf_data:hiperf_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
+    "${OHOS_PROFILER_DIR}/device/services/apm:profiler_apm",
   ]
   public_configs = [
     ":profiler_service_config",
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
+    "${OHOS_PROFILER_DIR}/device/services/apm:profiler_apm_config",
   ]
   external_deps = [
     "abseil-cpp:absl_sync",
@@ -61,6 +63,11 @@ ohos_source_set("profiler_service") {
     "grpc:grpcxx",
     "openssl:libcrypto_shared",
     "protobuf:protobuf_lite",
+    "safwk:system_ability_fwk",
+ 	  "ipc:ipc_core",
+ 	  "samgr:samgr_proxy",
+ 	  "ability_runtime:app_manager",
+ 	  "zlib:libz",
   ]
   defines = [ "OPENSSL_SUPPRESS_DEPRECATED" ]
   if (hiprofiler_sandbox_log_path_mapping) {
