@@ -30,6 +30,7 @@
 namespace {
 constexpr uint32_t MAX_BUF_SIZE = 1024;
 constexpr int32_t TIME_BASE = 1000;
+constexpr int32_t WAIT_MONITOR_THREAD_RUN_SEC = 2;
 } //namespace
 
 FileMonitor::FileMonitor(const std::string& listenDir, FileFilter filter) : listenDir_(listenDir), filter_(filter)
@@ -100,6 +101,7 @@ bool FileMonitor::Init()
         return false;
     }
     thread_ = std::thread([this] { this->Run(); });
+    CHECK_TRUE(sem_->TimedWait(WAIT_MONITOR_THREAD_RUN_SEC), false, "wati thread run timeout");
     PROFILER_LOG_DEBUG(LOG_CORE, "init file monitor success");
     return true;
 }
@@ -109,6 +111,7 @@ void FileMonitor::Run()
     struct timeval time;
     pthread_setname_np(pthread_self(), "FileMonitor");
     running_.store(true);
+    sem_->Post();
     PROFILER_LOG_DEBUG(LOG_CORE, "file monitor running");
     while (running_.load()) {
         fd_set rFds;
@@ -145,7 +148,7 @@ bool FileMonitor::ProcessEvent()
         if (event->wd != wd_ || event->mask != IN_CLOSE_WRITE || !filter_(filename)) {
             continue;
         }
-        PROFILER_LOG_ERROR(LOG_CORE, "notify file write done:%s", event->name);
+        PROFILER_LOG_DEBUG(LOG_CORE, "notify file write done:%s", event->name);
         resultFile_ = event->name;
         sem_->Post();
         (void)memset_s(buffer, sizeof(buffer), 0, sizeof(buffer));
