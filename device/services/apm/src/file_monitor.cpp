@@ -83,7 +83,7 @@ std::string FileMonitor::GetResultFile(int32_t waitMs)
 bool FileMonitor::Init()
 {
     CHECK_TRUE(filter_, false, "invalid filter");
-    char realPath[PATH_MAX + 1] = {0};
+    char realPath[PATH_MAX] = {0};
     if (realpath(listenDir_.c_str(), realPath) == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "realpath(%s) failed, errno: %s", listenDir_.c_str(), strerror(errno));
         return false;
