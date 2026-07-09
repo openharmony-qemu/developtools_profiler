@@ -261,4 +261,25 @@ HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest007, 
     EXPECT_FALSE(NativeMemoryProfilerSaConfig::UnmarshallingExt(parcel, result));
 }
 
+/**
+ * @tc.name: NativeMemoryProfilerSaConfigTest008
+ * @tc.desc: bundleName_ serialization roundtrip
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest008, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    EXPECT_NE(config, nullptr);
+
+    config->bundleName_ = "test_bundle";
+    OHOS::Parcel parcel;
+    EXPECT_EQ(config->Marshalling(parcel), true);
+
+    std::shared_ptr<NativeMemoryProfilerSaConfig> result = std::make_shared<NativeMemoryProfilerSaConfig>();
+    EXPECT_NE(result, nullptr);
+    EXPECT_EQ(NativeMemoryProfilerSaConfig::Unmarshalling(parcel, result), true);
+    EXPECT_EQ(result->bundleName_, "test_bundle");
+}
+
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_TEST_H
