@@ -20,6 +20,8 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+#include <fstream>
+#include <ctime>
 #include "test_common.h"
 #include "init_param.h"
 #include "ipc_skeleton.h"
@@ -48,6 +50,17 @@ constexpr uint32_t TEST_SHARE_MEMORY_SIZE = 4096;
 constexpr uint32_t START_TYPE_API = 1;
 static AccessTokenID g_selfTokenId;
 static TEST_COMMON::MockNativeToken* g_mock = nullptr;
+const std::string TEST_INVALID_FILE_PATH = "/invalid/path/test_count_file";
+
+bool WriteFile(const std::string& filePath, const std::string& fileContent)
+{
+    std::ofstream ofs(filePath, std::ios::trunc);
+    if (!ofs.is_open()) {
+        return false;
+    }
+    ofs << fileContent;
+    return ofs.good();
+}
 
 std::shared_ptr<OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaConfig> MakeSaConfig()
 {
@@ -1240,5 +1253,166 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckTryBeginStopHook, TestSize.Leve
     service->EndStopHook(pid);
     EXPECT_TRUE(service->TryBeginStopHook(pid));
     service->EndStopHook(pid);
+}
+
+/**
+ * @tc.name: SaServiceReadQuotaFileTest001
+ * @tc.desc: quota file not exist -> empty records
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceReadQuotaFileTest001, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    const std::string dir = "/data/log/hiprofiler";
+    const std::string quotaFile = dir + "/profiling_rate_limits_quota";
+    ASSERT_EQ(system(("mkdir -p " + dir).c_str()), 0);
+    unlink(quotaFile.c_str());
+    std::unordered_map<std::string, QuotaRecord> records;
+    EXPECT_TRUE(NativeMemoryProfilerSaService::ReadQuotaFile(records));
+    EXPECT_TRUE(records.empty());
+}
+
+/**
+ * @tc.name: SaServiceReadQuotaFileTest002
+ * @tc.desc: multi-record parse
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceReadQuotaFileTest002, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    const std::string dir = "/data/log/hiprofiler";
+    const std::string quotaFile = dir + "/profiling_rate_limits_quota";
+    ASSERT_EQ(system(("mkdir -p " + dir).c_str()), 0);
+    std::string content = "bundleA 100 2\nbundleB 200 3\n";
+    EXPECT_TRUE(WriteFile(quotaFile, content));
+    std::unordered_map<std::string, QuotaRecord> records;
+    EXPECT_TRUE(NativeMemoryProfilerSaService::ReadQuotaFile(records));
+    EXPECT_EQ(records.size(), 2U);
+    EXPECT_EQ(records["bundleA"].count, 2);
+    EXPECT_EQ(records["bundleB"].count, 3);
+    unlink(quotaFile.c_str());
+}
+
+/**
+ * @tc.name: SaServiceReadQuotaFileTest003
+ * @tc.desc: empty file -> empty records
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceReadQuotaFileTest003, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    const std::string dir = "/data/log/hiprofiler";
+    const std::string quotaFile = dir + "/profiling_rate_limits_quota";
+    ASSERT_EQ(system(("mkdir -p " + dir).c_str()), 0);
+    EXPECT_TRUE(WriteFile(quotaFile, ""));
+    std::unordered_map<std::string, QuotaRecord> records;
+    EXPECT_TRUE(NativeMemoryProfilerSaService::ReadQuotaFile(records));
+    EXPECT_TRUE(records.empty());
+    unlink(quotaFile.c_str());
+}
+
+/**
+ * @tc.name: SaServiceWriteQuotaFileTest
+ * @tc.desc: write records and read back
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceWriteQuotaFileTest, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    const std::string dir = "/data/log/hiprofiler";
+    const std::string quotaFile = dir + "/profiling_rate_limits_quota";
+    ASSERT_EQ(system(("mkdir -p " + dir).c_str()), 0);
+    unlink(quotaFile.c_str());
+    std::unordered_map<std::string, QuotaRecord> records;
+    records["bundleX"] = {100, 5};
+    EXPECT_TRUE(NativeMemoryProfilerSaService::WriteQuotaFile(records));
+    std::unordered_map<std::string, QuotaRecord> result;
+    EXPECT_TRUE(NativeMemoryProfilerSaService::ReadQuotaFile(result));
+    EXPECT_EQ(result["bundleX"].count, 5);
+    unlink(quotaFile.c_str());
+}
+
+/**
+ * @tc.name: SaServiceGetMemProfilerUseCountTodayTest
+ * @tc.desc: query count from records
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceGetMemProfilerUseCountTodayTest, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::unordered_map<std::string, QuotaRecord> records;
+    records["ut_bundle"] = {static_cast<long long>(time(nullptr)), 2};
+    EXPECT_EQ(NativeMemoryProfilerSaService::GetMemProfilerUseCountToday(records, "ut_bundle"), 2);
+    EXPECT_EQ(NativeMemoryProfilerSaService::GetMemProfilerUseCountToday(records, "ut_nonexist"), 0);
+}
+
+/**
+ * @tc.name: SaServiceIsSeparateByMoreThan24HoursTest
+ * @tc.desc: boundary cases for 24h separation
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceIsSeparateByMoreThan24HoursTest, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    EXPECT_FALSE(NativeMemoryProfilerSaService::IsSeparateByMoreThan24Hours(-1, 0));
+    EXPECT_FALSE(NativeMemoryProfilerSaService::IsSeparateByMoreThan24Hours(100, 100 + 24 * 60 * 60));
+    EXPECT_TRUE(NativeMemoryProfilerSaService::IsSeparateByMoreThan24Hours(100 + 25 * 60 * 60, 100));
+}
+
+/**
+ * @tc.name: SaServiceCountFileUpdateAndRollback
+ * @tc.desc: update, rollback daily count in single quota file
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceCountFileUpdateAndRollback, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    const std::string dir = "/data/log/hiprofiler";
+    const std::string quotaFile = dir + "/profiling_rate_limits_quota";
+    ASSERT_EQ(system(("mkdir -p " + dir).c_str()), 0);
+    unlink(quotaFile.c_str());
+
+    std::unordered_map<std::string, QuotaRecord> records;
+    EXPECT_TRUE(NativeMemoryProfilerSaService::UpdateMemProfilerUserCount(records, "ut_rollback"));
+    EXPECT_EQ(NativeMemoryProfilerSaService::GetMemProfilerUseCountToday(records, "ut_rollback"), 1);
+    EXPECT_TRUE(NativeMemoryProfilerSaService::UpdateMemProfilerUserCount(records, "ut_rollback"));
+    EXPECT_EQ(NativeMemoryProfilerSaService::GetMemProfilerUseCountToday(records, "ut_rollback"), 2);
+    EXPECT_TRUE(NativeMemoryProfilerSaService::WriteQuotaFile(records));
+    EXPECT_TRUE(NativeMemoryProfilerSaService::RollbackMemProfilerUserCount(false, "ut_rollback"));
+    std::unordered_map<std::string, QuotaRecord> after;
+    EXPECT_TRUE(NativeMemoryProfilerSaService::ReadQuotaFile(after));
+    EXPECT_EQ(after["ut_rollback"].count, 1);
+
+    unlink(quotaFile.c_str());
+}
+
+/**
+ * @tc.name: SaServiceGetMemProfilerTotalUseCountTodayTest
+ * @tc.desc: total count accumulates 24h-valid records
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceGetMemProfilerTotalUseCountTodayTest, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::unordered_map<std::string, QuotaRecord> records;
+    long long now = static_cast<long long>(time(nullptr));
+    records["ut_total_a"] = {now, 1};
+    records["ut_total_b"] = {now, 2};
+    EXPECT_EQ(NativeMemoryProfilerSaService::GetMemProfilerTotalUseCountToday(records), 3);
+}
+
+/**
+ * @tc.name: SaServiceTotalCountSkipExpiredTest
+ * @tc.desc: total count skips records older than 24h
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceTotalCountSkipExpiredTest, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::unordered_map<std::string, QuotaRecord> records;
+    long long expiredTs = static_cast<long long>(time(nullptr)) - 25 * 60 * 60;
+    records["ut_expired"] = {expiredTs, 5};
+    records["ut_valid"] = {static_cast<long long>(time(nullptr)), 2};
+    EXPECT_EQ(NativeMemoryProfilerSaService::GetMemProfilerTotalUseCountToday(records), 2);
 }
 #endif // NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H

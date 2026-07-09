@@ -100,12 +100,6 @@ private:
     static int32_t ParseSimplifiedConfig(std::shared_ptr<NativeMemoryProfilerSaConfig> config,
         const SimplifiedMemConfig& inputConfig, uint32_t duration);
     static ResProfilerErrorCode CheckInputConfig(int type, MemAPIConfig* inputConfig);
-    static int32_t GetMemProfilerUseCountToday();
-    static bool UpdateMemProfilerUserCount();
-    static bool RollbackMemProfilerUserCount();
-    static bool ReadCountFile(const std::string &filepath, long long &timestamp, int32_t &count);
-    static bool WriteCountFileAtomic(const std::string &filepath, long long timestamp, int32_t count);
-    static bool IsSeparateByMoreThan24Hours(long long t1, long long t2);
     static std::string GenerateFileName(int type, int32_t pid);
     static std::string CreateFileAndGrantPermission(std::string& filename);
 };

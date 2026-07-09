@@ -55,9 +55,6 @@ constexpr uint32_t DEFINE_MAX_STATISTICS_INTERVAL = 3600; // seconds
 constexpr uint32_t DEFINE_MIN_SAMPLE_INTERVAL = 384; // bytes
 constexpr uint32_t ASYNC_REQUEST_TIMEOUT_DELTA = 5; // seconds
 constexpr int32_t TIME_BASE = 1000;
-constexpr int32_t MAX_MEM_PROFILER_USE_COUNT_PER_DAY = 2;
-constexpr int HOURS_PER_DAY = 24;
-const std::string MEM_PROFILER_COUNT_FILE_NAME = "/MemProfilerCount";
 const std::string FILE_SUFFIX = ".htrace";
 const std::vector<std::string> resourceTypeValues = { "fd", "thread", "native", "gpu", "global_handle" };
 
@@ -197,7 +194,6 @@ private:
     ScheduleTaskManager timeoutTaskMgr_;
 };
 
-static std::mutex g_countFileMutex;
 static NativeMemoryProfilerAsyncRequestManager g_profilerAsyncReqMgr;
 
 static void NotifyProfilingResult(int32_t pid, int32_t errorCode, const std::string& filepath)
@@ -641,13 +637,7 @@ int32_t NativeMemoryProfilerSaClientManager::StartByType(int32_t type,
     std::shared_ptr<NativeMemoryProfilerSaConfig>& config, ProfilingCallback callback)
 {
     config->pid_ = getpid();
-
-    std::lock_guard<std::mutex> lock(g_countFileMutex);
-    if (GetMemProfilerUseCountToday() >= MAX_MEM_PROFILER_USE_COUNT_PER_DAY) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Daily use count exceeded,errorcode is:%d.",
-            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED));
-        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED);
-    }
+    config->bundleName_ = COMMON::GetProcessNameByPid(config->pid_);
 
     std::string filename = GenerateFileName(type, config->pid_);
     std::string fullPath = CreateFileAndGrantPermission(filename);
@@ -661,19 +651,10 @@ int32_t NativeMemoryProfilerSaClientManager::StartByType(int32_t type,
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ALREADY_STARTED);
     }
 
-    if (!UpdateMemProfilerUserCount()) {
-        (void)unlink(fullPath.c_str());
-        g_profilerAsyncReqMgr.DeleteRequest(config->pid_);
-        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG);
-    }
-
     sptr<IRemoteObject> callbackObject = GetProfilingResultCallbackObject();
     if (callbackObject == nullptr) {
         (void)unlink(fullPath.c_str());
         g_profilerAsyncReqMgr.DeleteRequest(config->pid_);
-        if (!RollbackMemProfilerUserCount()) {
-            PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: rollback count failed");
-        }
         return RET_ERR;
     }
 
@@ -686,9 +667,6 @@ int32_t NativeMemoryProfilerSaClientManager::StartByType(int32_t type,
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: StartPidVoid failed");
         (void)unlink(fullPath.c_str());
         g_profilerAsyncReqMgr.DeleteRequest(config->pid_);
-        if (!RollbackMemProfilerUserCount()) {
-            PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: rollback count failed");
-        }
         return retStart;
     }
     g_profilerAsyncReqMgr.CreateTimeoutMonitor(config->pid_);
@@ -801,171 +779,6 @@ ResProfilerErrorCode NativeMemoryProfilerSaClientManager::CheckInputConfig(int t
         return ResProfilerErrorCode::RES_PROF_RESOURCE_TYPE_INVALID_ARG;
     }
     return ResProfilerErrorCode::RES_PROF_SUCCESS;
-}
-
-bool NativeMemoryProfilerSaClientManager::ReadCountFile(const std::string &filepath,
-    long long &timestamp, int32_t &count)
-{
-    char canonicalPath[PATH_MAX + 1] = {0};
-    if (realpath(filepath.c_str(), canonicalPath) == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "ReadCountFile: failed to get canonical path");
-        return false;
-    }
-
-    std::ifstream ifs(canonicalPath);
-    if (!ifs.is_open()) {
-        PROFILER_LOG_ERROR(LOG_CORE, "ReadCountFile: failed to open file");
-        return false;
-    }
-    ifs >> timestamp >> count;
-    if (!ifs.good() && !ifs.eof()) {
-        PROFILER_LOG_ERROR(LOG_CORE, "ReadCountFile: failed to read data");
-        ifs.close();
-        return false;
-    }
-    ifs.close();
-    return true;
-}
-
-bool NativeMemoryProfilerSaClientManager::WriteCountFileAtomic(const std::string &filepath,
-    long long timestamp, int32_t count)
-{
-    std::string tpl = filepath + ".tmp.XXXXXX";
-    std::vector<char> tmpl(tpl.begin(), tpl.end());
-    tmpl.push_back('\0');
-
-    int fd = mkstemp(tmpl.data());
-    if (fd < 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "WriteCountFileAtomic: failed to create temp file, errno: %d", errno);
-        return false;
-    }
-
-    std::string content = std::to_string(static_cast<long long>(timestamp)) + " " + std::to_string(count) + "\n";
-    const char *buf = content.c_str();
-    size_t toWrite = content.size();
-    ssize_t written = write(fd, buf, toWrite);
-    if (written != static_cast<ssize_t>(toWrite)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "WriteCountFileAtomic: failed to write data, errno: %d", errno);
-        close(fd);
-        unlink(tmpl.data());
-        return false;
-    }
-
-    if (fsync(fd) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "WriteCountFileAtomic: failed to sync data, errno: %d", errno);
-        close(fd);
-        unlink(tmpl.data());
-        return false;
-    }
-
-    if (close(fd) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "WriteCountFileAtomic: failed to close file, errno: %d", errno);
-        unlink(tmpl.data());
-        return false;
-    }
-
-    if (rename(tmpl.data(), filepath.c_str()) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "WriteCountFileAtomic: failed to rename temp file, errno: %d", errno);
-        unlink(tmpl.data());
-        return false;
-    }
-    return true;
-}
-
-bool NativeMemoryProfilerSaClientManager::IsSeparateByMoreThan24Hours(long long t1, long long t2)
-{
-    using namespace std::chrono;
-    if (t1 < 0 || t2 < 0) {
-        return false;
-    }
-    if (t1 > t2) {
-        std::swap(t1, t2);
-    }
-    return duration_cast<hours>(system_clock::from_time_t(t2) - system_clock::from_time_t(t1)) > hours(HOURS_PER_DAY);
-}
-
-bool NativeMemoryProfilerSaClientManager::UpdateMemProfilerUserCount()
-{
-    const std::string filepath = std::string(NAPI_FILE_PATH_PREFIX) + std::string(MEM_PROFILER_COUNT_FILE_NAME);
-
-    time_t now = time(nullptr);
-    if (now == static_cast<time_t>(-1)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "UpdateMemProfilerUserCount: failed to get current time");
-        return false;
-    }
-
-    long long nowTime = static_cast<long long>(now);
-    long long timeStamp = static_cast<long long>(now);
-    int32_t count = 0;
-    struct stat st;
-    if (stat(filepath.c_str(), &st) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "UpdateMemProfilerUserCount: filepath not exist,count set 1.");
-        count = 1;
-        if (!COMMON::CreateFile(filepath)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "UpdateMemProfilerUserCount: failed to create file,errorno=%d %s.",
-                errno, strerror(errno));
-            return false;
-        }
-    } else {
-        if (!ReadCountFile(filepath, timeStamp, count)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "UpdateMemProfilerUserCount: failed to read count file");
-            return false;
-        }
-        if (IsSeparateByMoreThan24Hours(timeStamp, nowTime)) {
-            count = 1;
-        } else {
-            count++;
-        }
-    }
-
-    if (!WriteCountFileAtomic(filepath, nowTime, count)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "UpdateMemProfilerUserCount: failed to write count file");
-        return false;
-    }
-    return true;
-}
-
-bool NativeMemoryProfilerSaClientManager::RollbackMemProfilerUserCount()
-{
-    const std::string filepath = std::string(NAPI_FILE_PATH_PREFIX) + std::string(MEM_PROFILER_COUNT_FILE_NAME);
-    long long timeStamp = 0;
-    int32_t count = 0;
-    if (!ReadCountFile(filepath, timeStamp, count)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "RollbackMemProfilerUserCount: failed to read count file");
-        return false;
-    }
-    if (count <= 0) {
-        return true;
-    }
-    if (!WriteCountFileAtomic(filepath, timeStamp, count - 1)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "RollbackMemProfilerUserCount: failed to write count file");
-        return false;
-    }
-    return true;
-}
-
-int32_t NativeMemoryProfilerSaClientManager::GetMemProfilerUseCountToday()
-{
-    const std::string filepath = std::string(NAPI_FILE_PATH_PREFIX) + std::string(MEM_PROFILER_COUNT_FILE_NAME);
-    int32_t count = 0;
-    struct stat st;
-
-    if (stat(filepath.c_str(), &st) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "GetMemProfilerUseCountToday: filepath not exist");
-        count = 0;
-    } else {
-        long long timeStamp = static_cast<long long>(st.st_mtime);
-        if (!ReadCountFile(filepath, timeStamp, count)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "GetMemProfilerUseCountToday: failed to read count file");
-            return MAX_MEM_PROFILER_USE_COUNT_PER_DAY; // Return max count to prevent profiler start if read fails
-        }
-
-        long long nowTime = static_cast<long long>(time(nullptr));
-        if (IsSeparateByMoreThan24Hours(timeStamp, nowTime)) {
-            count = 0;
-        }
-    }
-    return count;
 }
 
 int32_t NativeMemoryProfilerSaClientManager::Prepare()
