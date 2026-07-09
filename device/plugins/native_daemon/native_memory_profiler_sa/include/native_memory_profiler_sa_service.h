@@ -50,6 +50,7 @@ struct MemoryInfo {
     uint64_t totalMem;
     uint64_t usedMem;
     uint64_t freeMem;
+    uint64_t availableMem;
     double availablePercent;
 };
 
