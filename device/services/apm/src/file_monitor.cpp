@@ -16,6 +16,7 @@
 
 #include <climits>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <dirent.h>
 #include <pthread.h>
@@ -23,7 +24,6 @@
 #include <sys/time.h>
 #include <sys/select.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include "securec.h"
 #include "logging.h"
 

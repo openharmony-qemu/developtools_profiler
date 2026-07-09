@@ -87,7 +87,6 @@ bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPat
 bool CleanOldenFiles(const std::string& path);
 bool CleanCmdOldenTraceFiles(const std::string& path);
 bool CreateFile(const std::string& filePath);
-std::string GetLatestFileStartWithPrefix(const std::string &diretory, const std::string &prefix);
 
 class SpinLock {
 public:
