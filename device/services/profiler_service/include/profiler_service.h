@@ -23,6 +23,7 @@
 #include "profiler_service.grpc.pb.h"
 #include "schedule_task_manager.h"
 #include "profiler_data_repeater.h"
+#include "i_semaphore.h"
 
 class PluginService;
 
@@ -105,13 +106,16 @@ private:
         std::shared_ptr<ProfilerDataRepeater<ProfilerPluginState>> stateRepeater {nullptr};
         std::shared_ptr<TraceFileWriter> traceFileWriter {nullptr};
         ScheduleTaskManager stopExpireTask;
+        std::atomic<bool> stopping {false};
+        SemaphorePtr stopSem {nullptr};
 
         SessionContext() = default;
         ~SessionContext();
 
         bool CreatePluginSessions();
         bool StartPluginSessions();
-        bool StopPluginSessions();
+        bool StopPluginSessions(bool timerTask = false);
+        bool CollectApm();
 
         size_t UpdatePluginConfigs(const std::vector<ProfilerPluginConfig>& newPluginConfigs);
 

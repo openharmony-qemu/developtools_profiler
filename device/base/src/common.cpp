@@ -1148,6 +1148,24 @@ bool CopyFileFast(uint32_t srcFd, const std::string& destPath)
     return true;
 }
 
+bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPath)
+{
+    int srcFd = open(srcPath.c_str(), O_RDONLY);
+    if (srcFd < 0) {
+        const int bufSize = 256;
+        char buf[bufSize] = {0};
+        strerror_r(errno, buf, bufSize);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, srcPath.c_str(), errno, buf);
+        return false;
+    }
+    bool result = COMMON::CopyFileFast(srcFd, destPath);
+    if (!result) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CopyFileFast fail");
+    }
+    close(srcFd);
+    return result;
+}
+
 static bool IsHtraceFileName(const std::string& filename)
 {
     const std::string fileSuffix = ".htrace";
@@ -1344,5 +1362,24 @@ bool CleanCmdOldenTraceFiles(const std::string& path)
         }
     }
     return allOk;
+}
+
+std::string GetLatestFileStartWithPrefix(const std::string &diretory, const std::string &prefix)
+{
+    DIR *dir = opendir(diretory.c_str());
+    CHECK_NOTNULL(dir, "", "fail to open dir:%s, error:%s", diretory.c_str(), strerror(errno));
+    struct dirent* ptr;
+    std::string latest;
+    while ((ptr = readdir(dir)) != nullptr) {
+        if (ptr->d_type == DT_REG && strlen(ptr->d_name) >= prefix.length() &&
+            strncmp(ptr->d_name, prefix.c_str(), prefix.length()) == 0) {
+            std::string filename(ptr->d_name);
+            if (filename > latest) {
+                latest = filename;
+            }
+        }
+    }
+    closedir(dir);
+    return latest;
 }
 } // namespace COMMON

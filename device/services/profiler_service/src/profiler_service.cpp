@@ -27,6 +27,10 @@
 #include "profiler_data_repeater.h"
 #include "trace_file_writer.h"
 #include <cinttypes>
+#include "apm_collect_mgr.h"
+#include "htrace_collector.h"
+#include "rawheap_collector.h"
+#include "jsmap_collector.h"
 
 using namespace ::grpc;
 using PluginContextPtr = std::shared_ptr<PluginContext>;
@@ -58,9 +62,11 @@ namespace {
 constexpr int MIN_SESSION_TIMEOUT_MS = 1000;
 constexpr int MAX_SESSION_TIMEOUT_MS = 1000 * 3600;
 constexpr int DEFAULT_KEEP_ALIVE_DELTA = 3000;
+constexpr int PLUGIN_SESSION_STOP_TIMEOUT_SECONDS = 60;
 constexpr uint64_t CHECK_HEARTBEAT_INTERVAL = 500;
 constexpr long BYTE_PER_KB = 1024;
 const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
+const std::string TAG_RES_COMPOSITE_HEAP = "RES_COMPOSITE_HEAP";
 #ifdef  PERFORMANCE_DEBUG
 constexpr uint64_t S_TO_NS = 1000 * 1000 * 1000;
 #endif
@@ -155,11 +161,12 @@ bool ProfilerService::SessionContext::StartPluginSessions()
             offlineScheduleTaskFd = stopExpireTask.ScheduleTask(
                 [weakCtx]() {
                     if (auto ctx = weakCtx.lock(); ctx != nullptr) {
-                        ctx->StopPluginSessions();
+                        ctx->StopPluginSessions(true);
                     }
                 },
                 sampleDuration,
                 true);
+            stopSem = GetSemaphoreFactory().Create(0);
             // keep_alive_time not set by client, but the sample_duration setted
             if (sessionConfig.keep_alive_time() == 0) {
                 // use sample_duration add a little time to set keep_alive_time
@@ -174,14 +181,26 @@ bool ProfilerService::SessionContext::StartPluginSessions()
     return true;
 }
 
-bool ProfilerService::SessionContext::StopPluginSessions()
+bool ProfilerService::SessionContext::StopPluginSessions(bool timerTask)
 {
     if (sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
         if (offlineScheduleTaskFd != -1) {
             stopExpireTask.UnscheduleTask(offlineScheduleTaskFd);
             offlineScheduleTaskFd = -1;
-        } else {
-            return true;
+        }
+        PROFILER_LOG_DEBUG(LOG_CORE, "StopPluginSessions from timer: %d", timerTask);
+        bool expected = false;
+        if (!stopping.compare_exchange_strong(expected, true)) {
+            if (timerTask) {
+                PROFILER_LOG_DEBUG(LOG_CORE, "PluginSessions is stopping, skip timer task");
+                return true;
+            } else {
+                CHECK_NOTNULL(stopSem, false, "stopSem is NULL");
+                PROFILER_LOG_DEBUG(LOG_CORE, "PluginSessions is stopping, waitting stop done");
+                bool result = stopSem->TimedWait(PLUGIN_SESSION_STOP_TIMEOUT_SECONDS);
+                PROFILER_LOG_DEBUG(LOG_CORE, "PluginSessions stoped, result:%d", result);
+                return result;
+            }
         }
         traceFileWriter->SetDurationTime();
     }
@@ -199,16 +218,69 @@ bool ProfilerService::SessionContext::StopPluginSessions()
         // update file header.
         traceFileWriter->Finish();
     }
-
     // make sure FetchData thread exit
     if (dataRepeater) {
         dataRepeater->Close();
     }
-
     if (stateRepeater) {
         stateRepeater->Close();
     }
+    CollectApm();
+    if (sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE && stopSem != nullptr) {
+        stopSem->Post();
+        PROFILER_LOG_DEBUG(LOG_CORE, "notify pluginSessions stop done");
+    }
     return true;
+}
+
+bool ProfilerService::SessionContext::CollectApm()
+{
+    std::string processName;
+    NativeHookConfig hookConfig;
+    for (auto& config : pluginConfigs) {
+        if (config.name() == "nativehook") {
+            std::string cfgData = config.config_data();
+            if (hookConfig.ParseFromArray(reinterpret_cast<const uint8_t *>(cfgData.c_str()), cfgData.size()) <= 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
+            } else {
+                processName = hookConfig.process_name();
+            }
+            break;
+        }
+    }
+    int pidValue = 0;
+    if (processName.empty()) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "no nativehook plugin");
+        return false;
+    }
+    bool apmEnabled = false;
+    for (const auto& tag: hookConfig.restrace_tag()) {
+        if (tag == TAG_RES_COMPOSITE_HEAP) {
+            apmEnabled = true;
+            break;
+        }
+    }
+    if (!apmEnabled) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "apm tag not enabled");
+        return false;
+    }
+    CHECK_TRUE(COMMON::IsProcessExist(processName, pidValue), false, "process %s not exist", processName.c_str());
+    uint32_t pid = static_cast<uint32_t>(pidValue);
+    size_t pos = sessionConfig.result_file().rfind("/");
+    std::string pathDir = "";
+    if (pos != std::string::npos) {
+        pathDir = sessionConfig.result_file().substr(0, pos);
+    } else {
+        pathDir = ".";
+    }
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+    ApmCollectMgr apmMgr(pathDir + "/hiprofiler_data_" + std::to_string(ms) + ".zip");
+    apmMgr.RegisterCollector(std::static_pointer_cast<IDataCollector>(std::make_shared<RawheapCollector>(pid, pid)));
+    apmMgr.RegisterCollector(std::static_pointer_cast<IDataCollector>(std::make_shared<JsmapCollector>(pid, pid)));
+    apmMgr.RegisterCollector(
+        std::static_pointer_cast<IDataCollector>(std::make_shared<TraceCollector>(sessionConfig.result_file())));
+    return apmMgr.Collect();
 }
 
 namespace {
