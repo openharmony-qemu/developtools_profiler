@@ -28,6 +28,8 @@ public:
     bool Collect(std::shared_ptr<IDataStorage> storage) override;
 
 private:
+    bool DumpJsmap();
+
     uint32_t pid_;
     uint32_t tid_;
 };
