@@ -48,6 +48,13 @@ ohos_shared_library("hidebug") {
     "ability_base:configuration",
   ]
 
+  if (hidebug_api_metrics_enable) {
+    defines = [ "ENABLE_API_METRICS" ]
+    external_deps += [
+      "api_metrics:histogrammanager"
+    ]
+  }
+
   relative_install_dir = "module"
 
   part_name = "hiprofiler"

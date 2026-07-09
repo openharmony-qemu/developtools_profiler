@@ -30,6 +30,7 @@
         "ability_runtime",
         "ability_base",
         "access_token",
+        "api_metrics",
         "arkxtest",
         "bounds_checking_function",
         "bundle_framework",
