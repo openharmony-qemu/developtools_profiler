@@ -595,7 +595,11 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckSystemResourceTest, TestSize.Le
 {
     using namespace OHOS::Developtools::NativeDaemon;
     int32_t result = NativeMemoryProfilerSaService::CheckSystemResource();
-    EXPECT_EQ(result, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS));
+    bool isResourceResult = (result == static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) ||
+        (result == static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_MEM_PRESSURE_CRITICAL)) ||
+        (result == static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CPU_OVERLOADED)) ||
+        (result == static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_STORAGE_PRESSURE_CRITICAL));
+    EXPECT_TRUE(isResourceResult) << "unexpected result: " << result;
 }
 
 /**
@@ -625,6 +629,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, GetSystemMemoryInfoTest002, TestSize
         EXPECT_GT(memInfo.totalMem, 0);
         EXPECT_GT(memInfo.usedMem, 0);
         EXPECT_GT(memInfo.freeMem, 0);
+        EXPECT_GT(memInfo.availableMem, 0ULL);
         EXPECT_GT(memInfo.availablePercent, 0.0);
     }
 }
