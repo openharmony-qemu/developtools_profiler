@@ -133,6 +133,7 @@ bool FileMonitor::ProcessEvent()
         PROFILER_LOG_ERROR(LOG_CORE, "invalid state");
         return false;
     }
+    char filenameBuf[PATH_MAX] = {0};
     const struct inotify_event *event = nullptr;
     char buffer[MAX_BUF_SIZE] = {'\0'};
     char *ptr = nullptr;
@@ -144,8 +145,15 @@ bool FileMonitor::ProcessEvent()
     }
     for (ptr = buffer; ptr < buffer + readLength; ptr += sizeof(struct inotify_event) + event->len) {
         event = reinterpret_cast<const struct inotify_event *>(ptr);
-        std::string filename = event->name;
-        if (event->wd != wd_ || event->mask != IN_CLOSE_WRITE || !filter_(filename)) {
+        if (event->wd != wd_ || event->mask != IN_CLOSE_WRITE) {
+            continue;
+        }
+        if (strncpy_s(filenameBuf, PATH_MAX, event->name, event->len) != EOK) {
+            PROFILER_LOG_ERROR(LOG_CORE, "strncpy_s fail");
+            continue;
+        }
+        std::string filename = filenameBuf;
+        if (!filter_(filename)) {
             continue;
         }
         PROFILER_LOG_DEBUG(LOG_CORE, "notify file write done:%s", event->name);
