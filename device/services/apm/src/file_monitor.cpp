@@ -141,9 +141,11 @@ bool FileMonitor::ProcessEvent()
     }
     for (ptr = buffer; ptr < buffer + readLength; ptr += sizeof(struct inotify_event) + event->len) {
         event = reinterpret_cast<const struct inotify_event *>(ptr);
-        if (event->wd != wd_ || event->mask != IN_CLOSE_WRITE || !filter_(resultFile_)) {
+        std::string filename = event->name;
+        if (event->wd != wd_ || event->mask != IN_CLOSE_WRITE || !filter_(filename)) {
             continue;
         }
+        PROFILER_LOG_ERROR(LOG_CORE, "notify file write done:%s", event->name);
         resultFile_ = event->name;
         sem_->Post();
         (void)memset_s(buffer, sizeof(buffer), 0, sizeof(buffer));
