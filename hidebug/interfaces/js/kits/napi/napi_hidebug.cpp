@@ -39,6 +39,10 @@
 #include "napi_util.h"
 #include "error_code.h"
 
+#ifdef ENABLE_API_METRICS
+#include "histogram_plugin_macros.h"
+#endif
+
 namespace OHOS {
 namespace HiviewDFX {
 namespace {
@@ -331,10 +335,9 @@ napi_value GetPrivateDirty(napi_env env, napi_callback_info info)
 
 napi_value GetCpuUsage(napi_env env, napi_callback_info info)
 {
-    constexpr uint32_t reportTimeOutSec = 5 * 60;
-    constexpr uint32_t limitSize = 100;
-    static MultipleRecordReporter multipleRecordReporter(reportTimeOutSec, limitSize);
-    ApiInvokeRecorder apiInvokeRecorder("getCpuUsage", multipleRecordReporter);
+#ifdef ENABLE_API_METRICS
+    HISTOGRAM_BOOLEAN("PerformanceAnalysisKit.ApiCall.getCpuUsage", 1);
+#endif
     double cpuUsage = HidebugNativeInterface::GetInstance().GetCpuUsage();
     napi_value retValue = nullptr;
     napi_create_double(env, cpuUsage, &retValue);
@@ -406,10 +409,9 @@ napi_value GetVss(napi_env env, napi_callback_info info)
 
 static napi_value GetSystemCpuUsage(napi_env env, napi_callback_info info)
 {
-    constexpr uint32_t reportTimeOutSec = 5 * 60;
-    constexpr uint32_t limitSize = 100;
-    static MultipleRecordReporter multipleRecordReporter(reportTimeOutSec, limitSize);
-    ApiInvokeRecorder apiInvokeRecorder("getSystemCpuUsage", multipleRecordReporter);
+#ifdef ENABLE_API_METRICS
+    HISTOGRAM_BOOLEAN("PerformanceAnalysisKit.ApiCall.getSystemCpuUsage", 1);
+#endif
     auto cpuUsageOptional = HidebugNativeInterface::GetInstance().GetSystemCpuUsage();
     if (!cpuUsageOptional) {
         std::string paramErrorMessage = "The status of the system CPU usage is abnormal.";

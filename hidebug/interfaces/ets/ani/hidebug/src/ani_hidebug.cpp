@@ -38,6 +38,10 @@
 #include "debugger_arkapi.h"
 #include "system_ability_definition.h"
 
+#ifdef ENABLE_API_METRICS
+#include "histogram_plugin_macros.h"
+#endif
+
 using namespace OHOS;
 using namespace OHOS::HiviewDFX;
 
@@ -193,7 +197,9 @@ ani_long GetPrivateDirty(ani_env *env)
 
 ani_double GetCpuUsage(ani_env *env)
 {
-    ApiInvokeRecorder apiInvokeRecorder("getCpuUsage");
+#ifdef ENABLE_API_METRICS
+    HISTOGRAM_BOOLEAN("PerformanceAnalysisKit.ApiCall.getCpuUsage", 1);
+#endif
     return static_cast<ani_double>(HidebugNativeInterface::GetInstance().GetCpuUsage());
 }
 
@@ -253,7 +259,9 @@ ani_long GetVss(ani_env *env)
 
 ani_double GetSystemCpuUsage(ani_env *env)
 {
-    ApiInvokeRecorder apiInvokeRecorder("getSystemCpuUsage");
+#ifdef ENABLE_API_METRICS
+    HISTOGRAM_BOOLEAN("PerformanceAnalysisKit.ApiCall.getSystemCpuUsage", 1);
+#endif
     auto cpuUsageOptional = HidebugNativeInterface::GetInstance().GetSystemCpuUsage();
     if (!cpuUsageOptional) {
         std::string paramErrorMessage = "The status of the system CPU usage is abnormal.";

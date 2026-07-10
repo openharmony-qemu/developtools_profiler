@@ -15,3 +15,10 @@
 hidebug_path = "//developtools/profiler/hidebug"
 OHOS_PROFILER_SUBSYS_NAME = "developtools"
 OHOS_PROFILER_PART_NAME = "hiprofiler"
+
+declare_args() {
+  hidebug_api_metrics_enable = false
+  if (defined(global_parts_info) && defined(global_parts_info.hiviewdfx_api_metrics)) {
+    hidebug_api_metrics_enable = true
+  }
+}
