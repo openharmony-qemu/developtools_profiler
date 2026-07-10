@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef TRACE_COLLECTOR_H
-#define TRACE_COLLECTOR_H
+#ifndef HTRACE_COLLECTOR_H
+#define HTRACE_COLLECTOR_H
 
 #include <cstdint>
 #include <string>
@@ -31,4 +31,4 @@ private:
     std::string traceFilePath_;
 };
 
-#endif // TRACE_COLLECTOR_H
+#endif // HTRACE_COLLECTOR_H

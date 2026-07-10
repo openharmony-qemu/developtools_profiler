@@ -38,7 +38,7 @@ const std::string METADATA_PATH = "/system/lib/module/arkcompiler/metadata.json"
 #else
 const std::string METADATA_PATH = "/system/lib64/module/arkcompiler/metadata.json";
 #endif
-constexpr int32_t WAIT_FOR_RAWHEP_FILE_READY_MS = 60 * 1000;
+constexpr int32_t WAIT_FOR_RAWHEAP_FILE_READY_MS = 60 * 1000;
 }
 
 bool RawheapCollector::Collect(std::shared_ptr<IDataStorage> storage)
@@ -57,10 +57,10 @@ bool RawheapCollector::Collect(std::shared_ptr<IDataStorage> storage)
         monitor.Finalize();
         return false;
     }
-    std::string resultFilename = monitor.GetResultFile(WAIT_FOR_RAWHEP_FILE_READY_MS);
+    std::string resultFilename = monitor.GetResultFile(WAIT_FOR_RAWHEAP_FILE_READY_MS);
     monitor.Finalize();
     CHECK_TRUE(!resultFilename.empty(), false, "Dump rawheap file fail");
-    PROFILER_LOG_DEBUG(LOG_CORE,  "Dump rawheap file succless, pid: %u", pid_);
+    PROFILER_LOG_DEBUG(LOG_CORE,  "Dump rawheap file success, pid: %u", pid_);
     std::string srcPath = SRC_RAWHEAP_FILE_DIR + "/" + resultFilename;
     std::string destPath = DEST_RAWHEAP_FILE_DIR + "/" + resultFilename + ".rawheap";
     CHECK_TRUE(COMMON::CopyFileFastFromPath(srcPath, destPath), false, "copy rawheap file fail");

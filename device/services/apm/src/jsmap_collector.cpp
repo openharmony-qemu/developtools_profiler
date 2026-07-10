@@ -52,12 +52,12 @@ bool JsmapCollector::Collect(std::shared_ptr<IDataStorage> storage)
     std::string resultFilename = monitor.GetResultFile(WAIT_FOR_JSMAP_FILE_READY_MS);
     monitor.Finalize();
     CHECK_TRUE(!resultFilename.empty(), false, "Dump jshandle map file fail");
-    PROFILER_LOG_DEBUG(LOG_CORE,  "Dump jshandle map file succless, pid: %u", pid_);
+    PROFILER_LOG_DEBUG(LOG_CORE,  "Dump jshandle map file success, pid: %u", pid_);
     std::string srcPath = SRC_JSMAP_FILE_DIR + "/" + resultFilename;
     std::string destPath = DEST_JSMAP_FILE_DIR + "/" + resultFilename + ".txt";
-    CHECK_TRUE(COMMON::CopyFileFastFromPath(srcPath, destPath), false, "copy rawheap file fail");
+    CHECK_TRUE(COMMON::CopyFileFastFromPath(srcPath, destPath), false, "copy jshandle map file fail");
     if (!storage->AddFile(destPath)) {
-        PROFILER_LOG_ERROR(LOG_CORE,  "storage rawheap file fail");
+        PROFILER_LOG_ERROR(LOG_CORE,  "storage jshandle map file fail");
         (void)unlink(destPath.c_str());
         return false;
     }

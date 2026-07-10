@@ -240,7 +240,7 @@ bool ProfilerService::SessionContext::CollectApm()
     for (auto& config : pluginConfigs) {
         if (config.name() == "nativehook") {
             std::string cfgData = config.config_data();
-            if (hookConfig.ParseFromArray(reinterpret_cast<const uint8_t *>(cfgData.c_str()), cfgData.size()) <= 0) {
+            if (!hookConfig.ParseFromArray(reinterpret_cast<const uint8_t *>(cfgData.c_str()), cfgData.size())) {
                 PROFILER_LOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
             } else {
                 processName = hookConfig.process_name();

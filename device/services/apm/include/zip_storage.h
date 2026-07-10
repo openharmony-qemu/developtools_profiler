@@ -16,8 +16,6 @@
 #ifndef ZIP_STORAGE_H
 #define ZIP_STORAGE_H
 
-#include "zip_storage.h"
-
 #include <cstdint>
 #include <string>
 #include <filesystem>
