@@ -389,12 +389,10 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
             filterTarget = false;
         }
         nextFp = *reinterpret_cast<uintptr_t*>(fp);
-        if (nextFp <= stackPtr) {
-            depth -= 1;
-            break;
-        }
-        if (fp == nextFp) {
-            depth -= 1;
+        if (nextFp <= fp) {
+            if (depth > 1) {
+                depth -= 1;
+            }
             break;
         }
         fp = nextFp;
