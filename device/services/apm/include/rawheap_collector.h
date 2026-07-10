@@ -28,6 +28,9 @@ public:
     bool Collect(std::shared_ptr<IDataStorage> storage) override;
 
 private:
+    bool DumpRawheap();
+    bool AppendMetaData(const std::string &filepath);
+
     uint32_t pid_;
     uint32_t tid_;
 };

@@ -16,8 +16,11 @@
 #include "rawheap_collector.h"
 
 #include <chrono>
+#include <cstdio>
 #include <thread>
 #include <unistd.h>
+#include <fstream>
+#include <sys/stat.h>
 #include "app_mgr_interface.h"
 #include "app_mgr_proxy.h"
 #include "iservice_registry.h"
@@ -25,12 +28,17 @@
 #include "app_jsheap_mem_info.h"
 #include "common.h"
 #include "logging.h"
+#include "file_monitor.h"
 
 namespace {
 const std::string SRC_RAWHEAP_FILE_DIR = "/data/log/faultlog/temp";
 const std::string DEST_RAWHEAP_FILE_DIR = "/data/local/tmp";
-constexpr int WAIT_FOR_RAWHEP_FILE_READY_TOTAL = 5;
-constexpr int WAIT_FOR_RAWHEP_FILE_WRITE_DONE = 5;
+#if defined(__arm__)
+const std::string METADATA_PATH = "/system/lib/module/arkcompiler/metadata.json";
+#else
+const std::string METADATA_PATH = "/system/lib64/module/arkcompiler/metadata.json";
+#endif
+constexpr int32_t WAIT_FOR_RAWHEAP_FILE_READY_MS = 60 * 1000;
 }
 
 bool RawheapCollector::Collect(std::shared_ptr<IDataStorage> storage)
@@ -38,7 +46,35 @@ bool RawheapCollector::Collect(std::shared_ptr<IDataStorage> storage)
     PROFILER_LOG_DEBUG(LOG_CORE,  "start collect rawheap, pid: %u", pid_);
     CHECK_NOTNULL(storage, false, "storage is NULL");
     CHECK_TRUE(pid_ > 0, false, "invalid pid");
-    CHECK_TRUE(tid_ > 0, false, "invalid pid");
+
+    std::string prefix = "jsheap-" + std::to_string(pid_) + "-" + std::to_string(tid_) + "-";
+    auto filer = [&prefix](std::string& filename) {
+        return filename.length() >= prefix.length() && filename.compare(0, prefix.length(), prefix) == 0;
+    };
+    FileMonitor monitor(SRC_RAWHEAP_FILE_DIR, filer);
+    if (!DumpRawheap() || !monitor.Start()) {
+        PROFILER_LOG_ERROR(LOG_CORE,  "DumpJsHeapMemory failed");
+        monitor.Finalize();
+        return false;
+    }
+    std::string resultFilename = monitor.GetResultFile(WAIT_FOR_RAWHEAP_FILE_READY_MS);
+    monitor.Finalize();
+    CHECK_TRUE(!resultFilename.empty(), false, "Dump rawheap file fail");
+    PROFILER_LOG_DEBUG(LOG_CORE,  "Dump rawheap file success, pid: %u", pid_);
+    std::string srcPath = SRC_RAWHEAP_FILE_DIR + "/" + resultFilename;
+    std::string destPath = DEST_RAWHEAP_FILE_DIR + "/" + resultFilename + ".rawheap";
+    CHECK_TRUE(COMMON::CopyFileFastFromPath(srcPath, destPath), false, "copy rawheap file fail");
+    if (!AppendMetaData(destPath) || !storage->AddFile(destPath)) {
+        PROFILER_LOG_ERROR(LOG_CORE,  "storage rawheap file fail");
+        (void)unlink(destPath.c_str());
+        return false;
+    }
+    (void)unlink(destPath.c_str());
+    return true;
+}
+
+bool RawheapCollector::DumpRawheap()
+{
     OHOS::sptr<OHOS::ISystemAbilityManager> samgr =
         OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_NOTNULL(samgr, false, "samgr is NULL");
@@ -56,22 +92,38 @@ bool RawheapCollector::Collect(std::shared_ptr<IDataStorage> storage)
     info.needClearNodeIdCache = false;
     info.needProcDump = false;
     int ret = appManager->DumpJsHeapMemory(info);
-    CHECK_TRUE(ret == 0, false, "DumpJsHeapMemory failed, ret:%d", ret);
-
-    int waitSeconds = 0;
-    std::string file;
-    std::string prefix = "jsheap-" + std::to_string(pid_) + "-" + std::to_string(tid_) + "-";
-    while (waitSeconds < WAIT_FOR_RAWHEP_FILE_READY_TOTAL && file.empty()) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        file = COMMON::GetLatestFileStartWithPrefix(SRC_RAWHEAP_FILE_DIR, prefix);
-        waitSeconds++;
+    if (ret != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE,  "Call DumpJsHeapMemory failed, ret:%d", ret);
+        return false;
     }
-    CHECK_TRUE(!file.empty(), false, "Dump rawheap file fail");
-    PROFILER_LOG_DEBUG(LOG_CORE,  "Dump rawheap file succless, pid: %u", pid_);
-    std::this_thread::sleep_for(std::chrono::seconds(WAIT_FOR_RAWHEP_FILE_WRITE_DONE));
-    std::string srcPath = SRC_RAWHEAP_FILE_DIR + "/" + file;
-    std::string destPath = DEST_RAWHEAP_FILE_DIR + "/" + file + ".rawheap";
-    CHECK_TRUE(COMMON::CopyFileFastFromPath(srcPath, destPath), false, "copy rawheap file fail");
-    CHECK_TRUE(storage->AddFile(destPath), false, "storage rawheap file fail");
+    return true;
+}
+
+bool RawheapCollector::AppendMetaData(const std::string& filepath)
+{
+    struct stat fileInfo;
+    CHECK_TRUE(stat(filepath.c_str(), &fileInfo) == 0, false, "get file stat fail");
+    uint32_t fileSize = static_cast<uint32_t>(fileInfo.st_size);
+    CHECK_TRUE(fileSize > 0, false, "file is empty");
+
+    struct stat metadataInfo;
+    CHECK_TRUE(stat(METADATA_PATH.c_str(), &metadataInfo) == 0, false, "get metadata stat fail");
+    uint32_t metaSize = static_cast<uint32_t>(metadataInfo.st_size);
+
+    std::ifstream finMetadata(METADATA_PATH);
+    CHECK_TRUE(finMetadata.is_open(), false, "open meta file fail");
+    std::ofstream fout;
+    fout.open(filepath.c_str(), std::ios::out | std::ios::app);
+    if (!fout.is_open()) {
+        PROFILER_LOG_ERROR(LOG_CORE,  "open file fail: %s", filepath.c_str());
+        finMetadata.close();
+        return false;
+    }
+    fout << finMetadata.rdbuf();
+    fout.write(reinterpret_cast<const char *>(&fileSize), sizeof(fileSize));
+    fout.write(reinterpret_cast<const char *>(&metaSize), sizeof(metaSize));
+    fout.close();
+    finMetadata.close();
+    PROFILER_LOG_DEBUG(LOG_CORE,  "append metadata done");
     return true;
 }
