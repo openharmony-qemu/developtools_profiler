@@ -14,6 +14,7 @@
  */
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 #include "unistd.h"
 #include <fstream>
 #include <sstream>
@@ -117,6 +118,7 @@ static void SocketStopCommand()
 
 static void SocketStartCommand(int argc, char *argv[])
 {
+    setenv("SP_NO_HEARTBEAT", "1", 1);
     OHOS::SmartPerf::SPUtils::KillStartDaemon();
     std::string startStr = "";
     std::string endStr = "";
@@ -124,6 +126,7 @@ static void SocketStartCommand(int argc, char *argv[])
     OHOS::SmartPerf::SPUtils::LoadCmd(pidCmd, startStr);
     OHOS::SmartPerf::ClientControl cc;
     cc.StartSPDaemon();
+    unsetenv("SP_NO_HEARTBEAT");
     OHOS::SmartPerf::SPUtils::LoadCmd(pidCmd, endStr);
     std::vector<std::string> startParams;
     std::vector<std::string> endParams;

@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include <cstdio>
+#include <cstdlib>
 #include <thread>
 #include <cstring>
 #include <iterator>
@@ -144,8 +145,13 @@ void SmartPerfCommand::CreateSocketThread() const
     auto udpSocket = std::thread([]() { SpThreadSocket::GetInstance().Process(ProtoType::UDP); });
     sleep(1);
     auto udpexSocket = std::thread([]() { SpThreadSocket::GetInstance().Process(ProtoType::UDPEX); });
-    Heartbeat::GetInstance().UpdatestartTime();
-    std::thread([]() { Heartbeat::GetInstance().HeartbeatRule(); }).detach();
+    const char* noHeartbeat = getenv("SP_NO_HEARTBEAT");
+    if (noHeartbeat != nullptr && strcmp(noHeartbeat, "1") == 0) {
+        unsetenv("SP_NO_HEARTBEAT");
+    } else {
+        Heartbeat::GetInstance().UpdatestartTime();
+        std::thread([]() { Heartbeat::GetInstance().HeartbeatRule(); }).detach();
+    }
     tcpSocket.join();
     udpSocket.join();
     udpexSocket.join();
