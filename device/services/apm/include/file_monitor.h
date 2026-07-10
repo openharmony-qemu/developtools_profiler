@@ -22,7 +22,7 @@
 #include <thread>
 #include <cstdint>
 #include <string>
-
+#include "nocopyable.h"
 #include "i_semaphore.h"
 
 class FileMonitor {
@@ -48,6 +48,8 @@ private:
     std::string resultFile_;
     FileFilter filter_;
     SemaphorePtr sem_ {nullptr};
+
+    DISALLOW_COPY_AND_MOVE(FileMonitor);
 };
 
 #endif // FileMonitor
