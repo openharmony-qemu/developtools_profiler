@@ -431,6 +431,21 @@ HWTEST_F(CommonTest, GetFreeRomPercent, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetRomSpaceInfo
+ * @tc.desc: GetRomSpaceInfo
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, GetRomSpaceInfo, TestSize.Level1)
+{
+    uint64_t totalBytes = 0;
+    uint64_t freeBytes = 0;
+    bool result = COMMON::GetRomSpaceInfo(COMMON::DEFAULT_RW_DIR, totalBytes, freeBytes);
+    EXPECT_TRUE(result);
+    EXPECT_GT(totalBytes, 0ULL);
+    EXPECT_GT(freeBytes, 0ULL);
+}
+
+/**
  * @tc.name: CopyFileFast
  * @tc.desc: CopyFileFast
  * @tc.type: FUNC

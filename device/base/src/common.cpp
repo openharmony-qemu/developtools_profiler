@@ -1062,17 +1062,26 @@ std::string GetFullTracePath(pid_t uid, pid_t pid, const std::string& processNam
     return HTRACE_PATH_PREFIX + std::to_string(uid / uidBase) + "/base/" + bundleName + HTRACE_PATH_SUFFIX + filename;
 }
 
-double GetFreeRomPercent(const std::string path)
+bool GetRomSpaceInfo(const std::string& path, uint64_t& totalBytes, uint64_t& freeBytes)
 {
     struct statvfs stat;
-    double ret = 0.0;
     if (statvfs(path.c_str(), &stat) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "GetFreeRomPercent::Failed to get free rom percent,error:%s", strerror(errno));
-        return ret;
+        PROFILER_LOG_ERROR(LOG_CORE, "GetRomSpaceInfo::Failed to get rom info,error:%s", strerror(errno));
+        return false;
     }
+    totalBytes = static_cast<uint64_t>(stat.f_blocks) * static_cast<uint64_t>(stat.f_frsize);
+    freeBytes = static_cast<uint64_t>(stat.f_bfree) * static_cast<uint64_t>(stat.f_frsize);
+    return true;
+}
 
-    ret = static_cast<double>(stat.f_bfree) / static_cast<double>(stat.f_blocks);
-    return ret;
+double GetFreeRomPercent(const std::string path)
+{
+    uint64_t totalBytes = 0;
+    uint64_t freeBytes = 0;
+    if (!GetRomSpaceInfo(path, totalBytes, freeBytes) || totalBytes == 0) {
+        return 0.0;
+    }
+    return static_cast<double>(freeBytes) / static_cast<double>(totalBytes);
 }
 
 static bool DoSendfileCopyOnce(int srcFd, int destFd, ssize_t &outTotal)

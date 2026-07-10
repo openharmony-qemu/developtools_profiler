@@ -82,6 +82,7 @@ enum ErrorType {
 std::string GetBundleNameByPid(int32_t pid);
 std::string GetFullTracePath(pid_t uid, pid_t pid, const std::string& processName, const std::string& filename);
 double GetFreeRomPercent(const std::string path = DEFAULT_RW_DIR);
+bool GetRomSpaceInfo(const std::string& path, uint64_t& totalBytes, uint64_t& freeBytes);
 bool CopyFileFast(uint32_t srcFd, const std::string& destPath);
 bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPath);
 bool CleanOldenFiles(const std::string& path);

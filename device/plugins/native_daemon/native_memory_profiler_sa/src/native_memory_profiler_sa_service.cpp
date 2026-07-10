@@ -40,8 +40,9 @@ constexpr int FILE_MODE = 0644;
 constexpr int32_t SIMP_NMD = 3;
 constexpr int32_t NMD_WAIT_MS = 5000;
 constexpr int VEC_SHIFT = 2;
-constexpr double MIN_MEM_ROM_PERCENT = 0.20;
-constexpr double MIN_MEM_PROFILER_MEM_PERCENT = 0.20;
+constexpr double MIN_MEM_ROM_PERCENT = 0.03;
+constexpr uint64_t MIN_MEM_AVAILABLE_KB = 2ULL * 1024 * 1024; // 2GB, /proc/meminfo unit is kB
+constexpr uint64_t MIN_FREE_ROM_BYTES = 15ULL * 1024 * 1024 * 1024; // 15GB
 constexpr double MAX_MEM_PROFILER_CPU_PERCENT = 0.7;
 const std::string API_SANDBOX_PATH_PREFIX = "/data/storage/el2/base/files/";
 constexpr uint32_t START_TYPE_HIVIEW = 0;
@@ -375,9 +376,9 @@ int32_t NativeMemoryProfilerSaService::CheckSystemResource()
     if (!GetSystemMemoryInfo(&memInfo)) {
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_MEM_PRESSURE_CRITICAL);
     }
-
-    if (memInfo.availablePercent < MIN_MEM_PROFILER_MEM_PERCENT) {
-        PROFILER_LOG_ERROR(LOG_CORE, "System memory is too low: %.2f%%", memInfo.availablePercent * oneHundred);
+    if (memInfo.availableMem < MIN_MEM_AVAILABLE_KB) {
+        PROFILER_LOG_ERROR(LOG_CORE, "System memory is too low: %llu KB",
+            static_cast<unsigned long long>(memInfo.availableMem));
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_MEM_PRESSURE_CRITICAL);
     }
     
@@ -390,10 +391,16 @@ int32_t NativeMemoryProfilerSaService::CheckSystemResource()
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CPU_OVERLOADED);
     }
     
-    double freeRom = 0.0;
-    freeRom = COMMON::GetFreeRomPercent(COMMON::DEFAULT_RW_DIR);
-    if (freeRom < MIN_MEM_ROM_PERCENT) {
-        PROFILER_LOG_ERROR(LOG_CORE, "System ROM is too low: %.2f%%", freeRom * oneHundred);
+    uint64_t totalBytes = 0;
+    uint64_t freeBytes = 0;
+    if (!COMMON::GetRomSpaceInfo(COMMON::DEFAULT_RW_DIR, totalBytes, freeBytes)) {
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_STORAGE_PRESSURE_CRITICAL);
+    }
+    uint64_t percentThreshold = static_cast<uint64_t>(static_cast<double>(totalBytes) * MIN_MEM_ROM_PERCENT);
+    uint64_t threshold = std::max(percentThreshold, MIN_FREE_ROM_BYTES);
+    if (freeBytes < threshold) {
+        PROFILER_LOG_ERROR(LOG_CORE, "System ROM is too low: %llu bytes, threshold: %llu bytes",
+            static_cast<unsigned long long>(freeBytes), static_cast<unsigned long long>(threshold));
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_STORAGE_PRESSURE_CRITICAL);
     }
 
@@ -1355,6 +1362,7 @@ bool NativeMemoryProfilerSaService::GetSystemMemoryInfo(MemoryInfo *memInfo)
     memInfo->totalMem = totalMem;
     memInfo->freeMem = freeMem;
     memInfo->usedMem = totalMem - availableMem;
+    memInfo->availableMem = availableMem;
     memInfo->availablePercent = static_cast<double>(availableMem) / static_cast<double>(totalMem);
 
     return true;
