@@ -570,7 +570,12 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigHandlesNullAn
 {
     using namespace OHOS::Developtools::NativeDaemon;
     auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    MemAPIConfig inputConfig = {12, 34, 5, 67, 890};
+    MemAPIConfig inputConfig;
+    inputConfig.maxDuration = 12;
+    inputConfig.filterSize = 34;
+    inputConfig.maxStackDepth = 5;
+    inputConfig.statisticsInterval = 67;
+    inputConfig.sampleInterval = 890;
     ASSERT_NE(config, nullptr);
 
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseNormalConfig(nullptr, &inputConfig), RET_ERR);
@@ -581,6 +586,173 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigHandlesNullAn
     EXPECT_EQ(config->maxStackDepth_, inputConfig.maxStackDepth);
     EXPECT_EQ(config->statisticsInterval_, inputConfig.statisticsInterval);
     EXPECT_EQ(config->sampleInterval_, inputConfig.sampleInterval);
+}
+
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigSetsAsyncFlagWhenNestedEnabled, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(config, nullptr);
+
+    MemAPIConfig inputConfig;
+    inputConfig.maxDuration = 11;
+    inputConfig.filterSize = 22;
+    inputConfig.maxStackDepth = 3;
+    inputConfig.statisticsInterval = 44;
+    inputConfig.sampleInterval = 512;
+    inputConfig.asyncStackEnable = true;
+    inputConfig.nestedAsyncStackEnable = true;
+    constexpr uint64_t expectedFlag = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
+        ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROFILER | ASYNC_TYPE_CUSTOMIZE | ASYNC_TYPE_ARKTS_WORKER |
+        ASYNC_TYPE_ARKTS_TASKPOOL;
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseNormalConfig(config, &inputConfig), RET_OK);
+    EXPECT_EQ(config->asyncFlag_, expectedFlag);
+}
+
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigSetsAsyncFlagWhenOnlyAsyncEnabled, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(config, nullptr);
+
+    MemAPIConfig inputConfig;
+    inputConfig.maxDuration = 15;
+    inputConfig.filterSize = 26;
+    inputConfig.maxStackDepth = 4;
+    inputConfig.statisticsInterval = 55;
+    inputConfig.sampleInterval = 768;
+    inputConfig.asyncStackEnable = true;
+    inputConfig.nestedAsyncStackEnable = false;
+    constexpr uint64_t expectedFlag = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
+        ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROMISE | ASYNC_TYPE_CUSTOMIZE | ASYNC_TYPE_ARKTS_WORKER |
+        ASYNC_TYPE_ARKTS_TASKPOOL | ASYNC_TYPE_ARKTS_STA_LAUNCH | ASYNC_TYPE_ARKWEB | ASYNC_TYPE_JSVM;
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseNormalConfig(config, &inputConfig), RET_OK);
+    EXPECT_EQ(config->asyncFlag_, expectedFlag);
+}
+
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigSetsAsyncFlagWhenAsyncDisabled, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(config, nullptr);
+    constexpr uint64_t preservedFlag = 0x123456789ULL;
+    config->asyncFlag_ = preservedFlag;
+
+    MemAPIConfig inputConfig;
+    inputConfig.maxDuration = 21;
+    inputConfig.filterSize = 31;
+    inputConfig.maxStackDepth = 5;
+    inputConfig.statisticsInterval = 61;
+    inputConfig.sampleInterval = 1024;
+    inputConfig.asyncStackEnable = false;
+    inputConfig.nestedAsyncStackEnable = true;
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseNormalConfig(config, &inputConfig), RET_OK);
+    EXPECT_EQ(config->asyncFlag_, 0x0);
+}
+
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigCopiesAsyncAndGpuHookSizes, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(config, nullptr);
+    config->traceMask_ = RES_GPU_MASK;
+    config->gpuRange_ = {{99, 99, 99, 99}};
+
+    MemAPIConfig inputConfig;
+    inputConfig.maxDuration = 12;
+    inputConfig.filterSize = 34;
+    inputConfig.maxStackDepth = 5;
+    inputConfig.statisticsInterval = 67;
+    inputConfig.sampleInterval = 890;
+    inputConfig.asyncStackEnable = true;
+    inputConfig.nestedAsyncStackEnable = true;
+    inputConfig.asyncNestingDepth = 8;
+    inputConfig.asyncTaskStackDepth = 9;
+
+    inputConfig.hookSizes[TAG_RES_GPU_VK] = std::make_pair(std::make_pair(1u, 2u), std::make_pair(3u, 4u));
+    inputConfig.hookSizes[TAG_RES_GPU_GLES_IMAGE] = std::make_pair(std::make_pair(5u, 6u), std::make_pair(7u, 8u));
+    inputConfig.hookSizes[TAG_RES_GPU_GLES_BUFFER] =
+        std::make_pair(std::make_pair(9u, 10u), std::make_pair(11u, 12u));
+    inputConfig.hookSizes[TAG_RES_GPU_CL_IMAGE] = std::make_pair(std::make_pair(13u, 14u), std::make_pair(15u, 16u));
+    inputConfig.hookSizes[TAG_RES_GPU_CL_BUFFER] =
+        std::make_pair(std::make_pair(17u, 18u), std::make_pair(19u, 20u));
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseNormalConfig(config, &inputConfig), RET_OK);
+    EXPECT_TRUE(config->asyncStackEnable_);
+    EXPECT_TRUE(config->nestedAsyncStackEnable_);
+    EXPECT_EQ(config->asyncNestingDepth_, inputConfig.asyncNestingDepth);
+    EXPECT_EQ(config->asyncTaskStackDepth_, inputConfig.asyncTaskStackDepth);
+
+    ASSERT_EQ(config->gpuRange_.size(), 5u);
+    const std::vector<uint64_t> vkExpected = {1, 2, 3, 4};
+    const std::vector<uint64_t> glesImageExpected = {5, 6, 7, 8};
+    const std::vector<uint64_t> glesBufferExpected = {9, 10, 11, 12};
+    const std::vector<uint64_t> clImageExpected = {13, 14, 15, 16};
+    const std::vector<uint64_t> clBufferExpected = {17, 18, 19, 20};
+    EXPECT_EQ(config->gpuRange_[0], vkExpected);
+    EXPECT_EQ(config->gpuRange_[1], glesImageExpected);
+    EXPECT_EQ(config->gpuRange_[2], glesBufferExpected);
+    EXPECT_EQ(config->gpuRange_[3], clImageExpected);
+    EXPECT_EQ(config->gpuRange_[4], clBufferExpected);
+}
+
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigGpuWithoutHookSizesKeepsGpuRange, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(config, nullptr);
+    config->traceMask_ = RES_GPU_MASK;
+    const std::vector<uint64_t> firstRange = {21, 22, 23, 24};
+    const std::vector<uint64_t> secondRange = {31, 32, 33, 34};
+    config->gpuRange_ = {firstRange, secondRange};
+
+    MemAPIConfig inputConfig;
+    inputConfig.maxDuration = 20;
+    inputConfig.filterSize = 40;
+    inputConfig.maxStackDepth = 6;
+    inputConfig.statisticsInterval = 80;
+    inputConfig.sampleInterval = 900;
+    inputConfig.asyncStackEnable = false;
+    inputConfig.nestedAsyncStackEnable = false;
+    inputConfig.asyncNestingDepth = 2;
+    inputConfig.asyncTaskStackDepth = 3;
+
+    EXPECT_TRUE(inputConfig.hookSizes.empty());
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseNormalConfig(config, &inputConfig), RET_OK);
+    ASSERT_EQ(config->gpuRange_.size(), 2u);
+    EXPECT_EQ(config->gpuRange_[0], firstRange);
+    EXPECT_EQ(config->gpuRange_[1], secondRange);
+}
+
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigNonGpuMaskIgnoresHookSizes, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(config, nullptr);
+    config->traceMask_ = RES_FD_MASK;
+    const std::vector<uint64_t> preservedRange = {41, 42, 43, 44};
+    config->gpuRange_ = {preservedRange};
+
+    MemAPIConfig inputConfig;
+    inputConfig.maxDuration = 30;
+    inputConfig.filterSize = 50;
+    inputConfig.maxStackDepth = 7;
+    inputConfig.statisticsInterval = 90;
+    inputConfig.sampleInterval = 1000;
+    inputConfig.hookSizes[TAG_RES_GPU_VK] = std::make_pair(std::make_pair(1u, 2u), std::make_pair(3u, 4u));
+    inputConfig.hookSizes[TAG_RES_GPU_GLES_IMAGE] = std::make_pair(std::make_pair(5u, 6u), std::make_pair(7u, 8u));
+    inputConfig.hookSizes[TAG_RES_GPU_GLES_BUFFER] =
+        std::make_pair(std::make_pair(9u, 10u), std::make_pair(11u, 12u));
+    inputConfig.hookSizes[TAG_RES_GPU_CL_IMAGE] = std::make_pair(std::make_pair(13u, 14u), std::make_pair(15u, 16u));
+    inputConfig.hookSizes[TAG_RES_GPU_CL_BUFFER] =
+        std::make_pair(std::make_pair(17u, 18u), std::make_pair(19u, 20u));
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseNormalConfig(config, &inputConfig), RET_OK);
+    ASSERT_EQ(config->gpuRange_.size(), 1u);
+    EXPECT_EQ(config->gpuRange_[0], preservedRange);
 }
 
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, UtilityMethodsHandleBoundaries, TestSize.Level2)
