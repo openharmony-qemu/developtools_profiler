@@ -1744,7 +1744,7 @@ void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, s
 {
     // ignore the first two frame if dwarf unwind
     auto rawStack = hookRecord->GetRawStack();
-    size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
+    size_t idx = (hookConfig_.async_stack_enable() || !hookConfig_.fp_unwind()) ? FILTER_STACK_DEPTH : 0;
     g_callStack.clear();
     bool isNapi = false;
     if (hookConfig_.js_stack_report() == NAPI_CALL_STACK) {
