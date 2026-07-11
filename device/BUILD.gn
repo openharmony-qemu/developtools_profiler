@@ -97,6 +97,7 @@ group("unittest") {
     "plugins/network_profiler/test:unittest",
     "plugins/process_plugin/test:unittest",
     "plugins/xpower_plugin/test:unittest",
+    "services/apm/test:unittest",
     "services/ipc/test:unittest",
     "services/plugin_service/test:unittest",
     "services/profiler_service/test:unittest",
