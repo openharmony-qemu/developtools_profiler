@@ -45,6 +45,11 @@ constexpr uint64_t MIN_MEM_AVAILABLE_KB = 2ULL * 1024 * 1024; // 2GB, /proc/memi
 constexpr uint64_t MIN_FREE_ROM_BYTES = 15ULL * 1024 * 1024 * 1024; // 15GB
 constexpr double MAX_MEM_PROFILER_CPU_PERCENT = 0.7;
 const std::string API_SANDBOX_PATH_PREFIX = "/data/storage/el2/base/files/";
+const std::string DAILY_COUNT_DIR = "/data/log/hiprofiler/";
+const std::string MEM_PROFILER_QUOTA_FILE_NAME = "profiling_rate_limits_quota";
+constexpr int HOURS_PER_DAY = 24;
+constexpr int32_t MAX_MEM_PROFILER_USE_COUNT_PER_DAY = 2;
+constexpr int32_t MAX_MEM_PROFILER_TOTAL_USE_COUNT_PER_DAY = 4;
 constexpr uint32_t START_TYPE_HIVIEW = 0;
 constexpr uint32_t START_TYPE_API = 1;
 
@@ -69,6 +74,7 @@ static std::mutex g_fileNameMtx;
 static std::mutex g_nmdMtx;
 static std::unordered_set<uint32_t> g_stoppingPids;
 static std::mutex g_stoppingPidsMtx;
+static std::mutex g_countFileMutex;
 #ifdef ENABLE_SA_AUTO_START
 const bool G_REGISTER_RESUTL = SystemAbility::MakeAndRegisterAbility(
     DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance().get());
@@ -407,8 +413,7 @@ int32_t NativeMemoryProfilerSaService::CheckSystemResource()
     return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS);
 }
 
-int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
-    const sptr<IRemoteObject>& callback)
+int32_t NativeMemoryProfilerSaService::PreCheckPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
     int32_t pid = static_cast<int32_t>(IPCSkeleton::GetCallingPid());
     if (config->pid_ != pid) {
@@ -442,10 +447,53 @@ int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemory
         PROFILER_LOG_ERROR(LOG_CORE, "System resource is not enough,errorcode is:%d.", retResource);
         return retResource;
     }
+    return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS);
+}
+
+int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+    const sptr<IRemoteObject>& callback)
+{
+    bool isDebugApp = COMMON::CheckApplicationPermission(config->pid_, config->processName_);
+    if (!isDebugApp) {
+        std::lock_guard<std::mutex> lock(g_countFileMutex);
+        std::unordered_map<std::string, QuotaRecord> records;
+        if (!ReadQuotaFile(records)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "StartPidVoid: failed to read quota file");
+            return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR);
+        }
+        if (GetMemProfilerUseCountToday(records, config->bundleName_) >= MAX_MEM_PROFILER_USE_COUNT_PER_DAY) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Daily use count exceeded,errorcode is:%d.",
+                static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED));
+            return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED);
+        }
+        if (GetMemProfilerTotalUseCountToday(records) >= MAX_MEM_PROFILER_TOTAL_USE_COUNT_PER_DAY) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Global daily use count exceeded,errorcode is:%d.",
+                static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED));
+            return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED);
+        }
+        if (!UpdateMemProfilerUserCount(records, config->bundleName_)) {
+            return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR);
+        }
+        if (!WriteQuotaFile(records)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "StartPidVoid: failed to write quota file");
+            return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR);
+        }
+    }
+    int32_t retPreCheck = PreCheckPidVoid(config);
+    if (retPreCheck != static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
+        if (!RollbackMemProfilerUserCount(isDebugApp, config->bundleName_)) {
+            PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaService: rollback count failed");
+        }
+        return retPreCheck;
+    }
     auto args = GetCmdArgs(config);
     std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
     uint32_t fd = 0;
-    return StartHookLock(config, fd, hook, args, callback);
+    int32_t retHookLock = StartHookLock(config, fd, hook, args, callback);
+    if (retHookLock != RET_OK && !RollbackMemProfilerUserCount(isDebugApp, config->bundleName_)) {
+        PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaService: rollback count failed");
+    }
+    return retHookLock;
 }
 
 // only for API
@@ -970,6 +1018,10 @@ int32_t NativeMemoryProfilerSaService::PidAndNameConflict(std::shared_ptr<Native
 // Returns RES_PROF_PROCESS_OVERLIMIT if either limit is exceeded.
 int32_t NativeMemoryProfilerSaService::CheckTaskLimit(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
+    if (COMMON::CheckApplicationPermission(config->pid_, config->processName_)) {
+        PROFILER_LOG_INFO(LOG_CORE, "debug app skip task limit, pid: %d", config->pid_);
+        return RET_OK;
+    }
     auto maxTaskCount = GetValueFromJsonFile(PRODUCT_CONFIG_PATH, "hiprofiler_hook_process_count");
     taskMaxNum_ = maxTaskCount > 0 ? maxTaskCount : taskMaxNum_;
 
@@ -1521,6 +1573,158 @@ int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::sha
         close(config->fd);
     }
     return ret;
+}
+
+bool NativeMemoryProfilerSaService::ReadQuotaFile(std::unordered_map<std::string, QuotaRecord>& records)
+{
+    records.clear();
+    const std::string filepath = std::string(DAILY_COUNT_DIR) + std::string(MEM_PROFILER_QUOTA_FILE_NAME);
+    struct stat st;
+    if (stat(filepath.c_str(), &st) != 0) {
+        return true;
+    }
+    char canonicalPath[PATH_MAX] = {0};
+    if (realpath(filepath.c_str(), canonicalPath) == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ReadQuotaFile: failed to get canonical path");
+        return false;
+    }
+    std::ifstream ifs(canonicalPath);
+    if (!ifs.is_open()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ReadQuotaFile: failed to open file");
+        return false;
+    }
+    std::string name;
+    long long timestamp = 0;
+    int32_t count = 0;
+    while (ifs >> name >> timestamp >> count) {
+        records[name] = {timestamp, count};
+    }
+    ifs.close();
+    return true;
+}
+
+bool NativeMemoryProfilerSaService::WriteQuotaFile(const std::unordered_map<std::string, QuotaRecord>& records)
+{
+    const std::string filepath = std::string(DAILY_COUNT_DIR) + std::string(MEM_PROFILER_QUOTA_FILE_NAME);
+    std::string tpl = filepath + ".tmp.XXXXXX";
+    std::vector<char> tmpl(tpl.begin(), tpl.end());
+    tmpl.push_back('\0');
+    int fd = mkstemp(tmpl.data());
+    if (fd < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "WriteQuotaFile: failed to create temp file, errno: %d", errno);
+        return false;
+    }
+    std::string content;
+    for (const auto& item : records) {
+        content += item.first + " " + std::to_string(item.second.timestamp) + " " +
+            std::to_string(item.second.count) + "\n";
+    }
+    const char* buf = content.c_str();
+    size_t toWrite = content.size();
+    ssize_t written = write(fd, buf, toWrite);
+    if (written != static_cast<ssize_t>(toWrite)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "WriteQuotaFile: failed to write data, errno: %d", errno);
+        close(fd);
+        unlink(tmpl.data());
+        return false;
+    }
+    if (fsync(fd) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "WriteQuotaFile: failed to sync data, errno: %d", errno);
+        close(fd);
+        unlink(tmpl.data());
+        return false;
+    }
+    if (close(fd) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "WriteQuotaFile: failed to close file, errno: %d", errno);
+        unlink(tmpl.data());
+        return false;
+    }
+    if (rename(tmpl.data(), filepath.c_str()) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "WriteQuotaFile: failed to rename temp file, errno: %d", errno);
+        unlink(tmpl.data());
+        return false;
+    }
+    return true;
+}
+
+bool NativeMemoryProfilerSaService::IsSeparateByMoreThan24Hours(long long t1, long long t2)
+{
+    using namespace std::chrono;
+    if (t1 < 0 || t2 < 0) {
+        return false;
+    }
+    if (t1 > t2) {
+        std::swap(t1, t2);
+    }
+    return duration_cast<hours>(system_clock::from_time_t(t2) - system_clock::from_time_t(t1)) > hours(HOURS_PER_DAY);
+}
+
+int32_t NativeMemoryProfilerSaService::GetMemProfilerUseCountToday(
+    const std::unordered_map<std::string, QuotaRecord>& records, std::string name)
+{
+    auto it = records.find(name);
+    if (it == records.end()) {
+        return 0;
+    }
+    long long nowTime = static_cast<long long>(time(nullptr));
+    if (IsSeparateByMoreThan24Hours(it->second.timestamp, nowTime)) {
+        return 0;
+    }
+    return it->second.count;
+}
+
+int32_t NativeMemoryProfilerSaService::GetMemProfilerTotalUseCountToday(
+    const std::unordered_map<std::string, QuotaRecord>& records)
+{
+    int32_t totalCount = 0;
+    long long nowTime = static_cast<long long>(time(nullptr));
+    for (const auto& item : records) {
+        if (!IsSeparateByMoreThan24Hours(item.second.timestamp, nowTime)) {
+            totalCount += item.second.count;
+        }
+    }
+    return totalCount;
+}
+
+bool NativeMemoryProfilerSaService::UpdateMemProfilerUserCount(
+    std::unordered_map<std::string, QuotaRecord>& records, std::string name)
+{
+    time_t now = time(nullptr);
+    if (now == static_cast<time_t>(-1)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "UpdateMemProfilerUserCount: failed to get current time");
+        return false;
+    }
+    long long nowTime = static_cast<long long>(now);
+    auto it = records.find(name);
+    if (it == records.end() || IsSeparateByMoreThan24Hours(it->second.timestamp, nowTime)) {
+        records[name] = {nowTime, 1};
+    } else {
+        it->second.count++;
+        it->second.timestamp = nowTime;
+    }
+    return true;
+}
+
+bool NativeMemoryProfilerSaService::RollbackMemProfilerUserCount(bool isDebug, std::string name)
+{
+    if (isDebug) {
+        return true;
+    }
+    std::lock_guard<std::mutex> lock(g_countFileMutex);
+    std::unordered_map<std::string, QuotaRecord> records;
+    if (!ReadQuotaFile(records)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "RollbackMemProfilerUserCount: failed to read quota file");
+        return false;
+    }
+    auto it = records.find(name);
+    if (it != records.end() && it->second.count > 0) {
+        it->second.count--;
+        if (!WriteQuotaFile(records)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "RollbackMemProfilerUserCount: failed to write quota file");
+            return false;
+        }
+    }
+    return true;
 }
 
 } // namespace OHOS::Developtools::NativeDaemon

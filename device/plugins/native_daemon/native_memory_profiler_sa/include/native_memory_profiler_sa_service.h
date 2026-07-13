@@ -54,6 +54,11 @@ struct MemoryInfo {
     double availablePercent;
 };
 
+struct QuotaRecord {
+    long long timestamp;
+    int32_t count;
+};
+
 class NativeMemoryProfilerSaService : public SystemAbility, public NativeMemoryProfilerSaStub, public ServiceBase {
     DECLARE_SYSTEM_ABILITY(NativeMemoryProfilerSaService);
     DECLARE_DELAYED_SINGLETON(NativeMemoryProfilerSaService);
@@ -118,6 +123,17 @@ private:
         const std::string& filePath);
     static int32_t CopyApiCollectorFile(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath);
     static int32_t ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath);
+    int32_t PreCheckPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    static int32_t GetMemProfilerUseCountToday(
+        const std::unordered_map<std::string, QuotaRecord>& records, std::string name = "");
+    static int32_t GetMemProfilerTotalUseCountToday(
+        const std::unordered_map<std::string, QuotaRecord>& records);
+    static bool UpdateMemProfilerUserCount(
+        std::unordered_map<std::string, QuotaRecord>& records, std::string name = "");
+    static bool RollbackMemProfilerUserCount(bool isDebug = false, std::string name = "");
+    static bool ReadQuotaFile(std::unordered_map<std::string, QuotaRecord>& records);
+    static bool WriteQuotaFile(const std::unordered_map<std::string, QuotaRecord>& records);
+    static bool IsSeparateByMoreThan24Hours(long long t1, long long t2);
 
 private:
     std::mutex gpuMtx_;
