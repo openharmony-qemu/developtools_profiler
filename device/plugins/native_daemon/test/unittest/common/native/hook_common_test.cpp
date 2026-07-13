@@ -65,36 +65,36 @@ HWTEST_F(HookCommonTest, HookCommonTest002, TestSize.Level3)
 
 /**
  * @tc.name: HookCommonTest003
- * @tc.desc: Test discardDestoryedTraces propagation in IPC (ToIpc and FromIpc)
+ * @tc.desc: Test discardDestroyedTraces propagation in IPC (ToIpc and FromIpc)
  * @tc.type: FUNC
  */
 HWTEST_F(HookCommonTest, HookCommonTest003, TestSize.Level3)
 {
     ClientConfig config;
-    config.discardDestoryedTraces = true;
+    config.discardDestroyedTraces = true;
 
     ClientConfigIpc ipc;
     EXPECT_TRUE(ConvertClientConfigToIpc(config, ipc));
-    EXPECT_EQ(ipc.discardDestoryedTraces, true);
+    EXPECT_EQ(ipc.discardDestroyedTraces, true);
 
     ClientConfig resultConfig;
     ConvertClientConfigFromIpc(ipc, resultConfig);
-    EXPECT_EQ(resultConfig.discardDestoryedTraces, true);
+    EXPECT_EQ(resultConfig.discardDestroyedTraces, true);
 }
 
 /**
  * @tc.name: HookCommonTest004
- * @tc.desc: Test default value of discardDestoryedTraces (should be false)
+ * @tc.desc: Test default value of discardDestroyedTraces (should be false)
  * @tc.type: FUNC
  */
 HWTEST_F(HookCommonTest, HookCommonTest004, TestSize.Level3)
 {
     ClientConfig config;
-    EXPECT_EQ(config.discardDestoryedTraces, false);
+    EXPECT_EQ(config.discardDestroyedTraces, false);
 
     ClientConfigIpc ipc;
     ConvertClientConfigToIpc(config, ipc);
-    EXPECT_EQ(ipc.discardDestoryedTraces, false);
+    EXPECT_EQ(ipc.discardDestroyedTraces, false);
 }
 
 /**

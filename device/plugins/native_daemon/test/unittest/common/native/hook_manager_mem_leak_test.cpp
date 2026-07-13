@@ -711,40 +711,40 @@ HWTEST_F(HookManagerMemLeakTest, HandleMemLeakDone_AlreadyFinished, TestSize.Lev
 }
 
 /*
- * @tc.name: SetHookConfigExt_discardDestoryedTraces
- * @tc.desc: test SetHookConfigExt propagates discardDestoryedTraces_ to hookConfig_.
+ * @tc.name: SetHookConfigExt_discardDestroyedTraces
+ * @tc.desc: test SetHookConfigExt propagates discardDestroyedTraces_ to hookConfig_.
  * @tc.type: FUNC
  */
-HWTEST_F(HookManagerMemLeakTest, SetHookConfigExt_discardDestoryedTraces, TestSize.Level0)
+HWTEST_F(HookManagerMemLeakTest, SetHookConfigExt_discardDestroyedTraces, TestSize.Level0)
 {
     auto saConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
     saConfig->pid_ = TEST_PID;
     saConfig->processName_ = TEST_PROCESS_NAME;
-    saConfig->discardDestoryedTraces_ = true;
+    saConfig->discardDestroyedTraces_ = true;
     hookManager_->SetHookConfig(saConfig);
-    EXPECT_TRUE(hookManager_->hookConfig_.discard_destoryed_traces());
+    EXPECT_TRUE(hookManager_->hookConfig_.discard_destroyed_traces());
 
-    saConfig->discardDestoryedTraces_ = false;
+    saConfig->discardDestroyedTraces_ = false;
     hookManager_->SetHookConfig(saConfig);
-    EXPECT_FALSE(hookManager_->hookConfig_.discard_destoryed_traces());
+    EXPECT_FALSE(hookManager_->hookConfig_.discard_destroyed_traces());
 }
 
 /*
- * @tc.name: GetClientConfig_discardDestoryedTraces
- * @tc.desc: test GetClientConfig propagates discard_destoryed_traces to clientConfig.
+ * @tc.name: GetClientConfig_discardDestroyedTraces
+ * @tc.desc: test GetClientConfig propagates discard_destroyed_traces to clientConfig.
  * @tc.type: FUNC
  */
-HWTEST_F(HookManagerMemLeakTest, GetClientConfig_discardDestoryedTraces, TestSize.Level0)
+HWTEST_F(HookManagerMemLeakTest, GetClientConfig_discardDestroyedTraces, TestSize.Level0)
 {
     auto saConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
     saConfig->pid_ = TEST_PID;
     saConfig->processName_ = TEST_PROCESS_NAME;
-    saConfig->discardDestoryedTraces_ = true;
+    saConfig->discardDestroyedTraces_ = true;
     hookManager_->SetHookConfig(saConfig);
 
     ClientConfig clientConfig;
     hookManager_->GetClientConfig(clientConfig);
-    EXPECT_TRUE(clientConfig.discardDestoryedTraces);
+    EXPECT_TRUE(clientConfig.discardDestroyedTraces);
 }
 
 /*
