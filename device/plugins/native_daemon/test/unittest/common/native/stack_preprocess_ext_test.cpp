@@ -847,29 +847,29 @@ HWTEST_F(StackPreprocessExtTest, FlushRecordStatisticsTest, TestSize.Level0)
 }
 
 /*
-@tc.name: StackPreprocessCtor_discardDestoryedTraces
-@tc.desc: test StackPreprocess constructor reads discard_destoryed_traces from hookConfig.
+@tc.name: StackPreprocessCtor_discardDestroyedTraces
+@tc.desc: test StackPreprocess constructor reads discard_destroyed_traces from hookConfig.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, StackPreprocessCtor_discardDestoryedTraces, TestSize.Level0)
+HWTEST_F(StackPreprocessExtTest, StackPreprocessCtor_discardDestroyedTraces, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     hookConfig.set_statistics_interval(1);
-    hookConfig.set_discard_destoryed_traces(true);
+    hookConfig.set_discard_destroyed_traces(true);
     StackPreprocess preprocess(nullptr, hookConfig, 0);
-    EXPECT_TRUE(preprocess.discardDestoryedTraces_);
+    EXPECT_TRUE(preprocess.discardDestroyedTraces_);
 }
 
 /*
-@tc.name: FlushRecordStatistics_discardDestoryedTraces
+@tc.name: FlushRecordStatistics_discardDestroyedTraces
 @tc.desc: test FlushRecordStatistics discards destroyed traces created in current period.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, FlushRecordStatistics_discardDestoryedTraces, TestSize.Level0)
+HWTEST_F(StackPreprocessExtTest, FlushRecordStatistics_discardDestroyedTraces, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     hookConfig.set_statistics_interval(1);
-    hookConfig.set_discard_destoryed_traces(true);
+    hookConfig.set_discard_destroyed_traces(true);
     StackPreprocess preprocess(nullptr, hookConfig, 0);
 
     constexpr uint32_t stackId = 100;

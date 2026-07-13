@@ -375,7 +375,7 @@ private:
     std::atomic_bool finalSnapshotDone_{false};
     std::mutex snapshotMtx_;
     std::condition_variable snapshotCv_;
-    bool discardDestoryedTraces_ = false;
+    bool discardDestroyedTraces_ = false;
     const std::unordered_map<void*, struct timespec>* validLiveDataPtr_ = nullptr;
 };
 }

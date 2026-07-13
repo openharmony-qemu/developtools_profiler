@@ -572,7 +572,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.asyncNestingDepth = hookConfig_.async_nesting_depth();
     clientConfig.asyncTaskStackDepth = hookConfig_.async_task_stack_depth();
     clientConfig.arkuiMemTraceEnable = hookConfig_.arkui_mem_trace_enable();
-    clientConfig.discardDestoryedTraces = hookConfig_.discard_destoryed_traces();
+    clientConfig.discardDestroyedTraces = hookConfig_.discard_destroyed_traces();
     GetClientConfigExt(clientConfig);
 }
 
@@ -612,7 +612,7 @@ bool HookManager::HandleFileCacheHookContext(const std::shared_ptr<HookManagerCt
     ctx->cacheFileStopReceived = false;
     ctx->cacheFileStopRequested = false;
 
-    shouldSkipGlobalFreed_ = hookConfig_.discard_destoryed_traces();
+    shouldSkipGlobalFreed_ = hookConfig_.discard_destroyed_traces();
     if (shouldSkipGlobalFreed_) {
         totalRecord_ = 0;
         skipRecord_ = 0;
@@ -2176,7 +2176,7 @@ void HookManager::SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaC
     hookConfig_.set_async_nesting_depth(config->asyncNestingDepth_);
     hookConfig_.set_async_task_stack_depth(config->asyncTaskStackDepth_);
     hookConfig_.set_arkui_mem_trace_enable(config->arkuiMemTraceEnable_);
-    hookConfig_.set_discard_destoryed_traces(config->discardDestoryedTraces_);
+    hookConfig_.set_discard_destroyed_traces(config->discardDestroyedTraces_);
     SetMemLeakFormat(config->memLeakFormat_);
     memLeakLimit_ = config->memLeakLimit_;
     largestSize_ = config->largestSize_;

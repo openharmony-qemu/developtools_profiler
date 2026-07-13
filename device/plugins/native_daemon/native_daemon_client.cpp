@@ -164,7 +164,7 @@ int32_t main(int32_t argc, char* argv[])
             printf("    --nmdType                           -nt : nmd type, default: 0\n");
             printf("    --asyncNestingDepth                 -and : async nesting depth, default: 0\n");
             printf("    --asyncTaskStackDepth               -atsd : async task stack depth, default: 0\n");
-            printf("    --discardDestoryedTraces            -ddt : discard destoryed traces, default: true\n");
+            printf("    --discardDestroyedTraces            -ddt : discard destroyed traces, default: true\n");
             return 0;
         }
 
@@ -319,10 +319,10 @@ int32_t main(int32_t argc, char* argv[])
         } else if ((arg == "--asyncTaskStackDepth") || (arg == "-atsd")) {
             config->asyncTaskStackDepth_ =
                 i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
-        } else if ((arg == "--discardDestoryedTraces") || (arg == "-ddt")) {
+        } else if ((arg == "--discardDestroyedTraces") || (arg == "-ddt")) {
             if (i + 1 < argc && !IsOption(argv[i + 1])) {
                 std::string ddtVal(argv[++i]);
-                config->discardDestoryedTraces_ = (ddtVal == "true" || ddtVal == "1");
+                config->discardDestroyedTraces_ = (ddtVal == "true" || ddtVal == "1");
             }
         } else {
             printf("error arg: %s\n", arg.c_str());
