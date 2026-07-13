@@ -275,6 +275,7 @@ ohos_executable("native_daemon_client") {
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
+    "faultloggerd:libasync_stack",
     "faultloggerd:libdfx_dumpcatcher",
     "hicollie:libhicollie",
     "hisysevent:libhisysevent",
@@ -311,6 +312,7 @@ ohos_shared_library("libnative_daemon_client") {
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_config.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_proxy.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_lazyload_callback.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/util/src/mem_config.cpp",
     "../../base/src/common.cpp",
     "../../base/src/schedule_task_manager.cpp",
   ]
@@ -320,6 +322,7 @@ ohos_shared_library("libnative_daemon_client") {
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
+    "faultloggerd:libasync_stack",
     "faultloggerd:libdfx_dumpcatcher",
     "hicollie:libhicollie",
     "hisysevent:libhisysevent",
@@ -344,12 +347,16 @@ ohos_shared_library("libnative_daemon_client") {
 ohos_shared_library("memory_profiler_client") {
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   public_configs = [ ":memory_profiler_client_config" ]
-  sources = [ "memory_profiler_client/memory_profiler_client_impl.cpp" ]
+  sources = [
+    "memory_profiler_client/memory_profiler_client_impl.cpp",
+    "native_memory_profiler_sa/util/src/mem_config.cpp",
+  ]
   deps = [ ":libnative_daemon_client" ]
 
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
+    "faultloggerd:libasync_stack",
     "ipc:ipc_core",
     "samgr:samgr_proxy",
   ]

@@ -31,6 +31,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "application_context.h"
+#include "async_stack.h"
 #include "storage_acl.h"
 
 namespace OHOS::Developtools::NativeDaemon {
@@ -729,16 +730,16 @@ int32_t NativeMemoryProfilerSaClientManager::ParseNormalConfig(
         std::swap(config->gpuRange_, gpuRange);
     }
     if (inputConfig->asyncStackEnable && inputConfig->nestedAsyncStackEnable) {
-        config->asyncFlag_ = 0x143010304;   // ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
-                                            // ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROFILER | ASYNC_TYPE_CUSTOMIZE |
-                                            // ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL;
+        config->asyncFlag_ = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
+                             ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROFILER | ASYNC_TYPE_CUSTOMIZE |
+                             ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL;
     } else if (inputConfig->asyncStackEnable) {
-        config->asyncFlag_ = 0x1070F0304;   // ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
-                                            // ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROMISE | ASYNC_TYPE_CUSTOMIZE |
-                                            // ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL |
-                                            // ASYNC_TYPE_ARKTS_STA_LAUNCH | ASYNC_TYPE_ARKWEB | ASYNC_TYPE_JSVM;
+        config->asyncFlag_ = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
+                             ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROMISE | ASYNC_TYPE_CUSTOMIZE |
+                             ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL | ASYNC_TYPE_ARKTS_STA_LAUNCH |
+                             ASYNC_TYPE_ARKWEB | ASYNC_TYPE_JSVM;
     } else {
-        config->asyncFlag_ = 0x0;
+        config->asyncFlag_ = 0;
     }
     return RET_OK;
 }

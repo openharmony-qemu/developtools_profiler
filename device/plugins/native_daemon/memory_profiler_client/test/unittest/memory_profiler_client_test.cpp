@@ -19,6 +19,7 @@
 #include <thread>
 #include <unistd.h>
 
+#include "async_stack.h"
 #include "memory_profiler_client_impl.h"
 
 using namespace testing::ext;
@@ -59,15 +60,8 @@ HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest001, TestSize.Level3)
     using namespace OHOS::Developtools::NativeDaemon;
     MemoryProfilerClient* client = new MemoryProfilerClientImpl();
     SimplifiedMemConfig config;
-    std::vector<SimplifiedMemStats> memStats;
     EXPECT_EQ(client->Start(0, config), ResProfilerErrorCode::RES_PROF_ERROR);
-    MemAPIConfig apiConfig = {
-        .maxDuration = 0,
-        .filterSize = 0,
-        .maxStackDepth = 0,
-        .statisticsInterval = 0,
-        .sampleInterval = 0
-    };
+    MemAPIConfig apiConfig;
     int32_t resType = -1;
     EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
     resType = 5;
@@ -85,6 +79,22 @@ HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest001, TestSize.Level3)
     EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
     apiConfig.statisticsInterval = 1;
     apiConfig.sampleInterval = 100;
+    EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
+    apiConfig.sampleInterval = 384;
+    apiConfig.asyncTaskStackDepth = 0;
+    EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
+    apiConfig.asyncTaskStackDepth = 258;
+    EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
+    apiConfig.asyncTaskStackDepth = 16;
+    apiConfig.asyncNestingDepth = 0;
+    EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
+    apiConfig.asyncNestingDepth = 17;
+    EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
+    apiConfig.asyncNestingDepth = 1;
+    EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
+    apiConfig.nestedAsyncStackEnable = false;
+    EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
+    apiConfig.asyncStackEnable = false;
     EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
     delete client;
     GTEST_LOG_(INFO) << "MemoryProfilerClientTest001 end.";
@@ -127,4 +137,105 @@ HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest003, TestSize.Level3)
         t.join();
     }
     GTEST_LOG_(INFO) << "MemoryProfilerClientTest003 end.";
+}
+
+/**
+ * @tc.name: MemConfigTest001
+ * @tc.desc: Test simplified mem config.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MemoryProfilerClientTest, MemConfigTest001, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "MemConfigTest001 start.";
+    using namespace OHOS::Developtools::NativeDaemon;
+    uint64_t expectedAsyncFlag = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
+                                 ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROFILER | ASYNC_TYPE_CUSTOMIZE |
+                                 ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL;
+    SimplifiedMemConfig config;
+    EXPECT_EQ(config.largestSize, 0);
+    EXPECT_EQ(config.secondLargestSize, 0);
+    EXPECT_EQ(config.maxGrowthSize, 0);
+    EXPECT_EQ(config.sampleSize, 0);
+    EXPECT_EQ(config.asyncStackEnable, true);
+    EXPECT_EQ(config.asyncFlag, expectedAsyncFlag);
+    EXPECT_EQ(config.targetSoName, "");
+    EXPECT_EQ(config.responseLibraryMode, false);
+    EXPECT_EQ(config.nestedAsyncStackEnable, true);
+    EXPECT_EQ(config.asyncNestingDepth, 1);
+    EXPECT_EQ(config.asyncTaskStackDepth, 16);
+    GTEST_LOG_(INFO) << "MemConfigTest001 end.";
+}
+
+/**
+ * @tc.name: MemConfigTest002
+ * @tc.desc: Test SimplifiedMemConfig with partial parameters.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MemoryProfilerClientTest, MemConfigTest002, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "MemConfigTest002 start.";
+    using namespace OHOS::Developtools::NativeDaemon;
+    uint64_t expectedAsyncFlag = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
+                                 ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROFILER | ASYNC_TYPE_CUSTOMIZE |
+                                 ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL;
+    SimplifiedMemConfig config(20, 10, 10, 384);
+    EXPECT_EQ(config.largestSize, 20);
+    EXPECT_EQ(config.secondLargestSize, 10);
+    EXPECT_EQ(config.maxGrowthSize, 10);
+    EXPECT_EQ(config.sampleSize, 384);
+    EXPECT_EQ(config.asyncStackEnable, true);
+    EXPECT_EQ(config.asyncFlag, expectedAsyncFlag);
+    EXPECT_EQ(config.targetSoName, "");
+    EXPECT_EQ(config.responseLibraryMode, false);
+    EXPECT_EQ(config.nestedAsyncStackEnable, true);
+    EXPECT_EQ(config.asyncNestingDepth, 1);
+    EXPECT_EQ(config.asyncTaskStackDepth, 16);
+    GTEST_LOG_(INFO) << "MemConfigTest002 end.";
+}
+
+/**
+ * @tc.name: MemConfigTest003
+ * @tc.desc: Test SimplifiedMemConfig with all parameters.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MemoryProfilerClientTest, MemConfigTest003, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "MemConfigTest003 start.";
+    using namespace OHOS::Developtools::NativeDaemon;
+    SimplifiedMemConfig config(20, 10, 10, 384, true, 0x123456789ULL, "libtest.so", true, false, 2, 8);
+    EXPECT_EQ(config.largestSize, 20);
+    EXPECT_EQ(config.secondLargestSize, 10);
+    EXPECT_EQ(config.maxGrowthSize, 10);
+    EXPECT_EQ(config.sampleSize, 384);
+    EXPECT_EQ(config.asyncStackEnable, true);
+    EXPECT_EQ(config.asyncFlag, 0x123456789ULL);
+    EXPECT_EQ(config.targetSoName, "libtest.so");
+    EXPECT_EQ(config.responseLibraryMode, true);
+    EXPECT_EQ(config.nestedAsyncStackEnable, false);
+    EXPECT_EQ(config.asyncNestingDepth, 2);
+    EXPECT_EQ(config.asyncTaskStackDepth, 8);
+    GTEST_LOG_(INFO) << "MemConfigTest003 end.";
+}
+
+/**
+ * @tc.name: MemConfigTest004
+ * @tc.desc: Test MemApiConfig.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MemoryProfilerClientTest, MemConfigTest004, TestSize.Level3)
+{
+    GTEST_LOG_(INFO) << "MemConfigTest004 start.";
+    using namespace OHOS::Developtools::NativeDaemon;
+    MemAPIConfig config;
+    EXPECT_EQ(config.maxDuration, 0);
+    EXPECT_EQ(config.filterSize, 0);
+    EXPECT_EQ(config.maxStackDepth, 0);
+    EXPECT_EQ(config.statisticsInterval, 0);
+    EXPECT_EQ(config.sampleInterval, 0);
+    EXPECT_EQ(config.hookSizes.size(), 0);
+    EXPECT_EQ(config.asyncStackEnable, true);
+    EXPECT_EQ(config.nestedAsyncStackEnable, true);
+    EXPECT_EQ(config.asyncNestingDepth, 1);
+    EXPECT_EQ(config.asyncTaskStackDepth, 16);
+    GTEST_LOG_(INFO) << "MemConfigTest004 end.";
 }
