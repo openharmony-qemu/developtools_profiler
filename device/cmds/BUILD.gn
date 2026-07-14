@@ -66,6 +66,7 @@ ohos_executable("hiprofiler_cmd") {
     "abseil-cpp:absl_cord",
     "abseil-cpp:absl_log",
     "abseil-cpp:absl_sync",
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "grpc:grpc",
     "grpc:grpcxx",
