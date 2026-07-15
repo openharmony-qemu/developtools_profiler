@@ -112,6 +112,7 @@ ohos_source_set("libhidebug_source") {
   sources = [ "./src/hidebug_base.c" ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "hichecker:libhichecker",
     "hilog:libhilog",

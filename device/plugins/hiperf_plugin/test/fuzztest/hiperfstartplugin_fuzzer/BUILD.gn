@@ -47,6 +47,7 @@ ohos_fuzztest("HiperfStartPluginFuzzTest") {
   ]
   defines = [ "LITE_PROTO" ]
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "hisysevent:libhisysevent",
     "openssl:libcrypto_shared",

@@ -271,6 +271,7 @@ ohos_executable("native_daemon_client") {
   ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
@@ -315,6 +316,7 @@ ohos_shared_library("libnative_daemon_client") {
   ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
@@ -346,6 +348,7 @@ ohos_shared_library("memory_profiler_client") {
   deps = [ ":libnative_daemon_client" ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "ipc:ipc_core",
     "samgr:samgr_proxy",

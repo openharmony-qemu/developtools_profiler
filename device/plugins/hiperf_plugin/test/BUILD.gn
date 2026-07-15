@@ -40,6 +40,7 @@ ohos_unittest("hiperfplugin_ut") {
     "-Dprivate=public",  #allow test code access private members
   ]
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "googletest:gtest",
     "protobuf:protobuf_lite",
