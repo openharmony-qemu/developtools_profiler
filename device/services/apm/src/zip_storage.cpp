@@ -17,6 +17,7 @@
 #include <iostream>
 
 #include "logging.h"
+#include "common.h"
 #include "zip_storage.h"
 
 namespace {
@@ -112,8 +113,8 @@ bool ZipStorage::GetRealPath(const std::string& path, std::string& realPath)
 
 void ZipStorage::CleanStaleData()
 {
-    std::string& realPath;
-    CHECK_TRUE(GetRealPath(zipFilePath_, realPath), false, "get file path fail:%s", zipFilePath_.c_str());
+    std::string realPath;
+    CHECK_TRUE(GetRealPath(zipFilePath_, realPath), NO_RETVAL, "get file path fail:%s", zipFilePath_.c_str());
     std::string parentDir = fs::path(realPath).parent_path().string();
     auto filter = [](const std::string &filename) {
         return COMMON::StringMatch(filename, "hiprofiler_data_", ".zip");
