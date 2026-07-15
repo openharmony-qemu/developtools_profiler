@@ -61,6 +61,7 @@ config("hiperf_data_protos_config") {
 }
 
 ohos_source_set("hiperf_data_cpp") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":hiperf_data_protos_protoc" ]
   external_deps = [
     "protobuf:protobuf_lite",
@@ -73,6 +74,7 @@ ohos_source_set("hiperf_data_cpp") {
 }
 
 ohos_source_set("hiperf_data_cpp_standard") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":hiperf_data_protos_protoc" ]
   external_deps = [
     "protobuf:protobuf_lite",

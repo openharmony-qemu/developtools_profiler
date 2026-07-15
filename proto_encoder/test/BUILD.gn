@@ -57,6 +57,7 @@ action("proto_gen_source") {
 }
 
 ohos_source_set("proto_example_source") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":proto_gen_source" ]
   include_dirs = [ "$proto_out_dir" ]
   sources = example_codegen_all

@@ -69,6 +69,7 @@ config("kern_common_config") {
 }
 
 ohos_source_set("hiebpf.bpf") {
+  branch_protector_ret = "pac_ret"
   remove_configs = [ "//build/config/coverage:default_coverage" ]
   if (use_libfuzzer) {
     remove_configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
@@ -101,6 +102,7 @@ action("gen_bpf_skeleton") {
 }
 
 ohos_source_set("hiebpf_source_common") {
+  branch_protector_ret = "pac_ret"
   public_configs = [
     ":common_config",
     ":user_common_config",
@@ -135,6 +137,7 @@ ohos_source_set("hiebpf_source_common") {
 }
 
 ohos_executable("hiebpf") {
+  branch_protector_ret = "pac_ret"
   sources = [ "./src/hiebpf.cpp" ]  # this is main()
 
   deps = [ ":hiebpf_source_common" ]

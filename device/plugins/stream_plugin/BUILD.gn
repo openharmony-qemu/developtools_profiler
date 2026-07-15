@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 
 ohos_source_set("streamplugin_source") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   sources = [
     "src/stream_module.cpp",
@@ -43,6 +44,7 @@ ohos_source_set("streamplugin_source") {
 }
 
 ohos_shared_library("streamplugin") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   output_name = "streamplugin"
   version_script = "libstream_plugin.map"

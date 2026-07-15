@@ -27,6 +27,7 @@ config("module_private_config") {
 }
 
 ohos_executable("ffrt_profiler_test_exe") {
+  branch_protector_ret = "pac_ret"
   output_name = "ffrt_profiler_test_exe"
 
   sources = [ "unittest/ffrt_profiler_test_exec.cpp" ]

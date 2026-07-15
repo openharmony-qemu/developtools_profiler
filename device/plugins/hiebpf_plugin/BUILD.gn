@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 
 ohos_source_set("hiebpfplugin_source") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   sources = [
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_helper.cpp",
@@ -53,6 +54,7 @@ ohos_source_set("hiebpfplugin_source") {
 }
 
 ohos_shared_library("hiebpfplugin") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   output_name = "hiebpfplugin"
   version_script = "libhiebpf_plugin.map"
