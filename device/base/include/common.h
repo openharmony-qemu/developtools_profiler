@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <functional>
 
 
 namespace COMMON {
@@ -88,6 +89,8 @@ bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPat
 bool CleanOldenFiles(const std::string& path);
 bool CleanCmdOldenTraceFiles(const std::string& path);
 bool CreateFile(const std::string& filePath);
+bool DeleteFiles(const std::string& path, std::function<bool(const std::string& filename)> filter);
+bool StringMatch(const std::string& str, const std::string& prefix, const std::string& suffix);
 
 class SpinLock {
 public:
