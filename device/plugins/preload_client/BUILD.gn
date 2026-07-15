@@ -31,6 +31,7 @@ config("preload_client_config") {
 }
 
 ohos_source_set("preload_client_source") {
+  branch_protector_ret = "pac_ret"
   use_exceptions = true
   sources = [
     "../../services/ipc/src/socket_context.cpp",
@@ -83,6 +84,7 @@ ohos_source_set("preload_client_source") {
 }
 
 ohos_shared_library("hiprofiler_preload_client") {
+  branch_protector_ret = "pac_ret"
   public_configs = [ ":preload_client_config" ]
   output_name = "hiprofiler_preload_client"
   deps = [ ":preload_client_source" ]

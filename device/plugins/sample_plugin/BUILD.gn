@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 
 ohos_shared_library("sampleplugin") {
+  branch_protector_ret = "pac_ret"
   output_name = "sampleplugin"
   sources = [
     "src/sample_module.cpp",

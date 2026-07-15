@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 
 ohos_source_set("hisyseventplugin_source") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
@@ -46,6 +47,7 @@ ohos_source_set("hisyseventplugin_source") {
 }
 
 ohos_shared_library("hisyseventplugin") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   output_name = "hisyseventplugin"
   version_script = "libhisysevent_plugin.map"

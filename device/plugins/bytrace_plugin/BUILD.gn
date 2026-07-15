@@ -24,6 +24,7 @@ config("bytraceplugin_config") {
 }
 
 ohos_shared_library("bytraceplugin") {
+  branch_protector_ret = "pac_ret"
   output_name = "bytraceplugin"
   sources = [ "src/bytrace_module.cpp" ]
   public_configs = [
@@ -44,6 +45,7 @@ ohos_shared_library("bytraceplugin") {
 }
 
 ohos_executable("test_bytrace_plugin") {
+  branch_protector_ret = "pac_ret"
   output_name = "test_bytraceplugin"
   sources = [ "src/run_test.cpp" ]
   deps = [ ":bytraceplugin" ]
