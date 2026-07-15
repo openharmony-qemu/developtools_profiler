@@ -41,12 +41,12 @@ bool ZipStorage::AddFile(const std::string &filepath)
 {
     PROFILER_LOG_DEBUG(LOG_CORE,  "Start storage file:%s", filepath.c_str());
     if (zipFile_ == nullptr) {
+        CleanStaleData();
         zipFile_ = zipOpen64(zipFilePath_.c_str(), APPEND_STATUS_CREATE);
         if (zipFile_ == nullptr) {
             PROFILER_LOG_ERROR(LOG_CORE, "zip file handle open failed");
             return false;
         }
-        CleanStaleData();
     }
     fs::path fsFilePath(filepath);
     CHECK_TRUE(fs::is_regular_file(fsFilePath), false, "not regular file:%s", filepath.c_str());
@@ -113,11 +113,9 @@ bool ZipStorage::GetRealPath(const std::string& path, std::string& realPath)
 
 void ZipStorage::CleanStaleData()
 {
-    std::string realPath;
-    CHECK_TRUE(GetRealPath(zipFilePath_, realPath), NO_RETVAL, "get file path fail:%s", zipFilePath_.c_str());
-    std::string parentDir = fs::path(realPath).parent_path().string();
+    std::string parentDir = fs::path(zipFilePath_).parent_path().string();
     auto filter = [](const std::string &filename) {
         return COMMON::StringMatch(filename, "hiprofiler_data_", ".zip");
     };
-    (void)COMMON::DeleteFiles(parentDir, filter);
+    CHECK_TRUE(COMMON::DeleteFiles(parentDir, filter), NO_RETVAL, "clean stale apm data fail");
 }
