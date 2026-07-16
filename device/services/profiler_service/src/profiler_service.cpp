@@ -265,6 +265,8 @@ bool ProfilerService::SessionContext::CollectApm()
         return false;
     }
     CHECK_TRUE(COMMON::IsProcessExist(processName, pidValue), false, "process %s not exist", processName.c_str());
+    bool permitted = !COMMON::IsUserMode() || COMMON::CheckApplicationPermission(pidValue, processName);
+    CHECK_TRUE(permitted, false, "not permission to collect apm of %s", processName.c_str());
     uint32_t pid = static_cast<uint32_t>(pidValue);
     size_t pos = sessionConfig.result_file().rfind("/");
     std::string pathDir = "";
