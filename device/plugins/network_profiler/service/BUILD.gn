@@ -28,6 +28,7 @@ config("network_profiler_service_config") {
 }
 
 ohos_source_set("network_profiler_service") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   public_configs = [ ":network_profiler_service_config" ]
 
@@ -66,6 +67,7 @@ ohos_source_set("network_profiler_service") {
 }
 
 ohos_source_set("network_profiler_service_cfi") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   public_configs = [ ":network_profiler_service_config" ]
 

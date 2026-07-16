@@ -87,6 +87,7 @@ config("stack_common_export_config") {
 
 # Shared by libstack_common (OHOS) and hiperf host/mingw via external_deps (static lib: headers + TU).
 ohos_static_library("stack_common_static") {
+  branch_protector_ret = "pac_ret"
   configs = [ ":hiprofiler_size_opt_cflags_config" ]
   visibility = [ "*:*" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
@@ -110,6 +111,7 @@ ohos_static_library("stack_common_static") {
 }
 
 ohos_shared_library("libstack_common") {
+  branch_protector_ret = "pac_ret"
   configs = [ ":hiprofiler_size_opt_config" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
@@ -128,6 +130,7 @@ ohos_shared_library("libstack_common") {
 }
 
 ohos_static_library("hiprofiler_base_static") {
+  branch_protector_ret = "pac_ret"
   configs = [
     ":hiprofiler_base_build_config",
     ":hiprofiler_size_opt_cflags_config",
@@ -162,6 +165,7 @@ ohos_static_library("hiprofiler_base_static") {
 }
 
 ohos_shared_library("libhiprofiler_base") {
+  branch_protector_ret = "pac_ret"
   configs = [ ":hiprofiler_size_opt_config" ]
   visibility = [ "*:*" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
@@ -186,6 +190,7 @@ ohos_shared_library("libhiprofiler_base") {
 }
 
 ohos_source_set("hiprofiler_base") {
+  branch_protector_ret = "pac_ret"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   sources = [
@@ -221,6 +226,7 @@ ohos_source_set("hiprofiler_base") {
 }
 
 ohos_source_set("hiprofiler_base_cfi") {
+  branch_protector_ret = "pac_ret"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   sources = [
@@ -263,6 +269,7 @@ ohos_source_set("hiprofiler_base_cfi") {
 }
 
 ohos_source_set("mock_test_source") {
+  branch_protector_ret = "pac_ret"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   sources = [

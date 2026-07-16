@@ -41,6 +41,7 @@ config("ebpf_converter_inner_config") {
 }
 
 ohos_executable("ebpf_converter") {
+  branch_protector_ret = "pac_ret"
   public_configs = []
   if (!is_mingw) {
     defines = [ "_GNU_SOURCE" ]

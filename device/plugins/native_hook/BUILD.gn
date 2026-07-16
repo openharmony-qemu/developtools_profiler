@@ -35,6 +35,7 @@ config("hook_config") {
 }
 
 ohos_source_set("native_hook_source") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   use_exceptions = true
   sources = [
@@ -104,6 +105,7 @@ ohos_source_set("native_hook_source") {
 }
 
 ohos_executable("hookDecoder") {
+  branch_protector_ret = "pac_ret"
   output_name = "hookDecoder"
   sources = [ "test/hook_decoder.cpp" ]
 
@@ -141,6 +143,7 @@ ohos_executable("hookDecoder") {
 }
 
 ohos_shared_library("native_hook") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   output_name = "native_hook"
   deps = [ ":native_hook_source" ]
@@ -155,6 +158,7 @@ ohos_shared_library("native_hook") {
 }
 
 ohos_executable("nativetest_c") {
+  branch_protector_ret = "pac_ret"
   output_name = "nativetest_c"
   sources = [ "test/hook_test.c" ]
 
@@ -176,6 +180,7 @@ ohos_executable("nativetest_c") {
 }
 
 ohos_executable("nativetest_cpp") {
+  branch_protector_ret = "pac_ret"
   output_name = "nativetest_cpp"
   sources = [ "test/hook_test.cpp" ]
 
@@ -195,6 +200,7 @@ ohos_executable("nativetest_cpp") {
 }
 
 ohos_shared_library("nativetest_so") {
+  branch_protector_ret = "pac_ret"
   output_name = "nativetest_so"
   sources = [ "test/hook_so.cpp" ]
 
@@ -213,6 +219,7 @@ ohos_shared_library("nativetest_so") {
 }
 
 ohos_executable("malloctest_cpp") {
+  branch_protector_ret = "pac_ret"
   output_name = "malloctest_cpp"
   sources = [ "test/malloc_test.cpp" ]
 
@@ -235,6 +242,7 @@ ohos_executable("malloctest_cpp") {
 }
 
 ohos_executable("perf_test_data") {
+  branch_protector_ret = "pac_ret"
   output_name = "perf_test_data"
   sources = [ "test/perf_test_data.cpp" ]
 
@@ -250,6 +258,7 @@ ohos_executable("perf_test_data") {
 }
 
 ohos_executable("statisticstest_cpp") {
+  branch_protector_ret = "pac_ret"
   output_name = "statisticstest_cpp"
   sources = [ "test/statistics_test.cpp" ]
 
@@ -269,6 +278,7 @@ ohos_executable("statisticstest_cpp") {
 }
 
 ohos_executable("hook_restrace_test") {
+  branch_protector_ret = "pac_ret"
   output_name = "hook_restrace_test"
   sources = [ "test/hook_restrace_test.cpp" ]
   include_dirs = [
@@ -293,6 +303,7 @@ ohos_executable("hook_restrace_test") {
 }
 
 ohos_executable("arkui_test") {
+  branch_protector_ret = "pac_ret"
   output_name = "arkui_test"
   sources = [ "test/arkui_test.cpp" ]
   include_dirs = [

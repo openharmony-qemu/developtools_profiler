@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("//developtools/profiler/device/base/config.gni")
 
 ohos_executable("timestamps") {
+  branch_protector_ret = "pac_ret"
   sources = [ "timestamps.cpp" ]
 
   include_dirs = []

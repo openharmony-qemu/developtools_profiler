@@ -81,6 +81,7 @@ action("cpu_data_cpp_gen") {
 }
 
 ohos_source_set("cpu_data_cpp") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":cpu_data_cpp_gen" ]
   external_deps = [
     "protobuf:protobuf_lite",
@@ -93,6 +94,7 @@ ohos_source_set("cpu_data_cpp") {
 }
 
 ohos_source_set("cpu_data_cpp_standard") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":cpu_data_cpp_gen" ]
   external_deps = [
     "protobuf:protobuf_lite",
@@ -105,6 +107,7 @@ ohos_source_set("cpu_data_cpp_standard") {
 }
 
 ohos_source_set("cpu_plugin_config_cpp_standard") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":cpu_data_cpp_gen" ]
   external_deps = [
     "protobuf:protobuf_lite",
@@ -117,6 +120,7 @@ ohos_source_set("cpu_plugin_config_cpp_standard") {
 }
 
 ohos_source_set("cpu_data_encoder") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":cpu_data_cpp_gen" ]
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":cpu_include_config" ]
