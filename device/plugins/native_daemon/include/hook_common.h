@@ -635,4 +635,38 @@ struct alignas(8) HookCacheFileMsg {
     uint16_t fileIndex = 0;
     uint16_t msgType = CACHE_FILE_CREATED;
 };
+
+constexpr uint32_t BACKPRESSURE_LOW_WATERMARK = 5;
+constexpr uint32_t BACKPRESSURE_MID_WATERMARK = 10;
+constexpr uint32_t BACKPRESSURE_HIGH_WATERMARK = 20;
+constexpr uint32_t BACKPRESSURE_MIN_DELAY_NS = 0;
+constexpr uint32_t BACKPRESSURE_MID_DELAY_NS = 20 * 1000;
+constexpr uint32_t BACKPRESSURE_HIGH_DELAY_NS = 100 * 1000;
+constexpr uint32_t BACKPRESSURE_SAMPLE_SIZE = 4;
+constexpr uint32_t BACKPRESSURE_VOLATILE_SIZE = 10;
+
+struct BackpressureConfig {
+    uint32_t lowWatermark = BACKPRESSURE_LOW_WATERMARK;
+    uint32_t midWatermark = BACKPRESSURE_MID_WATERMARK;
+    uint32_t highWatermark = BACKPRESSURE_HIGH_WATERMARK;
+    uint32_t minDelayNs = BACKPRESSURE_MIN_DELAY_NS;
+    uint32_t midDelayNs = BACKPRESSURE_MID_DELAY_NS;
+    uint32_t highDelayNs = BACKPRESSURE_HIGH_DELAY_NS;
+    uint32_t stateBroadcastIntervalMs = 100;
+    uint32_t monitorIntervalMs = 1000;
+};
+
+struct alignas(8) BackpressureStateMsg {
+    int32_t pid = -1;
+    uint32_t queueDepth = 0;
+    uint32_t recommendedDelayNs = 0;
+};
+
+inline uint64_t GetBackpressureCurrentTimeMs()
+{
+    auto now = std::chrono::system_clock::now();
+    auto duration = now.time_since_epoch();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+}
+
 #endif // HOOK_COMMON_H

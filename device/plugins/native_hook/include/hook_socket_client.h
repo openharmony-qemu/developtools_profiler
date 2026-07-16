@@ -66,6 +66,7 @@ public:
 private:
     void HandleFileCacheMode(SocketContext &context);
     bool HandleFileCacheMsg(SocketContext &context, const HookCacheFileMsg& cacheFileMsg);
+    bool HandleBackpressureState(SocketContext &context, const int8_t *buf, uint32_t size);
     bool HandleControlCommand(uint32_t cmd);
     bool ApplyClientConfig(SocketContext &context, const ClientConfig& clientConfig);
     void HandleSharedMemoryMode(SocketContext &context);

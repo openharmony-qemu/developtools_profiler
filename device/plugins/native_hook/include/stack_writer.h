@@ -52,6 +52,7 @@ public:
     bool AddFileCacheDescriptor(uint16_t fileIndex, int fd);
     void EnterStopFileCacheMode();
     void StopFileCache();
+    void UpdateBackpressureState(const BackpressureStateMsg& state);
 
 private:
     void DoStats(long bytes);

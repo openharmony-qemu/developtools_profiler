@@ -33,6 +33,7 @@ public:
     void AddPidInfo(pid_t pid, uid_t uid, gid_t gid);
     void RemovePidInfo(pid_t pid);
     void SendCommand(pid_t pid, uint32_t cmd);
+    void SendBackpressureState(pid_t pid, const BackpressureStateMsg& state);
     bool HasSocketFd(pid_t pid);
     void ClientDisconnectCallback(int socketFd);
 private:
@@ -57,6 +58,7 @@ private:
     std::mutex mtx_;
     std::mutex pidFdMtx_;
     std::mutex pidInfoMtx_;
+    std::mutex socketSendMtx_;
     std::unordered_map<pid_t, int> pidFds_;
     bool firstProcess_ = true;
     bool multipleProcesses_ = false;
