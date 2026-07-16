@@ -201,6 +201,27 @@ bool HookSocketClient::HandleFileCacheMsg(SocketContext &context, const HookCach
     return true;
 }
 
+bool HookSocketClient::HandleBackpressureState(SocketContext &context, const int8_t *buf, uint32_t size)
+{
+    if (buf == nullptr || size != sizeof(BackpressureStateMsg) || config_->offlineSymbolization) {
+        return false;
+    }
+    
+    BackpressureStateMsg state;
+    if (memcpy_s(&state, sizeof(state), buf, size) != EOK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HandleBackpressureState memcpy_s failed");
+        return false;
+    }
+    
+    if (!stackWriterList_.empty() && stackWriterList_[0] != nullptr) {
+        stackWriterList_[0]->UpdateBackpressureState(state);
+    }
+    
+    PROFILER_LOG_INFO(LOG_CORE, "HandleBackpressureState: pid=%d, queueDepth=%u, delay=%uns",
+        state.pid, state.queueDepth, state.recommendedDelayNs);
+    return true;
+}
+
 bool HookSocketClient::HandleControlCommand(uint32_t cmd)
 {
     if (cmd == SNAPSHOT_REQUEST_CMD) {
@@ -366,6 +387,9 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
 {
     if (buf == nullptr) {
         return false;
+    }
+    if (size == sizeof(BackpressureStateMsg) && config_ != nullptr && config_->enableFileCacheMode) {
+        return HandleBackpressureState(context, buf, size);
     }
     if (size == sizeof(HookCacheFileMsg) && config_ != nullptr && config_->enableFileCacheMode) {
         HookCacheFileMsg cacheFileMsg;
