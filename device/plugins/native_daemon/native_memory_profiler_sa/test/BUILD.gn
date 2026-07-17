@@ -99,6 +99,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "../../src/utilities.cpp",
     "../../src/virtual_runtime.cpp",
     "../../src/virtual_thread.cpp",
+    "../util/src/mem_config.cpp",
     "unittest/native_memory_profiler_sa_client_manager_test.cpp",
     "unittest/native_memory_profiler_sa_config_test.cpp",
     "unittest/native_memory_profiler_sa_service_test.cpp",
