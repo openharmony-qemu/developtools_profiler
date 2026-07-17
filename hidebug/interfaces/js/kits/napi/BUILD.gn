@@ -43,7 +43,9 @@ ohos_shared_library("hidebug") {
     "hiview:libfaultlogger",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "libuv:uv",
     "napi:ace_napi",
+    "node:node_header_notice",
     "samgr:samgr_proxy",
     "ability_base:configuration",
   ]
