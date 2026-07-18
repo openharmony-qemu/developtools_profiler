@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("//developtools/profiler/hidebug/hidebug.gni")
 
 ohos_shared_library("cj_hidebug_ffi") {
+  branch_protector_ret = "pac_ret"
   include_dirs = [
     "$hidebug_path/frameworks/native/include",
     ".",
