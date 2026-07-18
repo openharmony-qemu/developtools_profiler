@@ -25,6 +25,7 @@
 using namespace testing::ext;
 
 namespace {
+#if defined(__LP64__)
 void MallocTest()
 {
     int size = 10;
@@ -39,6 +40,7 @@ void MallocTest()
         free(arr[i]);
     }
 }
+#endif
 }
 
 class MemoryProfilerClientTest : public testing::Test {
@@ -122,6 +124,7 @@ HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest002, TestSize.Level3)
  */
 HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest003, TestSize.Level3)
 {
+#if defined(__LP64__)
     GTEST_LOG_(INFO) << "MemoryProfilerClientTest003 start.";
     using namespace OHOS::Developtools::NativeDaemon;
     MemoryProfilerClient* client = new MemoryProfilerClientImpl();
@@ -137,6 +140,7 @@ HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest003, TestSize.Level3)
         t.join();
     }
     GTEST_LOG_(INFO) << "MemoryProfilerClientTest003 end.";
+#endif
 }
 
 /**

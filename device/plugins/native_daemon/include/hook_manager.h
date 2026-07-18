@@ -307,6 +307,7 @@ private:
     std::string memLeakFileName_;
     std::string fileCacheDir_ = "/data/log/hiprofiler/";
     std::atomic_bool memLeakDumpDone_ {true};
+    std::atomic_bool memLeakHasData_ {false};
     std::string simplifiedNmd_;
     SemaphorePtr nmdSemaphore_{nullptr};
     bool shouldSkipGlobalFreed_ = false;
