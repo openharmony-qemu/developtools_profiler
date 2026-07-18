@@ -204,6 +204,7 @@ bool ProfilerSessionManager::StartSession(std::unique_ptr<IProfilerService::Stub
 bool ProfilerSessionManager::StopSession(std::unique_ptr<IProfilerService::Stub>& profilerStub,
                                          uint32_t sessionId, bool stopAll)
 {
+    printf("StopSession start!\n");
     StopSessionRequest stopRequest;
     StopSessionResponse stopResponse;
     grpc::ClientContext stopContext;
