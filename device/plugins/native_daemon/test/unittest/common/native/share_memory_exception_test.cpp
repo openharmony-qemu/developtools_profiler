@@ -16,7 +16,7 @@
 #include "share_memory_exception_test.h"
 #include <sys/mman.h>
 #include <sys/syscall.h>
-#include "native_hook_config.pb.h"
+#include "native_hook_result_standard.pb.h"
 
 using namespace testing::ext;
 using namespace std;
@@ -203,9 +203,10 @@ HWTEST_F(ShareMemoryExceptionTest, PutMessageBlockWithOversizeMessage, TestSize.
 {
     shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
     if (shareMemoryBlock_->Valid()) {
-        NativeHookConfig largeConfig;
-        largeConfig.set_process_name(std::string(SMB_SIZE * 2, 'x'));
-        bool result = shareMemoryBlock_->PutMessageBlock(largeConfig, "test_plugin");
+        BatchNativeHookData largeData;
+        auto* event = largeData.add_events();
+        event->set_data(std::string(SMB_SIZE * 2, 'x'));
+        bool result = shareMemoryBlock_->PutMessageBlock(largeData, "test_plugin");
         EXPECT_FALSE(result);
     }
 }
@@ -219,9 +220,10 @@ HWTEST_F(ShareMemoryExceptionTest, PutMessageBlockOnInvalidBlock, TestSize.Level
 {
     shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>("", SMB_SIZE);
     EXPECT_FALSE(shareMemoryBlock_->Valid());
-    NativeHookConfig config;
-    config.set_pid(1);
-    bool result = shareMemoryBlock_->PutMessageBlock(config, "test_plugin");
+    BatchNativeHookData data;
+    auto* event = data.add_events();
+    event->set_tv_sec(1);
+    bool result = shareMemoryBlock_->PutMessageBlock(data, "test_plugin");
     EXPECT_FALSE(result);
 }
 
@@ -234,9 +236,10 @@ HWTEST_F(ShareMemoryExceptionTest, PutMessageOnInvalidBlock, TestSize.Level0)
 {
     shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>("", SMB_SIZE);
     EXPECT_FALSE(shareMemoryBlock_->Valid());
-    NativeHookConfig config;
-    config.set_pid(1);
-    bool result = shareMemoryBlock_->PutMessage(config, "test_plugin");
+    BatchNativeHookData data;
+    auto* event = data.add_events();
+    event->set_tv_sec(1);
+    bool result = shareMemoryBlock_->PutMessage(data, "test_plugin");
     EXPECT_FALSE(result);
 }
 } // namespace OHOS::Developtools::NativeDaemon
