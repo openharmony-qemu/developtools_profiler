@@ -205,7 +205,8 @@ HWTEST_F(ShareMemoryExceptionTest, PutMessageBlockWithOversizeMessage, TestSize.
     if (shareMemoryBlock_->Valid()) {
         ForStandard::BatchNativeHookData largeData;
         auto* event = largeData.add_events();
-        event->set_data(std::string(SMB_SIZE * 2, 'x'));
+        auto* filePath = event->mutable_file_path();
+        filePath->set_name(std::string(SMB_SIZE * 2, 'x'));
         bool result = shareMemoryBlock_->PutMessageBlock(largeData, "test_plugin");
         EXPECT_FALSE(result);
     }
