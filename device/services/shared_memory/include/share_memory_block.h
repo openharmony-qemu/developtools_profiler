@@ -49,6 +49,7 @@ public:
         const std::function<bool()>& callback);
 #ifndef NO_PROTOBUF
     EXPORT_API bool PutMessage(const google::protobuf::Message& pmsg, const std::string& pluginName);
+    EXPORT_API bool PutMessageBlock(const google::protobuf::Message& pmsg, const std::string& pluginName);
 #endif
     using DataHandler = std::function<bool(const int8_t*, uint32_t)>;
     EXPORT_API bool TakeData(const DataHandler& func, bool isProtobufSerialize = true);

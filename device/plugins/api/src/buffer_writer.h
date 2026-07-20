@@ -35,6 +35,10 @@ public:
                  uint32_t pluginId);
     ~BufferWriter();
     long Write(const void* data, size_t size) override;
+    long WriteBlock(const void* data, size_t size)
+    {
+        return Write(data, size, true);
+    }
     bool Flush() override;
     void UseMemory(int32_t size) override;
     RandomWriteCtx* StartReport() override;
@@ -46,12 +50,18 @@ public:
     }
 
     bool WriteMessage(const google::protobuf::Message& pmsg, const std::string& pluginName);
+    bool WriteMessageBlock(const google::protobuf::Message& pmsg, const std::string& pluginName)
+    {
+        return WriteMessage(pmsg, pluginName, true);
+    }
 
     void SetClockId(clockid_t clockId) override
     {
         clockId_ = clockId;
     }
 private:
+    long Write(const void* data, size_t size, bool block);
+    bool WriteMessage(const google::protobuf::Message& pmsg, const std::string& pluginName, bool block);
     void DoStats(long bytes);
     void Report() const;
 

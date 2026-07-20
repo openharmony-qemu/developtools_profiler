@@ -437,6 +437,29 @@ bool ShareMemoryBlock::PutWithExtraDataTimeout(const int8_t* header, uint32_t he
 bool ShareMemoryBlock::PutMessage(const google::protobuf::Message& pmsg, const std::string& pluginName)
 {
     size_t size = pmsg.ByteSizeLong();
+
+    CHECK_NOTNULL(header_, false, "header not ready!");
+    PthreadLocker locker(header_->info.mutex_);
+    int8_t* rawMemory = GetFreeMemory(size);
+    if (rawMemory == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s: PutMessage not enough space [%zu]", pluginName.c_str(), size);
+        return false;
+    }
+
+    int ret = pmsg.SerializeToArray(rawMemory, size);
+    if (ret <= 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s: SerializeToArray failed with %d, size: %zu", __func__, ret, size);
+        return false;
+    }
+    UseFreeMemory(rawMemory, size);
+    ++header_->info.bytesCount_;
+    ++header_->info.chunkCount_;
+    return true;
+}
+
+bool ShareMemoryBlock::PutMessageBlock(const google::protobuf::Message& pmsg, const std::string& pluginName)
+{
+    size_t size = pmsg.ByteSizeLong();
     if (size == 0) {
         return true;
     }
