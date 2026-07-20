@@ -15,6 +15,7 @@
 
 #include "shmem_boundary_test.h"
 #include <climits>
+#include "native_hook_config.pb.h"
 
 using namespace testing::ext;
 using namespace std;
@@ -335,6 +336,79 @@ HWTEST_F(ShmemBoundaryTest, SetWaitTimeMinBoundary, TestSize.Level0)
     if (shareMemoryBlock_->Valid()) {
         shareMemoryBlock_->SetWaitTime(INT_MIN);
         EXPECT_TRUE(shareMemoryBlock_->Valid());
+    }
+}
+/*
+ * @tc.name: PutMessageBlockValidMessage
+ * @tc.desc: test PutMessageBlock with a valid protobuf message.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ShmemBoundaryTest, PutMessageBlockValidMessage, TestSize.Level0)
+{
+    shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>(SMB_NAME, PAGE_SIZE);
+    if (shareMemoryBlock_->Valid()) {
+        NativeHookConfig config;
+        config.set_pid(1234);
+        config.set_save_file(false);
+        bool result = shareMemoryBlock_->PutMessageBlock(config, "test_plugin");
+        EXPECT_TRUE(result);
+    }
+}
+
+/*
+ * @tc.name: PutMessageBlockEmptyMessage
+ * @tc.desc: test PutMessageBlock with an empty protobuf message (ByteSizeLong == 0).
+ * @tc.type: FUNC
+ */
+HWTEST_F(ShmemBoundaryTest, PutMessageBlockEmptyMessage, TestSize.Level0)
+{
+    shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>(SMB_NAME, PAGE_SIZE);
+    if (shareMemoryBlock_->Valid()) {
+        NativeHookConfig emptyConfig;
+        bool result = shareMemoryBlock_->PutMessageBlock(emptyConfig, "test_plugin");
+        EXPECT_TRUE(result);
+    }
+}
+
+/*
+ * @tc.name: PutMessageBlockMultipleWrites
+ * @tc.desc: test PutMessageBlock with multiple sequential writes.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ShmemBoundaryTest, PutMessageBlockMultipleWrites, TestSize.Level0)
+{
+    uint32_t multiPageSize = PAGE_SIZE * 4;
+    shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>(SMB_NAME, multiPageSize);
+    if (shareMemoryBlock_->Valid()) {
+        NativeHookConfig config;
+        config.set_pid(100);
+        config.set_process_name("test_process");
+        for (int i = 0; i < 5; ++i) {
+            bool result = shareMemoryBlock_->PutMessageBlock(config, "test_plugin");
+            EXPECT_TRUE(result);
+        }
+    }
+}
+
+/*
+ * @tc.name: PutMessageVsPutMessageBlock
+ * @tc.desc: test PutMessage and PutMessageBlock both succeed with same message.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ShmemBoundaryTest, PutMessageVsPutMessageBlock, TestSize.Level0)
+{
+    uint32_t multiPageSize = PAGE_SIZE * 4;
+    shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>(SMB_NAME, multiPageSize);
+    if (shareMemoryBlock_->Valid()) {
+        NativeHookConfig config;
+        config.set_pid(200);
+        config.set_max_stack_depth(10);
+
+        bool resultNormal = shareMemoryBlock_->PutMessage(config, "test_plugin");
+        EXPECT_TRUE(resultNormal);
+
+        bool resultBlock = shareMemoryBlock_->PutMessageBlock(config, "test_plugin");
+        EXPECT_TRUE(resultBlock);
     }
 }
 } // namespace OHOS::Developtools::NativeDaemon

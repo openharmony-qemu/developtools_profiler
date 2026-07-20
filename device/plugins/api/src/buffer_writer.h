@@ -35,7 +35,7 @@ public:
                  uint32_t pluginId);
     ~BufferWriter();
     long Write(const void* data, size_t size) override;
-    long WriteBlock(const void* data, size_t size)
+    long WriteBlock(const void* data, size_t size) override
     {
         return Write(data, size, true);
     }

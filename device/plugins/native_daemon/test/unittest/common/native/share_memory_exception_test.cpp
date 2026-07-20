@@ -16,6 +16,7 @@
 #include "share_memory_exception_test.h"
 #include <sys/mman.h>
 #include <sys/syscall.h>
+#include "native_hook_config.pb.h"
 
 using namespace testing::ext;
 using namespace std;
@@ -192,5 +193,50 @@ HWTEST_F(ShareMemoryExceptionTest, SeekWithInvalidPosition, TestSize.Level0)
         bool result = shareMemoryBlock_->Seek(SMB_SIZE * 2);
         EXPECT_FALSE(result);
     }
+}
+/*
+ * @tc.name: PutMessageBlockWithOversizeMessage
+ * @tc.desc: test PutMessageBlock with message larger than shared memory.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ShareMemoryExceptionTest, PutMessageBlockWithOversizeMessage, TestSize.Level0)
+{
+    shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
+    if (shareMemoryBlock_->Valid()) {
+        NativeHookConfig largeConfig;
+        largeConfig.set_process_name(std::string(SMB_SIZE * 2, 'x'));
+        bool result = shareMemoryBlock_->PutMessageBlock(largeConfig, "test_plugin");
+        EXPECT_FALSE(result);
+    }
+}
+
+/*
+ * @tc.name: PutMessageBlockOnInvalidBlock
+ * @tc.desc: test PutMessageBlock on an invalid ShareMemoryBlock.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ShareMemoryExceptionTest, PutMessageBlockOnInvalidBlock, TestSize.Level0)
+{
+    shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>("", SMB_SIZE);
+    EXPECT_FALSE(shareMemoryBlock_->Valid());
+    NativeHookConfig config;
+    config.set_pid(1);
+    bool result = shareMemoryBlock_->PutMessageBlock(config, "test_plugin");
+    EXPECT_FALSE(result);
+}
+
+/*
+ * @tc.name: PutMessageOnInvalidBlock
+ * @tc.desc: test PutMessage on an invalid ShareMemoryBlock.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ShareMemoryExceptionTest, PutMessageOnInvalidBlock, TestSize.Level0)
+{
+    shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>("", SMB_SIZE);
+    EXPECT_FALSE(shareMemoryBlock_->Valid());
+    NativeHookConfig config;
+    config.set_pid(1);
+    bool result = shareMemoryBlock_->PutMessage(config, "test_plugin");
+    EXPECT_FALSE(result);
 }
 } // namespace OHOS::Developtools::NativeDaemon
