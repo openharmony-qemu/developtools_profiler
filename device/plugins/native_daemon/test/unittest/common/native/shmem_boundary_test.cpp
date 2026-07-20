@@ -347,7 +347,7 @@ HWTEST_F(ShmemBoundaryTest, PutMessageBlockValidMessage, TestSize.Level0)
 {
     shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>(SMB_NAME, PAGE_SIZE);
     if (shareMemoryBlock_->Valid()) {
-        BatchNativeHookData data;
+        ForStandard::BatchNativeHookData data;
         auto* event = data.add_events();
         event->set_tv_sec(1234);
         event->set_tv_nsec(5678);
@@ -365,7 +365,7 @@ HWTEST_F(ShmemBoundaryTest, PutMessageBlockEmptyMessage, TestSize.Level0)
 {
     shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>(SMB_NAME, PAGE_SIZE);
     if (shareMemoryBlock_->Valid()) {
-        BatchNativeHookData emptyData;
+        ForStandard::BatchNativeHookData emptyData;
         bool result = shareMemoryBlock_->PutMessageBlock(emptyData, "test_plugin");
         EXPECT_TRUE(result);
     }
@@ -381,7 +381,7 @@ HWTEST_F(ShmemBoundaryTest, PutMessageBlockMultipleWrites, TestSize.Level0)
     uint32_t multiPageSize = PAGE_SIZE * 4;
     shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>(SMB_NAME, multiPageSize);
     if (shareMemoryBlock_->Valid()) {
-        BatchNativeHookData data;
+        ForStandard::BatchNativeHookData data;
         auto* event = data.add_events();
         event->set_tv_sec(100);
         for (int i = 0; i < 5; ++i) {
@@ -401,7 +401,7 @@ HWTEST_F(ShmemBoundaryTest, PutMessageVsPutMessageBlock, TestSize.Level0)
     uint32_t multiPageSize = PAGE_SIZE * 4;
     shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>(SMB_NAME, multiPageSize);
     if (shareMemoryBlock_->Valid()) {
-        BatchNativeHookData data;
+        ForStandard::BatchNativeHookData data;
         auto* event = data.add_events();
         event->set_tv_sec(200);
         event->set_tv_nsec(10);

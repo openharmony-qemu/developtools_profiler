@@ -203,7 +203,7 @@ HWTEST_F(ShareMemoryExceptionTest, PutMessageBlockWithOversizeMessage, TestSize.
 {
     shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>(SMB_NAME, SMB_SIZE);
     if (shareMemoryBlock_->Valid()) {
-        BatchNativeHookData largeData;
+        ForStandard::BatchNativeHookData largeData;
         auto* event = largeData.add_events();
         event->set_data(std::string(SMB_SIZE * 2, 'x'));
         bool result = shareMemoryBlock_->PutMessageBlock(largeData, "test_plugin");
@@ -220,7 +220,7 @@ HWTEST_F(ShareMemoryExceptionTest, PutMessageBlockOnInvalidBlock, TestSize.Level
 {
     shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>("", SMB_SIZE);
     EXPECT_FALSE(shareMemoryBlock_->Valid());
-    BatchNativeHookData data;
+    ForStandard::BatchNativeHookData data;
     auto* event = data.add_events();
     event->set_tv_sec(1);
     bool result = shareMemoryBlock_->PutMessageBlock(data, "test_plugin");
@@ -236,7 +236,7 @@ HWTEST_F(ShareMemoryExceptionTest, PutMessageOnInvalidBlock, TestSize.Level0)
 {
     shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>("", SMB_SIZE);
     EXPECT_FALSE(shareMemoryBlock_->Valid());
-    BatchNativeHookData data;
+    ForStandard::BatchNativeHookData data;
     auto* event = data.add_events();
     event->set_tv_sec(1);
     bool result = shareMemoryBlock_->PutMessage(data, "test_plugin");
