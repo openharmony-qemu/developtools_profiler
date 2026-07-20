@@ -16,6 +16,7 @@ import("//build/ohos/ace/ace.gni")
 import("//developtools/profiler/hidebug/hidebug.gni")
 
 ohos_shared_library("hidebug") {
+  branch_protector_ret = "pac_ret"
   include_dirs = [
     "util",
     "$hidebug_path/frameworks/native/include",
@@ -43,7 +44,9 @@ ohos_shared_library("hidebug") {
     "hiview:libfaultlogger",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "libuv:uv",
     "napi:ace_napi",
+    "node:node_header_notice",
     "samgr:samgr_proxy",
     "ability_base:configuration",
   ]

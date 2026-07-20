@@ -17,6 +17,7 @@
 #include <iostream>
 
 #include "logging.h"
+#include "common.h"
 #include "zip_storage.h"
 
 namespace {
@@ -40,6 +41,7 @@ bool ZipStorage::AddFile(const std::string &filepath)
 {
     PROFILER_LOG_DEBUG(LOG_CORE,  "Start storage file:%s", filepath.c_str());
     if (zipFile_ == nullptr) {
+        CleanStaleData();
         zipFile_ = zipOpen64(zipFilePath_.c_str(), APPEND_STATUS_CREATE);
         if (zipFile_ == nullptr) {
             PROFILER_LOG_ERROR(LOG_CORE, "zip file handle open failed");
@@ -107,4 +109,13 @@ bool ZipStorage::GetRealPath(const std::string& path, std::string& realPath)
     }
     realPath = std::string(buffer);
     return true;
+}
+
+void ZipStorage::CleanStaleData()
+{
+    std::string parentDir = fs::path(zipFilePath_).parent_path().string();
+    auto filter = [](const std::string &filename) {
+        return COMMON::StringMatch(filename, "hiprofiler_data_", ".zip");
+    };
+    CHECK_TRUE(COMMON::DeleteFiles(parentDir, filter), NO_RETVAL, "clean stale apm data fail");
 }

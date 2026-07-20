@@ -1372,4 +1372,50 @@ bool CleanCmdOldenTraceFiles(const std::string& path)
     }
     return allOk;
 }
+
+bool DeleteFiles(const std::string& dir, std::function<bool(const std::string& filename)> filter)
+{
+    if (dir.empty() || !filter) {
+        PROFILER_LOG_ERROR(LOG_CORE, "invalid param");
+        return false;
+    }
+    std::error_code ec;
+    if (!fs::is_directory(dir, ec) || ec) {
+        PROFILER_LOG_ERROR(LOG_CORE, "invalid param dir:%s,", dir.c_str());
+        return false;
+    }
+    for (const auto& entry : fs::directory_iterator(dir, ec)) {
+        if (ec) {
+            PROFILER_LOG_ERROR(LOG_CORE, "iter dir err:%s", ec.message().c_str());
+            return false;
+        }
+        bool isRegularFile = entry.is_regular_file(ec);
+        if (ec) {
+            PROFILER_LOG_ERROR(LOG_CORE, "get is regular file err:%s", ec.message().c_str());
+            return false;
+        }
+        if (isRegularFile && filter(entry.path().filename().string())) {
+            fs::remove(entry.path(), ec);
+            if (ec) {
+                PROFILER_LOG_ERROR(LOG_CORE, "remove file err:%s", ec.message().c_str());
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool StringMatch(const std::string& str, const std::string& prefix, const std::string& suffix)
+{
+    if (str.length() < prefix.length() + suffix.length()) {
+        return false;
+    }
+    if (!prefix.empty() && str.compare(0, prefix.length(), prefix) != 0) {
+        return false;
+    }
+    if (!suffix.empty() && str.compare(str.length() - suffix.length(), suffix.length(), suffix) != 0) {
+        return false;
+    }
+    return true;
+}
 } // namespace COMMON

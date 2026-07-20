@@ -231,7 +231,7 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const
 
     if (hookConfig_.statistics_interval() > 0) {
         statisticsInterval_ = std::chrono::seconds(hookConfig_.statistics_interval());
-        discardDestoryedTraces_ = hookConfig_.discard_destoryed_traces();
+        discardDestroyedTraces_ = hookConfig_.discard_destroyed_traces();
         if (!hookConfig_.arkui_mem_trace_enable()) {
             simplifiedRecordStatisticsMap_.reserve(STATISTICS_MAP_SIZE);
         } else {
@@ -2638,7 +2638,7 @@ bool StackPreprocess::FlushRecordStatisticsImpl(std::unordered_map<uint32_t, T>&
                     continue;
                 }
                 auto statistics = &iter->second;
-                bool shouldClean = discardDestoryedTraces_ &&
+                bool shouldClean = discardDestroyedTraces_ &&
                     statistics->applySize == statistics->releaseSize;
                 if (shouldClean && statistics->createInCurPeriod) {
                     statisticsMap.erase(iter);

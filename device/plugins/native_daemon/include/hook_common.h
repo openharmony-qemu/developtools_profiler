@@ -340,7 +340,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         asyncNestingDepth = 0;
         asyncTaskStackDepth = 0;
         arkuiMemTraceEnable = false;
-        discardDestoryedTraces = false;
+        discardDestroyedTraces = false;
     }
 
     std::string ToString()
@@ -358,7 +358,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", uniqueStackTableSize: " << uniqueStackTableSize
             << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable
             << ", arkuiMemTraceEnable: " << arkuiMemTraceEnable
-            << ", discardDestoryedTraces: " << discardDestoryedTraces
+            << ", discardDestroyedTraces: " << discardDestroyedTraces
             << ", jsStackReport: "
             << arktsConfig.jsStackReport << ", maxJsStackDepth: "
             << std::to_string(arktsConfig.maxJsStackDepth) << ", filterNapiName: "
@@ -424,7 +424,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     uint32_t asyncNestingDepth = 0;
     uint32_t asyncTaskStackDepth = 0;
     bool arkuiMemTraceEnable = false;
-    bool discardDestoryedTraces = false;
+    bool discardDestroyedTraces = false;
 };
 
 struct alignas(8) ClientConfigIpc { // 8 is 8 bit
@@ -472,7 +472,7 @@ struct alignas(8) ClientConfigIpc { // 8 is 8 bit
     uint32_t asyncNestingDepth = 0;
     uint32_t asyncTaskStackDepth = 0;
     bool arkuiMemTraceEnable = false;
-    bool discardDestoryedTraces = false;
+    bool discardDestroyedTraces = false;
 };
 
 inline bool CopyClientConfigString(char* dest, size_t destSize, const std::string& src)
@@ -536,7 +536,7 @@ inline void CopyClientConfigExtToIpc(const ClientConfig& config, ClientConfigIpc
     ipc.secondLargestSize = config.secondLargestSize;
     ipc.maxGrowthSize = config.maxGrowthSize;
     ipc.arkuiMemTraceEnable = config.arkuiMemTraceEnable;
-    ipc.discardDestoryedTraces = config.discardDestoryedTraces;
+    ipc.discardDestroyedTraces = config.discardDestroyedTraces;
 }
 
 inline void CopyClientConfigTailToIpc(const ClientConfig& config, ClientConfigIpc& ipc)
@@ -622,7 +622,7 @@ inline void CopyClientConfigExtFromIpc(const ClientConfigIpc& ipc, ClientConfig&
     config.secondLargestSize = ipc.secondLargestSize;
     config.maxGrowthSize = ipc.maxGrowthSize;
     config.arkuiMemTraceEnable = ipc.arkuiMemTraceEnable;
-    config.discardDestoryedTraces = ipc.discardDestoryedTraces;
+    config.discardDestroyedTraces = ipc.discardDestroyedTraces;
 }
 
 inline void CopyClientConfigTailFromIpc(const ClientConfigIpc& ipc, ClientConfig& config)

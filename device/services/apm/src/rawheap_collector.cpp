@@ -48,8 +48,11 @@ bool RawheapCollector::Collect(std::shared_ptr<IDataStorage> storage)
     CHECK_TRUE(pid_ > 0, false, "invalid pid");
 
     std::string prefix = "jsheap-" + std::to_string(pid_) + "-" + std::to_string(tid_) + "-";
-    auto filer = [&prefix](std::string& filename) {
-        return filename.length() >= prefix.length() && filename.compare(0, prefix.length(), prefix) == 0;
+    std::string suffix = ".rawheap";
+    auto filer = [&prefix, &suffix](std::string& filename) {
+        return filename.length() >= prefix.length() + suffix.length() &&
+            filename.compare(0, prefix.length(), prefix) == 0 &&
+            filename.compare(filename.length() - suffix.length(), suffix.length(), suffix) == 0;
     };
     FileMonitor monitor(SRC_RAWHEAP_FILE_DIR, filer);
     if (!DumpRawheap() || !monitor.Start()) {
@@ -62,7 +65,7 @@ bool RawheapCollector::Collect(std::shared_ptr<IDataStorage> storage)
     CHECK_TRUE(!resultFilename.empty(), false, "Dump rawheap file fail");
     PROFILER_LOG_DEBUG(LOG_CORE,  "Dump rawheap file success, pid: %u", pid_);
     std::string srcPath = SRC_RAWHEAP_FILE_DIR + "/" + resultFilename;
-    std::string destPath = DEST_RAWHEAP_FILE_DIR + "/" + resultFilename + ".rawheap";
+    std::string destPath = DEST_RAWHEAP_FILE_DIR + "/" + resultFilename;
     CHECK_TRUE(COMMON::CopyFileFastFromPath(srcPath, destPath), false, "copy rawheap file fail");
     if (!AppendMetaData(destPath) || !storage->AddFile(destPath)) {
         PROFILER_LOG_ERROR(LOG_CORE,  "storage rawheap file fail");

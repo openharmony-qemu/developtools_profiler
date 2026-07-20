@@ -16,6 +16,7 @@ import("../../base/config.gni")
 import("ftrace.gni")
 
 ohos_source_set("ftrace_plugin_source") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   sources = [
     "src/file_utils.cpp",
@@ -64,6 +65,7 @@ ohos_source_set("ftrace_plugin_source") {
 }
 
 ohos_shared_library("ftrace_plugin") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   deps = [ ":ftrace_plugin_source" ]
   version_script = "libftrace_plugin.map"

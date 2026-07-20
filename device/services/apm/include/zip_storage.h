@@ -33,6 +33,7 @@ public:
 private:
     bool WriteFileToZip(std::ifstream &file);
     bool GetRealPath(const std::string& path, std::string& realPath);
+    void CleanStaleData();
 
     std::string zipFilePath_;
     zipFile zipFile_ = nullptr;

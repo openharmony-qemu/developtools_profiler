@@ -17,6 +17,7 @@ import("//build/ohos/ace/ace.gni")
 import("//developtools/profiler/hidebug/hidebug.gni")
 
 ohos_shared_library("hidebug_ani") {
+  branch_protector_ret = "pac_ret"
   shlib_type = "ani"
   include_dirs = [
     "./include/",

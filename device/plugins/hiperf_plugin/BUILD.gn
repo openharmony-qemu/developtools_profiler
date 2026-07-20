@@ -24,6 +24,7 @@ config("hiperfplugin_config") {
 }
 
 ohos_source_set("hiperfplugin_source") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   output_name = "hiperfplugin"
   sources = [
@@ -58,6 +59,7 @@ ohos_source_set("hiperfplugin_source") {
 }
 
 ohos_shared_library("hiperfplugin") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   deps = [ ":hiperfplugin_source" ]
   version_script = "libhiperf_plugin.map"

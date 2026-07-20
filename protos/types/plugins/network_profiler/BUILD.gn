@@ -72,6 +72,7 @@ action("network_profiler_data_cpp_gen") {
 }
 
 ohos_source_set("network_profiler_cpp") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":network_profiler_data_cpp_gen" ]
   external_deps = [
     "protobuf:protobuf_lite",
@@ -84,6 +85,7 @@ ohos_source_set("network_profiler_cpp") {
 }
 
 ohos_source_set("network_profiler_cpp_cfi") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":network_profiler_data_cpp_gen" ]
   external_deps = [
     "protobuf:protobuf_lite",
@@ -102,6 +104,7 @@ ohos_source_set("network_profiler_cpp_cfi") {
 }
 
 ohos_source_set("network_profiler_encoder") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":network_profiler_data_cpp_gen" ]
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":network_profiler_include_config" ]
@@ -111,6 +114,7 @@ ohos_source_set("network_profiler_encoder") {
 }
 
 ohos_source_set("network_profiler_encoder_cfi") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":network_profiler_data_cpp_gen" ]
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":network_profiler_include_config" ]
@@ -126,6 +130,7 @@ ohos_source_set("network_profiler_encoder_cfi") {
 }
 
 ohos_source_set("network_profiler_cpp_standard") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":network_profiler_data_cpp_gen" ]
   external_deps = [
     "protobuf:protobuf_lite",

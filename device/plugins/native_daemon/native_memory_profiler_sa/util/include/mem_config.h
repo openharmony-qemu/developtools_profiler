@@ -61,19 +61,23 @@ struct SimplifiedMemStats {
 };
 
 struct SimplifiedMemConfig {
-    size_t largestSize = 0;
-    size_t secondLargestSize = 0;
-    size_t maxGrowthSize = 0;
-    size_t sampleSize = 0;
-    bool asyncStackEnable = true;
-    uint64_t asyncFlag = 0x143010304;   // ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
-                                        // ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROFILER | ASYNC_TYPE_CUSTOMIZE |
-                                        // ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL;
+    size_t largestSize;
+    size_t secondLargestSize;
+    size_t maxGrowthSize;
+    size_t sampleSize;
+    bool asyncStackEnable;
+    uint64_t asyncFlag;
     std::string targetSoName;
-    bool responseLibraryMode = false;
-    bool nestedAsyncStackEnable = true;
-    uint32_t asyncNestingDepth = 1;     // default: 1, ranges: [1, 16]
-    uint32_t asyncTaskStackDepth = 16;  // default: 16, ranges: [1, 256]
+    bool responseLibraryMode;
+    bool nestedAsyncStackEnable;
+    uint32_t asyncNestingDepth;
+    uint32_t asyncTaskStackDepth;
+
+    SimplifiedMemConfig();
+    SimplifiedMemConfig(size_t largestSize, size_t secondLargestSize, size_t maxGrowthSize, size_t sampleSize);
+    SimplifiedMemConfig(size_t largestSize, size_t secondLargestSize, size_t maxGrowthSize, size_t sampleSize,
+        bool asyncStackEnable, uint64_t asyncFlag, const std::string& targetSoName, bool responseLibraryMode,
+        bool nestedAsyncStackEnable, uint32_t asyncNestingDepth, uint32_t asyncTaskStackDepth);
 };
 
 using Range = std::pair<uint64_t, uint64_t>;

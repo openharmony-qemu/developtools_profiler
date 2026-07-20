@@ -37,6 +37,7 @@ ohos_fuzztest("SpDaemonFuzzTest") {
   ]
   configs = [ "//build/config/compiler:exceptions" ]
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "hilog:libhilog",
     "hiview:libucollection_utility",

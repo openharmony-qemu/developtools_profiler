@@ -56,6 +56,7 @@ ohos_prebuilt_etc("hiprofiler_daemon.cfg") {
 }
 
 ohos_shared_library("libmemory_profiler") {
+  branch_protector_ret = "pac_ret"
   configs = [
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config",
     ":hook_config",
@@ -177,6 +178,7 @@ ohos_shared_library("libmemory_profiler") {
 }
 
 ohos_executable("native_daemon") {
+  branch_protector_ret = "pac_ret"
   output_name = "native_daemon"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   public_configs = [
@@ -251,6 +253,7 @@ ohos_executable("native_daemon") {
 }
 
 ohos_executable("native_daemon_client") {
+  branch_protector_ret = "pac_ret"
   output_name = "native_daemon_client"
   include_dirs = [
     "../../base/include",
@@ -271,9 +274,11 @@ ohos_executable("native_daemon_client") {
   ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
+    "faultloggerd:libasync_stack",
     "faultloggerd:libdfx_dumpcatcher",
     "hicollie:libhicollie",
     "hisysevent:libhisysevent",
@@ -295,6 +300,7 @@ ohos_executable("native_daemon_client") {
 }
 
 ohos_shared_library("libnative_daemon_client") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   public_configs = [ ":profiler_sa_config" ]
   include_dirs = [
@@ -310,14 +316,17 @@ ohos_shared_library("libnative_daemon_client") {
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_config.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_proxy.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_lazyload_callback.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/util/src/mem_config.cpp",
     "../../base/src/common.cpp",
     "../../base/src/schedule_task_manager.cpp",
   ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
+    "faultloggerd:libasync_stack",
     "faultloggerd:libdfx_dumpcatcher",
     "hicollie:libhicollie",
     "hisysevent:libhisysevent",
@@ -340,13 +349,19 @@ ohos_shared_library("libnative_daemon_client") {
 }
 
 ohos_shared_library("memory_profiler_client") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   public_configs = [ ":memory_profiler_client_config" ]
-  sources = [ "memory_profiler_client/memory_profiler_client_impl.cpp" ]
+  sources = [
+    "memory_profiler_client/memory_profiler_client_impl.cpp",
+    "native_memory_profiler_sa/util/src/mem_config.cpp",
+  ]
   deps = [ ":libnative_daemon_client" ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
+    "faultloggerd:libasync_stack",
     "ipc:ipc_core",
     "samgr:samgr_proxy",
   ]

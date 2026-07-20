@@ -134,3 +134,90 @@ HWTEST_F(ZipStorageTest, AddDirectoryFails, TestSize.Level1)
     bool result = storage.AddFile(TEST_DIR);
     EXPECT_FALSE(result);
 }
+
+/**
+ * @tc.name: CleanStaleDataRemovesMatchingFiles
+ * @tc.desc: Test CleanStaleData deletes files matching hiprofiler_data_*.zip pattern
+ * @tc.type: FUNC
+ */
+HWTEST_F(ZipStorageTest, CleanStaleDataRemovesMatchingFiles, TestSize.Level1)
+{
+    std::vector<std::string> staleFiles = {
+        TEST_DIR + "hiprofiler_data_001.zip",
+        TEST_DIR + "hiprofiler_data_002.zip",
+    };
+    std::string keepFile = TEST_DIR + "other_data.zip";
+    for (const auto& f : staleFiles) {
+        std::ofstream ofs(f, std::ios::trunc);
+        ofs << "stale";
+        ofs.close();
+    }
+    {
+        std::ofstream ofs(keepFile, std::ios::trunc);
+        ofs << "keep";
+        ofs.close();
+    }
+
+    ZipStorage storage(TEST_ZIP_FILE);
+    storage.AddFile(TEST_INPUT_FILE);
+
+    for (const auto& f : staleFiles) {
+        EXPECT_FALSE(fs::exists(f));
+    }
+    EXPECT_TRUE(fs::exists(keepFile));
+
+    fs::remove(keepFile);
+    for (const auto& f : staleFiles) {
+        fs::remove(f);
+    }
+}
+
+/**
+ * @tc.name: CleanStaleDataNoFilesToDelete
+ * @tc.desc: Test CleanStaleData works when no stale files exist
+ * @tc.type: FUNC
+ */
+HWTEST_F(ZipStorageTest, CleanStaleDataNoFilesToDelete, TestSize.Level1)
+{
+    ZipStorage storage(TEST_ZIP_FILE);
+    bool result = storage.AddFile(TEST_INPUT_FILE);
+    EXPECT_TRUE(result);
+}
+
+/**
+ * @tc.name: CleanStaleDataOnlyDeletesMatchingSuffix
+ * @tc.desc: Test CleanStaleData does not delete files with matching prefix but wrong suffix
+ * @tc.type: FUNC
+ */
+HWTEST_F(ZipStorageTest, CleanStaleDataOnlyDeletesMatchingSuffix, TestSize.Level1)
+{
+    std::string matchFile = TEST_DIR + "hiprofiler_data_003.zip";
+    std::string noMatchSuffix = TEST_DIR + "hiprofiler_data_004.htrace";
+    std::string noMatchPrefix = TEST_DIR + "data_005.zip";
+    {
+        std::ofstream ofs(matchFile, std::ios::trunc);
+        ofs << "match";
+        ofs.close();
+    }
+    {
+        std::ofstream ofs(noMatchSuffix, std::ios::trunc);
+        ofs << "noMatchSuffix";
+        ofs.close();
+    }
+    {
+        std::ofstream ofs(noMatchPrefix, std::ios::trunc);
+        ofs << "noMatchPrefix";
+        ofs.close();
+    }
+
+    ZipStorage storage(TEST_ZIP_FILE);
+    storage.AddFile(TEST_INPUT_FILE);
+
+    EXPECT_FALSE(fs::exists(matchFile));
+    EXPECT_TRUE(fs::exists(noMatchSuffix));
+    EXPECT_TRUE(fs::exists(noMatchPrefix));
+
+    fs::remove(noMatchSuffix);
+    fs::remove(noMatchPrefix);
+    fs::remove(matchFile);
+}
