@@ -30,13 +30,14 @@
 namespace OHOS::Developtools::NativeDaemon {
 
 struct TaskConfig {
-    TaskConfig(std::shared_ptr<HookManager> manager, int32_t pid, const std::string& processName,
+    TaskConfig(std::shared_ptr<HookManager> manager, int32_t pid, int32_t callingPid, const std::string& processName,
         const std::string& filePath, int32_t timerFd, bool startupMode, uint32_t fd = 0, uint32_t startType = 0)
         : hookMgr(manager), pid(pid), processName(processName), filePath(filePath), timerFd(timerFd),
           isStartupMode(startupMode), fd(fd), startType(startType) {}
     ~TaskConfig() {};
     std::shared_ptr<HookManager> hookMgr = nullptr;
     int32_t pid{0};
+    int32_t callingPid{0};
     std::string processName;
     std::string filePath;
     int32_t timerFd{-1};
@@ -77,8 +78,6 @@ public:
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, MessageParcel &reply) override;
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
                   std::string& replyStats) override { return 0; }
-    static int32_t StopHook(uint32_t pid, std::string name = "",
-        int32_t finishErrorCode = static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR));
     static void ClientDisconnectCallback(int socketFd);
     static bool HasProfilingPermission();
     static void CloseSocketFd(int pid);
@@ -92,12 +91,16 @@ private:
                           uint32_t& fd, std::shared_ptr<HookManager>& hook, std::string& args,
                           const sptr<IRemoteObject>& callback = nullptr);
     int32_t StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd, MessageParcel &reply);
-    static int32_t StopHookAsync(uint32_t pid, int32_t finishErrorCode);
+    static int32_t StopHook(uint32_t pid, std::string name = "",
+        int32_t finishErrorCode = static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR), bool innerCall = false);
+    static int32_t StopHookAsync(uint32_t pid, int32_t finishErrorCode, bool innerCall = false);
     static int32_t StopHookTask(uint32_t pid, std::shared_ptr<TaskConfig> config, int32_t finishErrorCode);
-    static int32_t StopHookByType(uint32_t pid, std::string& name, int32_t finishErrorCode, bool isAsync);
+    static int32_t StopHookByType(uint32_t pid, std::string& name, int32_t finishErrorCode, bool isAsync,
+        bool innerCall = false);
     static bool TryBeginStopHook(uint32_t pid);
     static void EndStopHook(uint32_t pid);
     static bool IsAsyncRequest(uint32_t pid);
+    static bool CheckStopPermission(int32_t calllingPid, std::shared_ptr<TaskConfig>& config);
     int32_t CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
     int32_t CheckTaskLimit(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     int32_t CheckStartupModeConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
