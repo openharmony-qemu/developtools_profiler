@@ -14,13 +14,17 @@
  */
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <codecvt>
 #include <condition_variable>
-#include <string>
+#include <cinttypes>
+#include <cstring>
 #include <malloc.h>
 #include <mutex>
 #include <parameters.h>
+#include <sys/statvfs.h>
+#include <string>
 #include "ani_util.h"
 #include "application_context.h"
 #include "context.h"
@@ -55,12 +59,34 @@ constexpr int MAX_TAGS_ARRAY_LENGTH = 40;
 constexpr int MAX_WAIT_TIME_SECOND = 30; // 30s
 constexpr auto SLASH_STR = "/";
 constexpr auto JSON_FILE = ".json";
+constexpr auto HEAPSNAPSHOT_FILE = ".heapsnapshot";
+constexpr auto RAW_HEAP_RECORD_FILE = "rawheap";
+constexpr auto RAW_HEAP_FILE_EXT = ".rawheap";
+constexpr auto HIDEBUG_DUMP_QUOTA = "user.hidebugdump.quota";
+constexpr auto DUMP_MAX_COUNT = "persist.hiview.hidebugdump.maxcount";
+constexpr auto PROCESS_DUMP_MAX_COUNT = "persist.hiview.hidebugdump.process.maxcount";
+constexpr int64_t MS_TO_NS = 1000 * 1000;
+constexpr int64_t S_TO_NS = MS_TO_NS * 1000;
+constexpr int QUOTA_VALUE_LENGTH = 256;
 
 constexpr std::pair<TraceErrorCode, const char*> TraceErrorCodeMap[] = {
     {TraceErrorCode::TRACE_INVALID_ARGUMENT, "Invalid parameter."},
     {TraceErrorCode::TRACE_ABNORMAL, "Remote service exception."},
     {TraceErrorCode::TRACE_STORAGE_LIMIT, "Trace storage limit reached."},
     {TraceErrorCode::RESOURCE_UNAVAILABLE, "Resource unavailable."},
+};
+
+constexpr std::pair<int, const char*> DumpRawHeapErrCodeMap[] = {
+    {ErrorCode::PARAMETER_ERROR, "Invalid parameter."},
+    {DumpRawHeapErrors::REPEAT_DUMPING, "It is currently dumping. Please wait until the dumping is completed "
+    "before making another call."},
+    {DumpRawHeapErrors::FAILED_CREATE_FILE, "Failed to create dump file."},
+    {DumpRawHeapErrors::LOW_DISK_SPACE, "Disk remaining space too low."},
+    {DumpRawHeapErrors::QUOTA_EXCEEDED, "The number of available invocations for the interface is insufficient. "
+    "Please wait until the number of available invocations for the interface is reset."},
+    {DumpRawHeapErrors::FORK_FAILED, "Fork operation failed."},
+    {DumpRawHeapErrors::FAILED_WAIT_CHILD_PROCESS_FINISHED, "Failed to wait for the child process to finish."},
+    {DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED, "Timeout while waiting for the child process to finish."}
 };
 
 bool ResolveTraceErrorCode(ani_env *env, const TraceErrorCode errCode)
@@ -777,6 +803,162 @@ ani_int GetGwpAsanGrayscaleStateAni(ani_env *env)
     ani_int ret = static_cast<ani_int>(result);
     return ret;
 }
+
+bool DumpLimitEnable()
+{
+    return !IsDeveloperOptionsEnabled() && !IsDebuggableHap() && !IsBetaVersion();
+}
+
+bool InitRawHeapFile(std::string& fileName)
+{
+    std::string filePath = GetProcessDir(DirectoryType::CACHE);
+    if (filePath.empty()) {
+        return false;
+    }
+    fileName = filePath + SLASH_STR + RAW_HEAP_RECORD_FILE;
+    if (OHOS::FileExists(fileName)) {
+        return true;
+    }
+    constexpr unsigned fileMode = 0700;
+    return CreateDirectory(fileName, fileMode);
+}
+
+std::vector<std::string> LoadDumpRecords()
+{
+    std::vector<std::string> records;
+    std::string rawHeapFile;
+    if (!InitRawHeapFile(rawHeapFile)) {
+        return records;
+    }
+    std::string quota;
+    if (!GetXAttr(rawHeapFile, HIDEBUG_DUMP_QUOTA, quota, QUOTA_VALUE_LENGTH)) {
+        return records;
+    }
+    const int64_t currentTime = GetRealNanoSecondsTimestamp();
+    constexpr int64_t timeout = 24 * 60 * 60 * S_TO_NS;
+    const int64_t validTime = currentTime - timeout;
+    return SplitStr(quota, ',', [validTime, currentTime](std::string& record) {
+        if (record.empty()) {
+            return false;
+        }
+        constexpr int decBase = 10;
+        int64_t num = std::strtoll(record.c_str(), nullptr, decBase);
+        return num > validTime && num < currentTime;
+    });
+}
+
+bool InsertDumpRecord()
+{
+    std::vector<std::string> records = LoadDumpRecords();
+    records.emplace_back(std::to_string(GetRealNanoSecondsTimestamp()));
+    std::string recordStr;
+    for (const auto& record : records) {
+        recordStr += (record + ",");
+    }
+    std::string rawHeapFile;
+    if (!InitRawHeapFile(rawHeapFile)) {
+        return false;
+    }
+    return SetXAttr(rawHeapFile, HIDEBUG_DUMP_QUOTA, recordStr);
+}
+
+bool CheckDeviceQuota()
+{
+    return OHOS::system::GetIntParameter(DUMP_MAX_COUNT, 0) > 0;
+}
+
+bool CheckProcessQuota()
+{
+    int limit = OHOS::system::GetIntParameter(PROCESS_DUMP_MAX_COUNT, 0);
+    if (limit <= 0) {
+        return false;
+    }
+    auto size = LoadDumpRecords().size();
+    if (size >= static_cast<size_t>(limit)) {
+        return false;
+    }
+    return true;
+}
+
+bool CheckDumpDiskSpace()
+{
+    struct statvfs stat{};
+    std::string appDir = GetProcessDir(DirectoryType::FILE);
+    if (statvfs(appDir.c_str(), &stat) != 0) {
+        return false;
+    }
+    constexpr uint64_t dumpNeedSpace = 30ULL * 1024 * 1024 * 1024;
+    uint64_t freeSize = stat.f_bsize * stat.f_bfree;
+    if (freeSize <= dumpNeedSpace) {
+        HILOG_ERROR(LOG_CORE, "disk space is not enough, remains %{public}" PRIu64 "B.", freeSize);
+        return false;
+    }
+    return true;
+}
+
+std::string GenerateDumpFile(int64_t currentTime)
+{
+    std::string filesDir = GetProcessDir(DirectoryType::FILE);
+    if (filesDir.empty()) {
+        return "";
+    }
+    return filesDir + SLASH_STR + "hidebug-jsheap-" + std::to_string(getpid()) + "-" + std::to_string(gettid()) +
+        "-" + std::to_string(currentTime / MS_TO_NS) + RAW_HEAP_FILE_EXT;
+}
+
+bool AppendMetaData(const std::string& newPath)
+{
+    auto rawHeapFileSize = static_cast<uint32_t>(GetFileSize(newPath));
+    if (rawHeapFileSize == 0) {
+        HILOG_ERROR(LOG_CORE, "%{public}s is not existed or empty.", newPath.c_str());
+        return false;
+    }
+    constexpr auto metaDataPath = "/system/lib64/module/arkcompiler/metadata.json";
+    auto metaDataFileSize = static_cast<uint32_t>(GetFileSize(metaDataPath));
+    if (metaDataFileSize == 0) {
+        HILOG_ERROR(LOG_CORE, "%{public}s is not existed or empty.", metaDataPath);
+        return false;
+    }
+    auto targetFile = SmartFile::OpenFile(newPath, "ab");
+    if (targetFile == nullptr) {
+        return false;
+    }
+    auto metaData = SmartFile::OpenFile(metaDataPath, "rb");
+    if (metaData == nullptr) {
+        return false;
+    }
+    constexpr auto buffSize = 1024;
+    char buffer[buffSize];
+    size_t bytesRead;
+    while ((bytesRead = metaData->Read(buffer, 1, buffSize)) > 0) {
+        if (!targetFile->Write(buffer, 1, bytesRead)) {
+            return false;
+        }
+    }
+    return targetFile->Write(&rawHeapFileSize, sizeof(rawHeapFileSize), 1) &&
+        targetFile->Write(&metaDataFileSize, sizeof(metaDataFileSize), 1);
+}
+
+int TransferRetCodeToErrorCode(int retCode)
+{
+    constexpr int dumpSuccess = 0;
+    constexpr int forkFailed = 1;
+    constexpr int failedToWait = 2;
+    constexpr int waitTimeOut = 3;
+    switch (retCode) {
+        case dumpSuccess:
+            return 0;
+        case forkFailed:
+            return DumpRawHeapErrors::FORK_FAILED;
+        case failedToWait:
+            return DumpRawHeapErrors::FAILED_WAIT_CHILD_PROCESS_FINISHED;
+        case waitTimeOut:
+            return DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED;
+        default:
+            HILOG_ERROR(LOG_CORE, "unknown retCode %{public}d.", retCode);
+            return DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED;
+    }
+}
 }
 
 static ani_status BindGwpMethods(ani_env *env, ani_namespace nameSpace)
@@ -814,6 +996,146 @@ ani_object GetRssInfoAdapter(ani_env *env)
     env->Object_SetPropertyByName_Long(rssInfo, "rss", static_cast<ani_long>(rssInfoOption->rss));
     env->Object_SetPropertyByName_Long(rssInfo, "swapRss", static_cast<ani_long>(rssInfoOption->swapRss));
     return rssInfo;
+}
+
+void DumpJsHeapDataAdapter(ani_env *env, ani_string fileNameAni, ani_boolean needClean)
+{
+    ApiInvokeRecorder apiInvokeRecorder("dumpJsHeapData");
+    std::string fileName;
+    if (!GetTheOnlyStringParam(env, fileNameAni, fileName)) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
+        std::string paramErrorMessage = "Invalid parameter, require a string parameter.";
+        AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::PARAMETER_ERROR);
+        return;
+    }
+    std::string filesDir = GetProcessDir(DirectoryType::FILE);
+    if (filesDir.empty()) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        AniUtil::ThrowErrorMessage(env, "Get App files dir failed.", ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        return;
+    }
+    std::string filePath = filesDir + SLASH_STR + fileName + HEAPSNAPSHOT_FILE;
+    if (!IsLegalPath(filePath)) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        AniUtil::ThrowErrorMessage(env, "input fileName is illegal.", ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        return;
+    }
+    if (!CreateFile(filePath)) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        AniUtil::ThrowErrorMessage(env, "file created failed.", ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        return;
+    }
+    // 同步接口
+    if (!AniUtil::DumpHeapSnapshot(filePath, needClean == ANI_TRUE)) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        AniUtil::ThrowErrorMessage(env, "dump heap snapshot failed.", ErrorCode::SYSTEM_STATUS_ABNORMAL);
+    }
+}
+
+// needGC: boolean, needClean: boolean, processDump: boolean -> 返回文件路径
+ani_string DumpJsRawHeapDataAdapter(ani_env *env, ani_boolean needGC, ani_boolean needClean, ani_boolean processDump)
+{
+    ApiInvokeRecorder apiInvokeRecorder("dumpJsRawHeapData");
+    static std::atomic<int> dumpingCount{0};
+    if (dumpingCount.fetch_add(1) != 0) {
+        HILOG_ERROR(LOG_CORE, "DumpRawHeap is already running, reject repeated request.");
+        apiInvokeRecorder.SetErrorCode(DumpRawHeapErrors::REPEAT_DUMPING);
+        AniUtil::ThrowErrorMessage(env,
+            "It is currently dumping. Please wait until the dumping is completed before making another call.",
+            DumpRawHeapErrors::REPEAT_DUMPING);
+        dumpingCount.fetch_sub(1);
+        return nullptr;
+    }
+    if (!CheckDumpDiskSpace()) {
+        apiInvokeRecorder.SetErrorCode(DumpRawHeapErrors::LOW_DISK_SPACE);
+        AniUtil::ThrowErrorMessage(env, "Disk remaining space too low.", DumpRawHeapErrors::LOW_DISK_SPACE);
+        dumpingCount.fetch_sub(1);
+        return nullptr;
+    }
+    if (DumpLimitEnable() && (!CheckDeviceQuota() || !CheckProcessQuota())) {
+        apiInvokeRecorder.SetErrorCode(DumpRawHeapErrors::QUOTA_EXCEEDED);
+        AniUtil::ThrowErrorMessage(env,
+            "The number of available invocations for the interface is insufficient. "
+            "Please wait until the number of available invocations for the interface is reset.",
+            DumpRawHeapErrors::QUOTA_EXCEEDED);
+        dumpingCount.fetch_sub(1);
+        return nullptr;
+    }
+    std::string filePath = GenerateDumpFile(GetRealNanoSecondsTimestamp());
+    if (filePath.empty()) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        AniUtil::ThrowErrorMessage(env, "Get App files dir failed.", ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        dumpingCount.fetch_sub(1);
+        return nullptr;
+    }
+    if (!CreateFile(filePath)) {
+        apiInvokeRecorder.SetErrorCode(DumpRawHeapErrors::FAILED_CREATE_FILE);
+        AniUtil::ThrowErrorMessage(env, "Failed to create dump file.", DumpRawHeapErrors::FAILED_CREATE_FILE);
+        dumpingCount.fetch_sub(1);
+        return nullptr;
+    }
+    // 异步接口：通过回调等待结果（在 taskpool 线程中同步等待）
+    bool isGc = (needGC == ANI_TRUE);
+    bool isNeedClean = (needClean == ANI_TRUE);
+    bool isProcDump = (processDump == ANI_TRUE);
+    std::mutex mutex;
+    std::condition_variable cond;
+    bool hasFinished = false;
+    uint8_t retCode = 0;
+    auto callback = [&mutex, &cond, &hasFinished, &retCode](uint8_t code) {
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            retCode = code;
+            hasFinished = true;
+        }
+        cond.notify_all();
+    };
+    AniUtil::DumpHeapSnapshot(isGc, filePath, callback, isNeedClean, isProcDump);
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        cond.wait_for(lock, std::chrono::seconds(MAX_WAIT_TIME_SECOND), [&hasFinished] {
+            return hasFinished;
+        });
+    }
+    if (!hasFinished) {
+        HILOG_ERROR(LOG_CORE, "wait dump heap snapshot callback timeout");
+        apiInvokeRecorder.SetErrorCode(DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED);
+        AniUtil::ThrowErrorMessage(env, "Timeout while waiting for the child process to finish.",
+            DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED);
+        dumpingCount.fetch_sub(1);
+        return nullptr;
+    }
+    int32_t errCode = TransferRetCodeToErrorCode(retCode);
+    if (errCode != 0) {
+        remove(filePath.c_str());
+        apiInvokeRecorder.SetErrorCode(errCode);
+        std::string errMsg;
+        for (const auto& [code, msg] : DumpRawHeapErrCodeMap) {
+            if (code == errCode) {
+                errMsg = msg;
+                break;
+            }
+        }
+        AniUtil::ThrowErrorMessage(env, errMsg, errCode);
+        dumpingCount.fetch_sub(1);
+        return nullptr;
+    }
+    // 成功后的后处理
+    if (!AppendMetaData(filePath)) {
+        HILOG_ERROR(LOG_CORE, "failed to append metadata to dump file.");
+    }
+    if (DumpLimitEnable()) {
+        if (!InsertDumpRecord()) {
+            HILOG_ERROR(LOG_CORE, "failed to insert process dump record.");
+        }
+    }
+    dumpingCount.fetch_sub(1);
+    ani_string result = nullptr;
+    if (env->String_NewUTF8(filePath.c_str(), filePath.size(), &result) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "Create dumpJsRawHeapData return string failed.");
+        return nullptr;
+    }
+    return result;
 }
 
 ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
@@ -866,6 +1188,10 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
             reinterpret_cast<void *>(GetGraphicsMemoryAdapter)},
         ani_native_function {"getRssInfoAdapter", ":C{@ohos.hidebug.hidebug.RssInfoAdapter}",
             reinterpret_cast<void *>(GetRssInfoAdapter)},
+        ani_native_function {"dumpJsHeapDataAdapter", "C{std.core.String}z:",
+            reinterpret_cast<void *>(DumpJsHeapDataAdapter)},
+        ani_native_function {"dumpJsRawHeapDataAdapter", "zzz:C{std.core.String}",
+            reinterpret_cast<void *>(DumpJsRawHeapDataAdapter)},
     };
     auto retCode = env->Namespace_BindNativeFunctions(nameSpace, methods.data(), methods.size());
     if (ANI_OK != retCode) {

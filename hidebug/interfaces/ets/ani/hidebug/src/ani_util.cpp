@@ -164,5 +164,28 @@ ani_vm* AniUtil::GetAniVm(ani_env *env)
     }
     return vm;
 }
+
+// DumpHeapSnapshot 测试接口（三方暂未提供，函数名保持一致，不需要具体实现）
+// 同步版本 - 用于 dumpJsHeapData
+bool AniUtil::DumpHeapSnapshot(const std::string& filePath, bool needClean)
+{
+    HILOG_INFO(LOG_CORE, "DumpHeapSnapshot sync called, filePath: %{public}s, needClean: %{public}d",
+        filePath.c_str(), static_cast<int>(needClean));
+    return true;
+}
+
+// 异步版本 - 用于 dumpJsRawHeapData
+void AniUtil::DumpHeapSnapshot(bool isGc, const std::string& filePath,
+    const std::function<void(uint8_t)>& callback, bool needClean, bool isProcDump)
+{
+    HILOG_INFO(LOG_CORE, "DumpHeapSnapshot async called, filePath: %{public}s, isGc: %{public}d, "
+        "needClean: %{public}d, isProcDump: %{public}d",
+        filePath.c_str(), static_cast<int>(isGc), static_cast<int>(needClean),
+        static_cast<int>(isProcDump));
+    // 测试实现：同步回调 retCode=0 表示成功
+    if (callback) {
+        callback(0);
+    }
+}
 } // namespace HiviewDFX
 } // namespace OHOS

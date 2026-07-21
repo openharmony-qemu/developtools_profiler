@@ -396,4 +396,56 @@ export default namespace hidebug {
     ret.swapRss = new bigint(rssInfo.swapRss);
     return ret;
   }
+
+  native function dumpJsHeapDataAdapter(filename: string, needClean: boolean): void;
+
+  export function dumpJsHeapData(filename: string): void {
+    dumpJsHeapDataAdapter(filename, false);
+  }
+
+  export function dumpJsHeapData(filename: string, needClean: boolean): void {
+    dumpJsHeapDataAdapter(filename, needClean);
+  }
+
+  native function dumpJsRawHeapDataAdapter(needGC: boolean, needClean: boolean, processDump: boolean): string;
+
+  export function dumpJsRawHeapData(needGC?: boolean): Promise<string> {
+    return new Promise<string>((resolve: (v: string) => void, reject: (e: BusinessError<void>) => void) => {
+      taskpool.execute(() => {
+        return dumpJsRawHeapDataAdapter(needGC === true, false, false);
+      }).then((ret: Any): void => {
+        resolve(ret as string);
+      }).catch((err: Object | null | undefined) => {
+        reject(err as BusinessError);
+      });
+    });
+  }
+
+  export function dumpJsRawHeapData(needGC: boolean, needClean: boolean): Promise<string> {
+    return new Promise<string>((resolve: (v: string) => void, reject: (e: BusinessError<void>) => void) => {
+      taskpool.execute(() => {
+        return dumpJsRawHeapDataAdapter(needGC, needClean, false);
+      }).then((ret: Any): void => {
+        resolve(ret as string);
+      }).catch((err: Object | null | undefined) => {
+        reject(err as BusinessError);
+      });
+    });
+  }
+
+  export function dumpJsRawHeapData(needGC: boolean, needClean: boolean, processDump: boolean): Promise<Array<string>> {
+    return new Promise<Array<string>>((resolve: (v: Array<string>) => void,
+      reject: (e: BusinessError<void>) => void) => {
+      taskpool.execute(() => {
+        return dumpJsRawHeapDataAdapter(needGC, needClean, processDump);
+      }).then((ret: Any): void => {
+        let result: Array<string> = new Array<string>();
+        result.push(ret as string);
+        resolve(result);
+      }).catch((err: Object | null | undefined) => {
+        reject(err as BusinessError);
+      });
+    });
+  }
+
 }
