@@ -1033,51 +1033,61 @@ void DumpJsHeapDataAdapter(ani_env *env, ani_string fileNameAni, ani_boolean nee
 }
 
 // needGC: boolean, needClean: boolean, processDump: boolean -> 返回文件路径
-ani_string DumpJsRawHeapDataAdapter(ani_env *env, ani_boolean needGC, ani_boolean needClean, ani_boolean processDump)
+
+// 重复调用保护计数器（dump 期间拒绝并发调用）
+static std::atomic<int> g_dumpingCount{0};
+
+bool CheckDumpJsRawHeapPreconditions(ani_env *env, ApiInvokeRecorder &recorder)
 {
-    ApiInvokeRecorder apiInvokeRecorder("dumpJsRawHeapData");
-    static std::atomic<int> dumpingCount{0};
-    if (dumpingCount.fetch_add(1) != 0) {
+    if (g_dumpingCount.fetch_add(1) != 0) {
         HILOG_ERROR(LOG_CORE, "DumpRawHeap is already running, reject repeated request.");
-        apiInvokeRecorder.SetErrorCode(DumpRawHeapErrors::REPEAT_DUMPING);
+        recorder.SetErrorCode(DumpRawHeapErrors::REPEAT_DUMPING);
         AniUtil::ThrowErrorMessage(env,
             "It is currently dumping. Please wait until the dumping is completed before making another call.",
             DumpRawHeapErrors::REPEAT_DUMPING);
-        dumpingCount.fetch_sub(1);
-        return nullptr;
+        g_dumpingCount.fetch_sub(1);
+        return false;
     }
     if (!CheckDumpDiskSpace()) {
-        apiInvokeRecorder.SetErrorCode(DumpRawHeapErrors::LOW_DISK_SPACE);
+        recorder.SetErrorCode(DumpRawHeapErrors::LOW_DISK_SPACE);
         AniUtil::ThrowErrorMessage(env, "Disk remaining space too low.", DumpRawHeapErrors::LOW_DISK_SPACE);
-        dumpingCount.fetch_sub(1);
-        return nullptr;
+        g_dumpingCount.fetch_sub(1);
+        return false;
     }
     if (DumpLimitEnable() && (!CheckDeviceQuota() || !CheckProcessQuota())) {
-        apiInvokeRecorder.SetErrorCode(DumpRawHeapErrors::QUOTA_EXCEEDED);
+        recorder.SetErrorCode(DumpRawHeapErrors::QUOTA_EXCEEDED);
         AniUtil::ThrowErrorMessage(env,
             "The number of available invocations for the interface is insufficient. "
             "Please wait until the number of available invocations for the interface is reset.",
             DumpRawHeapErrors::QUOTA_EXCEEDED);
-        dumpingCount.fetch_sub(1);
-        return nullptr;
+        g_dumpingCount.fetch_sub(1);
+        return false;
     }
+    return true;
+}
+
+std::string PrepareDumpFile(ani_env *env, ApiInvokeRecorder &recorder)
+{
     std::string filePath = GenerateDumpFile(GetRealNanoSecondsTimestamp());
     if (filePath.empty()) {
-        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        recorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         AniUtil::ThrowErrorMessage(env, "Get App files dir failed.", ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        dumpingCount.fetch_sub(1);
-        return nullptr;
+        g_dumpingCount.fetch_sub(1);
+        return "";
     }
     if (!CreateFile(filePath)) {
-        apiInvokeRecorder.SetErrorCode(DumpRawHeapErrors::FAILED_CREATE_FILE);
+        recorder.SetErrorCode(DumpRawHeapErrors::FAILED_CREATE_FILE);
         AniUtil::ThrowErrorMessage(env, "Failed to create dump file.", DumpRawHeapErrors::FAILED_CREATE_FILE);
-        dumpingCount.fetch_sub(1);
-        return nullptr;
+        g_dumpingCount.fetch_sub(1);
+        return "";
     }
-    // 异步接口：通过回调等待结果（在 taskpool 线程中同步等待）
-    bool isGc = (needGC == ANI_TRUE);
-    bool isNeedClean = (needClean == ANI_TRUE);
-    bool isProcDump = (processDump == ANI_TRUE);
+    return filePath;
+}
+
+// 等待异步 DumpHeapSnapshot 回调完成，返回错误码（0 表示成功）
+int32_t WaitDumpHeapSnapshotResult(ani_env *env, ApiInvokeRecorder &recorder,
+    bool isGc, const std::string& filePath, bool isNeedClean, bool isProcDump)
+{
     std::mutex mutex;
     std::condition_variable cond;
     bool hasFinished = false;
@@ -1099,16 +1109,15 @@ ani_string DumpJsRawHeapDataAdapter(ani_env *env, ani_boolean needGC, ani_boolea
     }
     if (!hasFinished) {
         HILOG_ERROR(LOG_CORE, "wait dump heap snapshot callback timeout");
-        apiInvokeRecorder.SetErrorCode(DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED);
+        recorder.SetErrorCode(DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED);
         AniUtil::ThrowErrorMessage(env, "Timeout while waiting for the child process to finish.",
             DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED);
-        dumpingCount.fetch_sub(1);
-        return nullptr;
+        return DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED;
     }
     int32_t errCode = TransferRetCodeToErrorCode(retCode);
     if (errCode != 0) {
         remove(filePath.c_str());
-        apiInvokeRecorder.SetErrorCode(errCode);
+        recorder.SetErrorCode(errCode);
         std::string errMsg;
         for (const auto& [code, msg] : DumpRawHeapErrCodeMap) {
             if (code == errCode) {
@@ -1117,10 +1126,12 @@ ani_string DumpJsRawHeapDataAdapter(ani_env *env, ani_boolean needGC, ani_boolea
             }
         }
         AniUtil::ThrowErrorMessage(env, errMsg, errCode);
-        dumpingCount.fetch_sub(1);
-        return nullptr;
     }
-    // 成功后的后处理
+    return errCode;
+}
+
+void PostDumpSuccess(const std::string& filePath)
+{
     if (!AppendMetaData(filePath)) {
         HILOG_ERROR(LOG_CORE, "failed to append metadata to dump file.");
     }
@@ -1129,7 +1140,25 @@ ani_string DumpJsRawHeapDataAdapter(ani_env *env, ani_boolean needGC, ani_boolea
             HILOG_ERROR(LOG_CORE, "failed to insert process dump record.");
         }
     }
-    dumpingCount.fetch_sub(1);
+    g_dumpingCount.fetch_sub(1);
+}
+
+ani_string DumpJsRawHeapDataAdapter(ani_env *env, ani_boolean needGC, ani_boolean needClean, ani_boolean processDump)
+{
+    ApiInvokeRecorder apiInvokeRecorder("dumpJsRawHeapData");
+    if (!CheckDumpJsRawHeapPreconditions(env, apiInvokeRecorder)) {
+        return nullptr;
+    }
+    std::string filePath = PrepareDumpFile(env, apiInvokeRecorder);
+    if (filePath.empty()) {
+        return nullptr;
+    }
+    int32_t errCode = WaitDumpHeapSnapshotResult(env, apiInvokeRecorder,
+        needGC == ANI_TRUE, filePath, needClean == ANI_TRUE, processDump == ANI_TRUE);
+    if (errCode != 0) {
+        return nullptr;
+    }
+    PostDumpSuccess(filePath);
     ani_string result = nullptr;
     if (env->String_NewUTF8(filePath.c_str(), filePath.size(), &result) != ANI_OK) {
         HILOG_ERROR(LOG_CORE, "Create dumpJsRawHeapData return string failed.");
