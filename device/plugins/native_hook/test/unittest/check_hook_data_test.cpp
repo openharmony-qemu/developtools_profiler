@@ -46,7 +46,7 @@ constexpr int HOOK_TIME = 10;
 constexpr int SLEEP_FIVE = 5;
 
 const std::string DEFAULT_NATIVE_DAEMON_CLIENT_PATH("/data/local/tmp/native_daemon_client");
-constexpr int SHARE_MEMORY_SIZE = 1000 * 4096;
+constexpr int SHARE_MEMORY_SIZE = 100 * 4096;
 constexpr int BUFFER_SIZE = 100 * 1024;
 #ifdef __aarch64__
 constexpr int DEFAULT_DEPTH = 32;
