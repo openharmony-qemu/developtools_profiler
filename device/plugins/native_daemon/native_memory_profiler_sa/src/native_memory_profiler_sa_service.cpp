@@ -243,7 +243,7 @@ void NativeMemoryProfilerSaService::ClientDisconnectCallback(int socketFd)
     }
     // Note: The same mutex g_mtx is also used in the StopHook function.
     // Be cautious to avoid potential deadlocks.
-    StopHookByType(pidval, name, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), isAsync);
+    StopHookByType(pidval, name, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), isAsync, true);
 }
 
 bool NativeMemoryProfilerSaService::StartServiceAbility()
@@ -599,7 +599,7 @@ void NativeMemoryProfilerSaService::CloseSocketFd(pid_t pid)
     }
 }
 
-int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, int32_t finishErrorCode)
+int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, int32_t finishErrorCode, bool innerCall)
 {
     std::unique_lock<std::mutex> lock(g_mtx);
     std::shared_ptr<TaskConfig> config = nullptr;
@@ -619,8 +619,7 @@ int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, 
             pid, name.c_str(), ret);
         return ret;
     }
-    pid_t callingPid = IPCSkeleton::GetCallingPid();
-    if (config->startType == START_TYPE_API && pid != static_cast<uint32_t>(callingPid)) {
+    if (!innerCall && !CheckStopPermission(static_cast<int32_t>(IPCSkeleton::GetCallingPid()), config)) {
         PROFILER_LOG_ERROR(LOG_CORE, "Permission Denied,errorcode is:%d.",
             static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED));
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
@@ -652,7 +651,7 @@ int32_t NativeMemoryProfilerSaService::StopHookTask(uint32_t pid, std::shared_pt
     return retRelease;
 }
 
-int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finishErrorCode)
+int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finishErrorCode, bool innerCall)
 {
     std::shared_ptr<TaskConfig> config = nullptr;
     if (pid > 0) {
@@ -665,6 +664,11 @@ int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finis
         int32_t ret = static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED);
         PROFILER_LOG_ERROR(LOG_CORE, "StopHookAsync has stop, pid: %d, errorcode is:%d.", pid, ret);
         return ret;
+    }
+    if (!innerCall && !CheckStopPermission(static_cast<int32_t>(IPCSkeleton::GetCallingPid()), config)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Permission Denied,errorcode is:%d.",
+            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED));
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
     }
 
     if (!TryBeginStopHook(pid)) {
@@ -681,12 +685,12 @@ int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finis
 }
 
 int32_t NativeMemoryProfilerSaService::StopHookByType(uint32_t pid, std::string& name, int32_t finishErrorCode,
-    bool isAsync)
+    bool isAsync, bool innerCall)
 {
     if (isAsync) {
-        return StopHookAsync(pid, finishErrorCode);
+        return StopHookAsync(pid, finishErrorCode, innerCall);
     }
-    return StopHook(pid, name, finishErrorCode);
+    return StopHook(pid, name, finishErrorCode, innerCall);
 }
 
 bool NativeMemoryProfilerSaService::TryBeginStopHook(uint32_t pid)
@@ -715,6 +719,15 @@ bool NativeMemoryProfilerSaService::IsAsyncRequest(uint32_t pid)
     bool async = config && config->callback;
     PROFILER_LOG_INFO(LOG_CORE, "pid %d hasCallback:%d", pid, async);
     return async;
+}
+
+bool NativeMemoryProfilerSaService::CheckStopPermission(int32_t calllingPid, std::shared_ptr<TaskConfig>& config)
+{
+    if (calllingPid != config->callingPid) {
+        PROFILER_LOG_ERROR(LOG_CORE, "calling pid check fail, (%d, %d)", config->callingPid, calllingPid);
+        return false;
+    }
+    return true;
 }
 
 std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
@@ -821,7 +834,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
                 static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION));
             int32_t retStop = StopHookByType(config->pid_, config->processName_,
                 static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION),
-                isAsync);
+                isAsync, true);
             if (retStop != RET_OK) {
                 PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService StopHook failed");
             }
@@ -841,8 +854,8 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     }
 
     std::shared_ptr<TaskConfig> configCtx =
-        std::make_shared<TaskConfig>(hook, config->pid_, config->processName_, config->filePath_, timerFd,
-                                     config->startupMode_, fd, config->startType_);
+        std::make_shared<TaskConfig>(hook, config->pid_, static_cast<int32_t>(IPCSkeleton::GetCallingPid()),
+            config->processName_, config->filePath_, timerFd, config->startupMode_, fd, config->startType_);
     configCtx->callback = callback;
     if (!g_hasStartupMode && config->startupMode_) {
         g_hasStartupMode = true;
