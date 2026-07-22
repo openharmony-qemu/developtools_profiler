@@ -37,8 +37,8 @@ struct TaskConfig {
     ~TaskConfig() {};
     std::shared_ptr<HookManager> hookMgr = nullptr;
     int32_t pid{0};
-    int32_t callingPid{0};
     std::string processName;
+    int32_t callingPid{0};
     std::string filePath;
     int32_t timerFd{-1};
     bool isStartupMode{false};
