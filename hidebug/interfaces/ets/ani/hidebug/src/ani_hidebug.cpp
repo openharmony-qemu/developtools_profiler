@@ -1085,8 +1085,14 @@ std::string PrepareDumpFile(ani_env *env, ApiInvokeRecorder &recorder)
 }
 
 // 等待异步 DumpHeapSnapshot 回调完成，返回错误码（0 表示成功）
+struct DumpHeapParams {
+    bool isGc;
+    bool isNeedClean;
+    bool isProcDump;
+};
+
 int32_t WaitDumpHeapSnapshotResult(ani_env *env, ApiInvokeRecorder &recorder,
-    bool isGc, const std::string& filePath, bool isNeedClean, bool isProcDump)
+    const std::string& filePath, const DumpHeapParams& params)
 {
     std::mutex mutex;
     std::condition_variable cond;
@@ -1100,7 +1106,7 @@ int32_t WaitDumpHeapSnapshotResult(ani_env *env, ApiInvokeRecorder &recorder,
         }
         cond.notify_all();
     };
-    AniUtil::DumpHeapSnapshot(isGc, filePath, callback, isNeedClean, isProcDump);
+    AniUtil::DumpHeapSnapshot(params.isGc, filePath, callback, params.isNeedClean, params.isProcDump);
     {
         std::unique_lock<std::mutex> lock(mutex);
         cond.wait_for(lock, std::chrono::seconds(MAX_WAIT_TIME_SECOND), [&hasFinished] {
@@ -1153,8 +1159,8 @@ ani_string DumpJsRawHeapDataAdapter(ani_env *env, ani_boolean needGC, ani_boolea
     if (filePath.empty()) {
         return nullptr;
     }
-    int32_t errCode = WaitDumpHeapSnapshotResult(env, apiInvokeRecorder,
-        needGC == ANI_TRUE, filePath, needClean == ANI_TRUE, processDump == ANI_TRUE);
+    int32_t errCode = WaitDumpHeapSnapshotResult(env, apiInvokeRecorder, filePath,
+        {needGC == ANI_TRUE, needClean == ANI_TRUE, processDump == ANI_TRUE});
     if (errCode != 0) {
         return nullptr;
     }
