@@ -30,10 +30,10 @@
 namespace OHOS::Developtools::NativeDaemon {
 
 struct TaskConfig {
-    TaskConfig(std::shared_ptr<HookManager> manager, int32_t pid, int32_t callingPid, const std::string& processName,
+    TaskConfig(std::shared_ptr<HookManager> manager, int32_t pid, const std::string& processName, int32_t callingPid,
         const std::string& filePath, int32_t timerFd, bool startupMode, uint32_t fd = 0, uint32_t startType = 0)
-        : hookMgr(manager), pid(pid), processName(processName), filePath(filePath), timerFd(timerFd),
-          isStartupMode(startupMode), fd(fd), startType(startType) {}
+        : hookMgr(manager), pid(pid), processName(processName), callingPid(callingPid), filePath(filePath),
+            timerFd(timerFd), isStartupMode(startupMode), fd(fd), startType(startType) {}
     ~TaskConfig() {};
     std::shared_ptr<HookManager> hookMgr = nullptr;
     int32_t pid{0};
