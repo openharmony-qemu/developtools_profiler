@@ -901,9 +901,9 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         g_timerFdInfo[config->pid_] = timerFd;
     }
 
-    std::shared_ptr<TaskConfig> configCtx =
-        std::make_shared<TaskConfig>(hook, config->pid_, static_cast<int32_t>(IPCSkeleton::GetCallingPid()),
-            config->processName_, config->filePath_, timerFd, config->startupMode_, fd, config->startType_);
+    std::shared_ptr<TaskConfig> configCtx = std::make_shared<TaskConfig>(hook, config->pid_, config->processName_,
+        static_cast<int32_t>(IPCSkeleton::GetCallingPid()), config->filePath_, timerFd, config->startupMode_, fd,
+        config->startType_);
     configCtx->callback = callback;
     if (!g_hasStartupMode && config->startupMode_) {
         g_hasStartupMode = true;
