@@ -89,6 +89,11 @@ bool CacheFileWriter::Write(const void* data, size_t size)
     uint32_t totalSize = size;
     size_t incomingSize = sizeof(totalSize) + size;
     std::lock_guard<std::mutex> lock(writeMutex_);
+    
+    if (!stopModeEnabled_ && ShouldApplyBackpressure()) {
+        ApplyBackpressureDelay();
+    }
+    
     if (!EnsureWritableCacheFile()) {
         return false;
     }
@@ -109,6 +114,11 @@ bool CacheFileWriter::WriteWithPayload(const void* data, size_t size, const void
     uint32_t totalSize = size + payloadSize;
     size_t incomingSize = sizeof(totalSize) + size + payloadSize;
     std::lock_guard<std::mutex> lock(writeMutex_);
+    
+    if (!stopModeEnabled_ && ShouldApplyBackpressure()) {
+        ApplyBackpressureDelay();
+    }
+    
     if (!EnsureWritableCacheFile()) {
         return false;
     }
@@ -141,6 +151,11 @@ bool CacheFileWriter::WriteWithExtraData(const void* data, size_t size, const vo
     }
     size_t incomingSize = sizeof(totalSize) + totalSize;
     std::lock_guard<std::mutex> lock(writeMutex_);
+    
+    if (!stopModeEnabled_ && ShouldApplyBackpressure()) {
+        ApplyBackpressureDelay();
+    }
+    
     if (!EnsureWritableCacheFile()) {
         return false;
     }
@@ -319,5 +334,58 @@ void CacheFileWriter::CloseCacheFile(int& fd)
     if (fd >= 0) {
         close(fd);
         fd = -1;
+    }
+}
+
+void CacheFileWriter::UpdateBackpressureState(const BackpressureStateMsg& state)
+{
+    currentBackpressureDelay_ = state.recommendedDelayNs;
+}
+
+bool CacheFileWriter::ShouldApplyBackpressure()
+{
+    if (stopModeEnabled_ || isCacheFileEnded_) {
+        return false;
+    }
+    if (currentBackpressureDelay_.load() == 0) {
+        return false;
+    }
+
+    delayCount_++;
+    if (delayCount_ == UINT64_MAX) {
+        delayCount_ = 0;
+    }
+    if (delayCount_ % BACKPRESSURE_SAMPLE_SIZE != 0) {
+        return false;
+    }
+    return true;
+}
+
+void CacheFileWriter::ApplyBackpressureDelay()
+{
+    uint32_t delayNs = currentBackpressureDelay_.load();
+    if (delayNs == 0) {
+        return;
+    }
+    AdaptiveWait(delayNs);
+}
+
+void CacheFileWriter::AdaptiveWait(uint32_t delayNs)
+{
+    if (delayNs == 0) {
+        return;
+    }
+    
+    if (delayNs <= BACKPRESSURE_HIGH_DELAY_NS) {
+        auto start = std::chrono::steady_clock::now();
+        auto target = start + std::chrono::nanoseconds(delayNs);
+        // ns/us级别延时需要忙等待
+        while (std::chrono::steady_clock::now() < target) {
+            if (currentBackpressureDelay_.load() == 0 || stopModeEnabled_ || isCacheFileEnded_) {
+                break;
+            }
+            // volatile屏障避免编译优化
+            for (volatile int i = 0; i < BACKPRESSURE_VOLATILE_SIZE; ++i);
+        }
     }
 }

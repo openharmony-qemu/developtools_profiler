@@ -250,3 +250,10 @@ void StackWriter::StopFileCache()
     }
     cacheFileWriter_->SetCacheFileWriterEnd();
 }
+
+void StackWriter::UpdateBackpressureState(const BackpressureStateMsg& state)
+{
+    if (useFileCache_ && cacheFileWriter_ != nullptr) {
+        cacheFileWriter_->UpdateBackpressureState(state);
+    }
+}
