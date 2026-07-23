@@ -141,6 +141,13 @@ public:
     bool HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx);
     void StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, gid_t>>* pidInfo = nullptr);
     void ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex);
+    void RefreshValidLiveDataFromFile(int fd);
+    void ScanFileForLiveData(int fd, uint64_t& readfileSize);
+    bool ProcessFileChunk(int fd, uint8_t* buffer, uint32_t& remainSize, uint64_t& readfileSize);
+    uint32_t HandleRemainData(uint8_t* buffer, uint32_t totalAvail, uint32_t offset,
+                              int fd, uint64_t& readfileSize);
+    bool RefreshValidLiveDataFromBuffer(uint8_t* buffer, uint32_t totalAvail,
+                                        uint32_t& offset, uint64_t& fileSize);
     void ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd);
     bool HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex);
     bool HandleCacheFileStopByPid(pid_t pid);
@@ -302,6 +309,10 @@ private:
     std::atomic_bool memLeakDumpDone_ {true};
     std::string simplifiedNmd_;
     SemaphorePtr nmdSemaphore_{nullptr};
+    bool shouldSkipGlobalFreed_ = false;
+    std::unordered_map<void*, struct timespec> validLiveData_;
+    size_t totalRecord_{0};
+    size_t skipRecord_{0};
 };
 }
 #endif // AGENT_MANAGER_H

@@ -231,6 +231,7 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const
 
     if (hookConfig_.statistics_interval() > 0) {
         statisticsInterval_ = std::chrono::seconds(hookConfig_.statistics_interval());
+        discardDestroyedTraces_ = hookConfig_.discard_destroyed_traces();
         if (!hookConfig_.arkui_mem_trace_enable()) {
             simplifiedRecordStatisticsMap_.reserve(STATISTICS_MAP_SIZE);
         } else {
@@ -624,6 +625,13 @@ bool StackPreprocess::ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvai
         ctx.readfileSize += sizeof(uint32_t) + totalSize;
 
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + ctx.offset);
+        if (validLiveDataPtr_ != nullptr) {
+            auto* tmpRawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
+            if (IsArkGlobalHandleRecord(tmpRawData) && ShouldSkipRecord(tmpRawData, *validLiveDataPtr_)) {
+                ctx.offset += totalSize;
+                continue;
+            }
+        }
         if (!ProcessRawData(dataPtr, totalSize, rawData, hookRecord)) {
             if (isStopTakeData_) {
                 ctx.offset += totalSize;
@@ -2052,8 +2060,7 @@ bool StackPreprocess::ReconcileDuplicateMalloc(uint64_t addr, const struct times
         return true;
     }
     const auto& oldTs = it->second.ts;
-    bool isNewer = (newTs.tv_sec > oldTs.tv_sec) ||
-        (newTs.tv_sec == oldTs.tv_sec && newTs.tv_nsec > oldTs.tv_nsec);
+    bool isNewer = TsLess(oldTs, newTs);
     if (!isNewer) {
         spinLock_.Unlock();
         return false;
@@ -2627,8 +2634,19 @@ bool StackPreprocess::FlushRecordStatisticsImpl(std::unordered_map<uint32_t, T>&
                     continue;
                 }
                 auto statistics = &iter->second;
+                bool shouldClean = discardDestroyedTraces_ &&
+                    statistics->applySize == statistics->releaseSize;
+                if (shouldClean && statistics->createInCurPeriod) {
+                    statisticsMap.erase(iter);
+                    continue;
+                }
                 // if the stack is not created in this period, data will not write to file.
                 FlushStatisticsEntry(statistics, stackId, stackData);
+                if (statistics->applySize == statistics->releaseSize) {
+                    statisticsMap.erase(iter);
+                } else {
+                    statistics->createInCurPeriod = false;
+                }
                 if (++count % STATISTICS_PERIOD_DATA_FLUSH_BATCH == 0) {
                     FlushData(stackData);
                     count = 0;
