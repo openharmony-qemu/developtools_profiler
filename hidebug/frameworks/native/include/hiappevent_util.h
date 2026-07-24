@@ -59,7 +59,7 @@ private:
     int64_t lastReportTime_{GetElapsedNanoSecondsSinceBoot()};
     int64_t totalCostTime_{0};
     int64_t maxCostTime_{std::numeric_limits<int64_t>::min()};
-    int64_t minCostTime_{std::numeric_limits<int64_t>::max()};;
+    int64_t minCostTime_{std::numeric_limits<int64_t>::max()};
     std::vector<int32_t> records_{};
 };
 
