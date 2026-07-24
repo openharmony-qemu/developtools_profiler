@@ -259,6 +259,10 @@ int main(int argc, char* argv[])
 
     if (argc > 1) {
         if (argc == 2 && strcmp(argv[1], "sa") == 0) { // 2: argc size
+            if (lockFileFd > 0) {
+                flock(lockFileFd, LOCK_UN);
+                close(lockFileFd);
+            }
             return 0;
         } else {
             if (!COMMON::GetDeveloperMode()) {

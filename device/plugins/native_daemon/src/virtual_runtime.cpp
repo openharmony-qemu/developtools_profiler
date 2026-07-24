@@ -294,7 +294,7 @@ std::string VirtualRuntime::ResolveMergedSoIp(uint64_t ip, const std::string& fi
 
     std::string soName;
     for (const auto& idEntry : info.id_tlb_entries()) {
-        if (idEntry.so_index() == foundSoIndex) {
+        if (idEntry.so_index() == static_cast<uint32_t>(foundSoIndex)) {
             soName = idEntry.name();
             break;
         }
