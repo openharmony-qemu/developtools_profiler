@@ -1371,6 +1371,7 @@ void HookManager::DumpMemLeakInfo()
         memLeakDumpDone_ = true;
         return;
     }
+    memLeakHasData_ = true;
     if (tempMemLeakFd_ < 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo tmpMemLeakFd_ err");
         memLeakDumpDone_ = true;
@@ -1401,7 +1402,7 @@ bool HookManager::HandleMemLeakDone()
 
 void HookManager::WaitMemLeakDoneIfNeeded()
 {
-    if (!hookConfig_.native_orphansnapshots_enable() || memLeakDumpDone_.load()) {
+    if (!hookConfig_.native_orphansnapshots_enable() || memLeakDumpDone_.load() || !memLeakHasData_.load()) {
         return;
     }
     uint32_t waitedMs = 0;
