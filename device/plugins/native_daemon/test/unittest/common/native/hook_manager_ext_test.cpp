@@ -2377,4 +2377,183 @@ HWTEST_F(HookManagerExtTest, RotateCacheFdOnReturnMissingContext, TestSize.Level
 
     close(fd);
 }
+
+/*
+ * @tc.name: CalculateRecommendedDelayLowWatermark
+ * @tc.desc: test CalculateRecommendedDelay returns minDelayNs when queueDepth <= lowWatermark.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, CalculateRecommendedDelayLowWatermark, TestSize.Level0)
+{
+    EXPECT_EQ(hookManager_->CalculateRecommendedDelay(0), BACKPRESSURE_MIN_DELAY_NS);
+    EXPECT_EQ(hookManager_->CalculateRecommendedDelay(BACKPRESSURE_LOW_WATERMARK), BACKPRESSURE_MIN_DELAY_NS);
+}
+
+/*
+ * @tc.name: CalculateRecommendedDelayMidWatermarkLinear
+ * @tc.desc: test CalculateRecommendedDelay returns linear interpolation between min and mid delay.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, CalculateRecommendedDelayMidWatermarkLinear, TestSize.Level0)
+{
+    uint32_t delay = hookManager_->CalculateRecommendedDelay(BACKPRESSURE_LOW_WATERMARK + 1);
+    EXPECT_GT(delay, BACKPRESSURE_MIN_DELAY_NS);
+    EXPECT_LT(delay, BACKPRESSURE_MID_DELAY_NS);
+
+    delay = hookManager_->CalculateRecommendedDelay(BACKPRESSURE_MID_WATERMARK);
+    EXPECT_EQ(delay, BACKPRESSURE_MID_DELAY_NS);
+}
+
+/*
+ * @tc.name: CalculateRecommendedDelayHighWatermarkQuadratic
+ * @tc.desc: test CalculateRecommendedDelay returns quadratic interpolation between mid and high delay.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, CalculateRecommendedDelayHighWatermarkQuadratic, TestSize.Level0)
+{
+    uint32_t delay = hookManager_->CalculateRecommendedDelay(BACKPRESSURE_MID_WATERMARK + 1);
+    EXPECT_GT(delay, BACKPRESSURE_MID_DELAY_NS);
+    EXPECT_LT(delay, BACKPRESSURE_HIGH_DELAY_NS);
+
+    delay = hookManager_->CalculateRecommendedDelay(BACKPRESSURE_HIGH_WATERMARK);
+    EXPECT_EQ(delay, BACKPRESSURE_HIGH_DELAY_NS);
+}
+
+/*
+ * @tc.name: CalculateRecommendedDelayAboveHighWatermark
+ * @tc.desc: test CalculateRecommendedDelay returns highDelayNs when queueDepth > highWatermark.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, CalculateRecommendedDelayAboveHighWatermark, TestSize.Level0)
+{
+    uint32_t delay = hookManager_->CalculateRecommendedDelay(BACKPRESSURE_HIGH_WATERMARK + 1);
+    EXPECT_EQ(delay, BACKPRESSURE_HIGH_DELAY_NS);
+
+    delay = hookManager_->CalculateRecommendedDelay(BACKPRESSURE_HIGH_WATERMARK + 100);
+    EXPECT_EQ(delay, BACKPRESSURE_HIGH_DELAY_NS);
+}
+
+/*
+ * @tc.name: SendBackpressureStateWithNullHookService
+ * @tc.desc: test SendBackpressureState does nothing when hookService_ is nullptr.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, SendBackpressureStateWithNullHookService, TestSize.Level0)
+{
+    hookManager_->hookService_ = nullptr;
+
+    BackpressureStateMsg state;
+    state.pid = TEST_PID;
+    state.queueDepth = 10;
+    state.recommendedDelayNs = 20000;
+
+    hookManager_->SendBackpressureState(TEST_PID, state);
+    EXPECT_EQ(hookManager_->hookService_, nullptr);
+}
+
+/*
+ * @tc.name: HandleBackpressureSkipsBroadcastWhenDelayUnchanged
+ * @tc.desc: test HandleBackpressure skips state broadcast when recommended delay is unchanged.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleBackpressureSkipsBroadcastWhenDelayUnchanged, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ctx->lastStateBroadcastTime_ = 0;
+
+    hookManager_->HandleBackpressure(ctx);
+    uint64_t firstBroadcastTime = ctx->lastStateBroadcastTime_.load();
+
+    hookManager_->HandleBackpressure(ctx);
+    uint64_t secondBroadcastTime = ctx->lastStateBroadcastTime_.load();
+
+    EXPECT_EQ(firstBroadcastTime, secondBroadcastTime);
+}
+
+/*
+ * @tc.name: HandleBackpressureBroadcastsStateAfterInterval
+ * @tc.desc: test HandleBackpressure broadcasts state when interval has elapsed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleBackpressureBroadcastsStateAfterInterval, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    ctx->lastStateBroadcastTime_ = GetBackpressureCurrentTimeMs() -
+        hookManager_->bpConfig_.stateBroadcastIntervalMs - 1;
+    uint64_t lastStateBroadcastTime = ctx->lastStateBroadcastTime_.load();
+    ctx->recommendedDelayNs_ = BACKPRESSURE_MID_DELAY_NS;
+    hookManager_->HandleBackpressure(ctx);
+
+    EXPECT_GT(ctx->lastStateBroadcastTime_.load(), lastStateBroadcastTime);
+}
+
+/*
+ * @tc.name: CalculateBackpressureStateReturnsCorrectValues
+ * @tc.desc: test CalculateBackpressureState returns correct state message values.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, CalculateBackpressureStateReturnsCorrectValues, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    ctx->queueDepth_ = 15;
+    ctx->recommendedDelayNs_ = 50000;
+
+    BackpressureStateMsg state = ctx->CalculateBackpressureState();
+
+    EXPECT_EQ(state.pid, TEST_PID);
+    EXPECT_EQ(state.queueDepth, 15u);
+    EXPECT_EQ(state.recommendedDelayNs, 50000u);
+}
+
+/*
+ * @tc.name: HandleBackpressureWithEmptyQueue
+ * @tc.desc: test HandleBackpressure handles empty queue correctly.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleBackpressureWithEmptyQueue, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ctx->lastStateBroadcastTime_ = 0;
+
+    hookManager_->HandleBackpressure(ctx);
+
+    EXPECT_EQ(ctx->queueDepth_, 0u);
+    EXPECT_EQ(ctx->recommendedDelayNs_, BACKPRESSURE_MIN_DELAY_NS);
+}
+
+/*
+ * @tc.name: HandleBackpressureMultipleCallsWithinInterval
+ * @tc.desc: test HandleBackpressure does not broadcast state multiple times within interval.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleBackpressureMultipleCallsWithinInterval, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ctx->lastStateBroadcastTime_ = GetBackpressureCurrentTimeMs();
+    uint64_t initialBroadcastTime = ctx->lastStateBroadcastTime_.load();
+
+    hookManager_->HandleBackpressure(ctx);
+
+    EXPECT_EQ(ctx->lastStateBroadcastTime_.load(), initialBroadcastTime);
+}
+
+/*
+ * @tc.name: CalculateRecommendedDelayBoundaryValues
+ * @tc.desc: test CalculateRecommendedDelay with boundary values at each watermark.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, CalculateRecommendedDelayBoundaryValues, TestSize.Level0)
+{
+    EXPECT_EQ(hookManager_->CalculateRecommendedDelay(0), BACKPRESSURE_MIN_DELAY_NS);
+    EXPECT_EQ(hookManager_->CalculateRecommendedDelay(BACKPRESSURE_LOW_WATERMARK), BACKPRESSURE_MIN_DELAY_NS);
+    EXPECT_EQ(hookManager_->CalculateRecommendedDelay(BACKPRESSURE_MID_WATERMARK), BACKPRESSURE_MID_DELAY_NS);
+    EXPECT_EQ(hookManager_->CalculateRecommendedDelay(BACKPRESSURE_HIGH_WATERMARK), BACKPRESSURE_HIGH_DELAY_NS);
+}
 } // namespace
