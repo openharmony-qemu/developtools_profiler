@@ -44,10 +44,13 @@ bool HookService::SendFileCacheFd(SocketContext &context, int32_t pid, uint16_t 
     if (cacheFd < 0) {
         return false;
     }
-    
-    HookCacheFileMsg cacheFileMsg(pid, fileIndex, CACHE_FILE_CREATED);
-    bool ret = context.SendHookConfig(reinterpret_cast<uint8_t*>(&cacheFileMsg), sizeof(cacheFileMsg)) &&
-        context.SendFileDescriptor(cacheFd);
+    bool ret = false;
+    {
+        HookCacheFileMsg cacheFileMsg(pid, fileIndex, CACHE_FILE_CREATED);
+        std::lock_guard<std::mutex> lock(socketSendMtx_);
+        ret = context.SendHookConfig(reinterpret_cast<uint8_t*>(&cacheFileMsg), sizeof(cacheFileMsg)) &&
+            context.SendFileDescriptor(cacheFd);
+    }
     hookMgr_->RotateCacheFdOnReturn(pid, fileIndex, cacheFd);
     close(cacheFd);
     return ret;
@@ -113,7 +116,10 @@ bool HookService::HandlePeerMessage(SocketContext &context, const int8_t *buf, u
     if (path.empty()) {
         return false;
     }
-    context.SendHookConfig(reinterpret_cast<const uint8_t *>(path.c_str()), path.size());
+    {
+        std::lock_guard<std::mutex> lock(socketSendMtx_);
+        context.SendHookConfig(reinterpret_cast<const uint8_t *>(path.c_str()), path.size());
+    }
     PROFILER_LOG_INFO(LOG_CORE, "ProtocolProc, receive message does not from hook client, just return");
     return false;
 }
@@ -327,17 +333,22 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     PROFILER_LOG_DEBUG(LOG_CORE, "ProtocolProc, receive message from hook client, and send hook config to process %d",
                        peerConfig);
     ClientConfigIpc clientConfigIpc;
-    if (!ConvertClientConfigToIpc(clientConfig_, clientConfigIpc) ||
-        !context.SendHookConfig(reinterpret_cast<const uint8_t *>(&clientConfigIpc), sizeof(clientConfigIpc))) {
-        PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc send client config failed");
-        CloseSocketFd(static_cast<pid_t>(peerConfig));
-        return false;
+    {
+        std::unique_lock<std::mutex> sendLock(socketSendMtx_);
+        if (!ConvertClientConfigToIpc(clientConfig_, clientConfigIpc) ||
+            !context.SendHookConfig(reinterpret_cast<const uint8_t *>(&clientConfigIpc), sizeof(clientConfigIpc))) {
+            sendLock.unlock();
+            PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc send client config failed");
+            CloseSocketFd(static_cast<pid_t>(peerConfig));
+            return false;
+        }
+        if (!SendPeerFds(context, peerConfig, procName) || !SendAsyncStackFd(context) || !SendMemLeakFd(context)) {
+            sendLock.unlock();
+            CloseSocketFd(static_cast<pid_t>(peerConfig));
+            return false;
+        }
     }
-    if (!SendPeerFds(context, peerConfig, procName) || !SendAsyncStackFd(context) || !SendMemLeakFd(context)) {
-        CloseSocketFd(static_cast<pid_t>(peerConfig));
-        return false;
-    }
-    hookMgr_->ResetStartupParam();
+    hookMgr_->ResetStartupParam(static_cast<pid_t>(peerConfig));
     return true;
 }
 
@@ -389,6 +400,7 @@ void HookService::SendCommand(pid_t pid, uint32_t cmd)
     struct ProtocolHead phead;
     phead.protoType = PROTOCOL_TYPE_PROTOBUF;
     phead.protoSize = sizeof(cmd) + sizeof(struct ProtocolHead);
+    std::lock_guard<std::mutex> sendLock(socketSendMtx_);
     if (send(sockFd, reinterpret_cast<int8_t*>(&phead),
              sizeof(phead), 0) == -1) {
         PROFILER_LOG_ERROR(LOG_CORE, "SendCommand send head failed, cmd: %u", cmd);
@@ -397,6 +409,32 @@ void HookService::SendCommand(pid_t pid, uint32_t cmd)
     if (send(sockFd, reinterpret_cast<int8_t*>(&cmd),
              sizeof(cmd), 0) == -1) {
         PROFILER_LOG_ERROR(LOG_CORE, "SendCommand send cmd failed, cmd: %u", cmd);
+    }
+}
+
+void HookService::SendBackpressureState(pid_t pid, const BackpressureStateMsg& state)
+{
+    std::unique_lock<std::mutex> lock(pidFdMtx_);
+    auto it = pidFds_.find(pid);
+    if (it == pidFds_.end() || it->second <= 0) {
+        return;
+    }
+    int sockFd = it->second;
+    lock.unlock();
+
+    PROFILER_LOG_INFO(LOG_CORE, "SendBackpressureState: pid=%d queueDepth=%u, delay=%uns",
+        pid, state.queueDepth, state.recommendedDelayNs);
+
+    struct ProtocolHead phead;
+    phead.protoType = PROTOCOL_TYPE_PROTOBUF;
+    phead.protoSize = sizeof(state) + sizeof(struct ProtocolHead);
+    std::lock_guard<std::mutex> sendLock(socketSendMtx_);
+    if (send(sockFd, reinterpret_cast<int8_t*>(&phead), sizeof(phead), 0) == -1) {
+        PROFILER_LOG_WARN(LOG_CORE, "SendBackpressureState send head failed, pid %d", pid);
+        return;
+    }
+    if (send(sockFd, reinterpret_cast<const int8_t*>(&state), sizeof(state), 0) == -1) {
+        PROFILER_LOG_WARN(LOG_CORE, "SendBackpressureState send state failed, pid %d", pid);
     }
 }
 }

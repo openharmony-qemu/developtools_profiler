@@ -111,6 +111,11 @@ public:
         void RotateActiveCacheFd(uint16_t returnedFileIndex, int newFd);
         void CloseAllCacheFds();
         void ProcessPendingCacheFdOnDisconnect();
+
+        std::atomic<uint32_t> queueDepth_{0};
+        std::atomic<uint32_t> recommendedDelayNs_{0};
+        std::atomic<uint64_t> lastStateBroadcastTime_{0};
+        BackpressureStateMsg CalculateBackpressureState();
     };
     EXPORT_API HookManager();
     ~HookManager();
@@ -134,7 +139,7 @@ public:
                         bool isProtobufSerialize = true) override;
     bool ResetWriter(uint32_t pluginId) override;
     void SetCommandPoller(const std::shared_ptr<CommandPoller>& p) override;
-    void ResetStartupParam();
+    void ResetStartupParam(pid_t pid = -1);
     void SethookStandalone(bool);
     bool SetLocalHandle(const char *value);
     std::string GetArktsDiagPath(const int8_t *buf, const uint32_t size);
@@ -271,7 +276,11 @@ private:
     std::string GetMemLeakFileName(MemLeakFormat format);
     void UpdateFreezeExcludedPid(bool isAdd, int32_t targetPid, int32_t profilerPid);
     bool CloseMemLeakTempFile();
+    void SendBackpressureState(pid_t pid, const BackpressureStateMsg& state);
+    void HandleBackpressure(const std::shared_ptr<HookManagerCtx>& ctx);
+    uint32_t CalculateRecommendedDelay(uint32_t queueDepth);
 
+    const BackpressureConfig bpConfig_ = BackpressureConfig();
     std::shared_ptr<HookService> hookService_;
     std::shared_ptr<CommandPoller> commandPoller_;
     int agentIndex_ = -1;
@@ -307,6 +316,7 @@ private:
     std::string memLeakFileName_;
     std::string fileCacheDir_ = "/data/log/hiprofiler/";
     std::atomic_bool memLeakDumpDone_ {true};
+    std::atomic_bool memLeakHasData_ {false};
     std::string simplifiedNmd_;
     SemaphorePtr nmdSemaphore_{nullptr};
     bool shouldSkipGlobalFreed_ = false;
