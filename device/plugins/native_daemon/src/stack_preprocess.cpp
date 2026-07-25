@@ -456,7 +456,7 @@ bool StackPreprocess::StopTakeResults()
     } else {
         PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults: enter file cache stop task, pid %d", pid_);
         if (pid_ < 0) {
-            isStartTakeData_ = true;
+            isStopTakeData_ = true;
         }
         StopCacheFileTask();
     }
@@ -611,7 +611,13 @@ bool StackPreprocess::ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvai
     RawStackPtr& rawData, std::shared_ptr<HookRecord>& hookRecord)
 {
     while (ctx.offset + sizeof(uint32_t) <= totalAvail) {
-        uint32_t totalSize = *(reinterpret_cast<const uint32_t*>(buffer + ctx.offset));
+        uint32_t totalSize = 0;
+        errno_t ret = memcpy_s(&totalSize, sizeof(uint32_t), buffer + ctx.offset, sizeof(uint32_t));
+        if (ret != EOK) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer memcpy_s failed, ret=%d", ret);
+            return false;
+        }
+
         if (totalSize == 0 || totalSize > DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES) {
             PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer invalid totalSize=%u", totalSize);
             return false;
@@ -721,7 +727,7 @@ void StackPreprocess::TakeResultsFromCacheFile(int fd)
     }
 
     close(fd);
-    PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile [%" PRIu64 "] completed, ret %d", readfileSize, ret);
+    PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile [%" PRIu64 "]completed, ret %d.", readfileSize, ret);
 }
 
 void StackPreprocess::InitializeDirector()
