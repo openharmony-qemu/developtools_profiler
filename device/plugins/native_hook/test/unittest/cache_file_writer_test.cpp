@@ -16,8 +16,11 @@
 #include <gtest/gtest.h>
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <fcntl.h>
+#include <fstream>
+#include <sstream>
 #include <sys/stat.h>
 #include <thread>
 #include <unistd.h>
@@ -61,6 +64,25 @@ std::string ReadAll(int fd)
         return "";
     }
     return std::string(buffer.data(), static_cast<size_t>(bytes));
+}
+
+bool AddressInNamedVma(uintptr_t addr, size_t size, const std::string& vmaName)
+{
+    std::ifstream maps("/proc/self/maps");
+    std::string line;
+    while (std::getline(maps, line)) {
+        uintptr_t start = 0;
+        uintptr_t end = 0;
+        char dash = 0;
+        std::istringstream iss(line);
+        if (!(iss >> std::hex >> start >> dash >> end)) {
+            continue;
+        }
+        if (addr >= start && addr + size <= end && line.find(vmaName) != std::string::npos) {
+            return true;
+        }
+    }
+    return false;
 }
 
 class CacheFileWriterTest : public ::testing::Test {
@@ -354,7 +376,7 @@ HWTEST_F(CacheFileWriterTest, WriteWithExtraDataExceedsCacheSize, TestSize.Level
     writer.Prepare(nullptr);
     ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
     
-    size_t hugeSize = writer.cacheMemorySize_ + 1;
+    size_t hugeSize = writer.memoryCacheDataSizeLimit_ + 1;
     std::vector<uint8_t> hugeData(hugeSize, 0);
     
     EXPECT_FALSE(writer.WriteWithExtraData(hugeData.data(), hugeSize, nullptr, 0, nullptr, 0, nullptr, 0));
@@ -659,5 +681,32 @@ HWTEST_F(CacheFileWriterTest, BackpressureIntegrationTest, TestSize.Level0)
     
     writer.currentBackpressureDelay_ = 0;
     EXPECT_FALSE(writer.ShouldApplyBackpressure());
+}
+
+HWTEST_F(CacheFileWriterTest, MemoryCacheIsOffHeapAndNamedVma, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.memoryCache_ != nullptr);
+    ASSERT_GT(writer.memoryCacheCapacity_, 0u);
+    EXPECT_EQ(writer.memoryCacheSize_, 0u);
+    bool inNamedVma = AddressInNamedVma(reinterpret_cast<uintptr_t>(writer.memoryCache_),
+                                        writer.memoryCacheCapacity_, "hooknativesmb");
+    EXPECT_TRUE(inNamedVma);
+}
+
+HWTEST_F(CacheFileWriterTest, WriteWithExtraDataRollsBackOnPartialCopy, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    // Shrink the reported capacity so a later segment overflows the bounds
+    // check after the length prefix and header have already been copied.
+    writer.memoryCacheCapacity_ = sizeof(uint32_t) + 8;
+    uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    uint8_t payload[4] = {9, 10, 11, 12};
+    EXPECT_FALSE(writer.WriteWithExtraData(header, sizeof(header), payload, sizeof(payload),
+        nullptr, 0, nullptr, 0));
+    EXPECT_EQ(writer.memoryCacheSize_, 0u);
 }
 } // namespace
