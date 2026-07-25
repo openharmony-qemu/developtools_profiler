@@ -323,9 +323,9 @@ bool ohos_malloc_hook_on_end(void)
     }
     pthread_detach(threadEnd);
 #ifdef OHOS_ENABLE_SAMPLER
-    malloc_sampler_data_fill_hook_reg(nullptr);
-    malloc_sampler_data_dump_hook_reg(nullptr);
-    malloc_sampler_alloc_report_hook_reg(nullptr);
+    je_malloc_sampler_data_fill_hook_reg(nullptr);
+    je_malloc_sampler_data_dump_hook_reg(nullptr);
+    je_malloc_sampler_alloc_report_hook_reg(nullptr);
 #endif
     return true;
 }

@@ -761,7 +761,7 @@ bool NativeMemoryProfilerSaService::IsAsyncRequest(uint32_t pid)
         config = taskIter->second;
     }
     bool async = config && config->callback;
-    PROFILER_LOG_ERROR(LOG_CORE, "pid %d hasCallback:%d", pid, async);
+    PROFILER_LOG_INFO(LOG_CORE, "pid %d hasCallback:%d", pid, async);
     return async;
 }
 

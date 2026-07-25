@@ -27,7 +27,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -227,14 +226,14 @@ bool HookSocketClient::HandleControlCommand(uint32_t cmd)
 {
     if (cmd == SNAPSHOT_REQUEST_CMD) {
 #ifdef OHOS_ENABLE_SAMPLER
-        malloc_sampler_alloc_report_all();
+        je_malloc_sampler_alloc_report_all();
 #endif
         return true;
     }
     if (cmd == FINAL_SNAPSHOT_REQUEST_CMD) {
 #ifdef OHOS_ENABLE_SAMPLER
-        malloc_sampler_data_fill_hook_reg(nullptr);
-        malloc_sampler_alloc_report_all();
+        je_malloc_sampler_data_fill_hook_reg(nullptr);
+        je_malloc_sampler_alloc_report_all();
 #endif
         return true;
     }
@@ -338,9 +337,9 @@ void HookSocketClient::SendOptionalReports()
     }
     if (config_->allocatorSamplingEnable) {
 #ifdef OHOS_ENABLE_SAMPLER
-        malloc_sampler_data_fill_hook_reg(hook_fill_data);
-        malloc_sampler_data_dump_hook_reg(hook_data_dump);
-        malloc_sampler_alloc_report_hook_reg(hook_alive_addr_dump);
+        je_malloc_sampler_data_fill_hook_reg(hook_fill_data);
+        je_malloc_sampler_data_dump_hook_reg(hook_data_dump);
+        je_malloc_sampler_alloc_report_hook_reg(hook_alive_addr_dump);
 #endif
     }
     if (nmdType_ == 0 || nmdType_ == ONLY_NMD_TYPE) {
