@@ -98,7 +98,8 @@ int32_t main(int32_t argc, char* argv[])
     bool dumpData = false;
     std::vector<int> pidList;
     std::vector<std::string> nameList;
-    for (int32_t i = 1; i < argc; ++i) {
+    int32_t i = 1;
+    while (i < argc) {
         std::string arg(argv[i]);
         if (arg == "--help" || arg == "-h") {
             printf("    --start                             -s : start, default: false\n");
@@ -163,6 +164,7 @@ int32_t main(int32_t argc, char* argv[])
             printf("    --nmdType                           -nt : nmd type, default: 0\n");
             printf("    --asyncNestingDepth                 -and : async nesting depth, default: 0\n");
             printf("    --asyncTaskStackDepth               -atsd : async task stack depth, default: 0\n");
+            printf("    --discardDestroyedTraces            -ddt : discard destroyed traces, default: true\n");
             return 0;
         }
 
@@ -317,11 +319,17 @@ int32_t main(int32_t argc, char* argv[])
         } else if ((arg == "--asyncTaskStackDepth") || (arg == "-atsd")) {
             config->asyncTaskStackDepth_ =
                 i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
+        } else if ((arg == "--discardDestroyedTraces") || (arg == "-ddt")) {
+            if (i + 1 < argc && !IsOption(argv[i + 1])) {
+                std::string ddtVal(argv[++i]);
+                config->discardDestroyedTraces_ = (ddtVal == "true" || ddtVal == "1");
+            }
         } else {
             printf("error arg: %s\n", arg.c_str());
             error = true;
             break;
         }
+        ++i;
     }
 
     if (error) {

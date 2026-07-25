@@ -709,4 +709,78 @@ HWTEST_F(HookManagerMemLeakTest, HandleMemLeakDone_AlreadyFinished, TestSize.Lev
     hookManager_->memLeakDumpDone_ = true;
     EXPECT_TRUE(hookManager_->HandleMemLeakDone());
 }
+
+/*
+ * @tc.name: SetHookConfigExt_discardDestroyedTraces
+ * @tc.desc: test SetHookConfigExt propagates discardDestroyedTraces_ to hookConfig_.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, SetHookConfigExt_discardDestroyedTraces, TestSize.Level0)
+{
+    auto saConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
+    saConfig->pid_ = TEST_PID;
+    saConfig->processName_ = TEST_PROCESS_NAME;
+    saConfig->discardDestroyedTraces_ = true;
+    hookManager_->SetHookConfig(saConfig);
+    EXPECT_TRUE(hookManager_->hookConfig_.discard_destroyed_traces());
+
+    saConfig->discardDestroyedTraces_ = false;
+    hookManager_->SetHookConfig(saConfig);
+    EXPECT_FALSE(hookManager_->hookConfig_.discard_destroyed_traces());
+}
+
+/*
+ * @tc.name: GetClientConfig_discardDestroyedTraces
+ * @tc.desc: test GetClientConfig propagates discard_destroyed_traces to clientConfig.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, GetClientConfig_discardDestroyedTraces, TestSize.Level0)
+{
+    auto saConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
+    saConfig->pid_ = TEST_PID;
+    saConfig->processName_ = TEST_PROCESS_NAME;
+    saConfig->discardDestroyedTraces_ = true;
+    hookManager_->SetHookConfig(saConfig);
+
+    ClientConfig clientConfig;
+    hookManager_->GetClientConfig(clientConfig);
+    EXPECT_TRUE(clientConfig.discardDestroyedTraces);
+}
+
+/*
+ * @tc.name: RefreshValidLiveDataFromFile_DiscardMallocFreed
+ * @tc.desc: test RefreshValidLiveDataFromFile builds validLiveData_ where malloc matched by free is removed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, RefreshValidLiveDataFromFile_DiscardMallocFreed, TestSize.Level0)
+{
+    char path[] = "/data/local/tmp/test_malloc_dedup_XXXXXX";
+    int fd = mkstemp(path);
+    ASSERT_GE(fd, 0);
+    unlink(path);
+
+    BaseStackRawData mallocRec{};
+    mallocRec.type = MALLOC_MSG;
+    mallocRec.addr = reinterpret_cast<void*>(0x1234);
+    mallocRec.ts = {1, 0};
+    BaseStackRawData freeRec{};
+    freeRec.type = FREE_MSG;
+    freeRec.addr = reinterpret_cast<void*>(0x1234);
+    freeRec.ts = {2, 0};
+
+    uint32_t mallocSize = sizeof(BaseStackRawData);
+    ASSERT_TRUE(write(fd, &mallocSize, sizeof(uint32_t)) == sizeof(uint32_t));
+    ASSERT_TRUE(write(fd, &mallocRec, sizeof(BaseStackRawData)) == sizeof(BaseStackRawData));
+    uint32_t freeSize = sizeof(BaseStackRawData);
+    ASSERT_TRUE(write(fd, &freeSize, sizeof(uint32_t)) == sizeof(uint32_t));
+    ASSERT_TRUE(write(fd, &freeRec, sizeof(BaseStackRawData)) == sizeof(BaseStackRawData));
+
+    hookManager_->shouldSkipGlobalFreed_ = true;
+    hookManager_->validLiveData_.clear();
+    hookManager_->RefreshValidLiveDataFromFile(fd);
+    close(fd);
+
+    EXPECT_EQ(hookManager_->validLiveData_.count(reinterpret_cast<void*>(0x1234)), 0u);
+    EXPECT_TRUE(ShouldSkipRecord(&mallocRec, hookManager_->validLiveData_));
+}
 } // namespace

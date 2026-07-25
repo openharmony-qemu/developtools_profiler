@@ -62,3 +62,60 @@ HWTEST_F(HookCommonTest, HookCommonTest002, TestSize.Level3)
     ConvertClientConfigToIpc(config, ipc);
     EXPECT_EQ(ipc.arkuiMemTraceEnable, false);
 }
+
+/**
+ * @tc.name: HookCommonTest003
+ * @tc.desc: Test discardDestroyedTraces propagation in IPC (ToIpc and FromIpc)
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookCommonTest, HookCommonTest003, TestSize.Level3)
+{
+    ClientConfig config;
+    config.discardDestroyedTraces = true;
+
+    ClientConfigIpc ipc;
+    EXPECT_TRUE(ConvertClientConfigToIpc(config, ipc));
+    EXPECT_EQ(ipc.discardDestroyedTraces, true);
+
+    ClientConfig resultConfig;
+    ConvertClientConfigFromIpc(ipc, resultConfig);
+    EXPECT_EQ(resultConfig.discardDestroyedTraces, true);
+}
+
+/**
+ * @tc.name: HookCommonTest004
+ * @tc.desc: Test default value of discardDestroyedTraces (should be false)
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookCommonTest, HookCommonTest004, TestSize.Level3)
+{
+    ClientConfig config;
+    EXPECT_EQ(config.discardDestroyedTraces, false);
+
+    ClientConfigIpc ipc;
+    ConvertClientConfigToIpc(config, ipc);
+    EXPECT_EQ(ipc.discardDestroyedTraces, false);
+}
+
+/**
+ * @tc.name: HookCommonTest005
+ * @tc.desc: Test TsLess timespec dictionary-order comparison
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookCommonTest, HookCommonTest005, TestSize.Level3)
+{
+    struct timespec a = {1, 0};
+    struct timespec b = {2, 0};
+    EXPECT_TRUE(TsLess(a, b));
+    EXPECT_FALSE(TsLess(b, a));
+
+    struct timespec c = {1, 5};
+    struct timespec d = {1, 10};
+    EXPECT_TRUE(TsLess(c, d));
+    EXPECT_FALSE(TsLess(d, c));
+
+    struct timespec e = {1, 0};
+    struct timespec f = {1, 0};
+    EXPECT_FALSE(TsLess(e, f));
+    EXPECT_FALSE(TsLess(f, e));
+}

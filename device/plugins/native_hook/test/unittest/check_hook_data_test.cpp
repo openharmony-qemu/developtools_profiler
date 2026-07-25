@@ -135,6 +135,8 @@ public:
             if (statisticsInterval_ > 0) {
                 command_.push_back(const_cast<char*>("-si"));
                 command_.push_back(const_cast<char*>(std::to_string(statisticsInterval_).c_str()));
+                command_.push_back(const_cast<char*>("-ddt"));
+                command_.push_back(const_cast<char*>("false"));
             }
             if (sampleInterval_ > 0) {
                 command_.push_back(const_cast<char*>("-spi"));

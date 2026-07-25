@@ -40,6 +40,7 @@ struct RecordStatistic {
     uint32_t stackSize {0};
     struct timespec ts {0, 0};
     std::vector<uint64_t> addrs;
+    bool createInCurPeriod{true};
 };
 
 struct SimplifiedRecordStatistics {
@@ -55,6 +56,7 @@ struct SimplifiedRecordStatistics {
     uint32_t GetNodeType() const;
     void SetNodeType(uint32_t val);
     std::vector<uint64_t> addrs;
+    bool createInCurPeriod{true};
 };
 
 struct AllocAddrInfo {
