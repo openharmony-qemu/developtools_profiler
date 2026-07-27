@@ -2591,18 +2591,12 @@ void StackPreprocess::InitializeFunctionPointers()
 }
 
 template <typename T, typename StackData>
-void StackPreprocess::FlushStatisticsEntry(T* statistics, uint32_t stackId, StackData& stackData)
+void StackPreprocess::FlushStatisticsEntry(T* statistics, uint32_t stackId, StackData& stackData,
+    const struct timespec& timestamp)
 {
     auto hookData = stackData.add_events();
-    if (hookConfig_.use_file_cache_mode()) {
-        hookData->set_tv_sec(lastCacheStatisticsTime_.tv_sec);
-        hookData->set_tv_nsec(lastCacheStatisticsTime_.tv_nsec);
-    } else {
-        struct timespec ts;
-        clock_gettime(hookDataClockId_, &ts);
-        hookData->set_tv_sec(ts.tv_sec);
-        hookData->set_tv_nsec(ts.tv_nsec);
-    }
+    hookData->set_tv_sec(timestamp.tv_sec);
+    hookData->set_tv_nsec(timestamp.tv_nsec);
     auto recordEvent = hookData->mutable_statistics_event();
     recordEvent->set_pid(pid_);
     recordEvent->set_callstack_id(stackId);
@@ -2631,6 +2625,12 @@ bool StackPreprocess::FlushRecordStatisticsImpl(std::unordered_map<uint32_t, T>&
         return false;
     }
     std::visit([&](auto& stackData) { FlushData(stackData); }, stackData_);
+    struct timespec timestamp;
+    if (hookConfig_.use_file_cache_mode()) {
+        timestamp = lastCacheStatisticsTime_;
+    } else {
+        clock_gettime(hookDataClockId_, &timestamp);
+    }
     std::visit(
         [&](auto& stackData) {
             uint32_t count = 0;
@@ -2647,7 +2647,7 @@ bool StackPreprocess::FlushRecordStatisticsImpl(std::unordered_map<uint32_t, T>&
                     continue;
                 }
                 // if the stack is not created in this period, data will not write to file.
-                FlushStatisticsEntry(statistics, stackId, stackData);
+                FlushStatisticsEntry(statistics, stackId, stackData, timestamp);
                 if (statistics->applySize == statistics->releaseSize) {
                     statisticsMap.erase(iter);
                 } else {

@@ -285,7 +285,8 @@ private:
     void FindAndUpdateFreeStatisticsLocked(uint32_t stackId, uint64_t mallocSize);
 
     template <typename T, typename StackData>
-    void FlushStatisticsEntry(T* statistics, uint32_t stackId, StackData& stackData);
+    void FlushStatisticsEntry(T* statistics, uint32_t stackId, StackData& stackData,
+        const struct timespec& timestamp);
 private:
     std::chrono::steady_clock::time_point lastStatisticsTime_ = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point lastCacheFileActivityTime_ = std::chrono::steady_clock::now();
