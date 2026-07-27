@@ -66,7 +66,7 @@ SocketContext::SocketContext()
 SocketContext::~SocketContext()
 {
     if (socketHandle_ >= 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "SocketContext socketHandle_ = %d", socketHandle_);
+        PROFILER_LOG_INFO(LOG_CORE, "SocketContext socketHandle_ = %d", socketHandle_);
 
         int ret = shutdown(socketHandle_, SHUT_RDWR);
         if (ret < 0) {
@@ -82,7 +82,7 @@ SocketContext::~SocketContext()
         recvThread_.join();
     }
     socketHandle_ = socketTemp;
-    PROFILER_LOG_ERROR(LOG_CORE, "~SocketContext recvThread join success");
+    PROFILER_LOG_INFO(LOG_CORE, "~SocketContext recvThread join success");
     if (socketHandle_ >= 0) {
         int ret = close(socketHandle_);
         if (ret < 0) {
