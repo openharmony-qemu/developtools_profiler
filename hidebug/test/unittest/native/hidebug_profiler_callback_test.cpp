@@ -121,5 +121,111 @@ HWTEST_F(HidebugProfilerCallbackTest, InvalidTypeStartTest, TestSize.Level0)
     EXPECT_TRUE(g_ctx.filePath.empty());
 }
 
+/**
+ * @tc.name: ProfilerOptionsCreateDestroyTest
+ * @tc.desc: ProfilerOptions_Create returns non-null, Destroy releases without crash.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugProfilerCallbackTest, ProfilerOptionsCreateDestroyTest, TestSize.Level0)
+{
+    OH_HiDebug_ProfilerOptions* opts = OH_HiDebug_ProfilerOptions_Create();
+    EXPECT_NE(opts, nullptr);
+    OH_HiDebug_ProfilerOptions_Destroy(opts);
+}
+
+/**
+ * @tc.name: ProfilerOptionsNullOptsTest
+ * @tc.desc: StartResProfilerWithOptions with null opts should return INVALID_ARG.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugProfilerCallbackTest, ProfilerOptionsNullOptsTest, TestSize.Level0)
+{
+    HiDebug_ErrorCode ret = OH_HiDebug_StartResProfilerWithOptions(OH_RES_TYPE_NATIVE, nullptr, ProfilingCallback);
+    EXPECT_EQ(ret, HIDEBUG_RES_PROF_INVALID_ARG);
+    EXPECT_FALSE(g_ctx.called.load());
+}
+
+/**
+ * @tc.name: ProfilerOptionsNullCallbackTest
+ * @tc.desc: StartResProfilerWithOptions with null callback should return INVALID_ARG.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugProfilerCallbackTest, ProfilerOptionsNullCallbackTest, TestSize.Level0)
+{
+    OH_HiDebug_ProfilerOptions* opts = OH_HiDebug_ProfilerOptions_Create();
+    ASSERT_NE(opts, nullptr);
+    HiDebug_ErrorCode ret = OH_HiDebug_StartResProfilerWithOptions(OH_RES_TYPE_NATIVE, opts, nullptr);
+    EXPECT_EQ(ret, HIDEBUG_RES_PROF_INVALID_ARG);
+    EXPECT_FALSE(g_ctx.called.load());
+    OH_HiDebug_ProfilerOptions_Destroy(opts);
+}
+
+/**
+ * @tc.name: ProfilerOptionsInvalidTypeTest
+ * @tc.desc: StartResProfilerWithOptions with invalid type returns INVALID_RESOURCE_TYPE.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugProfilerCallbackTest, ProfilerOptionsInvalidTypeTest, TestSize.Level0)
+{
+    OH_HiDebug_ProfilerOptions* opts = OH_HiDebug_ProfilerOptions_Create();
+    ASSERT_NE(opts, nullptr);
+    OH_HiDebug_ProfilerOptions_SetMaxDuration(opts, 10);
+    OH_HiDebug_ProfilerOptions_SetFilterSize(opts, 256);
+    OH_HiDebug_ProfilerOptions_SetMaxStackDepth(opts, 30);
+    OH_HiDebug_ProfilerOptions_SetSampleInterval(opts, 384);
+    OH_HiDebug_ProfilerOptions_SetStatisticsInterval(opts, 5);
+    HiDebug_ErrorCode ret =
+        OH_HiDebug_StartResProfilerWithOptions(static_cast<OH_HiDebug_ResourceType>(-1), opts, ProfilingCallback);
+    EXPECT_EQ(ret, HIDEBUG_RES_PROF_INVALID_RESOURCE_TYPE);
+    EXPECT_FALSE(g_ctx.called.load());
+    OH_HiDebug_ProfilerOptions_Destroy(opts);
+}
+
+/**
+ * @tc.name: ProfilerOptionsSetterNullSafeTest
+ * @tc.desc: All setters with null opts must not crash.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugProfilerCallbackTest, ProfilerOptionsSetterNullSafeTest, TestSize.Level0)
+{
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxDuration(nullptr, 10), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetFilterSize(nullptr, 256), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxStackDepth(nullptr, 30), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetStatisticsInterval(nullptr, 5), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetSampleInterval(nullptr, 384), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxAsyncNestingDepth(nullptr, 1), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxAsyncStackDepth(nullptr, 16), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_Destroy(nullptr), HIDEBUG_INVALID_ARGUMENT);
+}
+
+/**
+ * @tc.name: ProfilerOptionsSetterInvalidValueTest
+ * @tc.desc: Setters with out-of-range values should return INVALID_ARGUMENT.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugProfilerCallbackTest, ProfilerOptionsSetterInvalidValueTest, TestSize.Level0)
+{
+    OH_HiDebug_ProfilerOptions* opts = OH_HiDebug_ProfilerOptions_Create();
+    ASSERT_NE(opts, nullptr);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxDuration(opts, 0), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxDuration(opts, 3601), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetFilterSize(opts, 0), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxStackDepth(opts, 31), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetStatisticsInterval(opts, 3601), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetSampleInterval(opts, 383), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxAsyncNestingDepth(opts, 0), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxAsyncNestingDepth(opts, 17), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxAsyncStackDepth(opts, 0), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxAsyncStackDepth(opts, 257), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxDuration(opts, 10), HIDEBUG_SUCCESS);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetFilterSize(opts, 256), HIDEBUG_SUCCESS);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxStackDepth(opts, 30), HIDEBUG_SUCCESS);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetStatisticsInterval(opts, 5), HIDEBUG_SUCCESS);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetSampleInterval(opts, 384), HIDEBUG_SUCCESS);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxAsyncNestingDepth(opts, 1), HIDEBUG_SUCCESS);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_SetMaxAsyncStackDepth(opts, 16), HIDEBUG_SUCCESS);
+    EXPECT_EQ(OH_HiDebug_ProfilerOptions_Destroy(opts), HIDEBUG_SUCCESS);
+}
+
 } // namespace HiviewDFX
 } // namespace OHOS

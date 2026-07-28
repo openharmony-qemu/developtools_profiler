@@ -20,6 +20,7 @@
 
 #include <map>
 #include <mutex>
+#include <new>
 #include <securec.h>
 #include <string>
 
@@ -54,6 +55,27 @@ void ConvertHidebugToProfilerConfig(
     dst->sampleInterval = src->sampleInterval;
     dst->maxStackDepth = src->maxStackDepth;
 }
+
+struct OH_HiDebug_ProfilerOptions {
+    uint32_t maxDuration = 0;
+    uint32_t filterSize = 0;
+    uint32_t maxStackDepth = 0;
+    uint32_t statisticsInterval = 0;
+    uint32_t sampleInterval = 0;
+    uint32_t maxAsyncNestingDepth = 1;
+    uint32_t maxAsyncStackDepth = 16;
+};
+
+static constexpr uint32_t MIN_DURATION_SEC = 1;
+static constexpr uint32_t MAX_DURATION_SEC = 3600;
+static constexpr uint32_t MIN_FILTER_SIZE = 1;
+static constexpr uint32_t MAX_STACK_DEPTH = 30;
+static constexpr uint32_t MAX_STATISTICS_INTERVAL_SEC = 3600;
+static constexpr uint32_t MIN_SAMPLE_INTERVAL = 384;
+static constexpr uint32_t MIN_ASYNC_NESTING_DEPTH = 1;
+static constexpr uint32_t MAX_ASYNC_NESTING_DEPTH = 16;
+static constexpr uint32_t MIN_ASYNC_STACK_DEPTH = 1;
+static constexpr uint32_t MAX_ASYNC_STACK_DEPTH = 256;
 
 std::map<int32_t, HiDebug_ErrorCode> resProfErrorCodeMap = {
     {static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS),
@@ -119,14 +141,10 @@ static void ClearProfilingCallback()
     g_callback = nullptr;
 }
 
-HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type,
-    OH_HiDebug_ResProfilerConfig* config,
-    OH_HiDebug_ProfilingCallback callback)
+static HiDebug_ErrorCode StartProfilerWithConfig(OH_HiDebug_ResourceType type,
+    OHOS::Developtools::NativeDaemon::MemAPIConfig* profilerConfig, OH_HiDebug_ProfilingCallback callback)
 {
     if (callback == nullptr) {
-        return HIDEBUG_RES_PROF_INVALID_ARG;
-    }
-    if (config == nullptr) {
         return HIDEBUG_RES_PROF_INVALID_ARG;
     }
     {
@@ -137,9 +155,6 @@ HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type,
         g_callback = callback;
         g_resourceType = type;
     }
-
-    OHOS::Developtools::NativeDaemon::MemAPIConfig profilerConfig;
-    ConvertHidebugToProfilerConfig(config, &profilerConfig);
 
     auto profilingCallback = [](int32_t errCode, const std::string& path) {
         HiDebug_ErrorCode code = ConvertProfilerErrorCode(errCode);
@@ -152,12 +167,23 @@ HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type,
 
     int32_t retStart =
         OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaClientManager::StartProfilerByType(
-            static_cast<int32_t>(type), &profilerConfig, profilingCallback);
+            static_cast<int32_t>(type), profilerConfig, profilingCallback);
     if (retStart != static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
         ClearProfilingCallback();
         return ConvertProfilerErrorCode(retStart);
     }
     return HIDEBUG_RES_PROF_SUCCESS;
+}
+
+HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type,
+    OH_HiDebug_ResProfilerConfig* config, OH_HiDebug_ProfilingCallback callback)
+{
+    if (config == nullptr) {
+        return HIDEBUG_RES_PROF_INVALID_ARG;
+    }
+    OHOS::Developtools::NativeDaemon::MemAPIConfig profilerConfig;
+    ConvertHidebugToProfilerConfig(config, &profilerConfig);
+    return StartProfilerWithConfig(type, &profilerConfig, callback);
 }
 
 HiDebug_ErrorCode OH_HiDebug_StopProfiler()
@@ -168,4 +194,126 @@ HiDebug_ErrorCode OH_HiDebug_StopProfiler()
         return ret;
     }
     return HIDEBUG_RES_PROF_SUCCESS;
+}
+
+OH_HiDebug_ProfilerOptions* OH_HiDebug_ProfilerOptions_Create(void)
+{
+    return new (std::nothrow) OH_HiDebug_ProfilerOptions();
+}
+
+HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_Destroy(OH_HiDebug_ProfilerOptions* opts)
+{
+    if (opts == nullptr) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    delete opts;
+    return HIDEBUG_SUCCESS;
+}
+
+HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_SetMaxAsyncNestingDepth(OH_HiDebug_ProfilerOptions* opts,
+    uint32_t maxAsyncNestingDepth)
+{
+    if (opts == nullptr) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    if (maxAsyncNestingDepth < MIN_ASYNC_NESTING_DEPTH || maxAsyncNestingDepth > MAX_ASYNC_NESTING_DEPTH) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    opts->maxAsyncNestingDepth = maxAsyncNestingDepth;
+    return HIDEBUG_SUCCESS;
+}
+
+HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_SetMaxAsyncStackDepth(OH_HiDebug_ProfilerOptions* opts,
+    uint32_t maxAsyncStackDepth)
+{
+    if (opts == nullptr) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    if (maxAsyncStackDepth < MIN_ASYNC_STACK_DEPTH || maxAsyncStackDepth > MAX_ASYNC_STACK_DEPTH) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    opts->maxAsyncStackDepth = maxAsyncStackDepth;
+    return HIDEBUG_SUCCESS;
+}
+
+HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_SetMaxDuration(OH_HiDebug_ProfilerOptions* opts,
+    uint32_t maxDuration)
+{
+    if (opts == nullptr) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    if (maxDuration < MIN_DURATION_SEC || maxDuration > MAX_DURATION_SEC) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    opts->maxDuration = maxDuration;
+    return HIDEBUG_SUCCESS;
+}
+
+HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_SetFilterSize(OH_HiDebug_ProfilerOptions* opts,
+    uint32_t filterSize)
+{
+    if (opts == nullptr) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    if (filterSize < MIN_FILTER_SIZE) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    opts->filterSize = filterSize;
+    return HIDEBUG_SUCCESS;
+}
+
+HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_SetMaxStackDepth(OH_HiDebug_ProfilerOptions* opts,
+    uint32_t maxStackDepth)
+{
+    if (opts == nullptr) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    if (maxStackDepth > MAX_STACK_DEPTH) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    opts->maxStackDepth = maxStackDepth;
+    return HIDEBUG_SUCCESS;
+}
+
+HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_SetStatisticsInterval(OH_HiDebug_ProfilerOptions* opts,
+    uint32_t statisticsInterval)
+{
+    if (opts == nullptr) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    if (statisticsInterval > MAX_STATISTICS_INTERVAL_SEC) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    opts->statisticsInterval = statisticsInterval;
+    return HIDEBUG_SUCCESS;
+}
+
+HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_SetSampleInterval(OH_HiDebug_ProfilerOptions* opts,
+    uint32_t sampleInterval)
+{
+    if (opts == nullptr) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    if (sampleInterval < MIN_SAMPLE_INTERVAL) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    opts->sampleInterval = sampleInterval;
+    return HIDEBUG_SUCCESS;
+}
+
+HiDebug_ErrorCode OH_HiDebug_StartResProfilerWithOptions(OH_HiDebug_ResourceType type,
+    OH_HiDebug_ProfilerOptions* opts, OH_HiDebug_ProfilingCallback callback)
+{
+    if (opts == nullptr) {
+        return HIDEBUG_RES_PROF_INVALID_ARG;
+    }
+    OHOS::Developtools::NativeDaemon::MemAPIConfig profilerConfig;
+    profilerConfig.maxDuration = opts->maxDuration;
+    profilerConfig.filterSize = opts->filterSize;
+    profilerConfig.maxStackDepth = opts->maxStackDepth;
+    profilerConfig.statisticsInterval = opts->statisticsInterval;
+    profilerConfig.sampleInterval = opts->sampleInterval;
+    profilerConfig.asyncNestingDepth = opts->maxAsyncNestingDepth;
+    profilerConfig.asyncTaskStackDepth = opts->maxAsyncStackDepth;
+    return StartProfilerWithConfig(type, &profilerConfig, callback);
 }
