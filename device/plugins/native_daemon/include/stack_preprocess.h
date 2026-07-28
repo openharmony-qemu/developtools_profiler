@@ -269,6 +269,8 @@ private:
     uint32_t FindSimplifiedAsyncCallStackId(const HookRecordPtr& hookRecord);
     uint32_t FindFullAsyncCallStackId(const HookRecordPtr& hookRecord);
     uint32_t FindFullAsyncStatisticsStackId(const HookRecordPtr& hookRecord);
+    uint64_t GetAsyncDedupMallocSize(const RawStackPtr& rawData) const;
+    uint32_t GetDedupTagId(const RawStackPtr& rawData) const;
 
     uint32_t FindSyncCallStackId(std::vector<uint64_t>& callStack, const HookRecordPtr& hookRecord);
     uint32_t FindSimplifiedSyncCallStackId(std::vector<uint64_t>& callStack, const HookRecordPtr& hookRecord);
