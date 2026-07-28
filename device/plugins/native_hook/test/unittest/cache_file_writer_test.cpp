@@ -14,10 +14,12 @@
  */
 
 #include <gtest/gtest.h>
+#include <atomic>
 #include <chrono>
 #include <cstdlib>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <thread>
 #include <unistd.h>
 #include <string>
 #include <vector>
@@ -400,5 +402,262 @@ HWTEST_F(CacheFileWriterTest, WriteWithExtraDataMultipleWrites, TestSize.Level0)
     
     std::string content = ReadAll(writer.currentFileFd_);
     EXPECT_GT(content.size(), sizeof(uint32_t) * 2);
+}
+
+/*
+ * @tc.name: UpdateBackpressureStateSetsDelay
+ * @tc.desc: test UpdateBackpressureState sets currentBackpressureDelay_ correctly.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, UpdateBackpressureStateSetsDelay, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    
+    BackpressureStateMsg state;
+    state.recommendedDelayNs = 50000;
+    
+    writer.UpdateBackpressureState(state);
+    
+    EXPECT_EQ(writer.currentBackpressureDelay_.load(), 50000u);
+}
+
+/*
+ * @tc.name: UpdateBackpressureStateOverwritesPrevious
+ * @tc.desc: test UpdateBackpressureState overwrites previous delay value.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, UpdateBackpressureStateOverwritesPrevious, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    
+    BackpressureStateMsg state1;
+    state1.recommendedDelayNs = 20000;
+    writer.UpdateBackpressureState(state1);
+    EXPECT_EQ(writer.currentBackpressureDelay_.load(), 20000u);
+    
+    BackpressureStateMsg state2;
+    state2.recommendedDelayNs = 80000;
+    writer.UpdateBackpressureState(state2);
+    EXPECT_EQ(writer.currentBackpressureDelay_.load(), 80000u);
+}
+
+/*
+ * @tc.name: ShouldApplyBackpressureReturnsFalseWhenStopMode
+ * @tc.desc: test ShouldApplyBackpressure returns false when stopModeEnabled_ is true.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, ShouldApplyBackpressureReturnsFalseWhenStopMode, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.stopModeEnabled_ = true;
+    writer.currentBackpressureDelay_ = 50000;
+    
+    EXPECT_FALSE(writer.ShouldApplyBackpressure());
+}
+
+/*
+ * @tc.name: ShouldApplyBackpressureReturnsFalseWhenEnded
+ * @tc.desc: test ShouldApplyBackpressure returns false when isCacheFileEnded_ is true.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, ShouldApplyBackpressureReturnsFalseWhenEnded, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.isCacheFileEnded_ = true;
+    writer.currentBackpressureDelay_ = 50000;
+    
+    EXPECT_FALSE(writer.ShouldApplyBackpressure());
+}
+
+/*
+ * @tc.name: ShouldApplyBackpressureReturnsFalseWhenZeroDelay
+ * @tc.desc: test ShouldApplyBackpressure returns false when currentBackpressureDelay_ is zero.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, ShouldApplyBackpressureReturnsFalseWhenZeroDelay, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.currentBackpressureDelay_ = 0;
+    
+    EXPECT_FALSE(writer.ShouldApplyBackpressure());
+}
+
+/*
+ * @tc.name: ShouldApplyBackpressureSamplingRate
+ * @tc.desc: test ShouldApplyBackpressure returns true only at sample rate intervals.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, ShouldApplyBackpressureSamplingRate, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.currentBackpressureDelay_ = 50000;
+    writer.delayCount_ = 0;
+    
+    uint32_t trueCount = 0;
+    uint32_t falseCount = 0;
+    
+    for (int i = 0; i < 100; ++i) {
+        if (writer.ShouldApplyBackpressure()) {
+            trueCount++;
+        } else {
+            falseCount++;
+        }
+    }
+    
+    EXPECT_EQ(trueCount, 100 / BACKPRESSURE_SAMPLE_SIZE);
+    EXPECT_GT(falseCount, 0u);
+}
+
+/*
+ * @tc.name: ShouldApplyBackpressureCounterOverflow
+ * @tc.desc: test ShouldApplyBackpressure handles counter overflow correctly.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, ShouldApplyBackpressureCounterOverflow, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.currentBackpressureDelay_ = 50000;
+    writer.delayCount_ = UINT64_MAX - 1;
+    
+    EXPECT_TRUE(writer.ShouldApplyBackpressure());
+    EXPECT_EQ(writer.delayCount_.load(), 0);
+}
+
+/*
+ * @tc.name: ShouldApplyBackpressureConsecutiveCalls
+ * @tc.desc: test ShouldApplyBackpressure behavior across consecutive calls.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, ShouldApplyBackpressureConsecutiveCalls, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.currentBackpressureDelay_ = 50000;
+    writer.delayCount_ = 0;
+    
+    EXPECT_FALSE(writer.ShouldApplyBackpressure());
+    EXPECT_FALSE(writer.ShouldApplyBackpressure());
+    EXPECT_FALSE(writer.ShouldApplyBackpressure());
+    EXPECT_TRUE(writer.ShouldApplyBackpressure());
+    EXPECT_FALSE(writer.ShouldApplyBackpressure());
+}
+
+/*
+ * @tc.name: ApplyBackpressureDelayAppliesNonZeroDelay
+ * @tc.desc: test ApplyBackpressureDelay applies delay when delay is non-zero and within limit.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, ApplyBackpressureDelayAppliesNonZeroDelay, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.currentBackpressureDelay_ = BACKPRESSURE_HIGH_DELAY_NS;
+    writer.stopModeEnabled_ = false;
+    writer.isCacheFileEnded_ = false;
+    
+    auto start = std::chrono::steady_clock::now();
+    writer.ApplyBackpressureDelay();
+    auto elapsed = std::chrono::steady_clock::now() - start;
+    
+    EXPECT_GE(elapsed, std::chrono::microseconds(50));
+    EXPECT_LT(elapsed, std::chrono::milliseconds(10));
+}
+
+/*
+ * @tc.name: ApplyBackpressureDelaySkipsDelayAboveLimit
+ * @tc.desc: test ApplyBackpressureDelay skips delay when currentBackpressureDelay_ > BACKPRESSURE_HIGH_DELAY_NS.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, ApplyBackpressureDelaySkipsDelayAboveLimit, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.currentBackpressureDelay_ = BACKPRESSURE_HIGH_DELAY_NS + 1000;
+    writer.stopModeEnabled_ = false;
+    writer.isCacheFileEnded_ = false;
+    
+    auto start = std::chrono::steady_clock::now();
+    writer.ApplyBackpressureDelay();
+    auto elapsed = std::chrono::steady_clock::now() - start;
+    
+    EXPECT_LT(elapsed, std::chrono::milliseconds(10));
+}
+
+/*
+ * @tc.name: ApplyBackpressureDelayStopModeFlagCheck
+ * @tc.desc: test ApplyBackpressureDelay checks stopModeEnabled_ flag during wait loop.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, ApplyBackpressureDelayStopModeFlagCheck, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.currentBackpressureDelay_ = BACKPRESSURE_HIGH_DELAY_NS;
+    writer.stopModeEnabled_ = true;
+    writer.isCacheFileEnded_ = false;
+    
+    auto start = std::chrono::steady_clock::now();
+    writer.ApplyBackpressureDelay();
+    auto elapsed = std::chrono::steady_clock::now() - start;
+    
+    EXPECT_LT(elapsed, std::chrono::milliseconds(10));
+}
+
+/*
+ * @tc.name: ApplyBackpressureDelayCacheEndedFlagCheck
+ * @tc.desc: test ApplyBackpressureDelay checks isCacheFileEnded_ flag during wait loop.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, ApplyBackpressureDelayCacheEndedFlagCheck, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.currentBackpressureDelay_ = BACKPRESSURE_HIGH_DELAY_NS;
+    writer.stopModeEnabled_ = false;
+    writer.isCacheFileEnded_ = true;
+    
+    auto start = std::chrono::steady_clock::now();
+    writer.ApplyBackpressureDelay();
+    auto elapsed = std::chrono::steady_clock::now() - start;
+    
+    EXPECT_LT(elapsed, std::chrono::milliseconds(10));
+}
+
+/*
+ * @tc.name: ApplyBackpressureDelayZeroDelayCheck
+ * @tc.desc: test ApplyBackpressureDelay checks zero delay first.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, ApplyBackpressureDelayZeroDelayCheck, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.currentBackpressureDelay_ = 0;
+    writer.stopModeEnabled_ = false;
+    writer.isCacheFileEnded_ = false;
+    
+    auto start = std::chrono::steady_clock::now();
+    writer.ApplyBackpressureDelay();
+    auto elapsed = std::chrono::steady_clock::now() - start;
+    
+    EXPECT_LT(elapsed, std::chrono::milliseconds(10));
+}
+
+/*
+ * @tc.name: BackpressureIntegrationTest
+ * @tc.desc: test backpressure mechanism integrated with write operations.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, BackpressureIntegrationTest, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    
+    BackpressureStateMsg state;
+    state.recommendedDelayNs = 20000;
+    writer.UpdateBackpressureState(state);
+    
+    EXPECT_EQ(writer.currentBackpressureDelay_.load(), 20000u);
+    
+    writer.delayCount_ = BACKPRESSURE_SAMPLE_SIZE - 1;
+    EXPECT_TRUE(writer.ShouldApplyBackpressure());
+    
+    writer.currentBackpressureDelay_ = 0;
+    EXPECT_FALSE(writer.ShouldApplyBackpressure());
 }
 } // namespace

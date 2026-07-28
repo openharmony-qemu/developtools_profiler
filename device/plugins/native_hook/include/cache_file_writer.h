@@ -42,6 +42,7 @@ public:
         const void* firstExtra, size_t firstExtraSize, const void* secondExtra, size_t secondExtraSize);
     bool Flush();
     void SetCacheFileWriterEnd();
+    void UpdateBackpressureState(const BackpressureStateMsg& state);
 
 private:
     bool EnsureWritableCacheFile();
@@ -55,6 +56,9 @@ private:
     bool WriteToFile(const uint8_t* data, size_t size);
     bool NotifyFileEvent(uint16_t fileIndex, uint16_t eventType, int fd);
     void CloseCacheFile(int& fd);
+    void ApplyBackpressureDelay();
+    void AdaptiveWait(uint32_t delayNs);
+    bool ShouldApplyBackpressure();
 
 private:
     std::mutex writeMutex_;
@@ -69,6 +73,9 @@ private:
     bool isCacheFileEnded_ = false;
     bool stopModeEnabled_ = false;
     uint32_t cacheMemorySize_;
+    
+    std::atomic<uint64_t> delayCount_{0};
+    std::atomic<uint32_t> currentBackpressureDelay_{0};
 
     DISALLOW_COPY_AND_MOVE(CacheFileWriter);
 };
