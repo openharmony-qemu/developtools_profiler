@@ -407,45 +407,24 @@ export default namespace hidebug {
     dumpJsHeapDataAdapter(filename, needClean);
   }
 
-  native function dumpJsRawHeapDataAdapter(needGC: boolean, needClean: boolean, processDump: boolean): string;
+  native function dumpJsRawHeapDataAdapter(needGC: boolean, needClean: boolean, processDump: boolean): Promise<Array<string>>;
 
+  // native 直接返回 Promise（主线程 Promise_New + 异步 callback AttachCurrentThread resolve）
+  // 对齐 NAPI hidebug 的执行模型，不切线程（不用 taskpool），dump 调用者线程的 VM，语义正确
   export function dumpJsRawHeapData(needGC?: boolean): Promise<string> {
-    return new Promise<string>((resolve: (v: string) => void, reject: (e: BusinessError<void>) => void) => {
-      taskpool.execute(() => {
-        return dumpJsRawHeapDataAdapter(needGC === true, false, false);
-      }).then((ret: Any): void => {
-        resolve(ret as string);
-      }).catch((err: Object | null | undefined) => {
-        reject(err as BusinessError);
-      });
+    return dumpJsRawHeapDataAdapter(needGC === true, false, false).then((arr: Array<string>): string => {
+      return arr[0];
     });
   }
 
   export function dumpJsRawHeapData(needGC: boolean, needClean: boolean): Promise<string> {
-    return new Promise<string>((resolve: (v: string) => void, reject: (e: BusinessError<void>) => void) => {
-      taskpool.execute(() => {
-        return dumpJsRawHeapDataAdapter(needGC, needClean, false);
-      }).then((ret: Any): void => {
-        resolve(ret as string);
-      }).catch((err: Object | null | undefined) => {
-        reject(err as BusinessError);
-      });
+    return dumpJsRawHeapDataAdapter(needGC, needClean, false).then((arr: Array<string>): string => {
+      return arr[0];
     });
   }
 
   export function dumpJsRawHeapData(needGC: boolean, needClean: boolean, processDump: boolean): Promise<Array<string>> {
-    return new Promise<Array<string>>((resolve: (v: Array<string>) => void,
-      reject: (e: BusinessError<void>) => void) => {
-      taskpool.execute(() => {
-        return dumpJsRawHeapDataAdapter(needGC, needClean, processDump);
-      }).then((ret: Any): void => {
-        let result: Array<string> = new Array<string>();
-        result.push(ret as string);
-        resolve(result);
-      }).catch((err: Object | null | undefined) => {
-        reject(err as BusinessError);
-      });
-    });
+    return dumpJsRawHeapDataAdapter(needGC, needClean, processDump);
   }
 
 }

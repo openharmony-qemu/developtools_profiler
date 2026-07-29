@@ -70,7 +70,8 @@
         "grpc",
         "abseil-cpp",
         "netmanager_base",
-        "ets_frontend"
+        "ets_frontend",
+        "ets_runtime"
       ],
       "third_party": [
       ]
