@@ -39,7 +39,7 @@ std::string ReadString(const uint8_t start[], const uint8_t end[], int size)
 
     const uint8_t* cursor = start;
     const uint8_t* sectionEnd = start + size;
-    while (*cursor && cursor < sectionEnd) {
+    while (cursor < sectionEnd && *cursor) {
         cursor++;
     }
 

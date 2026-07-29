@@ -54,8 +54,9 @@ bool ParseCommand(const std::vector<std::string>& args, HookData& hookData)
             hookData.pids.insert(pids.begin(), pids.end());
             for (auto iter = hookData.pids.begin(); iter != hookData.pids.end();) {
                 if (!ProcessExist(*iter)) {
+                    std::string pid = *iter;
                     iter = hookData.pids.erase(iter);
-                    printf("process does not exist %s\n", iter->c_str());
+                    printf("process does not exist %s\n", pid.c_str());
                 } else {
                     ++iter;
                 }
