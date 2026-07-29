@@ -532,4 +532,71 @@ HWTEST_F(CommonTest, CreateFile, TestSize.Level1)
     bool ret = COMMON::CreateFile(filePath);
     EXPECT_TRUE(ret);
 }
+
+/**
+ * @tc.name: DeleteFiles
+ * @tc.desc: DeleteFiles
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, DeleteFiles, TestSize.Level1)
+{
+    std::string dir = "/data/local/tmp/";
+    std::string content = "hello world";
+    std::vector<std::string> files = {
+        "del_test_a.htrace",
+        "del_test_b.htrace",
+        "del_test_c.txt",
+        "keep_test_d.htrace"
+    };
+    for (const auto& f : files) {
+        WriteFile(dir + f, content);
+    }
+
+    auto filter = [](const std::string& filename) {
+        return filename.find("del_test_") == 0 && filename.find(".htrace") != std::string::npos;
+    };
+    bool ret = COMMON::DeleteFiles(dir, filter);
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(IsFileExists((dir + "del_test_a.htrace").c_str()));
+    EXPECT_FALSE(IsFileExists((dir + "del_test_b.htrace").c_str()));
+    EXPECT_TRUE(IsFileExists((dir + "del_test_c.txt").c_str()));
+    EXPECT_TRUE(IsFileExists((dir + "keep_test_d.htrace").c_str()));
+
+    for (const auto& f : files) {
+        std::string cmd = "rm " + dir + f;
+        system(cmd.c_str());
+    }
+}
+
+/**
+ * @tc.name: DeleteFilesInvalidParam
+ * @tc.desc: DeleteFiles with invalid parameters
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, DeleteFilesInvalidParam, TestSize.Level1)
+{
+    EXPECT_FALSE(COMMON::DeleteFiles("", nullptr));
+    EXPECT_FALSE(COMMON::DeleteFiles("", [](const std::string&) { return true; }));
+    EXPECT_FALSE(COMMON::DeleteFiles("/nonexistent_dir", [](const std::string&) { return true; }));
+    EXPECT_FALSE(COMMON::DeleteFiles("/data/local/tmp/", nullptr));
+}
+
+/**
+ * @tc.name: StringMatch
+ * @tc.desc: StringMatch
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, StringMatch, TestSize.Level1)
+{
+    EXPECT_FALSE(COMMON::StringMatch("hello_world", "hello_", "_world"));
+    EXPECT_TRUE(COMMON::StringMatch("abc.txt", "abc", ".txt"));
+    EXPECT_TRUE(COMMON::StringMatch("abc", "", ""));
+    EXPECT_TRUE(COMMON::StringMatch("prefixmiddle", "prefix", ""));
+    EXPECT_TRUE(COMMON::StringMatch("middlesuffix", "", "suffix"));
+    EXPECT_FALSE(COMMON::StringMatch("ab", "abc", ""));
+    EXPECT_FALSE(COMMON::StringMatch("ab", "", "abc"));
+    EXPECT_FALSE(COMMON::StringMatch("abc", "xyz", ""));
+    EXPECT_FALSE(COMMON::StringMatch("abc", "", "xyz"));
+    EXPECT_FALSE(COMMON::StringMatch("abcde", "ab", "de_long_suffix"));
+}
 } // namespace
