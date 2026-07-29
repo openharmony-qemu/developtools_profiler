@@ -51,6 +51,7 @@ ohos_unittest("hidebug_test") {
 }
 
 ohos_executable("malloc_dispatch_exe") {
+  branch_protector_ret = "pac_ret"
   sources = [ "hidebug_malloc_dispatch.cpp" ]
   include_dirs = [ "$hidebug_path/interfaces/native/kits/include" ]
   defines = [ "HOOK_ENABLE" ]
@@ -63,6 +64,7 @@ ohos_executable("malloc_dispatch_exe") {
 }
 
 ohos_executable("profiler_native_exe") {
+  branch_protector_ret = "pac_ret"
   sources = [ "hidebug_profiler_native.cpp" ]
   include_dirs = [ "$hidebug_path/interfaces/native/kits/include" ]
   defines = [ "HOOK_ENABLE" ]
