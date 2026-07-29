@@ -37,6 +37,7 @@ bool ApmCollectMgr::RegisterCollector(std::shared_ptr<IDataCollector> collector)
 
 bool ApmCollectMgr::Collect()
 {
+    CHECK_NOTNULL(storage_, false, "storage is NULL");
     CHECK_TRUE(collectors_.size() > 0, false, "none collector exists");
     for (auto& collector : collectors_) {
         if (!collector || !collector->Collect(storage_)) {

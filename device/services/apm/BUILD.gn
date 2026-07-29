@@ -25,7 +25,6 @@ config("profiler_apm_config") {
 }
 
 ohos_source_set("profiler_apm") {
-  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
