@@ -48,7 +48,7 @@ bool RawheapCollector::Collect(std::shared_ptr<IDataStorage> storage)
     CHECK_TRUE(pid_ > 0, false, "invalid pid");
 
     std::string prefix = "jsheap-" + std::to_string(pid_) + "-" + std::to_string(tid_) + "-";
-    auto filer = [&prefix](std::string& filename) {	 
+    auto filer = [&prefix](std::string& filename) {
         return filename.length() >= prefix.length() && filename.compare(0, prefix.length(), prefix) == 0;
     }
     FileMonitor monitor(SRC_RAWHEAP_FILE_DIR, filer);
