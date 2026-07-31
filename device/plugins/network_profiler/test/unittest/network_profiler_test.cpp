@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <sys/syscall.h>
+#include <sys/utsname.h>
 
 #include "command_poller.h"
 #include "init_param.h"
@@ -48,6 +49,17 @@ constexpr int SLEEP_TIME = 3;
 const std::string WRITER_NAME = "NetworkProfilerWriterTest";
 void* g_smbAddr = nullptr;
 int g_smbFd1 = 0;
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
 
 int InitShareMemory()
 {
@@ -462,6 +474,11 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerManagerTest001, TestSize.Level1)
  */
 HWTEST_F(NetworkProfilerTest, NetworkProfilerManagerTest002, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
     ASSERT_TRUE(networkProfilerMgr != nullptr);
     auto commandPoller = std::make_shared<CommandPoller>(networkProfilerMgr);
@@ -481,6 +498,11 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerManagerTest002, TestSize.Level1)
  */
 HWTEST_F(NetworkProfilerTest, NetworkProfilerManagerTest003, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     SystemSetParameter("hiviewdfx.hiprofiler.plugins.start", "1");
     auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
     ASSERT_TRUE(networkProfilerMgr != nullptr);
@@ -503,6 +525,11 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerManagerTest003, TestSize.Level1)
  */
 HWTEST_F(NetworkProfilerTest, NetworkProfilerManagerTest004, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
     ASSERT_TRUE(networkProfilerMgr != nullptr);
     auto commandPoller = std::make_shared<CommandPoller>(networkProfilerMgr);

@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/utsname.h>
 #include <unistd.h>
 
 #include "logging.h"
@@ -54,6 +55,16 @@ constexpr char HEX_CHARS[] = "0123456789abcdef";
 constexpr int SMB_PAGES = 16384;
 const std::string OUTPUT_PATH = "/data/local/tmp/hiprofiler_data.htrace";
 
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
 
 class HiprofilerCmdTest : public ::testing::Test {
 public:
@@ -547,6 +558,11 @@ public:
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     StopProcessStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
     StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
@@ -581,6 +597,11 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     StopProcessStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
     StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
@@ -632,6 +653,11 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::string cmd = "cp " + DEFAULT_SO_PATH + "libftrace_plugin.z.so " + DEFAULT_PATH;
     system(cmd.c_str());
 
@@ -664,6 +690,11 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     StopProcessStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
     StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
@@ -717,6 +748,11 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::string cmd = "cp " + DEFAULT_SO_PATH + "libftrace_plugin.z.so " + DEFAULT_PATH;
     system(cmd.c_str());
 
@@ -749,6 +785,11 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::string content = "";
     std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -s";
     EXPECT_TRUE(RunCommand(cmd, content));
@@ -795,6 +836,11 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::string cmd = "cp " + DEFAULT_SO_PATH + "libhiperfplugin.z.so " + DEFAULT_PATH;
     system(cmd.c_str());
 
@@ -852,6 +898,11 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::string outFileName = "split_hiperf";
     std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
     std::string perfFile = "/data/local/tmp/perf.data";
@@ -938,6 +989,11 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0250, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0260, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::string content = "";
     StartServerStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
@@ -964,6 +1020,11 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0260, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0270, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     int pidValue = 0;
     if (COMMON::IsProcessExist(DEFAULT_HIPROFILERD_NAME, pidValue)) {
         kill(pidValue, SIGKILL);
@@ -997,6 +1058,11 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0270, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0280, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::string content = "";
     StartServerStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
@@ -1066,6 +1132,9 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0290, Function | MediumTest | Lev
 #ifdef __aarch64__
 HWTEST_F(HiprofilerCmdTest, CheckNmdInfo, TestSize.Level0)
 {
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     std::string cmd = CreateNmdCommand(OUTPUT_PATH, 1, "hiview");
     std::string ret;
     EXPECT_TRUE(RunCommand(cmd, ret));
@@ -1095,6 +1164,11 @@ HWTEST_F(HiprofilerCmdTest, CheckNmdInfo, TestSize.Level0)
  */
 HWTEST_F(HiprofilerCmdTest, CheckNmdInfo002, TestSize.Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::string cmd = CreateNmdCommand(OUTPUT_PATH, 1, "test_profiler");
     std::string ret;
     EXPECT_TRUE(RunCommand(cmd, ret));

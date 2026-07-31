@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <cstdlib>
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <grpcpp/grpcpp.h>
@@ -22,6 +23,8 @@
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 #include <vector>
+#include <sys/utsname.h>
+#include <unistd.h>
 
 #include "common_types.pb.h"
 #include "cpu_plugin_config.pb.h"
@@ -66,6 +69,17 @@ constexpr int BLOCK_LEN = 100 * 1024;
 constexpr int WRITE_KB = 100;
 constexpr int DEFAULT_PAGES = 10;
 constexpr int MEMINFO_SIZE = 2;
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
 
 class Timer {
 public:
@@ -550,6 +564,11 @@ private:
  */
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0010, Function | MediumTest | Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     StopDependServerStub();
     sleep(1);
     ASSERT_TRUE(profilerStub_ != nullptr);
@@ -790,6 +809,11 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0010, Function | Med
  */
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0020, Function | MediumTest | Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     StopDependServerStub();
     sleep(1);
     ASSERT_TRUE(profilerStub_ != nullptr);
@@ -1031,6 +1055,11 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0020, Function | Med
  */
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0030, Function | MediumTest | Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     StopDependServerStub();
     sleep(1);
     ASSERT_TRUE(profilerStub_ != nullptr);
@@ -1176,6 +1205,11 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0030, Function | Med
  */
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0040, Function | MediumTest | Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     StopDependServerStub();
     sleep(1);
     ASSERT_TRUE(profilerStub_ != nullptr);
@@ -1309,6 +1343,11 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0040, Function | Med
  */
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0050, Function | MediumTest | Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     StopDependServerStub();
     sleep(1);
     ASSERT_TRUE(profilerStub_ != nullptr);
@@ -1449,6 +1488,11 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0050, Function | Med
  */
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0060, Function | MediumTest | Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     StopDependServerStub();
     sleep(1);
     ASSERT_TRUE(profilerStub_ != nullptr);
@@ -1555,6 +1599,11 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0060, Function | Med
  */
 HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0070, Function | MediumTest | Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     StopDependServerStub();
     sleep(1);
     ASSERT_TRUE(profilerStub_ != nullptr);

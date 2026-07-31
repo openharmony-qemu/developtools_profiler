@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <dlfcn.h>
 #include <fstream>
+#include <sys/utsname.h>
 #include "gpu_data_plugin.h"
 #include "plugin_module_api.h"
 
@@ -35,6 +36,17 @@ const unsigned long long SLEEP_TIME = 2;
 constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
 #endif
 constexpr ssize_t FWRITE_ERROR_VAL = -1;
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
 
 struct TestVmstat {
     int64_t pgpgin;
@@ -147,6 +159,9 @@ HWTEST_F(GpuDataPluginTest, TestPath, TestSize.Level1)
 HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
 {
 #if defined(__LP64__)
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     GpuDataPlugin gpuPlugin;
     WriterStruct writer = {WriteFunc, FlushFunc, StartReportFunc, FinishReportFunc};
     EXPECT_TRUE(PluginGpuInfoStub(gpuPlugin, &writer));
@@ -170,6 +185,9 @@ HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
 HWTEST_F(GpuDataPluginTest, TestReadGpuData, TestSize.Level1)
 {
 #if defined(__LP64__)
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     GpuDataPlugin gpuPlugin;
     WriterStruct writer = {WriteFunc, FlushFunc};
     gpuPlugin.SetWriter(&writer);
@@ -193,6 +211,9 @@ HWTEST_F(GpuDataPluginTest, TestReadGpuData, TestSize.Level1)
 HWTEST_F(GpuDataPluginTest, TestPluginRegister, TestSize.Level1)
 {
 #if defined(__LP64__)
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     void* handle = dlopen(SO_PATH.c_str(), RTLD_LAZY);
     ASSERT_NE(handle, nullptr);
     PluginModuleStruct* gpuPlugin = (PluginModuleStruct*)dlsym(handle, "g_pluginModule");
@@ -229,6 +250,9 @@ HWTEST_F(GpuDataPluginTest, TestPluginRegister, TestSize.Level1)
 HWTEST_F(GpuDataPluginTest, TestPluginReadArrayData, TestSize.Level1)
 {
 #if defined(__LP64__)
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     void* handle = dlopen(SO_PATH.c_str(), RTLD_LAZY);
     ASSERT_NE(handle, nullptr);
     PluginModuleStruct* gpuPlugin = (PluginModuleStruct*)dlsym(handle, "g_pluginModule");

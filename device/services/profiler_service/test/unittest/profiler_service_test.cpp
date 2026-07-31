@@ -19,6 +19,7 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <gtest/gtest.h>
+#include <sys/utsname.h>
 #include <thread>
 
 #include "logging.h"
@@ -39,6 +40,17 @@ constexpr int FETCH_DATA_DELAY_US = 100 * 1000;
 constexpr int TEST_WAIT_START_SESSION_US = 200 * 1000;
 constexpr int TEST_SESSION_TIMEOUT_MS = 1000;
 constexpr int TIMEOUT_US = 3 * 1000 * 1000;
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
 
 class Timer {
 public:
@@ -1608,6 +1620,11 @@ HWTEST_F(ProfilerServiceTest, KeepSessionInvalidContext, TestSize.Level1)
  */
 HWTEST_F(ProfilerServiceTest, StartService, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     auto service = service_;
     EXPECT_NE(service, nullptr);
     EXPECT_FALSE(service->StartService(""));

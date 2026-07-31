@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #include "hook_socket_client.h"
 #include "parameters.h"
 #include "socket_context.h"
@@ -40,6 +41,17 @@ const std::string TEST_MEM_LEAK_FILE_PATH = "/data/local/tmp/mem_leak_test.txt";
 const std::string FILE_CACHE_DIR = "/data/log/hiprofiler/";
 const std::string MEM_LEAK_FILE_PATH = "/data/local/tmp/";
 
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
+
 class HookManagerMemLeakTest : public ::testing::Test {
 public:
     static void SetUpTestCase()
@@ -55,6 +67,12 @@ public:
 
     void SetUp() override
     {
+#ifdef __aarch64__
+        if (IsNonHmKernel()) {
+            GTEST_SKIP();
+            return;
+        }
+#endif
         hookManager_ = std::make_shared<HookManager>();
         ASSERT_TRUE(hookManager_ != nullptr);
 
@@ -67,7 +85,9 @@ public:
 
     void TearDown() override
     {
-        hookManager_->CloseResource();
+        if (hookManager_ != nullptr) {
+            hookManager_->CloseResource();
+        }
         hookManager_ = nullptr;
         commandPoller_ = nullptr;
     }
