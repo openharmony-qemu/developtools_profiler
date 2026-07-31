@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <functional>
 
 
 namespace COMMON {
@@ -84,9 +85,12 @@ std::string GetFullTracePath(pid_t uid, pid_t pid, const std::string& processNam
 double GetFreeRomPercent(const std::string path = DEFAULT_RW_DIR);
 bool GetRomSpaceInfo(const std::string& path, uint64_t& totalBytes, uint64_t& freeBytes);
 bool CopyFileFast(uint32_t srcFd, const std::string& destPath);
+bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPath);
 bool CleanOldenFiles(const std::string& path);
 bool CleanCmdOldenTraceFiles(const std::string& path);
 bool CreateFile(const std::string& filePath);
+bool DeleteFiles(const std::string& path, std::function<bool(const std::string& filename)> filter);
+bool StringMatch(const std::string& str, const std::string& prefix, const std::string& suffix);
 
 class SpinLock {
 public:
