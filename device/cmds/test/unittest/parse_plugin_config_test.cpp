@@ -223,6 +223,49 @@ HWTEST_F(ParsePluginConfigTest, TestNativeHookConfig, TestSize.Level0)
 
 /**
  * @tc.name: ParsePluginConfig
+ * @tc.desc: check default values of string_compressed, callframe_compress, record_accurately
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestNativeHookConfigDefaultValues, TestSize.Level0)
+{
+    ParsePluginConfig parseConfig;
+    ProfilerPluginConfig pluginConfig;
+
+    // When not specified, string_compressed/callframe_compress/record_accurately should default to true
+    std::ostringstream oss{};
+    oss << "pid : 1\n"
+        << "filter_size: 4096\n"
+        << "process_name: \"render_service\"\n";
+    parseConfig.pluginConfigMap["nativehook"] = oss.str();
+    ASSERT_TRUE(parseConfig.SetSerializeHookConfig("nativehook", pluginConfig));
+
+    ForStandard::NativeHookConfig hookConfig;
+    ASSERT_TRUE(hookConfig.ParseFromString(pluginConfig.config_data()));
+    EXPECT_TRUE(hookConfig.string_compressed());
+    EXPECT_TRUE(hookConfig.callframe_compress());
+    EXPECT_TRUE(hookConfig.record_accurately());
+
+    // When explicitly set to false, the values should be overridden to false
+    std::ostringstream oss2{};
+    oss2 << "pid : 1\n"
+         << "filter_size: 4096\n"
+         << "process_name: \"render_service\"\n"
+         << "string_compressed: false\n"
+         << "callframe_compress: false\n"
+         << "record_accurately: false\n";
+    parseConfig.pluginConfigMap["nativehook"] = oss2.str();
+    pluginConfig.Clear();
+    ASSERT_TRUE(parseConfig.SetSerializeHookConfig("nativehook", pluginConfig));
+
+    ForStandard::NativeHookConfig hookConfig2;
+    ASSERT_TRUE(hookConfig2.ParseFromString(pluginConfig.config_data()));
+    EXPECT_FALSE(hookConfig2.string_compressed());
+    EXPECT_FALSE(hookConfig2.callframe_compress());
+    EXPECT_FALSE(hookConfig2.record_accurately());
+}
+
+/**
+ * @tc.name: ParsePluginConfig
  * @tc.desc: check restrace tag
  * @tc.type: FUNC
  */
