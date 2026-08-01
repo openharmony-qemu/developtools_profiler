@@ -14,10 +14,13 @@
  */
 
 #include <cinttypes>
+#include <cstdlib>
 #include <dlfcn.h>
 #include <gtest/gtest.h>
 #include <csignal>
 #include <filesystem>
+#include <sys/utsname.h>
+#include <unistd.h>
 
 #include "command_poller.h"
 #include "ffrt_profiler_common.h"
@@ -35,6 +38,17 @@ constexpr uint32_t BUFFER_SIZE = (1UL << 23);
 constexpr int FILE_SIZE = 2000;
 constexpr int MOBILE_BIT = 32;
 constexpr int32_t SMB_SIZE = 409600;
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
 
 class FfrtPofilerTest : public ::testing::Test {
 public:
@@ -122,6 +136,11 @@ public:
 
 HWTEST_F(FfrtPofilerTest, TestFfrtProfilerRuntime, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     StartProcess(FFRT_TEST_EXE, "100");
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
     std::string ret;
@@ -132,6 +151,11 @@ HWTEST_F(FfrtPofilerTest, TestFfrtProfilerRuntime, TestSize.Level1)
 
 HWTEST_F(FfrtPofilerTest, TestFfrtProfilerError, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
     std::string ret;
     fs::remove(OUTPUT_PATH);
@@ -343,6 +367,11 @@ HWTEST_F(FfrtPofilerTest, TestFunction008, TestSize.Level1)
 //  */
 HWTEST_F(FfrtPofilerTest, TestFunction011, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     ASSERT_TRUE(ffrtProfilerMgr != nullptr);
     std::shared_ptr<CommandPoller> commandPoller = std::make_shared<CommandPoller>(ffrtProfilerMgr);

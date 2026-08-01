@@ -19,6 +19,7 @@
 #include <thread>
 #include <sys/syscall.h>
 #include <sys/eventfd.h>
+#include <sys/utsname.h>
 
 #include "command_poller.h"
 #include "grpc/impl/codegen/log.h"
@@ -46,6 +47,17 @@ const std::string HIDUMPER_PLUGIN_NAME = "libhidumpplugin.z.so";
 std::string g_testPluginDir("/system/lib64/");
 #else
 std::string g_testPluginDir("/system/lib/");
+#endif
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
 #endif
 
 int InitShareMemory()
@@ -118,6 +130,11 @@ class PluginManagerTest : public ::testing::Test {
  */
 HWTEST_F(PluginManagerTest, SuccessPlugin, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     auto pluginManage = std::make_shared<PluginManager>();
     auto commandPoller = std::make_shared<CommandPoller>(pluginManage);
     EXPECT_TRUE(commandPoller->OnConnect());
@@ -171,6 +188,11 @@ HWTEST_F(PluginManagerTest, SuccessPlugin, TestSize.Level1)
  */
 HWTEST_F(PluginManagerTest, PluginStreamMode, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     auto pluginManage = std::make_shared<PluginManager>();
     auto commandPoller = std::make_shared<CommandPoller>(pluginManage);
     EXPECT_TRUE(commandPoller->OnConnect());
@@ -273,6 +295,11 @@ HWTEST_F(PluginManagerTest, PluginManager, TestSize.Level1)
  */
 HWTEST_F(PluginManagerTest, networkprofilerPlugin, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     using namespace OHOS::Developtools::Profiler;
     auto pluginManage = std::make_shared<PluginManager>();
     std::string pluginName = "network-profiler";
@@ -307,6 +334,11 @@ HWTEST_F(PluginManagerTest, networkprofilerPlugin, TestSize.Level1)
  */
 HWTEST_F(PluginManagerTest, PullState, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     auto pluginManage = std::make_shared<PluginManager>();
     auto commandPoller = std::make_shared<CommandPoller>(pluginManage);
     EXPECT_TRUE(commandPoller->OnConnect());
@@ -355,6 +387,11 @@ HWTEST_F(PluginManagerTest, PullState, TestSize.Level1)
  */
 HWTEST_F(PluginManagerTest, PullResult, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     auto pluginManage = std::make_shared<PluginManager>();
     auto commandPoller = std::make_shared<CommandPoller>(pluginManage);
     EXPECT_TRUE(commandPoller->OnConnect());

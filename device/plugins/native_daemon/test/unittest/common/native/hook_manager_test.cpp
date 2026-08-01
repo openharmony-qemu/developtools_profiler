@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <fstream>
 #include <unistd.h>
+#include <sys/utsname.h>
 #include "command_poller.h"
 #include "hook_manager.h"
 #include "hook_service.h"
@@ -28,6 +29,18 @@ using namespace testing::ext;
 using namespace OHOS::Developtools::NativeDaemon;
 namespace {
 const int TEST_MAX_JS_STACK_DEPTH = 10;
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
+
 class HookManagerTest : public ::testing::Test {
 public:
     static void SetUpTestCase()
@@ -53,6 +66,11 @@ public:
  */
 HWTEST_F(HookManagerTest, RegisterPlugin, TestSize.Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
     ASSERT_TRUE(hookManager != nullptr);
     std::shared_ptr<CommandPoller> commandPoller = std::make_shared<CommandPoller>(hookManager);
@@ -70,6 +88,11 @@ HWTEST_F(HookManagerTest, RegisterPlugin, TestSize.Level0)
  */
 HWTEST_F(HookManagerTest, LoadPlugin, TestSize.Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
     ASSERT_TRUE(hookManager != nullptr);
     std::shared_ptr<CommandPoller> commandPoller = std::make_shared<CommandPoller>(hookManager);
@@ -89,6 +112,11 @@ HWTEST_F(HookManagerTest, LoadPlugin, TestSize.Level0)
  */
 HWTEST_F(HookManagerTest, UnloadPlugin, TestSize.Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
     ASSERT_TRUE(hookManager != nullptr);
     std::shared_ptr<CommandPoller> commandPoller = std::make_shared<CommandPoller>(hookManager);
@@ -108,6 +136,11 @@ HWTEST_F(HookManagerTest, UnloadPlugin, TestSize.Level0)
  */
 HWTEST_F(HookManagerTest, PluginSession, TestSize.Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
     ASSERT_TRUE(hookManager != nullptr);
     std::shared_ptr<CommandPoller> commandPoller = std::make_shared<CommandPoller>(hookManager);

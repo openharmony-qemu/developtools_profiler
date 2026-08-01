@@ -22,6 +22,7 @@
 #include <fstream>
 #include <sstream>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #include <thread>
 #include <unistd.h>
 #include <string>
@@ -36,6 +37,17 @@ using namespace OHOS::Developtools::NativeDaemon;
 namespace {
 constexpr size_t TEST_DATA_SIZE = 128;
 const std::string TEST_CACHE_DIR = "/data/local/tmp/cache_file_writer_test/";
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
 
 struct FileEventRecord {
     uint16_t fileIndex = INVALID_CACHE_FILE_INDEX;
@@ -685,6 +697,11 @@ HWTEST_F(CacheFileWriterTest, BackpressureIntegrationTest, TestSize.Level0)
 
 HWTEST_F(CacheFileWriterTest, MemoryCacheIsOffHeapAndNamedVma, TestSize.Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     CacheFileWriter writer(1);
     writer.Prepare(nullptr);
     ASSERT_TRUE(writer.memoryCache_ != nullptr);

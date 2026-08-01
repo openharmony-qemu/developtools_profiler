@@ -19,6 +19,7 @@
 #include <sstream>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/utsname.h>
 #include "hook_socket_client.h"
 #include "parameters.h"
 #include "socket_context.h"
@@ -42,6 +43,17 @@ const uint32_t TEST_PAGE_BYTES = 4096;
 const uint32_t TEST_WAIT_MS = 1000;
 const std::string TEST_NMD_FILE_PATH = "/data/local/tmp/nmd_test_process.txt";
 
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
+
 class HookManagerExtTest : public ::testing::Test {
 public:
     static void SetUpTestCase()
@@ -61,6 +73,12 @@ public:
     
     void SetUp() override
     {
+#ifdef __aarch64__
+        if (IsNonHmKernel()) {
+            GTEST_SKIP();
+            return;
+        }
+#endif
         hookManager_ = std::make_shared<HookManager>();
         ASSERT_TRUE(hookManager_ != nullptr);
         
