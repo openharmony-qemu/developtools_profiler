@@ -127,7 +127,7 @@ HWTEST_F(HookClientHolderTest, UpdateThreadNameTest, TestSize.Level0)
     std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
     g_hookClient = mockClient;
     EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_,
-        ::testing::_, ::testing::_)).WillOnce(::testing::Return(true));
+        ::testing::_, ::testing::_, ::testing::_)).WillOnce(::testing::Return(true));
     HookClientHolder holder2(g_hookClient);
     EXPECT_TRUE(holder2.IsValid());
     EXPECT_TRUE(holder2.UpdateThreadName());
@@ -153,9 +153,11 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataBaseTest, TestSize.Level0)
     const char* filePath = "test.txt";
     std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
     g_hookClient = mockClient;
-    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
         .Times(1)
-        .WillOnce([&rawdata] (const void* data, size_t size, const void* payload, size_t payloadSize, int smbIndex) {
+        .WillOnce([&rawdata] (const void* data, size_t size, const void* payload,
+            size_t payloadSize, int smbIndex, bool skipDisableHook) {
             if (data) {
                 const NameData* nd = static_cast<const NameData*>(data);
                 EXPECT_EQ(nd->addr, rawdata.addr);
@@ -196,9 +198,11 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_ProtExec, TestSize.Level0
     std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
     g_hookClient = mockClient;
 
-    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
         .Times(1)
-        .WillOnce([&rawdata] (const void* data, size_t size, const void* payload, size_t payloadSize, int smbIndex) {
+        .WillOnce([&rawdata] (const void* data, size_t size, const void* payload,
+            size_t payloadSize, int smbIndex, bool skipDisableHook) {
             if (data) {
                 const NameData* nd = static_cast<const NameData*>(data);
                 EXPECT_EQ(nd->addr, rawdata.addr);
@@ -237,7 +241,8 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_TargetSo, TestSi
     std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
     g_hookClient = mockClient;
 
-    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
         .Times(1);
 
     HookClientHolder holder(g_hookClient);
@@ -274,7 +279,8 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_TargetSoList, Te
 
     std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
     g_hookClient = mockClient;
-    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
         .Times(1);
 
     HookClientHolder holder(g_hookClient);
@@ -311,7 +317,8 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_ExpandStart, Tes
 
     std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
     g_hookClient = mockClient;
-    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
         .Times(1);
 
     HookClientHolder holder(g_hookClient);
@@ -347,7 +354,8 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_ExpandEnd, TestS
 
     std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
     g_hookClient = mockClient;
-    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
         .Times(1);
 
     HookClientHolder holder(g_hookClient);
@@ -384,7 +392,8 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_FilePathTooLong, TestSize
     std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
     g_hookClient = mockClient;
 
-    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
         .Times(0);
 
     HookClientHolder holder(g_hookClient);
@@ -415,9 +424,11 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_LdMusl, TestSize
     std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
     g_hookClient = mockClient;
 
-    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
         .Times(1)
-        .WillOnce([](const void* data, size_t size, const void* payload, size_t payloadSize, int smbIndex) {
+        .WillOnce([](const void* data, size_t size, const void* payload, size_t payloadSize,
+            int smbIndex, bool skipDisableHook) {
             if (data) {
                 const NameData* nd = static_cast<const NameData*>(data);
                 EXPECT_EQ(nd->mmapArgs.flags & MAP_FIXED, MAP_FIXED);
@@ -457,7 +468,8 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_CustomFilterLib,
     std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
     g_hookClient = mockClient;
 
-    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
         .Times(1);
 
     HookClientHolder holder(g_hookClient);
@@ -491,9 +503,11 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_AddrNull, TestSize.Level0
     std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
     g_hookClient = mockClient;
 
-    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_,
+        ::testing::_, ::testing::_, ::testing::_))
         .Times(1)
-        .WillOnce([](const void* data, size_t size, const void* payload, size_t payloadSize, int smbIndex) {
+        .WillOnce([](const void* data, size_t size, const void* payload, size_t payloadSize,
+            int smbIndex, bool skipDisableHook) {
             if (data) {
                 const NameData* nd = static_cast<const NameData*>(data);
                 EXPECT_EQ(nd->addr, nullptr);

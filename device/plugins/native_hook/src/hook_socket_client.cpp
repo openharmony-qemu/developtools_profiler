@@ -57,8 +57,6 @@ extern "C" size_t libc_gwp_asan_collect_allocations_by_time_range(uint64_t end_t
 
 } // namespace
 
-thread_local bool g_inMmapMunmap = false;
-
 using namespace OHOS::Developtools::NativeDaemon;
 static std::string GetRealTime()
 {
@@ -493,7 +491,7 @@ bool HookSocketClient::SendStack(const void* data, size_t size)
 }
 
 bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const void* payload,
-    size_t payloadSize, int smbIndex)
+    size_t payloadSize, int smbIndex, bool skipDisableHook)
 {
     if (smbIndex + 1 > static_cast<int>(stackWriterList_.size())) {
         return false;
@@ -502,7 +500,9 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
         return false;
     }
     if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
-        DisableHook();
+        if (!skipDisableHook) {
+            DisableHook();
+        }
         return false;
     }
     std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
@@ -512,7 +512,9 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
     bool ret = stackWriter->WriteWithPayloadTimeout(data, size, payload, payloadSize,
                                                     std::bind(&HookSocketClient::PeerIsConnected, this));
     if (!ret && config_->isBlocked) {
-        DisableHook();
+        if (!skipDisableHook) {
+            DisableHook();
+        }
         return false;
     }
     if (!stackWriter->IsFileCacheMode() && stackWriter->PrepareFlush()) {
@@ -522,7 +524,7 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
 }
 
 bool HookSocketClient::SendStackWithExtraData(const void* data, size_t size, const void* payload,
-    size_t payloadSize, ExtraDataInfo& extraDataInfo, int smbIndex)
+    size_t payloadSize, ExtraDataInfo& extraDataInfo, int smbIndex, bool skipDisableHook)
 {
     if (smbIndex + 1 > static_cast<int>(stackWriterList_.size())) {
         return false;
@@ -531,7 +533,9 @@ bool HookSocketClient::SendStackWithExtraData(const void* data, size_t size, con
         return false;
     }
     if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
-        DisableHook();
+        if (!skipDisableHook) {
+            DisableHook();
+        }
         return false;
     }
     std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
@@ -543,7 +547,9 @@ bool HookSocketClient::SendStackWithExtraData(const void* data, size_t size, con
         extraDataInfo.secondExtra, extraDataInfo.secondExtraSize,
         std::bind(&HookSocketClient::PeerIsConnected, this));
     if (!ret && config_->isBlocked) {
-        DisableHook();
+        if (!skipDisableHook) {
+            DisableHook();
+        }
         return false;
     }
     if (!stackWriter->IsFileCacheMode() && stackWriter->PrepareFlush()) {
@@ -592,9 +598,6 @@ void HookSocketClient::Flush()
 
 void HookSocketClient::DisableHook()
 {
-    if (g_inMmapMunmap) {
-        return;
-    }
     bool expected = false;
     if (g_disableHook.compare_exchange_strong(expected, true, std::memory_order_release, std::memory_order_relaxed)) {
         RestoreAsyncStackType();
