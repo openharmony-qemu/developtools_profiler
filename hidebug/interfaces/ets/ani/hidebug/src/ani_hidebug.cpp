@@ -1052,14 +1052,10 @@ void DumpJsHeapDataAdapter(ani_env *env, ani_string fileNameAni, ani_boolean nee
 // 重复调用保护计数器（dump 期间拒绝并发调用）
 static std::atomic<int> g_dumpingCount{0};
 
-// 全局 VM 指针：ANI_Constructor 时保存，供 DumpHeapSnapshot 回调线程 AttachCurrentThread 用
-// 对应 NAPI 的 napi_send_event 投递回主线程 —— ANI 无 send_event 公开 API，
-// 用 AttachCurrentThread 在 callback 线程临时 attach 出 env，配合 Promise_New 返回的
-// GlobalRef resolver 直接 PromiseResolver_Resolve/Reject。
 static ani_vm *g_vm = nullptr;
 
-// RAII wrapper：在任意线程（含 fork 子进程完成后的 callback 线程）临时 attach 出 ani_env。
-// 对应 taihe framework 的 env_guard（runtime_ani.cpp:87-124）。
+constexpr ani_size LOCAL_SCOPE_REF_CAPACITY = 4096;
+
 class AniThreadEnvGuard {
 public:
     explicit AniThreadEnvGuard(ani_vm *vm) : vm_(vm)
@@ -1074,7 +1070,7 @@ public:
                 env_ = nullptr;
                 return;
             }
-            env_->CreateLocalScope(4096);
+            env_->CreateLocalScope(LOCAL_SCOPE_REF_CAPACITY);
         }
     }
     ~AniThreadEnvGuard()
@@ -1092,9 +1088,6 @@ private:
     bool isTemporary = false;
 };
 
-// 构造 BusinessError 对象（不抛）。用于 PromiseResolver_Reject 路径。
-// 与 AniUtil::ThrowErrorMessage 的区别：ThrowErrorMessage 调 env->ThrowError（同步抛异常），
-// 而 reject 路径需要构造 error 对象传给 PromiseResolver_Reject，不抛异常。
 static ani_error CreateBusinessError(ani_env *env, int32_t errCode, const std::string &msg)
 {
     ani_class cls {};
@@ -1121,7 +1114,6 @@ static ani_error CreateBusinessError(ani_env *env, int32_t errCode, const std::s
     return static_cast<ani_error>(error);
 }
 
-// 根据 errCode 查 DumpRawHeapErrCodeMap 取错误消息
 static std::string GetDumpRawHeapErrMsg(int32_t errCode)
 {
     for (const auto &[code, msg] : DumpRawHeapErrCodeMap) {
@@ -1179,7 +1171,6 @@ std::string PrepareDumpFile(ani_env *env, ApiInvokeRecorder &recorder)
     return filePath;
 }
 
-// 等待异步 DumpHeapSnapshot 回调完成，返回错误码（0 表示成功）
 struct DumpHeapParams {
     bool isGc;
     bool isNeedClean;
@@ -1201,18 +1192,13 @@ void PostDumpSuccess(const std::string& filePath)
     }
 }
 
-// 异步 dump 的跨线程上下文：主线程构造，move 到 callback 线程使用
-// 对应 NAPI hidebug 的 [env, deferred, options] 闭包捕获（napi_hidebug_dump.cpp:470）
 struct DumpRawHeapContext {
-    ani_resolver deferred;        // Promise_New 返回的 GlobalRef，跨线程持有合法
+    ani_resolver deferred;
     std::string filePath;
     DumpHeapParams params;
     std::shared_ptr<ApiInvokeRecorder> recorder;
 };
 
-// DumpHeapSnapshot 回调（在 fork 子进程结束后的通知线程触发）
-// 对应 NAPI 的 napi_send_event(env, [env, deferred, retCode]() { resolve/reject }, prio)
-// ANI 无 send_event，用 AttachCurrentThread 在 callback 线程临时 attach + 直接操作 GlobalRef resolver
 static void OnDumpHeapSnapshotDone(std::shared_ptr<DumpRawHeapContext> ctx, uint8_t retCode)
 {
     AniThreadEnvGuard guard(g_vm);
@@ -1242,7 +1228,6 @@ static void OnDumpHeapSnapshotDone(std::shared_ptr<DumpRawHeapContext> ctx, uint
         g_dumpingCount.fetch_sub(1);
         return;
     }
-    // 三参版声明返回 Array<string>，native 在此包成单元素数组（与原 .ets 行为一致）
     ani_array arr = nullptr;
     ani_ref initElem = cbEnv->GetUndefined(&initElem) == ANI_OK ? initElem : nullptr;
     if (cbEnv->Array_New(1, initElem, &arr) == ANI_OK) {
@@ -1251,7 +1236,6 @@ static void OnDumpHeapSnapshotDone(std::shared_ptr<DumpRawHeapContext> ctx, uint
         g_dumpingCount.fetch_sub(1);
         return;
     }
-    // Array 构造失败：reject Promise，避免类型不匹配导致 ETS 侧 arr[0] 解包错误
     HILOG_ERROR(LOG_CORE, "OnDumpHeapSnapshotDone: Array_New failed, reject");
     ani_error err = CreateBusinessError(cbEnv, ErrorCode::SYSTEM_STATUS_ABNORMAL,
         "Failed to create result array");
@@ -1259,16 +1243,9 @@ static void OnDumpHeapSnapshotDone(std::shared_ptr<DumpRawHeapContext> ctx, uint
     g_dumpingCount.fetch_sub(1);
 }
 
-// 异步入口：主线程（调用线程）发起，立即返回 Promise
-// 对齐 NAPI hidebug（napi_hidebug_dump.cpp:452-484）的执行模型：
-//   napi_create_promise → 异步操作 → napi_send_event 回主线程 resolve
-// ANI 对齐：
-//   env->Promise_New（主线程，deferred 是 GlobalRef）→ DumpHeapSnapshot 异步（不切线程）
-//   → callback 线程 AttachCurrentThread + PromiseResolver_Resolve/Reject
 ani_object DumpJsRawHeapDataAdapter(ani_env *env, ani_boolean needGC, ani_boolean needClean, ani_boolean processDump)
 {
     ApiInvokeRecorder apiInvokeRecorder("dumpJsRawHeapData");
-    // 前置检查在主线程同步做（保持原语义：重复调用/磁盘/配额检查同步失败同步抛）
     if (!CheckDumpJsRawHeapPreconditions(env, apiInvokeRecorder)) {
         return nullptr;
     }
@@ -1276,8 +1253,6 @@ ani_object DumpJsRawHeapDataAdapter(ani_env *env, ani_boolean needGC, ani_boolea
     if (filePath.empty()) {
         return nullptr;
     }
-    // 主线程创建 Promise —— 对应 NAPI 的 napi_create_promise
-    // resolver 是 GlobalRef（Promise_New 实现见 ani_interaction_api.cpp:6000），跨线程持有合法
     ani_resolver deferred = nullptr;
     ani_object promise = nullptr;
     if (env->Promise_New(&deferred, &promise) != ANI_OK || deferred == nullptr || promise == nullptr) {
@@ -1286,26 +1261,21 @@ ani_object DumpJsRawHeapDataAdapter(ani_env *env, ani_boolean needGC, ani_boolea
         g_dumpingCount.fetch_sub(1);
         return nullptr;
     }
-    // 构造跨线程上下文
     auto ctx = std::make_shared<DumpRawHeapContext>();
     ctx->deferred = deferred;
     ctx->filePath = filePath;
     ctx->params = {needGC == ANI_TRUE, needClean == ANI_TRUE, processDump == ANI_TRUE};
     ctx->recorder = std::make_shared<ApiInvokeRecorder>("dumpJsRawHeapData");
 
-    // 主线程发起异步 dump —— 对应 NAPI 的 engine->DumpHeapSnapshot(..., callback, ...)
-    // 关键：不切线程（不用 taskpool），GetEcmaVM 在 DumpHeapSnapshot 内部按当前线程取 VM，
-    // 拿到的是调用者线程的 VM（接口语义"dump 当前线程堆"正确）
     auto callback = [ctx](uint8_t code) { OnDumpHeapSnapshotDone(ctx, code); };
     AniUtil::DumpHeapSnapshot(ctx->params.isGc, ctx->filePath, callback,
         ctx->params.isNeedClean, ctx->params.isProcDump);
-    // 立即返回 Promise 给 ArkTS —— 对应 NAPI 的 return promise
     return promise;
 }
 
 ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
 {
-    g_vm = vm;  // 保存全局 VM，供 DumpHeapSnapshot 回调线程 AttachCurrentThread 用
+    g_vm = vm;
     ani_env *env = nullptr;
     if (ANI_OK != vm->GetEnv(ANI_VERSION_1, &env)) {
         return ANI_ERROR;

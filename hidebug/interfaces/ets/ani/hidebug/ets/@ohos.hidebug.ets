@@ -409,8 +409,6 @@ export default namespace hidebug {
 
   native function dumpJsRawHeapDataAdapter(needGC: boolean, needClean: boolean, processDump: boolean): Promise<Array<string>>;
 
-  // native 直接返回 Promise（主线程 Promise_New + 异步 callback AttachCurrentThread resolve）
-  // 对齐 NAPI hidebug 的执行模型，不切线程（不用 taskpool），dump 调用者线程的 VM，语义正确
   export function dumpJsRawHeapData(needGC?: boolean): Promise<string> {
     return dumpJsRawHeapDataAdapter(needGC === true, false, false).then((arr: Array<string>): string => {
       return arr[0];

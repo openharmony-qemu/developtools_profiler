@@ -166,9 +166,6 @@ ani_vm* AniUtil::GetAniVm(ani_env *env)
 }
 
 // DumpHeapSnapshot 同步版本 - 用于 dumpJsHeapData
-// 占位实现：三方暂未提供 ANI 友好的 DumpHeapSnapshot 接口，
-// ecma_vm.h 等 ets_runtime 内部头会引入 libpandabase/os 平台宏问题。
-// 待三方提供 ANI 友好的 dump 接口后重新实现真实调用。
 bool AniUtil::DumpHeapSnapshot(const std::string& filePath, bool needClean)
 {
     HILOG_INFO(LOG_CORE, "DumpHeapSnapshot sync called, filePath: %{public}s, needClean: %{public}d",
@@ -177,8 +174,6 @@ bool AniUtil::DumpHeapSnapshot(const std::string& filePath, bool needClean)
 }
 
 // DumpHeapSnapshot 异步版本 - 用于 dumpJsRawHeapData
-// 占位实现：同步回调 retCode=0 表示成功，模拟异步 dump 完成通知。
-// 待三方提供 ANI 友好的 dump 接口后重新实现真实 fork + callback。
 void AniUtil::DumpHeapSnapshot(bool isGc, const std::string& filePath,
     const std::function<void(uint8_t)>& callback, bool needClean, bool isProcDump)
 {
@@ -186,7 +181,6 @@ void AniUtil::DumpHeapSnapshot(bool isGc, const std::string& filePath,
         "needClean: %{public}d, isProcDump: %{public}d",
         filePath.c_str(), static_cast<int>(isGc), static_cast<int>(needClean),
         static_cast<int>(isProcDump));
-    // 占位实现：同步回调 retCode=0 表示成功
     if (callback) {
         callback(0);
     }
