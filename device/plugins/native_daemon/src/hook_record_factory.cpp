@@ -341,6 +341,21 @@ void HookRecordFactory::InitRawStack(RawStackPtr rawStack, const int8_t sharedMe
     ProcessDynamicTagInfo(rawStack, sharedMemData, size, callback);
 }
 
+bool HookRecordFactory::CheckSizeByType(uint16_t type, uint32_t size)
+{
+    if (hookConfig_.fp_unwind() && hookConfig_.async_stack_enable()) {
+        bool needAsyncStackData = (type == MALLOC_MSG || type == FREE_MSG || type == MMAP_MSG ||
+                                    type == MMAP_FILE_PAGE_MSG || type == MEMORY_USING_MSG ||
+                                    type == MEMORY_UNUSING_MSG);
+        if (needAsyncStackData && size < sizeof(AsyncStackData)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "GetHookRecord type %u size %u is less than AsyncStackData size %zu",
+                               type, size, sizeof(AsyncStackData));
+            return false;
+        }
+    }
+    return true;
+}
+
 std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t sharedMemData[], uint32_t size,
     bool storeData, const SaveMemTagCallBack& callback)
 {
@@ -357,6 +372,9 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
     auto rawStack = GetRawStackFromCache();
     InitRawStack(rawStack, sharedMemData, size, storeData, callback);
     uint16_t type = rawStack->stackContext->type;
+    if (!CheckSizeByType(type, size)) {
+        return nullptr;
+    }
     switch (type) {
         case GWP_ASAN_MSG:
             return std::make_shared<GwpAsanRecord>(rawStack);
