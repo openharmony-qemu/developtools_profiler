@@ -339,6 +339,7 @@ HWTEST_F(HookRecordFactoryTest, GetHookRecordSetsFpDepthAndStackData, TestSize.L
     asyncConfig.set_fp_unwind(true);
     asyncConfig.set_async_stack_enable(true);
     HookRecordFactory asyncFactory(asyncConfig);
+    fpBuffer = MakeRecordBuffer(MALLOC_MSG, sizeof(AsyncStackData) - sizeof(BaseStackRawData));
     auto asyncRecord = asyncFactory.GetHookRecord(fpBuffer.data(), static_cast<uint32_t>(fpBuffer.size()));
     ASSERT_NE(asyncRecord, nullptr);
     EXPECT_EQ(asyncRecord->GetRawStack()->fpDepth, 0u);
@@ -916,4 +917,97 @@ HWTEST_F(HookRecordFactoryTest, ProcessDynamicTagInfo_AllThreeTypes, TestSize.Le
     EXPECT_EQ(callbackCount, 3);
 }
 
+/*
+ * @tc.name: CheckSizeByType_AsyncStackEnabled_CorrectTypes
+ * @tc.desc: test CheckSizeByType with async stack enabled for correct types.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, CheckSizeByType_AsyncStackEnabled_CorrectTypes, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(true);
+    hookConfig.set_async_stack_enable(true);
+    HookRecordFactory factory(hookConfig);
+
+    const std::vector<uint16_t> asyncStackTypes = {
+        MALLOC_MSG, FREE_MSG, MMAP_MSG, MMAP_FILE_PAGE_MSG, MEMORY_USING_MSG, MEMORY_UNUSING_MSG
+    };
+
+    for (uint16_t type : asyncStackTypes) {
+        EXPECT_TRUE(factory.CheckSizeByType(type, sizeof(AsyncStackData)));
+        EXPECT_TRUE(factory.CheckSizeByType(type, sizeof(AsyncStackData) + 100));
+        EXPECT_FALSE(factory.CheckSizeByType(type, sizeof(AsyncStackData) - 1));
+        EXPECT_FALSE(factory.CheckSizeByType(type, sizeof(BaseStackRawData)));
+    }
+}
+
+/*
+ * @tc.name: CheckSizeByType_AsyncStackEnabled_OtherTypes
+ * @tc.desc: test CheckSizeByType with async stack enabled for types not requiring AsyncStackData.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, CheckSizeByType_AsyncStackEnabled_OtherTypes, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(true);
+    hookConfig.set_async_stack_enable(true);
+    HookRecordFactory factory(hookConfig);
+
+    const std::vector<uint16_t> otherTypes = {
+        MALLOC_ARKTS, FREE_ARKTS, PR_SET_VMA_MSG, JS_STACK_MSG, NMD_MSG, GWP_ASAN_MSG
+    };
+
+    for (uint16_t type : otherTypes) {
+        EXPECT_TRUE(factory.CheckSizeByType(type, sizeof(BaseStackRawData)));
+        EXPECT_TRUE(factory.CheckSizeByType(type, sizeof(AsyncStackData) - 1));
+        EXPECT_TRUE(factory.CheckSizeByType(type, sizeof(void*)));
+    }
+}
+
+/*
+ * @tc.name: CheckSizeByType_AsyncStackDisabled_AllTypes
+ * @tc.desc: test CheckSizeByType with async stack disabled for all types.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, CheckSizeByType_AsyncStackDisabled_AllTypes, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(true);
+    hookConfig.set_async_stack_enable(false);
+    HookRecordFactory factory(hookConfig);
+
+    const std::vector<uint16_t> allTypes = {
+        MALLOC_MSG, FREE_MSG, MMAP_MSG, MMAP_FILE_PAGE_MSG, MEMORY_USING_MSG, MEMORY_UNUSING_MSG,
+        MALLOC_ARKTS, FREE_ARKTS, PR_SET_VMA_MSG, JS_STACK_MSG
+    };
+
+    for (uint16_t type : allTypes) {
+        EXPECT_TRUE(factory.CheckSizeByType(type, sizeof(BaseStackRawData)));
+        EXPECT_TRUE(factory.CheckSizeByType(type, sizeof(AsyncStackData) - 1));
+        EXPECT_TRUE(factory.CheckSizeByType(type, sizeof(void*)));
+    }
+}
+
+/*
+ * @tc.name: CheckSizeByType_FpUnwindDisabled_AllTypes
+ * @tc.desc: test CheckSizeByType with fp unwind disabled for all types.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, CheckSizeByType_FpUnwindDisabled_AllTypes, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(false);
+    hookConfig.set_async_stack_enable(true);
+    HookRecordFactory factory(hookConfig);
+
+    const std::vector<uint16_t> allTypes = {
+        MALLOC_MSG, FREE_MSG, MMAP_MSG, MMAP_FILE_PAGE_MSG, MEMORY_USING_MSG, MEMORY_UNUSING_MSG,
+        MALLOC_ARKTS, FREE_ARKTS
+    };
+
+    for (uint16_t type : allTypes) {
+        EXPECT_TRUE(factory.CheckSizeByType(type, sizeof(BaseStackRawData)));
+        EXPECT_TRUE(factory.CheckSizeByType(type, sizeof(AsyncStackData) - 1));
+    }
+}
 } // namespace OHOS::Developtools::NativeDaemon
