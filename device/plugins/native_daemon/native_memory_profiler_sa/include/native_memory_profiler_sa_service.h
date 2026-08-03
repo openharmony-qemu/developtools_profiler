@@ -100,7 +100,7 @@ private:
     static bool TryBeginStopHook(uint32_t pid);
     static void EndStopHook(uint32_t pid);
     static bool IsAsyncRequest(uint32_t pid);
-    static bool CheckStopPermission(int32_t calllingPid, std::shared_ptr<TaskConfig>& config);
+    static bool CheckStopPermission(int32_t callingPid, std::shared_ptr<TaskConfig>& config);
     int32_t CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
     int32_t CheckTaskLimit(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     int32_t CheckStartupModeConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
