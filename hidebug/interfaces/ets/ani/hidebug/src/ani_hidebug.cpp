@@ -1186,51 +1186,6 @@ struct DumpHeapParams {
     bool isProcDump;
 };
 
-int32_t WaitDumpHeapSnapshotResult(ani_env *env, ApiInvokeRecorder &recorder,
-    const std::string& filePath, const DumpHeapParams& params)
-{
-    std::mutex mutex;
-    std::condition_variable cond;
-    bool hasFinished = false;
-    uint8_t retCode = 0;
-    auto callback = [&mutex, &cond, &hasFinished, &retCode](uint8_t code) {
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-            retCode = code;
-            hasFinished = true;
-        }
-        cond.notify_all();
-    };
-    AniUtil::DumpHeapSnapshot(params.isGc, filePath, callback, params.isNeedClean, params.isProcDump);
-    {
-        std::unique_lock<std::mutex> lock(mutex);
-        cond.wait_for(lock, std::chrono::seconds(MAX_WAIT_TIME_SECOND), [&hasFinished] {
-            return hasFinished;
-        });
-    }
-    if (!hasFinished) {
-        HILOG_ERROR(LOG_CORE, "wait dump heap snapshot callback timeout");
-        recorder.SetErrorCode(DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED);
-        AniUtil::ThrowErrorMessage(env, "Timeout while waiting for the child process to finish.",
-            DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED);
-        return DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED;
-    }
-    int32_t errCode = TransferRetCodeToErrorCode(retCode);
-    if (errCode != 0) {
-        remove(filePath.c_str());
-        recorder.SetErrorCode(errCode);
-        std::string errMsg;
-        for (const auto& [code, msg] : DumpRawHeapErrCodeMap) {
-            if (code == errCode) {
-                errMsg = msg;
-                break;
-            }
-        }
-        AniUtil::ThrowErrorMessage(env, errMsg, errCode);
-    }
-    return errCode;
-}
-
 void PostDumpSuccess(const std::string& filePath)
 {
     if (!AppendMetaData(filePath)) {
@@ -1244,7 +1199,6 @@ void PostDumpSuccess(const std::string& filePath)
             HILOG_ERROR(LOG_CORE, "failed to report dump success event.");
         }
     }
-    g_dumpingCount.fetch_sub(1);
 }
 
 // 异步 dump 的跨线程上下文：主线程构造，move 到 callback 线程使用
@@ -1297,9 +1251,11 @@ static void OnDumpHeapSnapshotDone(std::shared_ptr<DumpRawHeapContext> ctx, uint
         g_dumpingCount.fetch_sub(1);
         return;
     }
-    // Array 构造失败兜底：直接 resolve 单个 string
-    HILOG_ERROR(LOG_CORE, "OnDumpHeapSnapshotDone: Array_New failed, resolve with raw string");
-    cbEnv->PromiseResolver_Resolve(ctx->deferred, static_cast<ani_ref>(result));
+    // Array 构造失败：reject Promise，避免类型不匹配导致 ETS 侧 arr[0] 解包错误
+    HILOG_ERROR(LOG_CORE, "OnDumpHeapSnapshotDone: Array_New failed, reject");
+    ani_error err = CreateBusinessError(cbEnv, ErrorCode::SYSTEM_STATUS_ABNORMAL,
+        "Failed to create result array");
+    cbEnv->PromiseResolver_Reject(ctx->deferred, err);
     g_dumpingCount.fetch_sub(1);
 }
 
