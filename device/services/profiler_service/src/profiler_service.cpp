@@ -19,7 +19,6 @@
 #include <unistd.h>
 #include "common.h"
 #include "logging.h"
-#include "native_hook_config.pb.h"
 #include "plugin_service.h"
 #include "plugin_session.h"
 #include "plugin_session_manager.h"
@@ -31,6 +30,7 @@
 #include "htrace_collector.h"
 #include "rawheap_collector.h"
 #include "jsmap_collector.h"
+#include "memory_trace.h"
 
 using namespace ::grpc;
 using PluginContextPtr = std::shared_ptr<PluginContext>;
@@ -233,52 +233,52 @@ bool ProfilerService::SessionContext::StopPluginSessions(bool timerTask)
     return true;
 }
 
+bool ProfilerService::SessionContext::IsArktsDiagLibLoaded(int pid)
+{
+    return true;
+}
+
 bool ProfilerService::SessionContext::CollectApm()
 {
-    std::string processName;
-    NativeHookConfig hookConfig;
-    for (auto& config : pluginConfigs) {
-        if (config.name() == "nativehook") {
-            std::string cfgData = config.config_data();
-            if (!hookConfig.ParseFromArray(reinterpret_cast<const uint8_t *>(cfgData.c_str()), cfgData.size())) {
-                PROFILER_LOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
-            } else {
-                processName = hookConfig.process_name();
-            }
-            break;
+    if (nativeHookConfig == nullptr) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "composite tag not enabled");
+        return false;
+    }
+    if (traceFileWriter == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "trace file writer is NULL");
+        return false;
+    }
+    if (nativeHookConfig->process_name().empty()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "no process name");
+        return false;
+    }
+    bool hasLocalHandleTag = false;
+    bool hasGlobalHandleTag = false;
+    for (const auto& tag: nativeHookConfig->restrace_tag()) {
+        if (tag == TAG_RES_ARK_LOCAL_HANDLE) {
+            hasLocalHandleTag = true;
+        } else if (tag == TAG_RES_ARK_GLOBAL_HANDLE){
+            hasGlobalHandleTag = true;
         }
     }
     int pidValue = 0;
-    if (processName.empty()) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "no nativehook plugin");
-        return false;
-    }
-    bool apmEnabled = false;
-    for (const auto& tag: hookConfig.restrace_tag()) {
-        if (tag == TAG_RES_COMPOSITE_HEAP) {
-            apmEnabled = true;
-            break;
-        }
-    }
-    if (!apmEnabled) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "apm tag not enabled");
-        return false;
-    }
-    CHECK_TRUE(COMMON::IsProcessExist(processName, pidValue), false, "process %s not exist", processName.c_str());
-    if (COMMON::IsUserMode() && !COMMON::CheckApplicationPermission(pidValue, processName)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "no permission to collect apm of %s", processName.c_str());
+    CHECK_TRUE(COMMON::IsProcessExist(nativeHookConfig->process_name(), pidValue), false, "process %s not exist",
+        nativeHookConfig->process_name().c_str());
+    if (COMMON::IsUserMode() && !COMMON::CheckApplicationPermission(pidValue, nativeHookConfig->process_name())) {
+        PROFILER_LOG_ERROR(LOG_CORE, "no permission to collect apm of %s", nativeHookConfig->process_name().c_str());
         return false;
     }
     uint32_t pid = static_cast<uint32_t>(pidValue);
-    size_t pos = sessionConfig.result_file().rfind("/");
-    std::string pathDir = pos != std::string::npos ? sessionConfig.result_file().substr(0, pos) : ".";
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
-    ApmCollectMgr apmMgr(pathDir + "/hiprofiler_data_" + std::to_string(ms) + ".zip");
-    apmMgr.RegisterCollector(std::static_pointer_cast<IDataCollector>(std::make_shared<RawheapCollector>(pid, pid)));
-    apmMgr.RegisterCollector(std::static_pointer_cast<IDataCollector>(std::make_shared<JsmapCollector>(pid, pid)));
+    ApmCollectMgr apmMgr(sessionConfig.result_file());
+    if (hasGlobalHandleTag || (hasLocalHandleTag && IsArktsDiagLibLoaded(pidValue))) {
+        apmMgr.RegisterCollector(
+            std::static_pointer_cast<IDataCollector>(std::make_shared<RawheapCollector>(pid, pid)));
+        apmMgr.RegisterCollector(std::static_pointer_cast<IDataCollector>(std::make_shared<JsmapCollector>(pid, pid)));
+    } else {
+        PROFILER_LOG_WARN(LOG_CORE, "no arkts handle tag enabled or arkts diag lib not loaded, only collect htrace");
+    }
     apmMgr.RegisterCollector(
-        std::static_pointer_cast<IDataCollector>(std::make_shared<TraceCollector>(sessionConfig.result_file())));
+        std::static_pointer_cast<IDataCollector>(std::make_shared<TraceCollector>(traceFileWriter->Path())));
     return apmMgr.Collect();
 }
 
@@ -347,6 +347,19 @@ Status ProfilerService::CreateSession(ServerContext* context,
         PROFILER_LOG_ERROR(LOG_CORE, "No plugins are loaded!");
         return Status(StatusCode::PERMISSION_DENIED, "");
     }
+    std::shared_ptr<NativeHookConfig> nativeHookConfig = nullptr;
+    CHECK_EXPRESSION_TRUE(TryAbstractNativeHookConfig(pluginConfigs, nativeHookConfig), "nativehook config invalid!");
+    bool hasCompositeTag = NativeHookConfigHasCompositeTag(nativeHookConfig);
+    std::string traceFile;
+    if (hasCompositeTag) {
+        CHECK_EXPRESSION_TRUE(sessionConfig->session_mode() == ProfilerSessionConfig::OFFLINE,
+            "composite only support on offline!");
+        size_t pos = sessionConfig->result_file().rfind(".zip");
+        CHECK_EXPRESSION_TRUE(pos != std::string::npos && pos == sessionConfig->result_file().size() - 4,
+            "composite result file must endding with .zip!");
+        traceFile = sessionConfig->result_file().substr(0, pos) + ".htrace";
+        sessionConfig->set_split_file(false);   // coomposite mode not support split file
+    }
     // copy buffer configs
     std::vector<BufferConfig> bufferConfigs;
     if (nBuffers == 1) {
@@ -368,7 +381,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
     TraceFileWriterPtr traceWriter;
     std::shared_ptr<ProfilerDataRepeater<ProfilerPluginData>> dataRepeater = nullptr;
     if (sessionConfig->session_mode() == ProfilerSessionConfig::OFFLINE) {
-        auto resultFile = sessionConfig->result_file();
+        auto resultFile = traceFile.empty() ? sessionConfig->result_file() : traceFile;
         CHECK_EXPRESSION_TRUE(resultFile.size() > 0, "result_file empty!");
         traceWriter = std::make_shared<TraceFileWriter>(resultFile, sessionConfig->split_file(),
             sessionConfig->split_file_max_size_mb(), sessionConfig->split_file_max_num());
@@ -406,6 +419,9 @@ Status ProfilerService::CreateSession(ServerContext* context,
     }
     if (traceWriter != nullptr) {
         ctx->traceFileWriter = traceWriter;
+    }
+    if (nativeHookConfig != nullptr) {
+        ctx->nativeHookConfig = nativeHookConfig;
     }
     ctx->sessionConfig = *sessionConfig;
     ctx->pluginNames = std::move(pluginNames);
@@ -445,6 +461,40 @@ Status ProfilerService::CreateSession(ServerContext* context,
 
     PROFILER_LOG_INFO(LOG_CORE, "CreateSession %d %u done!", request->request_id(), sessionId);
     return Status::OK;
+}
+
+bool ProfilerService::TryAbstractNativeHookConfig(const std::vector<ProfilerPluginConfig>& pluginConfigs,
+        std::shared_ptr<NativeHookConfig>& nativeHookConfig)
+{
+    std::shared_ptr<NativeHookConfig> hookConfigPtr = std::make_shared<NativeHookConfig>();
+    for (auto& config : pluginConfigs) {
+        if (config.name() == "nativehook") {
+            std::string cfgData = config.config_data();
+            if (!hookConfigPtr->ParseFromArray(reinterpret_cast<const uint8_t *>(cfgData.c_str()), cfgData.size())) {
+                PROFILER_LOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
+                return false;
+            } else {
+                nativeHookConfig = hookConfigPtr;
+                return true;
+            }
+        }
+    }
+    return true;
+}
+
+bool ProfilerService::NativeHookConfigHasCompositeTag(std::shared_ptr<NativeHookConfig>& nativeHookConfig)
+{
+    if (nativeHookConfig == nullptr) {
+        return false;
+    }
+    bool result = false;
+    for (const auto& tag: nativeHookConfig->restrace_tag()) {
+        if (tag == TAG_RES_COMPOSITE_HEAP) {
+            result = true;
+            break;
+        }
+    }
+    return result;
 }
 
 bool ProfilerService::AddSessionContext(uint32_t sessionId, const SessionContextPtr& sessionCtx)

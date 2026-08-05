@@ -21,6 +21,7 @@
 #include "nocopyable.h"
 #include "hiperf_plugin_config.pb.h"
 #include "profiler_service.grpc.pb.h"
+#include "native_hook_config.pb.h"
 #include "schedule_task_manager.h"
 #include "profiler_data_repeater.h"
 #include "i_semaphore.h"
@@ -108,6 +109,7 @@ private:
         ScheduleTaskManager stopExpireTask;
         std::atomic<bool> stopping {false};
         SemaphorePtr stopSem {nullptr};
+        std::shared_ptr<NativeHookConfig> nativeHookConfig {nullptr};
 
         SessionContext() = default;
         ~SessionContext();
@@ -116,6 +118,7 @@ private:
         bool StartPluginSessions();
         bool StopPluginSessions(bool timerTask = false);
         bool CollectApm();
+        bool IsArktsDiagLibLoaded(int pid);
 
         size_t UpdatePluginConfigs(const std::vector<ProfilerPluginConfig>& newPluginConfigs);
 
@@ -137,6 +140,10 @@ private:
 
     void MergeStandaloneFile(const std::string& resultFile, const std::string& pluginName,
         const std::string& outputFile, const std::string& pluginVersion);
+
+    bool TryAbstractNativeHookConfig(const std::vector<ProfilerPluginConfig>& pluginConfigs,
+        std::shared_ptr<NativeHookConfig>& nativeHookConfig);
+    bool NativeHookConfigHasCompositeTag(std::shared_ptr<NativeHookConfig>& nativeHookConfig);
 
     ::grpc::Status StopSessionImpl(::grpc::ServerContext* context,
                                const ::StopSessionRequest* request,

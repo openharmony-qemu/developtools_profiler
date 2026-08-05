@@ -137,7 +137,7 @@ std::unique_ptr<CreateSessionRequest> ProfilerSessionManager::MakeCreateRequest(
     }
 
     // Use FilePathHandler to handle output file path
-    auto handler = FilePathHandlerFactory::CreateHandler();
+    auto handler = FilePathHandlerFactory::CreateHandler(ParsePluginConfig::GetInstance().CheckHookPluginComposited());
     if (!handler->HandleOutputFilePath(outputFile, sessionConfig)) {
         return nullptr;
     }

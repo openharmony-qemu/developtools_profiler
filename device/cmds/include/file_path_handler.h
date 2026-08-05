@@ -50,12 +50,6 @@ protected:
 private:
     std::string GetSandboxFileName(const std::string& outputFile, ProfilerSessionConfig* sessionConfig);
     bool HandleSandboxFilename(const std::string& outputFile, ProfilerSessionConfig* sessionConfig);
-
-    static constexpr int USER_ID_MOD = 200000;
-    static constexpr int APP_ID_THRESH = 20000000;
-    static const std::string SANDBOX_PATH_ROOT;
-
-    friend class FilePathHandlerFactory;
 };
 
 class NormalFilePathHandler : public FilePathHandler {
@@ -69,15 +63,33 @@ public:
 
 protected:
     std::string GetDefaultOutputFile() override;
+};
 
-private:
-    static const std::string DEFAULT_OUTPUT_FILE;
-    static const std::string DEFAULT_OUTPUT_ROOT;
+class CompositeSandboxFilePathHandler : public SandboxFilePathHandler {
+public:
+    CompositeSandboxFilePathHandler();
+    ~CompositeSandboxFilePathHandler() override = default;
+
+    bool HandleOutputFilePath(const std::string& outputFile, ProfilerSessionConfig* sessionConfig) override;
+
+protected:
+    std::string GetDefaultOutputFile() override;
+};
+
+class CompositeNormalFilePathHandler : public NormalFilePathHandler {
+public:
+    CompositeNormalFilePathHandler() = default;
+    ~CompositeNormalFilePathHandler() override = default;
+
+    bool HandleOutputFilePath(const std::string& outputFile, ProfilerSessionConfig* sessionConfig) override;
+
+protected:
+    std::string GetDefaultOutputFile() override;
 };
 
 class FilePathHandlerFactory {
 public:
-    static std::unique_ptr<FilePathHandler> CreateHandler();
+    static std::unique_ptr<FilePathHandler> CreateHandler(bool composite = false);
 };
 
 #endif // FILE_PATH_HANDLER_H

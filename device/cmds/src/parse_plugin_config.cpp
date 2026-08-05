@@ -388,6 +388,25 @@ uint32_t ParsePluginConfig::GetHiperfPluginDuration()
     return hiperfConfigNolite->duration();
 }
 
+bool ParsePluginConfig::CheckHookPluginComposited()
+{
+    if (pluginConfigMap.find("nativehook") == pluginConfigMap.end()) {
+        return false;
+    }
+    std::string configData = pluginConfigMap["nativehook"];
+    auto hookConfigNolite = std::make_unique<ForStandard::NativeHookConfig>();
+    if (!parser_.ParseFromString(configData, hookConfigNolite.get())) {
+        printf("nativedaemon parse failed!\n");
+        return false;
+    }
+    for (int i = 0; i < hookConfigNolite->restrace_tag_size(); ++i) {
+        if (hookConfigNolite->restrace_tag(i) == TAG_RES_COMPOSITE_HEAP) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool ParsePluginConfig::SetSerializeHisyseventConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig)
 {
     std::string configData = pluginConfigMap[pluginName];
