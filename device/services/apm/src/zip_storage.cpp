@@ -15,6 +15,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <unistd.h>
+#include <sys/stat.h>
 
 #include "logging.h"
 #include "common.h"
@@ -113,9 +115,15 @@ bool ZipStorage::GetRealPath(const std::string& path, std::string& realPath)
 
 void ZipStorage::CleanStaleData()
 {
+    uid_t uid = getuid();
     std::string parentDir = fs::path(zipFilePath_).parent_path().string();
     auto filter = [](const std::string &filename) {
-        return COMMON::StringMatch(filename, "hiprofiler_data_", ".zip");
+        struct stat st;
+        std::string filepath = parentDir + "/" + filename;
+        if (stat(filepath.c_str(), &st) != 0) {
+            return false;
+        }
+        return st.st_uid == uid && COMMON::StringMatch(filename, "", ".zip");
     };
     CHECK_TRUE(COMMON::DeleteFiles(parentDir, filter), NO_RETVAL, "clean stale apm data fail");
 }
