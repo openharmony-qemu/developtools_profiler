@@ -18,10 +18,10 @@
 
 #include <array>
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <mutex>
-#include <vector>
 #include "hook_common.h"
 #include "nocopyable.h"
 
@@ -51,7 +51,7 @@ private:
     bool ReturnCurrentCacheFile();
     bool SwitchToNextCacheFile();
     bool WaitForNextCacheFile();
-    void WriteToMemoryCache(const void* data, size_t size);
+    bool WriteToMemoryCache(const void* data, size_t size);
     bool FlushMemoryCacheToFile();
     bool WriteToFile(const uint8_t* data, size_t size);
     bool NotifyFileEvent(uint16_t fileIndex, uint16_t eventType, int fd);
@@ -59,11 +59,15 @@ private:
     void ApplyBackpressureDelay();
     void AdaptiveWait(uint32_t delayNs);
     bool ShouldApplyBackpressure();
+    uint8_t* AllocateMmapCache(uint32_t capacity);
+    void ReleaseMmapCache();
 
 private:
     std::mutex writeMutex_;
     FileEventCallback fileEventCallback_ = nullptr;
-    std::vector<uint8_t> memoryCache_;
+    uint8_t* memoryCache_ = nullptr;
+    uint32_t memoryCacheCapacity_ = 0;
+    size_t memoryCacheSize_ = 0;
     std::array<int, FILE_CACHE_FD_COUNT> pendingFileFds_ {{-1, -1, -1}};
     int currentFileFd_ = -1;
     uint16_t currentFileIndex_ = INVALID_CACHE_FILE_INDEX;
@@ -72,7 +76,7 @@ private:
     std::atomic<bool> initialized_ = false;
     bool isCacheFileEnded_ = false;
     bool stopModeEnabled_ = false;
-    uint32_t cacheMemorySize_;
+    uint32_t memoryCacheDataSizeLimit_;
     
     std::atomic<uint64_t> delayCount_{0};
     std::atomic<uint32_t> currentBackpressureDelay_{0};

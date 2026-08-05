@@ -269,6 +269,8 @@ private:
     uint32_t FindSimplifiedAsyncCallStackId(const HookRecordPtr& hookRecord);
     uint32_t FindFullAsyncCallStackId(const HookRecordPtr& hookRecord);
     uint32_t FindFullAsyncStatisticsStackId(const HookRecordPtr& hookRecord);
+    uint64_t GetAsyncDedupMallocSize(const RawStackPtr& rawData) const;
+    uint32_t GetDedupTagId(const RawStackPtr& rawData) const;
 
     uint32_t FindSyncCallStackId(std::vector<uint64_t>& callStack, const HookRecordPtr& hookRecord);
     uint32_t FindSimplifiedSyncCallStackId(std::vector<uint64_t>& callStack, const HookRecordPtr& hookRecord);
@@ -285,7 +287,8 @@ private:
     void FindAndUpdateFreeStatisticsLocked(uint32_t stackId, uint64_t mallocSize);
 
     template <typename T, typename StackData>
-    void FlushStatisticsEntry(T* statistics, uint32_t stackId, StackData& stackData);
+    void FlushStatisticsEntry(T* statistics, uint32_t stackId, StackData& stackData,
+        const struct timespec& timestamp);
 private:
     std::chrono::steady_clock::time_point lastStatisticsTime_ = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point lastCacheFileActivityTime_ = std::chrono::steady_clock::now();

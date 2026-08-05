@@ -265,14 +265,13 @@ bool ProfilerService::SessionContext::CollectApm()
         return false;
     }
     CHECK_TRUE(COMMON::IsProcessExist(processName, pidValue), false, "process %s not exist", processName.c_str());
+    if (COMMON::IsUserMode() && !COMMON::CheckApplicationPermission(pidValue, processName)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "no permission to collect apm of %s", processName.c_str());
+        return false;
+    }
     uint32_t pid = static_cast<uint32_t>(pidValue);
     size_t pos = sessionConfig.result_file().rfind("/");
-    std::string pathDir = "";
-    if (pos != std::string::npos) {
-        pathDir = sessionConfig.result_file().substr(0, pos);
-    } else {
-        pathDir = ".";
-    }
+    std::string pathDir = pos != std::string::npos ? sessionConfig.result_file().substr(0, pos) : ".";
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
     ApmCollectMgr apmMgr(pathDir + "/hiprofiler_data_" + std::to_string(ms) + ".zip");

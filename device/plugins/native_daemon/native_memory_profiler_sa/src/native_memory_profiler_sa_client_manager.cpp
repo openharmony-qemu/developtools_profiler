@@ -19,6 +19,7 @@
 #include "native_memory_profiler_sa_proxy.h"
 #include "schedule_task_manager.h"
 #include "common.h"
+#include "mem_config.h"
 
 #include "logging.h"
 
@@ -817,6 +818,13 @@ int32_t NativeMemoryProfilerSaClientManager::Prepare()
     auto remoteObject = sam->CheckSystemAbility(INativeMemoryProfilerSa::NATIVE_DAEMON_SYSTEM_ABILITY_ID);
     if (remoteObject == nullptr) {
         PROFILER_LOG_DEBUG(LOG_CORE, "NativeMemoryProfilerSaClientManager: Prepare start");
+        int32_t nativeDaemonPid = 0;
+        if (COMMON::IsProcessExist("native_daemon", nativeDaemonPid)) {
+            PROFILER_LOG_ERROR(LOG_CORE,
+                "NativeMemoryProfilerSaClientManager: Native Daemon is already running, skip SA load, errorcode is:%d.",
+                static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
+            return RET_PREPARE_FAIL;
+        }
         int32_t retStart = OnDemandStart(sam, remoteObject);
         if (remoteObject == nullptr || retStart != 0) {
             PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: Prepare start failed");

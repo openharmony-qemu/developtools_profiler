@@ -671,7 +671,7 @@ HWTEST_F(StackPreprocessTest, CallStackHash02, TestSize.Level0)
 
 /*
 @tc.name: CallStackHash03
-@tc.desc: Same call stack but different tagName should map to different stack ids.
+@tc.desc: Non-statistics stack mapping should ignore tagName for identical call stacks.
 @tc.type: FUNC
 */
 HWTEST_F(StackPreprocessTest, CallStackHash03, TestSize.Level0)
@@ -696,7 +696,7 @@ HWTEST_F(StackPreprocessTest, CallStackHash03, TestSize.Level0)
     BatchNativeHookData data2;
     uint32_t id2 = preprocess.GetCallStackId(hr2, frames, data2);
     EXPECT_GT(id2, 0u);
-    EXPECT_NE(id1, id2);
+    EXPECT_EQ(id1, id2);
 }
 
 /*
@@ -797,6 +797,80 @@ HWTEST_F(StackPreprocessTest, CallStackHash07, TestSize.Level0)
     std::vector<uint64_t> emptyCallStack;
     uint32_t id2 = preprocess.FindCallStackId(emptyCallStack, hookRecord);
     EXPECT_EQ(id1, id2);
+}
+
+/*
+@tc.name: NonStatisticsAsyncStackIgnoresSizeAndTag
+@tc.desc: non-statistics async stack mapping should reuse the id when only size and tag differ.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, NonStatisticsAsyncStackIgnoresSizeAndTag, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_async_stack_enable(true);
+    hookConfig.set_fp_unwind(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto firstRecord = MakeAsyncHookRecord(MALLOC_MSG, 11, 22, 64);
+    auto secondRecord = MakeAsyncHookRecord(MALLOC_MSG, 11, 22, 128);
+    firstRecord->GetRawStack()->stackContext->tagId = 1;
+    secondRecord->GetRawStack()->stackContext->tagId = 2;
+    auto firstFrames = MakeFrames(0x1234);
+    auto secondFrames = MakeFrames(0x1234);
+    BatchNativeHookData data;
+
+    uint32_t firstId = preprocess.GetCallStackId(firstRecord, firstFrames, data);
+    uint32_t secondId = preprocess.GetCallStackId(secondRecord, secondFrames, data);
+
+    EXPECT_EQ(firstId, secondId);
+}
+
+/*
+@tc.name: StatisticsSimplifiedSyncStackIgnoresTagId
+@tc.desc: simplified statistics stack mapping should ignore tagId for identical frames.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, StatisticsSimplifiedSyncStackIgnoresTagId, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    hookConfig.set_fp_unwind(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto firstRecord = MakeHookRecord(0, 0, 1);
+    auto secondRecord = MakeHookRecord(0, 0, 2);
+    auto firstFrames = MakeFrames(0x1234);
+    auto secondFrames = MakeFrames(0x1234);
+    BatchNativeHookData data;
+
+    preprocess.SetAllocStatisticsFrame(firstRecord, firstFrames, data);
+    preprocess.SetAllocStatisticsFrame(secondRecord, secondFrames, data);
+
+    EXPECT_EQ(preprocess.simplifiedCallStackIndex_.size(), 1u);
+}
+
+/*
+@tc.name: StatisticsSimplifiedAsyncStackIgnoresTagId
+@tc.desc: simplified async statistics stack mapping should ignore tagId for identical stacks.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, StatisticsSimplifiedAsyncStackIgnoresTagId, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    hookConfig.set_async_stack_enable(true);
+    hookConfig.set_fp_unwind(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto firstRecord = MakeAsyncHookRecord(MALLOC_MSG, 11, 22, 64);
+    auto secondRecord = MakeAsyncHookRecord(MALLOC_MSG, 11, 22, 64);
+    firstRecord->GetRawStack()->stackContext->tagId = 1;
+    secondRecord->GetRawStack()->stackContext->tagId = 2;
+    auto firstFrames = MakeFrames(0x1234);
+    auto secondFrames = MakeFrames(0x1234);
+    BatchNativeHookData data;
+
+    preprocess.SetAllocStatisticsFrame(firstRecord, firstFrames, data);
+    preprocess.SetAllocStatisticsFrame(secondRecord, secondFrames, data);
+
+    EXPECT_EQ(preprocess.simplifiedAsyncCallStackIndex_.size(), 1u);
 }
 
 /*

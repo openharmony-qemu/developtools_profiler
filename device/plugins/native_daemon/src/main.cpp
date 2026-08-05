@@ -54,8 +54,9 @@ bool ParseCommand(const std::vector<std::string>& args, HookData& hookData)
             hookData.pids.insert(pids.begin(), pids.end());
             for (auto iter = hookData.pids.begin(); iter != hookData.pids.end();) {
                 if (!ProcessExist(*iter)) {
+                    std::string pid = *iter;
                     iter = hookData.pids.erase(iter);
-                    printf("process does not exist %s\n", iter->c_str());
+                    printf("process does not exist %s\n", pid.c_str());
                 } else {
                     ++iter;
                 }
@@ -259,6 +260,10 @@ int main(int argc, char* argv[])
 
     if (argc > 1) {
         if (argc == 2 && strcmp(argv[1], "sa") == 0) { // 2: argc size
+            if (lockFileFd > 0) {
+                flock(lockFileFd, LOCK_UN);
+                close(lockFileFd);
+            }
             return 0;
         } else {
             if (!COMMON::GetDeveloperMode()) {
