@@ -35,12 +35,6 @@ public:
     static bool ParseIntProperty(ani_env *env, ani_object object, const char *name, int32_t &value);
     static ani_status SetNamedPropertyNumber(ani_env *env, ani_object object, const std::string& name, double value);
     static ani_vm* GetAniVm(ani_env *env);
-    // DumpHeapSnapshot 测试接口（三方暂未提供，函数名保持一致，不需要具体实现）
-    // 同步版本 - 用于 dumpJsHeapData
-    static bool DumpHeapSnapshot(const std::string& filePath, bool needClean);
-    // 异步版本 - 用于 dumpJsRawHeapData
-    static void DumpHeapSnapshot(bool isGc, const std::string& filePath,
-        const std::function<void(uint8_t)>& callback, bool needClean, bool isProcDump);
 };
 } // namespace HiviewDFX
 } // namespace OHOS

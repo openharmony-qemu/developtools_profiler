@@ -43,6 +43,7 @@
 #include "refbase.h"
 #include "heap_helpers.h"
 #include "debugger_arkapi.h"
+#include "dfx_jsnapi.h"
 #include "system_ability_definition.h"
 
 #ifdef ENABLE_API_METRICS
@@ -921,6 +922,16 @@ std::string GenerateDumpFile(int64_t currentTime)
         "-" + std::to_string(currentTime / MS_TO_NS) + RAW_HEAP_FILE_EXT;
 }
 
+std::string GenerateStaticDumpFile(int64_t currentTime)
+{
+    std::string filesDir = GetProcessDir(DirectoryType::FILE);
+    if (filesDir.empty()) {
+        return "";
+    }
+    return filesDir + SLASH_STR + "hidebug-static_jsheap-" + std::to_string(getpid()) +
+        "-" + std::to_string(currentTime / MS_TO_NS) + RAW_HEAP_FILE_EXT;
+}
+
 bool AppendMetaData(const std::string& newPath)
 {
     auto rawHeapFileSize = static_cast<uint32_t>(GetFileSize(newPath));
@@ -1041,7 +1052,16 @@ void DumpJsHeapDataAdapter(ani_env *env, ani_string fileNameAni, ani_boolean nee
         return;
     }
     // 同步接口
-    if (!AniUtil::DumpHeapSnapshot(filePath, needClean == ANI_TRUE)) {
+    panda::DumpSnapShotOption dumpOption;
+    dumpOption.dumpFormat = panda::DumpFormat::JSON;
+    dumpOption.isVmMode = true;
+    dumpOption.isPrivate = false;
+    dumpOption.captureNumericValue = true;
+    dumpOption.isFullGC = true;
+    dumpOption.isSync = true;
+    dumpOption.isClearNodeIdCache = needClean == ANI_TRUE;
+    dumpOption.languageEnv = panda::ecmascript::LanguageEnv::HYBRID;
+    if (!panda::DFXJSNApi::DumpHybridHeapSnapshot(filePath, dumpOption)) {
         apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         AniUtil::ThrowErrorMessage(env, "dump heap snapshot failed.", ErrorCode::SYSTEM_STATUS_ABNORMAL);
     }
@@ -1124,51 +1144,49 @@ static std::string GetDumpRawHeapErrMsg(int32_t errCode)
     return "dumpJsRawHeapData failed";
 }
 
-bool CheckDumpJsRawHeapPreconditions(ani_env *env, ApiInvokeRecorder &recorder)
+int32_t CheckDumpJsRawHeapPreconditions(ApiInvokeRecorder &recorder)
 {
     if (g_dumpingCount.fetch_add(1) != 0) {
         HILOG_ERROR(LOG_CORE, "DumpRawHeap is already running, reject repeated request.");
         recorder.SetErrorCode(DumpRawHeapErrors::REPEAT_DUMPING);
-        AniUtil::ThrowErrorMessage(env,
-            "It is currently dumping. Please wait until the dumping is completed before making another call.",
-            DumpRawHeapErrors::REPEAT_DUMPING);
-        g_dumpingCount.fetch_sub(1);
-        return false;
+        return DumpRawHeapErrors::REPEAT_DUMPING;
     }
     if (!CheckDumpDiskSpace()) {
         recorder.SetErrorCode(DumpRawHeapErrors::LOW_DISK_SPACE);
-        AniUtil::ThrowErrorMessage(env, "Disk remaining space too low.", DumpRawHeapErrors::LOW_DISK_SPACE);
-        g_dumpingCount.fetch_sub(1);
-        return false;
+        return DumpRawHeapErrors::LOW_DISK_SPACE;
     }
     if (DumpLimitEnable() && (!CheckDeviceQuota() || !CheckProcessQuota())) {
         recorder.SetErrorCode(DumpRawHeapErrors::QUOTA_EXCEEDED);
-        AniUtil::ThrowErrorMessage(env,
-            "The number of available invocations for the interface is insufficient. "
-            "Please wait until the number of available invocations for the interface is reset.",
-            DumpRawHeapErrors::QUOTA_EXCEEDED);
-        g_dumpingCount.fetch_sub(1);
-        return false;
+        return DumpRawHeapErrors::QUOTA_EXCEEDED;
     }
-    return true;
+    return 0;
 }
 
-std::string PrepareDumpFile(ani_env *env, ApiInvokeRecorder &recorder)
+struct DumpFilePaths {
+    std::string dynamicPath;
+    std::string staticPath;
+};
+
+DumpFilePaths PrepareDumpFile(ApiInvokeRecorder &recorder, int32_t &errCode)
 {
-    std::string filePath = GenerateDumpFile(GetRealNanoSecondsTimestamp());
-    if (filePath.empty()) {
-        recorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        AniUtil::ThrowErrorMessage(env, "Get App files dir failed.", ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        g_dumpingCount.fetch_sub(1);
-        return "";
-    }
-    if (!CreateFile(filePath)) {
+    errCode = 0;
+    int64_t currentTime = GetRealNanoSecondsTimestamp();
+    DumpFilePaths paths;
+    paths.dynamicPath = GenerateDumpFile(currentTime);
+    paths.staticPath = GenerateStaticDumpFile(currentTime);
+    if (paths.dynamicPath.empty() || paths.staticPath.empty()) {
         recorder.SetErrorCode(DumpRawHeapErrors::FAILED_CREATE_FILE);
-        AniUtil::ThrowErrorMessage(env, "Failed to create dump file.", DumpRawHeapErrors::FAILED_CREATE_FILE);
+        errCode = DumpRawHeapErrors::FAILED_CREATE_FILE;
         g_dumpingCount.fetch_sub(1);
-        return "";
+        return {};
     }
-    return filePath;
+    if (!CreateFile(paths.dynamicPath) || !CreateFile(paths.staticPath)) {
+        recorder.SetErrorCode(DumpRawHeapErrors::FAILED_CREATE_FILE);
+        errCode = DumpRawHeapErrors::FAILED_CREATE_FILE;
+        g_dumpingCount.fetch_sub(1);
+        return {};
+    }
+    return paths;
 }
 
 struct DumpHeapParams {
@@ -1194,7 +1212,8 @@ void PostDumpSuccess(const std::string& filePath)
 
 struct DumpRawHeapContext {
     ani_resolver deferred;
-    std::string filePath;
+    std::string dynamicFilePath;
+    std::string staticFilePath;
     DumpHeapParams params;
     std::shared_ptr<ApiInvokeRecorder> recorder;
 };
@@ -1211,65 +1230,88 @@ static void OnDumpHeapSnapshotDone(std::shared_ptr<DumpRawHeapContext> ctx, uint
     }
     if (retCode != 0) {
         int32_t errCode = TransferRetCodeToErrorCode(retCode);
-        ctx->recorder->SetErrorCode(errCode);
-        remove(ctx->filePath.c_str());
+        ctx->recorder->SetErrorCode(retCode);
+        remove(ctx->dynamicFilePath.c_str());
+        remove(ctx->staticFilePath.c_str());
+        g_dumpingCount.fetch_sub(1);
         ani_error err = CreateBusinessError(cbEnv, errCode, GetDumpRawHeapErrMsg(errCode));
         cbEnv->PromiseResolver_Reject(ctx->deferred, err);
-        g_dumpingCount.fetch_sub(1);
         return;
     }
-    PostDumpSuccess(ctx->filePath);
-    ani_string result = nullptr;
-    if (cbEnv->String_NewUTF8(ctx->filePath.c_str(), ctx->filePath.size(), &result) != ANI_OK) {
+    PostDumpSuccess(ctx->dynamicFilePath);
+    ani_string dynamicResult = nullptr;
+    ani_string staticResult = nullptr;
+    if (cbEnv->String_NewUTF8(ctx->dynamicFilePath.c_str(), ctx->dynamicFilePath.size(), &dynamicResult) != ANI_OK ||
+        cbEnv->String_NewUTF8(ctx->staticFilePath.c_str(), ctx->staticFilePath.size(), &staticResult) != ANI_OK) {
         HILOG_ERROR(LOG_CORE, "OnDumpHeapSnapshotDone: String_NewUTF8 failed");
+        g_dumpingCount.fetch_sub(1);
         ani_error err = CreateBusinessError(cbEnv, ErrorCode::SYSTEM_STATUS_ABNORMAL,
             "Create dump file path string failed");
         cbEnv->PromiseResolver_Reject(ctx->deferred, err);
-        g_dumpingCount.fetch_sub(1);
         return;
     }
     ani_array arr = nullptr;
     ani_ref initElem = cbEnv->GetUndefined(&initElem) == ANI_OK ? initElem : nullptr;
-    if (cbEnv->Array_New(1, initElem, &arr) == ANI_OK) {
-        cbEnv->Array_Set(arr, 0, static_cast<ani_ref>(result));
-        cbEnv->PromiseResolver_Resolve(ctx->deferred, static_cast<ani_ref>(arr));
+    if (cbEnv->Array_New(2, initElem, &arr) == ANI_OK) {
+        cbEnv->Array_Set(arr, 0, static_cast<ani_ref>(dynamicResult));
+        cbEnv->Array_Set(arr, 1, static_cast<ani_ref>(staticResult));
         g_dumpingCount.fetch_sub(1);
+        cbEnv->PromiseResolver_Resolve(ctx->deferred, static_cast<ani_ref>(arr));
         return;
     }
     HILOG_ERROR(LOG_CORE, "OnDumpHeapSnapshotDone: Array_New failed, reject");
+    g_dumpingCount.fetch_sub(1);
     ani_error err = CreateBusinessError(cbEnv, ErrorCode::SYSTEM_STATUS_ABNORMAL,
         "Failed to create result array");
     cbEnv->PromiseResolver_Reject(ctx->deferred, err);
-    g_dumpingCount.fetch_sub(1);
 }
 
 ani_object DumpJsRawHeapDataAdapter(ani_env *env, ani_boolean needGC, ani_boolean needClean, ani_boolean processDump)
 {
-    ApiInvokeRecorder apiInvokeRecorder("dumpJsRawHeapData");
-    if (!CheckDumpJsRawHeapPreconditions(env, apiInvokeRecorder)) {
-        return nullptr;
-    }
-    std::string filePath = PrepareDumpFile(env, apiInvokeRecorder);
-    if (filePath.empty()) {
-        return nullptr;
-    }
+    auto apiInvokeRecorder = std::make_shared<ApiInvokeRecorder>("dumpJsRawHeapData");
     ani_resolver deferred = nullptr;
     ani_object promise = nullptr;
     if (env->Promise_New(&deferred, &promise) != ANI_OK || deferred == nullptr || promise == nullptr) {
         HILOG_ERROR(LOG_CORE, "DumpJsRawHeapDataAdapter: Promise_New failed");
         AniUtil::ThrowErrorMessage(env, "Promise_New failed", ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        g_dumpingCount.fetch_sub(1);
         return nullptr;
+    }
+    int32_t preErrCode = CheckDumpJsRawHeapPreconditions(*apiInvokeRecorder);
+    if (preErrCode != 0) {
+        g_dumpingCount.fetch_sub(1);
+        ani_error err = CreateBusinessError(env, preErrCode, GetDumpRawHeapErrMsg(preErrCode));
+        env->PromiseResolver_Reject(deferred, err);
+        return promise;
+    }
+    int32_t prepErrCode = 0;
+    DumpFilePaths paths = PrepareDumpFile(*apiInvokeRecorder, prepErrCode);
+    if (prepErrCode != 0) {
+        ani_error err = CreateBusinessError(env, prepErrCode, GetDumpRawHeapErrMsg(prepErrCode));
+        env->PromiseResolver_Reject(deferred, err);
+        return promise;
     }
     auto ctx = std::make_shared<DumpRawHeapContext>();
     ctx->deferred = deferred;
-    ctx->filePath = filePath;
+    ctx->dynamicFilePath = paths.dynamicPath;
+    ctx->staticFilePath = paths.staticPath;
     ctx->params = {needGC == ANI_TRUE, needClean == ANI_TRUE, processDump == ANI_TRUE};
-    ctx->recorder = std::make_shared<ApiInvokeRecorder>("dumpJsRawHeapData");
+    ctx->recorder = apiInvokeRecorder;
 
     auto callback = [ctx](uint8_t code) { OnDumpHeapSnapshotDone(ctx, code); };
-    AniUtil::DumpHeapSnapshot(ctx->params.isGc, ctx->filePath, callback,
-        ctx->params.isNeedClean, ctx->params.isProcDump);
+    panda::DumpSnapShotOption rawDumpOption;
+    rawDumpOption.dumpFormat = panda::DumpFormat::BINARY;
+    rawDumpOption.isVmMode = true;
+    rawDumpOption.isPrivate = false;
+    rawDumpOption.isFullGC = ctx->params.isGc;
+    rawDumpOption.isSync = false;
+    rawDumpOption.isClearNodeIdCache = ctx->params.isNeedClean;
+    rawDumpOption.isProcDump = ctx->params.isProcDump;
+    rawDumpOption.languageEnv = panda::ecmascript::LanguageEnv::HYBRID;
+    if (!panda::DFXJSNApi::DumpHybridRawHeapSnapshot(ctx->dynamicFilePath, ctx->staticFilePath,
+        rawDumpOption, callback)) {
+        HILOG_ERROR(LOG_CORE, "DumpHybridRawHeapSnapshot failed.");
+        callback(static_cast<uint8_t>(panda::ecmascript::DumpHeapSnapshotStatus::FORK_FAILED));
+    }
     return promise;
 }
 

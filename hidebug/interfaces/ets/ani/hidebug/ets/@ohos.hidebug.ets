@@ -410,7 +410,7 @@ export default namespace hidebug {
   native function dumpJsRawHeapDataAdapter(needGC: boolean, needClean: boolean, processDump: boolean): Promise<Array<string>>;
 
   export function dumpJsRawHeapData(needGC?: boolean): Promise<string> {
-    return dumpJsRawHeapDataAdapter(needGC === true, false, false).then((arr: Array<string>): string => {
+    return dumpJsRawHeapDataAdapter(needGC !== false, false, false).then((arr: Array<string>): string => {
       return arr[0];
     });
   }
