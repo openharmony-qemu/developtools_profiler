@@ -275,7 +275,8 @@ bool ProfilerService::SessionContext::CollectApm()
             std::static_pointer_cast<IDataCollector>(std::make_shared<RawheapCollector>(pid, pid)));
         apmMgr.RegisterCollector(std::static_pointer_cast<IDataCollector>(std::make_shared<JsmapCollector>(pid, pid)));
     } else {
-        PROFILER_LOG_WARN(LOG_CORE, "no arkts handle tag enabled or arkts diag lib not loaded, only collect htrace");
+        PROFILER_LOG_WARN(LOG_CORE, "no arkts handle tag enabled or diag lib not loaded (%d,%d), only collect htrace",
+            hasGlobalHandleTag, hasLocalHandleTag);
     }
     apmMgr.RegisterCollector(
         std::static_pointer_cast<IDataCollector>(std::make_shared<TraceCollector>(traceFileWriter->Path())));

@@ -117,7 +117,7 @@ void ZipStorage::CleanStaleData()
 {
     uid_t uid = getuid();
     std::string parentDir = fs::path(zipFilePath_).parent_path().string();
-    auto filter = [](const std::string &filename) {
+    auto filter = [&uid, &parentDir](const std::string &filename) {
         struct stat st;
         std::string filepath = parentDir + "/" + filename;
         if (stat(filepath.c_str(), &st) != 0) {
