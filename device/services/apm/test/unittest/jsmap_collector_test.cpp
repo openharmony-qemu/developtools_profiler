@@ -23,8 +23,10 @@
 using namespace testing::ext;
 
 namespace {
-constexpr uint32_t VALID_PID = 2000;
-constexpr uint32_t VALID_TID = 2001;
+// 4194305 exceeds PID_MAX_LIMIT (4194304 = 2^22), the absolute kernel upper bound,
+// guarantees no matching process record on any OHOS device under any pid_max config.
+constexpr uint32_t VALID_PID = 4194305;
+constexpr uint32_t VALID_TID = 4194305;
 constexpr uint32_t INVALID_PID = 0;
 constexpr uint32_t INVALID_TID = 0;
 }
