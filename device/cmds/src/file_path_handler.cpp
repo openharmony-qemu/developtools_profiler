@@ -164,7 +164,8 @@ std::string CompositeSandboxFilePathHandler::GetDefaultOutputFile()
     return fileName;
 }
 
-bool CompositeSandboxFilePathHandler::HandleOutputFilePath(const std::string& outputFile, ProfilerSessionConfig* sessionConfig)
+bool CompositeSandboxFilePathHandler::HandleOutputFilePath(
+    const std::string& outputFile, ProfilerSessionConfig* sessionConfig)
 {
     if (!SandboxFilePathHandler::HandleOutputFilePath(outputFile, sessionConfig)) {
         return false;
@@ -187,7 +188,8 @@ std::string CompositeNormalFilePathHandler::GetDefaultOutputFile()
     return DEFAULT_OUTPUT_ROOT + COMPOSITE_OUTPUT_FILE_PREFIX + std::to_string(ms) + COMPOSITE_OUTPUT_FILE_SUFFFIX;
 }
 
-bool CompositeNormalFilePathHandler::HandleOutputFilePath(const std::string& outputFile, ProfilerSessionConfig* sessionConfig)
+bool CompositeNormalFilePathHandler::HandleOutputFilePath(
+    const std::string& outputFile, ProfilerSessionConfig* sessionConfig)
 {
     if (!NormalFilePathHandler::HandleOutputFilePath(outputFile, sessionConfig)) {
         return false;
