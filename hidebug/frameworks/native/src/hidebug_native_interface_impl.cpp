@@ -314,8 +314,7 @@ void HidebugNativeInterfaceImpl::SubmitDelayedTask()
 {
     std::lock_guard<std::mutex> lock(cpuUsageTaskMutex_);
     if (cpuUsageTask_) {
-        auto taskCopy = cpuUsageTask_;
-        ffrt::submit(std::move(taskCopy), {}, {}, ffrt::task_attr().delay(CPU_USAGE_DELAY_TIME));
+        ffrt::submit(cpuUsageTask_, {}, {}, ffrt::task_attr().delay(CPU_USAGE_DELAY_TIME));
     }
 }
 
