@@ -251,7 +251,7 @@ bool ProfilerService::SessionContext::IsArktsDiagLibLoaded(int32_t pid)
         return false;
     }
     std::string libName = std::string(value.data());
-    std::ifstream ifs("/proc/" + std::to_string(pid) + "maps");
+    std::ifstream ifs("/proc/" + std::to_string(pid) + "/maps");
     if (!ifs.is_open()) {
         PROFILER_LOG_ERROR(LOG_CORE, "open /proc/%d/maps fail, err:%d,%s", pid, errno, strerror(errno));
         return false;
