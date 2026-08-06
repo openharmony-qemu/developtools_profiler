@@ -16,6 +16,7 @@
 #ifndef MEM_CONFIG_H
 #define MEM_CONFIG_H
 
+#include <map>
 #include <string>
 #include <sys/types.h>
 
@@ -73,12 +74,19 @@ struct SimplifiedMemConfig {
     uint32_t asyncTaskStackDepth = 0;
 };
 
+using Range = std::pair<uint64_t, uint64_t>;
+
 struct MemAPIConfig {
-    uint32_t maxDuration;
-    uint32_t filterSize;
-    uint32_t maxStackDepth;
-    uint32_t statisticsInterval;
-    uint32_t sampleInterval;
+    uint32_t maxDuration = 0;
+    uint32_t filterSize = 0;
+    uint32_t maxStackDepth = 0;
+    uint32_t statisticsInterval = 0;
+    uint32_t sampleInterval = 0;
+    std::map<std::string, std::pair<Range, Range>> hookSizes;
+    bool asyncStackEnable = false;
+    bool nestedAsyncStackEnable = false;
+    uint32_t asyncNestingDepth = 0;
+    uint32_t asyncTaskStackDepth = 0;
 };
 
 } // namespace NativeDaemon

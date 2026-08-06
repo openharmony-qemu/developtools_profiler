@@ -32,6 +32,10 @@ constexpr uint32_t DEFINE_MIN_FILTER_SIZE = 1; // bytes
 constexpr uint32_t DEFINE_MAX_STACK_DEPTH = 30;
 constexpr uint32_t DEFINE_MAX_STATISTICS_INTERVAL = 3600; // seconds
 constexpr uint32_t DEFINE_MIN_SAMPLE_INTERVAL = 384; // bytes
+constexpr uint32_t DEFINE_MIN_ASYNC_NESTING_DEPTH = 1;
+constexpr uint32_t DEFINE_MAX_ASYNC_NESTING_DEPTH = 16;
+constexpr uint32_t DEFINE_MIN_ASYNC_TASK_STACK_DEPTH = 1;
+constexpr uint32_t DEFINE_MAX_ASYNC_TASK_STACK_DEPTH = 256;
 }
 
 ResProfilerErrorCode MemoryProfilerClientImpl::Start(uint32_t duration, SimplifiedMemConfig& config,
@@ -123,6 +127,18 @@ bool MemoryProfilerClientImpl::CheckInput(int32_t resourceType, const MemAPIConf
     if (config.sampleInterval < DEFINE_MIN_SAMPLE_INTERVAL) {
         PROFILER_LOG_ERROR(LOG_CORE, "Invalid sampleInterval: %u", config.sampleInterval);
         return false;
+    }
+    if (config.asyncStackEnable) {
+        if (config.asyncTaskStackDepth < DEFINE_MIN_ASYNC_TASK_STACK_DEPTH ||
+            config.asyncTaskStackDepth > DEFINE_MAX_ASYNC_TASK_STACK_DEPTH) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Invalid asyncTaskStackDepth: %u", config.asyncTaskStackDepth);
+            return false;
+        }
+        if (config.nestedAsyncStackEnable && (config.asyncNestingDepth < DEFINE_MIN_ASYNC_NESTING_DEPTH ||
+            config.asyncNestingDepth > DEFINE_MAX_ASYNC_NESTING_DEPTH)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Invalid asyncNestingDepth: %u", config.asyncNestingDepth);
+            return false;
+        }
     }
     return true;
 }
