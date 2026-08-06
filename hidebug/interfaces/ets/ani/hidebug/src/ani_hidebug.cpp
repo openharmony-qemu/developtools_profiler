@@ -1051,7 +1051,6 @@ void DumpJsHeapDataAdapter(ani_env *env, ani_string fileNameAni, ani_boolean nee
         AniUtil::ThrowErrorMessage(env, "file created failed.", ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return;
     }
-    // 同步接口
     panda::DumpSnapShotOption dumpOption;
     dumpOption.dumpFormat = panda::DumpFormat::JSON;
     dumpOption.isVmMode = true;
@@ -1066,8 +1065,6 @@ void DumpJsHeapDataAdapter(ani_env *env, ani_string fileNameAni, ani_boolean nee
         AniUtil::ThrowErrorMessage(env, "dump heap snapshot failed.", ErrorCode::SYSTEM_STATUS_ABNORMAL);
     }
 }
-
-// needGC: boolean, needClean: boolean, processDump: boolean -> 返回文件路径
 
 // 重复调用保护计数器（dump 期间拒绝并发调用）
 static std::atomic<int> g_dumpingCount{0};
