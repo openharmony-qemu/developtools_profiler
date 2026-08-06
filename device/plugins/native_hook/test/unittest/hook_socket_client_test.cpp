@@ -257,4 +257,30 @@ HWTEST_F(HookSocketClientTest, SendSimplifiedNmdInfo, TestSize.Level0)
 }
 #endif
 
+/*
+ * @tc.name: DisableHookSkipInMmapMunmap
+ * @tc.desc: test DisableHook skips when g_inMmapMunmap is true, callback not invoked.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, DisableHookSkipInMmapMunmap, TestSize.Level0)
+{
+    static int callbackCount = 0;
+    callbackCount = 0;
+    auto callback = []() { callbackCount++; };
+
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr, nullptr, callback);
+    SocketContext socketContext;
+    ClientConfigIpc configIpc = MakeClientConfigIpc(ClientConfig{});
+    auto ptr = reinterpret_cast<const int8_t*>(&configIpc);
+    ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, sizeof(configIpc)));
+
+    g_inMmapMunmap = true;
+    hookClient.DisableHook();
+    g_inMmapMunmap = false;
+    EXPECT_EQ(callbackCount, 0);
+
+    hookClient.DisableHook();
+    EXPECT_EQ(callbackCount, 1);
+}
+
 } // namespace

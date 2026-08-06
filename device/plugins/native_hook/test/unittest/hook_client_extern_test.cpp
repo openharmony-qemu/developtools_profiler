@@ -107,9 +107,8 @@ public:
         g_hookClient = mockClient;
 
         EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_,
-            ::testing::_, ::testing::_, ::testing::_)).WillRepeatedly([&typeVec, &sizeVec, sendInfo]
-            (const void* data, size_t size, const void* payload, size_t payloadSize,
-            int smbIndex, bool skipDisableHook) {
+            ::testing::_, ::testing::_)).WillRepeatedly([&typeVec, &sizeVec, sendInfo]
+            (const void* data, size_t size, const void* payload, size_t payloadSize, int smbIndex) {
             if (data) {
                 const BaseStackRawData* data_ptr = static_cast<const BaseStackRawData*>(data);
                 typeVec.push_back(data_ptr->type);
