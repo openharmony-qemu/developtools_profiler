@@ -22,6 +22,7 @@
 #include "share_memory_allocator.h"
 #include "mem_leak_detector.h"
 #include "logging.h"
+#include "musl_preinit_common.h"
 #include "sampling.h"
 #include <unistd.h>
 #include <sys/stat.h>
@@ -245,7 +246,9 @@ bool HookSocketClient::HandleControlCommand(uint32_t cmd)
     if (stopRequested_.compare_exchange_strong(expected, true,
         std::memory_order_release, std::memory_order_relaxed)) {
         PROFILER_LOG_INFO(LOG_CORE, "HandleControlCommand: trigger hook end, pid %d", pid_);
+        __set_hook_flag(false);
         (void)ohos_malloc_hook_on_end();
+        __set_hook_flag(true);
     } else {
         PROFILER_LOG_INFO(LOG_CORE, "HandleControlCommand: stop already requested, pid %d", pid_);
     }
