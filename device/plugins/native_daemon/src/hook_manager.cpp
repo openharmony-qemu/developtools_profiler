@@ -63,12 +63,15 @@ inline void ApplyLiveDataByType(const BaseStackRawData* data,
 }
 
 inline void UpdateLiveData(const BaseStackRawData* data,
-    std::unordered_map<void*, struct timespec>& liveData)
+    std::unordered_map<void*, struct timespec>& liveData,
+    std::unordered_map<void*, struct timespec>& orphanFreeWhitelist)
 {
     auto iter = liveData.find(data->addr);
     if (iter == liveData.end()) {
         if (IsAllocRecord(data)) {
             liveData[data->addr] = data->ts;
+        } else if (IsFreeRecord(data)) {
+            orphanFreeWhitelist.emplace(data->addr, data->ts);
         }
         return;
     }
@@ -681,10 +684,12 @@ void HookManager::HandleReadyCacheFile(const std::shared_ptr<HookManagerCtx>& ct
     ctx->cacheFileParsing = true;
     if (shouldSkipGlobalFreed_) {
         validLiveData_.clear();
+        orphanFreeWhitelist_.clear();
         RefreshValidLiveDataFromFile(frontFd);
     }
     if (noDataQueue_) {
-        ctx->stackPreprocess->SetValidLiveData(shouldSkipGlobalFreed_ ? &validLiveData_ : nullptr);
+        ctx->stackPreprocess->SetValidLiveData(shouldSkipGlobalFreed_ ? &validLiveData_ : nullptr,
+            shouldSkipGlobalFreed_ ? &orphanFreeWhitelist_ : nullptr);
         ctx->stackPreprocess->TakeResultsFromCacheFile(frontFd);
     } else {
         ReadFromCacheFile(ctx, frontFd);
@@ -1726,7 +1731,8 @@ bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& 
         if (shouldSkipGlobalFreed_) {
             auto* tmpRawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
             if ((IsAllocRecord(tmpRawData) || IsFreeRecord(tmpRawData)) &&
-                ShouldSkipRecord(tmpRawData, validLiveData_)) {
+                ShouldSkipRecord(tmpRawData, validLiveData_) &&
+                !(IsFreeRecord(tmpRawData) && InOrphanFreeWhitelist(tmpRawData, orphanFreeWhitelist_))) {
                 offset += totalSize;
                 skipRecord_++;
                 continue;
@@ -1773,7 +1779,7 @@ bool HookManager::RefreshValidLiveDataFromBuffer(uint8_t* buffer, uint32_t total
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + offset);
         auto* rawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
         if (IsAllocRecord(rawData) || IsFreeRecord(rawData)) {
-            UpdateLiveData(rawData, validLiveData_);
+            UpdateLiveData(rawData, validLiveData_, orphanFreeWhitelist_);
         }
         offset += totalSize;
     }
