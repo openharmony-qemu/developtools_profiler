@@ -15,6 +15,7 @@
 #define LOG_TAG "ProfilerService"
 #include "profiler_service.h"
 #include <algorithm>
+#include <fstream>
 #include <sys/stat.h>
 #include <unistd.h>
 #include "common.h"
@@ -31,6 +32,7 @@
 #include "rawheap_collector.h"
 #include "jsmap_collector.h"
 #include "memory_trace.h"
+#include "init_param.h"
 
 using namespace ::grpc;
 using PluginContextPtr = std::shared_ptr<PluginContext>;
@@ -248,7 +250,20 @@ bool ProfilerService::SessionContext::IsArktsDiagLibLoaded(int32_t pid)
         PROFILER_LOG_ERROR(LOG_CORE, "get arkts diag path fail, ret: %d", ret);
         return false;
     }
-    return COMMON::IsLibLoaded(pid,  std::string(value.data()));
+    std::string libName = std::string(value.data());
+    std::ifstream ifs("/proc/" + std::to_string(pid) + "maps");
+    if (!ifs.is_open()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "open /proc/%d/maps fail, err:%d,%s", pid, errno, strerror(errno));
+        return false;
+    }
+    std::string line;
+    while (std::getline(ifs, line)) {
+        if (line.find(libName) != std::string::npos) {
+            return true;
+        }
+    }
+    PROFILER_LOG_DEBUG(LOG_CORE, "pid %d not load arkts diag lib(%s)", pid, libName.c_str());
+    return false;
 }
 
 bool ProfilerService::SessionContext::CollectApm()

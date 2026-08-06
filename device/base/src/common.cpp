@@ -1418,16 +1418,4 @@ bool StringMatch(const std::string& str, const std::string& prefix, const std::s
     }
     return true;
 }
-
-bool IsLibLoaded(int32_t pid, const std::string& libName)
-{
-    std::ifstream ifs("/proc/" + std::to_string(pid) + "/maps");
-    std::string line;
-    while (std::getline(ifs, line)) {
-        if (line.find(libName) != std::string::npos) {
-            return true;
-        }
-    }
-    return false;
-}
 } // namespace COMMON

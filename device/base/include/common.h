@@ -91,7 +91,6 @@ bool CleanCmdOldenTraceFiles(const std::string& path);
 bool CreateFile(const std::string& filePath);
 bool DeleteFiles(const std::string& path, std::function<bool(const std::string& filename)> filter);
 bool StringMatch(const std::string& str, const std::string& prefix, const std::string& suffix);
-bool IsLibLoaded(int32_t pid, const std::string& libName);
 
 class SpinLock {
 public:
