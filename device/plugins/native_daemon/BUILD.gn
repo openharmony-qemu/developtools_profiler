@@ -169,6 +169,7 @@ ohos_shared_library("libmemory_profiler") {
 
   if (current_toolchain != host_toolchain) {
     defines += [ "HAVE_HILOG" ]
+    external_deps += [ "hilog:libhilog" ]
   }
   shlib_type = "sa"
   version_script = "libmemory_profiler.versionscript"
