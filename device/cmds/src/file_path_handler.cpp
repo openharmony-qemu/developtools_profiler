@@ -174,7 +174,7 @@ bool CompositeSandboxFilePathHandler::HandleOutputFilePath(
     if (filepath.length() <= COMPOSITE_OUTPUT_FILE_SUFFFIX.length() ||
         filepath.compare(filepath.length() - COMPOSITE_OUTPUT_FILE_SUFFFIX.length(),
         COMPOSITE_OUTPUT_FILE_SUFFFIX.length(), COMPOSITE_OUTPUT_FILE_SUFFFIX) != 0) {
-        printf("Filepath unable to write! Composite file must endding with .zip\n");
+        printf("Filepath unable to write! Composite file must ending with .zip\n");
         return false;
     }
     return true;
@@ -198,7 +198,7 @@ bool CompositeNormalFilePathHandler::HandleOutputFilePath(
     if (filepath.length() <= COMPOSITE_OUTPUT_FILE_SUFFFIX.length() ||
         filepath.compare(filepath.length() - COMPOSITE_OUTPUT_FILE_SUFFFIX.length(),
         COMPOSITE_OUTPUT_FILE_SUFFFIX.length(), COMPOSITE_OUTPUT_FILE_SUFFFIX) != 0) {
-        printf("Filepath unable to write! Composite file must endding with .zip\n");
+        printf("Filepath unable to write! Composite file must ending with .zip\n");
         return false;
     }
     return true;

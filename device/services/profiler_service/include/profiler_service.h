@@ -143,7 +143,7 @@ private:
 
     bool TryAbstractNativeHookConfig(const std::vector<ProfilerPluginConfig>& pluginConfigs,
         std::shared_ptr<NativeHookConfig>& nativeHookConfig);
-    bool NativeHookConfigHasCompositeTag(std::shared_ptr<NativeHookConfig>& nativeHookConfig);
+    bool NativeHookConfigHasCompositeTag(const std::shared_ptr<NativeHookConfig>& nativeHookConfig);
 
     ::grpc::Status StopSessionImpl(::grpc::ServerContext* context,
                                const ::StopSessionRequest* request,

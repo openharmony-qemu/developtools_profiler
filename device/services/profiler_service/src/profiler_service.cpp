@@ -385,7 +385,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
             "composite only support on offline!");
         size_t pos = sessionConfig->result_file().rfind(".zip");
         CHECK_EXPRESSION_TRUE(pos != std::string::npos && pos == sessionConfig->result_file().size() - 4,
-            "composite result file must endding with .zip!");
+            "composite result file must ending with .zip!");
         compositeTraceFile = sessionConfig->result_file().substr(0, pos) + ".htrace";
         sessionConfig->set_split_file(false);   // coomposite mode not support split file
     }
@@ -511,7 +511,7 @@ bool ProfilerService::TryAbstractNativeHookConfig(const std::vector<ProfilerPlug
     return true;
 }
 
-bool ProfilerService::NativeHookConfigHasCompositeTag(std::shared_ptr<NativeHookConfig>& nativeHookConfig)
+bool ProfilerService::NativeHookConfigHasCompositeTag(const std::shared_ptr<NativeHookConfig>& nativeHookConfig)
 {
     if (nativeHookConfig == nullptr) {
         return false;
