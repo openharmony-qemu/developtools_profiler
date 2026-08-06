@@ -21,6 +21,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
+#include <unordered_set>
 #include "hook_record_factory.h"
 #include "hook_record.h"
 #include "buffer_writer.h"
@@ -321,6 +323,7 @@ private:
     SemaphorePtr nmdSemaphore_{nullptr};
     bool shouldSkipGlobalFreed_ = false;
     std::unordered_map<void*, struct timespec> validLiveData_;
+    std::unordered_map<void*, struct timespec> orphanFreeWhitelist_;
     size_t totalRecord_{0};
     size_t skipRecord_{0};
 };

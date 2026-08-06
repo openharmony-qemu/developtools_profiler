@@ -228,6 +228,15 @@ inline bool IsFreeRecord(const BaseStackRawData* data)
     return data->type == FREE_MSG || data->type == MEMORY_UNUSING_MSG;
 }
 
+inline bool InOrphanFreeWhitelist(const BaseStackRawData* data,
+    const std::unordered_map<void*, struct timespec>& whitelist)
+{
+    auto it = whitelist.find(data->addr);
+    return it != whitelist.end() &&
+           data->ts.tv_sec == it->second.tv_sec &&
+           data->ts.tv_nsec == it->second.tv_nsec;
+}
+
 struct alignas(8) AsyncStackData : public BaseStackRawData { // 8 is 8 bit
     uint64_t syncStackId;
     uint64_t asyncStackId;
