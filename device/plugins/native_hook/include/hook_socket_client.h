@@ -23,8 +23,6 @@
 #include <utility>
 #include <vector>
 
-extern thread_local bool g_inMmapMunmap;
-
 class UnixSocketClient;
 class Sampling;
 

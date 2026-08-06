@@ -57,8 +57,6 @@ extern "C" size_t libc_gwp_asan_collect_allocations_by_time_range(uint64_t end_t
 
 } // namespace
 
-thread_local bool g_inMmapMunmap = false;
-
 using namespace OHOS::Developtools::NativeDaemon;
 static std::string GetRealTime()
 {
@@ -592,9 +590,6 @@ void HookSocketClient::Flush()
 
 void HookSocketClient::DisableHook()
 {
-    if (g_inMmapMunmap) {
-        return;
-    }
     bool expected = false;
     if (g_disableHook.compare_exchange_strong(expected, true, std::memory_order_release, std::memory_order_relaxed)) {
         RestoreAsyncStackType();

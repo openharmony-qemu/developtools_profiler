@@ -1435,21 +1435,17 @@ bool ohos_malloc_hook_set_hook_flag(bool flag)
 
 void* ohos_malloc_hook_mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
-    g_inMmapMunmap = true;
     __set_hook_flag(false);
     void* ret = hook_mmap(GetDispatch()->mmap, addr, length, prot, flags, fd, offset);
     __set_hook_flag(true);
-    g_inMmapMunmap = false;
     return ret;
 }
 
 int ohos_malloc_hook_munmap(void* addr, size_t length)
 {
-    g_inMmapMunmap = true;
     __set_hook_flag(false);
     int ret = hook_munmap(GetDispatch()->munmap, addr, length);
     __set_hook_flag(true);
-    g_inMmapMunmap = false;
     return ret;
 }
 
