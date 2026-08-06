@@ -268,7 +268,7 @@ bool ProfilerService::SessionContext::IsArktsDiagLibLoaded(int32_t pid)
 
 bool ProfilerService::SessionContext::CollectApm()
 {
-    if (nativeHookConfig == nullptr) {
+    if (compositeConfig == nullptr) {
         PROFILER_LOG_DEBUG(LOG_CORE, "composite tag not enabled");
         return false;
     }
@@ -276,24 +276,24 @@ bool ProfilerService::SessionContext::CollectApm()
         PROFILER_LOG_ERROR(LOG_CORE, "trace file writer is NULL");
         return false;
     }
-    if (nativeHookConfig->process_name().empty()) {
+    if (compositeConfig->process_name().empty()) {
         PROFILER_LOG_ERROR(LOG_CORE, "no process name");
         return false;
     }
     bool hasLocalHandleTag = false;
     bool hasGlobalHandleTag = false;
-    for (const auto& tag: nativeHookConfig->restrace_tag()) {
+    for (const auto& tag: compositeConfig->restrace_tag()) {
         if (tag == TAG_RES_ARK_LOCAL_HANDLE) {
             hasLocalHandleTag = true;
-        } else if (tag == TAG_RES_ARK_GLOBAL_HANDLE){
+        } else if (tag == TAG_RES_ARK_GLOBAL_HANDLE) {
             hasGlobalHandleTag = true;
         }
     }
     int pidValue = 0;
-    CHECK_TRUE(COMMON::IsProcessExist(nativeHookConfig->process_name(), pidValue), false, "process %s not exist",
-        nativeHookConfig->process_name().c_str());
-    if (COMMON::IsUserMode() && !COMMON::CheckApplicationPermission(pidValue, nativeHookConfig->process_name())) {
-        PROFILER_LOG_ERROR(LOG_CORE, "no permission to collect apm of %s", nativeHookConfig->process_name().c_str());
+    CHECK_TRUE(COMMON::IsProcessExist(compositeConfig->process_name(), pidValue), false, "process %s not exist",
+        compositeConfig->process_name().c_str());
+    if (COMMON::IsUserMode() && !COMMON::CheckApplicationPermission(pidValue, compositeConfig->process_name())) {
+        PROFILER_LOG_ERROR(LOG_CORE, "no permission to collect apm of %s", compositeConfig->process_name().c_str());
         return false;
     }
     uint32_t pid = static_cast<uint32_t>(pidValue);
@@ -379,14 +379,14 @@ Status ProfilerService::CreateSession(ServerContext* context,
     std::shared_ptr<NativeHookConfig> nativeHookConfig = nullptr;
     CHECK_EXPRESSION_TRUE(TryAbstractNativeHookConfig(pluginConfigs, nativeHookConfig), "nativehook config invalid!");
     bool hasCompositeTag = NativeHookConfigHasCompositeTag(nativeHookConfig);
-    std::string traceFile;
+    std::string compositeTraceFile;
     if (hasCompositeTag) {
         CHECK_EXPRESSION_TRUE(sessionConfig->session_mode() == ProfilerSessionConfig::OFFLINE,
             "composite only support on offline!");
         size_t pos = sessionConfig->result_file().rfind(".zip");
         CHECK_EXPRESSION_TRUE(pos != std::string::npos && pos == sessionConfig->result_file().size() - 4,
             "composite result file must endding with .zip!");
-        traceFile = sessionConfig->result_file().substr(0, pos) + ".htrace";
+        compositeTraceFile = sessionConfig->result_file().substr(0, pos) + ".htrace";
         sessionConfig->set_split_file(false);   // coomposite mode not support split file
     }
     // copy buffer configs
@@ -410,7 +410,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
     TraceFileWriterPtr traceWriter;
     std::shared_ptr<ProfilerDataRepeater<ProfilerPluginData>> dataRepeater = nullptr;
     if (sessionConfig->session_mode() == ProfilerSessionConfig::OFFLINE) {
-        auto resultFile = traceFile.empty() ? sessionConfig->result_file() : traceFile;
+        auto resultFile = compositeTraceFile.empty() ? sessionConfig->result_file() : compositeTraceFile;
         CHECK_EXPRESSION_TRUE(resultFile.size() > 0, "result_file empty!");
         traceWriter = std::make_shared<TraceFileWriter>(resultFile, sessionConfig->split_file(),
             sessionConfig->split_file_max_size_mb(), sessionConfig->split_file_max_num());
@@ -449,8 +449,8 @@ Status ProfilerService::CreateSession(ServerContext* context,
     if (traceWriter != nullptr) {
         ctx->traceFileWriter = traceWriter;
     }
-    if (nativeHookConfig != nullptr) {
-        ctx->nativeHookConfig = nativeHookConfig;
+    if (nativeHookConfig != nullptr && hasCompositeTag) {
+        ctx->compositeConfig = nativeHookConfig;
     }
     ctx->sessionConfig = *sessionConfig;
     ctx->pluginNames = std::move(pluginNames);
@@ -493,7 +493,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
 }
 
 bool ProfilerService::TryAbstractNativeHookConfig(const std::vector<ProfilerPluginConfig>& pluginConfigs,
-        std::shared_ptr<NativeHookConfig>& nativeHookConfig)
+    std::shared_ptr<NativeHookConfig>& nativeHookConfig)
 {
     std::shared_ptr<NativeHookConfig> hookConfigPtr = std::make_shared<NativeHookConfig>();
     for (auto& config : pluginConfigs) {

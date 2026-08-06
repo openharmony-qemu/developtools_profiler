@@ -109,7 +109,7 @@ private:
         ScheduleTaskManager stopExpireTask;
         std::atomic<bool> stopping {false};
         SemaphorePtr stopSem {nullptr};
-        std::shared_ptr<NativeHookConfig> nativeHookConfig {nullptr};
+        std::shared_ptr<NativeHookConfig> compositeConfig {nullptr};
 
         SessionContext() = default;
         ~SessionContext();
