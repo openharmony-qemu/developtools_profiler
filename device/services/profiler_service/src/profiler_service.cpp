@@ -67,6 +67,7 @@ constexpr uint64_t CHECK_HEARTBEAT_INTERVAL = 500;
 constexpr long BYTE_PER_KB = 1024;
 const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 const std::string TAG_RES_COMPOSITE_HEAP = "RES_COMPOSITE_HEAP";
+const std::string ARKTS_DIAG_PATH = "const.ark.jsruntime.dfx_library";
 #ifdef  PERFORMANCE_DEBUG
 constexpr uint64_t S_TO_NS = 1000 * 1000 * 1000;
 #endif
@@ -233,9 +234,21 @@ bool ProfilerService::SessionContext::StopPluginSessions(bool timerTask)
     return true;
 }
 
-bool ProfilerService::SessionContext::IsArktsDiagLibLoaded(int pid)
+bool ProfilerService::SessionContext::IsArktsDiagLibLoaded(int32_t pid)
 {
-    return true;
+    uint32_t len = 0;
+    int ret = SystemGetParameter(ARKTS_DIAG_PATH.c_str(), nullptr, &len);
+    if (ret != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "get arkts diag path len fail, ret: %d", ret);
+        return false;
+    }
+    std::vector<char> value(len + 1);
+    ret = SystemGetParameter(ARKTS_DIAG_PATH.c_str(), value.data(), &len);
+    if (ret != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "get arkts diag path fail, ret: %d", ret);
+        return false;
+    }
+    return COMMON::IsLibLoaded(pid,  std::string(value.data()));
 }
 
 bool ProfilerService::SessionContext::CollectApm()
