@@ -170,11 +170,11 @@ bool CompositeSandboxFilePathHandler::HandleOutputFilePath(
     if (!SandboxFilePathHandler::HandleOutputFilePath(outputFile, sessionConfig)) {
         return false;
     }
-    std::string filepath = sessionConfig->result_file();
-    if (filepath.length() <= COMPOSITE_OUTPUT_FILE_SUFFFIX.length() ||
-        filepath.compare(filepath.length() - COMPOSITE_OUTPUT_FILE_SUFFFIX.length(),
+    std::string filename = std::filesystem::path(sessionConfig->result_file()).filename().string();
+    if (filename.length() <= COMPOSITE_OUTPUT_FILE_SUFFFIX.length() ||
+        filename.compare(filename.length() - COMPOSITE_OUTPUT_FILE_SUFFFIX.length(),
         COMPOSITE_OUTPUT_FILE_SUFFFIX.length(), COMPOSITE_OUTPUT_FILE_SUFFFIX) != 0) {
-        printf("Filepath unable to write! Composite file must ending with .zip\n");
+        printf("Filepath unable to write! Composite Sandbox filename must ending with .zip\n");
         return false;
     }
     return true;
@@ -194,11 +194,11 @@ bool CompositeNormalFilePathHandler::HandleOutputFilePath(
     if (!NormalFilePathHandler::HandleOutputFilePath(outputFile, sessionConfig)) {
         return false;
     }
-    std::string filepath = sessionConfig->result_file();
-    if (filepath.length() <= COMPOSITE_OUTPUT_FILE_SUFFFIX.length() ||
-        filepath.compare(filepath.length() - COMPOSITE_OUTPUT_FILE_SUFFFIX.length(),
+    std::string filename = std::filesystem::path(sessionConfig->result_file()).filename().string();
+    if (filename.length() <= COMPOSITE_OUTPUT_FILE_SUFFFIX.length() ||
+        filename.compare(filename.length() - COMPOSITE_OUTPUT_FILE_SUFFFIX.length(),
         COMPOSITE_OUTPUT_FILE_SUFFFIX.length(), COMPOSITE_OUTPUT_FILE_SUFFFIX) != 0) {
-        printf("Filepath unable to write! Composite file must ending with .zip\n");
+        printf("Filepath unable to write! Composite filename must ending with .zip\n");
         return false;
     }
     return true;

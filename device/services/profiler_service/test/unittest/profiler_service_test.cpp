@@ -1644,4 +1644,227 @@ HWTEST_F(ProfilerServiceTest, MergeStandaloneFile, TestSize.Level1)
     service_->MergeStandaloneFile(targetPath, "hiperf-plugin", testPath, "1.02");
 }
 
+/**
+ * @tc.name: TryAbstractNativeHookConfig
+ * @tc.desc: Test TryAbstractNativeHookConfig with nativehook plugin config
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, TryAbstractNativeHookConfigWithNativeHook, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    ProfilerPluginConfig cfg;
+    cfg.set_name("nativehook");
+    NativeHookConfig hookCfg;
+    hookCfg.set_process_name("test_process");
+    std::string cfgData;
+    hookCfg.SerializeToString(&cfgData);
+    cfg.set_config_data(cfgData);
+    pluginConfigs.push_back(cfg);
+
+    std::shared_ptr<NativeHookConfig> nativeHookConfig = nullptr;
+    bool ret = service_->TryAbstractNativeHookConfig(pluginConfigs, nativeHookConfig);
+    EXPECT_TRUE(ret);
+    ASSERT_NE(nativeHookConfig, nullptr);
+    EXPECT_EQ(nativeHookConfig->process_name(), "test_process");
+}
+
+/**
+ * @tc.name: TryAbstractNativeHookConfigNoNativeHook
+ * @tc.desc: Test TryAbstractNativeHookConfig without nativehook plugin
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, TryAbstractNativeHookConfigNoNativeHook, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    ProfilerPluginConfig cfg;
+    cfg.set_name("memory-plugin");
+    cfg.set_config_data("test");
+    pluginConfigs.push_back(cfg);
+
+    std::shared_ptr<NativeHookConfig> nativeHookConfig = nullptr;
+    bool ret = service_->TryAbstractNativeHookConfig(pluginConfigs, nativeHookConfig);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(nativeHookConfig, nullptr);
+}
+
+/**
+ * @tc.name: TryAbstractNativeHookConfigInvalidData
+ * @tc.desc: Test TryAbstractNativeHookConfig with invalid config data
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, TryAbstractNativeHookConfigInvalidData, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    ProfilerPluginConfig cfg;
+    cfg.set_name("nativehook");
+    cfg.set_config_data("invalid_protobuf_data");
+    pluginConfigs.push_back(cfg);
+
+    std::shared_ptr<NativeHookConfig> nativeHookConfig = nullptr;
+    bool ret = service_->TryAbstractNativeHookConfig(pluginConfigs, nativeHookConfig);
+    EXPECT_FALSE(ret);
+}
+
+/**
+ * @tc.name: TryAbstractNativeHookConfigEmpty
+ * @tc.desc: Test TryAbstractNativeHookConfig with empty plugin configs
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, TryAbstractNativeHookConfigEmpty, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    std::shared_ptr<NativeHookConfig> nativeHookConfig = nullptr;
+    bool ret = service_->TryAbstractNativeHookConfig(pluginConfigs, nativeHookConfig);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(nativeHookConfig, nullptr);
+}
+
+/**
+ * @tc.name: NativeHookConfigHasCompositeTagTrue
+ * @tc.desc: Test NativeHookConfigHasCompositeTag returns true when tag present
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, NativeHookConfigHasCompositeTagTrue, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+
+    auto hookCfg = std::make_shared<NativeHookConfig>();
+    hookCfg->add_restrace_tag("RES_COMPOSITE_HEAP");
+    EXPECT_TRUE(service_->NativeHookConfigHasCompositeTag(hookCfg));
+}
+
+/**
+ * @tc.name: NativeHookConfigHasCompositeTagFalse
+ * @tc.desc: Test NativeHookConfigHasCompositeTag returns false when tag absent
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, NativeHookConfigHasCompositeTagFalse, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+
+    auto hookCfg = std::make_shared<NativeHookConfig>();
+    hookCfg->add_restrace_tag("RES_ARK_LOCAL_HANDLE");
+    EXPECT_FALSE(service_->NativeHookConfigHasCompositeTag(hookCfg));
+}
+
+/**
+ * @tc.name: NativeHookConfigHasCompositeTagNullptr
+ * @tc.desc: Test NativeHookConfigHasCompositeTag returns false with nullptr
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, NativeHookConfigHasCompositeTagNullptr, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    EXPECT_FALSE(service_->NativeHookConfigHasCompositeTag(nullptr));
+}
+
+/**
+ * @tc.name: NativeHookConfigHasCompositeTagEmpty
+ * @tc.desc: Test NativeHookConfigHasCompositeTag returns false with empty tags
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, NativeHookConfigHasCompositeTagEmpty, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+
+    auto hookCfg = std::make_shared<NativeHookConfig>();
+    EXPECT_FALSE(service_->NativeHookConfigHasCompositeTag(hookCfg));
+}
+
+/**
+ * @tc.name: IsArktsDiagLibLoadedInvalidPid
+ * @tc.desc: Test IsArktsDiagLibLoaded with invalid pid returns false
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, IsArktsDiagLibLoadedInvalidPid, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+
+    uint32_t sessionId = CreateOfflineSession();
+    EXPECT_NE(sessionId, 0);
+    auto ctx = service_->GetSessionContext(sessionId);
+    ASSERT_NE(ctx, nullptr);
+    EXPECT_FALSE(ctx->IsArktsDiagLibLoaded(-1));
+}
+
+/**
+ * @tc.name: CollectApmNullCompositeConfig
+ * @tc.desc: Test CollectApm returns false when compositeConfig is nullptr
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, CollectApmNullCompositeConfig, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+
+    uint32_t sessionId = CreateOfflineSession();
+    EXPECT_NE(sessionId, 0);
+    auto ctx = service_->GetSessionContext(sessionId);
+    ASSERT_NE(ctx, nullptr);
+    EXPECT_EQ(ctx->compositeConfig, nullptr);
+    EXPECT_FALSE(ctx->CollectApm());
+}
+
+/**
+ * @tc.name: CollectApmNullTraceFileWriter
+ * @tc.desc: Test CollectApm returns false when traceFileWriter is nullptr
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, CollectApmNullTraceFileWriter, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+
+    uint32_t sessionId = CreateOnlineSession();
+    EXPECT_NE(sessionId, 0);
+    auto ctx = service_->GetSessionContext(sessionId);
+    ASSERT_NE(ctx, nullptr);
+    ctx->compositeConfig = std::make_shared<NativeHookConfig>();
+    ctx->traceFileWriter = nullptr;
+    EXPECT_FALSE(ctx->CollectApm());
+}
+
+/**
+ * @tc.name: CollectApmEmptyProcessName
+ * @tc.desc: Test CollectApm returns false when process_name is empty
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, CollectApmEmptyProcessName, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+
+    uint32_t sessionId = CreateOfflineSession();
+    EXPECT_NE(sessionId, 0);
+    auto ctx = service_->GetSessionContext(sessionId);
+    ASSERT_NE(ctx, nullptr);
+    ctx->compositeConfig = std::make_shared<NativeHookConfig>();
+    ctx->compositeConfig->set_process_name("");
+    EXPECT_FALSE(ctx->CollectApm());
+}
+
+/**
+ * @tc.name: CollectApmNonExistentProcess
+ * @tc.desc: Test CollectApm returns false when process does not exist
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, CollectApmNonExistentProcess, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+
+    uint32_t sessionId = CreateOfflineSession();
+    EXPECT_NE(sessionId, 0);
+    auto ctx = service_->GetSessionContext(sessionId);
+    ASSERT_NE(ctx, nullptr);
+    ctx->compositeConfig = std::make_shared<NativeHookConfig>();
+    ctx->compositeConfig->set_process_name("non_existent_process_12345");
+    ctx->compositeConfig->add_restrace_tag("RES_ARK_GLOBAL_HANDLE");
+    EXPECT_FALSE(ctx->CollectApm());
+}
+
 } // namespace
