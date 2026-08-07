@@ -708,9 +708,17 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartOverloadsValidInputFailWi
     using namespace OHOS::Developtools::NativeDaemon;
     SimplifiedMemConfig simplifiedConfig;
     simplifiedConfig.sampleSize = 512;
+    MemLeakConfig memLeakConfig;
+    memLeakConfig.duration = 10;
+    memLeakConfig.limit = 3;
     GwpAsanConfig gwpConfig;
     gwpConfig.holdTime = 1;
 
+    int32_t memLeakRet = NativeMemoryProfilerSaClientManager::Start(STDOUT_FILENO, getpid(), memLeakConfig);
+    ExpectRemotePathRet(memLeakRet);
+    if (memLeakRet == RET_OK) {
+        EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(getpid()), RET_OK);
+    }
     int32_t simplifiedRet = NativeMemoryProfilerSaClientManager::Start(STDOUT_FILENO, getpid(), 10, simplifiedConfig);
     ExpectRemotePathRet(simplifiedRet);
     if (simplifiedRet == RET_OK) {
