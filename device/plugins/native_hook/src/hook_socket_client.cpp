@@ -22,6 +22,7 @@
 #include "share_memory_allocator.h"
 #include "mem_leak_detector.h"
 #include "logging.h"
+#include "musl_preinit_common.h"
 #include "sampling.h"
 #include <unistd.h>
 #include <sys/stat.h>
@@ -245,7 +246,9 @@ bool HookSocketClient::HandleControlCommand(uint32_t cmd)
     if (stopRequested_.compare_exchange_strong(expected, true,
         std::memory_order_release, std::memory_order_relaxed)) {
         PROFILER_LOG_INFO(LOG_CORE, "HandleControlCommand: trigger hook end, pid %d", pid_);
+        __set_hook_flag(false);
         (void)ohos_malloc_hook_on_end();
+        __set_hook_flag(true);
     } else {
         PROFILER_LOG_INFO(LOG_CORE, "HandleControlCommand: stop already requested, pid %d", pid_);
     }
@@ -491,7 +494,7 @@ bool HookSocketClient::SendStack(const void* data, size_t size)
 }
 
 bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const void* payload,
-    size_t payloadSize, int smbIndex, bool skipDisableHook)
+    size_t payloadSize, int smbIndex)
 {
     if (smbIndex + 1 > static_cast<int>(stackWriterList_.size())) {
         return false;
@@ -500,9 +503,6 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
         return false;
     }
     if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
-        if (!skipDisableHook) {
-            DisableHook();
-        }
         return false;
     }
     std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
@@ -512,9 +512,6 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
     bool ret = stackWriter->WriteWithPayloadTimeout(data, size, payload, payloadSize,
                                                     std::bind(&HookSocketClient::PeerIsConnected, this));
     if (!ret && config_->isBlocked) {
-        if (!skipDisableHook) {
-            DisableHook();
-        }
         return false;
     }
     if (!stackWriter->IsFileCacheMode() && stackWriter->PrepareFlush()) {
@@ -524,7 +521,7 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
 }
 
 bool HookSocketClient::SendStackWithExtraData(const void* data, size_t size, const void* payload,
-    size_t payloadSize, ExtraDataInfo& extraDataInfo, int smbIndex, bool skipDisableHook)
+    size_t payloadSize, ExtraDataInfo& extraDataInfo, int smbIndex)
 {
     if (smbIndex + 1 > static_cast<int>(stackWriterList_.size())) {
         return false;
@@ -533,9 +530,6 @@ bool HookSocketClient::SendStackWithExtraData(const void* data, size_t size, con
         return false;
     }
     if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
-        if (!skipDisableHook) {
-            DisableHook();
-        }
         return false;
     }
     std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
@@ -547,9 +541,6 @@ bool HookSocketClient::SendStackWithExtraData(const void* data, size_t size, con
         extraDataInfo.secondExtra, extraDataInfo.secondExtraSize,
         std::bind(&HookSocketClient::PeerIsConnected, this));
     if (!ret && config_->isBlocked) {
-        if (!skipDisableHook) {
-            DisableHook();
-        }
         return false;
     }
     if (!stackWriter->IsFileCacheMode() && stackWriter->PrepareFlush()) {
@@ -567,7 +558,6 @@ bool HookSocketClient::SendRawData(const void* data, size_t size, int smbIndex)
         return false;
     }
     if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
-        DisableHook();
         return false;
     }
     std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
@@ -577,7 +567,6 @@ bool HookSocketClient::SendRawData(const void* data, size_t size, int smbIndex)
     long ret = stackWriter->WriteSync(data, size,
                                        std::bind(&HookSocketClient::PeerIsConnected, this));
     if (ret <= 0 && config_->isBlocked) {
-        DisableHook();
         return false;
     }
     if (stackWriter->PrepareFlush()) {
@@ -645,7 +634,6 @@ bool HookSocketClient::SendNmdInfo()
                                                             reinterpret_cast<int8_t *>(opt.buf), strlen(opt.buf) + 1,
                                                             std::bind(&HookSocketClient::PeerIsConnected, this));
     if (!ret) {
-        DisableHook();
         free(nmdBuf);
         return false;
     }
@@ -675,7 +663,6 @@ bool HookSocketClient::SendSimplifiedNmdInfo()
                                                             reinterpret_cast<int8_t *>(opt.buf), strlen(opt.buf) + 1,
                                                             std::bind(&HookSocketClient::PeerIsConnected, this));
     if (!ret) {
-        DisableHook();
         free(nmdBuf);
         return false;
     }
@@ -726,7 +713,6 @@ bool HookSocketClient::SendGwpAsanInfo()
                                                             payload, MEMCHECK_DETAILINFO_MAXSIZE,
                                                             std::bind(&HookSocketClient::PeerIsConnected, this));
     if (!ret) {
-        DisableHook();
         free(payload);
         return false;
     }
