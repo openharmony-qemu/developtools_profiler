@@ -500,7 +500,6 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
         return false;
     }
     if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
-        DisableHook();
         return false;
     }
     std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
@@ -510,7 +509,6 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
     bool ret = stackWriter->WriteWithPayloadTimeout(data, size, payload, payloadSize,
                                                     std::bind(&HookSocketClient::PeerIsConnected, this));
     if (!ret && config_->isBlocked) {
-        DisableHook();
         return false;
     }
     if (!stackWriter->IsFileCacheMode() && stackWriter->PrepareFlush()) {
@@ -529,7 +527,6 @@ bool HookSocketClient::SendStackWithExtraData(const void* data, size_t size, con
         return false;
     }
     if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
-        DisableHook();
         return false;
     }
     std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
@@ -541,7 +538,6 @@ bool HookSocketClient::SendStackWithExtraData(const void* data, size_t size, con
         extraDataInfo.secondExtra, extraDataInfo.secondExtraSize,
         std::bind(&HookSocketClient::PeerIsConnected, this));
     if (!ret && config_->isBlocked) {
-        DisableHook();
         return false;
     }
     if (!stackWriter->IsFileCacheMode() && stackWriter->PrepareFlush()) {
@@ -559,7 +555,6 @@ bool HookSocketClient::SendRawData(const void* data, size_t size, int smbIndex)
         return false;
     }
     if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
-        DisableHook();
         return false;
     }
     std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
@@ -569,7 +564,6 @@ bool HookSocketClient::SendRawData(const void* data, size_t size, int smbIndex)
     long ret = stackWriter->WriteSync(data, size,
                                        std::bind(&HookSocketClient::PeerIsConnected, this));
     if (ret <= 0 && config_->isBlocked) {
-        DisableHook();
         return false;
     }
     if (stackWriter->PrepareFlush()) {
@@ -637,7 +631,6 @@ bool HookSocketClient::SendNmdInfo()
                                                             reinterpret_cast<int8_t *>(opt.buf), strlen(opt.buf) + 1,
                                                             std::bind(&HookSocketClient::PeerIsConnected, this));
     if (!ret) {
-        DisableHook();
         free(nmdBuf);
         return false;
     }
@@ -667,7 +660,6 @@ bool HookSocketClient::SendSimplifiedNmdInfo()
                                                             reinterpret_cast<int8_t *>(opt.buf), strlen(opt.buf) + 1,
                                                             std::bind(&HookSocketClient::PeerIsConnected, this));
     if (!ret) {
-        DisableHook();
         free(nmdBuf);
         return false;
     }
@@ -718,7 +710,6 @@ bool HookSocketClient::SendGwpAsanInfo()
                                                             payload, MEMCHECK_DETAILINFO_MAXSIZE,
                                                             std::bind(&HookSocketClient::PeerIsConnected, this));
     if (!ret) {
-        DisableHook();
         free(payload);
         return false;
     }
