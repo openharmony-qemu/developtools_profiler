@@ -721,10 +721,10 @@ bool NativeMemoryProfilerSaService::IsAsyncRequest(uint32_t pid)
     return async;
 }
 
-bool NativeMemoryProfilerSaService::CheckStopPermission(int32_t calllingPid, std::shared_ptr<TaskConfig>& config)
+bool NativeMemoryProfilerSaService::CheckStopPermission(int32_t callingPid, std::shared_ptr<TaskConfig>& config)
 {
-    if (calllingPid != config->callingPid) {
-        PROFILER_LOG_ERROR(LOG_CORE, "calling pid check fail, (%d, %d)", config->callingPid, calllingPid);
+    if (callingPid != config->callingPid) {
+        PROFILER_LOG_ERROR(LOG_CORE, "calling pid check fail, (%d, %d)", config->callingPid, callingPid);
         return false;
     }
     return true;
