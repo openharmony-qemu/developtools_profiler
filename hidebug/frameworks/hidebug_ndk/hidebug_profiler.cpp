@@ -196,12 +196,12 @@ HiDebug_ErrorCode OH_HiDebug_StopProfiler()
     return HIDEBUG_RES_PROF_SUCCESS;
 }
 
-OH_HiDebug_ProfilerOptions* OH_HiDebug_ProfilerOptions_Create(void)
+OH_HiDebug_ProfilerOptions* OH_HiDebug_CreateProfilerOptions(void)
 {
     return new (std::nothrow) OH_HiDebug_ProfilerOptions();
 }
 
-HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_Destroy(OH_HiDebug_ProfilerOptions* opts)
+HiDebug_ErrorCode OH_HiDebug_DestroyProfilerOptions(OH_HiDebug_ProfilerOptions* opts)
 {
     if (opts == nullptr) {
         return HIDEBUG_INVALID_ARGUMENT;
@@ -210,98 +210,98 @@ HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_Destroy(OH_HiDebug_ProfilerOptions*
     return HIDEBUG_SUCCESS;
 }
 
-HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_SetMaxAsyncNestingDepth(OH_HiDebug_ProfilerOptions* opts,
-    uint32_t maxAsyncNestingDepth)
+HiDebug_ErrorCode OH_HiDebug_SetMaxAsyncNestingDepth(OH_HiDebug_ProfilerOptions* opts,
+    uint32_t depth)
 {
     if (opts == nullptr) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    if (maxAsyncNestingDepth < MIN_ASYNC_NESTING_DEPTH || maxAsyncNestingDepth > MAX_ASYNC_NESTING_DEPTH) {
+    if (depth < MIN_ASYNC_NESTING_DEPTH || depth > MAX_ASYNC_NESTING_DEPTH) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    opts->maxAsyncNestingDepth = maxAsyncNestingDepth;
+    opts->maxAsyncNestingDepth = depth;
     return HIDEBUG_SUCCESS;
 }
 
-HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_SetMaxAsyncStackDepth(OH_HiDebug_ProfilerOptions* opts,
-    uint32_t maxAsyncStackDepth)
+HiDebug_ErrorCode OH_HiDebug_SetMaxAsyncTaskStackDepth(OH_HiDebug_ProfilerOptions* opts,
+    uint32_t depth)
 {
     if (opts == nullptr) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    if (maxAsyncStackDepth < MIN_ASYNC_STACK_DEPTH || maxAsyncStackDepth > MAX_ASYNC_STACK_DEPTH) {
+    if (depth < MIN_ASYNC_STACK_DEPTH || depth > MAX_ASYNC_STACK_DEPTH) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    opts->maxAsyncStackDepth = maxAsyncStackDepth;
+    opts->maxAsyncStackDepth = depth;
     return HIDEBUG_SUCCESS;
 }
 
-HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_SetMaxDuration(OH_HiDebug_ProfilerOptions* opts,
-    uint32_t maxDuration)
+HiDebug_ErrorCode OH_HiDebug_SetMaxDurationSec(OH_HiDebug_ProfilerOptions* opts,
+    uint32_t seconds)
 {
     if (opts == nullptr) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    if (maxDuration < MIN_DURATION_SEC || maxDuration > MAX_DURATION_SEC) {
+    if (seconds < MIN_DURATION_SEC || seconds > MAX_DURATION_SEC) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    opts->maxDuration = maxDuration;
+    opts->maxDuration = seconds;
     return HIDEBUG_SUCCESS;
 }
 
-HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_SetFilterSize(OH_HiDebug_ProfilerOptions* opts,
-    uint32_t filterSize)
+HiDebug_ErrorCode OH_HiDebug_SetFilterSize(OH_HiDebug_ProfilerOptions* opts,
+    uint32_t size)
 {
     if (opts == nullptr) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    if (filterSize < MIN_FILTER_SIZE) {
+    if (size < MIN_FILTER_SIZE) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    opts->filterSize = filterSize;
+    opts->filterSize = size;
     return HIDEBUG_SUCCESS;
 }
 
-HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_SetMaxStackDepth(OH_HiDebug_ProfilerOptions* opts,
-    uint32_t maxStackDepth)
+HiDebug_ErrorCode OH_HiDebug_SetMaxStackDepth(OH_HiDebug_ProfilerOptions* opts,
+    uint32_t depth)
 {
     if (opts == nullptr) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    if (maxStackDepth > MAX_STACK_DEPTH) {
+    if (depth > MAX_STACK_DEPTH) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    opts->maxStackDepth = maxStackDepth;
+    opts->maxStackDepth = depth;
     return HIDEBUG_SUCCESS;
 }
 
-HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_SetStatisticsInterval(OH_HiDebug_ProfilerOptions* opts,
-    uint32_t statisticsInterval)
+HiDebug_ErrorCode OH_HiDebug_SetStatisticsIntervalSec(OH_HiDebug_ProfilerOptions* opts,
+    uint32_t seconds)
 {
     if (opts == nullptr) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    if (statisticsInterval > MAX_STATISTICS_INTERVAL_SEC) {
+    if (seconds > MAX_STATISTICS_INTERVAL_SEC) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    opts->statisticsInterval = statisticsInterval;
+    opts->statisticsInterval = seconds;
     return HIDEBUG_SUCCESS;
 }
 
-HiDebug_ErrorCode OH_HiDebug_ProfilerOptions_SetSampleInterval(OH_HiDebug_ProfilerOptions* opts,
-    uint32_t sampleInterval)
+HiDebug_ErrorCode OH_HiDebug_SetSampleIntervalBytes(OH_HiDebug_ProfilerOptions* opts,
+    uint32_t bytes)
 {
     if (opts == nullptr) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    if (sampleInterval < MIN_SAMPLE_INTERVAL) {
+    if (bytes < MIN_SAMPLE_INTERVAL) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    opts->sampleInterval = sampleInterval;
+    opts->sampleInterval = bytes;
     return HIDEBUG_SUCCESS;
 }
 
-HiDebug_ErrorCode OH_HiDebug_StartResProfilerWithOptions(OH_HiDebug_ResourceType type,
+HiDebug_ErrorCode OH_HiDebug_StartProfilerWithOptions(OH_HiDebug_ResourceType type,
     OH_HiDebug_ProfilerOptions* opts, OH_HiDebug_ProfilingCallback callback)
 {
     if (opts == nullptr) {

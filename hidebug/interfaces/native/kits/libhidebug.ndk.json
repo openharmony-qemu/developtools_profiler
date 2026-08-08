@@ -90,5 +90,45 @@
     {
         "first_introduced": "26",
         "name": "OH_HiDebug_ReleaseAsyncContext"
+    },
+    {
+        "first_introduced": "26.1.0",
+        "name": "OH_HiDebug_CreateProfilerOptions"
+    },
+    {
+        "first_introduced": "26.1.0",
+        "name": "OH_HiDebug_DestroyProfilerOptions"
+    },
+    {
+        "first_introduced": "26.1.0",
+        "name": "OH_HiDebug_SetMaxAsyncNestingDepth"
+    },
+    {
+        "first_introduced": "26.1.0",
+        "name": "OH_HiDebug_SetMaxAsyncTaskStackDepth"
+    },
+    {
+        "first_introduced": "26.1.0",
+        "name": "OH_HiDebug_SetSampleIntervalBytes"
+    },
+    {
+        "first_introduced": "26.1.0",
+        "name": "OH_HiDebug_SetStatisticsIntervalSec"
+    },
+    {
+        "first_introduced": "26.1.0",
+        "name": "OH_HiDebug_SetMaxStackDepth"
+    },
+    {
+        "first_introduced": "26.1.0",
+        "name": "OH_HiDebug_SetFilterSize"
+    },
+    {
+        "first_introduced": "26.1.0",
+        "name": "OH_HiDebug_SetMaxDurationSec"
+    },
+    {
+        "first_introduced": "26.1.0",
+        "name": "OH_HiDebug_StartProfilerWithOptions"
     }
 ]
