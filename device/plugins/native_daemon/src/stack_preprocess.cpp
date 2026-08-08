@@ -1587,7 +1587,8 @@ inline uint32_t StackPreprocess::GetNewStackId()
 
 void StackPreprocess::AddCallStackIndex(uint32_t stackId, RawStackPtr rawData)
 {
-    if (hookConfig_.async_stack_enable()) {
+    if (hookConfig_.async_stack_enable() && rawData->stackContext->type != FREE_ARKTS &&
+        rawData->stackContext->type != MALLOC_ARKTS && rawData->stackContext->type != PR_SET_VMA_MSG) {
         const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
         uint64_t stackHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
         AsyncCallStackKey key = {stackHash, GetAsyncDedupMallocSize(rawData), GetDedupTagId(rawData)};
@@ -1604,7 +1605,8 @@ void StackPreprocess::AddCallStackIndex(uint32_t stackId, RawStackPtr rawData)
 
 void StackPreprocess::AddSimplifiedCallStackIndex(uint32_t stackId, RawStackPtr rawData)
 {
-    if (hookConfig_.async_stack_enable()) {
+    if (hookConfig_.async_stack_enable() && rawData->stackContext->type != FREE_ARKTS &&
+        rawData->stackContext->type != MALLOC_ARKTS && rawData->stackContext->type != PR_SET_VMA_MSG) {
         const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
         uint64_t stackHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
         SimplifiedAsyncCallStackKey asyncKey = {stackHash, GetAsyncDedupMallocSize(rawData), GetDedupTagId(rawData)};
