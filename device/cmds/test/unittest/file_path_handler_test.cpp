@@ -113,6 +113,7 @@ HWTEST_F(FilePathHandlerTest, TestCompositeNormalHandlerEmptyOutput, Function | 
 
     bool ret = handler.HandleOutputFilePath("", &sessionConfig);
     EXPECT_TRUE(ret);
+    ASSERT_TRUE(sessionConfig.result_file().length() > 4);
     EXPECT_EQ(sessionConfig.result_file().substr(sessionConfig.result_file().length() - 4), ".zip");
     EXPECT_NE(sessionConfig.result_file().find("/data/local/tmp/"), std::string::npos);
     EXPECT_NE(sessionConfig.result_file().find("hiprofiler_data_"), std::string::npos);
