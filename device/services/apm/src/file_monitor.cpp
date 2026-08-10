@@ -147,7 +147,7 @@ bool FileMonitor::ProcessEvent()
         event = reinterpret_cast<const struct inotify_event *>(ptr);
         uint32_t remainderBytes = static_cast<uint32_t>(buffer + readLength - (ptr + sizeof(struct inotify_event)));
         if (event->len > remainderBytes) {
-            PROFILER_LOG_ERROR(LOG_CORE, "invalid event len,(%u, %u), event->len, remainderBytes");
+            PROFILER_LOG_ERROR(LOG_CORE, "invalid event len, (%u, %u)", event->len, remainderBytes);
             break;
         }
         if (event->wd != wd_ || event->mask != IN_CLOSE_WRITE) {
