@@ -145,7 +145,7 @@ HWTEST_F(ZipStorageTest, CleanStaleDataRemovesMatchingFiles, TestSize.Level1)
     std::vector<std::string> staleFiles = {
         TEST_DIR + "hiprofiler_data_001.zip",
         TEST_DIR + "hiprofiler_data_002.zip",
-        TEST_DIR + "other_data.zip";
+        TEST_DIR + "other_data.zip",
     };
     for (const auto& f : staleFiles) {
         std::ofstream ofs(f, std::ios::trunc);
