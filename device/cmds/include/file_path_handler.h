@@ -89,7 +89,7 @@ protected:
 
 class FilePathHandlerFactory {
 public:
-    static std::unique_ptr<FilePathHandler> CreateHandler(bool composite = false);
+    static std::unique_ptr<FilePathHandler> CreateHandler(bool needComposite = false);
 };
 
 #endif // FILE_PATH_HANDLER_H

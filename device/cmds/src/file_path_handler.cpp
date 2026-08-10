@@ -205,20 +205,20 @@ bool CompositeNormalFilePathHandler::HandleOutputFilePath(
 }
 
 // FilePathHandlerFactory implementation
-std::unique_ptr<FilePathHandler> FilePathHandlerFactory::CreateHandler(bool composite)
+std::unique_ptr<FilePathHandler> FilePathHandlerFactory::CreateHandler(bool needComposite)
 {
 #if defined(is_sandbox) && is_sandbox
     int32_t callingUid = OHOS::IPCSkeleton::GetCallingUid();
     constexpr int APP_ID_THRESH = 20000000;
     if (callingUid > APP_ID_THRESH) {
-        if (composite) {
+        if (needComposite) {
             return std::make_unique<CompositeSandboxFilePathHandler>();
         } else {
             return std::make_unique<SandboxFilePathHandler>();
         }
     }
 #endif
-    if (composite) {
+    if (needComposite) {
         return std::make_unique<CompositeNormalFilePathHandler>();
     } else {
         return std::make_unique<NormalFilePathHandler>();
