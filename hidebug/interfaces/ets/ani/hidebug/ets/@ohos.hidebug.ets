@@ -425,4 +425,15 @@ export default namespace hidebug {
     return dumpJsRawHeapDataAdapter(needGC, needClean, processDump);
   }
 
+  export enum JsRawHeapTrimLevel {
+    TRIM_LEVEL_1 = 0,
+    TRIM_LEVEL_2 = 1
+  }
+
+  native function setJsRawHeapTrimLevelAdapter(level: int): void;
+
+  export function setJsRawHeapTrimLevel(level: JsRawHeapTrimLevel): void {
+    setJsRawHeapTrimLevelAdapter(level);
+  }
+
 }

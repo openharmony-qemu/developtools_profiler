@@ -1307,9 +1307,21 @@ ani_object DumpJsRawHeapDataAdapter(ani_env *env, ani_boolean needGC, ani_boolea
     if (!panda::DFXJSNApi::DumpHybridRawHeapSnapshot(ctx->dynamicFilePath, ctx->staticFilePath,
         rawDumpOption, callback)) {
         HILOG_ERROR(LOG_CORE, "DumpHybridRawHeapSnapshot failed.");
-        callback(static_cast<uint8_t>(panda::ecmascript::DumpHeapSnapshotStatus::FORK_FAILED));
+        // 1 = DumpHeapSnapshotStatus::FORK_FAILED (enum in heap_profiler.h, cannot include due to platform headers)
+        callback(1);
     }
     return promise;
+}
+
+void SetJsRawHeapTrimLevelAdapter([[maybe_unused]] ani_env *env, ani_int level)
+{
+    ApiInvokeRecorder apiInvokeRecorder("setJsRawHeapTrimLevel");
+    if (level < 0 || level > 1) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
+        AniUtil::ThrowErrorMessage(env, "Param type error, invalid level.", ErrorCode::PARAMETER_ERROR);
+        return;
+    }
+    panda::DFXJSNApi::SetJsRawHeapCropLevel(static_cast<panda::CropLevel>(level));
 }
 
 ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
@@ -1367,6 +1379,8 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
             reinterpret_cast<void *>(DumpJsHeapDataAdapter)},
         ani_native_function {"dumpJsRawHeapDataAdapter", "zzz:C{std.core.Promise}",
             reinterpret_cast<void *>(DumpJsRawHeapDataAdapter)},
+        ani_native_function {"setJsRawHeapTrimLevelAdapter", "i:",
+            reinterpret_cast<void *>(SetJsRawHeapTrimLevelAdapter)},
     };
     auto retCode = env->Namespace_BindNativeFunctions(nameSpace, methods.data(), methods.size());
     if (ANI_OK != retCode) {
