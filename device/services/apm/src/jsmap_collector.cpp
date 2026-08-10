@@ -54,7 +54,7 @@ bool JsmapCollector::Collect(std::shared_ptr<IDataStorage> storage)
     CHECK_TRUE(!resultFilename.empty(), false, "Dump jshandle map file fail");
     PROFILER_LOG_DEBUG(LOG_CORE,  "Dump jshandle map file success, pid: %u", pid_);
     std::string srcPath = SRC_JSMAP_FILE_DIR + "/" + resultFilename;
-    std::string destPath = DEST_JSMAP_FILE_DIR + "/" + resultFilename + ".txt";
+    std::string destPath = DEST_JSMAP_FILE_DIR + "/" + resultFilename + ".binpb";
     CHECK_TRUE(COMMON::CopyFileFastFromPath(srcPath, destPath), false, "copy jshandle map file fail");
     if (!storage->AddFile(destPath)) {
         PROFILER_LOG_ERROR(LOG_CORE,  "storage jshandle map file fail");
