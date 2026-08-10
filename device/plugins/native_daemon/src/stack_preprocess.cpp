@@ -2528,7 +2528,11 @@ void StackPreprocess::Flush(const uint8_t* src, size_t size)
         PROFILER_LOG_ERROR(LOG_CORE, "Flush writer_ is nullptr");
         return;
     }
-    writer_->Write(src, size);
+    if (hookConfig_.blocked()) {
+        writer_->WriteBlock(src, size);
+    } else {
+        writer_->Write(src, size);
+    }
     writer_->Flush();
 
     std::get<::BatchNativeHookData>(stackData_).clear_events();

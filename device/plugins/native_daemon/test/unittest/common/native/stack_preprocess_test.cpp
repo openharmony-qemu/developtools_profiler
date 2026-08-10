@@ -2936,4 +2936,112 @@ HWTEST_F(StackPreprocessTest, HandleMoveAddrFlushAndFreeTest, TestSize.Level0)
 
     delete rawStack->stackContext;
 }
+
+class MockWriter : public Writer {
+public:
+    long Write(const void* data, size_t size) override
+    {
+        writeCalled_ = true;
+        writeSize_ = size;
+        return size;
+    }
+    long WriteBlock(const void* data, size_t size) override
+    {
+        writeBlockCalled_ = true;
+        writeBlockSize_ = size;
+        return size;
+    }
+    bool Flush() override
+    {
+        flushCalled_ = true;
+        return true;
+    }
+    bool writeCalled_ = false;
+    bool writeBlockCalled_ = false;
+    bool flushCalled_ = false;
+    size_t writeSize_ = 0;
+    size_t writeBlockSize_ = 0;
+};
+
+/*
+ * @tc.name: FlushWithBlockModeEnabled
+ * @tc.desc: test Flush calls WriteBlock when hookConfig.blocked is true.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackPreprocessTest, FlushWithBlockModeEnabled, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_blocked(true);
+    StackPreprocess preprocess(nullptr, config, 0);
+
+    auto mockWriter = std::make_shared<MockWriter>();
+    preprocess.SetWriter(std::shared_ptr<Writer>(mockWriter));
+
+    uint8_t testData[] = {1, 2, 3, 4};
+    preprocess.Flush(testData, sizeof(testData));
+
+    EXPECT_TRUE(mockWriter->writeBlockCalled_);
+    EXPECT_FALSE(mockWriter->writeCalled_);
+    EXPECT_TRUE(mockWriter->flushCalled_);
+    EXPECT_EQ(mockWriter->writeBlockSize_, sizeof(testData));
+}
+
+/*
+ * @tc.name: FlushWithBlockModeDisabled
+ * @tc.desc: test Flush calls Write when hookConfig.blocked is false.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackPreprocessTest, FlushWithBlockModeDisabled, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_blocked(false);
+    StackPreprocess preprocess(nullptr, config, 0);
+
+    auto mockWriter = std::make_shared<MockWriter>();
+    preprocess.SetWriter(std::shared_ptr<Writer>(mockWriter));
+
+    uint8_t testData[] = {1, 2, 3, 4};
+    preprocess.Flush(testData, sizeof(testData));
+
+    EXPECT_TRUE(mockWriter->writeCalled_);
+    EXPECT_FALSE(mockWriter->writeBlockCalled_);
+    EXPECT_TRUE(mockWriter->flushCalled_);
+    EXPECT_EQ(mockWriter->writeSize_, sizeof(testData));
+}
+
+/*
+ * @tc.name: FlushWithNullSrc
+ * @tc.desc: test Flush with null src pointer returns early.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackPreprocessTest, FlushWithNullSrc, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_blocked(true);
+    StackPreprocess preprocess(nullptr, config, 0);
+
+    auto mockWriter = std::make_shared<MockWriter>();
+    preprocess.SetWriter(std::shared_ptr<Writer>(mockWriter));
+
+    preprocess.Flush(nullptr, 100);
+
+    EXPECT_FALSE(mockWriter->writeCalled_);
+    EXPECT_FALSE(mockWriter->writeBlockCalled_);
+    EXPECT_FALSE(mockWriter->flushCalled_);
+}
+
+/*
+ * @tc.name: FlushWithNullWriter
+ * @tc.desc: test Flush with null writer returns early.
+ * @tc.type: FUNC
+ */
+HWTEST_F(StackPreprocessTest, FlushWithNullWriter, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_blocked(true);
+    StackPreprocess preprocess(nullptr, config, 0);
+
+    uint8_t testData[] = {1, 2, 3, 4};
+    preprocess.Flush(testData, sizeof(testData));
+}
 }
