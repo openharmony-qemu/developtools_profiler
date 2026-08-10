@@ -136,15 +136,20 @@ bool FileMonitor::ProcessEvent()
     char filenameBuf[PATH_MAX] = {0};
     const struct inotify_event *event = nullptr;
     char buffer[MAX_BUF_SIZE] = {'\0'};
-    char *ptr = nullptr;
 
     ssize_t readLength = read(inotifyFd_, buffer, MAX_BUF_SIZE);
     if (readLength <= 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "read event fail, err: %s", strerror(errno));
         return false;
     }
-    for (ptr = buffer; ptr < buffer + readLength; ptr += sizeof(struct inotify_event) + event->len) {
+    for (char *ptr = buffer; ptr < buffer + readLength - sizeof(struct inotify_event);
+        ptr += sizeof(struct inotify_event) + event->len) {
         event = reinterpret_cast<const struct inotify_event *>(ptr);
+        uint32_t remainderBytes = static_cast<uint32_t>(buffer + readLength - (ptr + sizeof(struct inotify_event)));
+        if (event->len > remainderBytes) {
+            PROFILER_LOG_ERROR(LOG_CORE, "invalid event len,(%u, %u), event->len, remainderBytes");
+            break;
+        }
         if (event->wd != wd_ || event->mask != IN_CLOSE_WRITE) {
             continue;
         }
@@ -156,8 +161,8 @@ bool FileMonitor::ProcessEvent()
         if (!filter_(filename)) {
             continue;
         }
-        PROFILER_LOG_DEBUG(LOG_CORE, "notify file write done:%s", event->name);
-        resultFile_ = event->name;
+        PROFILER_LOG_DEBUG(LOG_CORE, "notify file write done:%s", filenameBuf);
+        resultFile_ = filenameBuf;
         sem_->Post();
         (void)memset_s(buffer, sizeof(buffer), 0, sizeof(buffer));
         return true;
