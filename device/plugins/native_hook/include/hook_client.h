@@ -85,5 +85,13 @@ EXPORT_API void hook_alive_addr_dump(void* buff, size_t buffLen);
 }
 #endif
 
+using ArkTsHookFn = void (*)(void);
+using ArkTsHookResolver = ArkTsHookFn (*)(const char* name);
+void EnableArkTsHookIfNeeded(unsigned long long traceMask);
+void DisableArkTsHookIfNeeded();
+#ifdef NATIVE_HOOK_UT
+void SetArkTsHookResolver(ArkTsHookResolver resolver);
+void ResetArkTsHookResolver();
+#endif
 
 #endif /* __OHOS_MALLOC_HOOK_CLIENT_H__ */
