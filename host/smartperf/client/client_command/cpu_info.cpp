@@ -91,6 +91,10 @@ void CPUInfo::StartExecutionOnce(bool isPause)
     if (pids_.empty()) {
         hiperfCmd_ += "-a";
     } else {
+        if (!SPUtils::IsValidPid(pids_[0])) {
+            LOGE("CPUInfo::StartExecutionOnce invalid pid");
+            return;
+        }
         hiperfCmd_ += "-p " + pids_[0];
     }
 
@@ -104,7 +108,6 @@ void CPUInfo::StartExecutionOnce(bool isPause)
             while (fgets(chunk.data(), chunk.size(), pipe.get()) != nullptr) {
                 buffer_.append(chunk.data());
             }
-
             if (!running_) {
                 return;
             }

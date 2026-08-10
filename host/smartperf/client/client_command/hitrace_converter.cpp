@@ -278,12 +278,15 @@ bool TraceClipper::ClipByTimeRange(uint64_t startTimeNs, uint64_t endTimeNs)
 
 bool TraceClipper::SaveToFile(const std::string& outputPath)
 {
-    char outPutPathChar[PATH_MAX] = {0x00};
-    if (realpath(outputPath.c_str(), outPutPathChar) == nullptr) {
-        LOGE("data dir %s is nullptr", outputPath.c_str());
-        return false;
+    std::string dirPath = outputPath.substr(0, outputPath.find_last_of('/'));
+    if (!dirPath.empty()) { //只校验目录
+        char realDirPath[PATH_MAX] = {0x00};
+        if (realpath(dirPath.c_str(), realDirPath) == nullptr) {
+            LOGE("data dir %s is nullptr", dirPath.c_str());
+            return false;
+        }
     }
-    std::ofstream outFile(outPutPathChar, std::ios::binary | std::ios::trunc);
+    std::ofstream outFile(outputPath.c_str(), std::ios::binary | std::ios::trunc);
     if (!outFile.is_open()) {
         errorMsg_ = "Failed to create output file: " + outputPath;
         return false;

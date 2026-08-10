@@ -492,19 +492,12 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
 
     if (type == CommandType::CT_PID) {
         processIds_ = std::to_string(std::get<int32_t>(value));
-        const std::string getProcPkg = "cat /proc/" + processIds_ + "/cmdline";
-        FILE *fd = popen(getProcPkg.c_str(), "r");
-        if (fd == nullptr) {
+        std::string cmdResult;
+        std::string procPath = "/proc/" + processIds_ + "/cmdline";
+        if (!SPUtils::SafeLoadExec({"cat", procPath}, cmdResult)) {
             return;
         }
-        char buf[1024] = {'\0'};
-        while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-            processName_ = buf;
-        }
-        if (pclose(fd) == -1) {
-            LOGE("Error: Failed to close file");
-            return;
-        }
+        processName_ = cmdResult;
     }
 
     FPS::GetInstance().SetProcessId(processIds_);
@@ -657,12 +650,15 @@ void TaskManager::DeleteTask(SpProfiler* task)
 
 void TaskManager::InitDataCsv()
 {
-    if (!SPUtils::FileAccess(fileName_)) {
-        char fileName[PATH_MAX] = {0x00};
-        if (realpath(fileName_.c_str(), fileName) == nullptr) {
-            LOGE("the file not exeit");
+    std::string dirPath = fileName_.substr(0, fileName_.find_last_of('/'));
+    if (!dirPath.empty()) { //只校验目录
+        char realDirPath[PATH_MAX] = {0x00};
+        if (realpath(dirPath.c_str(), realDirPath) == nullptr) {
+            LOGE("data dir %s is nullptr", dirPath.c_str());
             return;
         }
+    }
+    if (!SPUtils::FileAccess(fileName_)) {
         std::ofstream file(fileName_);
         if (file) {
             std::string chmodCmd = "chmod 777 " + fileName_;
@@ -674,11 +670,6 @@ void TaskManager::InitDataCsv()
             return;
         }
     } else {
-        char fileName[PATH_MAX] = {0x00};
-        if (realpath(fileName_.c_str(), fileName) == nullptr) {
-            LOGE("the file not exeit");
-            return;
-        }
         std::ofstream file(fileName_, std::ios::trunc);
         if (!file) {
             LOGE("Unable to open file");
