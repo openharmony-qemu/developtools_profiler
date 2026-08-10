@@ -1780,22 +1780,6 @@ HWTEST_F(ProfilerServiceTest, NativeHookConfigHasCompositeTagEmpty, TestSize.Lev
 }
 
 /**
- * @tc.name: IsArktsDiagLibLoadedInvalidPid
- * @tc.desc: Test IsArktsDiagLibLoaded with invalid pid returns false
- * @tc.type: FUNC
- */
-HWTEST_F(ProfilerServiceTest, IsArktsDiagLibLoadedInvalidPid, TestSize.Level1)
-{
-    ASSERT_NE(service_, nullptr);
-
-    uint32_t sessionId = CreateOfflineSession();
-    EXPECT_NE(sessionId, 0);
-    auto ctx = service_->GetSessionContext(sessionId);
-    ASSERT_NE(ctx, nullptr);
-    EXPECT_FALSE(ctx->IsArktsDiagLibLoaded(-1));
-}
-
-/**
  * @tc.name: CollectApmNullCompositeConfig
  * @tc.desc: Test CollectApm returns false when compositeConfig is nullptr
  * @tc.type: FUNC

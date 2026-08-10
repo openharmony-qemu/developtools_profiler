@@ -69,7 +69,6 @@ ohos_source_set("profiler_service") {
     "samgr:samgr_proxy",
     "ability_runtime:app_manager",
     "zlib:libz",
-    "init:libbegetutil",
   ]
   defines = [ "OPENSSL_SUPPRESS_DEPRECATED" ]
   if (hiprofiler_sandbox_log_path_mapping) {

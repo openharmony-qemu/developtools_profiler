@@ -118,7 +118,6 @@ private:
         bool StartPluginSessions();
         bool StopPluginSessions(bool timerTask = false);
         bool CollectApm();
-        bool IsArktsDiagLibLoaded(int32_t pid);
 
         size_t UpdatePluginConfigs(const std::vector<ProfilerPluginConfig>& newPluginConfigs);
 

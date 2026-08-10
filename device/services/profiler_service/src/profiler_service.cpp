@@ -15,7 +15,6 @@
 #define LOG_TAG "ProfilerService"
 #include "profiler_service.h"
 #include <algorithm>
-#include <fstream>
 #include <sys/stat.h>
 #include <unistd.h>
 #include "common.h"
@@ -32,7 +31,6 @@
 #include "rawheap_collector.h"
 #include "jsmap_collector.h"
 #include "memory_trace.h"
-#include "init_param.h"
 
 using namespace ::grpc;
 using PluginContextPtr = std::shared_ptr<PluginContext>;
@@ -69,7 +67,6 @@ constexpr uint64_t CHECK_HEARTBEAT_INTERVAL = 500;
 constexpr long BYTE_PER_KB = 1024;
 const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 const std::string TAG_RES_COMPOSITE_HEAP = "RES_COMPOSITE_HEAP";
-const std::string ARKTS_DIAG_PATH = "const.ark.jsruntime.dfx_library";
 #ifdef  PERFORMANCE_DEBUG
 constexpr uint64_t S_TO_NS = 1000 * 1000 * 1000;
 #endif
@@ -236,36 +233,6 @@ bool ProfilerService::SessionContext::StopPluginSessions(bool timerTask)
     return true;
 }
 
-bool ProfilerService::SessionContext::IsArktsDiagLibLoaded(int32_t pid)
-{
-    uint32_t len = 0;
-    int ret = SystemGetParameter(ARKTS_DIAG_PATH.c_str(), nullptr, &len);
-    if (ret != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "get arkts diag path len fail, ret: %d", ret);
-        return false;
-    }
-    std::vector<char> value(len + 1);
-    ret = SystemGetParameter(ARKTS_DIAG_PATH.c_str(), value.data(), &len);
-    if (ret != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "get arkts diag path fail, ret: %d", ret);
-        return false;
-    }
-    std::string libName = std::string(value.data());
-    std::ifstream ifs("/proc/" + std::to_string(pid) + "/maps");
-    if (!ifs.is_open()) {
-        PROFILER_LOG_ERROR(LOG_CORE, "open /proc/%d/maps fail, err:%d,%s", pid, errno, strerror(errno));
-        return false;
-    }
-    std::string line;
-    while (std::getline(ifs, line)) {
-        if (line.find(libName) != std::string::npos) {
-            return true;
-        }
-    }
-    PROFILER_LOG_DEBUG(LOG_CORE, "pid %d not load arkts diag lib(%s)", pid, libName.c_str());
-    return false;
-}
-
 bool ProfilerService::SessionContext::CollectApm()
 {
     if (compositeConfig == nullptr) {
@@ -298,12 +265,12 @@ bool ProfilerService::SessionContext::CollectApm()
     }
     uint32_t pid = static_cast<uint32_t>(pidValue);
     ApmCollectMgr apmMgr(sessionConfig.result_file());
-    if (hasGlobalHandleTag || (hasLocalHandleTag && IsArktsDiagLibLoaded(pidValue))) {
+    if (hasGlobalHandleTag || hasLocalHandleTag) {
         apmMgr.RegisterCollector(
             std::static_pointer_cast<IDataCollector>(std::make_shared<RawheapCollector>(pid, pid)));
         apmMgr.RegisterCollector(std::static_pointer_cast<IDataCollector>(std::make_shared<JsmapCollector>(pid, pid)));
     } else {
-        PROFILER_LOG_WARN(LOG_CORE, "no arkts handle tag enabled or diag lib not loaded (%d,%d), only collect htrace",
+        PROFILER_LOG_WARN(LOG_CORE, "no arkts handle tag enabled, global:%d, local:%d, only collect htrace",
             hasGlobalHandleTag, hasLocalHandleTag);
     }
     apmMgr.RegisterCollector(
