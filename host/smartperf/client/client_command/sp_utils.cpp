@@ -135,6 +135,12 @@ bool SPUtils::SafeLoadExec(const std::vector<std::string> &args, std::string &re
     }
     if (pid == 0) {
         close(pipefd[0]);
+        int maxFd = static_cast<int>(sysconf(_SC_OPEN_MAX));
+        for (int fd = STDERR_FILENO +1; fd < maxFd; ++fd) {
+            if (fd != pipefd[1]) {
+                close(fd);
+            }
+        }
         if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
             _exit(EXEC_FAILURE_EXIT_CODE);
         }

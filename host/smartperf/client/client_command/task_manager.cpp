@@ -200,10 +200,13 @@ void TaskManager::AddTask(std::vector<std::string>& argv)
 
 void TaskManager::SetFilePath(const std::string& fileName, bool removeCurrentFile)
 {
-    fileName_ = fileName;
-    saveFlag_ = true;
-    if (removeCurrentFile) {
-        std::remove(fileName_.c_str());
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        fileName_ = fileName;
+        saveFlag_ = true;
+        if (removeCurrentFile) {
+            std::remove(fileName_.c_str());
+        }
     }
     std::filesystem::path fullPath = fileName;
     std::string dir = fullPath.parent_path().string();
@@ -280,7 +283,10 @@ void TaskManager::SaveRegularly(int32_t dataIndex)
             item->switch_ = !item->switch_;
         }
         LOGD("Start saving data automatically");
-        scheduleSaveDataCond_.notify_all();
+        {
+            std::lock_guard<std::mutex> schedLock(scheduleSaveDataMtx_);
+            scheduleSaveDataCond_.notify_all();
+        }
     }
 }
 
@@ -330,6 +336,41 @@ bool TaskManager::ThreadLock()
     return true;
 }
 
+std::map<std::string, std::string> TaskManager::CollectCurrentData(uint32_t dataIndex, bool recordData)
+{
+    std::map<std::string, std::string> currDatas;
+    currDatas.emplace("timestamp", std::to_string(SPUtils::GetCurTime()));
+    if (recordData) {
+        datas_.emplace(dataIndex_,
+            std::map<std::string, std::string>{{"timestamp", std::to_string(SPUtils::GetCurTime())}});
+    }
+    for (auto& item : priorityTask_) {
+        currDatas.merge(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData).get());
+    }
+    std::vector<std::future<std::map<std::string, std::string>>> result;
+    for (auto& item : normalTask_) {
+        result.emplace_back(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData));
+    }
+    for (auto& item : result) {
+        currDatas.merge(item.get());
+    }
+    for (auto& item : OHOS::SmartPerf::GpuCounter::GetInstance().GetGpuRealtimeData()) {
+        currDatas.insert(item);
+    }
+    return currDatas;
+}
+
+void TaskManager::FinishLoop()
+{
+    ProcessOnceTask(false);
+    running_ = false;
+    finishCond_.notify_all();
+    {
+        std::lock_guard<std::mutex> lock(scheduleSaveDataMtx_);
+        scheduleSaveDataCond_.notify_all();
+    }
+
+}
 void TaskManager::MainLoop()
 {
     while (running_) {
@@ -346,25 +387,7 @@ void TaskManager::MainLoop()
             break;
         }
         LOGD("data index: %u", dataIndex_);
-        std::map<std::string, std::string> currDatas;
-        currDatas.emplace("timestamp", std::to_string(SPUtils::GetCurTime()));
-        if (recordData) {
-            datas_.emplace(dataIndex_,
-                std::map<std::string, std::string>{{"timestamp", std::to_string(SPUtils::GetCurTime())}});
-        }
-        for (auto& item : priorityTask_) {
-            currDatas.merge(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData).get());
-        }
-        std::vector<std::future<std::map<std::string, std::string>>> result;
-        for (auto& item : normalTask_) {
-            result.emplace_back(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData));
-        }
-        for (auto& item : result) {
-            currDatas.merge(item.get());
-        }
-        for (auto& item : OHOS::SmartPerf::GpuCounter::GetInstance().GetGpuRealtimeData()) {
-            currDatas.insert(item);
-        }
+        std::map<std::string, std::string> currDatas = CollectCurrentData(dataIndex_, recordData);
         if (nextTime_ != nullptr) {
             *nextTime_ = SPUtils::GetCurTime();
         }
@@ -376,10 +399,7 @@ void TaskManager::MainLoop()
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
         }
     }
-    ProcessOnceTask(false);
-    running_ = false;
-    finishCond_.notify_all();
-    scheduleSaveDataCond_.notify_all();
+    FinishLoop();
 }
 
 void TaskManager::WriteToCSV()
@@ -456,7 +476,11 @@ void TaskManager::Stop(bool pause)
             std::lock_guard<std::mutex> lock(mtx_);
             running_ = false;
         }
-        scheduleSaveDataCond_.notify_all();
+        {
+            std::lock_guard<std::mutex> schedLock(scheduleSaveDataMtx_);
+            scheduleSaveDataCond_.notify_all();
+        }
+
         scheduleSaveDataTh_.join();
     }
     if (!pause) {
@@ -650,18 +674,25 @@ void TaskManager::DeleteTask(SpProfiler* task)
 
 void TaskManager::InitDataCsv()
 {
-    std::string dirPath = fileName_.substr(0, fileName_.find_last_of('/'));
-    if (!dirPath.empty()) { //只校验目录
-        char realDirPath[PATH_MAX] = {0x00};
+    size_t lastSlash = fileName_.find_last_of('/');
+    std::string fileName = (lastSlash != std::string::npos) ? fileName_.substr(lastSlash + 1) :
+        fileName_;
+    std::string safePath;
+    if (lastSlash != std::string::npos) {
+        std::string dirPath = fileName_.substr(0, lastSlash);
+        char realDirPath[PATH_MAX] = {0X00};
         if (realpath(dirPath.c_str(), realDirPath) == nullptr) {
             LOGE("data dir %s is nullptr", dirPath.c_str());
-            return;
+            return false;
         }
+        safePath = std::string(realDirPath) + "/" + fileName;
+    } else {
+        safePath = fileName;
     }
-    if (!SPUtils::FileAccess(fileName_)) {
-        std::ofstream file(fileName_);
+    if (!SPUtils::FileAccess(safePath)) {
+        std::ofstream file(safePath);
         if (file) {
-            std::string chmodCmd = "chmod 777 " + fileName_;
+            std::string chmodCmd = "chmod 777 " + safePath;
             std::string cmdResult;
             SPUtils::LoadCmd(chmodCmd, cmdResult);
             file.close();
@@ -670,13 +701,13 @@ void TaskManager::InitDataCsv()
             return;
         }
     } else {
-        std::ofstream file(fileName_, std::ios::trunc);
+        std::ofstream file(safePath, std::ios::trunc);
         if (!file) {
             LOGE("Unable to open file");
             return;
         }
         file.close();
-        LOGD("CreatPath already exists: %s", fileName_.c_str());
+        LOGD("CreatPath already exists: %s", safePath.c_str());
     }
 }
 
