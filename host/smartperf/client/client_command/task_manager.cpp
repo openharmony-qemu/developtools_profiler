@@ -515,9 +515,12 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
 
     if (type == CommandType::CT_PID) {
         processIds_ = std::to_string(std::get<int32_t>(value));
+        if (!SPUtils::IsValidPid(processIds_)) {
+            return;
+        }
         std::string cmdResult;
         std::string procPath = "/proc/" + processIds_ + "/cmdline";
-        if (!SPUtils::SafeLoadExec({"cat", procPath}, cmdResult)) {
+        if (!SPUtils::LoadFile(procPath, cmdResult)) {
             return;
         }
         processName_ = cmdResult;
