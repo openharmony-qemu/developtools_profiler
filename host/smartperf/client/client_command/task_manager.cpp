@@ -683,7 +683,7 @@ void TaskManager::InitDataCsv()
         char realDirPath[PATH_MAX] = {0x00};
         if (realpath(dirPath.c_str(), realDirPath) == nullptr) {
             LOGE("data dir %s is nullptr", dirPath.c_str());
-            return false;
+            return;
         }
         safePath = std::string(realDirPath) + "/" + fileName;
     } else {
