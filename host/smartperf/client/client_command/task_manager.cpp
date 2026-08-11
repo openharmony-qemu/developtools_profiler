@@ -369,7 +369,6 @@ void TaskManager::FinishLoop()
         std::lock_guard<std::mutex> lock(scheduleSaveDataMtx_);
         scheduleSaveDataCond_.notify_all();
     }
-
 }
 void TaskManager::MainLoop()
 {
