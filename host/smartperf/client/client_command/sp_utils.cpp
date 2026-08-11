@@ -990,15 +990,6 @@ void SPUtils::RemoveDirOrFile(const std::string &dirPath)
     }
 }
 
-void SPUtils::CopyFiles(const std::string& cpStr)
-{
-    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::CP) + cpStr;
-    std::string cmdResult;
-    if (!SPUtils::LoadCmd(cmd, cmdResult)) {
-        WLOGE("Failed to copy files: %s", cpStr.c_str());
-    }
-}
-
 void SPUtils::TarFiles(const std::string& tarStr)
 {
     std::string tarCommand = CMD_COMMAND_MAP.at(CmdCommand::TAR) + tarStr;

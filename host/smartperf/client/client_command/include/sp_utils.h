@@ -166,7 +166,6 @@ void GetTestsaPlugin(int command);
 void KillStartDaemon();
 void CreateDir(const std::string &dirPath);
 void RemoveDirOrFile(const std::string &dirPath);
-void CopyFiles(const std::string& cpStr);
 void TarFiles(const std::string& tarStr);
 size_t GetFileSize(std::string filePath);
 bool IsFindDHGame(const std::string &pkg);
