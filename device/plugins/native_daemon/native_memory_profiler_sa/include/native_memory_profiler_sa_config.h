@@ -97,6 +97,7 @@ public:
     uint32_t asyncTaskStackDepth_{0};
     bool arkuiMemTraceEnable_{false};
     bool discardDestroyedTraces_{true};
+    std::string bundleName_;
 };
 } // namespace OHOS::Developtools::NativeDaemon
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_H
