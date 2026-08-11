@@ -45,9 +45,9 @@ public:
     void Flush();
     bool SendStack(const void* data, size_t size);
     virtual bool SendStackWithPayload(const void* data, size_t size, const void* payload,
-            size_t payloadSize, int smbIndex = 0);
+            size_t payloadSize, int smbIndex = 0, bool skipDisableHook = false);
     bool SendStackWithExtraData(const void* data, size_t size, const void* payload, size_t payloadSize,
-        ExtraDataInfo& extraDataInfo, int smbIndex = 0);
+        ExtraDataInfo& extraDataInfo, int smbIndex = 0, bool skipDisableHook = false);
     bool SendRawData(const void* data, size_t size, int smbIndex = 0);
     void DisableHook();
     bool PeerIsConnected();
@@ -66,6 +66,7 @@ public:
 private:
     void HandleFileCacheMode(SocketContext &context);
     bool HandleFileCacheMsg(SocketContext &context, const HookCacheFileMsg& cacheFileMsg);
+    bool HandleBackpressureState(SocketContext &context, const int8_t *buf, uint32_t size);
     bool HandleControlCommand(uint32_t cmd);
     bool ApplyClientConfig(SocketContext &context, const ClientConfig& clientConfig);
     void HandleSharedMemoryMode(SocketContext &context);

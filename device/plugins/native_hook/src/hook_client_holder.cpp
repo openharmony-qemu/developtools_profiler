@@ -43,23 +43,23 @@ bool HookClientHolder::IsValid() const
 }
 
 bool HookClientHolder::SendStackWithPayload(const void* data, size_t size, const void* payload,
-    size_t payloadSize, int smbIndex)
+    size_t payloadSize, int smbIndex, bool skipDisableHook)
 {
     std::shared_ptr<HookSocketClient> client = holder_.lock();
     if (client == nullptr) {
         return false;
     }
-    return client->SendStackWithPayload(data, size, payload, payloadSize, smbIndex);
+    return client->SendStackWithPayload(data, size, payload, payloadSize, smbIndex, skipDisableHook);
 }
 
 bool HookClientHolder::SendStackWithExtraData(const void* data, size_t size, const void* payload,
-    size_t payloadSize, ExtraDataInfo& extraDataInfo, int smbIndex)
+    size_t payloadSize, ExtraDataInfo& extraDataInfo, int smbIndex, bool skipDisableHook)
 {
     std::shared_ptr<HookSocketClient> client = holder_.lock();
     if (client == nullptr) {
         return false;
     }
-    return client->SendStackWithExtraData(data, size, payload, payloadSize, extraDataInfo, smbIndex);
+    return client->SendStackWithExtraData(data, size, payload, payloadSize, extraDataInfo, smbIndex, skipDisableHook);
 }
 
 bool HookClientHolder::SendRawData(const void* data, size_t size, int smbIndex)
@@ -137,5 +137,5 @@ void HookClientHolder::SendMmapFileRawData(int prot, int flags, off_t offset, co
     if (static_cast<uint32_t>(flags) & MAP_FIXED) {
         curRawdata.mmapArgs.flags |= MAP_FIXED;
     }
-    client->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + len, nullptr, 0);
+    client->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + len, nullptr, 0, 0, true);
 }

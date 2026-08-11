@@ -18,6 +18,7 @@
 #include <future>
 #include <gtest/gtest.h>
 #include <memory_trace.h>
+#include <sys/utsname.h>
 #include <thread>
 #include "init_param.h"
 #include "logging.h"
@@ -32,6 +33,17 @@ constexpr uint32_t SIZE = 1024;
 constexpr int SLEEP_SECONDS = 5;
 const std::string OUTPUT_PATH = "/data/local/tmp/hiprofiler_data.htrace";
 const int SMB_PAGES = 16384;
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
 
 class PreloadClientTest : public ::testing::Test {
 public:
@@ -161,6 +173,11 @@ int ThreadFunc(int size)
  */
 HWTEST_F(PreloadClientTest, GetPreloadSoListTest5, TestSize.Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::string appName("com.ohos.test");
     std::future<int> ret = std::async(std::launch::async, ThreadFunc, SIZE);
     sleep(1);
@@ -179,6 +196,11 @@ HWTEST_F(PreloadClientTest, GetPreloadSoListTest5, TestSize.Level0)
  */
 HWTEST_F(PreloadClientTest, GetPreloadSoListTest6, TestSize.Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::string appName("hiview");
     std::future<int> ret = std::async(std::launch::async, ThreadFunc, 5);
     sleep(1);

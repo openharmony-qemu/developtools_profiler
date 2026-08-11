@@ -50,9 +50,13 @@ ohos_unittest("profiler_service_ut") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/process_data:process_data_cpp",
     "../:profiler_service",
     "../../../base:hiprofiler_base",
+    "../../apm:profiler_apm",
   ]
   include_dirs = [ "${OHOS_PROFILER_DIR}/interfaces/kits" ]
-  configs = [ ":cflags_config" ]
+  configs = [
+    ":cflags_config",
+    "${OHOS_PROFILER_DIR}/device/services/apm:profiler_apm_config",
+  ]
   if (use_clang_coverage) {
     defines = [ "COVERAGE_TEST" ]
   }
@@ -69,6 +73,11 @@ ohos_unittest("profiler_service_ut") {
     "init:libbegetutil",
     "openssl:libcrypto_shared",
     "protobuf:protobuf_lite",
+    "safwk:system_ability_fwk",
+    "ipc:ipc_core",
+    "samgr:samgr_proxy",
+    "ability_runtime:app_manager",
+    "zlib:libz",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
 }

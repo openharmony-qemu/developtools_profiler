@@ -633,7 +633,9 @@ bool StackPreprocess::ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvai
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + ctx.offset);
         if (validLiveDataPtr_ != nullptr) {
             auto* tmpRawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
-            if (IsArkGlobalHandleRecord(tmpRawData) && ShouldSkipRecord(tmpRawData, *validLiveDataPtr_)) {
+            if (IsArkGlobalHandleRecord(tmpRawData) && ShouldSkipRecord(tmpRawData, *validLiveDataPtr_) &&
+                !(IsFreeRecord(tmpRawData) && orphanFreeWhitelistPtr_ != nullptr &&
+                  InOrphanFreeWhitelist(tmpRawData, *orphanFreeWhitelistPtr_))) {
                 ctx.offset += totalSize;
                 continue;
             }
@@ -1470,13 +1472,29 @@ inline void StackPreprocess::FillCallStack(std::vector<CallFrame>& callFrames, s
     }
 }
 
+uint64_t StackPreprocess::GetAsyncDedupMallocSize(const RawStackPtr& rawData) const
+{
+    if (hookConfig_.statistics_interval() == 0 || rawData == nullptr || rawData->stackContext == nullptr) {
+        return 0;
+    }
+    return rawData->stackContext->mallocSize;
+}
+
+uint32_t StackPreprocess::GetDedupTagId(const RawStackPtr& rawData) const
+{
+    if (hookConfig_.statistics_interval() == 0 || !hookConfig_.arkui_mem_trace_enable() ||
+        rawData == nullptr || rawData->stackContext == nullptr) {
+        return 0;
+    }
+    return rawData->stackContext->tagId;
+}
+
 uint32_t StackPreprocess::FindAsyncCallStackId(const HookRecordPtr& hookRecord)
 {
     auto rawData = hookRecord->GetRawStack();
     const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
     uint64_t asyncHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
-    AsyncCallStackKey asyncKey = {asyncHash, rawData->stackContext->mallocSize,
-        rawData->stackContext->tagId};
+    AsyncCallStackKey asyncKey = {asyncHash, GetAsyncDedupMallocSize(rawData), GetDedupTagId(rawData)};
     auto it = asyncCallStackIndex_.find(asyncKey);
     return it != asyncCallStackIndex_.end() ? it->second : 0;
 }
@@ -1486,8 +1504,7 @@ uint32_t StackPreprocess::FindSimplifiedAsyncCallStackId(const HookRecordPtr& ho
     auto rawData = hookRecord->GetRawStack();
     const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
     uint64_t asyncHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
-    SimplifiedAsyncCallStackKey asyncKey = {asyncHash, rawData->stackContext->mallocSize,
-        rawData->stackContext->tagId};
+    SimplifiedAsyncCallStackKey asyncKey = {asyncHash, GetAsyncDedupMallocSize(rawData), GetDedupTagId(rawData)};
     auto it = simplifiedAsyncCallStackIndex_.find(asyncKey);
     return it != simplifiedAsyncCallStackIndex_.end() ? it->second : 0;
 }
@@ -1497,8 +1514,7 @@ uint32_t StackPreprocess::FindFullAsyncCallStackId(const HookRecordPtr& hookReco
     auto rawData = hookRecord->GetRawStack();
     const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
     uint64_t asyncHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
-    AsyncCallStackKey asyncKey = {asyncHash, rawData->stackContext->mallocSize,
-        rawData->stackContext->tagId};
+    AsyncCallStackKey asyncKey = {asyncHash, GetAsyncDedupMallocSize(rawData), GetDedupTagId(rawData)};
     auto it = asyncCallStackIndex_.find(asyncKey);
     return it != asyncCallStackIndex_.end() ? it->second : 0;
 }
@@ -1510,8 +1526,7 @@ uint32_t StackPreprocess::FindFullAsyncStatisticsStackId(const HookRecordPtr& ho
     CHECK_NOTNULL(rawData->stackContext, 0, "stackContext is nullptr");
     const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
     uint64_t stackHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
-    AsyncCallStackKey key = {stackHash, rawData->stackContext->mallocSize,
-        rawData->stackContext->tagId};
+    AsyncCallStackKey key = {stackHash, GetAsyncDedupMallocSize(rawData), GetDedupTagId(rawData)};
     auto it = asyncCallStackIndex_.find(key);
     return it != asyncCallStackIndex_.end() ? it->second : 0;
 }
@@ -1524,7 +1539,7 @@ uint32_t StackPreprocess::FindSyncCallStackId(std::vector<uint64_t>& callStack, 
     uint32_t stackSize = static_cast<uint32_t>(callStack.size());
     uint64_t nodeId = hookConfig_.arkui_mem_trace_enable() ? rawData->stackContext->nodeId : 0;
     uint32_t nodeType = hookConfig_.arkui_mem_trace_enable() ? rawData->stackContext->nodeType : 0;
-    CallStackKey key = {stackHash, nodeId, stackSize, nodeType, rawData->stackContext->tagId};
+    CallStackKey key = {stackHash, nodeId, stackSize, nodeType, GetDedupTagId(rawData)};
     auto itStack = callStackIndex_.find(key);
     return itStack != callStackIndex_.end() ? itStack->second : 0;
 }
@@ -1535,7 +1550,7 @@ uint32_t StackPreprocess::FindSimplifiedSyncCallStackId(
     auto rawData = hookRecord->GetRawStack();
     uint64_t stackHash = CallStackHash{}(callStack);
     uint32_t stackSize = static_cast<uint32_t>(callStack.size());
-    SimplifiedCallStackKey key = {stackHash, stackSize, rawData->stackContext->tagId};
+    SimplifiedCallStackKey key = {stackHash, stackSize, GetDedupTagId(rawData)};
     auto itStack = simplifiedCallStackIndex_.find(key);
     return itStack != simplifiedCallStackIndex_.end() ? itStack->second : 0;
 }
@@ -1575,15 +1590,14 @@ void StackPreprocess::AddCallStackIndex(uint32_t stackId, RawStackPtr rawData)
     if (hookConfig_.async_stack_enable()) {
         const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
         uint64_t stackHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
-        AsyncCallStackKey key = {stackHash, rawData->stackContext->mallocSize,
-            rawData->stackContext->tagId};
+        AsyncCallStackKey key = {stackHash, GetAsyncDedupMallocSize(rawData), GetDedupTagId(rawData)};
             asyncCallStackIndex_[key] = stackId;
     } else {
         uint64_t stackHash = CallStackHash{}(g_callStack);
         uint32_t stackSize = static_cast<uint32_t>(g_callStack.size());
         uint64_t nodeId = hookConfig_.arkui_mem_trace_enable() ? rawData->stackContext->nodeId : 0;
         uint32_t nodeType = hookConfig_.arkui_mem_trace_enable() ? rawData->stackContext->nodeType : 0;
-        CallStackKey key = {stackHash, nodeId, stackSize, nodeType, rawData->stackContext->tagId};
+        CallStackKey key = {stackHash, nodeId, stackSize, nodeType, GetDedupTagId(rawData)};
         callStackIndex_[key] = stackId;
     }
 }
@@ -1593,13 +1607,12 @@ void StackPreprocess::AddSimplifiedCallStackIndex(uint32_t stackId, RawStackPtr 
     if (hookConfig_.async_stack_enable()) {
         const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
         uint64_t stackHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
-        SimplifiedAsyncCallStackKey asyncKey = {stackHash, rawData->stackContext->mallocSize,
-            rawData->stackContext->tagId};
+        SimplifiedAsyncCallStackKey asyncKey = {stackHash, GetAsyncDedupMallocSize(rawData), GetDedupTagId(rawData)};
         simplifiedAsyncCallStackIndex_[asyncKey] = stackId;
     } else {
         uint64_t stackHash = CallStackHash{}(g_callStack);
         uint32_t stackSize = static_cast<uint32_t>(g_callStack.size());
-        SimplifiedCallStackKey key = {stackHash, stackSize, rawData->stackContext->tagId};
+        SimplifiedCallStackKey key = {stackHash, stackSize, GetDedupTagId(rawData)};
         simplifiedCallStackIndex_[key] = stackId;
     }
 }
@@ -1750,7 +1763,7 @@ void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, s
 {
     // ignore the first two frame if dwarf unwind
     auto rawStack = hookRecord->GetRawStack();
-    size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
+    size_t idx = (hookConfig_.async_stack_enable() || !hookConfig_.fp_unwind()) ? FILTER_STACK_DEPTH : 0;
     g_callStack.clear();
     bool isNapi = false;
     if (hookConfig_.js_stack_report() == NAPI_CALL_STACK) {
@@ -2591,18 +2604,12 @@ void StackPreprocess::InitializeFunctionPointers()
 }
 
 template <typename T, typename StackData>
-void StackPreprocess::FlushStatisticsEntry(T* statistics, uint32_t stackId, StackData& stackData)
+void StackPreprocess::FlushStatisticsEntry(T* statistics, uint32_t stackId, StackData& stackData,
+    const struct timespec& timestamp)
 {
     auto hookData = stackData.add_events();
-    if (hookConfig_.use_file_cache_mode()) {
-        hookData->set_tv_sec(lastCacheStatisticsTime_.tv_sec);
-        hookData->set_tv_nsec(lastCacheStatisticsTime_.tv_nsec);
-    } else {
-        struct timespec ts;
-        clock_gettime(hookDataClockId_, &ts);
-        hookData->set_tv_sec(ts.tv_sec);
-        hookData->set_tv_nsec(ts.tv_nsec);
-    }
+    hookData->set_tv_sec(timestamp.tv_sec);
+    hookData->set_tv_nsec(timestamp.tv_nsec);
     auto recordEvent = hookData->mutable_statistics_event();
     recordEvent->set_pid(pid_);
     recordEvent->set_callstack_id(stackId);
@@ -2631,6 +2638,12 @@ bool StackPreprocess::FlushRecordStatisticsImpl(std::unordered_map<uint32_t, T>&
         return false;
     }
     std::visit([&](auto& stackData) { FlushData(stackData); }, stackData_);
+    struct timespec timestamp;
+    if (hookConfig_.use_file_cache_mode()) {
+        timestamp = lastCacheStatisticsTime_;
+    } else {
+        clock_gettime(hookDataClockId_, &timestamp);
+    }
     std::visit(
         [&](auto& stackData) {
             uint32_t count = 0;
@@ -2647,7 +2660,7 @@ bool StackPreprocess::FlushRecordStatisticsImpl(std::unordered_map<uint32_t, T>&
                     continue;
                 }
                 // if the stack is not created in this period, data will not write to file.
-                FlushStatisticsEntry(statistics, stackId, stackData);
+                FlushStatisticsEntry(statistics, stackId, stackData, timestamp);
                 if (statistics->applySize == statistics->releaseSize) {
                     statisticsMap.erase(iter);
                 } else {

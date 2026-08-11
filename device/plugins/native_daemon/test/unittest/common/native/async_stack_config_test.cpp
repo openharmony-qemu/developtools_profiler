@@ -19,6 +19,7 @@
 #include <sstream>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/utsname.h>
 #include "hook_manager.h"
 #include "command_poller.h"
 #include "native_memory_profiler_sa_config.h"
@@ -29,6 +30,17 @@ using namespace OHOS::Developtools::NativeDaemon;
 
 namespace {
 const int ASYNC_TEST_PID = 999999;
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
 
 class AsyncStackConfigTest : public ::testing::Test {
 public:
@@ -45,6 +57,12 @@ public:
 
     void SetUp() override
     {
+#ifdef __aarch64__
+        if (IsNonHmKernel()) {
+            GTEST_SKIP();
+            return;
+        }
+#endif
         hookManager_ = std::make_shared<HookManager>();
         ASSERT_TRUE(hookManager_ != nullptr);
 

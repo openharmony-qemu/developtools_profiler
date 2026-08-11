@@ -19,6 +19,7 @@
 #include <vector>
 #include <sys/syscall.h>
 #include <sys/mman.h>
+#include <sys/utsname.h>
 #include "token_setproc.h"
 #include "accesstoken_kit.h"
 #include "buffer_splitter.h"
@@ -70,6 +71,17 @@ const std::string DEFAULT_LIBB_PATH("/system/lib64/libb.z.so");
 const std::string DEFAULT_LIBNATIVETEST_PATH("/data/local/tmp/libnativetest_so.z.so");
 const int LIBA_MALLOC_SIZE = 888;
 const int LIBB_MALLOC_SIZE = 666;
+#endif
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
 #endif
 
 typedef char* (*DepthMallocSo)(int depth, int mallocSize);
@@ -505,6 +517,9 @@ public:
 #ifdef __aarch64__
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Level0)
 {
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 30;
         outFileType_ = "malloc_";
@@ -575,6 +590,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Level3)
 {
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         int setDepth = 1;
         unwindDepth_ = 100;
@@ -646,6 +664,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Level3)
 {
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         int setDepth = 100;
         outFileType_ = "realloc_";
@@ -735,6 +756,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Level3)
 {
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     for (size_t i = 1; i < 2; ++i) {
         unwindDepth_ = 6;
         outFileType_ = "dlopen_";
@@ -791,6 +815,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Level0)
 {
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
         statisticsInterval_ = 1;
@@ -853,6 +880,11 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     for (size_t i = 0; i < 2; ++i) {
         unwindDepth_ = 10;
         outFileType_ = "offline_symbolization_";
@@ -905,6 +937,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
 #ifdef __aarch64__
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Level3)
 {
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 6;
         outFileType_ = "callframecompress_";
@@ -954,6 +989,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Level3)
 {
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     for (size_t i = 0; i < 2; ++i) {
         unwindDepth_ = 6;
         outFileType_ = "stringcompress_";
@@ -995,6 +1033,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Level3)
 {
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 6;
         outFileType_ = "rawstring_";
@@ -1036,6 +1077,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Level3)
 {
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     for (size_t i = 1; i < 2; ++i) { // 1 is fp mode,  response_library_mode only fp mode is used
         unwindDepth_ = 6;
         outFileType_ = "responseLibraryMode";
@@ -1080,6 +1124,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Level0)
 {
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
         statisticsInterval_ = 1;
@@ -1140,6 +1187,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Level3)
 {
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 6;
         outFileType_ = "mallocFreeMatchingInterval_";
@@ -1190,6 +1240,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Level0)
 {
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
         statisticsInterval_ = 1;
@@ -1252,6 +1305,11 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0210, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
         statisticsInterval_ = 1;
@@ -1313,6 +1371,11 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0210, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
         statisticsInterval_ = 1;
@@ -1373,6 +1436,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Lev
 #ifdef __aarch64__
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Level0)
 {
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         modeIndex_ = i;
         dumpdata_ = true;
@@ -1408,6 +1474,11 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0240, Function | MediumTest | Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
         statisticsInterval_ = 1;

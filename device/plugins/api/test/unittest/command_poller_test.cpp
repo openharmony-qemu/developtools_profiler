@@ -16,6 +16,7 @@
 #include "command_poller.h"
 
 #include <gtest/gtest.h>
+#include <sys/utsname.h>
 
 #include "plugin_manager.h"
 #include "plugin_service.ipc.h"
@@ -26,6 +27,18 @@ using namespace testing::ext;
 
 namespace {
 constexpr int DEFAULT_SLEEP_TIME = 1000;
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
+
 class PluginManagerStub final : public ManagerInterface {
 public:
     bool LoadPlugin(const std::string& pluginPath) override
@@ -231,6 +244,11 @@ HWTEST_F(CommandPollerTest, DestoryCmdTest, TestSize.Level1)
 
 HWTEST_F(CommandPollerTest, RefreshSessionCmd, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     StartHiprofilerService();
     auto pluginManage = std::make_shared<PluginManagerStub>();
     auto commandPoller = std::make_shared<CommandPoller>(pluginManage);
@@ -246,6 +264,11 @@ HWTEST_F(CommandPollerTest, RefreshSessionCmd, TestSize.Level1)
 
 HWTEST_F(CommandPollerTest, GetCommandResponse, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     StartHiprofilerService();
     auto pluginManage = std::make_shared<PluginManagerStub>();
     auto commandPoller = std::make_shared<CommandPoller>(pluginManage);
@@ -286,6 +309,11 @@ HWTEST_F(CommandPollerTest, GetCommandResponse, TestSize.Level1)
 
 HWTEST_F(CommandPollerTest, GetCommandResponse2, TestSize.Level1)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     StartHiprofilerService();
     auto pluginManage = std::make_shared<PluginManagerStub>();
     auto commandPoller = std::make_shared<CommandPoller>(pluginManage);

@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
+#include <sys/utsname.h>
 #include <unistd.h>
 #include <algorithm>
 #include "hook_client.h"
@@ -35,6 +36,17 @@ namespace {
 constexpr uint32_t SIZE = 1024;
 constexpr uint32_t RESIZE = 2048;
 constexpr unsigned int WAIT_THREAD_TIME = 3;
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
 
 void* FakeMmapFailed(void*, size_t, int, int, int, off_t)
 {
@@ -95,8 +107,9 @@ public:
         g_hookClient = mockClient;
 
         EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_,
-            ::testing::_, ::testing::_)).WillRepeatedly([&typeVec, &sizeVec, sendInfo]
-            (const void* data, size_t size, const void* payload, size_t payloadSize, int smbIndex) {
+            ::testing::_, ::testing::_, ::testing::_)).WillRepeatedly([&typeVec, &sizeVec, sendInfo]
+            (const void* data, size_t size, const void* payload, size_t payloadSize,
+            int smbIndex, bool skipDisableHook) {
             if (data) {
                 const BaseStackRawData* data_ptr = static_cast<const BaseStackRawData*>(data);
                 typeVec.push_back(data_ptr->type);
@@ -548,6 +561,11 @@ HWTEST_F(HookClientExternTest, HookResTraceFreeRegionMaskMismatchTest, TestSize.
  */
 HWTEST_F(HookClientExternTest, HookPrctlTest, TestSize.Level0)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     std::vector<int> typeVec;
     std::vector<int> sizeVec;
     StartMock(typeVec, sizeVec);

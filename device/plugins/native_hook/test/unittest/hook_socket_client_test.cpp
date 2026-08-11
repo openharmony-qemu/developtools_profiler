@@ -256,4 +256,5 @@ HWTEST_F(HookSocketClientTest, SendSimplifiedNmdInfo, TestSize.Level0)
     sleep(WAIT_THREAD_TIME);
 }
 #endif
+
 } // namespace

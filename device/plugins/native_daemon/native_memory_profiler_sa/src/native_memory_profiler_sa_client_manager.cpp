@@ -19,6 +19,7 @@
 #include "native_memory_profiler_sa_proxy.h"
 #include "schedule_task_manager.h"
 #include "common.h"
+#include "mem_config.h"
 
 #include "logging.h"
 
@@ -53,10 +54,14 @@ constexpr uint32_t DEFINE_MIN_FILTER_SIZE = 1; // bytes
 constexpr uint32_t DEFINE_MAX_STACK_DEPTH = 30;
 constexpr uint32_t DEFINE_MAX_STATISTICS_INTERVAL = 3600; // seconds
 constexpr uint32_t DEFINE_MIN_SAMPLE_INTERVAL = 384; // bytes
-constexpr uint32_t ASYNC_REQUEST_TIMEOUT_DELTA = 5; // seconds
+constexpr uint32_t ASYNC_REQUEST_TIMEOUT_DELTA = 600; // seconds
 constexpr int32_t TIME_BASE = 1000;
 const std::string FILE_SUFFIX = ".htrace";
 const std::vector<std::string> resourceTypeValues = { "fd", "thread", "native", "gpu", "global_handle" };
+constexpr uint32_t DEFINE_MIN_ASYNC_NESTING_DEPTH = 1;
+constexpr uint32_t DEFINE_MAX_ASYNC_NESTING_DEPTH = 16;
+constexpr uint32_t DEFINE_MIN_ASYNC_TASK_STACK_DEPTH = 1;
+constexpr uint32_t DEFINE_MAX_ASYNC_TASK_STACK_DEPTH = 256;
 
 using ProfilingCallbackVar = std::variant<
     NativeMemoryProfilerSaClientManager::ProfilingCallback,
@@ -690,7 +695,6 @@ int32_t NativeMemoryProfilerSaClientManager::ParseResType(int32_t type,
     }
 
     config->shareMemorySize_ = CALL_STACK_SMS;
-    config->asyncStackEnable_ = false;
     if (internalType == InternalResourceType::OH_RES_TYPE_GPU) {
         config->traceMask_ = RES_GPU_MASK;
         SetDefaultGpuRange(config);
@@ -716,6 +720,31 @@ int32_t NativeMemoryProfilerSaClientManager::ParseNormalConfig(
     config->sampleInterval_ = inputConfig->sampleInterval;
     config->filterSize_ = static_cast<int32_t>(inputConfig->filterSize);
     config->statisticsInterval_ = inputConfig->statisticsInterval;
+    config->asyncStackEnable_ = inputConfig->asyncStackEnable;
+    config->nestedAsyncStackEnable_ = inputConfig->nestedAsyncStackEnable;
+    config->asyncNestingDepth_ = inputConfig->asyncNestingDepth;
+    config->asyncTaskStackDepth_ = inputConfig->asyncTaskStackDepth;
+    if (config->traceMask_ == RES_GPU_MASK && !inputConfig->hookSizes.empty()) {
+        std::vector<std::vector<uint64_t>> gpuRange;
+        gpuRange.push_back(ConvertToVec(inputConfig->hookSizes[TAG_RES_GPU_VK]));
+        gpuRange.push_back(ConvertToVec(inputConfig->hookSizes[TAG_RES_GPU_GLES_IMAGE]));
+        gpuRange.push_back(ConvertToVec(inputConfig->hookSizes[TAG_RES_GPU_GLES_BUFFER]));
+        gpuRange.push_back(ConvertToVec(inputConfig->hookSizes[TAG_RES_GPU_CL_IMAGE]));
+        gpuRange.push_back(ConvertToVec(inputConfig->hookSizes[TAG_RES_GPU_CL_BUFFER]));
+        std::swap(config->gpuRange_, gpuRange);
+    }
+    if (inputConfig->asyncStackEnable && inputConfig->nestedAsyncStackEnable) {
+        config->asyncFlag_ = 0x143010304;   // ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
+                                            // ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROFILER | ASYNC_TYPE_CUSTOMIZE |
+                                            // ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL;
+    } else if (inputConfig->asyncStackEnable) {
+        config->asyncFlag_ = 0x1070F0304;   // ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
+                                            // ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROMISE | ASYNC_TYPE_CUSTOMIZE |
+                                            // ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL |
+                                            // ASYNC_TYPE_ARKTS_STA_LAUNCH | ASYNC_TYPE_ARKWEB | ASYNC_TYPE_JSVM;
+    } else {
+        config->asyncFlag_ = 0x0;
+    }
     return RET_OK;
 }
 
@@ -778,6 +807,18 @@ ResProfilerErrorCode NativeMemoryProfilerSaClientManager::CheckInputConfig(int t
         PROFILER_LOG_ERROR(LOG_CORE, "CheckInputConfig: type is invalid");
         return ResProfilerErrorCode::RES_PROF_RESOURCE_TYPE_INVALID_ARG;
     }
+    if (inputConfig->asyncStackEnable) {
+        if (inputConfig->asyncTaskStackDepth < DEFINE_MIN_ASYNC_TASK_STACK_DEPTH ||
+            inputConfig->asyncTaskStackDepth > DEFINE_MAX_ASYNC_TASK_STACK_DEPTH) {
+            PROFILER_LOG_ERROR(LOG_CORE, "CheckInputConfig: asyncTaskStackDepth is invalid");
+            return ResProfilerErrorCode::RES_PROF_RESOURCE_TYPE_INVALID_ARG;
+        }
+        if (inputConfig->nestedAsyncStackEnable && (inputConfig->asyncNestingDepth < DEFINE_MIN_ASYNC_NESTING_DEPTH ||
+            inputConfig->asyncNestingDepth > DEFINE_MAX_ASYNC_NESTING_DEPTH)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "CheckInputConfig: asyncNestingDepth is invalid");
+            return ResProfilerErrorCode::RES_PROF_RESOURCE_TYPE_INVALID_ARG;
+        }
+    }
     return ResProfilerErrorCode::RES_PROF_SUCCESS;
 }
 
@@ -792,6 +833,13 @@ int32_t NativeMemoryProfilerSaClientManager::Prepare()
     auto remoteObject = sam->CheckSystemAbility(INativeMemoryProfilerSa::NATIVE_DAEMON_SYSTEM_ABILITY_ID);
     if (remoteObject == nullptr) {
         PROFILER_LOG_DEBUG(LOG_CORE, "NativeMemoryProfilerSaClientManager: Prepare start");
+        int32_t nativeDaemonPid = 0;
+        if (COMMON::IsProcessExist("native_daemon", nativeDaemonPid)) {
+            PROFILER_LOG_ERROR(LOG_CORE,
+                "NativeMemoryProfilerSaClientManager: Native Daemon is already running, skip SA load, errorcode is:%d.",
+                static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
+            return RET_PREPARE_FAIL;
+        }
         int32_t retStart = OnDemandStart(sam, remoteObject);
         if (remoteObject == nullptr || retStart != 0) {
             PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: Prepare start failed");

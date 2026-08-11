@@ -1062,17 +1062,26 @@ std::string GetFullTracePath(pid_t uid, pid_t pid, const std::string& processNam
     return HTRACE_PATH_PREFIX + std::to_string(uid / uidBase) + "/base/" + bundleName + HTRACE_PATH_SUFFIX + filename;
 }
 
-double GetFreeRomPercent(const std::string path)
+bool GetRomSpaceInfo(const std::string& path, uint64_t& totalBytes, uint64_t& freeBytes)
 {
     struct statvfs stat;
-    double ret = 0.0;
     if (statvfs(path.c_str(), &stat) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "GetFreeRomPercent::Failed to get free rom percent,error:%s", strerror(errno));
-        return ret;
+        PROFILER_LOG_ERROR(LOG_CORE, "GetRomSpaceInfo::Failed to get rom info,error:%s", strerror(errno));
+        return false;
     }
+    totalBytes = static_cast<uint64_t>(stat.f_blocks) * static_cast<uint64_t>(stat.f_frsize);
+    freeBytes = static_cast<uint64_t>(stat.f_bfree) * static_cast<uint64_t>(stat.f_frsize);
+    return true;
+}
 
-    ret = static_cast<double>(stat.f_bfree) / static_cast<double>(stat.f_blocks);
-    return ret;
+double GetFreeRomPercent(const std::string path)
+{
+    uint64_t totalBytes = 0;
+    uint64_t freeBytes = 0;
+    if (!GetRomSpaceInfo(path, totalBytes, freeBytes) || totalBytes == 0) {
+        return 0.0;
+    }
+    return static_cast<double>(freeBytes) / static_cast<double>(totalBytes);
 }
 
 static bool DoSendfileCopyOnce(int srcFd, int destFd, ssize_t &outTotal)
@@ -1146,6 +1155,24 @@ bool CopyFileFast(uint32_t srcFd, const std::string& destPath)
     }
 
     return true;
+}
+
+bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPath)
+{
+    int srcFd = open(srcPath.c_str(), O_RDONLY);
+    if (srcFd < 0) {
+        const int bufSize = 256;
+        char buf[bufSize] = {0};
+        strerror_r(errno, buf, bufSize);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, srcPath.c_str(), errno, buf);
+        return false;
+    }
+    bool result = COMMON::CopyFileFast(srcFd, destPath);
+    if (!result) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CopyFileFast fail");
+    }
+    close(srcFd);
+    return result;
 }
 
 static bool IsHtraceFileName(const std::string& filename)
@@ -1344,5 +1371,51 @@ bool CleanCmdOldenTraceFiles(const std::string& path)
         }
     }
     return allOk;
+}
+
+bool DeleteFiles(const std::string& dir, std::function<bool(const std::string& filename)> filter)
+{
+    if (dir.empty() || !filter) {
+        PROFILER_LOG_ERROR(LOG_CORE, "invalid param");
+        return false;
+    }
+    std::error_code ec;
+    if (!fs::is_directory(dir, ec) || ec) {
+        PROFILER_LOG_ERROR(LOG_CORE, "invalid param dir:%s,", dir.c_str());
+        return false;
+    }
+    for (const auto& entry : fs::directory_iterator(dir, ec)) {
+        if (ec) {
+            PROFILER_LOG_ERROR(LOG_CORE, "iter dir err:%s", ec.message().c_str());
+            return false;
+        }
+        bool isRegularFile = entry.is_regular_file(ec);
+        if (ec) {
+            PROFILER_LOG_ERROR(LOG_CORE, "get is regular file err:%s", ec.message().c_str());
+            return false;
+        }
+        if (isRegularFile && filter(entry.path().filename().string())) {
+            fs::remove(entry.path(), ec);
+            if (ec) {
+                PROFILER_LOG_ERROR(LOG_CORE, "remove file err:%s", ec.message().c_str());
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool StringMatch(const std::string& str, const std::string& prefix, const std::string& suffix)
+{
+    if (str.length() < prefix.length() + suffix.length()) {
+        return false;
+    }
+    if (!prefix.empty() && str.compare(0, prefix.length(), prefix) != 0) {
+        return false;
+    }
+    if (!suffix.empty() && str.compare(str.length() - suffix.length(), suffix.length(), suffix) != 0) {
+        return false;
+    }
+    return true;
 }
 } // namespace COMMON

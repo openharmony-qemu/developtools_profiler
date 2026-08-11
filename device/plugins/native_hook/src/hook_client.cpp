@@ -389,12 +389,10 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
             filterTarget = false;
         }
         nextFp = *reinterpret_cast<uintptr_t*>(fp);
-        if (nextFp <= stackPtr) {
-            depth -= 1;
-            break;
-        }
-        if (fp == nextFp) {
-            depth -= 1;
+        if (nextFp <= fp) {
+            if (depth > 1) {
+                depth -= 1;
+            }
             break;
         }
         fp = nextFp;
@@ -1022,7 +1020,7 @@ static bool SendMmapFixedReleaseEvent(HookClientHolder& client, void* addr, size
     }
     BaseStackRawData rawdata = {};
     SetStackRawData(rawdata, MUNMAP_MSG, addr, length);
-    return client.SendStackWithPayload(&rawdata, sizeof(rawdata), nullptr, 0);
+    return client.SendStackWithPayload(&rawdata, sizeof(rawdata), nullptr, 0, 0, true);
 }
 
 void* __attribute__((noinline)) hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
@@ -1077,10 +1075,10 @@ void* __attribute__((noinline)) hook_mmap(void*(*fn)(void*, size_t, int, int, in
         if (isAsyncStack) {
             *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
             client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr),
-                param.stackSize);
+                param.stackSize, 0, true);
         } else {
             client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr),
-                param.stackSize);
+                param.stackSize, 0, true);
         }
     } else {
         rawdata.tagId = GetTagId(tagName);
@@ -1090,10 +1088,10 @@ void* __attribute__((noinline)) hook_mmap(void*(*fn)(void*, size_t, int, int, in
         if (isAsyncStack) {
             *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
             client.SendStackWithExtraData(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr),
-                param.stackSize, extraNameInfo);
+                param.stackSize, extraNameInfo, 0, true);
         } else {
             client.SendStackWithExtraData(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr),
-                param.stackSize, extraNameInfo);
+                param.stackSize, extraNameInfo, 0, true);
         }
     }
     return ret;
@@ -1142,11 +1140,13 @@ int __attribute__((noinline)) hook_munmap(int(*fn)(void*, size_t), void* addr, s
     if (isAsyncStack) {
         SetStackRawData(asyncData, MUNMAP_MSG, addr, length);
         asyncData.ts = unmapTime;
-        client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+        client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+            0, true);
     } else {
         SetStackRawData(rawdata, MUNMAP_MSG, addr, length);
         rawdata.ts = unmapTime;
-        client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+        client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+            0, true);
     }
     return ret;
 }

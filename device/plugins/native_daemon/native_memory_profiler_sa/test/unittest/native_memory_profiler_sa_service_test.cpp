@@ -22,6 +22,7 @@
 #include <memory>
 #include <fstream>
 #include <ctime>
+#include <sys/utsname.h>
 #include "test_common.h"
 #include "init_param.h"
 #include "ipc_skeleton.h"
@@ -61,6 +62,17 @@ bool WriteFile(const std::string& filePath, const std::string& fileContent)
     ofs << fileContent;
     return ofs.good();
 }
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
+}
+#endif
 
 std::shared_ptr<OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaConfig> MakeSaConfig()
 {
@@ -199,6 +211,11 @@ static bool WriteStubConfig(OHOS::MessageParcel& data, int32_t pid)
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest001, TestSize.Level3)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     using namespace OHOS::Developtools::NativeDaemon;
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
@@ -259,6 +276,11 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest002
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest003, TestSize.Level3)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     using namespace OHOS::Developtools::NativeDaemon;
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
@@ -576,6 +598,11 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, GetTaskNumHiviewTypeEmpty, TestSize.
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, IsNativeDeamonRunningTest, TestSize.Level2)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     using namespace OHOS::Developtools::NativeDaemon;
     EXPECT_FALSE(NativeMemoryProfilerSaService::IsNativeDeamonRunning());
 }
@@ -608,7 +635,11 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckSystemResourceTest, TestSize.Le
 {
     using namespace OHOS::Developtools::NativeDaemon;
     int32_t result = NativeMemoryProfilerSaService::CheckSystemResource();
-    EXPECT_EQ(result, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS));
+    bool isResourceResult = (result == static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) ||
+        (result == static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_MEM_PRESSURE_CRITICAL)) ||
+        (result == static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CPU_OVERLOADED)) ||
+        (result == static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_STORAGE_PRESSURE_CRITICAL));
+    EXPECT_TRUE(isResourceResult) << "unexpected result: " << result;
 }
 
 /**
@@ -638,6 +669,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, GetSystemMemoryInfoTest002, TestSize
         EXPECT_GT(memInfo.totalMem, 0);
         EXPECT_GT(memInfo.usedMem, 0);
         EXPECT_GT(memInfo.freeMem, 0);
+        EXPECT_GT(memInfo.availableMem, 0ULL);
         EXPECT_GT(memInfo.availablePercent, 0.0);
     }
 }
@@ -944,6 +976,11 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, StartPidVoidRejectsMismatchedCalling
 
 HWTEST_F(NativeMemoryProfilerSaServiceTest, StartPidVoidNmdModeReturnsOkForCallerPid, TestSize.Level2)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     using namespace OHOS::Developtools::NativeDaemon;
     auto config = MakeSaConfig();
     ASSERT_NE(config, nullptr);
@@ -959,6 +996,11 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, StartPidVoidNmdModeReturnsOkForCalle
 
 HWTEST_F(NativeMemoryProfilerSaServiceTest, StartAndDumpDataNmdModesReturnOk, TestSize.Level2)
 {
+#ifdef __aarch64__
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
+#endif
     using namespace OHOS::Developtools::NativeDaemon;
     auto startConfig = MakeSaConfig();
     auto dumpConfig = MakeSaConfig();

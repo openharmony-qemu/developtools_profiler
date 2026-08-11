@@ -63,12 +63,15 @@ inline void ApplyLiveDataByType(const BaseStackRawData* data,
 }
 
 inline void UpdateLiveData(const BaseStackRawData* data,
-    std::unordered_map<void*, struct timespec>& liveData)
+    std::unordered_map<void*, struct timespec>& liveData,
+    std::unordered_map<void*, struct timespec>& orphanFreeWhitelist)
 {
     auto iter = liveData.find(data->addr);
     if (iter == liveData.end()) {
         if (IsAllocRecord(data)) {
             liveData[data->addr] = data->ts;
+        } else if (IsFreeRecord(data)) {
+            orphanFreeWhitelist.emplace(data->addr, data->ts);
         }
         return;
     }
@@ -681,15 +684,21 @@ void HookManager::HandleReadyCacheFile(const std::shared_ptr<HookManagerCtx>& ct
     ctx->cacheFileParsing = true;
     if (shouldSkipGlobalFreed_) {
         validLiveData_.clear();
+        orphanFreeWhitelist_.clear();
         RefreshValidLiveDataFromFile(frontFd);
     }
     if (noDataQueue_) {
-        ctx->stackPreprocess->SetValidLiveData(shouldSkipGlobalFreed_ ? &validLiveData_ : nullptr);
+        ctx->stackPreprocess->SetValidLiveData(shouldSkipGlobalFreed_ ? &validLiveData_ : nullptr,
+            shouldSkipGlobalFreed_ ? &orphanFreeWhitelist_ : nullptr);
         ctx->stackPreprocess->TakeResultsFromCacheFile(frontFd);
     } else {
         ReadFromCacheFile(ctx, frontFd);
     }
     ctx->PopFrontFdQueue();
+    if (!hookConfig_.offline_symbolization()) {
+        // only for online_symbolization
+        HandleBackpressure(ctx);
+    }
     ctx->cacheFileParsing = false;
     PROFILER_LOG_INFO(LOG_CORE, "HandleReadyCacheFile pop fd, queue size%zu", ctx->GetFdQueueSize());
     FinishFileCacheStopIfDrained(ctx);
@@ -1377,6 +1386,15 @@ void HookManager::HookManagerCtx::ProcessPendingCacheFdOnDisconnect()
     pendingCacheFds.clear();
 }
 
+BackpressureStateMsg HookManager::HookManagerCtx::CalculateBackpressureState()
+{
+    BackpressureStateMsg state;
+    state.pid = pid;
+    state.queueDepth = queueDepth_.load();
+    state.recommendedDelayNs = recommendedDelayNs_.load();
+    return state;
+}
+
 void HookManager::FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                                      std::shared_ptr<HookRecord>& hookRecord)
 {
@@ -1713,7 +1731,8 @@ bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& 
         if (shouldSkipGlobalFreed_) {
             auto* tmpRawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
             if ((IsAllocRecord(tmpRawData) || IsFreeRecord(tmpRawData)) &&
-                ShouldSkipRecord(tmpRawData, validLiveData_)) {
+                ShouldSkipRecord(tmpRawData, validLiveData_) &&
+                !(IsFreeRecord(tmpRawData) && InOrphanFreeWhitelist(tmpRawData, orphanFreeWhitelist_))) {
                 offset += totalSize;
                 skipRecord_++;
                 continue;
@@ -1760,7 +1779,7 @@ bool HookManager::RefreshValidLiveDataFromBuffer(uint8_t* buffer, uint32_t total
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + offset);
         auto* rawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
         if (IsAllocRecord(rawData) || IsFreeRecord(rawData)) {
-            UpdateLiveData(rawData, validLiveData_);
+            UpdateLiveData(rawData, validLiveData_, orphanFreeWhitelist_);
         }
         offset += totalSize;
     }
@@ -2051,7 +2070,7 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
     return true;
 }
 
-void HookManager::ResetStartupParam()
+void HookManager::ResetStartupParam(pid_t pid)
 {
     const std::string resetParam = "startup:disabled";
     if (hookConfig_.startup_mode()) {
@@ -2061,6 +2080,7 @@ void HookManager::ResetStartupParam()
         } else {
             PROFILER_LOG_INFO(LOG_CORE, "reset param success");
         }
+        UpdateFreezeExcludedPid(true, pid, getpid());
     }
 }
 
@@ -2398,6 +2418,12 @@ bool HookManager::HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex)
     }
     item->PushBackFdQueue(fd);
     PROFILER_LOG_INFO(LOG_CORE, "HandleCachedFileFdByPid push fd, queue size %zu", item->GetFdQueueSize());
+    
+    if (!hookConfig_.offline_symbolization()) {
+        // only for online_symbolization
+        HandleBackpressure(item);
+    }
+    
     if (item->readyFileNotifier != nullptr && !item->readyFileNotifier->Post(1)) {
         PROFILER_LOG_ERROR(LOG_CORE, "HandleCachedFileFdByPid post ready notifier failed");
         return false;
@@ -2487,5 +2513,53 @@ void HookManager::RotateCacheFdOnReturn(pid_t pid, uint16_t returnedFileIndex, i
     item->RotateActiveCacheFd(returnedFileIndex, dupFd);
     PROFILER_LOG_INFO(LOG_CORE, "RotateCacheFdOnReturn: pid:%d returnedIndex:%u dupFd:%d",
         pid, returnedFileIndex, dupFd);
+}
+
+void HookManager::HandleBackpressure(const std::shared_ptr<HookManagerCtx>& ctx)
+{
+    uint32_t depth = ctx->GetFdQueueSize();
+    ctx->queueDepth_ = depth;
+    
+    uint32_t delay = CalculateRecommendedDelay(depth);
+    if (ctx->recommendedDelayNs_ == delay) {
+        return;
+    }
+    ctx->recommendedDelayNs_ = delay;
+    
+    uint64_t now = GetBackpressureCurrentTimeMs();
+    if (now - ctx->lastStateBroadcastTime_.load() >= bpConfig_.stateBroadcastIntervalMs) {
+        BackpressureStateMsg state = ctx->CalculateBackpressureState();
+        SendBackpressureState(ctx->pid, state);
+        ctx->lastStateBroadcastTime_ = now;
+    }
+}
+
+uint32_t HookManager::CalculateRecommendedDelay(uint32_t queueDepth)
+{
+    const BackpressureConfig& cfg = bpConfig_;
+    
+    if (queueDepth <= cfg.lowWatermark) {
+        return cfg.minDelayNs;
+    } else if (queueDepth <= cfg.midWatermark) {
+        float ratio = static_cast<float>(queueDepth - cfg.lowWatermark) /
+                      (cfg.midWatermark - cfg.lowWatermark);
+        return static_cast<uint32_t>(cfg.minDelayNs + ratio * (cfg.midDelayNs - cfg.minDelayNs));
+    } else if (queueDepth <= cfg.highWatermark) {
+        float ratio = static_cast<float>(queueDepth - cfg.midWatermark) /
+                      (cfg.highWatermark - cfg.midWatermark);
+        return static_cast<uint32_t>(cfg.midDelayNs +
+            (cfg.highDelayNs - cfg.midDelayNs) * ratio * ratio);
+    } else {
+        return cfg.highDelayNs;
+    }
+}
+
+void HookManager::SendBackpressureState(pid_t pid, const BackpressureStateMsg& state)
+{
+    if (hookService_ == nullptr) {
+        return;
+    }
+    
+    hookService_->SendBackpressureState(pid, state);
 }
 }

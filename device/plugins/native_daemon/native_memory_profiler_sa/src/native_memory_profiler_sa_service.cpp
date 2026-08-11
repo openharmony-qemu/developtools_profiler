@@ -40,8 +40,9 @@ constexpr int FILE_MODE = 0644;
 constexpr int32_t SIMP_NMD = 3;
 constexpr int32_t NMD_WAIT_MS = 5000;
 constexpr int VEC_SHIFT = 2;
-constexpr double MIN_MEM_ROM_PERCENT = 0.20;
-constexpr double MIN_MEM_PROFILER_MEM_PERCENT = 0.20;
+constexpr double MIN_MEM_ROM_PERCENT = 0.03;
+constexpr uint64_t MIN_MEM_AVAILABLE_KB = 2ULL * 1024 * 1024; // 2GB, /proc/meminfo unit is kB
+constexpr uint64_t MIN_FREE_ROM_BYTES = 15ULL * 1024 * 1024 * 1024; // 15GB
 constexpr double MAX_MEM_PROFILER_CPU_PERCENT = 0.7;
 const std::string API_SANDBOX_PATH_PREFIX = "/data/storage/el2/base/files/";
 const std::string DAILY_COUNT_DIR = "/data/log/hiprofiler/";
@@ -248,7 +249,7 @@ void NativeMemoryProfilerSaService::ClientDisconnectCallback(int socketFd)
     }
     // Note: The same mutex g_mtx is also used in the StopHook function.
     // Be cautious to avoid potential deadlocks.
-    StopHookByType(pidval, name, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), isAsync);
+    StopHookByType(pidval, name, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), isAsync, true);
 }
 
 bool NativeMemoryProfilerSaService::StartServiceAbility()
@@ -381,9 +382,9 @@ int32_t NativeMemoryProfilerSaService::CheckSystemResource()
     if (!GetSystemMemoryInfo(&memInfo)) {
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_MEM_PRESSURE_CRITICAL);
     }
-
-    if (memInfo.availablePercent < MIN_MEM_PROFILER_MEM_PERCENT) {
-        PROFILER_LOG_ERROR(LOG_CORE, "System memory is too low: %.2f%%", memInfo.availablePercent * oneHundred);
+    if (memInfo.availableMem < MIN_MEM_AVAILABLE_KB) {
+        PROFILER_LOG_ERROR(LOG_CORE, "System memory is too low: %llu KB",
+            static_cast<unsigned long long>(memInfo.availableMem));
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_MEM_PRESSURE_CRITICAL);
     }
     
@@ -396,10 +397,16 @@ int32_t NativeMemoryProfilerSaService::CheckSystemResource()
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CPU_OVERLOADED);
     }
     
-    double freeRom = 0.0;
-    freeRom = COMMON::GetFreeRomPercent(COMMON::DEFAULT_RW_DIR);
-    if (freeRom < MIN_MEM_ROM_PERCENT) {
-        PROFILER_LOG_ERROR(LOG_CORE, "System ROM is too low: %.2f%%", freeRom * oneHundred);
+    uint64_t totalBytes = 0;
+    uint64_t freeBytes = 0;
+    if (!COMMON::GetRomSpaceInfo(COMMON::DEFAULT_RW_DIR, totalBytes, freeBytes)) {
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_STORAGE_PRESSURE_CRITICAL);
+    }
+    uint64_t percentThreshold = static_cast<uint64_t>(static_cast<double>(totalBytes) * MIN_MEM_ROM_PERCENT);
+    uint64_t threshold = std::max(percentThreshold, MIN_FREE_ROM_BYTES);
+    if (freeBytes < threshold) {
+        PROFILER_LOG_ERROR(LOG_CORE, "System ROM is too low: %llu bytes, threshold: %llu bytes",
+            static_cast<unsigned long long>(freeBytes), static_cast<unsigned long long>(threshold));
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_STORAGE_PRESSURE_CRITICAL);
     }
 
@@ -640,7 +647,7 @@ void NativeMemoryProfilerSaService::CloseSocketFd(pid_t pid)
     }
 }
 
-int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, int32_t finishErrorCode)
+int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, int32_t finishErrorCode, bool innerCall)
 {
     std::unique_lock<std::mutex> lock(g_mtx);
     std::shared_ptr<TaskConfig> config = nullptr;
@@ -660,8 +667,7 @@ int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, 
             pid, name.c_str(), ret);
         return ret;
     }
-    pid_t callingPid = IPCSkeleton::GetCallingPid();
-    if (config->startType == START_TYPE_API && pid != static_cast<uint32_t>(callingPid)) {
+    if (!innerCall && !CheckStopPermission(static_cast<int32_t>(IPCSkeleton::GetCallingPid()), config)) {
         PROFILER_LOG_ERROR(LOG_CORE, "Permission Denied,errorcode is:%d.",
             static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED));
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
@@ -693,7 +699,7 @@ int32_t NativeMemoryProfilerSaService::StopHookTask(uint32_t pid, std::shared_pt
     return retRelease;
 }
 
-int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finishErrorCode)
+int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finishErrorCode, bool innerCall)
 {
     std::shared_ptr<TaskConfig> config = nullptr;
     if (pid > 0) {
@@ -706,6 +712,11 @@ int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finis
         int32_t ret = static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED);
         PROFILER_LOG_ERROR(LOG_CORE, "StopHookAsync has stop, pid: %d, errorcode is:%d.", pid, ret);
         return ret;
+    }
+    if (!innerCall && !CheckStopPermission(static_cast<int32_t>(IPCSkeleton::GetCallingPid()), config)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Permission Denied,errorcode is:%d.",
+            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED));
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
     }
 
     if (!TryBeginStopHook(pid)) {
@@ -722,12 +733,12 @@ int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finis
 }
 
 int32_t NativeMemoryProfilerSaService::StopHookByType(uint32_t pid, std::string& name, int32_t finishErrorCode,
-    bool isAsync)
+    bool isAsync, bool innerCall)
 {
     if (isAsync) {
-        return StopHookAsync(pid, finishErrorCode);
+        return StopHookAsync(pid, finishErrorCode, innerCall);
     }
-    return StopHook(pid, name, finishErrorCode);
+    return StopHook(pid, name, finishErrorCode, innerCall);
 }
 
 bool NativeMemoryProfilerSaService::TryBeginStopHook(uint32_t pid)
@@ -756,6 +767,15 @@ bool NativeMemoryProfilerSaService::IsAsyncRequest(uint32_t pid)
     bool async = config && config->callback;
     PROFILER_LOG_INFO(LOG_CORE, "pid %d hasCallback:%d", pid, async);
     return async;
+}
+
+bool NativeMemoryProfilerSaService::CheckStopPermission(int32_t callingPid, std::shared_ptr<TaskConfig>& config)
+{
+    if (callingPid != config->callingPid) {
+        PROFILER_LOG_ERROR(LOG_CORE, "calling pid check fail, (%d, %d)", config->callingPid, callingPid);
+        return false;
+    }
+    return true;
 }
 
 std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
@@ -862,7 +882,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
                 static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION));
             int32_t retStop = StopHookByType(config->pid_, config->processName_,
                 static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION),
-                isAsync);
+                isAsync, true);
             if (retStop != RET_OK) {
                 PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService StopHook failed");
             }
@@ -881,9 +901,9 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         g_timerFdInfo[config->pid_] = timerFd;
     }
 
-    std::shared_ptr<TaskConfig> configCtx =
-        std::make_shared<TaskConfig>(hook, config->pid_, config->processName_, config->filePath_, timerFd,
-                                     config->startupMode_, fd, config->startType_);
+    std::shared_ptr<TaskConfig> configCtx = std::make_shared<TaskConfig>(hook, config->pid_, config->processName_,
+        static_cast<int32_t>(IPCSkeleton::GetCallingPid()), config->filePath_, timerFd, config->startupMode_, fd,
+        config->startType_);
     configCtx->callback = callback;
     if (!g_hasStartupMode && config->startupMode_) {
         g_hasStartupMode = true;
@@ -1407,6 +1427,7 @@ bool NativeMemoryProfilerSaService::GetSystemMemoryInfo(MemoryInfo *memInfo)
     memInfo->totalMem = totalMem;
     memInfo->freeMem = freeMem;
     memInfo->usedMem = totalMem - availableMem;
+    memInfo->availableMem = availableMem;
     memInfo->availablePercent = static_cast<double>(availableMem) / static_cast<double>(totalMem);
 
     return true;

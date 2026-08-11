@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <gtest/gtest.h>
 #include <string>
+#include <sys/utsname.h>
 #include <thread>
 #include <unistd.h>
 
@@ -38,6 +39,17 @@ void MallocTest()
     for (int i = 0; i < size; i++) {
         free(arr[i]);
     }
+}
+#endif
+
+#ifdef __aarch64__
+static bool IsNonHmKernel()
+{
+    utsname buf;
+    if (uname(&buf) != 0) {
+        return false;
+    }
+    return std::string(buf.release).find("HongMeng") == std::string::npos;
 }
 #endif
 }
@@ -115,6 +127,9 @@ HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest002, TestSize.Level3)
 HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest003, TestSize.Level3)
 {
 #if defined(__LP64__)
+    if (IsNonHmKernel()) {
+        GTEST_SKIP() << "Skip on non-HM kernel";
+    }
     GTEST_LOG_(INFO) << "MemoryProfilerClientTest003 start.";
     using namespace OHOS::Developtools::NativeDaemon;
     MemoryProfilerClient* client = new MemoryProfilerClientImpl();
