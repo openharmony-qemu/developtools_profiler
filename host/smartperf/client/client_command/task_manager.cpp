@@ -519,8 +519,8 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
             return;
         }
         std::string cmdResult;
-        std::string procPath = "/proc/" + processIds_ + "/cmdline";
-        if (!SPUtils::LoadFile(procPath, cmdResult)) {
+        std::string procPath = "cat /proc/" + processIds_ + "/cmdline";
+        if (!SPUtils::LoadCmd(procPath, cmdResult)) {
             return;
         }
         processName_ = cmdResult;
