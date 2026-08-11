@@ -341,15 +341,15 @@ std::map<std::string, std::string> TaskManager::CollectCurrentData(uint32_t data
     std::map<std::string, std::string> currDatas;
     currDatas.emplace("timestamp", std::to_string(SPUtils::GetCurTime()));
     if (recordData) {
-        datas_.emplace(dataIndex_,
+        datas_.emplace(dataIndex,
             std::map<std::string, std::string>{{"timestamp", std::to_string(SPUtils::GetCurTime())}});
     }
     for (auto& item : priorityTask_) {
-        currDatas.merge(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData).get());
+        currDatas.merge(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex, recordData).get());
     }
     std::vector<std::future<std::map<std::string, std::string>>> result;
     for (auto& item : normalTask_) {
-        result.emplace_back(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData));
+        result.emplace_back(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex, recordData));
     }
     for (auto& item : result) {
         currDatas.merge(item.get());
@@ -680,7 +680,7 @@ void TaskManager::InitDataCsv()
     std::string safePath;
     if (lastSlash != std::string::npos) {
         std::string dirPath = fileName_.substr(0, lastSlash);
-        char realDirPath[PATH_MAX] = {0X00};
+        char realDirPath[PATH_MAX] = {0x00};
         if (realpath(dirPath.c_str(), realDirPath) == nullptr) {
             LOGE("data dir %s is nullptr", dirPath.c_str());
             return false;

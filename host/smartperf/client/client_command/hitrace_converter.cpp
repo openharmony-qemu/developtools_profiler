@@ -284,7 +284,7 @@ bool TraceClipper::SaveToFile(const std::string& outputPath)
     std::string safePath;
     if (lastSlash != std::string::npos) {
         std::string dirPath = outputPath.substr(0, lastSlash);
-        char realDirPath[PATH_MAX] = {0X00};
+        char realDirPath[PATH_MAX] = {0x00};
         if (realpath(dirPath.c_str(), realDirPath) == nullptr) {
             LOGE("data dir %s is nullptr", dirPath.c_str());
             return false;
