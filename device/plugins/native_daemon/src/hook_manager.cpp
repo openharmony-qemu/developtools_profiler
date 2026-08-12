@@ -1046,6 +1046,10 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
 
 void HookManager::CheckHapEncryped()
 {
+    if (!COMMON::IsUserMode()) {
+        PROFILER_LOG_INFO(LOG_CORE, "debug mode, skip encrypted app js stack check.");
+        return;
+    }
     if (saMode_ && hookConfig_.fp_unwind()) {
         PROFILER_LOG_DEBUG(LOG_CORE, "sa Mode, the encrypted app is allowed to use fp unwind to catch js stack.");
         return;
