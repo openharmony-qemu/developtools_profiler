@@ -115,6 +115,7 @@ void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
     CPU::GetInstance().SetPackageName(pkg);
     Threads::GetInstance().SetPackageName(pkg);
     FileDescriptor::GetInstance().SetPackageName(pkg);
+    Shader::GetInstance().SetPkgName(pkg);
 }
 
 void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid, std::string pids)

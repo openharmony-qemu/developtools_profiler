@@ -102,8 +102,8 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
     if (snf.isEffective && (!isFPS)) {
         return ExceptionMsg::TASK_CONFIG_NULL;
     }
-    if (sessionId.empty()) {
-        LOGE("ExceptionMsg ParseToTask sessoin id is null");
+    if (!SPUtils::IsValidWinId(sessionId)) {
+        LOGE("ExceptionMsg ParseToTask sessionId is invalid: %s", sessionId.c_str());
         return ExceptionMsg::SESSION_ID_NULL;
     } else if (configs.size() == 0) {
         LOGE("ExceptionMsg ParseToTask configs size is 0");
@@ -192,6 +192,10 @@ ErrCode SPTask::StartTask(std::function<void(const std::string&)> msgTask)
     LOGD("RAM first flag set.");
     if (!isInit) {
         WLOGE("Initialization failed.");
+        return ErrCode::FAILED;
+    }
+    if (curTaskInfo.sessionId.empty() || !SPUtils::IsValidWinId(curTaskInfo.sessionId)) {
+        WLOGE("SessionId is invalid: %s", curTaskInfo.sessionId.c_str());
         return ErrCode::FAILED;
     }
     isRunning = true;

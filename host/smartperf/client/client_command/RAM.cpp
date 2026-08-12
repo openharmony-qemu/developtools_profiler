@@ -234,18 +234,13 @@ std::map<std::string, std::string> RAM::CollectRam(const std::string& ramPid, si
 {
     std::map<std::string, std::string> emptyprocRamInfo;
 
-    if (!std::all_of(ramPid.begin(), ramPid.end(), ::isdigit)) {
+    if (!SPUtils::IsValidPid(ramPid)) {
         LOGE("RAM::CollectRam invalid ramPid");
         return emptyprocRamInfo;
     }
-    const std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_MEM) + ramPid;
-    if (cmd.empty()) {
-        LOGE("RAM::GetRamInfo cmd is null");
-        return emptyprocRamInfo;
-    }
-    FILE *fd = popen(cmd.c_str(), "r");
-    if (fd == nullptr) {
-        LOGD("RAM::fd is empty");
+    std::string cmdResult;
+    if (!SPUtils::SafeLoadExec({"hidumper", "--mem", ramPid}, cmdResult)) {
+        LOGD("RAM::SafeLoadExec failed");
         emptyprocRamInfo = ProcMemNaInfo();
         for (auto& item : emptyprocRamInfo) {
             item.second = "0";
@@ -253,16 +248,12 @@ std::map<std::string, std::string> RAM::CollectRam(const std::string& ramPid, si
         return emptyprocRamInfo;
     }
 
-    std::map<std::string, std::string> procRamInfo = GetPssRamInfo(fd, ramPid, index);
+    std::istringstream iss(cmdResult);
+    std::map<std::string, std::string> procRamInfo = GetPssRamInfo(iss, ramPid, index);
     if (procRamInfo.empty()) {
-        pclose(fd);
         return emptyprocRamInfo;
     }
 
-    if (pclose(fd) == -1) {
-        LOGE("Error: Failed to close file");
-        return emptyprocRamInfo;
-    }
     return procRamInfo;
 }
 
@@ -316,10 +307,10 @@ std::map<std::string, std::string> RAM::GetRamInfo()
     return dataMap;
 }
 
-std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, const std::string& pid, size_t index)
+std::map<std::string, std::string> RAM::GetPssRamInfo(std::istringstream &iss, const std::string& pid, size_t index)
 {
     std::vector<std::string> paramsInfo;
-    std::map<std::string, std::string> pssRamInfo = ParsePssValues(fd, paramsInfo, pid, index);
+    std::map<std::string, std::string> pssRamInfo = ParsePssValues(iss, paramsInfo, pid, index);
     std::map<std::string, std::string> sumRamInfo = SaveSumRamInfo(paramsInfo, pid, index);
     pssRamInfo.insert(std::make_move_iterator(sumRamInfo.begin()), std::make_move_iterator(sumRamInfo.end()));
     if (paramsInfo.empty()) {
@@ -334,14 +325,13 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, const std::strin
     return pssRamInfo;
 }
 
-std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo,
+std::map<std::string, std::string> RAM::ParsePssValues(std::istringstream &iss, std::vector<std::string> &paramsInfo,
     std::string pid, size_t index)
 {
     std::map<std::string, std::string> pssRamInfo;
     struct PssValues pss;
-    char buf[1024] = {'\0'};
-    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-        std::string line(buf);
+    std::string line;
+    while (std::getline(iss, line)) {
         if (line.find("No such process") != std::string::npos) {
             processId.clear();
             return pssRamInfo;

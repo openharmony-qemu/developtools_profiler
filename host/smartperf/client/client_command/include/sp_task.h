@@ -61,7 +61,6 @@ struct TaskInfo {
     StuckNotification stuckInfo;
     bool isPrint = false;
 };
-
 class SPTask {
 public:
     static SPTask &GetInstance()

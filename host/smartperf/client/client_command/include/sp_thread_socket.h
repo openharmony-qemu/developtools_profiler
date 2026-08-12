@@ -58,7 +58,6 @@ public:
     void StopRecvRecord(SpServerSocket &spSocket) const;
     void SendTokenFailedMessage(SpServerSocket &socket, const std::string &message) const;
     void DealMsg(const std::string& recvStr, SpServerSocket &spSocket, SocketErrorType tokenStatus);
-    void EditorRecv(const std::string& recvStr, const SpServerSocket &spSocket) const;
     void BackDesktop() const;
     void HandleMsg(SpServerSocket &spSocket);
     void HeartbeatDetection(const std::string& recvBuf);
