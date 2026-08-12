@@ -1069,6 +1069,10 @@ void HookManager::UpdateFreezeExcludedPid(bool isAdd, int32_t targetPid, int32_t
 {
     if (!saMode_) {
         sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+        if (sam == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Get SystemAbilityManager failed");
+            return;
+        }
         sptr<AppExecFwk::IAppMgr> appManager =
             iface_cast<AppExecFwk::IAppMgr>(sam->GetSystemAbility(APP_MGR_SERVICE_ID));
         if (appManager == nullptr) {
@@ -1558,6 +1562,10 @@ void HookManager::DumpGwpAsanInfo(uint8_t* data)
         return;
     }
 
+    if (gwpAsanMaxStackDepth_ == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "gwpAsanMaxStackDepth_ is 0");
+        return;
+    }
     size_t allocDataSize = sizeof(GwpAllocationData) + (gwpAsanMaxStackDepth_ - 1) * sizeof(uintptr_t);
     uint8_t* allocDataPtr = data + sizeof(size_t) + sizeof(struct GwpHeader);
 
