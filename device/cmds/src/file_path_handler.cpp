@@ -21,9 +21,15 @@
 #include <cstring>
 #include <memory>
 
-const std::string SandboxFilePathHandler::SANDBOX_PATH_ROOT("/storage/Users/currentUser/");
-const std::string NormalFilePathHandler::DEFAULT_OUTPUT_FILE("/data/local/tmp/hiprofiler_data.htrace");
-const std::string NormalFilePathHandler::DEFAULT_OUTPUT_ROOT("/data/local/tmp/");
+namespace {
+constexpr int USER_ID_MOD = 200000;
+constexpr int APP_ID_THRESH = 20000000;
+const std::string SANDBOX_PATH_ROOT = "/storage/Users/currentUser/";
+const std::string DEFAULT_OUTPUT_FILE = "/data/local/tmp/hiprofiler_data.htrace";
+const std::string DEFAULT_OUTPUT_ROOT = "/data/local/tmp/";
+const std::string COMPOSITE_OUTPUT_FILE_PREFIX = "hiprofiler_data_";
+const std::string COMPOSITE_OUTPUT_FILE_SUFFFIX = ".zip";
+}
 
 SandboxFilePathHandler::SandboxFilePathHandler()
 {
@@ -129,7 +135,7 @@ bool NormalFilePathHandler::HandleOutputFilePath(const std::string& outputFile, 
     if (!outputFile.empty()) {
         sessionConfig->set_result_file(outputFile);
     } else if (sessionConfig->result_file().empty()) {
-        sessionConfig->set_result_file(DEFAULT_OUTPUT_FILE);
+        sessionConfig->set_result_file(GetDefaultOutputFile());
     }
     if (sessionConfig->result_file().substr(0, DEFAULT_OUTPUT_ROOT.size()) != DEFAULT_OUTPUT_ROOT) {
         printf("Filepath unable to write! Please use /data/local/tmp/ at the beginning.\n");
@@ -138,16 +144,84 @@ bool NormalFilePathHandler::HandleOutputFilePath(const std::string& outputFile, 
     return true;
 }
 
+// CompositeSandboxFilePathHandler implementation
+CompositeSandboxFilePathHandler::CompositeSandboxFilePathHandler()
+{
+}
+
+std::string CompositeSandboxFilePathHandler::GetDefaultOutputFile()
+{
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+    std::string compositeFileName = COMPOSITE_OUTPUT_FILE_PREFIX + std::to_string(ms) + COMPOSITE_OUTPUT_FILE_SUFFFIX;
+    std::string fileName;
+    char* outputPathEnv = std::getenv("TMPDIR");
+    if (outputPathEnv != nullptr && strlen(outputPathEnv) > 0) {
+        fileName = std::string(outputPathEnv) + "/" + compositeFileName;
+    } else {
+        fileName = SANDBOX_PATH_ROOT + compositeFileName;
+    }
+    return fileName;
+}
+
+bool CompositeSandboxFilePathHandler::HandleOutputFilePath(
+    const std::string& outputFile, ProfilerSessionConfig* sessionConfig)
+{
+    if (!SandboxFilePathHandler::HandleOutputFilePath(outputFile, sessionConfig)) {
+        return false;
+    }
+    std::string filename = std::filesystem::path(sessionConfig->result_file()).filename().string();
+    if (filename.length() <= COMPOSITE_OUTPUT_FILE_SUFFFIX.length() ||
+        filename.compare(filename.length() - COMPOSITE_OUTPUT_FILE_SUFFFIX.length(),
+        COMPOSITE_OUTPUT_FILE_SUFFFIX.length(), COMPOSITE_OUTPUT_FILE_SUFFFIX) != 0) {
+        printf("Filepath unable to write! Composite Sandbox filename must ending with .zip\n");
+        return false;
+    }
+    return true;
+}
+
+// CompositeNormalFilePathHandler implementation
+std::string CompositeNormalFilePathHandler::GetDefaultOutputFile()
+{
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+    return DEFAULT_OUTPUT_ROOT + COMPOSITE_OUTPUT_FILE_PREFIX + std::to_string(ms) + COMPOSITE_OUTPUT_FILE_SUFFFIX;
+}
+
+bool CompositeNormalFilePathHandler::HandleOutputFilePath(
+    const std::string& outputFile, ProfilerSessionConfig* sessionConfig)
+{
+    if (!NormalFilePathHandler::HandleOutputFilePath(outputFile, sessionConfig)) {
+        return false;
+    }
+    std::string filename = std::filesystem::path(sessionConfig->result_file()).filename().string();
+    if (filename.length() <= COMPOSITE_OUTPUT_FILE_SUFFFIX.length() ||
+        filename.compare(filename.length() - COMPOSITE_OUTPUT_FILE_SUFFFIX.length(),
+        COMPOSITE_OUTPUT_FILE_SUFFFIX.length(), COMPOSITE_OUTPUT_FILE_SUFFFIX) != 0) {
+        printf("Filepath unable to write! Composite filename must ending with .zip\n");
+        return false;
+    }
+    return true;
+}
+
 // FilePathHandlerFactory implementation
-std::unique_ptr<FilePathHandler> FilePathHandlerFactory::CreateHandler()
+std::unique_ptr<FilePathHandler> FilePathHandlerFactory::CreateHandler(bool needComposite)
 {
 #if defined(is_sandbox) && is_sandbox
     int32_t callingUid = OHOS::IPCSkeleton::GetCallingUid();
     constexpr int APP_ID_THRESH = 20000000;
     if (callingUid > APP_ID_THRESH) {
-        return std::make_unique<SandboxFilePathHandler>();
+        if (needComposite) {
+            return std::make_unique<CompositeSandboxFilePathHandler>();
+        } else {
+            return std::make_unique<SandboxFilePathHandler>();
+        }
     }
 #endif
-    return std::make_unique<NormalFilePathHandler>();
+    if (needComposite) {
+        return std::make_unique<CompositeNormalFilePathHandler>();
+    } else {
+        return std::make_unique<NormalFilePathHandler>();
+    }
 }
 

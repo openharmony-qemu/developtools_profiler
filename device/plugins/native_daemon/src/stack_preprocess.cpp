@@ -633,7 +633,9 @@ bool StackPreprocess::ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvai
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + ctx.offset);
         if (validLiveDataPtr_ != nullptr) {
             auto* tmpRawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
-            if (IsArkGlobalHandleRecord(tmpRawData) && ShouldSkipRecord(tmpRawData, *validLiveDataPtr_)) {
+            if (IsArkGlobalHandleRecord(tmpRawData) && ShouldSkipRecord(tmpRawData, *validLiveDataPtr_) &&
+                !(IsFreeRecord(tmpRawData) && orphanFreeWhitelistPtr_ != nullptr &&
+                  InOrphanFreeWhitelist(tmpRawData, *orphanFreeWhitelistPtr_))) {
                 ctx.offset += totalSize;
                 continue;
             }
@@ -1585,7 +1587,8 @@ inline uint32_t StackPreprocess::GetNewStackId()
 
 void StackPreprocess::AddCallStackIndex(uint32_t stackId, RawStackPtr rawData)
 {
-    if (hookConfig_.async_stack_enable()) {
+    if (hookConfig_.async_stack_enable() && rawData->stackContext->type != FREE_ARKTS &&
+        rawData->stackContext->type != MALLOC_ARKTS && rawData->stackContext->type != PR_SET_VMA_MSG) {
         const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
         uint64_t stackHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
         AsyncCallStackKey key = {stackHash, GetAsyncDedupMallocSize(rawData), GetDedupTagId(rawData)};
@@ -1602,7 +1605,8 @@ void StackPreprocess::AddCallStackIndex(uint32_t stackId, RawStackPtr rawData)
 
 void StackPreprocess::AddSimplifiedCallStackIndex(uint32_t stackId, RawStackPtr rawData)
 {
-    if (hookConfig_.async_stack_enable()) {
+    if (hookConfig_.async_stack_enable() && rawData->stackContext->type != FREE_ARKTS &&
+        rawData->stackContext->type != MALLOC_ARKTS && rawData->stackContext->type != PR_SET_VMA_MSG) {
         const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
         uint64_t stackHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
         SimplifiedAsyncCallStackKey asyncKey = {stackHash, GetAsyncDedupMallocSize(rawData), GetDedupTagId(rawData)};
@@ -1662,7 +1666,7 @@ inline uint32_t StackPreprocess::GetCallStackId(const HookRecordPtr& hookRecord,
 {
     auto rawStack = hookRecord->GetRawStack();
     // ignore the first two frame if dwarf unwind
-    size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
+    size_t idx = (hookConfig_.async_stack_enable() || !hookConfig_.fp_unwind()) ? FILTER_STACK_DEPTH : 0;
     // if free_stack_report or munmap_stack_report is false, don't need to record.
     uint16_t type = hookRecord->GetType();
     if ((type == FREE_MSG) && !hookConfig_.free_stack_report()) {
@@ -1979,7 +1983,7 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
     }
 
     if ((!hookConfig_.callframe_compress() || stackMapId == 0) && hookConfig_.string_compressed()) {
-        size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
+        size_t idx = (hookConfig_.async_stack_enable() || !hookConfig_.fp_unwind()) ? FILTER_STACK_DEPTH : 0;
         for (; idx < callFrames.size(); ++idx) {
             ReportSymbolNameMap(callFrames[idx], stackData);
             ReportFilePathMap(callFrames[idx], stackData);
@@ -2271,7 +2275,7 @@ void StackPreprocess::WriteFrames(HookRecordPtr hookRecord, const std::vector<Ca
         rawStack->stackContext->pid, rawStack->stackContext->tid,
         static_cast<int64_t>(rawStack->stackContext->ts.tv_sec),
         rawStack->stackContext->ts.tv_nsec, rawStack->stackContext->mallocSize);
-    size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
+    size_t idx = (hookConfig_.async_stack_enable() || !hookConfig_.fp_unwind()) ? FILTER_STACK_DEPTH : 0;
     for (; idx < callFrames.size(); ++idx) {
         (void)fprintf(fpHookData_, "0x%" PRIx64 ";0x%" PRIx64 ";%s;%s;0x%" PRIx64 ";%" PRIu64 "\n",
             callFrames[idx].ip_, callFrames[idx].sp_, std::string(callFrames[idx].symbolName_).c_str(),
