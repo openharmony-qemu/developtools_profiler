@@ -22,5 +22,7 @@ bool TraceCollector::Collect(std::shared_ptr<IDataStorage> storage)
 {
     CHECK_NOTNULL(storage, false, "storage is NULL");
     CHECK_TRUE(!traceFilePath_.empty(), false, "trace file is NULL");
-    return storage->AddFile(traceFilePath_);
+    bool result = storage->AddFile(traceFilePath_);
+    (void)unlink(traceFilePath_.c_str());
+    return result;
 }
