@@ -137,7 +137,7 @@ HWTEST_F(ZipStorageTest, AddDirectoryFails, TestSize.Level1)
 
 /**
  * @tc.name: CleanStaleDataRemovesMatchingFiles
- * @tc.desc: Test CleanStaleData deletes files matching hiprofiler_data_*.zip pattern
+ * @tc.desc: Test CleanStaleData deletes files matching *.zip pattern
  * @tc.type: FUNC
  */
 HWTEST_F(ZipStorageTest, CleanStaleDataRemovesMatchingFiles, TestSize.Level1)
@@ -145,16 +145,11 @@ HWTEST_F(ZipStorageTest, CleanStaleDataRemovesMatchingFiles, TestSize.Level1)
     std::vector<std::string> staleFiles = {
         TEST_DIR + "hiprofiler_data_001.zip",
         TEST_DIR + "hiprofiler_data_002.zip",
+        TEST_DIR + "other_data.zip",
     };
-    std::string keepFile = TEST_DIR + "other_data.zip";
     for (const auto& f : staleFiles) {
         std::ofstream ofs(f, std::ios::trunc);
         ofs << "stale";
-        ofs.close();
-    }
-    {
-        std::ofstream ofs(keepFile, std::ios::trunc);
-        ofs << "keep";
         ofs.close();
     }
 
@@ -164,9 +159,7 @@ HWTEST_F(ZipStorageTest, CleanStaleDataRemovesMatchingFiles, TestSize.Level1)
     for (const auto& f : staleFiles) {
         EXPECT_FALSE(fs::exists(f));
     }
-    EXPECT_TRUE(fs::exists(keepFile));
 
-    fs::remove(keepFile);
     for (const auto& f : staleFiles) {
         fs::remove(f);
     }
@@ -193,7 +186,6 @@ HWTEST_F(ZipStorageTest, CleanStaleDataOnlyDeletesMatchingSuffix, TestSize.Level
 {
     std::string matchFile = TEST_DIR + "hiprofiler_data_003.zip";
     std::string noMatchSuffix = TEST_DIR + "hiprofiler_data_004.htrace";
-    std::string noMatchPrefix = TEST_DIR + "data_005.zip";
     {
         std::ofstream ofs(matchFile, std::ios::trunc);
         ofs << "match";
@@ -204,20 +196,13 @@ HWTEST_F(ZipStorageTest, CleanStaleDataOnlyDeletesMatchingSuffix, TestSize.Level
         ofs << "noMatchSuffix";
         ofs.close();
     }
-    {
-        std::ofstream ofs(noMatchPrefix, std::ios::trunc);
-        ofs << "noMatchPrefix";
-        ofs.close();
-    }
 
     ZipStorage storage(TEST_ZIP_FILE);
     storage.AddFile(TEST_INPUT_FILE);
 
     EXPECT_FALSE(fs::exists(matchFile));
     EXPECT_TRUE(fs::exists(noMatchSuffix));
-    EXPECT_TRUE(fs::exists(noMatchPrefix));
 
     fs::remove(noMatchSuffix);
-    fs::remove(noMatchPrefix);
     fs::remove(matchFile);
 }

@@ -50,6 +50,7 @@ public:
     bool SetSerializeNetworkProfilerConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
     bool CheckRestraceTag(std::unique_ptr<ForStandard::NativeHookConfig>& hookConfig);
     uint32_t GetHiperfPluginDuration();
+    bool CheckHookPluginComposited();
     google::protobuf::TextFormat::Parser& GetParser()
     {
         return parser_;
