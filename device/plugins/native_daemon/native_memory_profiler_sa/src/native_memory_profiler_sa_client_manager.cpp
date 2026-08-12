@@ -58,7 +58,7 @@ constexpr uint32_t DEFINE_MIN_SAMPLE_INTERVAL = 384; // bytes
 constexpr uint32_t ASYNC_REQUEST_TIMEOUT_DELTA = 600; // seconds
 constexpr int32_t TIME_BASE = 1000;
 const std::string FILE_SUFFIX = ".htrace";
-const std::vector<std::string> resourceTypeValues = { "fd", "thread", "native", "gpu", "global_handle" };
+const std::vector<std::string> resourceTypeValues = { "fd", "thread", "native", "gpu", "global_handle", "dma" };
 
 using ProfilingCallbackVar = std::variant<
     NativeMemoryProfilerSaClientManager::ProfilingCallback,
@@ -701,6 +701,8 @@ int32_t NativeMemoryProfilerSaClientManager::ParseResType(int32_t type,
         config->traceMask_ = RES_THREAD_MASK;
     } else if (internalType == InternalResourceType::OH_RES_TYPE_GLOBAL_HANDLE) {
         config->traceMask_ = RES_ARK_GLOBAL_HANDLE;
+    } else if (internalType == InternalResourceType::OH_RES_TYPE_DMA) {
+        config->traceMask_ = RES_FD_DMABUF | RES_DMABUF_MASK;
     }
     return RET_OK;
 }
@@ -800,7 +802,7 @@ ResProfilerErrorCode NativeMemoryProfilerSaClientManager::CheckInputConfig(int t
     }
 
     if (type < static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_FD) ||
-        type > static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_GLOBAL_HANDLE)) {
+        type >= static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_MAX)) {
         PROFILER_LOG_ERROR(LOG_CORE, "CheckInputConfig: type is invalid");
         return ResProfilerErrorCode::RES_PROF_RESOURCE_TYPE_INVALID_ARG;
     }
