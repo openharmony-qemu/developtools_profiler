@@ -17,6 +17,7 @@
 #include "common.h"
 #include <chrono>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include "securec.h"
 
@@ -52,6 +53,7 @@ OHOS::SmartPerf::TaskManager* g_mgr = nullptr;
 thread_local OHOS::SmartPerf::ThreadLocal g_datas;
 constexpr int32_t SAVE_DATA_INTERVAL_MINUTE = 5;
 constexpr int32_t THE_MINUTE = 60;
+constexpr mode_t FILE_PERMISSION_FULL = 0777;
 }
 
 namespace OHOS::SmartPerf {
@@ -200,6 +202,10 @@ void TaskManager::AddTask(std::vector<std::string>& argv)
 
 void TaskManager::SetFilePath(const std::string& fileName, bool removeCurrentFile)
 {
+    if (!SPUtils::IsValidPath(fileName)) {
+        LOGE("SetFilePath invalid path: %s", fileName.c_str());
+        return;
+    }
     {
         std::lock_guard<std::mutex> lock(mtx_);
         fileName_ = fileName;
@@ -509,6 +515,10 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
 {
     if (type == CommandType::CT_PKG) {
         processName_ = std::get<std::string>(value);
+        if (!SPUtils::IsInvalidPkgName(processName_)) {
+            LOGE("The pkgName is Abnormal characters");
+            return;
+        }
         OHOS::SmartPerf::StartUpDelay sp;
         sp.GetPidByPkg(processName_, &processIds_);
     }
@@ -516,6 +526,7 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
     if (type == CommandType::CT_PID) {
         processIds_ = std::to_string(std::get<int32_t>(value));
         if (!SPUtils::IsValidPid(processIds_)) {
+            LOGE("The pid is Abnormal characters");
             return;
         }
         std::string cmdResult;
@@ -525,7 +536,6 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
         }
         processName_ = cmdResult;
     }
-
     FPS::GetInstance().SetProcessId(processIds_);
     FPS::GetInstance().SetPackageName(processName_);
     Jitters::GetInstance().SetProcessId(processIds_);
@@ -692,16 +702,18 @@ void TaskManager::InitDataCsv()
         safePath = fileName;
     }
     if (!SPUtils::FileAccess(safePath)) {
+        mode_t oldMask = umask(0);
         std::ofstream file(safePath);
         if (file) {
-            std::string chmodCmd = "chmod 777 " + safePath;
-            std::string cmdResult;
-            SPUtils::LoadCmd(chmodCmd, cmdResult);
-            file.close();
+            if (chmod(safePath.c_str(), FILE_PERMISSION_FULL) != 0) {
+                LOGE("Failed to chmod %s", safePath.c_str());
+            }
         } else {
             LOGE("Failed to creat file");
+            umask(oldMask);
             return;
         }
+        umask(oldMask);
     } else {
         std::ofstream file(safePath, std::ios::trunc);
         if (!file) {

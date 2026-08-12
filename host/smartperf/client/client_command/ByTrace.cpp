@@ -106,17 +106,20 @@ void ByTrace::CpTraceFile() const
     constexpr const char* cpCommand = "cp -r ";
     constexpr const char* chmodCommand = "chmod 777 ";
     const std::string cpHiviewTracePath = hiviewTracePath_ + hiviewTrace;
-    const std::string cpTrace = cpCommand + cpHiviewTracePath + " " + traceCpPath_;
-    if (!SPUtils::LoadCmd(cpTrace, result)) {
-        LOGE("Copy failed.");
+    std::error_code ec;
+    std::filesystem::copy(cpHiviewTracePath, traceCpPath_,
+        std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing, ec);
+    if (ec) {
+        LOGE("Copy failed: %s", ec.message().c_str());
         return;
     }
-    std::string tracePathChmod = chmodCommand + traceCpPath_;
-    if (!SPUtils::LoadCmd(tracePathChmod, result)) {
-        LOGE("Chmod failed.");
+    std::filesystem::permissions(traceCpPath_,
+        std::filesystem::perms::all, std::filesystem::perm_options::replace, ec);
+    if (ec) {
+        LOGE("Chmod failed: %s", ec.message().c_str());
         return;
     }
-    LOGD("ByTrace::CpTraceFile result = (%s)", result.c_str());
+    LOGD("ByTrace::CpTraceFile result = (success)");
 }
 
 void ByTrace::CheckFpsJitters(long long& jitters, int cfps)
