@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("//developtools/profiler/device/base/config.gni")
 
 ohos_executable("pagemap_parse") {
+  branch_protector_ret = "pac_ret"
   sources = [ "pagemap_parse.cpp" ]
 
   include_dirs = []

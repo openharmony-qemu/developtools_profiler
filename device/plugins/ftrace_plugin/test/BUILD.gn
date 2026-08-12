@@ -69,6 +69,7 @@ ohos_unittest("ftrace_plugin_ut") {
 }
 
 ohos_executable("busy_test") {
+  branch_protector_ret = "pac_ret"
   sources = [ "app/busy_workers.cpp" ]
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
   install_enable = false
@@ -77,6 +78,7 @@ ohos_executable("busy_test") {
 }
 
 ohos_executable("regex_test") {
+  branch_protector_ret = "pac_ret"
   sources = [ "app/regex_test.cpp" ]
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
   install_enable = false
@@ -85,6 +87,7 @@ ohos_executable("regex_test") {
 }
 
 ohos_executable("get_tzinfo") {
+  branch_protector_ret = "pac_ret"
   sources = [ "app/get_tzinfo.cpp" ]
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
   install_enable = false

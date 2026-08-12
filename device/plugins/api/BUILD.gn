@@ -30,6 +30,7 @@ config("hiprofiler_plugins_config") {
 }
 
 ohos_source_set("plugins_sources") {
+  branch_protector_ret = "pac_ret"
   configs = [
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config",
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
@@ -76,6 +77,7 @@ ohos_prebuilt_etc("hiprofiler_plugins.cfg") {
 }
 
 ohos_executable("hiprofiler_plugins") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   deps = [
     ":hiprofiler_plugins.cfg",
@@ -103,6 +105,7 @@ config("hidebug_native_config") {
 }
 
 ohos_source_set("libhidebug_source") {
+  branch_protector_ret = "pac_ret"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   include_dirs = [ "./include" ]
@@ -120,6 +123,7 @@ ohos_source_set("libhidebug_source") {
 }
 
 ohos_shared_library("libhidebug") {
+  branch_protector_ret = "pac_ret"
   public_configs = [ ":hidebug_native_config" ]
 
   deps =
@@ -148,6 +152,7 @@ ohos_shared_library("libhidebug") {
 }
 
 ohos_static_library("libhidebug_init") {
+  branch_protector_ret = "pac_ret"
   public_configs = [ ":hidebug_native_config" ]
 
   defines = [ "HIDEBUG_IN_INIT" ]

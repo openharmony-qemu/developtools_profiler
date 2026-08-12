@@ -30,6 +30,7 @@ config("profiler_service_config") {
 }
 
 ohos_source_set("profiler_service") {
+  branch_protector_ret = "pac_ret"
   configs = [ 
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config",
     "${OHOS_PROFILER_DIR}/device/services/apm:profiler_apm_config",
@@ -97,6 +98,7 @@ ohos_prebuilt_etc("hiprofiler.para.dac") {
 }
 
 ohos_executable("hiprofilerd") {
+  branch_protector_ret = "pac_ret"
   configs = [ 
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config",
     "${OHOS_PROFILER_DIR}/device/services/apm:profiler_apm_config",

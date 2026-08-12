@@ -97,6 +97,7 @@ foreach(proto, profiler_service_type_proto) {
 }
 
 ohos_source_set("profiler_service_type_source") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":all_type_gen" ]
   external_deps = [
     "protobuf:protobuf_lite",
@@ -109,6 +110,7 @@ ohos_source_set("profiler_service_type_source") {
 }
 
 ohos_source_set("profiler_service_all_type_source") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":all_type_gen" ]
   external_deps = [
     "protobuf:protobuf_lite",
@@ -121,6 +123,7 @@ ohos_source_set("profiler_service_all_type_source") {
 }
 
 ohos_source_set("profiler_service_all_type_source_cfi") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":all_type_gen" ]
   external_deps = [
     "protobuf:protobuf_lite",
@@ -178,6 +181,7 @@ action("profiler_service_interface_gen") {
 }
 
 ohos_source_set("profiler_service_proto") {
+  branch_protector_ret = "pac_ret"
   deps = [
     ":all_type_gen",
     ":profiler_service_interface_gen",
@@ -251,6 +255,7 @@ action("plugin_service_interface_proto_gen") {
 }
 
 ohos_source_set("plugin_service_proto") {
+  branch_protector_ret = "pac_ret"
   deps = [
     ":all_type_gen",
     ":plugin_service_interface_proto_gen",
@@ -270,6 +275,7 @@ ohos_source_set("plugin_service_proto") {
 }
 
 ohos_source_set("plugin_service_proto_cfi") {
+  branch_protector_ret = "pac_ret"
   deps = [
     ":all_type_gen",
     ":plugin_service_interface_proto_gen",
@@ -296,6 +302,7 @@ ohos_source_set("plugin_service_proto_cfi") {
 
 #######################################################
 ohos_source_set("proto_services_cpp") {
+  branch_protector_ret = "pac_ret"
   public_deps = [
     ":plugin_service_proto",
     ":profiler_service_all_type_source",
@@ -306,6 +313,7 @@ ohos_source_set("proto_services_cpp") {
 }
 
 ohos_source_set("common_types_lite_proto") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":all_type_gen" ]
   external_deps = [
     "protobuf:protobuf_lite",

@@ -61,6 +61,7 @@ config("bytrace_plugin_protos_config") {
 }
 
 ohos_source_set("bytrace_plugin_protos_cpp") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":bytrace_plugin_protos_protoc" ]
   external_deps = [
     "protobuf:protobuf_lite",
@@ -73,6 +74,7 @@ ohos_source_set("bytrace_plugin_protos_cpp") {
 }
 
 ohos_source_set("bytrace_plugin_protos_cpp_standard") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":bytrace_plugin_protos_protoc" ]
   external_deps = [
     "protobuf:protobuf_lite",

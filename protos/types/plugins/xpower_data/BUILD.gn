@@ -74,6 +74,7 @@ action("xpower_data_cpp_gen") {
 }
 
 ohos_source_set("xpower_data_cpp") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":xpower_data_cpp_gen" ]
   external_deps = [
     "protobuf:protobuf_lite",
@@ -86,6 +87,7 @@ ohos_source_set("xpower_data_cpp") {
 }
 
 ohos_source_set("xpower_data_cpp_standard") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":xpower_data_cpp_gen" ]
   external_deps = [
     "protobuf:protobuf_lite",
@@ -98,6 +100,7 @@ ohos_source_set("xpower_data_cpp_standard") {
 }
 
 ohos_source_set("xpower_plugin_config_cpp_standard") {
+  branch_protector_ret = "pac_ret"
   deps = [ ":xpower_data_cpp_gen" ]
   external_deps = [
     "protobuf:protobuf_lite",

@@ -71,6 +71,7 @@ group("unittest") {
 }
 
 ohos_executable("hiebpf_test_demo") {
+  branch_protector_ret = "pac_ret"
   cflags = [ "-O0" ]
   sources = [ "hiebpf_test_demo.cpp" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

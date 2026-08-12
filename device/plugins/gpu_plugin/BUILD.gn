@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("../../base/config.gni")
 
 ohos_source_set("gpudataplugin_source") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_cflags_config" ]
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
@@ -47,6 +48,7 @@ ohos_source_set("gpudataplugin_source") {
 }
 
 ohos_shared_library("gpudataplugin") {
+  branch_protector_ret = "pac_ret"
   configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_size_opt_config" ]
   output_name = "gpudataplugin"
   version_script = "libgpu_plugin.map"
@@ -63,6 +65,7 @@ ohos_shared_library("gpudataplugin") {
 }
 
 ohos_executable("gpudataplugintest") {
+  branch_protector_ret = "pac_ret"
   output_name = "gpudataplugintest"
   sources = [ "src/test_main.cpp" ]
   include_dirs = [
