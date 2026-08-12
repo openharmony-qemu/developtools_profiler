@@ -124,11 +124,11 @@ void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
 
 void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid, std::string pids)
 {
-    LOGD("SpProfilerFactory setPID:%s", pid.c_str());
     if (!SPUtils::IsValidPid(pid)) {
-        LOGE("invalid processID");
+        LOGE("invalid processId");
         return;
     }
+    LOGD("SpProfilerFactory setPID:%s", pid.c_str());
     FPS::GetInstance().SetProcessId(pid);
     Jitters::GetInstance().SetProcessId(pid);
     Hiperf::GetInstance().SetProcessId(pid);

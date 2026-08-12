@@ -195,6 +195,7 @@ bool SPUtils::IsValidPath(const std::string& str)
     }
     return true;
 }
+
 bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak, std::string &result)
 {
     const std::string cmdExc = cmd;
@@ -702,12 +703,12 @@ bool SPUtils::VerifyValueStr(std::map<std::string, std::string> &mapInfo, std::s
         return false;
     }
     a = mapInfo.find("PKG");
-    if (mapInfo.end() != a && !IsInvalidPkgName(a->second)) { // Cannot be null
+    if (mapInfo.end() != a && !IsInvalidPkgName(a->second)) {
         errorInfo += "invalid parameter, invalid package name -- '" + a->second + "'";
         return false;
     }
     a = mapInfo.find("PID");
-    if (mapInfo.end() != a && !IsValidPid(a->second)) { // Cannot be null
+    if (mapInfo.end() != a && !IsValidPid(a->second)) {
         errorInfo += "invalid parameter, invalid pid -- '" + a->second + "'";
         return false;
     }
@@ -1098,6 +1099,10 @@ std::string SPUtils::GetWinId()
     std::string line;
     while (std::getline(iss, line)) {
         GetWinIdNum(line, winId);
+    }
+    if (!SPUtils::IsValidPid(winId)) {
+        LOGE("winId is Abnormal characters");
+        return "";
     }
     return winId;
 }

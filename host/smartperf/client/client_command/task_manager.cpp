@@ -708,6 +708,7 @@ void TaskManager::InitDataCsv()
             if (chmod(safePath.c_str(), FILE_PERMISSION_FULL) != 0) {
                 LOGE("Failed to chmod %s", safePath.c_str());
             }
+            file.close();
         } else {
             LOGE("Failed to creat file");
             umask(oldMask);

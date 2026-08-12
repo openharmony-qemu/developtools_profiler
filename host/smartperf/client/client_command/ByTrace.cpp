@@ -101,10 +101,6 @@ void ByTrace::CpTraceFile() const
         LOGE("Destination path is not a directory.");
         return;
     }
-    std::string result;
-    std::string cpResult;
-    constexpr const char* cpCommand = "cp -r ";
-    constexpr const char* chmodCommand = "chmod 777 ";
     const std::string cpHiviewTracePath = hiviewTracePath_ + hiviewTrace;
     std::error_code ec;
     std::filesystem::copy(cpHiviewTracePath, traceCpPath_,
