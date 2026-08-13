@@ -22,6 +22,7 @@
 #include "native_memory_profiler_sa_config.h"
 
 using namespace testing::ext;
+using namespace OHOS::Developtools::NativeDaemon;
 
 class NativeMemoryProfilerSaConfigTest : public testing::Test {
 public:
@@ -30,6 +31,100 @@ public:
     void SetUp() {}
     void TearDown() {}
 };
+
+using ParcelFieldWriter = bool (*)(OHOS::Parcel&, size_t);
+
+static bool WriteGpuRangeForTest(OHOS::Parcel& parcel)
+{
+    for (size_t i = 0; i < GPU_TYPE_SIZE * GPU_RANGE_SIZE * 2; ++i) {
+        if (!parcel.WriteUint64(i + 1)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool WriteCoreField(OHOS::Parcel& parcel, size_t index)
+{
+    switch (index) {
+        case 0: return parcel.WriteInt32(1);
+        case 1: return parcel.WriteString("file_path");
+        case 2: return parcel.WriteUint32(3);
+        case 3: return parcel.WriteInt32(4);
+        case 4: return parcel.WriteUint32(5);
+        case 5: return parcel.WriteString("process_name");
+        case 6: return parcel.WriteUint8(7);
+        case 7: return parcel.WriteBool(true);
+        case 8: return parcel.WriteBool(false);
+        case 9: return parcel.WriteBool(true);
+        case 10: return parcel.WriteBool(false);
+        case 11: return parcel.WriteUint32(12);
+        case 12: return parcel.WriteUint32(13);
+        case 13: return parcel.WriteBool(true);
+        case 14: return parcel.WriteBool(false);
+        case 15: return parcel.WriteBool(true);
+        case 16: return parcel.WriteBool(false);
+        case 17: return parcel.WriteBool(true);
+        case 18: return parcel.WriteBool(false);
+        case 19: return parcel.WriteBool(true);
+        case 20: return parcel.WriteUint64(21);
+        case 21: return parcel.WriteBool(false);
+        case 22: return parcel.WriteUint64(23);
+        case 23: return WriteGpuRangeForTest(parcel);
+        default: return false;
+    }
+}
+
+static bool WriteExtField(OHOS::Parcel& parcel, size_t index)
+{
+    switch (index) {
+        case 0: return parcel.WriteBool(true);
+        case 1: return parcel.WriteBool(false);
+        case 2: return parcel.WriteUint32(3);
+        case 3: return parcel.WriteInt32(CLOCK_REALTIME);
+        case 4: return parcel.WriteUint32(5);
+        case 5: return parcel.WriteBool(false);
+        case 6: return parcel.WriteBool(true);
+        case 7: return parcel.WriteBool(false);
+        case 8: return parcel.WriteBool(true);
+        case 9: return parcel.WriteBool(false);
+        case 10: return parcel.WriteBool(true);
+        case 11: return parcel.WriteString("file_name");
+        case 12: return parcel.WriteUint32(13);
+        case 13: return parcel.WriteUint32(14);
+        case 14: return parcel.WriteInt32(15);
+        case 15: return parcel.WriteUint8(16);
+        case 16: return parcel.WriteString("napi_name");
+        case 17: return parcel.WriteString("libtarget.so");
+        case 18: return parcel.WriteUint32(0);
+        case 19: return parcel.WriteUint32(20);
+        case 20: return parcel.WriteUint32(21);
+        case 21: return parcel.WriteUint32(22);
+        case 22: return parcel.WriteUint32(23);
+        case 23: return parcel.WriteString("type_name");
+        case 24: return parcel.WriteUint32(25);
+        case 25: return parcel.WriteUint32(26);
+        case 26: return parcel.WriteUint32(27);
+        case 27: return parcel.WriteUint32(28);
+        case 28: return parcel.WriteBool(true);
+        case 29: return parcel.WriteBool(false);
+        case 30: return parcel.WriteUint32(31);
+        case 31: return parcel.WriteUint32(32);
+        case 32: return parcel.WriteUint32(33);
+        case 33: return parcel.WriteUint32(34);
+        default: return false;
+    }
+}
+
+static bool WriteFieldPrefix(OHOS::Parcel& parcel, size_t fieldCount, ParcelFieldWriter writer)
+{
+    for (size_t i = 0; i < fieldCount; ++i) {
+        if (!writer(parcel, i)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 /**
  * @tc.name: NativeMemoryProfilerSaConfigTest001
@@ -262,24 +357,43 @@ HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest007, 
 }
 
 /**
- * @tc.name: NativeMemoryProfilerSaConfigTest008
- * @tc.desc: bundleName_ serialization roundtrip
+ * @tc.name: UnmarshallingRejectsNullAndTruncatedCoreFields
+ * @tc.desc: Unmarshalling rejects null config and truncated core fields.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest008, TestSize.Level3)
+HWTEST_F(NativeMemoryProfilerSaConfigTest, UnmarshallingRejectsNullAndTruncatedCoreFields, TestSize.Level3)
 {
     using namespace OHOS::Developtools::NativeDaemon;
-    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(config, nullptr);
+    OHOS::Parcel emptyParcel;
+    std::shared_ptr<NativeMemoryProfilerSaConfig> nullConfig = nullptr;
+    EXPECT_FALSE(NativeMemoryProfilerSaConfig::Unmarshalling(emptyParcel, nullConfig));
 
-    config->bundleName_ = "test_bundle";
-    OHOS::Parcel parcel;
-    EXPECT_EQ(config->Marshalling(parcel), true);
+    constexpr size_t coreFieldCount = 24;
+    for (size_t prefix = 0; prefix < coreFieldCount; ++prefix) {
+        OHOS::Parcel parcel;
+        ASSERT_TRUE(WriteFieldPrefix(parcel, prefix, WriteCoreField));
+        auto result = std::make_shared<NativeMemoryProfilerSaConfig>();
+        ASSERT_NE(result, nullptr);
+        EXPECT_FALSE(NativeMemoryProfilerSaConfig::Unmarshalling(parcel, result)) << prefix;
+    }
+}
 
-    std::shared_ptr<NativeMemoryProfilerSaConfig> result = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(result, nullptr);
-    EXPECT_EQ(NativeMemoryProfilerSaConfig::Unmarshalling(parcel, result), true);
-    EXPECT_EQ(result->bundleName_, "test_bundle");
+/**
+ * @tc.name: UnmarshallingExtRejectsTruncatedFields
+ * @tc.desc: Unmarshalling rejects truncated extension fields.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, UnmarshallingExtRejectsTruncatedFields, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    constexpr size_t extFieldCount = 34;
+    for (size_t prefix = 0; prefix < extFieldCount; ++prefix) {
+        OHOS::Parcel parcel;
+        ASSERT_TRUE(WriteFieldPrefix(parcel, prefix, WriteExtField));
+        auto result = std::make_shared<NativeMemoryProfilerSaConfig>();
+        ASSERT_NE(result, nullptr);
+        EXPECT_FALSE(NativeMemoryProfilerSaConfig::UnmarshallingExt(parcel, result)) << prefix;
+    }
 }
 
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_TEST_H

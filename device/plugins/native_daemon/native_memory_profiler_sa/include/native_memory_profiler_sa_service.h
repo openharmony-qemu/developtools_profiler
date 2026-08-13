@@ -137,8 +137,24 @@ private:
     static bool ReadQuotaFile(std::unordered_map<std::string, QuotaRecord>& records);
     static bool WriteQuotaFile(const std::unordered_map<std::string, QuotaRecord>& records);
     static bool IsSeparateByMoreThan24Hours(long long t1, long long t2);
+#ifdef NATIVE_DAEMON_UNITTEST
+    static void ResetTaskContextsForTest();
+    static void InjectPidInfoForTest(pid_t pid, uid_t uid, gid_t gid);
+    static void InjectPidCtxForTest(int32_t pid, const std::shared_ptr<TaskConfig>& config);
+    static void InjectPidFdsForTest(pid_t pid, int fd);
+    static void SetHasStartupModeForTest(bool val);
+    static void SetMockPermissionForTest(bool isUserMode, bool granted);
+    static void SetMockNativeDaemonRunningForTest(bool running);
+    static void SetMockStartServiceAbilityForTest(bool result);
+    static void SetMockSystemResourceForTest(bool memFail, bool cpuFail, bool romFail);
+    static void SetMockSendFailForTest(bool fail);
+    static void SetMockNmdResultForTest(const std::string& result);
+#endif
 
 private:
+    static bool IsMemoryPressureCritical(uint64_t availableMem, bool memReadOk);
+    static bool IsCpuOverloaded(double cpuUsage, bool cpuReadOk);
+    static bool IsRomInsufficient(uint64_t freeBytes, uint64_t totalBytes, bool romReadOk);
     std::mutex gpuMtx_;
     std::string startupModeProcessName_;
     int32_t taskMaxNum_ = 2;

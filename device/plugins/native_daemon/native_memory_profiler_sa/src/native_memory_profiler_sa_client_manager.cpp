@@ -302,16 +302,20 @@ int32_t NativeMemoryProfilerSaClientManager::Start(NativeMemProfilerType type, u
     return Start(config);
 }
 
-int32_t NativeMemoryProfilerSaClientManager::Stop(uint32_t pid)
+int32_t NativeMemoryProfilerSaClientManager::StopWithService(const sptr<IRemoteObject>& service, uint32_t pid)
 {
-    CHECK_TRUE(pid != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: pid is 0");
-    auto service = GetRemoteService();
     if (service == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop service is null");
         return RET_ERR;
     }
     NativeMemoryProfilerSaProxy proxy(service);
     return proxy.Stop(pid);
+}
+
+int32_t NativeMemoryProfilerSaClientManager::Stop(uint32_t pid)
+{
+    CHECK_TRUE(pid != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: pid is 0");
+    return StopWithService(GetRemoteService(), pid);
 }
 
 int32_t NativeMemoryProfilerSaClientManager::Stop(const std::string& name)

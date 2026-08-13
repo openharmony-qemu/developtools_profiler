@@ -40,7 +40,11 @@ constexpr uint32_t LOG_PRINT_TIMES = 10000;
 constexpr uint32_t WAIT_STOP_TIME = 5000;
 constexpr uint32_t FINAL_SNAPSHOT_TIMEOUT_MS = 3000;
 constexpr uint32_t WAIT_TIME_ONCE = 10;
+#ifdef NATIVE_DAEMON_UNITTEST
+constexpr uint32_t MAX_FILE_CACHE_INACTIVE_SECONDS = 2;
+#else
 constexpr uint32_t MAX_FILE_CACHE_INACTIVE_SECONDS = 60;
+#endif
 constexpr uint32_t WAIT_FILE_CACHE_STOP_CNT = 3600;
 constexpr uint32_t SECOND_TO_MILLISECOND = 1000;
 constexpr uint32_t MILLISECOND_TO_NANOSECOND = 1000 * 1000;
