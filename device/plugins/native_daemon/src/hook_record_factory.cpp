@@ -218,12 +218,6 @@ std::shared_ptr<HookRecord> HookRecordFactory::CreateStackRecord(uint16_t type, 
             freeRecord->rawStack_ = rawStack;
             return freeRecord;
         }
-        case FREE_MSG_SIMP: {
-            auto freeRecord = GetRecordFromCache(freeRecordSimpCache_, FREE_MSG_SIMP);
-            freeRecord->rawStack_ = rawStack;
-            freeRecord->SetAddr(reinterpret_cast<uint64_t>(rawStack->stackContext->addr));
-            return freeRecord;
-        }
         default:
             PROFILER_LOG_ERROR(LOG_CORE, "GetHookRecord get unknown type");
             return nullptr;
@@ -396,6 +390,12 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
         case FREE_ARKTS: {
             auto freeRecord = GetRecordFromCache(arkTsFreeRecordCache_, FREE_ARKTS);
             freeRecord->rawStack_ = rawStack;
+            return freeRecord;
+        }
+        case FREE_MSG_SIMP: {
+            auto freeRecord = GetRecordFromCache(freeRecordSimpCache_, FREE_MSG_SIMP);
+            freeRecord->rawStack_ = rawStack;
+            freeRecord->SetAddr(reinterpret_cast<uint64_t>(rawStack->stackContext->addr));
             return freeRecord;
         }
         case END_MSG:
