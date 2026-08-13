@@ -793,6 +793,11 @@ bool StackPreprocess::ProcessRawData(const int8_t data[], uint32_t size,
     if (!ValidateAndPrepareData(data, size, hookRecord, rawData)) {
         return false;
     }
+    if (hookRecord->GetType() == FREE_MSG_SIMP) {
+        uint64_t addr = hookRecord->GetAddr();
+        factory_->SaveHookRecord(std::move(hookRecord));
+        return ProcessAddressData(reinterpret_cast<const int8_t*>(&addr));
+    }
     DmaFdSizeMap dmaFdSizeMap;
     uint32_t dmaFdSizePid = 0;
     if (!ResolveDmaSize(hookRecord, dmaFdSizeMap, dmaFdSizePid)) {
@@ -1265,7 +1270,8 @@ bool StackPreprocess::ProcessBatchData()
         if (!ProcessSingleRecord(batchRawStack[i])) {
             break;
         }
-        if (batchRawStack[i] && batchRawStack[i]->GetRawStack() && batchRawStack[i]->GetRawStack()->stackContext) {
+        if (batchRawStack[i] && batchRawStack[i]->GetRawStack() && batchRawStack[i]->GetRawStack()->stackContext &&
+            batchRawStack[i]->GetRawStack()->stackContext->type != MMAP_FILE_TYPE) {
             latestEventTime = batchRawStack[i]->GetRawStack()->stackContext->ts;
         }
     }
