@@ -53,6 +53,8 @@ public:
     static void TearDownTestCase()
     {
         OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
+        OHOS::system::SetParameter("libc.hook_mode", "startup:disabled");
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.preload", "0");
         int result = remove(TEST_NMD_FILE_PATH.c_str());
         if (result != 0) {
             std::cout << "Failed to remove file: " << TEST_NMD_FILE_PATH << std::endl;
@@ -167,6 +169,21 @@ protected:
         EXPECT_EQ(write(fd, &rawData, sizeof(rawData)), static_cast<ssize_t>(sizeof(rawData)));
         EXPECT_EQ(lseek(fd, 0, SEEK_SET), 0);
         return fd;
+    }
+
+    RawStackPtr MakeRawStack(uint16_t type, uint16_t tagId = 0, uint64_t jsChainId = 0)
+    {
+        auto rawStack = std::make_shared<RawStack>();
+        rawStack->baseStackData = std::make_unique<uint8_t[]>(sizeof(BaseStackRawData));
+        auto* baseData = reinterpret_cast<BaseStackRawData*>(rawStack->baseStackData.get());
+        *baseData = {};
+        baseData->type = type;
+        baseData->pid = TEST_PID;
+        baseData->tid = TEST_PID;
+        baseData->tagId = tagId;
+        baseData->jsChainId = jsChainId;
+        rawStack->stackContext = baseData;
+        return rawStack;
     }
 
     std::vector<int8_t> CreateRecordRawData(uint16_t type, std::string data)
@@ -1074,6 +1091,42 @@ HWTEST_F(HookManagerExtTest, CreatePluginSessionEmptyConfig, TestSize.Level0)
 }
 
 /*
+ * @tc.name: CreatePluginSessionEnablesSamplingNoQueueConfig
+ * @tc.desc: test CreatePluginSession updates js depth and sampling no-queue callback config.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, CreatePluginSessionEnablesSamplingNoQueueConfig, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_pid(getpid());
+    config.set_clock("monotonic");
+    config.set_smb_pages(TEST_SMB_PAGES);
+    config.set_fp_unwind(true);
+    config.set_offline_symbolization(true);
+    config.set_js_stack_report(1);
+    config.set_statistics_interval(1);
+    config.set_allocator_sampling_enable(true);
+    hookManager_->SetHookConfig(config);
+    hookManager_->SetSaMode(true);
+
+    EXPECT_TRUE(hookManager_->CreatePluginSession({}));
+    ASSERT_FALSE(hookManager_->hookCtx_.empty());
+    auto ctx = hookManager_->hookCtx_.front();
+    ASSERT_NE(ctx->stackPreprocess, nullptr);
+    ASSERT_TRUE(ctx->stackPreprocess->serverCommandCallback_ != nullptr);
+
+#if defined(__arm__)
+    EXPECT_EQ(hookManager_->hookConfig_.max_js_stack_depth(), 0u);
+    EXPECT_FALSE(hookManager_->noDataQueue_);
+#else
+    EXPECT_EQ(hookManager_->hookConfig_.max_js_stack_depth(), DEFAULT_MAX_JS_STACK_DEPTH);
+    EXPECT_TRUE(hookManager_->noDataQueue_);
+#endif
+    ctx->stackPreprocess->serverCommandCallback_(SNAPSHOT_REQUEST_CMD);
+    EXPECT_TRUE(hookManager_->DestroyPluginSession({0}));
+}
+
+/*
  * @tc.name: StartPluginSessionEmptyContext
  * @tc.desc: test StartPluginSession with empty hook context.
  * @tc.type: FUNC
@@ -1792,6 +1845,59 @@ HWTEST_F(HookManagerExtTest, RequestCacheFileStopMarksFlag, TestSize.Level0)
     EXPECT_FALSE(hookManager_->IsCacheFileStopRequested(TEST_PID));
     hookManager_->RequestCacheFileStop(TEST_PID);
     EXPECT_TRUE(hookManager_->IsCacheFileStopRequested(TEST_PID));
+}
+
+/*
+ * @tc.name: ProcessRawStackByTypeStoresTagAndJsData
+ * @tc.desc: test direct raw stack processing saves memory tags and js stacks.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, ProcessRawStackByTypeStoresTagAndJsData, TestSize.Level0)
+{
+    constexpr uint16_t tagId = 77;
+    constexpr uint64_t jsChainId = 88;
+    auto ctx = CreateSharedMemoryCtx(TEST_PID);
+    ASSERT_NE(ctx, nullptr);
+
+    char tagPayload[] = "native_tag";
+    auto tagRawStack = MakeRawStack(MEMORY_TAG, tagId);
+    tagRawStack->data = reinterpret_cast<uint8_t*>(tagPayload);
+    std::shared_ptr<HookRecord> tagRecord = std::make_shared<TagRecord>(tagRawStack);
+    EXPECT_TRUE(hookManager_->ProcessRawStackByType(ctx, tagRecord, tagRawStack));
+    ctx->stackPreprocess->SaveMemTag(tagId, tagPayload);
+    std::string tagName;
+    EXPECT_TRUE(ctx->stackPreprocess->GetMemTag(tagId, tagName));
+    EXPECT_EQ(tagName, "native_tag");
+
+    char jsPayload[] = "js raw stack";
+    auto jsRawStack = MakeRawStack(JS_STACK_MSG, 0, jsChainId);
+    jsRawStack->data = reinterpret_cast<uint8_t*>(jsPayload);
+    std::shared_ptr<HookRecord> jsRecord = std::make_shared<JsRecord>(jsRawStack);
+    EXPECT_TRUE(hookManager_->ProcessRawStackByType(ctx, jsRecord, jsRawStack));
+    EXPECT_STREQ(ctx->stackPreprocess->GetJsRawStack(jsChainId), "js raw stack");
+}
+
+/*
+ * @tc.name: ProcessRawStackByTypeHandlesEndMsgQueueResults
+ * @tc.desc: test END_MSG stores final record and reports queue failure when closed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, ProcessRawStackByTypeHandlesEndMsgQueueResults, TestSize.Level0)
+{
+    auto ctx = CreateSharedMemoryCtx(TEST_PID);
+    ASSERT_NE(ctx, nullptr);
+    auto endRawStack = MakeRawStack(END_MSG);
+    std::shared_ptr<HookRecord> endRecord = std::make_shared<HookRecord>(endRawStack);
+
+    EXPECT_TRUE(hookManager_->ProcessRawStackByType(ctx, endRecord, endRawStack));
+    EXPECT_EQ(ctx->stackData->Size(), 1u);
+
+    auto closedCtx = CreateSharedMemoryCtx(TEST_PID + 1);
+    ASSERT_NE(closedCtx, nullptr);
+    closedCtx->stackData->Close();
+    auto failedRawStack = MakeRawStack(END_MSG);
+    std::shared_ptr<HookRecord> failedRecord = std::make_shared<HookRecord>(failedRawStack);
+    EXPECT_FALSE(hookManager_->ProcessRawStackByType(closedCtx, failedRecord, failedRawStack));
 }
 
 /*

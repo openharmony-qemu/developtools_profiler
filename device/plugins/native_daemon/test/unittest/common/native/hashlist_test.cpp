@@ -303,6 +303,157 @@ HWTEST_F(HashListTest, erase, TestSize.Level0)
     }
     EXPECT_TRUE(hashList.empty());
 }
+
+HWTEST_F(HashListTest, IteratorComparisonAndBoundary, TestSize.Level0)
+{
+    HashList<std::size_t, std::size_t> first {3};
+    HashList<std::size_t, std::size_t> second {3};
+    auto emptyIt = first.begin();
+    EXPECT_TRUE(emptyIt == first.end());
+    ++emptyIt;
+    EXPECT_FALSE(emptyIt == first.end());
+    emptyIt--;
+    EXPECT_TRUE(emptyIt.GetNode() == nullptr);
+
+    first.push_back(1, 10);
+    first.push_back(2, 20);
+    second.push_back(1, 10);
+    auto head = first.begin();
+    auto next = head;
+    next++;
+    EXPECT_TRUE(head < next);
+    EXPECT_FALSE(next < head);
+    EXPECT_FALSE(head < second.begin());
+    EXPECT_FALSE((HashList<std::size_t, std::size_t>::Iterator() < head));
+    EXPECT_FALSE((HashList<std::size_t, std::size_t>::Iterator() == head));
+    EXPECT_EQ(*head, 10u);
+}
+
+HWTEST_F(HashListTest, ReverseIteratorComparisonAndBoundary, TestSize.Level0)
+{
+    HashList<std::size_t, std::size_t> first {3};
+    HashList<std::size_t, std::size_t> second {3};
+    auto emptyIt = first.rbegin();
+    EXPECT_TRUE(emptyIt == first.rend());
+    ++emptyIt;
+    EXPECT_FALSE(emptyIt == first.rend());
+    emptyIt--;
+    EXPECT_TRUE(emptyIt.GetNode() == nullptr);
+
+    first.push_back(1, 10);
+    first.push_back(2, 20);
+    second.push_back(1, 10);
+    auto tail = first.rbegin();
+    auto prev = tail;
+    prev++;
+    EXPECT_TRUE(tail < prev);
+    EXPECT_FALSE(prev < tail);
+    EXPECT_FALSE(tail < second.rbegin());
+    EXPECT_FALSE((HashList<std::size_t, std::size_t>::ReverseIterator() < tail));
+    EXPECT_FALSE((HashList<std::size_t, std::size_t>::ReverseIterator() == tail));
+    EXPECT_EQ(*tail, 20u);
+}
+
+HWTEST_F(HashListTest, DuplicateKeysMoveNodesAndUpdateValues, TestSize.Level0)
+{
+    HashList<std::size_t, std::size_t> hashList {2};
+    hashList.push_back(1, 10);
+    hashList.push_back(2, 20);
+    EXPECT_TRUE(hashList.IsFull());
+
+    hashList.push_back(3, 30);
+    EXPECT_EQ(hashList.count(2), 0u);
+    EXPECT_EQ(hashList.back(), 30u);
+
+    hashList.push_front(1, 11);
+    EXPECT_EQ(hashList.front(), 11u);
+    hashList.push_back(1, 12);
+    EXPECT_EQ(hashList.front(), 12u);
+    EXPECT_EQ(hashList.back(), 30u);
+
+    std::size_t movedValue = 40;
+    hashList.push_front(4, std::move(movedValue));
+    EXPECT_EQ(hashList.front(), 40u);
+    hashList.push_back(4, static_cast<std::size_t>(41));
+    EXPECT_EQ(hashList.front(), 41u);
+    EXPECT_EQ(hashList.back(), 12u);
+}
+
+HWTEST_F(HashListTest, ReservePopAndEraseEdges, TestSize.Level0)
+{
+    HashList<std::size_t, std::size_t> emptyList {1};
+    emptyList.pop_front();
+    emptyList.pop_back();
+    EXPECT_TRUE(emptyList.erase(99) == emptyList.end());
+
+    HashList<std::size_t, std::size_t> hashList;
+    EXPECT_EQ(hashList.reserve(0), 0);
+    EXPECT_EQ(hashList.reserve(4), 4);
+    EXPECT_EQ(hashList.reserve(2), -1);
+    hashList.push_back(1, 10);
+    hashList.push_back(2, 20);
+    hashList.push_back(3, 30);
+    auto eraseRet = hashList.erase(hashList.find(2));
+    EXPECT_FALSE(eraseRet == hashList.end());
+    EXPECT_EQ(*eraseRet, 30u);
+    EXPECT_EQ(hashList.size(), 2u);
+}
+
+HWTEST_F(HashListTest, IteratorNullAndSingleElementBoundaries, TestSize.Level0)
+{
+    using List = HashList<std::size_t, std::size_t>;
+    using Node = LinkNode<std::size_t, std::size_t>;
+    EXPECT_EQ(Node::GetLinkNode(static_cast<std::size_t*>(nullptr)), nullptr);
+    EXPECT_EQ(Node::GetLinkNode(static_cast<Link*>(nullptr)), nullptr);
+
+    List::Iterator nullIterator(static_cast<Node*>(nullptr), static_cast<List*>(nullptr));
+    EXPECT_EQ(nullIterator.GetNode(), nullptr);
+    const Node* nullNode = nullptr;
+    const List* nullList = nullptr;
+    List::Iterator constNullIterator(nullNode, nullList);
+    EXPECT_EQ(constNullIterator.GetNode(), nullptr);
+
+    HashList<std::size_t, std::size_t> hashList {2};
+    EXPECT_TRUE(hashList.cbegin() == hashList.cend());
+    EXPECT_TRUE(hashList.crbegin() == hashList.crend());
+
+    hashList.push_back(1, 10);
+    auto forward = hashList.begin();
+    EXPECT_EQ(*forward, 10u);
+    ++forward;
+    EXPECT_EQ(forward.GetNode(), nullptr);
+    forward++;
+    EXPECT_EQ(forward.GetNode(), nullptr);
+
+    auto reverse = hashList.rbegin();
+    EXPECT_EQ(*reverse, 10u);
+    ++reverse;
+    EXPECT_EQ(reverse.GetNode(), nullptr);
+    reverse++;
+    EXPECT_EQ(reverse.GetNode(), nullptr);
+}
+
+HWTEST_F(HashListTest, ReverseIteratorRendDecrementBoundaries, TestSize.Level0)
+{
+    HashList<std::size_t, std::size_t> hashList {2};
+    hashList.push_back(1, 10);
+    hashList.push_back(2, 20);
+
+    auto fromRend = hashList.rend();
+    --fromRend;
+    ASSERT_NE(fromRend.GetNode(), nullptr);
+    EXPECT_EQ(*fromRend, 10u);
+
+    auto post = hashList.rend();
+    auto old = post--;
+    EXPECT_EQ(old.GetNode(), nullptr);
+    ASSERT_NE(post.GetNode(), nullptr);
+    EXPECT_EQ(*post, 10u);
+
+    auto beforeRbegin = hashList.rbegin();
+    --beforeRbegin;
+    EXPECT_EQ(beforeRbegin.GetNode(), nullptr);
+}
 } // end of namespace NativeDaemon
 } // end of namespace Developtools
 } // end of namespace OHOS

@@ -536,7 +536,7 @@ inline void StackPreprocess::IntervalFlushRecordStatistics(const struct timespec
     }
 }
 
-inline void StackPreprocess::IntervalFlushApplyAndReleaseMatchData()
+void StackPreprocess::IntervalFlushApplyAndReleaseMatchData()
 {
     // interval reporting apply and release match data
     if (hookConfig_.malloc_free_matching_interval() > 0) {
@@ -2891,3 +2891,7 @@ template void StackPreprocess::SetEventFrame<FreeEvent>(const ReportEventBaseDat
     FreeEvent* event, uint32_t stackMapId, const std::string& type);
 template void StackPreprocess::SetEventFrame<MmapEvent>(const ReportEventBaseData& rawStack,
     MmapEvent* event, uint32_t stackMapId, const std::string& type);
+template void StackPreprocess::SetEventFrame<TraceAllocEvent>(const ReportEventBaseData& rawStack,
+    TraceAllocEvent* event, uint32_t stackMapId, const std::string& type);
+template void StackPreprocess::SetEventFrame<TraceFreeEvent>(const ReportEventBaseData& rawStack,
+    TraceFreeEvent* event, uint32_t stackMapId, const std::string& type);
