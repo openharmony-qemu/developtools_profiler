@@ -242,6 +242,9 @@ std::vector<std::vector<std::string>> StartUpDelay::GetAppProcInfor(const std::s
         }
         std::vector<std::string> eachRowOfProceInfor;
         SPUtils::StrSplit(line, " ", eachRowOfProceInfor);
+        if (eachRowOfProceInfor.size() <= mainProcessPose) {
+            continue;
+        }
         for (const auto& procName : eachRowOfProceInfor) {
             if (procName == curPkgName) {
                 mainProcessId_ = eachRowOfProceInfor[mainProcessPose];
@@ -260,6 +263,9 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName, std::string
     g_pidParams.clear();
     const size_t indexOne = 1;
     for (size_t i = 0; i < resultProceInfor.size(); ++i) {
+        if (resultProceInfor[i].size() <= indexOne) {
+            continue;
+        }
         g_pidParams.push_back(resultProceInfor[i][indexOne]);
         resultChildProcId += (" " + resultProceInfor[i][indexOne]);
     }

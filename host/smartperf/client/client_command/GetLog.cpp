@@ -171,7 +171,6 @@ void GetLog::GenerateHilogFile()
         return std::filesystem::last_write_time(a) > std::filesystem::last_write_time(b);
     });
     std::filesystem::current_path(systemHilogFileDir);
-    std::string cpCommand = "";
     for (const auto& file : filesOther) {
         uintmax_t fileSize = std::filesystem::file_size(file);
         if (currentLogSize + fileSize > logMaxSize) {

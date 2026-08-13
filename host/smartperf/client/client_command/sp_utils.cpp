@@ -184,6 +184,18 @@ bool SPUtils::IsValidWinId(const std::string &winId)
     return std::all_of(winId.begin(), winId.end(), ::isdigit);
 }
 
+bool SPUtils::IsValidPath(const std::string& str)
+{
+    if (str.empty()) {
+        return false;
+    }
+    const char* specialChars = R"(\\"$`;&|><(){}[]^~*?#!%@)";
+    if (str.find_first_of(specialChars) != std::string::npos) {
+        return false;
+    }
+    return true;
+}
+
 bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak, std::string &result)
 {
     const std::string cmdExc = cmd;
@@ -691,19 +703,19 @@ bool SPUtils::VerifyValueStr(std::map<std::string, std::string> &mapInfo, std::s
         return false;
     }
     a = mapInfo.find("PKG");
-    if (mapInfo.end() != a && a->second.empty()) { // Cannot be null
-        errorInfo += "option requires an argument -- '" + a->first + "'";
+    if (mapInfo.end() != a && !IsInvalidPkgName(a->second)) {
+        errorInfo += "invalid parameter, invalid package name -- '" + a->second + "'";
         return false;
     }
     a = mapInfo.find("PID");
-    if (mapInfo.end() != a && a->second.empty()) { // Cannot be null
-        errorInfo += "option requires an argument -- '" + a->first + "'";
+    if (mapInfo.end() != a && !IsValidPid(a->second)) {
+        errorInfo += "invalid parameter, invalid pid -- '" + a->second + "'";
         return false;
     }
     a = mapInfo.find("OUT");
     if (mapInfo.end() != a) {
-        if (a->second.empty()) {
-            errorInfo += "option requires an argument -- '" + a->first + "'";
+        if (!IsValidPath(a->second)) {
+            errorInfo += "invalid parameter, invalid path -- '" + a->second + "'";
             return false;
         }
         // The total length of file path and name cannot exceed PATH_MAX
@@ -1087,6 +1099,10 @@ std::string SPUtils::GetWinId()
     std::string line;
     while (std::getline(iss, line)) {
         GetWinIdNum(line, winId);
+    }
+    if (!SPUtils::IsValidPid(winId)) {
+        LOGE("winId is Abnormal characters");
+        return "";
     }
     return winId;
 }
