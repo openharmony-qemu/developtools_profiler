@@ -278,22 +278,29 @@ bool TraceClipper::ClipByTimeRange(uint64_t startTimeNs, uint64_t endTimeNs)
 
 bool TraceClipper::SaveToFile(const std::string& outputPath)
 {
-    char outPutPathChar[PATH_MAX] = {0x00};
-    if (realpath(outputPath.c_str(), outPutPathChar) == nullptr) {
-        LOGE("data dir %s is nullptr", outputPath.c_str());
-        return false;
+    size_t lastSlash = outputPath.find_last_of('/');
+    std::string fileName = (lastSlash != std::string::npos) ? outputPath.substr(lastSlash + 1) :
+        outputPath;
+    std::string safePath;
+    if (lastSlash != std::string::npos) {
+        std::string dirPath = outputPath.substr(0, lastSlash);
+        char realDirPath[PATH_MAX] = {0x00};
+        if (realpath(dirPath.c_str(), realDirPath) == nullptr) {
+            LOGE("data dir %s is nullptr", dirPath.c_str());
+            return false;
+        }
+        safePath = std::string(realDirPath) + "/" + fileName;
+    } else {
+        safePath = fileName;
     }
-    std::ofstream outFile(outPutPathChar, std::ios::binary | std::ios::trunc);
+    std::ofstream outFile(safePath.c_str(), std::ios::binary | std::ios::trunc);
     if (!outFile.is_open()) {
-        errorMsg_ = "Failed to create output file: " + outputPath;
+        errorMsg_ = "Failed to create output file: " + safePath;
         return false;
     }
-
     TraceFileHeader header = parser_->GetFileHeader();
     UpdateFileHeader(header);
-
     outFile.write(reinterpret_cast<const char*>(&header), sizeof(TraceFileHeader));
-
     auto writeContentSection = [&outFile](uint8_t type, const std::vector<uint8_t>& data) {
         TraceFileContentHeader contentHeader = {};
         contentHeader.type = type;
@@ -303,19 +310,16 @@ bool TraceClipper::SaveToFile(const std::string& outputPath)
             outFile.write(reinterpret_cast<const char*>(data.data()), data.size());
         }
     };
-
     std::vector<uint8_t> baseInfoData = parser_->GetBaseInfo();
     writeContentSection(CONTENT_TYPE_BASE_INFO, baseInfoData);
     writeContentSection(CONTENT_TYPE_EVENTS_FORMAT, parser_->GetEventFormats());
     writeContentSection(CONTENT_TYPE_CMDLINES, parser_->GetCmdLines());
     writeContentSection(CONTENT_TYPE_TGIDS, parser_->GetTgids());
-
     for (const auto& kv : clippedCpuData_) {
         int cpuId = kv.first;
         const std::vector<uint8_t>& cpuData = kv.second;
         writeContentSection(CONTENT_TYPE_CPU_RAW + cpuId, cpuData);
     }
-
     outFile.close();
     return true;
 }

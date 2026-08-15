@@ -27,7 +27,7 @@ public:
     template<typename T>
     static T StringToSometype(const std::string& str)
     {
-        T result;
+        T result {};
         std::stringstream ss;
         ss << str;
         ss >> result;
@@ -166,15 +166,17 @@ void GetTestsaPlugin(int command);
 void KillStartDaemon();
 void CreateDir(const std::string &dirPath);
 void RemoveDirOrFile(const std::string &dirPath);
-void CopyFiles(const std::string& cpStr);
 void TarFiles(const std::string& tarStr);
-std::string ExecuteCommand(const std::string& command);
 size_t GetFileSize(std::string filePath);
 bool IsFindDHGame(const std::string &pkg);
 std::string GetSurface();
 std::string GetProductName();
 std::string EscapeShellArgs(const std::string& args);
 bool IsInvalidPkgName(const std::string& pkgName);
+bool SafeLoadExec(const std::vector<std::string> &args, std::string &result);
+bool IsValidPid(const std::string &pid);
+bool IsValidWinId(const std::string &winId);
+bool IsValidPath(const std::string& str);
 std::string GetWinId();
 void GetWinIdNum(std::string &hidumperStr, std::string &winId);
 void EnDumpFun(const std::string &winId);

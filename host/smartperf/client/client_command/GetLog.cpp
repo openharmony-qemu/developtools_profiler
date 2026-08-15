@@ -52,11 +52,7 @@ void GetLog::GenerateDaemonLogFile()
     const std::string preLogFileName = "log.";
     std::filesystem::path dirPath(LOG_FILE_DIR);    // Log file directory
     std::vector<std::filesystem::path> files;       // Log file vector to tar
-
     SPUtils::CreateDir(daemonLogFileDir);                    // Create daemonLog directory
-
-    // Save current working directory to restore it later
-    // Change directory to handle relative paths in tar operations
     std::string originPath;
     if (std::filesystem::current_path().string().empty()) {
         WLOGE("Failed to get current working directory");
@@ -64,8 +60,6 @@ void GetLog::GenerateDaemonLogFile()
     }
     originPath = std::filesystem::current_path().string();
     std::filesystem::current_path(LOG_FILE_DIR);
-
-    // Get all log files in LOG_FILE_DIR
     for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
         if (std::filesystem::is_regular_file(entry)) {
             if (entry.path().filename().string().substr(0, preLogFileName.length()) != preLogFileName) {
@@ -74,26 +68,23 @@ void GetLog::GenerateDaemonLogFile()
             files.push_back(entry.path());
         }
     }
-
-    // Sort log files by last write time
     std::sort(files.begin(), files.end(), [](const auto& a, const auto& b) {
         return std::filesystem::last_write_time(a) > std::filesystem::last_write_time(b);
     });
-
-    // Build tar command with relative paths only, respecting size limit
-    std::string cpCommand = "";
     for (const auto& file : files) {
         uintmax_t fileSize = std::filesystem::file_size(file);
         if (currentLogSize + fileSize > logMaxSize) {
-            break; // Stop if adding this file would exceed the limit
+            break;
         }
         currentLogSize += fileSize;
-        std::string filename = file.filename().string();
-        cpCommand += filename + " ";
+        std::filesystem::path destPath = std::filesystem::path(daemonLogFileDir) / file.filename();
+        std::error_code ec;
+        std::filesystem::copy_file(file, destPath,
+            std::filesystem::copy_options::overwrite_existing, ec);
+        if (ec) {
+            WLOGE("Failed to copy file %s: %s", file.filename().string().c_str(), ec.message().c_str());
+        }
     }
-    cpCommand += daemonLogFileDir;
-    SPUtils::CopyFiles(cpCommand);
-
     std::filesystem::current_path(originPath.c_str());
     WLOGI("Created tar archive of daemonLog files successfully");
 }
@@ -163,7 +154,6 @@ void GetLog::GenerateHilogFile()
 {
     std::vector<std::filesystem::path> filesLog;            // Log file vector to tar
     std::vector<std::filesystem::path> filesOther;          // Other file vector to tar
-
     SPUtils::CreateDir(hilogFileDir);
     std::string originPath;
     if (std::filesystem::current_path().string().empty()) {
@@ -173,29 +163,26 @@ void GetLog::GenerateHilogFile()
     originPath = std::filesystem::current_path().string();
     GetHilogInMemory(filesLog);
     GetHilogInData(filesOther, filesLog);
-
     if (filesLog.empty() && filesOther.empty()) {
         WLOGE("Failed to get hilog files");
         return;
     }
-
-    // Sort hilog files by last write time
     std::sort(filesLog.begin(), filesLog.end(), [](const auto& a, const auto& b) {
         return std::filesystem::last_write_time(a) > std::filesystem::last_write_time(b);
     });
-
-    // cd LOG_FILE_DIR
     std::filesystem::current_path(systemHilogFileDir);
-    // Build tokar command with relative paths only
-    std::string cpCommand = "";
     for (const auto& file : filesOther) {
         uintmax_t fileSize = std::filesystem::file_size(file);
         if (currentLogSize + fileSize > logMaxSize) {
             break; // Stop if adding this file would exceed the limit
         }
         currentLogSize += fileSize;
-        std::string filename = file.filename().string();
-        cpCommand += filename + " ";
+        std::filesystem::path destPath = std::filesystem::path(hilogFileDir) / file.filename();
+        std::error_code ec;
+        std::filesystem::copy_file(file, destPath, std::filesystem::copy_options::overwrite_existing, ec);
+        if (ec) {
+            WLOGE("Failed to copy file %s: %s", file.filename().string().c_str(), ec.message().c_str());
+        }
     }
     for (const auto& file : filesLog) {
         uintmax_t fileSize = std::filesystem::file_size(file);
@@ -203,12 +190,13 @@ void GetLog::GenerateHilogFile()
             break; // Stop if adding this file would exceed the limit
         }
         currentLogSize += fileSize;
-        std::string filename = file.filename().string();
-        cpCommand += filename + " ";
+        std::filesystem::path destPath = std::filesystem::path(hilogFileDir) / file.filename();
+        std::error_code ec;
+        std::filesystem::copy_file(file, destPath, std::filesystem::copy_options::overwrite_existing, ec);
+        if (ec) {
+            WLOGE("Failed to copy file %s: %s", file.filename().string().c_str(), ec.message().c_str());
+        }
     }
-    cpCommand += hilogFileDir;
-    SPUtils::CopyFiles(cpCommand);
-
     std::filesystem::current_path(originPath.c_str());
     WLOGI("Created tar archive of hilog files successfully");
 }

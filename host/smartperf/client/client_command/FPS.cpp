@@ -947,10 +947,14 @@ void FPS::GetFPS(std::vector<std::string>& v)
 void FPS::GetTouchEventNum()
 {
     std::unique_lock<std::mutex> lock(touchEventLock_);
+    if (!SPUtils::IsValidWinId(winId_)) {
+        LOGE("FPS::GetTouchEventNum invalid winId");
+        return;
+    }
     int oneHunder = 100;
-    const std::string hidumperCmd = "hidumper -s WindowManagerService -a '-w " + winId_ + " -touchmonitor -c'";
     std::string cmdResult = "";
-    SPUtils::LoadCmd(hidumperCmd, cmdResult);
+    std::string arg = "-w " + winId_ + " -touchmonitor -c";
+    SPUtils::SafeLoadExec({"hidumper", "-s", "WindowManagerService", "-a", arg}, cmdResult);
     size_t pos = cmdResult.find("UINodeCount:");
     if (pos != std::string::npos) {
         std::string substring = cmdResult.substr(pos + 12);
@@ -961,16 +965,20 @@ void FPS::GetTouchEventNum()
 void FPS::GetDistr()
 {
     std::unique_lock<std::mutex> lock(distrLock_);
-    char tmp[4096];
+    if (!SPUtils::IsValidWinId(winId_)) {
+        LOGE("FPS::GetDistr invalid winId");
+        return;
+    }
     long long tamps = 0;
-    const std::string hidumperCmd = "hidumper -s WindowManagerService -a '-w " + winId_ + " -touchmonitor -d'";
-    FILE *fp = popen(hidumperCmd.c_str(), "r");
-    if (!fp) {
+    std::string cmdResult;
+    std::string arg = "-w " + winId_ + " -touchmonitor -d";
+    if (!SPUtils::SafeLoadExec({"hidumper", "-s", "WindowManagerService", "-a", arg}, cmdResult)) {
         LOGE("hidumperf is failed");
         return;
     }
-    while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
-        std::string line(tmp);
+    std::istringstream iss(cmdResult);
+    std::string line;
+    while (std::getline(iss, line)) {
         if (line.find("LastRequestVsyncTime:") != std::string::npos) {
             size_t pos = line.find(":");
             std::string numberStr = line.substr(pos + 1);
@@ -979,7 +987,6 @@ void FPS::GetDistr()
         GetDistrTimes(line, tamps);
     }
     avgDistr = totalDistr / distrNum;
-    pclose(fp);
 }
 
 void FPS::GetDistrTimes(std::string &line, long long &tamps)

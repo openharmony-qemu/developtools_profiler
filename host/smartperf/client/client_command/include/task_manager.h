@@ -75,6 +75,8 @@ private:
     void SaveRegularly(int32_t dataIndex);
     void ProcessCurrentBatch(std::map<std::string, std::string>& data);
     void ProcessOnceTask(bool start);
+    std::map<std::string, std::string> CollectCurrentData(uint32_t dataIndex, bool recordData);
+    void FinishLoop();
     void MainLoop();
     void GpuCounterProcess(const ArgumentParser::ArgValue& value);
     void SpecialKeyProcess(const std::string specKey);

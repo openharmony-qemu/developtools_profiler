@@ -291,42 +291,11 @@ HWTEST_F(SPdaemonJittersTest, GetJittersInfoTest002, TestSize.Level1)
  * @tc.desc: Test GetJittersByDump with composer name
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonJittersTest, GetJittersByDumpTest001, TestSize.Level1)
+HWTEST_F(SPdaemonJittersTest, GetJittersByDumpTest, TestSize.Level1)
 {
     Jitters &jitters = Jitters::GetInstance();
-    std::string name = "composer";
     
-    auto result = jitters.GetJittersByDump(name);
-    
-    EXPECT_TRUE(result.fps >= 0);
-}
-
-/**
- * @tc.name: Jitters::GetJittersByDump
- * @tc.desc: Test GetJittersByDump with empty name
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonJittersTest, GetJittersByDumpTest002, TestSize.Level1)
-{
-    Jitters &jitters = Jitters::GetInstance();
-    std::string name = "";
-    
-    auto result = jitters.GetJittersByDump(name);
-    
-    EXPECT_TRUE(result.fps >= 0);
-}
-
-/**
- * @tc.name: Jitters::GetJittersByDump
- * @tc.desc: Test GetJittersByDump with special characters
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonJittersTest, GetJittersByDumpTest003, TestSize.Level1)
-{
-    Jitters &jitters = Jitters::GetInstance();
-    std::string name = "composer_test";
-    
-    auto result = jitters.GetJittersByDump(name);
+    auto result = jitters.GetJittersByDump();
     
     EXPECT_TRUE(result.fps >= 0);
 }
@@ -442,23 +411,6 @@ HWTEST_F(SPdaemonJittersTest, GetJittersInfoTest003, TestSize.Level1)
     auto result1 = jitters.GetJittersInfo();
     sleep(1);
     auto result2 = jitters.GetJittersInfo();
-    
-    EXPECT_TRUE(result1.fps >= 0);
-    EXPECT_TRUE(result2.fps >= 0);
-}
-
-/**
- * @tc.name: Jitters::GetJittersByDump
- * @tc.desc: Test GetJittersByDump multiple calls
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonJittersTest, GetJittersByDumpTest004, TestSize.Level1)
-{
-    Jitters &jitters = Jitters::GetInstance();
-    std::string name = "composer";
-    
-    auto result1 = jitters.GetJittersByDump(name);
-    auto result2 = jitters.GetJittersByDump(name);
     
     EXPECT_TRUE(result1.fps >= 0);
     EXPECT_TRUE(result2.fps >= 0);

@@ -57,7 +57,9 @@ std::map<std::string, std::string> &VisualEffectDisPatch::GetVisualEffectDisPatc
 
 void VisualEffectDisPatch::SetVisualEffectDisPatchType(int32_t type)
 {
-    type_ = type;
+    if (type == captureFileFlag_ || type == 0) {
+        type_ = type;
+    }
     LOGD("VisualEffectDisPatch type_ = %d", type_);
 }
 
@@ -70,10 +72,10 @@ void VisualEffectDisPatch::SetCollectNum()
         }
         std::string sendMessage = "haveSchedule::" + std::to_string(collectNum);
         ipcCallback_(sendMessage);
-        type_ = 1;
+        type_ = -1;
     } else if (type_ == 0) {
         ipcCallback_("haveSchedule");
-        type_ = 1;
+        type_ = -1;
     }
 }
 

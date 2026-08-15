@@ -25,6 +25,10 @@ namespace SmartPerf {
 
 void Shader::SetPkgName(const std::string& pkgName)
 {
+    if (!SPUtils::IsInvalidPkgName(pkgName)) {
+        LOGE("Shader::SetPkgName pkgName is invalid: (%s)", pkgName.c_str());
+        return;
+    }
     pkgName_ = pkgName;
 }
 

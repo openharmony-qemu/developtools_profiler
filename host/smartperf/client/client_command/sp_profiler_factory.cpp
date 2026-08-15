@@ -109,16 +109,25 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
 void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
 {
     LOGD("SpProfilerFactory setPKG:%s", pkg.c_str());
+    if (!SPUtils::IsInvalidPkgName(pkg)) {
+        LOGE("invalid pkg name");
+        return;
+    }
     FPS::GetInstance().SetPackageName(pkg);
     Jitters::GetInstance().SetPackageName(pkg);
     RAM::GetInstance().SetPackageName(pkg);
     CPU::GetInstance().SetPackageName(pkg);
     Threads::GetInstance().SetPackageName(pkg);
     FileDescriptor::GetInstance().SetPackageName(pkg);
+    Shader::GetInstance().SetPkgName(pkg);
 }
 
 void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid, std::string pids)
 {
+    if (!SPUtils::IsValidPid(pid)) {
+        LOGE("invalid processId");
+        return;
+    }
     LOGD("SpProfilerFactory setPID:%s", pid.c_str());
     FPS::GetInstance().SetProcessId(pid);
     Jitters::GetInstance().SetProcessId(pid);
