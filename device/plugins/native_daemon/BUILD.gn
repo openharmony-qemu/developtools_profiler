@@ -158,6 +158,7 @@ ohos_shared_library("libmemory_profiler") {
     "samgr:samgr_proxy",
     "zlib:libz",
     "ability_base:configuration",
+    "resource_schedule_service:ressched_client",
   ]
   external_deps += [ "faultloggerd:libasync_stack" ]
   defines = [ "ENABLE_HAP_EXTRACTOR" ]

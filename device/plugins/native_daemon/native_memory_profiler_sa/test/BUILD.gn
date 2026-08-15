@@ -162,6 +162,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "ability_runtime:app_context",
     "storage_service:storage_manager_acl",
     "ability_base:configuration",
+    "resource_schedule_service:ressched_client",
   ]
 
   if (hiprofiler_use_libunwinder) {
