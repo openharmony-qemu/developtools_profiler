@@ -48,6 +48,10 @@ void Hiperf::SetProcessId(const std::string &pid)
 
 void Hiperf::PrepareHiperf()
 {
+    if (!SPUtils::IsValidPid(processId_)) {
+        LOGE("Hiperf::PrepareHiperf invalid processId");
+        return;
+    }
     std::string cmdResult;
     const std::string preparedCmd = "hiperf stat --control prepare -p " + processId_ + " -o " + savePath_;
     SPUtils::LoadCmd(preparedCmd, cmdResult);
