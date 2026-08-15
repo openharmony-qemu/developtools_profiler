@@ -80,9 +80,6 @@ std::shared_ptr<AddressHandler> g_wholeAddrHandler = nullptr;
 std::shared_ptr<AddressHandler> g_midPartHandler = nullptr;
 #endif
 
-static std::atomic<bool> g_arktsHookEnabled{false};
-static std::atomic<ArkTsHookResolver> g_arktsResolver{nullptr};
-
 static ArkTsHookFn ResolveArkTsHookDlopen(const char* name)
 {
     void* handle = dlopen("libark_jsruntime.so", RTLD_LAZY | RTLD_NOLOAD);
@@ -93,6 +90,9 @@ static ArkTsHookFn ResolveArkTsHookDlopen(const char* name)
     dlclose(handle);
     return fn;
 }
+
+static std::atomic<bool> g_arktsHookEnabled{false};
+static std::atomic<ArkTsHookResolver> g_arktsResolver{ResolveArkTsHookDlopen};
 
 void SetArkTsHookResolver(ArkTsHookResolver resolver)
 {
