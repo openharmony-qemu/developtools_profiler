@@ -500,7 +500,8 @@ napi_value GetAppVMMemoryInfo(napi_env env, napi_callback_info info)
     return vMMemoryInfo;
 }
 
-static void ConvertThreadCpuUsageToJs(napi_env env, napi_value &result, uint32_t threadIdValue, double cpuUsageValue)
+static void ConvertThreadCpuUsageToJs(napi_env env, napi_value &result,
+    uint32_t threadIdValue, double cpuUsageValue, const std::string &threadNameValue)
 {
     napi_create_object(env, &result);
 
@@ -511,15 +512,20 @@ static void ConvertThreadCpuUsageToJs(napi_env env, napi_value &result, uint32_t
     napi_value cpuUsage = nullptr;
     napi_create_double(env, cpuUsageValue, &cpuUsage);
     napi_set_named_property(env, result, "cpuUsage", cpuUsage);
+
+    napi_value threadName = nullptr;
+    napi_create_string_utf8(env, threadNameValue.c_str(), threadNameValue.length(), &threadName);
+    napi_set_named_property(env, result, "threadName", threadName);
 }
 
-static void ConvertThreadCpuUsageMapToJs(napi_env env, napi_value &result, const std::map<uint32_t, double> &threadMap)
+static void ConvertThreadCpuUsageListToJs(napi_env env, napi_value &result,
+    const std::vector<ThreadCpuUsageInfo> &threadCpuUsageList)
 {
     napi_create_array(env, &result);
     size_t idx = 0;
-    for (const auto& [threadId, cpuUsage] : threadMap) {
+    for (const auto& item : threadCpuUsageList) {
         napi_value obj = nullptr;
-        ConvertThreadCpuUsageToJs(env, obj, threadId, cpuUsage);
+        ConvertThreadCpuUsageToJs(env, obj, item.tid, item.cpuUsage, item.threadName);
         napi_set_element(env, result, idx, obj);
         idx++;
     }
@@ -529,8 +535,8 @@ napi_value GetAppThreadCpuUsage(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppThreadCpuUsage");
     napi_value result = nullptr;
-    std::map<uint32_t, double> threadMap = HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
-    ConvertThreadCpuUsageMapToJs(env, result, threadMap);
+    auto threadCpuUsageList = HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
+    ConvertThreadCpuUsageListToJs(env, result, threadCpuUsageList);
     return result;
 }
 
