@@ -1310,4 +1310,352 @@ HWTEST_F(MemoryDataPluginTest, TestGpuData, TestSize.Level1)
     EXPECT_EQ(memoryData.gpu_limit_size(), gpuLimitSize);
     EXPECT_EQ(memoryData.gpu_used_size(), usedSize);
 }
+
+HWTEST_F(MemoryDataPluginTest, TestStringToUll, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    uint64_t value = 0;
+
+    EXPECT_TRUE(plugin.StringToUll("12345", value));
+    EXPECT_EQ((uint64_t)12345, value);
+
+    EXPECT_TRUE(plugin.StringToUll("0", value));
+    EXPECT_EQ((uint64_t)0, value);
+
+    EXPECT_TRUE(plugin.StringToUll("18446744073709551615", value));
+    EXPECT_EQ(ULLONG_MAX, value);
+
+    EXPECT_FALSE(plugin.StringToUll("", value));
+}
+
+HWTEST_F(MemoryDataPluginTest, TestParseMemInfoNoAppSummary, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    ProcessMemoryInfo memoryInfo;
+    const char* data = "Some data without App Summary\nMore data\n";
+    EXPECT_FALSE(plugin.ParseMemInfo(data, memoryInfo));
+}
+
+HWTEST_F(MemoryDataPluginTest, TestParseMemInfoPartialAppSummary, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    ProcessMemoryInfo memoryInfo;
+    const char* data = R"(App Summary
+Java Heap:  100
+Native Heap:    200)";
+    EXPECT_FALSE(plugin.ParseMemInfo(data, memoryInfo));
+}
+
+HWTEST_F(MemoryDataPluginTest, TestReportBufferTooSmall, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryConfig protoConfig;
+    plugin.SetPath(const_cast<char*>(g_path.c_str()));
+    SetPluginSysMemConfig(protoConfig);
+
+    int configSize = protoConfig.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    protoConfig.SerializeToArray(configData.data(), configData.size());
+    EXPECT_EQ(plugin.Start(configData.data(), configData.size()), 0);
+
+    uint8_t smallBuffer[1] = {0};
+    int ret = plugin.Report(smallBuffer, sizeof(smallBuffer));
+    EXPECT_LT(ret, 0);
+    plugin.Stop();
+}
+
+HWTEST_F(MemoryDataPluginTest, TestParseNumber, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    EXPECT_EQ(123, plugin.ParseNumber("abc123"));
+    EXPECT_EQ(456, plugin.ParseNumber("456"));
+    EXPECT_EQ(0, plugin.ParseNumber("0"));
+}
+
+HWTEST_F(MemoryDataPluginTest, TestAddPidBySort, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    EXPECT_TRUE(plugin.addPidBySort(5));
+    EXPECT_TRUE(plugin.addPidBySort(3));
+    EXPECT_TRUE(plugin.addPidBySort(7));
+    EXPECT_TRUE(plugin.addPidBySort(1));
+    EXPECT_FALSE(plugin.addPidBySort(5));
+    EXPECT_FALSE(plugin.addPidBySort(3));
+}
+
+HWTEST_F(MemoryDataPluginTest, TestBufnCmp, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    EXPECT_TRUE(plugin.BufnCmp("hello", 5, "hello", 5));
+    EXPECT_TRUE(plugin.BufnCmp("hello world", 11, "hello", 5));
+    EXPECT_FALSE(plugin.BufnCmp("hello", 5, "world", 5));
+    EXPECT_FALSE(plugin.BufnCmp(nullptr, 5, "hello", 5));
+    EXPECT_FALSE(plugin.BufnCmp("hello", 5, nullptr, 5));
+    EXPECT_FALSE(plugin.BufnCmp("hi", 2, "hello", 5));
+}
+
+HWTEST_F(MemoryDataPluginTest, TestGetProcStatusId, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    EXPECT_GT(plugin.GetProcStatusId("VmSize:", 7), 0);
+    EXPECT_GT(plugin.GetProcStatusId("VmRSS:", 6), 0);
+    EXPECT_GT(plugin.GetProcStatusId("Name:", 5), 0);
+    EXPECT_EQ(-1, plugin.GetProcStatusId("Unknown:", 8));
+    EXPECT_EQ(-1, plugin.GetProcStatusId("Xyz:", 4));
+}
+
+HWTEST_F(MemoryDataPluginTest, TestOpenDestDirInvalid, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    DIR* dir = plugin.OpenDestDir("/nonexistent/path/12345");
+    EXPECT_EQ(nullptr, dir);
+}
+
+HWTEST_F(MemoryDataPluginTest, TestGetValidPidNullDir, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    EXPECT_EQ(0, plugin.GetValidPid(nullptr));
+}
+
+HWTEST_F(MemoryDataPluginTest, TestSizeToBytes, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    EXPECT_EQ((uint64_t)1024, plugin.SizeToBytes("1", "KB"));
+    EXPECT_EQ((uint64_t)1048576, plugin.SizeToBytes("1", "MB"));
+    EXPECT_EQ((uint64_t)5, plugin.SizeToBytes("5", "B"));
+    EXPECT_EQ((uint64_t)0, plugin.SizeToBytes("abc", "KB"));
+}
+
+HWTEST_F(MemoryDataPluginTest, TestGetCmdArgs, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryConfig protoConfig;
+    protoConfig.set_report_process_tree(true);
+    protoConfig.set_report_sysmem_mem_info(false);
+    protoConfig.set_report_sysmem_vmem_info(true);
+    protoConfig.set_report_process_mem_info(true);
+    protoConfig.set_report_app_mem_info(false);
+    protoConfig.set_report_app_mem_by_memory_service(false);
+    protoConfig.set_report_smaps_mem_info(false);
+    protoConfig.set_report_purgeable_ashmem_info(true);
+    protoConfig.set_report_dma_mem_info(false);
+    protoConfig.set_report_gpu_mem_info(true);
+    protoConfig.set_report_gpu_dump_info(false);
+    protoConfig.set_report_fake_data(false);
+    protoConfig.add_sys_meminfo_counters(SysMeminfoType::PMEM_MEM_TOTAL);
+    protoConfig.add_pid(100);
+
+    std::string args = plugin.GetCmdArgs(protoConfig);
+    EXPECT_NE(args.find("report_process_tree: true"), std::string::npos);
+    EXPECT_NE(args.find("report_sysmem_vmem_info: true"), std::string::npos);
+    EXPECT_NE(args.find("report_purgeable_ashmem_info: true"), std::string::npos);
+    EXPECT_NE(args.find("report_gpu_mem_info: true"), std::string::npos);
+    EXPECT_NE(args.find("sys_meminfo_counters: 1"), std::string::npos);
+}
+
+HWTEST_F(MemoryDataPluginTest, TestWriteAshmemInfoFileNotFound, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    plugin.SetPath(const_cast<char*>("/nonexistent/path"));
+    plugin.WriteAshmemInfo(memoryData);
+    EXPECT_EQ(0, memoryData.ashmeminfo_size());
+}
+
+HWTEST_F(MemoryDataPluginTest, TestWriteDmaInfoFileNotFound, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    plugin.SetPath(const_cast<char*>("/nonexistent/path"));
+    plugin.WriteDmaInfo(memoryData);
+    EXPECT_EQ(0, memoryData.dmainfo_size());
+}
+
+HWTEST_F(MemoryDataPluginTest, TestWriteGpuMemInfoFileNotFound, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    plugin.SetPath(const_cast<char*>("/nonexistent/path"));
+    plugin.WriteGpuMemInfo(memoryData);
+    EXPECT_EQ(0, memoryData.gpumemoryinfo_size());
+}
+
+HWTEST_F(MemoryDataPluginTest, TestWriteGpuDumpInfoEmptyContent, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    MemoryConfig protoConfig;
+    plugin.SetPath(const_cast<char*>("/nonexistent/path"));
+    plugin.SetProtoConfig(protoConfig);
+    plugin.WriteGpuDumpInfo(memoryData);
+    EXPECT_EQ(0, memoryData.gpudumpinfo_size());
+}
+
+HWTEST_F(MemoryDataPluginTest, TestWriteManagerServiceInfoEmptyContent, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    plugin.SetPath(const_cast<char*>("/nonexistent/path"));
+    plugin.WriteManagerServiceInfo(memoryData);
+    EXPECT_EQ(0, memoryData.windowinfo_size());
+}
+
+HWTEST_F(MemoryDataPluginTest, TestWriteProfileMemInfoFileNotFound, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    MemoryConfig protoConfig;
+    protoConfig.add_pid(9999);
+    plugin.SetPath(const_cast<char*>("/nonexistent/path"));
+    plugin.SetProtoConfig(protoConfig);
+    plugin.WriteProfileMemInfo(memoryData);
+    EXPECT_EQ(0, memoryData.profilememinfo_size());
+}
+
+HWTEST_F(MemoryDataPluginTest, TestModulePluginReportNullptr, TestSize.Level1)
+{
+    std::string path = std::string("libmemdataplugin.z.so");
+    void* handle = dlopen(path.c_str(), RTLD_LAZY);
+    ASSERT_NE(handle, nullptr);
+    PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));
+    ASSERT_NE(plugin, nullptr);
+
+    std::vector<uint8_t> dataBuffer(plugin->resultBufferSizeHint);
+    EXPECT_EQ(plugin->callbacks->onPluginReportResult(dataBuffer.data(), dataBuffer.size()), -1);
+    EXPECT_EQ(plugin->callbacks->onPluginSessionStop(), -1);
+}
+
+HWTEST_F(MemoryDataPluginTest, TestModulePluginReportOptimizeNullptr, TestSize.Level1)
+{
+    std::string path = std::string("libmemdataplugin.z.so");
+    void* handle = dlopen(path.c_str(), RTLD_LAZY);
+    ASSERT_NE(handle, nullptr);
+    PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));
+    ASSERT_NE(plugin, nullptr);
+
+    RandomWriteCtx ctx;
+    EXPECT_EQ(plugin->callbacks->onPluginReportResultOptimize(&ctx), -1);
+}
+
+HWTEST_F(MemoryDataPluginTest, TestReadFileInvalidPath, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    std::string content = plugin.ReadFile("/nonexistent/path/file.txt");
+    EXPECT_EQ("", content);
+}
+
+HWTEST_F(MemoryDataPluginTest, TestReadFileTooLongPath, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    std::string longPath(PATH_MAX + 10, 'a');
+    std::string content = plugin.ReadFile(longPath);
+    EXPECT_EQ("", content);
+}
+
+HWTEST_F(MemoryDataPluginTest, TestInitMemVmemFdFail, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryConfig protoConfig;
+    protoConfig.set_report_sysmem_mem_info(true);
+    plugin.SetPath(const_cast<char*>("/nonexistent/path"));
+
+    int configSize = protoConfig.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    protoConfig.SerializeToArray(configData.data(), configData.size());
+    EXPECT_NE(plugin.Start(configData.data(), configData.size()), 0);
+}
+
+HWTEST_F(MemoryDataPluginTest, TestWriteZramData, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryData memoryData;
+    plugin.WriteZramData(memoryData);
+    EXPECT_GE(memoryData.zram(), (uint64_t)0);
+}
+
+HWTEST_F(MemoryDataPluginTest, TestReportOptimize, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryConfig protoConfig;
+    plugin.SetPath(const_cast<char*>(g_path.c_str()));
+    SetPluginSysMemConfig(protoConfig);
+
+    int configSize = protoConfig.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    protoConfig.SerializeToArray(configData.data(), configData.size());
+    EXPECT_EQ(plugin.Start(configData.data(), configData.size()), 0);
+
+    std::vector<uint8_t> buffer(BUF_SIZE);
+    static uint32_t offset = 0;
+    static std::vector<uint8_t> buf(4096);
+    RandomWriteCtx ctx;
+    ctx.getMemory = [](RandomWriteCtx*, uint32_t size, uint8_t** memory, uint32_t* off) -> bool {
+        if (offset + size > buf.size()) {
+            return false;
+        }
+        *memory = buf.data();
+        *off = offset;
+        return true;
+    };
+    ctx.seek = [](RandomWriteCtx*, uint32_t off) -> bool {
+        offset = off;
+        return true;
+    };
+    int ret = plugin.ReportOptimize(&ctx);
+    EXPECT_GT(ret, 0);
+    plugin.Stop();
+}
+
+HWTEST_F(MemoryDataPluginTest, TestStopClosesFds, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    MemoryConfig protoConfig;
+    plugin.SetPath(const_cast<char*>(g_path.c_str()));
+    SetPluginSysMemConfig(protoConfig);
+
+    int configSize = protoConfig.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    protoConfig.SerializeToArray(configData.data(), configData.size());
+    EXPECT_EQ(plugin.Start(configData.data(), configData.size()), 0);
+    EXPECT_EQ(plugin.Stop(), 0);
+}
+
+HWTEST_F(MemoryDataPluginTest, TestSetProcessInfo, TestSize.Level1)
+{
+    MemoryDataPlugin plugin;
+    ProcessMemoryInfo processInfo;
+
+    plugin.SetProcessInfo(processInfo, PRO_TGID, "123");
+    EXPECT_EQ(123, processInfo.pid());
+
+    plugin.SetProcessInfo(processInfo, PRO_VMSIZE, "456789");
+    EXPECT_EQ((uint64_t)456789, processInfo.vm_size_kb());
+
+    plugin.SetProcessInfo(processInfo, PRO_VMRSS, "12345");
+    EXPECT_EQ((uint64_t)12345, processInfo.vm_rss_kb());
+
+    plugin.SetProcessInfo(processInfo, PRO_RSSANON, "6789");
+    EXPECT_EQ((uint64_t)6789, processInfo.rss_anon_kb());
+
+    plugin.SetProcessInfo(processInfo, PRO_RSSFILE, "4321");
+    EXPECT_EQ((uint64_t)4321, processInfo.rss_file_kb());
+
+    plugin.SetProcessInfo(processInfo, PRO_RSSSHMEM, "1000");
+    EXPECT_EQ((uint64_t)1000, processInfo.rss_shmem_kb());
+
+    plugin.SetProcessInfo(processInfo, PRO_VMSWAP, "500");
+    EXPECT_EQ((uint64_t)500, processInfo.vm_swap_kb());
+
+    plugin.SetProcessInfo(processInfo, PRO_VMLCK, "200");
+    EXPECT_EQ((uint64_t)200, processInfo.vm_locked_kb());
+
+    plugin.SetProcessInfo(processInfo, PRO_VMHWM, "9999");
+    EXPECT_EQ((uint64_t)9999, processInfo.vm_hwm_kb());
+
+    plugin.SetProcessInfo(processInfo, PRO_PURGSUM, "10232");
+    EXPECT_EQ((uint64_t)10232, processInfo.purg_sum_kb());
+
+    plugin.SetProcessInfo(processInfo, PRO_PURGPIN, "400");
+    EXPECT_EQ((uint64_t)400, processInfo.purg_pin_kb());
+}
 } // namespace
