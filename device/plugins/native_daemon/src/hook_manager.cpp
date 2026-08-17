@@ -1732,7 +1732,7 @@ bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& 
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + offset);
 
         totalRecord_++;
-        if (shouldSkipGlobalFreed_) {
+        if (shouldSkipGlobalFreed_ && IsBaseStackRawDataRecord(dataPtr, totalSize)) {
             auto* tmpRawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
             if ((IsAllocRecord(tmpRawData) || IsFreeRecord(tmpRawData)) &&
                 ShouldSkipRecord(tmpRawData, validLiveData_) &&
@@ -1781,6 +1781,10 @@ bool HookManager::RefreshValidLiveDataFromBuffer(uint8_t* buffer, uint32_t total
         fileSize += sizeof(uint32_t) + totalSize;
 
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + offset);
+        if (!IsBaseStackRawDataRecord(dataPtr, totalSize)) {
+            offset += totalSize;
+            continue;
+        }
         auto* rawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
         if (IsAllocRecord(rawData) || IsFreeRecord(rawData)) {
             UpdateLiveData(rawData, validLiveData_, orphanFreeWhitelist_);

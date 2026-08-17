@@ -392,6 +392,12 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
             freeRecord->rawStack_ = rawStack;
             return freeRecord;
         }
+        case FREE_MSG_SIMP: {
+            auto freeRecord = GetRecordFromCache(freeRecordSimpCache_, FREE_MSG_SIMP);
+            freeRecord->rawStack_ = rawStack;
+            freeRecord->SetAddr(reinterpret_cast<uint64_t>(rawStack->stackContext->addr));
+            return freeRecord;
+        }
         case END_MSG:
         case MEMORY_TAG:
         case THREAD_NAME_MSG:

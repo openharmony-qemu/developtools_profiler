@@ -631,7 +631,7 @@ bool StackPreprocess::ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvai
         ctx.readfileSize += sizeof(uint32_t) + totalSize;
 
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + ctx.offset);
-        if (validLiveDataPtr_ != nullptr) {
+        if (validLiveDataPtr_ != nullptr && IsBaseStackRawDataRecord(dataPtr, totalSize)) {
             auto* tmpRawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
             if (IsArkGlobalHandleRecord(tmpRawData) && ShouldSkipRecord(tmpRawData, *validLiveDataPtr_) &&
                 !(IsFreeRecord(tmpRawData) && orphanFreeWhitelistPtr_ != nullptr &&
@@ -792,6 +792,11 @@ bool StackPreprocess::ProcessRawData(const int8_t data[], uint32_t size,
 
     if (!ValidateAndPrepareData(data, size, hookRecord, rawData)) {
         return false;
+    }
+    if (hookRecord->GetType() == FREE_MSG_SIMP) {
+        uint64_t addr = hookRecord->GetAddr();
+        factory_->SaveHookRecord(std::move(hookRecord));
+        return ProcessAddressData(reinterpret_cast<const int8_t*>(&addr));
     }
     DmaFdSizeMap dmaFdSizeMap;
     uint32_t dmaFdSizePid = 0;
@@ -1265,7 +1270,8 @@ bool StackPreprocess::ProcessBatchData()
         if (!ProcessSingleRecord(batchRawStack[i])) {
             break;
         }
-        if (batchRawStack[i] && batchRawStack[i]->GetRawStack() && batchRawStack[i]->GetRawStack()->stackContext) {
+        if (batchRawStack[i] && batchRawStack[i]->GetRawStack() && batchRawStack[i]->GetRawStack()->stackContext &&
+            batchRawStack[i]->GetRawStack()->stackContext->type != MMAP_FILE_TYPE) {
             latestEventTime = batchRawStack[i]->GetRawStack()->stackContext->ts;
         }
     }

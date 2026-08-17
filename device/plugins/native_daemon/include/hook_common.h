@@ -237,6 +237,15 @@ inline bool InOrphanFreeWhitelist(const BaseStackRawData* data,
            data->ts.tv_nsec == it->second.tv_nsec;
 }
 
+inline bool IsBaseStackRawDataRecord(const int8_t* data, uint32_t size)
+{
+    if (size < sizeof(BaseStackRawData)) {
+        return false;
+    }
+    uint32_t marker = *reinterpret_cast<const uint32_t*>(data);
+    return marker != ALIVE_ADDR_SNAPSHOT_MARKER && marker != ALIVE_ADDR_SNAPSHOT_END_MARKER;
+}
+
 struct alignas(8) AsyncStackData : public BaseStackRawData { // 8 is 8 bit
     uint64_t syncStackId;
     uint64_t asyncStackId;
