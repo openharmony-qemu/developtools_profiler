@@ -48,6 +48,7 @@ enum class InternalResourceType : int32_t {
     OH_RES_TYPE_GPU = 3,
     OH_RES_TYPE_GLOBAL_HANDLE = 4,
     OH_RES_TYPE_DMA = 5,
+    OH_RES_TYPE_ASHMEM = 6,
     OH_RES_TYPE_MAX, // sentinel value, not a valid type
 };
 

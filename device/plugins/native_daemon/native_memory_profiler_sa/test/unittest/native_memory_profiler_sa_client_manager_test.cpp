@@ -488,6 +488,10 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseResTypeSetsExpectedMasks,
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseResType(
         static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_DMA), config), RET_OK);
     EXPECT_EQ(config->traceMask_, RES_FD_DMABUF | RES_DMABUF_MASK);
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseResType(
+        static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_ASHMEM), config), RET_OK);
+    EXPECT_EQ(config->traceMask_, RES_FD_ASHMEM | RES_ASHMEM_MASK);
 }
 
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigHandlesNullAndCopiesFields, TestSize.Level2)
