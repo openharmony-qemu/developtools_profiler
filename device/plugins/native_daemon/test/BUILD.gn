@@ -20,6 +20,7 @@ module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/device"
 sources_base = [
   "unittest/common/native/callstack_test.cpp",
   "unittest/common/native/debug_logger_test.cpp",
+  "unittest/common/native/dwarf_encoding_test.cpp",
   "unittest/common/native/hashlist_test.cpp",
   "unittest/common/native/hook_common_test.cpp",
   "unittest/common/native/hook_boundary_test.cpp",
@@ -101,7 +102,7 @@ config("native_daemon_test_config") {
     "-Dprotected=public",
     "-DNATIVE_DAEMON_UNITTEST"
   ]  # allow test code access private members
-  if (native_daemon_test_coverage && is_ohos) {
+  if ((native_daemon_test_coverage || use_clang_coverage) && is_ohos) {
     defines += [ "TEST_COVERAGE" ]
     cflags += [
       "-fprofile-arcs",

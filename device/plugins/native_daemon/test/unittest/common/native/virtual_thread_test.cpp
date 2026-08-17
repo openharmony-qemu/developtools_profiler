@@ -18,6 +18,7 @@
 #include <link.h>
 #include <random>
 #include <sys/mman.h>
+#include "debug_logger.h"
 #include "get_thread_id.h"
 #include "symbols_file_test.h"
 #include "virtual_runtime.h"
@@ -269,6 +270,31 @@ HWTEST_F(VirtualThreadTest, FindMapByAddr, TestSize.Level0)
     EXPECT_EQ(thread->FindMapByAddr(30000u + 1u) != nullptr, false);
 }
 
+HWTEST_F(VirtualThreadTest, FindMapByAddrHandlesEmptyGapAndSorting, TestSize.Level0)
+{
+    std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> files;
+    std::shared_ptr<VirtualRuntime> runtime = std::make_shared<VirtualRuntime>();
+    std::shared_ptr<VirtualThread> thread = std::make_shared<VirtualThread>(getpid(), GetThreadId(),
+        files, runtime.get(), false);
+
+    EXPECT_EQ(thread->FindMapByAddr(0x1000), nullptr);
+    thread->CreateMapItem("0.so", 0x1000, 0x800, 0);
+    thread->CreateMapItem("2.so", 0x3000, 0x800, 0);
+    thread->CreateMapItem("1.so", 0x2000, 0x800, 0);
+
+    const std::vector<std::shared_ptr<DfxMap>> &maps = thread->GetMaps();
+    ASSERT_EQ(maps.size(), 3u);
+    EXPECT_EQ(maps[0]->begin, 0x1000u);
+    EXPECT_EQ(maps[1]->begin, 0x2000u);
+    EXPECT_EQ(maps[2]->begin, 0x3000u);
+    EXPECT_EQ(thread->FindMapByAddr(0x1900), nullptr);
+
+    std::shared_ptr<DfxMap> outMap = thread->FindMapByAddr(0x2000);
+    ASSERT_NE(outMap, nullptr);
+    EXPECT_EQ(outMap->prevMap, maps[0]);
+    EXPECT_EQ(thread->FindMapByAddr(0x3800), nullptr);
+}
+
 /**
  * @tc.name: FindMapByFileInfo
  * @tc.desc:
@@ -349,6 +375,20 @@ HWTEST_F(VirtualThreadTest, FindSymbolsFileByMap, TestSize.Level0)
     EXPECT_STREQ(thread->FindSymbolsFileByMap(inMap)->filePath_.c_str(), inMap->name.c_str());
 }
 
+HWTEST_F(VirtualThreadTest, FindSymbolsFileByNameHandlesMissingAndExisting, TestSize.Level0)
+{
+    std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> files;
+    files["named.elf"] = std::make_unique<SymbolsFile>(SYMBOL_UNKNOW_FILE, "named.elf");
+    std::shared_ptr<VirtualRuntime> runtime = std::make_shared<VirtualRuntime>();
+    std::shared_ptr<VirtualThread> thread = std::make_shared<VirtualThread>(getpid(), GetThreadId(),
+        files, runtime.get(), false);
+
+    EXPECT_EQ(thread->FindSymbolsFileByName("missing.elf"), nullptr);
+    SymbolsFile *symbolsFile = thread->FindSymbolsFileByName("named.elf");
+    ASSERT_NE(symbolsFile, nullptr);
+    EXPECT_EQ(symbolsFile->filePath_, "named.elf");
+}
+
 /**
  * @tc.name: ReadRoMemory
  * @tc.desc:
@@ -410,6 +450,74 @@ HWTEST_F(VirtualThreadTest, ReadRoMemory, TestSize.Level0)
         // EOF , out of file size should return 0
         ASSERT_EQ(thread->ReadRoMemory(addr++, &readRoByte, 1u), false);
     }
+}
+
+HWTEST_F(VirtualThreadTest, ReadRoMemoryRejectsMissingMapAndSymbols, TestSize.Level0)
+{
+    std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles;
+    std::shared_ptr<VirtualRuntime> runtime = std::make_shared<VirtualRuntime>();
+    std::shared_ptr<VirtualThread> thread = std::make_shared<VirtualThread>(getpid(), GetThreadId(),
+        symbolsFiles, runtime.get(), false);
+    uint8_t data = 0;
+
+    EXPECT_FALSE(thread->ReadRoMemory(0x1000, &data, sizeof(data)));
+    thread->CreateMapItem("missing_symbol.so", 0x1000, 0x1000, 0);
+    EXPECT_FALSE(thread->ReadRoMemory(0x1000, &data, sizeof(data)));
+    EXPECT_TRUE(thread->ReadThreadName(-1).empty());
+}
+
+HWTEST_F(VirtualThreadTest, LookupAndReadFailuresRunWithLogEnabled, TestSize.Level0)
+{
+    const bool savedLogDisabled = DebugLogger::logDisabled_;
+    DebugLogger::logDisabled_ = false;
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles;
+    symbolsFiles["hit.so"] = std::make_unique<SymbolsFile>(SYMBOL_UNKNOW_FILE, "hit.so");
+    std::shared_ptr<VirtualRuntime> runtime = std::make_shared<VirtualRuntime>();
+    std::shared_ptr<VirtualThread> thread = std::make_shared<VirtualThread>(getpid(), GetThreadId(),
+        symbolsFiles, runtime.get(), false);
+
+    EXPECT_EQ(thread->FindMapByAddr(0x1000), nullptr);
+    thread->CreateMapItem("hit.so", 0x1000, 0x100, 0x10);
+    thread->CreateMapItem("later.so", 0x3000, 0x100, 0);
+    std::shared_ptr<DfxMap> map = thread->FindMapByAddr(0x1010);
+    EXPECT_NE(map, nullptr);
+    if (map != nullptr) {
+        EXPECT_EQ(map->name, "hit.so");
+        EXPECT_NE(thread->FindSymbolsFileByMap(map), nullptr);
+    }
+    EXPECT_EQ(thread->FindMapByAddr(0x2000), nullptr);
+    EXPECT_EQ(thread->FindMapByFileInfo("missing.so", 0x10), nullptr);
+    std::shared_ptr<DfxMap> fileMap = thread->FindMapByFileInfo("hit.so", 0x10);
+    EXPECT_NE(fileMap, nullptr);
+    EXPECT_NE(thread->FindSymbolsFileByName("hit.so"), nullptr);
+
+    uint8_t data = 0;
+    EXPECT_FALSE(thread->ReadRoMemory(0x1010, &data, sizeof(data)));
+    DebugLogger::logDisabled_ = savedLogDisabled;
+}
+
+HWTEST_F(VirtualThreadTest, ParseMapUpdateAddsThenSkipsKnownMaps, TestSize.Level0)
+{
+    std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles;
+    std::shared_ptr<VirtualRuntime> runtime = std::make_shared<VirtualRuntime>();
+    std::shared_ptr<VirtualThread> thread = std::make_shared<VirtualThread>(getpid(), GetThreadId(),
+        symbolsFiles, runtime.get(), false);
+    std::vector<std::shared_ptr<DfxMap>> memMaps;
+
+    ASSERT_TRUE(thread->ParseMap(memMaps, true));
+    EXPECT_FALSE(memMaps.empty());
+    for (const auto& map : memMaps) {
+        ASSERT_NE(map, nullptr);
+        if (runtime->symbolsFiles_.find(map->name) == runtime->symbolsFiles_.end()) {
+            runtime->symbolsFiles_[map->name] = std::make_unique<SymbolsFile>(SYMBOL_UNKNOW_FILE, map->name);
+        }
+    }
+    ASSERT_FALSE(runtime->symbolsFiles_.empty());
+
+    bool changedAgain = thread->ParseMap(memMaps, true);
+    EXPECT_FALSE(changedAgain);
+    EXPECT_FALSE(memMaps.empty());
 }
 } // namespace NativeDaemon
 } // namespace Developtools

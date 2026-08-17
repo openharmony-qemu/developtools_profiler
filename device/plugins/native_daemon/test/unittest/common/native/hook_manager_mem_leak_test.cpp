@@ -18,10 +18,13 @@
 #include <fstream>
 #include <sstream>
 #include <cerrno>
+#include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
+#include <functional>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include "hook_socket_client.h"
 #include "parameters.h"
 #include "socket_context.h"
@@ -40,16 +43,38 @@ const std::string TEST_MEM_LEAK_FILE_PATH = "/data/local/tmp/mem_leak_test.txt";
 const std::string FILE_CACHE_DIR = "/data/log/hiprofiler/";
 const std::string MEM_LEAK_FILE_PATH = "/data/local/tmp/";
 
+bool RunInChildProcess(const std::function<void()>& task)
+{
+    pid_t pid = fork();
+    if (pid < 0) {
+        return false;
+    }
+    if (pid == 0) {
+        task();
+        bool ok = !::testing::Test::HasFailure();
+        fflush(nullptr);
+        _exit(ok ? EXIT_SUCCESS : EXIT_FAILURE);
+    }
+
+    int status = 0;
+    if (waitpid(pid, &status, 0) != pid) {
+        return false;
+    }
+    return WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS;
+}
+
 class HookManagerMemLeakTest : public ::testing::Test {
 public:
     static void SetUpTestCase()
     {
-        OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "1");
-        sleep(1);
     }
 
     static void TearDownTestCase()
     {
+        int result = remove(TEST_MEM_LEAK_FILE_PATH.c_str());
+        if (result != 0 && errno != ENOENT) {
+            std::cout << "Failed to remove file: " << TEST_MEM_LEAK_FILE_PATH << std::endl;
+        }
         OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
     }
 
@@ -57,24 +82,16 @@ public:
     {
         hookManager_ = std::make_shared<HookManager>();
         ASSERT_TRUE(hookManager_ != nullptr);
-
-        commandPoller_ = std::make_shared<CommandPoller>(hookManager_);
-        ASSERT_TRUE(commandPoller_ != nullptr);
-        ASSERT_TRUE(commandPoller_->OnConnect());
-
-        hookManager_->SetCommandPoller(commandPoller_);
     }
 
     void TearDown() override
     {
         hookManager_->CloseResource();
         hookManager_ = nullptr;
-        commandPoller_ = nullptr;
     }
 
 protected:
     std::shared_ptr<HookManager> hookManager_;
-    std::shared_ptr<CommandPoller> commandPoller_;
 };
 
 /*
@@ -637,37 +654,104 @@ HWTEST_F(HookManagerMemLeakTest, GetClientConfigExt_DefaultFormat, TestSize.Leve
  */
 HWTEST_F(HookManagerMemLeakTest, HandleMemLeakDone_CleansTempFile, TestSize.Level0)
 {
-    NativeHookConfig config;
-    config.set_native_orphansnapshots_enable(true);
-    config.set_pid(TEST_PID);
-    hookManager_->SetHookConfig(config);
-    hookManager_->SetMemLeakFormat(static_cast<uint32_t>(MemLeakFormat::TYPE_SNAPSHOT));
-    const std::string tempDir = "/data/local/tmp/memleak_test_cache/";
-    if (mkdir(tempDir.c_str(), 0755) != 0) {
-        ASSERT_EQ(errno, EEXIST) << strerror(errno);
-    }
-    hookManager_->fileCacheDir_ = tempDir;
-    hookManager_->memLeakFileName_ = "memleak-native-orphansnapshot-test.txt";
+    EXPECT_TRUE(RunInChildProcess([this]() {
+        NativeHookConfig config;
+        config.set_native_orphansnapshots_enable(true);
+        config.set_pid(TEST_PID);
+        hookManager_->SetHookConfig(config);
+        hookManager_->SetMemLeakFormat(static_cast<uint32_t>(MemLeakFormat::TYPE_SNAPSHOT));
+        const std::string tempDir = "/data/local/tmp/memleak_test_cache/";
+        if (mkdir(tempDir.c_str(), 0755) != 0) {
+            ASSERT_EQ(errno, EEXIST) << strerror(errno);
+        }
+        hookManager_->fileCacheDir_ = tempDir;
+        hookManager_->memLeakFileName_ = "memleak-native-orphansnapshot-test.txt";
 
-    int fd = hookManager_->CreateMemLeakFile();
-    ASSERT_GE(fd, 0);
-    EXPECT_FALSE(hookManager_->memLeakDumpDone_.load());
-    int clientFd = dup(fd);
-    ASSERT_GE(clientFd, 0);
-    const char* content = "mem-leak-content";
-    ssize_t writeSize = write(clientFd, content, strlen(content));
-    ASSERT_EQ(writeSize, static_cast<ssize_t>(strlen(content)));
-    ASSERT_EQ(close(clientFd), 0);
+        int fd = hookManager_->CreateMemLeakFile();
+        ASSERT_GE(fd, 0);
+        EXPECT_FALSE(hookManager_->memLeakDumpDone_.load());
+        int clientFd = dup(fd);
+        ASSERT_GE(clientFd, 0);
+        const char* content = "mem-leak-content";
+        ssize_t writeSize = write(clientFd, content, strlen(content));
+        ASSERT_EQ(writeSize, static_cast<ssize_t>(strlen(content)));
+        ASSERT_EQ(close(clientFd), 0);
 
-    EXPECT_TRUE(hookManager_->HandleMemLeakDone());
-    EXPECT_TRUE(hookManager_->memLeakDumpDone_.load());
-    EXPECT_EQ(hookManager_->tempMemLeakFd_, -1);
-    std::ifstream result("/data/local/tmp/memleak-native-orphansnapshot-test.txt");
-    std::stringstream buffer;
-    buffer << result.rdbuf();
-    EXPECT_EQ(buffer.str(), content);
-    remove("/data/local/tmp/memleak-native-orphansnapshot-test.txt");
-    rmdir(tempDir.c_str());
+        EXPECT_TRUE(hookManager_->HandleMemLeakDone());
+        EXPECT_TRUE(hookManager_->memLeakDumpDone_.load());
+        EXPECT_EQ(hookManager_->tempMemLeakFd_, -1);
+        std::ifstream result("/data/local/tmp/memleak-native-orphansnapshot-test.txt");
+        std::stringstream buffer;
+        buffer << result.rdbuf();
+        EXPECT_EQ(buffer.str(), content);
+        remove("/data/local/tmp/memleak-native-orphansnapshot-test.txt");
+        rmdir(tempDir.c_str());
+    }));
+}
+
+/*
+ * @tc.name: HandleMemLeakDone_SaModeCopiesTempFdToClientFd
+ * @tc.desc: test SA mem leak done copies temporary fd content into client fd.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, HandleMemLeakDone_SaModeCopiesTempFdToClientFd, TestSize.Level0)
+{
+    EXPECT_TRUE(RunInChildProcess([this]() {
+        NativeHookConfig config;
+        config.set_native_orphansnapshots_enable(true);
+        hookManager_->SetHookConfig(config);
+        hookManager_->SetSaMode(true);
+        hookManager_->fileCacheDir_ = "/data/local/tmp/";
+        hookManager_->memLeakFileName_ = "memleak-sa-copy.txt";
+        int srcFd = hookManager_->CreateMemLeakFile();
+        ASSERT_GE(srcFd, 0);
+
+        const char* content = "sa-mem-leak-content";
+        ASSERT_EQ(write(srcFd, content, strlen(content)), static_cast<ssize_t>(strlen(content)));
+        char destPath[] = "/data/local/tmp/memleak_dest_XXXXXX";
+        int destFd = mkstemp(destPath);
+        ASSERT_GE(destFd, 0);
+        ASSERT_EQ(unlink(destPath), 0);
+        int verifyFd = dup(destFd);
+        ASSERT_GE(verifyFd, 0);
+        hookManager_->SetMemLeakFd(destFd);
+
+        EXPECT_TRUE(hookManager_->HandleMemLeakDone());
+        EXPECT_EQ(lseek(verifyFd, 0, SEEK_SET), 0);
+        char buffer[64] = {0};
+        EXPECT_EQ(read(verifyFd, buffer, sizeof(buffer)), static_cast<ssize_t>(strlen(content)));
+        EXPECT_STREQ(buffer, content);
+        EXPECT_EQ(close(verifyFd), 0);
+    }));
+}
+
+/*
+ * @tc.name: HandleMemLeakDone_SaModeHandlesUnseekableTempFd
+ * @tc.desc: test SA mem leak done finishes even when temporary fd cannot be copied.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, HandleMemLeakDone_SaModeHandlesUnseekableTempFd, TestSize.Level0)
+{
+    EXPECT_TRUE(RunInChildProcess([this]() {
+        int pipeFds[2] = {-1, -1};
+        ASSERT_EQ(pipe(pipeFds), 0);
+        char destPath[] = "/data/local/tmp/memleak_bad_dest_XXXXXX";
+        int destFd = mkstemp(destPath);
+        ASSERT_GE(destFd, 0);
+        ASSERT_EQ(unlink(destPath), 0);
+        NativeHookConfig config;
+        config.set_native_orphansnapshots_enable(true);
+        hookManager_->SetHookConfig(config);
+        hookManager_->SetSaMode(true);
+        hookManager_->tempMemLeakFd_ = pipeFds[0];
+        hookManager_->SetMemLeakFd(destFd);
+        hookManager_->memLeakDumpDone_ = false;
+
+        EXPECT_TRUE(hookManager_->HandleMemLeakDone());
+        EXPECT_TRUE(hookManager_->memLeakDumpDone_.load());
+        EXPECT_EQ(hookManager_->tempMemLeakFd_, -1);
+        EXPECT_EQ(close(pipeFds[1]), 0);
+    }));
 }
 
 /*

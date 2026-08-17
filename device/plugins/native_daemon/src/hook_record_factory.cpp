@@ -434,4 +434,9 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
     }
     return CreateStackRecord(type, rawStack);
 }
+
+#ifdef NATIVE_DAEMON_UNITTEST
+template std::shared_ptr<HookRecord> HookRecordFactory::GetRecordFromCache<HookRecord>(
+    std::deque<std::shared_ptr<HookRecord>>& dataCache, int16_t type);
+#endif
 }

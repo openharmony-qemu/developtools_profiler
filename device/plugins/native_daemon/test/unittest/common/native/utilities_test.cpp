@@ -16,7 +16,9 @@
 #include "utilities_test.h"
 
 #include <chrono>
+#include <limits>
 #include <thread>
+#include "debug_logger.h"
 #include "utilities.h"
 
 using namespace testing::ext;
@@ -25,6 +27,22 @@ namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
 const std::string TEST_PATH = "/data/test/resource/testdata/";
+
+class ScopedLogDisabled {
+public:
+    ScopedLogDisabled() : oldDisabled_(DebugLogger::logDisabled_)
+    {
+        DebugLogger::logDisabled_ = true;
+    }
+
+    ~ScopedLogDisabled()
+    {
+        DebugLogger::logDisabled_ = oldDisabled_;
+    }
+
+private:
+    bool oldDisabled_;
+};
 
 class UtilitiesTest : public testing::Test {
 public:
@@ -316,6 +334,8 @@ HWTEST_F(UtilitiesTest, HexDump, TestSize.Level0)
 HWTEST_F(UtilitiesTest, StringTrim, TestSize.Level0)
 {
     std::string test;
+    EXPECT_STREQ(StringTrim(test = "").c_str(), "");
+    EXPECT_STREQ(StringTrim(test = "   ").c_str(), "");
     EXPECT_STREQ(StringTrim(test = " a ").c_str(), "a");
     EXPECT_STREQ(StringTrim(test = " a").c_str(), "a");
     EXPECT_STREQ(StringTrim(test = "a ").c_str(), "a");
@@ -349,6 +369,22 @@ HWTEST_F(UtilitiesTest, RecordStdout, TestSize.Level0)
     EXPECT_NE(out.find("line2:"), std::string::npos);
     EXPECT_NE(out.find("line3:"), std::string::npos);
     EXPECT_EQ(out.find("line4:"), std::string::npos);
+}
+
+HWTEST_F(UtilitiesTest, RecordStdoutWithExplicitFile, TestSize.Level0)
+{
+    const std::string stdoutPath = "./stdout_record_test.txt";
+    unlink(stdoutPath.c_str());
+
+    StdoutRecord stdoutRecord(stdoutPath, "w+");
+    printf("explicit stdout record\n");
+    std::string out = stdoutRecord.Stop();
+    EXPECT_NE(out.find("explicit stdout record"), std::string::npos);
+    EXPECT_EQ(stdoutRecord.Stop(), out);
+    unlink(stdoutPath.c_str());
+
+    StdoutRecord invalidRecord("./missing_dir/stdout.txt", "w+");
+    EXPECT_TRUE(invalidRecord.Stop().empty());
 }
 
 /**
@@ -404,6 +440,8 @@ HWTEST_F(UtilitiesTest, IsSameCommand, TestSize.Level0)
     EXPECT_EQ(IsSameCommand("1", "1"), true);
     EXPECT_EQ(IsSameCommand("a", "a"), true);
     EXPECT_EQ(IsSameCommand("a:1", "a:2"), false);
+    EXPECT_EQ(IsSameCommand("/system/bin/hiprofilerd", "hiprofilerd"), true);
+    EXPECT_EQ(IsSameCommand("/system/bin/hiprofilerd", "native_daemon"), false);
 }
 
 /**
@@ -416,11 +454,14 @@ HWTEST_F(UtilitiesTest, CompressFile, TestSize.Level0)
     std::string srcPath = "./resource/testdata/elf_test_stripped_broken";
     std::string destPath = "./test.gz";
     EXPECT_EQ(CompressFile(srcPath, destPath), true);
-    srcPath = "";
-    EXPECT_EQ(CompressFile(srcPath, destPath), false);
-    srcPath = "./resource/testdata/elf_test_stripped_broken";
-    destPath = "";
-    EXPECT_EQ(CompressFile(srcPath, destPath), false);
+    {
+        ScopedLogDisabled scopedLog;
+        srcPath = "";
+        EXPECT_EQ(CompressFile(srcPath, destPath), false);
+        srcPath = "./resource/testdata/elf_test_stripped_broken";
+        destPath = "";
+        EXPECT_EQ(CompressFile(srcPath, destPath), false);
+    }
 }
 
 /**
@@ -433,12 +474,15 @@ HWTEST_F(UtilitiesTest, UncompressFile, TestSize.Level0)
     std::string gzipPath = "./test.gz";
     std::string dataPath = "./test";
     EXPECT_EQ(UncompressFile(gzipPath, dataPath), true);
-    gzipPath = "./test.gz";
-    dataPath = "";
-    EXPECT_EQ(UncompressFile(gzipPath, dataPath), false);
-    gzipPath = "";
-    dataPath = "./resource/testdata/elf_test_stripped_broken";
-    EXPECT_EQ(UncompressFile(gzipPath, dataPath), false);
+    {
+        ScopedLogDisabled scopedLog;
+        gzipPath = "./test.gz";
+        dataPath = "";
+        EXPECT_EQ(UncompressFile(gzipPath, dataPath), false);
+        gzipPath = "";
+        dataPath = "./resource/testdata/elf_test_stripped_broken";
+        EXPECT_EQ(UncompressFile(gzipPath, dataPath), false);
+    }
 }
 
 /**
@@ -694,6 +738,159 @@ HWTEST_F(UtilitiesTest, IsArkwebV8File, TestSize.Level0)
     EXPECT_FALSE(IsArkwebV8File(filepath));
     filepath = "[anon:JS]";
     EXPECT_FALSE(IsArkwebV8File(filepath));
+}
+
+HWTEST_F(UtilitiesTest, AdvancedSplitStringSkipsEmptySegments, TestSize.Level0)
+{
+    std::vector<std::string> elems;
+
+    AdvancedSplitString(",alpha;beta,,gamma", ",;", elems);
+    ASSERT_EQ(elems.size(), 3u);
+    EXPECT_EQ(elems[0], "alpha");
+    EXPECT_EQ(elems[1], "beta");
+    EXPECT_EQ(elems[2], "gamma");
+
+    elems.clear();
+    AdvancedSplitString(",,", ",", elems);
+    EXPECT_TRUE(elems.empty());
+}
+
+HWTEST_F(UtilitiesTest, NumericAndPathUtilitiesHandleBoundaries, TestSize.Level0)
+{
+    EXPECT_FALSE(IsDigits("1234567890"));
+    EXPECT_TRUE(IsHexDigits("0x0"));
+    EXPECT_TRUE(IsHexDigits("000"));
+    EXPECT_FALSE(IsHexDigits("0x"));
+    EXPECT_FALSE(IsHexDigits("0xg"));
+
+    EXPECT_EQ(LgFloor(0), 0u);
+    EXPECT_EQ(LgFloor(std::numeric_limits<unsigned long>::max()), 8u * sizeof(unsigned long) - 1u);
+    EXPECT_EQ(PowCeil(0), 1u);
+    EXPECT_EQ(PowCeil(9), 16u);
+    EXPECT_EQ(ComputeAlign(0), 0u);
+    EXPECT_EQ(ComputeAlign(1), 8u);
+    EXPECT_EQ(ComputeAlign(8), 8u);
+    EXPECT_EQ(ComputeAlign(9), 16u);
+    EXPECT_EQ(ComputeAlign(17), 32u);
+    EXPECT_EQ(ComputeAlign(65), 80u);
+    EXPECT_EQ(RoundUp(0, 4), 0u);
+    EXPECT_EQ(RoundUp(5, 4), 8u);
+    EXPECT_FALSE(PowerOfTwo(0));
+    EXPECT_FALSE(PowerOfTwo(3));
+    EXPECT_TRUE(PowerOfTwo(1024));
+
+    EXPECT_TRUE(IsPath("/data"));
+    EXPECT_FALSE(IsPath("relative/path"));
+}
+
+HWTEST_F(UtilitiesTest, FileAndDirectoryUtilitiesHandleFailures, TestSize.Level0)
+{
+    const std::string basePath = "./utilities_tmp";
+    const std::string subDir = basePath + "/sub";
+    const std::string dataFile = basePath + "/value.txt";
+    const std::string textFile = basePath + "/text.txt";
+    rmdir(subDir.c_str());
+    unlink(dataFile.c_str());
+    unlink(textFile.c_str());
+    rmdir(basePath.c_str());
+
+    ASSERT_EQ(mkdir(basePath.c_str(), S_IRWXU), 0);
+    ASSERT_EQ(mkdir(subDir.c_str(), S_IRWXU), 0);
+    ASSERT_TRUE(WriteStringToFile(dataFile, "42"));
+    ASSERT_TRUE(WriteStringToFile(textFile, "abc"));
+    EXPECT_FALSE(WriteStringToFile(subDir, "invalid"));
+    EXPECT_FALSE(WriteIntToProcFile(subDir, 1));
+
+    auto entries = GetEntriesInDir(basePath);
+    EXPECT_NE(std::find(entries.begin(), entries.end(), "sub"), entries.end());
+    EXPECT_NE(std::find(entries.begin(), entries.end(), "value.txt"), entries.end());
+    EXPECT_TRUE(GetEntriesInDir(dataFile).empty());
+    auto subDirs = GetSubDirs(basePath);
+    EXPECT_EQ(std::count(subDirs.begin(), subDirs.end(), "sub"), 1);
+    EXPECT_TRUE(GetSubDirs(dataFile).empty());
+    EXPECT_FALSE(IsDir(dataFile));
+    EXPECT_FALSE(IsDir(basePath + "/missing"));
+
+    std::string content;
+    EXPECT_TRUE(ReadFileToString(dataFile, content, 16));
+    EXPECT_EQ(content, "42");
+    EXPECT_FALSE(ReadFileToString(basePath + "/missing", content));
+    EXPECT_FALSE(ReadFileToString(subDir, content));
+    EXPECT_TRUE(ReadFileToString(basePath + "/missing").empty());
+
+    int value = -1;
+    EXPECT_TRUE(ReadIntFromProcFile(dataFile, value));
+    EXPECT_EQ(value, 42);
+    EXPECT_FALSE(ReadIntFromProcFile(basePath + "/missing", value));
+    EXPECT_TRUE(ReadIntFromProcFile(textFile, value));
+    EXPECT_EQ(value, 0);
+
+    unlink(dataFile.c_str());
+    unlink(textFile.c_str());
+    rmdir(subDir.c_str());
+    rmdir(basePath.c_str());
+}
+
+HWTEST_F(UtilitiesTest, IsArkJsFileRecognizesAllSupportedForms, TestSize.Level0)
+{
+    EXPECT_TRUE(IsArkJsFile("entry.hap"));
+    EXPECT_TRUE(IsArkJsFile("shared.hsp"));
+    EXPECT_TRUE(IsArkJsFile("[anon:ArkTS Code:abc"));
+    EXPECT_TRUE(IsArkJsFile("module.abc"));
+    EXPECT_TRUE(IsArkJsFile("patch.hqf"));
+    EXPECT_FALSE(IsArkJsFile("module.txt"));
+}
+
+HWTEST_F(UtilitiesTest, GetValueFromJsonFileRejectsBrokenJson, TestSize.Level0)
+{
+    const std::string jsonPath = "./broken_hiprofiler_cfg.json";
+    unlink(jsonPath.c_str());
+
+    ASSERT_TRUE(WriteStringToFile(jsonPath, "{broken json"));
+    EXPECT_EQ(GetValueFromJsonFile(jsonPath, "hiprofiler_hook_process_count"), -1);
+    unlink(jsonPath.c_str());
+}
+
+HWTEST_F(UtilitiesTest, HexDumpUsesMaxSizeLimit, TestSize.Level0)
+{
+    const unsigned char buf[] = "12345678";
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+
+    StdoutRecord stdoutRecord;
+    ASSERT_TRUE(stdoutRecord.Start());
+    HexDump(buf, sizeof(buf) - 1u, 4u);
+    std::string out = stdoutRecord.Stop();
+    EXPECT_NE(out.find("0x31"), std::string::npos);
+    EXPECT_NE(out.find("0x34"), std::string::npos);
+}
+
+HWTEST_F(UtilitiesTest, HeaderUtilitiesHandleStateAndCopyFailures, TestSize.Level0)
+{
+    auto& holder = StringViewMemoryHold::GetInstance();
+    const char* first = holder.HoldStringView("held-string");
+    ASSERT_NE(first, nullptr);
+    EXPECT_STREQ(first, "held-string");
+    holder.Clear();
+    const char* second = holder.HoldStringView("held-string");
+    ASSERT_NE(second, nullptr);
+    EXPECT_STREQ(second, "held-string");
+
+    const unsigned char buffer[] = {1, 2, 3, 4};
+    const unsigned char* src = buffer;
+    int value = 0;
+    EXPECT_EQ(CopyFromBufferAndMove(src, &value, sizeof(value)), sizeof(value));
+    EXPECT_EQ(src, buffer + sizeof(value));
+
+    src = buffer;
+    int* invalidDest = nullptr;
+    EXPECT_EQ(CopyFromBufferAndMove(src, invalidDest, sizeof(value)), sizeof(value));
+    EXPECT_EQ(src, buffer);
+}
+
+HWTEST_F(UtilitiesTest, StringPrintfHandlesInvalidFormat, TestSize.Level0)
+{
+    EXPECT_EQ(StringPrintf(nullptr), "");
+    EXPECT_EQ(StringPrintf("%999999999999999999999999s", "value"), "");
 }
 } // namespace NativeDaemon
 } // namespace Developtools

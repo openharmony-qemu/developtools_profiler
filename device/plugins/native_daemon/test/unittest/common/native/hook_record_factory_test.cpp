@@ -15,6 +15,7 @@
 
 #include "hook_record_factory_test.h"
 #include "native_hook_config.pb.h"
+#include <deque>
 #include <string>
 #include <sys/time.h>
 #include <vector>
@@ -25,6 +26,7 @@ using namespace std;
 namespace OHOS::Developtools::NativeDaemon {
 NativeHookConfig g_hookConfig;
 std::shared_ptr<HookRecordFactory> g_factory = nullptr;
+HookRecordPtr CreateCacheItem(int16_t type);
 class HookRecordFactoryTest : public testing::Test {
 public:
     static void SetUpTestCase(void);
@@ -57,6 +59,21 @@ static std::vector<int8_t> MakeRecordBuffer(uint16_t type, uint32_t extraSize = 
         return {};
     }
     return buffer;
+}
+
+static void ExpectCacheItemCreated(int16_t type)
+{
+    HookRecordPtr record = CreateCacheItem(type);
+    ASSERT_NE(record, nullptr);
+}
+
+static void ExpectSaveRecordIncreases(std::deque<HookRecordPtr>& cache, uint16_t type)
+{
+    cache.clear();
+    HookRecordPtr record = CreateCacheItem(type);
+    ASSERT_NE(record, nullptr);
+    g_factory->SaveRecordToCache(type, record);
+    EXPECT_EQ(cache.size(), 1u);
 }
 
 /*
@@ -1010,4 +1027,86 @@ HWTEST_F(HookRecordFactoryTest, CheckSizeByType_FpUnwindDisabled_AllTypes, TestS
         EXPECT_TRUE(factory.CheckSizeByType(type, sizeof(AsyncStackData) - 1));
     }
 }
+
+/*
+ * @tc.name: CreateCacheItemCoversSupportedTypes
+ * @tc.desc: test direct record creation for every cacheable type.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, CreateCacheItemCoversSupportedTypes, TestSize.Level0)
+{
+    const std::vector<int16_t> types = {
+        MALLOC_MSG, FREE_MSG, FREE_MSG_SIMP, MMAP_MSG, MUNMAP_MSG, JS_STACK_MSG,
+        MALLOC_ARKTS, FREE_ARKTS, MEMORY_USING_MSG, MEMORY_UNUSING_MSG
+    };
+    for (int16_t type : types) {
+        ExpectCacheItemCreated(type);
+    }
+    EXPECT_EQ(CreateCacheItem(UNKNOWN), nullptr);
+}
+
+/*
+ * @tc.name: SaveRecordToCacheCoversSupportedTypes
+ * @tc.desc: test SaveRecordToCache stores every cacheable record type.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, SaveRecordToCacheCoversSupportedTypes, TestSize.Level0)
+{
+    ExpectSaveRecordIncreases(g_factory->freeRecordSimpCache_, FREE_MSG_SIMP);
+    ExpectSaveRecordIncreases(g_factory->freeRecordCache_, FREE_MSG);
+    ExpectSaveRecordIncreases(g_factory->mallocRecordCache_, MALLOC_MSG);
+    ExpectSaveRecordIncreases(g_factory->mmapRecordCache_, MMAP_MSG);
+    ExpectSaveRecordIncreases(g_factory->munmapRecordCache_, MUNMAP_MSG);
+    ExpectSaveRecordIncreases(g_factory->jsRecordCache_, JS_STACK_MSG);
+    ExpectSaveRecordIncreases(g_factory->arkTsMallocRecordCache_, MALLOC_ARKTS);
+    ExpectSaveRecordIncreases(g_factory->arkTsFreeRecordCache_, FREE_ARKTS);
+    ExpectSaveRecordIncreases(g_factory->memoryUnUsingMsgRecordCache_, MEMORY_UNUSING_MSG);
+    ExpectSaveRecordIncreases(g_factory->memoryUsingMsgRecordCache_, MEMORY_USING_MSG);
+}
+
+/*
+ * @tc.name: FactoryCacheBoundaryBranches
+ * @tc.desc: test no-data-queue cache sizing and empty cache fallback paths.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, FactoryCacheBoundaryBranches, TestSize.Level0)
+{
+    NativeHookConfig noDataConfig;
+    noDataConfig.set_statistics_interval(1);
+    noDataConfig.set_fp_unwind(true);
+    noDataConfig.set_offline_symbolization(true);
+    HookRecordFactory noDataFactory(noDataConfig);
+    EXPECT_EQ(noDataFactory.rawStackCache_.size(), static_cast<size_t>(SHARED_MEMORY_NUM));
+    EXPECT_EQ(noDataFactory.freeRecordSimpCache_.size(), static_cast<size_t>(SHARED_MEMORY_NUM));
+    EXPECT_TRUE(noDataFactory.freeRecordCache_.empty());
+
+    g_factory->rawStackCache_.clear();
+    EXPECT_NE(g_factory->GetRawStackFromCache(), nullptr);
+    g_factory->mallocRecordCache_.clear();
+    auto record = g_factory->GetRecordFromCache(g_factory->mallocRecordCache_, MALLOC_MSG);
+    ASSERT_NE(record, nullptr);
+    EXPECT_FALSE(record->IsValid());
+}
+
+/*
+ * @tc.name: GetHookRecordHandlesErrorAndZeroStack
+ * @tc.desc: test memcpy failure for simple free and zero stack-size dwarf metadata.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, GetHookRecordHandlesErrorAndZeroStack, TestSize.Level0)
+{
+    EXPECT_EQ(g_factory->GetHookRecord(nullptr, sizeof(void*)), nullptr);
+    g_factory->SaveRawStack(nullptr);
+    g_factory->SaveHookRecord(nullptr);
+
+    NativeHookConfig dwarfConfig;
+    HookRecordFactory dwarfFactory(dwarfConfig);
+    std::vector<int8_t> buffer = MakeRecordBuffer(MALLOC_MSG, MAX_REG_SIZE);
+    ASSERT_FALSE(buffer.empty());
+    auto record = dwarfFactory.GetHookRecord(buffer.data(), static_cast<uint32_t>(buffer.size()));
+    ASSERT_NE(record, nullptr);
+    EXPECT_EQ(record->GetRawStack()->stackSize, 0u);
+    EXPECT_EQ(record->GetRawStack()->stackData, nullptr);
+}
+
 } // namespace OHOS::Developtools::NativeDaemon
