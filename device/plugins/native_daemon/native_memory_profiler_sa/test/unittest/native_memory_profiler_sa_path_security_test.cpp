@@ -364,4 +364,79 @@ HWTEST_F(PathSecurityTest, CopyFileFast_NormalFile, TestSize.Level1)
     EXPECT_EQ(destContent, "VALID_SOURCE_DATA");
 }
 
+/**
+ * @tc.name: Safe_RejectsDotDotPath
+ * @tc.desc: CheckNotExistsFilePathSafe rejects path containing ..
+ * @tc.type: FUNC
+ */
+HWTEST_F(PathSecurityTest, Safe_RejectsDotDotPath, TestSize.Level1)
+{
+    using namespace COMMON;
+    auto ret = CheckNotExistsFilePathSafe("/data/local/tmp/../../../../etc/evil.htrace");
+    EXPECT_FALSE(ret.first);
+    EXPECT_TRUE(ret.second.empty());
+}
+
+/**
+ * @tc.name: Safe_RejectsPathOutsideDataTmpDir
+ * @tc.desc: CheckNotExistsFilePathSafe rejects absolute path outside /data/local/tmp/
+ * @tc.type: FUNC
+ */
+HWTEST_F(PathSecurityTest, Safe_RejectsPathOutsideDataTmpDir, TestSize.Level1)
+{
+    using namespace COMMON;
+    auto ret = CheckNotExistsFilePathSafe("/etc/evil.htrace");
+    EXPECT_FALSE(ret.first);
+    EXPECT_TRUE(ret.second.empty());
+}
+
+/**
+ * @tc.name: Safe_RejectsRelativePath
+ * @tc.desc: CheckNotExistsFilePathSafe rejects relative path
+ * @tc.type: FUNC
+ */
+HWTEST_F(PathSecurityTest, Safe_RejectsRelativePath, TestSize.Level1)
+{
+    using namespace COMMON;
+    EXPECT_FALSE(CheckNotExistsFilePathSafe("evil.htrace").first);
+    EXPECT_FALSE(CheckNotExistsFilePathSafe("sub/evil.htrace").first);
+}
+
+/**
+ * @tc.name: Safe_RejectsEmpty
+ * @tc.desc: CheckNotExistsFilePathSafe rejects empty path
+ * @tc.type: FUNC
+ */
+HWTEST_F(PathSecurityTest, Safe_RejectsEmpty, TestSize.Level1)
+{
+    using namespace COMMON;
+    EXPECT_FALSE(CheckNotExistsFilePathSafe("").first);
+}
+
+/**
+ * @tc.name: Safe_RejectsTrailingSlash
+ * @tc.desc: CheckNotExistsFilePathSafe rejects path ending with '/'
+ * @tc.type: FUNC
+ */
+HWTEST_F(PathSecurityTest, Safe_RejectsTrailingSlash, TestSize.Level1)
+{
+    using namespace COMMON;
+    auto ret = CheckNotExistsFilePathSafe("/data/local/tmp/");
+    EXPECT_FALSE(ret.first);
+    EXPECT_TRUE(ret.second.empty());
+}
+
+/**
+ * @tc.name: Safe_AcceptsValidPath
+ * @tc.desc: CheckNotExistsFilePathSafe accepts valid path under /data/local/tmp/
+ * @tc.type: FUNC
+ */
+HWTEST_F(PathSecurityTest, Safe_AcceptsValidPath, TestSize.Level1)
+{
+    using namespace COMMON;
+    auto ret = CheckNotExistsFilePathSafe("/data/local/tmp/native_memory_1234.htrace");
+    EXPECT_TRUE(ret.first);
+    EXPECT_EQ(ret.second, "/data/local/tmp/native_memory_1234.htrace");
+}
+
 #endif // NATIVE_MEMORY_PROFILER_SA_PATH_SECURITY_TEST_H

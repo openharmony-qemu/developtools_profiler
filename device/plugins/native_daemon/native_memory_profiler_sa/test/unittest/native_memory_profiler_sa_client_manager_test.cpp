@@ -310,7 +310,7 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, CheckInputConfigTest003, TestS
               ResProfilerErrorCode::RES_PROF_SAMPLE_INTERVAL_INVALID_ARG);
 
     invalidConfig.sampleInterval = 400;
-    type = 5;
+    type = static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_MAX);
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(type, &invalidConfig),
               ResProfilerErrorCode::RES_PROF_RESOURCE_TYPE_INVALID_ARG);
 }
@@ -350,7 +350,8 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartProfilerByTypeInvalidArgT
     inputConfig.maxStackDepth = 16;
     inputConfig.statisticsInterval = 120;
     inputConfig.sampleInterval = 512;
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartProfilerByType(5, &inputConfig, nullptr),
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartProfilerByType(
+        static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_MAX), &inputConfig, nullptr),
         static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_RESOURCE_TYPE_INVALID_ARG));
 }
 
@@ -509,6 +510,10 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseResTypeSetsExpectedMasks,
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseResType(
         static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_GLOBAL_HANDLE), config), RET_OK);
     EXPECT_EQ(config->traceMask_, RES_ARK_GLOBAL_HANDLE);
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseResType(
+        static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_DMA), config), RET_OK);
+    EXPECT_EQ(config->traceMask_, RES_FD_DMABUF | RES_DMABUF_MASK);
 }
 
 /**
@@ -542,7 +547,8 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, GenerateFileNameHandleBoundari
 {
     using namespace OHOS::Developtools::NativeDaemon;
     EXPECT_TRUE(NativeMemoryProfilerSaClientManager::GenerateFileName(-1, getpid()).empty());
-    EXPECT_TRUE(NativeMemoryProfilerSaClientManager::GenerateFileName(5, getpid()).empty());
+    EXPECT_TRUE(NativeMemoryProfilerSaClientManager::GenerateFileName(
+        static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_MAX), getpid()).empty());
     std::string fileName = NativeMemoryProfilerSaClientManager::GenerateFileName(
         static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_NATIVE), getpid());
     EXPECT_EQ(fileName.find("native-"), 0u);

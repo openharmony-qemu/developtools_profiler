@@ -62,6 +62,7 @@ bool GetDeveloperMode();
 bool ContainsSpecialChars(const std::string& input);
 bool IsBetaVersion();
 std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath);
+std::pair<bool, std::string> CheckNotExistsFilePathSafe(const std::string& filePath);
 bool CheckWhiteList(const std::string& cmdPath);
 bool CheckCmdLineArgValid(const std::string& cmdLine);
 int PluginWriteToHisysevent (const std::string& pluginName, const std::string& caller, const std::string& args,

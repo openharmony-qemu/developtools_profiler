@@ -440,4 +440,92 @@ HWTEST_F(BufferSplitterUnittest, MemInfoBufferTEST, TestSize.Level1)
         EXPECT_EQ((uint64_t)counterId, value);
     } while (totalbuffer.NextLine());
 }
+
+HWTEST_F(BufferSplitterUnittest, NextLineWithConsecutiveNewlines, TestSize.Level1)
+{
+    char text[] = {'a', 'b', '\n', '\n', 'c', 'd', '\0'};
+    int readsize = sizeof(text);
+    BufferSplitter totalbuffer(text, readsize);
+
+    EXPECT_EQ(&text[0], totalbuffer.CurLine());
+    EXPECT_EQ((size_t)2, totalbuffer.CurLineSize());
+
+    EXPECT_TRUE(totalbuffer.NextLine());
+    EXPECT_EQ(&text[4], totalbuffer.CurLine());
+    EXPECT_EQ((size_t)2, totalbuffer.CurLineSize());
+
+    EXPECT_FALSE(totalbuffer.NextLine());
+}
+
+HWTEST_F(BufferSplitterUnittest, NextLineWithTrailingNewline, TestSize.Level1)
+{
+    char text[] = {'a', 'b', '\n', '\0'};
+    int readsize = sizeof(text);
+    BufferSplitter totalbuffer(text, readsize);
+
+    EXPECT_EQ(&text[0], totalbuffer.CurLine());
+    EXPECT_EQ((size_t)2, totalbuffer.CurLineSize());
+
+    EXPECT_FALSE(totalbuffer.NextLine());
+    EXPECT_EQ(nullptr, totalbuffer.CurLine());
+    EXPECT_EQ((size_t)0, totalbuffer.CurLineSize());
+}
+
+HWTEST_F(BufferSplitterUnittest, NextWordAfterNextLineFalse, TestSize.Level1)
+{
+    char text[] = {'a', 'b', ' ', 'c', ' ', '\0'};
+    int readsize = sizeof(text);
+    BufferSplitter totalbuffer(text, readsize);
+
+    EXPECT_TRUE(totalbuffer.NextWord(' '));
+    EXPECT_EQ(&text[0], totalbuffer.CurWord());
+    EXPECT_EQ((size_t)2, totalbuffer.CurWordSize());
+
+    EXPECT_TRUE(totalbuffer.NextWord(' '));
+    EXPECT_EQ(&text[3], totalbuffer.CurWord());
+    EXPECT_EQ((size_t)1, totalbuffer.CurWordSize());
+
+    EXPECT_FALSE(totalbuffer.NextWord(' '));
+    EXPECT_EQ(nullptr, totalbuffer.CurWord());
+    EXPECT_EQ((size_t)0, totalbuffer.CurWordSize());
+}
+
+HWTEST_F(BufferSplitterUnittest, NextWordWithOnlySpaces, TestSize.Level1)
+{
+    char text[] = {' ', ' ', ' ', '\0'};
+    int readsize = sizeof(text);
+    BufferSplitter totalbuffer(text, readsize);
+
+    EXPECT_EQ(&text[0], totalbuffer.CurLine());
+    EXPECT_EQ((size_t)3, totalbuffer.CurLineSize());
+}
+
+HWTEST_F(BufferSplitterUnittest, NextWordWithLeadingSpaces, TestSize.Level1)
+{
+    char text[] = {' ', ' ', 'a', 'b', ' ', '\0'};
+    int readsize = sizeof(text);
+    BufferSplitter totalbuffer(text, readsize);
+
+    EXPECT_EQ(&text[0], totalbuffer.CurLine());
+    EXPECT_EQ((size_t)5, totalbuffer.CurLineSize());
+    EXPECT_TRUE(totalbuffer.NextWord(' '));
+    EXPECT_EQ(&text[2], totalbuffer.CurWord());
+    EXPECT_EQ((size_t)2, totalbuffer.CurWordSize());
+}
+
+HWTEST_F(BufferSplitterUnittest, NextLineWithEmptyLineBetweenContent, TestSize.Level1)
+{
+    char text[] = {'a', '\n', '\n', 'b', '\0'};
+    int readsize = sizeof(text);
+    BufferSplitter totalbuffer(text, readsize);
+
+    EXPECT_EQ(&text[0], totalbuffer.CurLine());
+    EXPECT_EQ((size_t)1, totalbuffer.CurLineSize());
+
+    EXPECT_TRUE(totalbuffer.NextLine());
+    EXPECT_EQ(&text[3], totalbuffer.CurLine());
+    EXPECT_EQ((size_t)1, totalbuffer.CurLineSize());
+
+    EXPECT_FALSE(totalbuffer.NextLine());
+}
 } // namespace

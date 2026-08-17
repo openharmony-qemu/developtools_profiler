@@ -27,7 +27,7 @@ public:
     template<typename T>
     static T StringToSometype(const std::string& str)
     {
-        T result;
+        T result {};
         std::stringstream ss;
         ss << str;
         ss >> result;
@@ -176,6 +176,7 @@ bool IsInvalidPkgName(const std::string& pkgName);
 bool SafeLoadExec(const std::vector<std::string> &args, std::string &result);
 bool IsValidPid(const std::string &pid);
 bool IsValidWinId(const std::string &winId);
+bool IsValidPath(const std::string& str);
 std::string GetWinId();
 void GetWinIdNum(std::string &hidumperStr, std::string &winId);
 void EnDumpFun(const std::string &winId);

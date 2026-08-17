@@ -223,6 +223,10 @@ ErrCode SPTask::StartTask(std::function<void(const std::string&)> msgTask)
 
 void SPTask::CreatPath(const std::string& path)
 {
+    if (!SPUtils::IsValidPath(path)) {
+        LOGE("CreatPath invalid path: %s", path.c_str());
+        return;
+    }
     if (!SPUtils::FileAccess(path)) {
         LOGD("CreatPath does not exist, attempting to create: %s", path.c_str());
         std::string cmdResult;

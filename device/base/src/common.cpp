@@ -967,6 +967,28 @@ std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath)
     return {true, std::string(pathDirRealPath.get()) + "/" + filePath.substr(pos + 1)};
 }
 
+static const std::string DATA_TMP_DIR = "/data/local/tmp";
+
+std::pair<bool, std::string> CheckNotExistsFilePathSafe(const std::string& filePath)
+{
+    size_t pos = filePath.rfind('/');
+    if (pos == std::string::npos || pos == filePath.size() - 1) {
+        return {false, std::string()};
+    }
+    std::string pathDir = filePath.substr(0, pos);
+    char realDir[PATH_MAX] = {0};
+    if (realpath(pathDir.c_str(), realDir) == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:realpath fail: %s", __func__, pathDir.c_str());
+        return {false, std::string()};
+    }
+    std::string resolved(realDir);
+    if (resolved != DATA_TMP_DIR && resolved.rfind(DATA_TMP_DIR + "/", 0) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:not under %s: %s", __func__, DATA_TMP_DIR.c_str(), resolved.c_str());
+        return {false, std::string()};
+    }
+    return {true, resolved + "/" + filePath.substr(pos + 1)};
+}
+
 bool CheckWhiteList(const std::string& cmdPath)
 {
     if (cmdPath.empty()) {

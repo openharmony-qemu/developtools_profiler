@@ -71,9 +71,9 @@ std::string SpThreadSocket::MapToString(std::map<std::string, std::string>& data
 }
 std::string SpThreadSocket::SplitMsg(const std::string &recvBuf) const
 {
-    if (recvBuf.empty()) {
-        LOGE("SplitMsg recvBuf is null");
-        return recvBuf;
+    if (!SPUtils::IsValidPath(recvBuf)) {
+        LOGE("SplitMsg recvBuf is null or Abnormal characters");
+        return "";
     }
     size_t pos = recvBuf.find("::");
     if (pos != std::string::npos) {
