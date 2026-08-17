@@ -104,6 +104,7 @@ private:
     static ResProfilerErrorCode CheckInputConfig(int type, MemAPIConfig* inputConfig);
     static std::string GenerateFileName(int type, int32_t pid);
     static std::string CreateFileAndGrantPermission(std::string& filename);
+    static int32_t StopWithService(const OHOS::sptr<OHOS::IRemoteObject>& service, uint32_t pid);
 };
 }
 
