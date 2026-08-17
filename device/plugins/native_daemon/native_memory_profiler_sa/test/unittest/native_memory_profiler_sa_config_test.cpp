@@ -282,4 +282,77 @@ HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest008, 
     EXPECT_EQ(result->bundleName_, "test_bundle");
 }
 
+static bool WriteUnmarshallingExtPrefix(OHOS::Parcel& parcel)
+{
+    return parcel.WriteBool(true)
+        && parcel.WriteBool(false)
+        && parcel.WriteUint32(1)
+        && parcel.WriteInt32(CLOCK_REALTIME)
+        && parcel.WriteUint32(2)
+        && parcel.WriteBool(false)
+        && parcel.WriteBool(false)
+        && parcel.WriteBool(false)
+        && parcel.WriteBool(false)
+        && parcel.WriteBool(false)
+        && parcel.WriteBool(false)
+        && parcel.WriteString("file_name")
+        && parcel.WriteUint32(3)
+        && parcel.WriteUint32(4)
+        && parcel.WriteInt32(5)
+        && parcel.WriteUint8(6)
+        && parcel.WriteString("napi_name")
+        && parcel.WriteString("libtarget.so");
+}
+
+/**
+ * @tc.name: NativeMemoryProfilerSaConfigTest009
+ * @tc.desc: DoS guard: UnmarshallingExt fails when filterLibList size exceeds MAX_STRING_VECTOR_SIZE
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest009, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    OHOS::Parcel parcel;
+    ASSERT_TRUE(WriteUnmarshallingExtPrefix(parcel));
+    ASSERT_TRUE(parcel.WriteUint32(MAX_STRING_VECTOR_SIZE + 1));
+    auto result = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(result, nullptr);
+    EXPECT_FALSE(NativeMemoryProfilerSaConfig::UnmarshallingExt(parcel, result));
+}
+
+/**
+ * @tc.name: NativeMemoryProfilerSaConfigTest010
+ * @tc.desc: DoS guard: UnmarshallingExt fails when filterLibList size is a malicious large value
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest010, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    OHOS::Parcel parcel;
+    ASSERT_TRUE(WriteUnmarshallingExtPrefix(parcel));
+    ASSERT_TRUE(parcel.WriteUint32(0xFFFFFFFF));
+    auto result = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(result, nullptr);
+    EXPECT_FALSE(NativeMemoryProfilerSaConfig::UnmarshallingExt(parcel, result));
+}
+
+/**
+ * @tc.name: NativeMemoryProfilerSaConfigTest011
+ * @tc.desc: Boundary: filterLibList of exactly MAX_STRING_VECTOR_SIZE round-trips successfully
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest011, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(config, nullptr);
+    config->filterLibList_ = std::vector<std::string>(MAX_STRING_VECTOR_SIZE, "lib");
+    OHOS::Parcel parcel;
+    ASSERT_TRUE(config->Marshalling(parcel));
+    auto result = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(result, nullptr);
+    ASSERT_TRUE(NativeMemoryProfilerSaConfig::Unmarshalling(parcel, result));
+    EXPECT_EQ(result->filterLibList_.size(), static_cast<size_t>(MAX_STRING_VECTOR_SIZE));
+}
+
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_TEST_H
