@@ -32,6 +32,10 @@ bool ReadStringVector(Parcel& parcel, std::vector<std::string>& values)
 {
     uint32_t size = 0;
     READUINT32(parcel, size);
+    if (size > MAX_STRING_VECTOR_SIZE) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ReadStringVector: size %u exceeds limit %u", size, MAX_STRING_VECTOR_SIZE);
+        return false;
+    }
     values.clear();
     values.reserve(size);
     for (uint32_t i = 0; i < size; ++i) {
