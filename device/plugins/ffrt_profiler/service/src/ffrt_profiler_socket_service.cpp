@@ -47,6 +47,16 @@ bool FfrtProfilerSocketService::StartService(const std::string& unixSocketName)
     return true;
 }
 
+void FfrtProfilerSocketService::GetPeerUcred(SocketContext &context, struct ucred &cred)
+{
+    int socketHandle = context.GetSocketHandle();
+    socklen_t len = sizeof(struct ucred);
+    if (getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetPeerUcred getsockopt failed");
+        return;
+    }
+}
+
 bool FfrtProfilerSocketService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf,
     const uint32_t size)
 {
@@ -60,6 +70,13 @@ bool FfrtProfilerSocketService::ProtocolProc(SocketContext &context, uint32_t pn
     if (pid <= 0) {
         return false;
     }
+    struct ucred cred;
+    GetPeerUcred(context, cred);
+    if (pid != static_cast<int32_t>(cred.pid)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc check client pid failed");
+        return false;
+    }
+
     std::string bundleName = GetProcessName(pid);
     std::lock_guard<std::mutex> lock(mtx_);
     auto [eventFd, smbFd] = ffrtMgr_->GetFfrtProfilerCtx(pid, bundleName);

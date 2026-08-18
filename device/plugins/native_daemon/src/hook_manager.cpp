@@ -2531,6 +2531,15 @@ void HookManager::RotateCacheFdOnReturn(pid_t pid, uint16_t returnedFileIndex, i
         pid, returnedFileIndex, dupFd);
 }
 
+bool HookManager::CheckHookPid(int32_t pid)
+{
+    auto item = FindHookContext(pid, "");
+    if (item == nullptr) {
+        return false;
+    }
+    return true;
+}
+
 void HookManager::HandleBackpressure(const std::shared_ptr<HookManagerCtx>& ctx)
 {
     uint32_t depth = ctx->GetFdQueueSize();
