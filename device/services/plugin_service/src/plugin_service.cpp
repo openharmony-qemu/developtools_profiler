@@ -399,6 +399,7 @@ PluginContextPtr PluginService::GetPluginContextById(uint32_t id)
 
 bool PluginService::AddPluginInfo(const PluginInfo& pluginInfo)
 {
+    std::unique_lock<std::mutex> lock(mutex_);
     if (nameIndex_.find(pluginInfo.name) == nameIndex_.end()) { // add new plugin
         auto pluginCtx = std::make_shared<PluginContext>();
         CHECK_NOTNULL(pluginCtx, false, "create PluginContext failed!");
@@ -423,11 +424,9 @@ bool PluginService::AddPluginInfo(const PluginInfo& pluginInfo)
         pluginCtx->pluginVersion = pluginInfo.pluginVersion;
 
         uint32_t pluginId = ++pluginIdCounter_;
-        std::unique_lock<std::mutex> lock(mutex_);
         pluginContext_[pluginId] = pluginCtx;
         nameIndex_[pluginInfo.name] = pluginId;
     } else { // update sha256 or bufferSizeHint
-        std::unique_lock<std::mutex> lock(mutex_);
         CHECK_TRUE(nameIndex_.count(pluginInfo.name) > 0, false, "plugin name %s not found!", pluginInfo.name.c_str());
 
         uint32_t pluginId = nameIndex_[pluginInfo.name];
