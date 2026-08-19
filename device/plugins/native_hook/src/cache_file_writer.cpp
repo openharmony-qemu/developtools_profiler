@@ -19,6 +19,7 @@
 #include <chrono>
 #include <sys/mman.h>
 #include <sys/prctl.h>
+#include <sys/syscall.h>
 #include <thread>
 #include <unistd.h>
 #include <utility>
@@ -382,7 +383,7 @@ bool CacheFileWriter::NotifyFileEvent(uint16_t fileIndex, uint16_t eventType, in
 void CacheFileWriter::CloseCacheFile(int& fd)
 {
     if (fd >= 0) {
-        close(fd);
+        syscall(SYS_close, fd);
         fd = -1;
     }
 }
