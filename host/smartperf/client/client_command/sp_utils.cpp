@@ -196,6 +196,14 @@ bool SPUtils::IsValidPath(const std::string& str)
     return true;
 }
 
+bool SPUtils::IsPathTraversal(const std::string& str)
+{
+    if (str.find("..") != std::string::npos) {
+        return true;
+    }
+    return false;
+}
+
 bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak, std::string &result)
 {
     const std::string cmdExc = cmd;
