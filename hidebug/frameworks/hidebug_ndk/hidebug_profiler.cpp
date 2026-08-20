@@ -57,11 +57,11 @@ void ConvertHidebugToProfilerConfig(
 }
 
 struct OH_HiDebug_ProfilerOptions {
-    uint32_t maxDuration = 0;
-    uint32_t filterSize = 0;
-    uint32_t maxStackDepth = 0;
-    uint32_t statisticsInterval = 0;
-    uint32_t sampleInterval = 0;
+    uint32_t maxDuration = 900;
+    uint32_t filterSize = 1024;
+    uint32_t maxStackDepth = 30;
+    uint32_t statisticsInterval = 10;
+    uint32_t sampleInterval = 384;
     uint32_t maxAsyncNestingDepth = 1;
     uint32_t maxAsyncStackDepth = 16;
 };
@@ -204,7 +204,7 @@ OH_HiDebug_ProfilerOptions* OH_HiDebug_CreateProfilerOptions(void)
 HiDebug_ErrorCode OH_HiDebug_DestroyProfilerOptions(OH_HiDebug_ProfilerOptions* opts)
 {
     if (opts == nullptr) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_ARG;
     }
     delete opts;
     return HIDEBUG_SUCCESS;
@@ -214,10 +214,10 @@ HiDebug_ErrorCode OH_HiDebug_SetMaxAsyncNestingDepth(OH_HiDebug_ProfilerOptions*
     uint32_t depth)
 {
     if (opts == nullptr) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_ARG;
     }
     if (depth < MIN_ASYNC_NESTING_DEPTH || depth > MAX_ASYNC_NESTING_DEPTH) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_MAX_ASYNC_NESTING_DEPTH;
     }
     opts->maxAsyncNestingDepth = depth;
     return HIDEBUG_SUCCESS;
@@ -227,10 +227,10 @@ HiDebug_ErrorCode OH_HiDebug_SetMaxAsyncTaskStackDepth(OH_HiDebug_ProfilerOption
     uint32_t depth)
 {
     if (opts == nullptr) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_ARG;
     }
     if (depth < MIN_ASYNC_STACK_DEPTH || depth > MAX_ASYNC_STACK_DEPTH) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_MAX_ASYNC_TASK_STACK_DEPTH;
     }
     opts->maxAsyncStackDepth = depth;
     return HIDEBUG_SUCCESS;
@@ -240,10 +240,10 @@ HiDebug_ErrorCode OH_HiDebug_SetMaxDurationSec(OH_HiDebug_ProfilerOptions* opts,
     uint32_t seconds)
 {
     if (opts == nullptr) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_ARG;
     }
     if (seconds < MIN_DURATION_SEC || seconds > MAX_DURATION_SEC) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_MAX_DURATION;
     }
     opts->maxDuration = seconds;
     return HIDEBUG_SUCCESS;
@@ -253,10 +253,10 @@ HiDebug_ErrorCode OH_HiDebug_SetFilterSize(OH_HiDebug_ProfilerOptions* opts,
     uint32_t size)
 {
     if (opts == nullptr) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_ARG;
     }
     if (size < MIN_FILTER_SIZE) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_FILTER_SIZE;
     }
     opts->filterSize = size;
     return HIDEBUG_SUCCESS;
@@ -266,10 +266,10 @@ HiDebug_ErrorCode OH_HiDebug_SetMaxStackDepth(OH_HiDebug_ProfilerOptions* opts,
     uint32_t depth)
 {
     if (opts == nullptr) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_ARG;
     }
     if (depth > MAX_STACK_DEPTH) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_MAX_STACK_DEPTH;
     }
     opts->maxStackDepth = depth;
     return HIDEBUG_SUCCESS;
@@ -279,10 +279,10 @@ HiDebug_ErrorCode OH_HiDebug_SetStatisticsIntervalSec(OH_HiDebug_ProfilerOptions
     uint32_t seconds)
 {
     if (opts == nullptr) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_ARG;
     }
     if (seconds > MAX_STATISTICS_INTERVAL_SEC) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_STATISTICS_INTERVAL;
     }
     opts->statisticsInterval = seconds;
     return HIDEBUG_SUCCESS;
@@ -292,10 +292,10 @@ HiDebug_ErrorCode OH_HiDebug_SetSampleIntervalBytes(OH_HiDebug_ProfilerOptions* 
     uint32_t bytes)
 {
     if (opts == nullptr) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_ARG;
     }
     if (bytes < MIN_SAMPLE_INTERVAL) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return HIDEBUG_RES_PROF_INVALID_SAMPLE_INTERVAL;
     }
     opts->sampleInterval = bytes;
     return HIDEBUG_SUCCESS;

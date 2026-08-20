@@ -188,13 +188,13 @@ typedef enum HiDebug_ErrorCode {
      *
      * @since 26.1.0
      */
-    HIDEBUG_RES_PROF_MAX_ASYNC_NESTING_DEPTH_INVALID_ARG = 11400431,
+    HIDEBUG_RES_PROF_INVALID_MAX_ASYNC_NESTING_DEPTH = 11400431,
     /**
      * @brief Invalid maximum asynchronous task stack depth.
      *
      * @since 26.1.0
      */
-    HIDEBUG_RES_PROF_MAX_ASYNC_TASK_STACK_DEPTH_INVALID_ARG = 11400432
+    HIDEBUG_RES_PROF_INVALID_MAX_ASYNC_TASK_STACK_DEPTH = 11400432
 } HiDebug_ErrorCode;
 
 /**
