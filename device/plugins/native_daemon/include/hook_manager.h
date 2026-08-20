@@ -165,6 +165,7 @@ public:
     int CreateFileCacheFd();
     void SaveInitialCacheFds(pid_t pid, uint16_t fileIndex, int fd);
     void RotateCacheFdOnReturn(pid_t pid, uint16_t returnedFileIndex, int fd);
+    bool CheckHookPid(int32_t pid);
     void SetHookConfig(const NativeHookConfig& hookConfig);
     void SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     void SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);

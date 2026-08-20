@@ -177,6 +177,16 @@ int32_t FindPidBySocket(int socketFd)
     return -1;
 }
 
+void GetPeerUcred(SocketContext &context, struct ucred &cred)
+{
+    int socketHandle = context.GetSocketHandle();
+    socklen_t len = sizeof(struct ucred);
+    if (getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetPeerUcred getsockopt failed");
+        return;
+    }
+}
+
 bool HandleMemLeakDoneBySocket(SocketContext &context)
 {
     int32_t pid = FindPidBySocket(context.GetSocketHandle());
@@ -184,6 +194,13 @@ bool HandleMemLeakDoneBySocket(SocketContext &context)
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc mem leak done without pid");
         return true;
     }
+    struct ucred cred;
+    GetPeerUcred(context, cred);
+    if (pid != static_cast<int32_t>(cred.pid)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HandleMemLeakDoneBySocket check client pid failed");
+        return true;
+    }
+
     std::lock_guard<std::mutex> guard(g_mtx);
     auto iter = g_pidCtx.find(pid);
     if (iter == g_pidCtx.end() || iter->second == nullptr || iter->second->hookMgr == nullptr) {
@@ -1257,6 +1274,13 @@ bool NativeMemoryProfilerSaService::ReceiveCacheFileMsg(SocketContext &context, 
         return false;
     }
     HookCacheFileMsg cacheFileMsg = *reinterpret_cast<HookCacheFileMsg *>(const_cast<int8_t*>(buf));
+    struct ucred cred;
+    GetPeerUcred(context, cred);
+    if (cacheFileMsg.hookPid != cred.pid) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ReceiveCacheFileMsg check client pid failed");
+        return false;
+    }
+
     std::lock_guard<std::mutex> guard(g_mtx);
     if (auto iter = g_pidCtx.find(cacheFileMsg.hookPid); iter != g_pidCtx.end()) {
         if (iter->second->hookMgr == nullptr) {
@@ -1311,6 +1335,12 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
     if (peerConfig == -1) {
         return false;
     }
+    struct ucred cred;
+    GetPeerUcred(context, cred);
+    if (static_cast<pid_t>(peerConfig) != cred.pid) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc check client pid failed");
+        return false;
+    }
 
     std::string filePath = "/proc/" + std::to_string(peerConfig) + "/cmdline";
     std::string bundleName;
@@ -1329,13 +1359,6 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
     FillTaskConfigContext(peerConfig, bundleName); // Save the relevant context for subsequent inspection
     if (auto iter = g_pidCtx.find(peerConfig); iter != g_pidCtx.end()) {
         if (!startupMode) {
-            int socketHandle = context.GetSocketHandle();
-            struct ucred cred;
-            socklen_t len = sizeof(struct ucred);
-            if (getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) {
-                PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc getsockopt failed");
-                return false;
-            }
             if (!((g_pidInfo.find(cred.pid) != g_pidInfo.end()) && (g_pidInfo[cred.pid].first == cred.uid) &&
                 (g_pidInfo[cred.pid].second == cred.gid))) {
                 PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc process uid gid check failed");

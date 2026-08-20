@@ -411,8 +411,8 @@ HWTEST_F(HookServiceExceptionTest, ControlAndCacheMessagesHandleFailurePaths, Te
 {
     hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
     SocketContext socketContext;
-    EXPECT_FALSE(hookService_->HandleControlCommand(STOP_HOOK_CMD));
-    EXPECT_TRUE(hookService_->HandleControlCommand(MEM_LEAK_DONE_CMD));
+    EXPECT_FALSE(hookService_->HandleControlCommand(socketContext, STOP_HOOK_CMD));
+    EXPECT_TRUE(hookService_->HandleControlCommand(socketContext, MEM_LEAK_DONE_CMD));
 
     hookService_->ReceiveCacheFileMsg(socketContext, nullptr);
     HookCacheFileMsg stopMsg(45678, 0, CACHE_FILE_STOP);
@@ -420,6 +420,33 @@ HWTEST_F(HookServiceExceptionTest, ControlAndCacheMessagesHandleFailurePaths, Te
 
     HookCacheFileMsg unknownMsg(45678, 0, CACHE_FILE_CREATED);
     hookService_->ReceiveCacheFileMsg(socketContext, reinterpret_cast<const int8_t*>(&unknownMsg));
+}
+
+/*
+ * @tc.name: HandleControlCommandWithValidContext
+ * @tc.desc: test HandleControlCommand succeeds with valid socket and registered hook context.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookServiceExceptionTest, HandleControlCommandWithValidContext, TestSize.Level0)
+{
+    pid_t testPid = getpid();
+    auto ctx = AddFileCacheContext(hookManager_, testPid, "native_daemon_ut");
+    ASSERT_NE(ctx, nullptr);
+
+    int sockets[2] = {-1, -1};
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, sockets), 0);
+    TestSocketContext serviceContext;
+    serviceContext.SetSocketHandle(sockets[0]);
+
+    hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
+    hookService_->AddPidInfo(testPid, getuid(), getgid());
+    hookService_->pidFds_[testPid] = sockets[0];
+
+    EXPECT_FALSE(hookService_->HandleControlCommand(serviceContext, STOP_HOOK_CMD));
+    EXPECT_TRUE(hookService_->HandleControlCommand(serviceContext, MEM_LEAK_DONE_CMD));
+
+    close(sockets[0]);
+    close(sockets[1]);
 }
 
 /*
@@ -431,23 +458,29 @@ HWTEST_F(HookServiceExceptionTest, CheckConnectionPermissionHandlesStateAndCrede
 {
     hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
     SocketContext invalidContext;
-    EXPECT_FALSE(hookService_->CheckConnectionPermission(invalidContext));
-    EXPECT_FALSE(hookService_->CheckConnectionPermission(invalidContext));
+    EXPECT_FALSE(hookService_->CheckConnectionPermission(invalidContext, getpid()));
+    EXPECT_FALSE(hookService_->CheckConnectionPermission(invalidContext, getpid()));
 
     NativeHookConfig hookConfig;
     hookConfig.set_startup_mode(true);
     hookManager_->SetHookConfig(hookConfig);
     hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
-    EXPECT_TRUE(hookService_->CheckConnectionPermission(invalidContext));
+    EXPECT_FALSE(hookService_->CheckConnectionPermission(invalidContext, getpid()));
 
     int sockets[2] = {-1, -1};
     ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, sockets), 0);
-    hookConfig.set_startup_mode(false);
+    hookConfig.set_startup_mode(true);
     hookManager_->SetHookConfig(hookConfig);
     hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
     TestSocketContext socketContext;
     socketContext.SetSocketHandle(sockets[0]);
-    EXPECT_FALSE(hookService_->CheckConnectionPermission(socketContext));
+    EXPECT_TRUE(hookService_->CheckConnectionPermission(socketContext, getpid()));
+
+    hookConfig.set_startup_mode(false);
+    hookManager_->SetHookConfig(hookConfig);
+    hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
+    socketContext.SetSocketHandle(sockets[0]);
+    EXPECT_FALSE(hookService_->CheckConnectionPermission(socketContext, getpid()));
     close(sockets[0]);
     close(sockets[1]);
 }
@@ -469,7 +502,7 @@ HWTEST_F(HookServiceExceptionTest, CheckConnectionPermissionAcceptsMatchingPeerC
     ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, sockets), 0);
     TestSocketContext socketContext;
     socketContext.SetSocketHandle(sockets[0]);
-    EXPECT_TRUE(hookService_->CheckConnectionPermission(socketContext));
+    EXPECT_TRUE(hookService_->CheckConnectionPermission(socketContext, getpid()));
     close(sockets[0]);
     close(sockets[1]);
 }
@@ -541,7 +574,7 @@ HWTEST_F(HookServiceExceptionTest, ReceiveCacheFileReadyQueuesAndReplenishesFd, 
     TestSocketContext peerContext;
     serviceContext.SetSocketHandle(sockets[0]);
     peerContext.SetSocketHandle(sockets[1]);
-    constexpr pid_t testPid = 45680;
+    pid_t testPid = getpid();
     auto ctx = AddFileCacheContext(hookManager_, testPid, "native_daemon_ut");
     ASSERT_NE(ctx, nullptr);
     hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
