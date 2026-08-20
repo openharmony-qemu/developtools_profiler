@@ -439,4 +439,17 @@ HWTEST_F(PathSecurityTest, Safe_AcceptsValidPath, TestSize.Level1)
     EXPECT_EQ(ret.second, "/data/local/tmp/native_memory_1234.htrace");
 }
 
+/**
+ * @tc.name: Safe_RejectsInvalidSuffix
+ * @tc.desc: CheckNotExistsFilePathSafe rejects path whose suffix is not .htrace
+ * @tc.type: FUNC
+ */
+HWTEST_F(PathSecurityTest, Safe_RejectsInvalidSuffix, TestSize.Level1)
+{
+    using namespace COMMON;
+    auto ret = CheckNotExistsFilePathSafe("/data/local/tmp/native_memory_1234.txt");
+    EXPECT_FALSE(ret.first);
+    EXPECT_TRUE(ret.second.empty());
+}
+
 #endif // NATIVE_MEMORY_PROFILER_SA_PATH_SECURITY_TEST_H
