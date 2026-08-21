@@ -916,7 +916,9 @@ void HookFreeStatisticsInterval(void (*free_func)(void*), void* p)
 
     HookClientHolder client(g_hookClient);
     if (client.IsValid() && p) {
-        client.SendStackWithPayload(&p, sizeof(void*), nullptr, 0,
+        BaseStackRawData rawdata = {};
+        SetStackRawData(rawdata, FREE_MSG_SIMP, p, 0);
+        client.SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), nullptr, 0,
                                     reinterpret_cast<uint64_t>(p) % g_sharedMemCount);
     }
     free_func(p);
