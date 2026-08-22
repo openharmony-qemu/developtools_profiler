@@ -632,11 +632,11 @@ typedef enum OH_HiDebug_ResourceType {
     OH_RES_TYPE_ASHMEM,
 
     /**
-     * @brief Composite heap.
+     * @brief Composite heap
      *
      * @since 26.1.0
      */
-    OH_RES_TYPE_COMPOSITE_HEAP
+    OH_RES_TYPE_COMPOSITE_HEAP,
 } OH_HiDebug_ResourceType;
 
 /**

@@ -42,8 +42,10 @@ struct TaskConfig {
     std::string filePath;
     int32_t timerFd{-1};
     bool isStartupMode{false};
+    bool compositeHeapEnable{false};
     uint32_t fd{0};
     uint32_t startType{0}; // 0:Hiveiew 1:API
+    std::string typeFileName;   // for API trace file move
     sptr<IRemoteObject> callback;
 };
 
@@ -124,6 +126,7 @@ private:
     static int32_t PidAndNameConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     static void NotifyProfilingResult(const std::shared_ptr<TaskConfig>& config, int32_t errorCode,
         const std::string& filePath);
+    static std::string CollectApm(std::shared_ptr<TaskConfig>& config);
     static int32_t CopyApiCollectorFile(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath);
     static int32_t ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath);
     int32_t PreCheckPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
