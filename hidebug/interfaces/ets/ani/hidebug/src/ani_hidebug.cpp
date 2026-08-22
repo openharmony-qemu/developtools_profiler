@@ -1228,7 +1228,7 @@ static void OnDumpHeapSnapshotDone(std::shared_ptr<DumpRawHeapContext> ctx, uint
     }
     if (retCode != 0) {
         int32_t errCode = TransferRetCodeToErrorCode(retCode);
-        ctx->recorder->SetErrorCode(retCode);
+        ctx->recorder->SetErrorCode(errCode);
         remove(ctx->dynamicFilePath.c_str());
         remove(ctx->staticFilePath.c_str());
         g_dumpingCount.fetch_sub(1);
