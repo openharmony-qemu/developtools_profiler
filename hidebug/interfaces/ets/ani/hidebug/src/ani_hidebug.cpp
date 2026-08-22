@@ -72,6 +72,7 @@ constexpr auto PROCESS_DUMP_MAX_COUNT = "persist.hiview.hidebugdump.process.maxc
 constexpr int64_t MS_TO_NS = 1000 * 1000;
 constexpr int64_t S_TO_NS = MS_TO_NS * 1000;
 constexpr int QUOTA_VALUE_LENGTH = 256;
+constexpr int RAW_HEAP_RESULT_ARRAY_SIZE = 2;
 
 constexpr std::pair<TraceErrorCode, const char*> TraceErrorCodeMap[] = {
     {TraceErrorCode::TRACE_INVALID_ARGUMENT, "Invalid parameter."},
@@ -1249,7 +1250,7 @@ static void OnDumpHeapSnapshotDone(std::shared_ptr<DumpRawHeapContext> ctx, uint
     }
     ani_array arr = nullptr;
     ani_ref initElem = cbEnv->GetUndefined(&initElem) == ANI_OK ? initElem : nullptr;
-    if (cbEnv->Array_New(2, initElem, &arr) == ANI_OK) {
+    if (cbEnv->Array_New(RAW_HEAP_RESULT_ARRAY_SIZE, initElem, &arr) == ANI_OK) {
         cbEnv->Array_Set(arr, 0, static_cast<ani_ref>(dynamicResult));
         cbEnv->Array_Set(arr, 1, static_cast<ani_ref>(staticResult));
         g_dumpingCount.fetch_sub(1);
