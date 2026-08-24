@@ -27,6 +27,7 @@
 #include <functional>
 #include <variant>
 #include <iostream>
+#include <map>
 #include <mutex>
 #include <sstream>
 #include <sys/stat.h>
@@ -58,7 +59,15 @@ constexpr uint32_t DEFINE_MIN_SAMPLE_INTERVAL = 384; // bytes
 constexpr uint32_t ASYNC_REQUEST_TIMEOUT_DELTA = 600; // seconds
 constexpr int32_t TIME_BASE = 1000;
 const std::string FILE_SUFFIX = ".htrace";
-const std::vector<std::string> resourceTypeValues = { "fd", "thread", "native", "gpu", "global_handle", "dma" };
+const std::map<InternalResourceType, std::string> resourceTypeValues = {
+    {InternalResourceType::OH_RES_TYPE_FD, "fd"},
+    {InternalResourceType::OH_RES_TYPE_THREAD, "thread"},
+    {InternalResourceType::OH_RES_TYPE_NATIVE, "native"},
+    {InternalResourceType::OH_RES_TYPE_GPU, "gpu"},
+    {InternalResourceType::OH_RES_TYPE_GLOBAL_HANDLE, "global_handle"},
+    {InternalResourceType::OH_RES_TYPE_DMA, "dma"},
+    {InternalResourceType::OH_RES_TYPE_ASHMEM, "ashmem"},
+};
 
 using ProfilingCallbackVar = std::variant<
     NativeMemoryProfilerSaClientManager::ProfilingCallback,
@@ -707,6 +716,8 @@ int32_t NativeMemoryProfilerSaClientManager::ParseResType(int32_t type,
         config->traceMask_ = RES_ARK_GLOBAL_HANDLE;
     } else if (internalType == InternalResourceType::OH_RES_TYPE_DMA) {
         config->traceMask_ = RES_FD_DMABUF | RES_DMABUF_MASK;
+    } else if (internalType == InternalResourceType::OH_RES_TYPE_ASHMEM) {
+        config->traceMask_ = RES_FD_ASHMEM | RES_ASHMEM_MASK;
     }
     return RET_OK;
 }
@@ -888,10 +899,11 @@ int32_t NativeMemoryProfilerSaClientManager::OnDemandStart(
 // <resource-type>-<process_name>-<pid>-<timestamp>.htrace
 std::string NativeMemoryProfilerSaClientManager::GenerateFileName(int type, int32_t pid)
 {
-    if (type < 0 || type >= static_cast<int>(resourceTypeValues.size())) {
+    auto it = resourceTypeValues.find(static_cast<InternalResourceType>(type));
+    if (it == resourceTypeValues.end()) {
         return "";
     }
-    std::string typeVal = resourceTypeValues[type];
+    std::string typeVal = it->second;
     std::string procName = COMMON::GetProcessNameByPid(pid);
     std::string timeStr = COMMON::GetTimeStr();
     return typeVal + "-" + procName + "-" + std::to_string(pid) + "-" + timeStr + FILE_SUFFIX;
