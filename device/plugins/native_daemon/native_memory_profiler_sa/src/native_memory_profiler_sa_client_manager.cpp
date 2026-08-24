@@ -49,6 +49,8 @@ constexpr int SIMP_NMD = 3;
 constexpr int FIVE_MINUTES = 300;
 constexpr int JS_STACK_DEPS = 10;
 const std::string NAPI_FILE_PATH_PREFIX = "/data/storage/el2/base/files/";
+const std::string NAPI_FILE_PATH = "/data/storage/el2/base/files";
+const std::string NAPI_BASE_PATH = "/data/storage/el2/base";
 constexpr uint32_t DEFINE_MIN_MAX_DURATION = 1; // 1 second
 constexpr uint32_t DEFINE_MAX_MAX_DURATION = 3600; // 60 * 60  seconds
 constexpr uint32_t DEFINE_MIN_FILTER_SIZE = 1; // bytes
@@ -920,13 +922,9 @@ std::string NativeMemoryProfilerSaClientManager::CreateFileAndGrantPermission(st
     std::shared_ptr<OHOS::AbilityRuntime::ApplicationContext> context =
         OHOS::AbilityRuntime::Context::GetApplicationContext();
     CHECK_NOTNULL(context, "", "context is NULL");
-    std::string baseDir = context->GetBaseDir();
-    CHECK_TRUE(!baseDir.empty(), "", "base dir is empty");
-    CHECK_TRUE(OHOS::StorageDaemon::AclSetAccess(baseDir, "u:3063:x") == 0, "", "grant base dir FAIL");
-    std::string filesDir = context->GetFilesDir();
-    CHECK_TRUE(!filesDir.empty(), "", "files dir is empty");
-    CHECK_TRUE(OHOS::StorageDaemon::AclSetAccess(filesDir, "u:3063:x") == 0, "", "grant files dir FAIL");
-    std::string fullPath = filesDir + "/" + filename;
+    CHECK_TRUE(OHOS::StorageDaemon::AclSetAccess(NAPI_BASE_PATH, "u:3063:x") == 0, "", "grant base dir FAIL");
+    CHECK_TRUE(OHOS::StorageDaemon::AclSetAccess(NAPI_FILE_PATH, "u:3063:x") == 0, "", "grant files dir FAIL");
+    std::string fullPath = NAPI_FILE_PATH + "/" + filename;
     CHECK_TRUE(COMMON::CreateFile(fullPath), "", "create file FAIL");
     if (OHOS::StorageDaemon::AclSetAccess(fullPath, "u:3063:rw") != 0) {
         (void)unlink(fullPath.c_str());
