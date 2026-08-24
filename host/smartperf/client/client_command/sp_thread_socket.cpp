@@ -71,7 +71,7 @@ std::string SpThreadSocket::MapToString(std::map<std::string, std::string>& data
 }
 std::string SpThreadSocket::SplitMsg(const std::string &recvBuf) const
 {
-    if (!SPUtils::IsValidPath(recvBuf)) {
+    if (!SPUtils::IsValidPath(recvBuf) || SPUtils::IsPathTraversal(recvBuf)) {
         LOGE("SplitMsg recvBuf is null or Abnormal characters");
         return "";
     }
@@ -888,6 +888,11 @@ void SpThreadSocket::GetSocketPort(const std::string& buffer)
         if (portStr.find("$") != std::string::npos) {
             fileName = portStr.substr(portStr.find("$") + 1);
             portStr = portStr.substr(0, portStr.find("$"));
+            if (SPUtils::IsPathTraversal(fileName)) {
+                LOGE("GetSocketPort path tracersal datected in fileName: %s", fileName.c_str());
+                sendFileSocketPort = -1;
+                return;
+            }
             tracefilePath = traceOriginPath + fileName;
         }
         

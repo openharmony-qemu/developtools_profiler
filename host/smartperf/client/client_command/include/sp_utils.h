@@ -177,6 +177,7 @@ bool SafeLoadExec(const std::vector<std::string> &args, std::string &result);
 bool IsValidPid(const std::string &pid);
 bool IsValidWinId(const std::string &winId);
 bool IsValidPath(const std::string& str);
+bool IsPathTraversal(const std::string& str);
 std::string GetWinId();
 void GetWinIdNum(std::string &hidumperStr, std::string &winId);
 void EnDumpFun(const std::string &winId);
