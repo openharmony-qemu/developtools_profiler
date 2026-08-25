@@ -1656,7 +1656,7 @@ int32_t NativeMemoryProfilerSaService::CopyApiCollectorFile(uint32_t pid, std::s
         return RET_ERR;
     }
     std::string destPath = COMMON::GetFullTracePath(
-        pidInfoIter->second.first, pid, config->processName,config->typeFileName);
+        pidInfoIter->second.first, pid, config->processName, config->typeFileName);
     if (destPath.empty()) {
         PROFILER_LOG_ERROR(LOG_CORE, "CopyApiCollectorFile: invalid destPath");
         return RET_ERR;
