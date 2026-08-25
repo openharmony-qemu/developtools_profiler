@@ -48,6 +48,9 @@
 #include "app_mgr_proxy.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
+#include "res_sched_client.h"
+#include "res_type.h"
+#include "nlohmann/json.hpp"
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
@@ -1125,6 +1128,16 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         if (hookConfig_.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()) <= 0) {
             PROFILER_LOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
             return false;
+        }
+    }
+    if (hookConfig_.startup_mode()) {
+        nlohmann::json payload;
+        payload["bundleName"] = hookConfig_.process_name();
+        nlohmann::json reply;
+        int32_t ret = OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportSyncEvent(
+            OHOS::ResourceSchedule::ResType::SYNC_RES_TYPE_DFX_CTRL_IMAGE_INTERFACE, 0, payload, reply);
+        if (ret != 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "ReportSyncEvent clear image cache failed, ret=%d", ret);
         }
     }
     if ((!saMode_) && (COMMON::IsUserMode())) {

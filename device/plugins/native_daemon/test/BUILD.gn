@@ -169,6 +169,7 @@ ohos_unittest("native_daemon_ut") {
     "zlib:libz",
     "faultloggerd:libasync_stack",
     "ability_base:configuration",
+    "resource_schedule_service:ressched_client",
   ]
   defines = [ "ENABLE_HAP_EXTRACTOR" ]
   if (current_toolchain != host_toolchain) {
