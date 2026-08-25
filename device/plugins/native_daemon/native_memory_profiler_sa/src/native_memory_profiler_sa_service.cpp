@@ -985,6 +985,8 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         static_cast<int32_t>(IPCSkeleton::GetCallingPid()), config->filePath_, timerFd, config->startupMode_, fd,
         config->startType_);
     configCtx->callback = callback;
+    configCtx->compositeHeapEnable = config->compositeHeapEnable_;
+    configCtx->typeFileName = config->typeFileName_;
     if (!g_hasStartupMode && config->startupMode_) {
         g_hasStartupMode = true;
         startupModeProcessName_ = config->processName_;
@@ -995,8 +997,6 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     } else if (!configCtx->processName.empty()) {
         g_nameAndFilePathCtx[configCtx->processName] = configCtx;
     }
-    configCtx->compositeHeapEnable = config->compositeHeapEnable_;
-    configCtx->typeFileName = config->typeFileName_;
 
     if (fd == 0) {
         g_nameAndFilePathCtx[configCtx->filePath] = configCtx;
