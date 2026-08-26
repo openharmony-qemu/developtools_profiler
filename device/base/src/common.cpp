@@ -1152,7 +1152,7 @@ static bool CopyFdContentWithRetry(int srcFd, int destFd, int maxRetries)
             ret = true;
             break;
         }
-        if (ftruncate(destFd, 0) < 0 || lseek(destFd, 0, SEEK_SET) == (off_t)-1) {
+        if (ftruncate(destFd, 0) < 0 || lseek(destFd, 0, SEEK_SET) < 0) {
             PROFILER_LOG_ERROR(LOG_CORE, "clear destFd fail,error:%s", strerror(errno));
             break;
         }
