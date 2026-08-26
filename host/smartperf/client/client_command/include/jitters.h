@@ -68,7 +68,7 @@ public:
     JittersInfo jittersInfoData;
     JittersInfo prevResultFpsInfo;
     JittersInfo GetJittersInfo();
-    JittersInfo GetJittersByDump(const std::string& name);
+    JittersInfo GetJittersByDump();
     void CalcJitters();
     bool CalcFpsAndJitters(bool isBreak);
     long long CalculateJitter() const;

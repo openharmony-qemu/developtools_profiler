@@ -14,6 +14,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <csignal>
 #include <fcntl.h>
 #include <fstream>
 #include <unistd.h>
@@ -32,6 +33,7 @@ class HookManagerTest : public ::testing::Test {
 public:
     static void SetUpTestCase()
     {
+        std::signal(SIGPIPE, SIG_IGN);
         OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "1");
 #ifdef COVERAGE_TEST
         const int coverageSleepTime = 5; // sleep 5s

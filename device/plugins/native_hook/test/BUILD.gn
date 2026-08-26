@@ -21,6 +21,7 @@ config("module_private_config") {
     "HIPERF_DEBUG",
     "CONFIG_NO_HILOG",
     "target_cpu_${target_cpu}",
+    "NATIVE_HOOK_UT",
   ]
 
   if (current_toolchain != host_toolchain) {
@@ -46,6 +47,7 @@ ohos_unittest("nativehook_ut") {
     "unittest/sampling_test.cpp",
     "unittest/stack_writer_test.cpp",
     "unittest/cache_file_writer_test.cpp",
+    "unittest/arkts_hook_test.cpp",
   ]
 
   public_deps = [

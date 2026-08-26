@@ -47,6 +47,16 @@ bool NetworkProfilerSocketService::StartService(const std::string& unixSocketNam
     return true;
 }
 
+void NetworkProfilerSocketService::GetPeerUcred(SocketContext &context, struct ucred &cred)
+{
+    int socketHandle = context.GetSocketHandle();
+    socklen_t len = sizeof(struct ucred);
+    if (getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetPeerUcred getsockopt failed");
+        return;
+    }
+}
+
 bool NetworkProfilerSocketService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf,
     const uint32_t size)
 {
@@ -60,6 +70,13 @@ bool NetworkProfilerSocketService::ProtocolProc(SocketContext &context, uint32_t
     if (pid <= 0) {
         return false;
     }
+    struct ucred cred;
+    GetPeerUcred(context, cred);
+    if (pid != static_cast<int32_t>(cred.pid)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc check client pid failed");
+        return false;
+    }
+
     std::string bundleName = GetProcessNameByPid(pid);
     std::lock_guard<std::mutex> lock(mtx_);
     auto [eventFd, smbFd] = networkMgr_->GetNetworkProfilerCtx(pid, bundleName);

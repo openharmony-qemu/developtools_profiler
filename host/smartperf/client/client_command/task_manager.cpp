@@ -17,6 +17,7 @@
 #include "common.h"
 #include <chrono>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include "securec.h"
 
@@ -52,6 +53,7 @@ OHOS::SmartPerf::TaskManager* g_mgr = nullptr;
 thread_local OHOS::SmartPerf::ThreadLocal g_datas;
 constexpr int32_t SAVE_DATA_INTERVAL_MINUTE = 5;
 constexpr int32_t THE_MINUTE = 60;
+constexpr mode_t FILE_PERMISSION_FULL = 0777;
 }
 
 namespace OHOS::SmartPerf {
@@ -200,10 +202,17 @@ void TaskManager::AddTask(std::vector<std::string>& argv)
 
 void TaskManager::SetFilePath(const std::string& fileName, bool removeCurrentFile)
 {
-    fileName_ = fileName;
-    saveFlag_ = true;
-    if (removeCurrentFile) {
-        std::remove(fileName_.c_str());
+    if (!SPUtils::IsValidPath(fileName)) {
+        LOGE("SetFilePath invalid path: %s", fileName.c_str());
+        return;
+    }
+    {
+        std::lock_guard<std::mutex> lock(mtx_);
+        fileName_ = fileName;
+        saveFlag_ = true;
+        if (removeCurrentFile) {
+            std::remove(fileName_.c_str());
+        }
     }
     std::filesystem::path fullPath = fileName;
     std::string dir = fullPath.parent_path().string();
@@ -280,7 +289,10 @@ void TaskManager::SaveRegularly(int32_t dataIndex)
             item->switch_ = !item->switch_;
         }
         LOGD("Start saving data automatically");
-        scheduleSaveDataCond_.notify_all();
+        {
+            std::lock_guard<std::mutex> schedLock(scheduleSaveDataMtx_);
+            scheduleSaveDataCond_.notify_all();
+        }
     }
 }
 
@@ -330,6 +342,40 @@ bool TaskManager::ThreadLock()
     return true;
 }
 
+std::map<std::string, std::string> TaskManager::CollectCurrentData(uint32_t dataIndex, bool recordData)
+{
+    std::map<std::string, std::string> currDatas;
+    currDatas.emplace("timestamp", std::to_string(SPUtils::GetCurTime()));
+    if (recordData) {
+        datas_.emplace(dataIndex,
+            std::map<std::string, std::string>{{"timestamp", std::to_string(SPUtils::GetCurTime())}});
+    }
+    for (auto& item : priorityTask_) {
+        currDatas.merge(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex, recordData).get());
+    }
+    std::vector<std::future<std::map<std::string, std::string>>> result;
+    for (auto& item : normalTask_) {
+        result.emplace_back(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex, recordData));
+    }
+    for (auto& item : result) {
+        currDatas.merge(item.get());
+    }
+    for (auto& item : OHOS::SmartPerf::GpuCounter::GetInstance().GetGpuRealtimeData()) {
+        currDatas.insert(item);
+    }
+    return currDatas;
+}
+
+void TaskManager::FinishLoop()
+{
+    ProcessOnceTask(false);
+    running_ = false;
+    finishCond_.notify_all();
+    {
+        std::lock_guard<std::mutex> lock(scheduleSaveDataMtx_);
+        scheduleSaveDataCond_.notify_all();
+    }
+}
 void TaskManager::MainLoop()
 {
     while (running_) {
@@ -346,25 +392,7 @@ void TaskManager::MainLoop()
             break;
         }
         LOGD("data index: %u", dataIndex_);
-        std::map<std::string, std::string> currDatas;
-        currDatas.emplace("timestamp", std::to_string(SPUtils::GetCurTime()));
-        if (recordData) {
-            datas_.emplace(dataIndex_,
-                std::map<std::string, std::string>{{"timestamp", std::to_string(SPUtils::GetCurTime())}});
-        }
-        for (auto& item : priorityTask_) {
-            currDatas.merge(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData).get());
-        }
-        std::vector<std::future<std::map<std::string, std::string>>> result;
-        for (auto& item : normalTask_) {
-            result.emplace_back(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData));
-        }
-        for (auto& item : result) {
-            currDatas.merge(item.get());
-        }
-        for (auto& item : OHOS::SmartPerf::GpuCounter::GetInstance().GetGpuRealtimeData()) {
-            currDatas.insert(item);
-        }
+        std::map<std::string, std::string> currDatas = CollectCurrentData(dataIndex_, recordData);
         if (nextTime_ != nullptr) {
             *nextTime_ = SPUtils::GetCurTime();
         }
@@ -376,10 +404,7 @@ void TaskManager::MainLoop()
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
         }
     }
-    ProcessOnceTask(false);
-    running_ = false;
-    finishCond_.notify_all();
-    scheduleSaveDataCond_.notify_all();
+    FinishLoop();
 }
 
 void TaskManager::WriteToCSV()
@@ -456,7 +481,11 @@ void TaskManager::Stop(bool pause)
             std::lock_guard<std::mutex> lock(mtx_);
             running_ = false;
         }
-        scheduleSaveDataCond_.notify_all();
+        {
+            std::lock_guard<std::mutex> schedLock(scheduleSaveDataMtx_);
+            scheduleSaveDataCond_.notify_all();
+        }
+
         scheduleSaveDataTh_.join();
     }
     if (!pause) {
@@ -486,27 +515,27 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
 {
     if (type == CommandType::CT_PKG) {
         processName_ = std::get<std::string>(value);
+        if (!SPUtils::IsInvalidPkgName(processName_)) {
+            LOGE("The pkgName is Abnormal characters");
+            return;
+        }
         OHOS::SmartPerf::StartUpDelay sp;
         sp.GetPidByPkg(processName_, &processIds_);
     }
 
     if (type == CommandType::CT_PID) {
         processIds_ = std::to_string(std::get<int32_t>(value));
-        const std::string getProcPkg = "cat /proc/" + processIds_ + "/cmdline";
-        FILE *fd = popen(getProcPkg.c_str(), "r");
-        if (fd == nullptr) {
+        if (!SPUtils::IsValidPid(processIds_)) {
+            LOGE("The pid is Abnormal characters");
             return;
         }
-        char buf[1024] = {'\0'};
-        while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-            processName_ = buf;
-        }
-        if (pclose(fd) == -1) {
-            LOGE("Error: Failed to close file");
+        std::string cmdResult;
+        std::string procPath = "cat /proc/" + processIds_ + "/cmdline";
+        if (!SPUtils::LoadCmd(procPath, cmdResult)) {
             return;
         }
+        processName_ = cmdResult;
     }
-
     FPS::GetInstance().SetProcessId(processIds_);
     FPS::GetInstance().SetPackageName(processName_);
     Jitters::GetInstance().SetProcessId(processIds_);
@@ -657,35 +686,43 @@ void TaskManager::DeleteTask(SpProfiler* task)
 
 void TaskManager::InitDataCsv()
 {
-    if (!SPUtils::FileAccess(fileName_)) {
-        char fileName[PATH_MAX] = {0x00};
-        if (realpath(fileName_.c_str(), fileName) == nullptr) {
-            LOGE("the file not exeit");
+    size_t lastSlash = fileName_.find_last_of('/');
+    std::string fileName = (lastSlash != std::string::npos) ? fileName_.substr(lastSlash + 1) :
+        fileName_;
+    std::string safePath;
+    if (lastSlash != std::string::npos) {
+        std::string dirPath = fileName_.substr(0, lastSlash);
+        char realDirPath[PATH_MAX] = {0x00};
+        if (realpath(dirPath.c_str(), realDirPath) == nullptr) {
+            LOGE("data dir %s is nullptr", dirPath.c_str());
             return;
         }
-        std::ofstream file(fileName_);
+        safePath = std::string(realDirPath) + "/" + fileName;
+    } else {
+        safePath = fileName;
+    }
+    if (!SPUtils::FileAccess(safePath)) {
+        mode_t oldMask = umask(0);
+        std::ofstream file(safePath);
         if (file) {
-            std::string chmodCmd = "chmod 777 " + fileName_;
-            std::string cmdResult;
-            SPUtils::LoadCmd(chmodCmd, cmdResult);
+            if (chmod(safePath.c_str(), FILE_PERMISSION_FULL) != 0) {
+                LOGE("Failed to chmod %s", safePath.c_str());
+            }
             file.close();
         } else {
             LOGE("Failed to creat file");
+            umask(oldMask);
             return;
         }
+        umask(oldMask);
     } else {
-        char fileName[PATH_MAX] = {0x00};
-        if (realpath(fileName_.c_str(), fileName) == nullptr) {
-            LOGE("the file not exeit");
-            return;
-        }
-        std::ofstream file(fileName_, std::ios::trunc);
+        std::ofstream file(safePath, std::ios::trunc);
         if (!file) {
             LOGE("Unable to open file");
             return;
         }
         file.close();
-        LOGD("CreatPath already exists: %s", fileName_.c_str());
+        LOGD("CreatPath already exists: %s", safePath.c_str());
     }
 }
 

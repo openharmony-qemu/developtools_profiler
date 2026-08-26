@@ -18,7 +18,6 @@
 #include "hook_manager.h"
 #include <cinttypes>
 #include <unistd.h>
-#include <sys/socket.h>
 #include "common.h"
 #include "logging.h"
 #include "parameter.h"
@@ -124,12 +123,23 @@ bool HookService::HandlePeerMessage(SocketContext &context, const int8_t *buf, u
     return false;
 }
 
-bool HookService::HandleControlCommand(uint32_t cmd)
+bool HookService::HandleControlCommand(SocketContext &context, uint32_t cmd)
 {
     if (cmd != MEM_LEAK_DONE_CMD) {
         return false;
     }
-    if (hookMgr_ == nullptr || !hookMgr_->HandleMemLeakDone()) {
+
+    if (hookMgr_ == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HandleControlCommand invalid hookMgr_");
+        return true;
+    }
+    struct ucred cred;
+    GetPeerUcred(context, cred);
+    if (!hookMgr_->CheckHookPid(static_cast<int32_t>(cred.pid))) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HandleControlCommand check client pid failed");
+        return true;
+    }
+    if (!hookMgr_->HandleMemLeakDone()) {
         PROFILER_LOG_ERROR(LOG_CORE, "HandleControlCommand mem leak done failed");
     }
     return true;
@@ -153,22 +163,34 @@ bool HookService::ResolveProcessName(int32_t peerConfig, std::string& procName)
     return true;
 }
 
-bool HookService::CheckConnectionPermission(SocketContext &context)
+void HookService::GetPeerUcred(SocketContext &context, struct ucred &cred)
+{
+    int socketHandle = context.GetSocketHandle();
+    socklen_t len = sizeof(struct ucred);
+    if (getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HookService ProtocolProc getsockopt failed");
+        return;
+    }
+}
+
+bool HookService::CheckConnectionPermission(SocketContext &context, pid_t pid)
 {
     if ((!firstProcess_) && (!multipleProcesses_)) {
         return false;
     }
     firstProcess_ = false;
+
+    struct ucred cred;
+    GetPeerUcred(context, cred);
+    if (pid != cred.pid) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HookService ProtocolProc process check cred failed");
+        return false;
+    }
+
     if (hookMgr_->GetHookConfig().startup_mode()) {
         return true;
     }
-    int socketHandle = context.GetSocketHandle();
-    struct ucred cred;
-    socklen_t len = sizeof(struct ucred);
-    if (getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) {
-        PROFILER_LOG_ERROR(LOG_CORE, "HookService ProtocolProc getsockopt failed");
-        return false;
-    }
+
     auto it = pidInfo_.find(cred.pid);
     if (it == pidInfo_.end() || it->second.first != cred.uid || it->second.second != cred.gid) {
         PROFILER_LOG_ERROR(LOG_CORE, "HookService ProtocolProc process uid gid check failed");
@@ -314,7 +336,7 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
         return HandlePeerMessage(context, buf, size);
     }
     int peerConfig = *const_cast<int *>(reinterpret_cast<const int *>(buf));
-    if (HandleControlCommand(static_cast<uint32_t>(peerConfig))) {
+    if (HandleControlCommand(context, static_cast<uint32_t>(peerConfig))) {
         return true;
     }
     if (peerConfig == -1) {
@@ -326,7 +348,7 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     }
 
     std::lock_guard<std::mutex> lock(mtx_);
-    if (!CheckConnectionPermission(context)) {
+    if (!CheckConnectionPermission(context, static_cast<pid_t>(peerConfig))) {
         return false;
     }
     SaveSocketFd(context, static_cast<pid_t>(peerConfig));
@@ -359,6 +381,13 @@ void HookService::ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf)
     }
 
     HookCacheFileMsg cacheFileMsg = *reinterpret_cast<HookCacheFileMsg *>(const_cast<int8_t*>(buf));
+    struct ucred cred;
+    GetPeerUcred(context, cred);
+    if (cacheFileMsg.hookPid != cred.pid) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ReceiveCacheFileMsg check client pid failed");
+        return;
+    }
+
     std::lock_guard<std::mutex> lock(mtx_);
     if (cacheFileMsg.msgType == CACHE_FILE_READY) {
         int cacheFd = context.ReceiveFileDiscriptor();

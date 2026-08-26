@@ -77,28 +77,26 @@ void Jitters::SetProcessId(const std::string &pid)
 
 JittersInfo Jitters::GetJittersInfo()
 {
-    std::string uniteLayer = "composer";
     bool onTop = OHOS::SmartPerf::SPUtils::IsForeGround(pkgName);
     if (onTop) {
         OHOS::SmartPerf::SPUtils::GetCurrentTime(prevResultFpsInfo.curTime);
-        jittersInfoData = GetJittersByDump(uniteLayer);
+        jittersInfoData = GetJittersByDump();
     } else {
         jittersInfoData.jitters.clear();
     }
     return jittersInfoData;
 }
 
-JittersInfo Jitters::GetJittersByDump(const std::string& name)
+JittersInfo Jitters::GetJittersByDump()
 {
     JittersInfo tmpFps;
     tmpFps.fps = 0;
     tmpFps.jitters.clear();
     jittersInfo = tmpFps;
     bool isBreak = false;
-    std::string commond = "fps " + name;
-    const std::string cmd = "hidumper -s 10 -a \"" + commond + "\"";
-    FILE *fp = popen(cmd.c_str(), "r");
-    if (fp == nullptr) {
+    std::string arg = "fps composer";
+    std::string cmdResult;
+    if (!SPUtils::SafeLoadExec({"hidumper", "-s", "10", "-a", arg}, cmdResult)) {
         LOGE("Failed to open hidumper file");
         return jittersInfo;
     }
@@ -108,14 +106,12 @@ JittersInfo Jitters::GetJittersByDump(const std::string& name)
     clock_gettime(CLOCK_MONOTONIC, &sysTime);
     jittersInfo.curTime = static_cast<int>(sysTime.tv_sec - 1);
     LOGD("jittersInfo.curTime: (%d)", jittersInfo.curTime);
-    char tmp[1024];
-    std::stringstream sstream;
-    while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
-        LOGD("jittersInfo::dump time: %s", tmp);
-        std::string tmpStr(tmp);
+    std::istringstream iss(cmdResult);
+    std::string line;
+    while (std::getline(iss, line)) {
+        LOGD("jittersInfo::dump time: %s", line.c_str());
         curScreenTimestamp = 0;
-        sstream.clear();
-        sstream.str(tmpStr);
+        std::stringstream sstream(line);
         sstream >> curScreenTimestamp;
         if (curScreenTimestamp == 0) {
             continue;
@@ -125,10 +121,6 @@ JittersInfo Jitters::GetJittersByDump(const std::string& name)
         }
     }
     CalcJitters();
-    if (pclose(fp) == -1) {
-        LOGE("Error::Failed to close file");
-        return jittersInfo;
-    }
     return jittersInfo;
 }
 

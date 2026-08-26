@@ -50,25 +50,20 @@ std::map<std::string, std::string> Navigation::GetNavResult(const std::string& w
 {
     std::map<std::string, std::string> navInfo;
     std::string nameStr = "No Navigation Info";
-    std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_NAV) + winId + " -navigation'";
-    if (cmd.empty()) {
+    if (!SPUtils::IsValidWinId(winId)) {
         navInfo["navPathName"] = nameStr;
         return navInfo;
     }
-    FILE *navfd = popen(cmd.c_str(), "r");
-    if (navfd == nullptr) {
+    std::string arg = "-w " + winId + " -navigation";
+    std::string cmdResult;
+    if (!SPUtils::SafeLoadExec({"hidumper", "-s", "WindowManagerService", "-a", arg}, cmdResult)) {
         navInfo["navPathName"] = nameStr;
         return navInfo;
     }
-    char buf[4096] = {'\0'};
-    while ((fgets(buf, sizeof(buf), navfd)) != nullptr) {
-        std::string line(buf);
+    std::istringstream iss(cmdResult);
+    std::string line;
+    while (std::getline(iss, line)) {
         SubstrNavName(line, nameStr);
-    }
-    if (pclose(navfd) == -1) {
-        LOGE("Error: Failed to close file");
-        navInfo["navPathName"] = nameStr;
-        return navInfo;
     }
     navInfo["navPathName"] = nameStr;
     LOGD("navPathName = %s", nameStr.c_str());
@@ -93,14 +88,13 @@ void Navigation::SubstrNavName(const std::string &line, std::string &nameStr) co
 std::string Navigation::GetWinId(std::string navPid) const
 {
     std::string wid;
-    const std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_A_A);
-    FILE *fd = popen(cmd.c_str(), "r");
-    if (fd == nullptr) {
-        return wid = -1;
+    std::string cmdResult;
+    if (!SPUtils::SafeLoadExec({"hidumper", "-s", "WindowManagerService", "-a", "-a"}, cmdResult)) {
+        return "-1";
     }
-    char buf[1024] = {'\0'};
-    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-        std::string line = buf;
+    std::istringstream iss(cmdResult);
+    std::string line;
+    while (std::getline(iss, line)) {
         if (line.find("---") != std::string::npos || line.length() <= 1 ||
             line.find("WindowName") != std::string::npos) {
             continue;
@@ -113,10 +107,6 @@ std::string Navigation::GetWinId(std::string navPid) const
                 break;
             }
         }
-    }
-    if (pclose(fd) == -1) {
-        LOGE("Error: Failed to close file");
-        return wid = -1;
     }
     return wid;
 }

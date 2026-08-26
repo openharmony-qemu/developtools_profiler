@@ -48,6 +48,9 @@
 #include "app_mgr_proxy.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
+#include "res_sched_client.h"
+#include "res_type.h"
+#include "nlohmann/json.hpp"
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
@@ -1046,6 +1049,10 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
 
 void HookManager::CheckHapEncryped()
 {
+    if (!COMMON::IsUserMode()) {
+        PROFILER_LOG_INFO(LOG_CORE, "debug mode, skip encrypted app js stack check.");
+        return;
+    }
     if (saMode_ && hookConfig_.fp_unwind()) {
         PROFILER_LOG_DEBUG(LOG_CORE, "sa Mode, the encrypted app is allowed to use fp unwind to catch js stack.");
         return;
@@ -1069,6 +1076,10 @@ void HookManager::UpdateFreezeExcludedPid(bool isAdd, int32_t targetPid, int32_t
 {
     if (!saMode_) {
         sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+        if (sam == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Get SystemAbilityManager failed");
+            return;
+        }
         sptr<AppExecFwk::IAppMgr> appManager =
             iface_cast<AppExecFwk::IAppMgr>(sam->GetSystemAbility(APP_MGR_SERVICE_ID));
         if (appManager == nullptr) {
@@ -1117,6 +1128,16 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         if (hookConfig_.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()) <= 0) {
             PROFILER_LOG_ERROR(LOG_CORE, "%s: ParseFromArray failed", __func__);
             return false;
+        }
+    }
+    if (hookConfig_.startup_mode()) {
+        nlohmann::json payload;
+        payload["bundleName"] = hookConfig_.process_name();
+        nlohmann::json reply;
+        int32_t ret = OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportSyncEvent(
+            OHOS::ResourceSchedule::ResType::SYNC_RES_TYPE_DFX_CTRL_IMAGE_INTERFACE, 0, payload, reply);
+        if (ret != 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "ReportSyncEvent clear image cache failed, ret=%d", ret);
         }
     }
     if ((!saMode_) && (COMMON::IsUserMode())) {
@@ -1558,6 +1579,10 @@ void HookManager::DumpGwpAsanInfo(uint8_t* data)
         return;
     }
 
+    if (gwpAsanMaxStackDepth_ == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "gwpAsanMaxStackDepth_ is 0");
+        return;
+    }
     size_t allocDataSize = sizeof(GwpAllocationData) + (gwpAsanMaxStackDepth_ - 1) * sizeof(uintptr_t);
     uint8_t* allocDataPtr = data + sizeof(size_t) + sizeof(struct GwpHeader);
 
@@ -1728,7 +1753,7 @@ bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& 
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + offset);
 
         totalRecord_++;
-        if (shouldSkipGlobalFreed_) {
+        if (shouldSkipGlobalFreed_ && IsBaseStackRawDataRecord(dataPtr, totalSize)) {
             auto* tmpRawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
             if ((IsAllocRecord(tmpRawData) || IsFreeRecord(tmpRawData)) &&
                 ShouldSkipRecord(tmpRawData, validLiveData_) &&
@@ -1777,6 +1802,10 @@ bool HookManager::RefreshValidLiveDataFromBuffer(uint8_t* buffer, uint32_t total
         fileSize += sizeof(uint32_t) + totalSize;
 
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + offset);
+        if (!IsBaseStackRawDataRecord(dataPtr, totalSize)) {
+            offset += totalSize;
+            continue;
+        }
         auto* rawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
         if (IsAllocRecord(rawData) || IsFreeRecord(rawData)) {
             UpdateLiveData(rawData, validLiveData_, orphanFreeWhitelist_);
@@ -2513,6 +2542,15 @@ void HookManager::RotateCacheFdOnReturn(pid_t pid, uint16_t returnedFileIndex, i
     item->RotateActiveCacheFd(returnedFileIndex, dupFd);
     PROFILER_LOG_INFO(LOG_CORE, "RotateCacheFdOnReturn: pid:%d returnedIndex:%u dupFd:%d",
         pid, returnedFileIndex, dupFd);
+}
+
+bool HookManager::CheckHookPid(int32_t pid)
+{
+    auto item = FindHookContext(pid, "");
+    if (item == nullptr) {
+        return false;
+    }
+    return true;
 }
 
 void HookManager::HandleBackpressure(const std::shared_ptr<HookManagerCtx>& ctx)

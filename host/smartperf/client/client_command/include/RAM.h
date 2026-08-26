@@ -17,6 +17,7 @@
 #include "sp_profiler.h"
 #include <future>
 #include <string>
+#include <sstream>
 
 enum {
     RAM_ONE = 1,
@@ -53,8 +54,8 @@ class RAM : public SpProfiler {
 public:
     std::map<std::string, std::string> GetSysRamInfo() const;
     std::map<std::string, std::string> GetRamInfo();
-    std::map<std::string, std::string> GetPssRamInfo(FILE *fd, const std::string& pid, size_t index);
-    std::map<std::string, std::string> ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo,
+    std::map<std::string, std::string> GetPssRamInfo(std::istringstream &iss, const std::string& pid, size_t index);
+    std::map<std::string, std::string> ParsePssValues(std::istringstream &iss, std::vector<std::string> &paramsInfo,
         const std::string pid, size_t index);
     void GetPssAboutPid(struct PssValues &pss, std::vector<std::string> &params);
     void GetDevecoPssAboutPid(struct PssValues &pss, std::vector<std::string> &params);

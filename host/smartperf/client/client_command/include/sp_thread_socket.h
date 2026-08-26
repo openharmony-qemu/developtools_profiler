@@ -58,7 +58,6 @@ public:
     void StopRecvRecord(SpServerSocket &spSocket) const;
     void SendTokenFailedMessage(SpServerSocket &socket, const std::string &message) const;
     void DealMsg(const std::string& recvStr, SpServerSocket &spSocket, SocketErrorType tokenStatus);
-    void EditorRecv(const std::string& recvStr, const SpServerSocket &spSocket) const;
     void BackDesktop() const;
     void HandleMsg(SpServerSocket &spSocket);
     void HeartbeatDetection(const std::string& recvBuf);
@@ -75,6 +74,8 @@ public:
     void GetTraceStartPoint(std::string &recvBuf);
     std::vector<std::string> split(const std::string &str, const std::string &delimiter);
     void HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
+        const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator);
+    void HandleNullMsgTail(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
         const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator);
     void UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
         const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator);

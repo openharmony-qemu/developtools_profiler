@@ -18,7 +18,7 @@
 
 #include <memory>
 #include <string>
-
+#include <sys/socket.h>
 #include "hook_common.h"
 #include "service_entry.h"
 
@@ -38,15 +38,16 @@ public:
     void ClientDisconnectCallback(int socketFd);
 private:
     bool StartService(const std::string& unixSocketName);
+    void GetPeerUcred(SocketContext &context, struct ucred &cred);
     bool HandlePeerMessage(SocketContext &context, const int8_t *buf, uint32_t size);
     bool ResolveProcessName(int32_t peerConfig, std::string& procName);
-    bool CheckConnectionPermission(SocketContext &context);
+    bool CheckConnectionPermission(SocketContext &context, pid_t pid);
     bool SendPeerFds(SocketContext &context, int32_t peerConfig, const std::string& procName);
     bool SendSharedMemoryFds(SocketContext &context, int32_t peerConfig, const std::string& procName);
     bool SendAsyncStackFd(SocketContext &context);
     bool SendMemLeakFd(SocketContext &context);
     void SaveSocketFd(SocketContext &context, pid_t pid);
-    bool HandleControlCommand(uint32_t cmd);
+    bool HandleControlCommand(SocketContext &context, uint32_t cmd);
     void ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf);
     bool SendFileCacheFd(SocketContext &context, int32_t pid, uint16_t fileIndex);
     bool SendInitialFileCacheFds(SocketContext &context, int32_t pid, const std::string& name);

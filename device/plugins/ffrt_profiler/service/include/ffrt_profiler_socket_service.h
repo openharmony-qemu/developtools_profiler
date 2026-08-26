@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-
+#include <sys/socket.h>
 #include "service_entry.h"
 #include "ffrt_profiler_common.h"
 
@@ -37,6 +37,7 @@ public:
     void SetConfig(int32_t shmSize, int32_t flushCount, bool block, int32_t clockType);
 private:
     bool StartService(const std::string& unixSocketName);
+    void GetPeerUcred(SocketContext &context, struct ucred &cred);
 
 private:
     std::shared_ptr<ServiceEntry> serviceEntry_{nullptr};

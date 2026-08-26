@@ -396,4 +396,44 @@ export default namespace hidebug {
     ret.swapRss = new bigint(rssInfo.swapRss);
     return ret;
   }
+
+  native function dumpJsHeapDataAdapter(filename: string, needClean: boolean): void;
+
+  export function dumpJsHeapData(filename: string): void {
+    dumpJsHeapDataAdapter(filename, false);
+  }
+
+  export function dumpJsHeapData(filename: string, needClean: boolean): void {
+    dumpJsHeapDataAdapter(filename, needClean);
+  }
+
+  native function dumpJsRawHeapDataAdapter(needGC: boolean, needClean: boolean, processDump: boolean): Promise<Array<string>>;
+
+  export function dumpJsRawHeapData(needGC?: boolean): Promise<string> {
+    return dumpJsRawHeapDataAdapter(needGC !== false, false, false).then((arr: Array<string>): string => {
+      return arr[0];
+    });
+  }
+
+  export function dumpJsRawHeapData(needGC: boolean, needClean: boolean): Promise<string> {
+    return dumpJsRawHeapDataAdapter(needGC, needClean, false).then((arr: Array<string>): string => {
+      return arr[0];
+    });
+  }
+
+  export function dumpJsRawHeapData(needGC: boolean, needClean: boolean, processDump: boolean): Promise<Array<string>> {
+    return dumpJsRawHeapDataAdapter(needGC, needClean, processDump);
+  }
+
+  export enum JsRawHeapTrimLevel {
+    TRIM_LEVEL_1 = 0,
+    TRIM_LEVEL_2 = 1
+  }
+
+  native function setJsRawHeapTrimLevelAdapter(level: int): void;
+
+  export function setJsRawHeapTrimLevel(level: JsRawHeapTrimLevel): void {
+    setJsRawHeapTrimLevelAdapter(level);
+  }
+
 }

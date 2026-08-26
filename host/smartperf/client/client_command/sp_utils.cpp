@@ -28,6 +28,10 @@
 #include <dlfcn.h>
 #include <sys/utsname.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <cerrno>
+#include <cstring>
 #include "sys/time.h"
 #include "securec.h"
 #include "include/sp_utils.h"
@@ -59,7 +63,10 @@ const unsigned int INT_MAX_LEN = 10;
 const unsigned int CHAR_NUM_DIFF = 48;
 const unsigned int UI_DECIMALISM = 10;
 const unsigned int UI_INDEX_2 = 2;
-const int BUFFER_SIZE = 1024;
+const int EXEC_FAILURE_EXIT_CODE = 127;
+const int EXEC_BUF_SIZE = 4096;
+const unsigned int PID_MAX_LEN = 10;
+const unsigned int WINID_MAX_LEN = 22;
 const std::string SMART_PERF_VERSION = "1.1.0";
 const std::string LOWERCASE_H(1, static_cast<char>(104));
 const std::string LOWERCASE_W(1, static_cast<char>(119));
@@ -109,6 +116,98 @@ bool SPUtils::LoadFile(const std::string &filePath, std::string &content)
     // remove '' \n\r
     ReplaceString(content);
     return true;
+}
+
+bool SPUtils::SafeLoadExec(const std::vector<std::string> &args, std::string &result)
+{
+    if (args.empty()) {
+        return false;
+    }
+    int pipefd[UI_INDEX_2];
+    if (pipe(pipefd) == -1) {
+        return false;
+    }
+    pid_t pid = fork();
+    if (pid == -1) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        return false;
+    }
+    if (pid == 0) {
+        close(pipefd[0]);
+        int maxFd = static_cast<int>(sysconf(_SC_OPEN_MAX));
+        for (int fd = STDERR_FILENO + 1; fd < maxFd; ++fd) {
+            if (fd != pipefd[1]) {
+                close(fd);
+            }
+        }
+        if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
+            _exit(EXEC_FAILURE_EXIT_CODE);
+        }
+        if (dup2(pipefd[1], STDERR_FILENO) == -1) {
+            _exit(EXEC_FAILURE_EXIT_CODE);
+        }
+        close(pipefd[1]);
+        std::vector<char *> argv;
+        for (const auto &arg : args) {
+            argv.push_back(const_cast<char *>(arg.c_str()));
+        }
+        argv.push_back(nullptr);
+        execvp(argv[0], argv.data());
+        _exit(EXEC_FAILURE_EXIT_CODE);
+    }
+    close(pipefd[1]);
+    char buf[EXEC_BUF_SIZE];
+    ssize_t n;
+    while ((n = read(pipefd[0], buf, sizeof(buf))) > 0) {
+        result.append(buf, n);
+    }
+    close(pipefd[0]);
+    int status = 0;
+    waitpid(pid, &status, 0);
+    return WIFEXITED(status);
+}
+
+bool SPUtils::IsValidPid(const std::string &pid)
+{
+    if (pid.empty() || pid.size() > PID_MAX_LEN) {
+        return false;
+    }
+    return std::all_of(pid.begin(), pid.end(), ::isdigit);
+}
+
+bool SPUtils::IsValidWinId(const std::string &winId)
+{
+    if (winId.empty() || winId.size() > WINID_MAX_LEN) {
+        return false;
+    }
+    return std::all_of(winId.begin(), winId.end(), ::isdigit);
+}
+
+bool SPUtils::IsValidPath(const std::string& str)
+{
+    if (str.empty()) {
+        return false;
+    }
+    //拒绝所有控制字符
+    for (char c : str) {
+        if (static_cast<unsigned char>(c) <= 0x1F) {
+            return false;
+        }
+    }
+    const char* specialChars = "\\\"$`;&|><(){}[]^~*?#!%@";
+    if (str.find_first_of(specialChars) != std::string::npos) {
+        return false;
+    }
+    return true;
+}
+
+bool SPUtils::IsPathTraversal(const std::string& str)
+{
+    if (str.find("..") != std::string::npos) {
+        return true;
+    }
+    return false;
 }
 
 bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak, std::string &result)
@@ -259,39 +358,21 @@ std::string SPUtils::GetRadar()
 }
 std::string SPUtils::GetScreen()
 {
-    std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SCREEN);
     std::string screenStr = "";
-    FILE *fd = popen(cmd.c_str(), "r");
-    if (fd == nullptr) {
+    std::string cmdResult;
+    if (!SafeLoadExec({"hidumper", "-s", "10", "-a", "screen"}, cmdResult)) {
         return screenStr;
     }
-    char buf[4096] = {'\0'};
-    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-        std::string line(buf);
+    std::istringstream iss(cmdResult);
+    std::string line;
+    while (std::getline(iss, line)) {
         if (line.find("activeMode") != std::string::npos) {
             screenStr = line;
         }
     }
-    pclose(fd);
     return screenStr;
 }
 
-std::string SPUtils::ExecuteCommand(const std::string& command)
-{
-    std::string result;
-    FILE* pipe = popen(command.c_str(), "r");
-    if (!pipe) {
-        LOGE("popen failed!");
-        return " ";
-    }
-    char buffer[BUFFER_SIZE];
-    size_t bytesRead;
-    while ((bytesRead = fread(buffer, 1, sizeof(buffer), pipe)) > 0) {
-        result.append(buffer, bytesRead);
-    }
-    pclose(pipe);
-    return result;
-}
 std::string SPUtils::GetRadarFrame()
 {
     std::vector<std::string> params;
@@ -303,11 +384,15 @@ std::string SPUtils::GetRadarFrame()
     std::promise<std::string> otherPromise;
     std::future<std::string> slideResult = slidePromise.get_future();
     std::future<std::string> otherResult = otherPromise.get_future();
-    std::thread slideThread([&slideCmd, &slidePromise]() {
-        slidePromise.set_value(ExecuteCommand(slideCmd));
+    std::thread slideThread([&slidePromise, &slideCmd]() {
+        std::string result = "";
+        LoadCmd(slideCmd, result);
+        slidePromise.set_value(result);
     });
-    std::thread otherThread([&otherCmd, &otherPromise]() {
-        otherPromise.set_value(ExecuteCommand(otherCmd));
+    std::thread otherThread([&otherPromise, &otherCmd]() {
+        std::string result = "";
+        LoadCmd(otherCmd, result);
+        otherPromise.set_value(result);
     });
     slideThread.join();
     otherThread.join();
@@ -632,19 +717,19 @@ bool SPUtils::VerifyValueStr(std::map<std::string, std::string> &mapInfo, std::s
         return false;
     }
     a = mapInfo.find("PKG");
-    if (mapInfo.end() != a && a->second.empty()) { // Cannot be null
-        errorInfo += "option requires an argument -- '" + a->first + "'";
+    if (mapInfo.end() != a && !IsInvalidPkgName(a->second)) {
+        errorInfo += "invalid parameter, invalid package name -- '" + a->second + "'";
         return false;
     }
     a = mapInfo.find("PID");
-    if (mapInfo.end() != a && a->second.empty()) { // Cannot be null
-        errorInfo += "option requires an argument -- '" + a->first + "'";
+    if (mapInfo.end() != a && !IsValidPid(a->second)) {
+        errorInfo += "invalid parameter, invalid pid -- '" + a->second + "'";
         return false;
     }
     a = mapInfo.find("OUT");
     if (mapInfo.end() != a) {
-        if (a->second.empty()) {
-            errorInfo += "option requires an argument -- '" + a->first + "'";
+        if (!IsValidPath(a->second)) {
+            errorInfo += "invalid parameter, invalid path -- '" + a->second + "'";
             return false;
         }
         // The total length of file path and name cannot exceed PATH_MAX
@@ -757,23 +842,7 @@ bool SPUtils::IsForeGround(const std::string &pkg)
     bool isFoundAppName = false;
     bool isForeground = false;
     std::string result;
-    const std::string cmd = "hidumper -s AbilityManagerService -a -l";
-    if (cmd.empty()) {
-        LOGI("cmd is null");
-        return false;
-    }
-
-    FILE *fd = popen(cmd.c_str(), "r");
-    if (fd == nullptr) {
-        return false;
-    }
-    size_t bytesRead;
-    std::array<char, BUFFER_SIZE> buf;
-    while ((bytesRead = fread(buf.data(), 1, buf.size(), fd)) > 0) {
-        result.append(buf.data(), bytesRead);
-    }
-    if (pclose(fd) == -1) {
-        LOGE("Error: failed to close file");
+    if (!SafeLoadExec({"hidumper", "-s", "AbilityManagerService", "-a", "-l"}, result)) {
         return false;
     }
 
@@ -846,17 +915,20 @@ bool SPUtils::GetPathPermissions(const std::string &path)
 
 bool SPUtils::GetIsGameApp(const std::string& pkg)
 {
-    bool isGame = false;
-    const std::string cmd = "hidumper -s 66006 -a '-t " + pkg + "'";
-    LOGD("SPUtils::GetIsGameApp cmd (%s)", cmd.c_str());
-    FILE *fd = popen(cmd.c_str(), "r");
-    if (fd == nullptr) {
-        LOGD("FPS::fd is empty");
+    if (!IsInvalidPkgName(pkg)) {
+        LOGE("SPUtils::GetIsGameApp invalid pkg name");
         return false;
     }
-    char buf[1024] = {'\0'};
-    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-        std::string line(buf);
+    bool isGame = false;
+    std::string cmdResult;
+    std::string arg = "-t " + pkg;
+    if (!SafeLoadExec({"hidumper", "-s", "66006", "-a", arg}, cmdResult)) {
+        LOGD("FPS::SafeLoadExec failed");
+        return false;
+    }
+    std::istringstream iss(cmdResult);
+    std::string line;
+    while (std::getline(iss, line)) {
         if (line.find("---") != std::string::npos || line.length() <= 1) {
             continue;
         }
@@ -866,15 +938,12 @@ bool SPUtils::GetIsGameApp(const std::string& pkg)
         } else {
             std::vector<std::string> params;
             SPUtils::StrSplit(line, " ", params);
-            if (params[0] == "1" && params[1] == pkg) {
+            if (params.size() >= UI_INDEX_2 && params[0] == "1" && params[1] == pkg) {
                 isGame = true;
-                LOGD("SPUtils::GetIsGameApp isGame", isGame);
+                LOGD("SPUtils::GetIsGameApp isGame %d", isGame);
                 break;
             }
         }
-    }
-    if (pclose(fd) == -1) {
-        LOGE("SPUtils::IsGameApp Error Failed to close file");
     }
     return isGame;
 }
@@ -947,15 +1016,6 @@ void SPUtils::RemoveDirOrFile(const std::string &dirPath)
     }
 }
 
-void SPUtils::CopyFiles(const std::string& cpStr)
-{
-    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::CP) + cpStr;
-    std::string cmdResult;
-    if (!SPUtils::LoadCmd(cmd, cmdResult)) {
-        WLOGE("Failed to copy files: %s", cpStr.c_str());
-    }
-}
-
 void SPUtils::TarFiles(const std::string& tarStr)
 {
     std::string tarCommand = CMD_COMMAND_MAP.at(CmdCommand::TAR) + tarStr;
@@ -977,6 +1037,10 @@ size_t SPUtils::GetFileSize(std::string filePath)
 
 bool SPUtils::IsFindDHGame(const std::string &pkg)
 {
+    if (!IsInvalidPkgName(pkg)) {
+        LOGE("SPUtils::IsFindDHGame invalid pkg name");
+        return false;
+    }
     bool isdhGame = false;
     const std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
     char buf[1024] = {'\0'};
@@ -1039,19 +1103,21 @@ bool SPUtils::IsInvalidPkgName(const std::string& pkgName)
 
 std::string SPUtils::GetWinId()
 {
-    char tmp[4096];
     std::string winId = "";
-    const std::string dumpCmd = "hidumper -s WindowManagerService -a '-a'";
-    FILE *fp = popen(dumpCmd.c_str(), "r");
-    if (!fp) {
+    std::string cmdResult;
+    if (!SafeLoadExec({"hidumper", "-s", "WindowManagerService", "-a", "-a"}, cmdResult)) {
         LOGE("hidumper is failed");
         return "";
     }
-    while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
-        std::string hidumperStr(tmp);
-        GetWinIdNum(hidumperStr, winId);
+    std::istringstream iss(cmdResult);
+    std::string line;
+    while (std::getline(iss, line)) {
+        GetWinIdNum(line, winId);
     }
-    pclose(fp);
+    if (!SPUtils::IsValidPid(winId)) {
+        LOGE("winId is Abnormal characters");
+        return "";
+    }
     return winId;
 }
 
