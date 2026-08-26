@@ -87,6 +87,7 @@ double GetFreeRomPercent(const std::string path = DEFAULT_RW_DIR);
 bool GetRomSpaceInfo(const std::string& path, uint64_t& totalBytes, uint64_t& freeBytes);
 bool CopyFileFast(uint32_t srcFd, const std::string& destPath);
 bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPath);
+bool CopyFileToFdFastFromPath(const std::string& srcPath, int destFd);
 bool CleanOldenFiles(const std::string& path);
 bool CleanCmdOldenTraceFiles(const std::string& path);
 bool CreateFile(const std::string& filePath);

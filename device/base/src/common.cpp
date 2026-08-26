@@ -1143,6 +1143,23 @@ static bool DoSendfileCopyOnce(int srcFd, int destFd, ssize_t &outTotal)
     return static_cast<ssize_t>(statBuf.st_size) == outTotal;
 }
 
+static bool CopyFdContentWithRetry(int srcFd, int destFd, int maxRetries)
+{
+    bool ret = false;
+    do {
+        ssize_t total = 0;
+        if (DoSendfileCopyOnce(srcFd, destFd, total)) {
+            ret = true;
+            break;
+        }
+        if (ftruncate(destFd, 0) < 0 || lseek(destFd, 0, SEEK_SET) == (off_t)-1) {
+            PROFILER_LOG_ERROR(LOG_CORE, "clear destFd fail,error:%s", strerror(errno));
+            break;
+        }
+    } while (maxRetries-- > 0);
+    return ret;
+}
+
 static bool CopyFileWithRetry(uint32_t srcFd, const std::string& destPath, int maxRetries)
 {
     if (srcFd < 0) {
@@ -1198,6 +1215,24 @@ bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPat
     bool result = COMMON::CopyFileFast(srcFd, destPath);
     if (!result) {
         PROFILER_LOG_ERROR(LOG_CORE, "CopyFileFast fail");
+    }
+    close(srcFd);
+    return result;
+}
+
+bool CopyFileToFdFastFromPath(const std::string& srcPath, int destFd)
+{
+    int srcFd = open(srcPath.c_str(), O_RDONLY);
+    if (srcFd < 0) {
+        const int bufSize = 256;
+        char buf[bufSize] = {0};
+        strerror_r(errno, buf, bufSize);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, srcPath.c_str(), errno, buf);
+        return false;
+    }
+    bool result = CopyFdContentWithRetry(srcFd, destFd, 3);
+    if (!result) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CopyFileToFdFastFromPath fail");
     }
     close(srcFd);
     return result;

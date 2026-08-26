@@ -900,6 +900,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
                                                      uint32_t& fd, std::shared_ptr<HookManager>& hook,
                                                      std::string& args, const sptr<IRemoteObject>& callback)
 {
+    uint32_t originFd = fd;
     std::lock_guard<std::mutex> guard(g_mtx);
     if (config->processName_.empty() && config->pid_ > 0) {
         config->processName_ = COMMON::GetBundleNameByPid(config->pid_);
@@ -915,7 +916,11 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
             "check config failed");
         return checkRet;
     }
-    if (fd == 0) {
+    if (fd > 0 && config->compositeHeapEnable_) {
+        std::string filePathStr = (config->pid_ > 0) ? std::to_string(config->pid_) : config->processName_;
+        config->filePath_ = FILE_PATH_HEAD + filePathStr + FILE_PATH_TAIL;
+    }
+    if (fd == 0 || (fd > 0 && config->compositeHeapEnable_)) {
         auto retFile = COMMON::CheckNotExistsFilePathSafe(config->filePath_);
         if (!retFile.first) {
             PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, config->filePath_.c_str());
@@ -987,6 +992,9 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     configCtx->callback = callback;
     configCtx->compositeHeapEnable = config->compositeHeapEnable_;
     configCtx->typeFileName = config->typeFileName_;
+    if (config->compositeHeapEnable_ && originFd > 0) {
+        configCtx->compositeHeapFd = originFd;
+    }
     if (!g_hasStartupMode && config->startupMode_) {
         g_hasStartupMode = true;
         startupModeProcessName_ = config->processName_;
@@ -1663,7 +1671,6 @@ int32_t NativeMemoryProfilerSaService::CopyApiCollectorFile(uint32_t pid, std::s
     }
     if (config->compositeHeapEnable) {
         std::string compositeFilepath = CollectApm(config);
-        unlink(config->filePath.c_str());
         if (compositeFilepath.empty()) {
             PROFILER_LOG_ERROR(LOG_CORE, "Collect composite heap fail");
             return RET_ERR;
@@ -1701,6 +1708,18 @@ int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::sha
         g_nameAndFilePathCtx.erase(config->filePath);
         if (config->startType == START_TYPE_API) {
             ret = CopyApiCollectorFile(pid, config, resultPath);
+        } else if (config->compositeHeapEnable && config->compositeHeapFd > 0) {
+            std::string compositeFilepath = CollectApm(config);
+            if (compositeFilepath.empty()) {
+                PROFILER_LOG_ERROR(LOG_CORE, "Collect composite heap fail");
+                return RET_ERR;
+            }
+            if (!COMMON::CopyFileToFdFastFromPath(compositeFilepath, config->compositeHeapFd)) {
+                (void)unlink(compositeFilepath.c_str());
+                PROFILER_LOG_ERROR(LOG_CORE, "Copy composite file into bundle fd failed");
+                return RET_ERR;
+            }
+            (void)unlink(compositeFilepath.c_str());
         }
         g_pidCtx.erase(config->pid);
         g_pidInfo.erase(static_cast<pid_t>(pid));

@@ -43,6 +43,7 @@ struct TaskConfig {
     int32_t timerFd{-1};
     bool isStartupMode{false};
     bool compositeHeapEnable{false};
+    uint32_t compositeHeapFd{0};
     uint32_t fd{0};
     uint32_t startType{0}; // 0:Hiveiew 1:API
     std::string typeFileName;   // for API trace file move
