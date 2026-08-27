@@ -28,6 +28,7 @@
 #include "parameters.h"
 #include "task_manager.h"
 #include "include/startup_delay.h"
+#include "include/RAM.h"
 
 constexpr const char *VERSION_TYPE = "const.logsystem.versiontype";
 static std::string GetOptions(const std::vector<std::string> &argv)
@@ -251,6 +252,7 @@ int main(int argc, char *argv[])
              "Try `SP_daemon --help' for more options." << std::endl;
         return 0;
     }
+    OHOS::SmartPerf::RAM::GetInstance().DetermineDeviceVersion();
     OHOS::SmartPerf::SPUtils::SetRkFlag();
     if (ProcessSpecificParameter(argc, argv, vec) == 0) {
         return 0;
