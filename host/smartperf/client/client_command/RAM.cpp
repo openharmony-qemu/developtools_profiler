@@ -353,7 +353,7 @@ std::map<std::string, std::string> RAM::ParsePssValues(std::istringstream &iss, 
         SPUtils::StrSplit(line, " ", params);
         GetPssAboutPid(pss, params);
         GetDevecoPssAboutPid(pss, params);
-        if (ParseAshmemValue(pss, params)) {
+        if (ParseAshmenValue(pss, params)) {
             continue;
         }
         if (line.find("arkts heap:") != std::string::npos) {
@@ -569,8 +569,8 @@ void RAM::DetermineDeviceVersion()
     int patch = 0;
     int build = 0;
     char dot;
-    std::istringstraem iss(verStr);
-    iss >> major >> dot >> minor >> dot >> pathc >> dot >> build;
+    std::istringstream iss(verStr);
+    iss >> major >> dot >> minor >> dot >> patch >> dot >> build;
     const int majorWeight = 10000;
     const int minorWeight = 1000;
     const int patchWeight = 100;
