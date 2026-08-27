@@ -566,6 +566,54 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, GenerateFileNameHandleBoundari
 }
 
 /**
+ * @tc.name: GenerateFileNamePrefixHandleBoundaries
+ * @tc.desc: Generate file name prefix handle boundaries.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, GenerateFileNamePrefixHandleBoundaries, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    EXPECT_TRUE(NativeMemoryProfilerSaClientManager::GenerateFileNamePrefix(-1, getpid()).empty());
+    EXPECT_TRUE(NativeMemoryProfilerSaClientManager::GenerateFileNamePrefix(
+        static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_MAX), getpid()).empty());
+
+    std::string procName = COMMON::GetProcessNameByPid(getpid());
+    EXPECT_FALSE(procName.empty());
+
+    std::string prefix = NativeMemoryProfilerSaClientManager::GenerateFileNamePrefix(
+        static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_NATIVE), getpid());
+    EXPECT_EQ(prefix, std::string("native-") + procName);
+}
+
+/**
+ * @tc.name: GenerateFileNamePrefixAllValidTypes
+ * @tc.desc: Generate file name prefix maps each valid resource type to its type tag.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, GenerateFileNamePrefixAllValidTypes, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::string procName = COMMON::GetProcessNameByPid(getpid());
+    ASSERT_FALSE(procName.empty());
+
+    const std::pair<InternalResourceType, std::string> typeTags[] = {
+        {InternalResourceType::OH_RES_TYPE_FD, "fd"},
+        {InternalResourceType::OH_RES_TYPE_THREAD, "thread"},
+        {InternalResourceType::OH_RES_TYPE_NATIVE, "native"},
+        {InternalResourceType::OH_RES_TYPE_GPU, "gpu"},
+        {InternalResourceType::OH_RES_TYPE_GLOBAL_HANDLE, "global_handle"},
+        {InternalResourceType::OH_RES_TYPE_DMA, "dma"},
+        {InternalResourceType::OH_RES_TYPE_ASHMEM, "ashmem"},
+        {InternalResourceType::OH_RES_TYPE_COMPOSITE_HEAP, "composite_heap"},
+    };
+    for (const auto& tag : typeTags) {
+        std::string prefix = NativeMemoryProfilerSaClientManager::GenerateFileNamePrefix(
+            static_cast<int32_t>(tag.first), getpid());
+        EXPECT_EQ(prefix, tag.second + "-" + procName);
+    }
+}
+
+/**
  * @tc.name: GetGwpAsanRejectsInvalidArgs
  * @tc.desc: Get GWPAsan asan rejects invalid args.
  * @tc.type: FUNC
@@ -1029,14 +1077,14 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigAsync, TestSiz
     auto callback = [&sem](int32_t errCode) { sem->Post(); };
     int fd = open(TEST_HTRACE_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
     ASSERT_GE(fd, 0);
-    int sceneboardPid = 0;
-    COMMON::IsProcessExist("com.ohos.sceneboard", sceneboardPid);
-    ASSERT_TRUE(sceneboardPid > 0);
+    int pid = 0;
+    COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    ASSERT_TRUE(pid > 0);
 
     std::string cmd = "setenforce 0";
     system(cmd.c_str());
 
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, sceneboardPid, 5, config, callback), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 5, config, callback), RET_OK);
     EXPECT_TRUE(sem->TimedWait(20));
     close(fd);
     unlink(TEST_HTRACE_FD_FILE_PATH.c_str());
@@ -1069,16 +1117,16 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigAsyncAndStop, 
     auto callback = [&sem](int32_t errCode) { sem->Post(); };
     int fd = open(TEST_HTRACE_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
     ASSERT_GE(fd, 0);
-    int sceneboardPid = 0;
-    COMMON::IsProcessExist("com.ohos.sceneboard", sceneboardPid);
-    ASSERT_TRUE(sceneboardPid > 0);
+    int pid = 0;
+    COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    ASSERT_TRUE(pid > 0);
 
     std::string cmd = "setenforce 0";
     system(cmd.c_str());
 
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, sceneboardPid, 10, config, callback), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 10, config, callback), RET_OK);
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(static_cast<uint32_t>(sceneboardPid)), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(static_cast<uint32_t>(pid)), RET_OK);
     EXPECT_TRUE(sem->TimedWait(20));
     close(fd);
     unlink(TEST_HTRACE_FD_FILE_PATH.c_str());
@@ -1104,14 +1152,14 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigCompositeHeapA
     auto callback = [&sem](int32_t errCode) { sem->Post(); };
     int fd = open(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
     ASSERT_GE(fd, 0);
-    int sceneboardPid = 0;
-    COMMON::IsProcessExist("com.ohos.sceneboard", sceneboardPid);
-    ASSERT_TRUE(sceneboardPid > 0);
+    int pid = 0;
+    COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    ASSERT_TRUE(pid > 0);
 
     std::string cmd = "setenforce 0";
     system(cmd.c_str());
 
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, sceneboardPid, 5, config, callback), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 5, config, callback), RET_OK);
     EXPECT_TRUE(sem->TimedWait(30));
     close(fd);
     unlink(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str());
@@ -1137,16 +1185,16 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigCompositeHeapA
     auto callback = [&sem](int32_t errCode) { sem->Post(); };
     int fd = open(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
     ASSERT_GE(fd, 0);
-    int sceneboardPid = 0;
-    COMMON::IsProcessExist("com.ohos.sceneboard", sceneboardPid);
-    ASSERT_TRUE(sceneboardPid > 0);
+    int pid = 0;
+    COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    ASSERT_TRUE(pid > 0);
 
     std::string cmd = "setenforce 0";
     system(cmd.c_str());
 
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, sceneboardPid, 10, config, callback), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 10, config, callback), RET_OK);
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(static_cast<uint32_t>(sceneboardPid)), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(static_cast<uint32_t>(pid)), RET_OK);
     EXPECT_TRUE(sem->TimedWait(30));
     close(fd);
     unlink(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str());

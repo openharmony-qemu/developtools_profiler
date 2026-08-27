@@ -102,7 +102,7 @@ int32_t NativeMemoryProfilerSaProxy::DumpData(uint32_t fd, std::shared_ptr<Nativ
     int32_t ret = remote->SendRequest(static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::DUMP_DATA),
                                       data, reply, option);
     if (ret != RET_OK) {
-        PROFILER_LOG_ERROR(LOG_CORE, "DumpData failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "DumpData failed, %d", ret);
         return ret;
     }
     return RET_OK;
