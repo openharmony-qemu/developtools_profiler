@@ -900,6 +900,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
                                                      uint32_t& fd, std::shared_ptr<HookManager>& hook,
                                                      std::string& args, const sptr<IRemoteObject>& callback)
 {
+    bool compositeHeapEnable = config->traceMask_ & RES_COMPOSITE_HEAP;
     uint32_t originFd = fd;
     std::lock_guard<std::mutex> guard(g_mtx);
     if (config->processName_.empty() && config->pid_ > 0) {
@@ -916,11 +917,11 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
             "check config failed");
         return checkRet;
     }
-    if (fd > 0 && config->compositeHeapEnable_) {
+    if (fd > 0 && compositeHeapEnable) {
         std::string filePathStr = (config->pid_ > 0) ? std::to_string(config->pid_) : config->processName_;
         config->filePath_ = FILE_PATH_HEAD + filePathStr + FILE_PATH_TAIL;
     }
-    if (fd == 0 || (fd > 0 && config->compositeHeapEnable_)) {
+    if (fd == 0 || (fd > 0 && compositeHeapEnable)) {
         auto retFile = COMMON::CheckNotExistsFilePathSafe(config->filePath_);
         if (!retFile.first) {
             PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, config->filePath_.c_str());
@@ -929,7 +930,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
             return RET_ERR;
         }
         int fdTemp = open(retFile.second.c_str(), O_RDWR | O_CREAT, FILE_MODE);
-        if (config->startType_ == START_TYPE_API && !config->compositeHeapEnable_) {
+        if (config->startType_ == START_TYPE_API && !compositeHeapEnable) {
             unlink(retFile.second.c_str());
         }
         CHECK_TRUE(fdTemp >= 0, RET_ERR, "Failed to open file(%s)", config->filePath_.c_str());
@@ -990,9 +991,9 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         static_cast<int32_t>(IPCSkeleton::GetCallingPid()), config->filePath_, timerFd, config->startupMode_, fd,
         config->startType_);
     configCtx->callback = callback;
-    configCtx->compositeHeapEnable = config->compositeHeapEnable_;
+    configCtx->compositeHeapEnable = compositeHeapEnable;
     configCtx->typeFileName = config->typeFileName_;
-    if (config->compositeHeapEnable_ && originFd > 0) {
+    if (compositeHeapEnable && originFd > 0) {
         configCtx->compositeHeapFd = originFd;
     }
     if (!g_hasStartupMode && config->startupMode_) {

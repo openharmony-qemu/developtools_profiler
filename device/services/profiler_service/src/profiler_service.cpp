@@ -66,7 +66,6 @@ constexpr int PLUGIN_SESSION_STOP_TIMEOUT_SECONDS = 3605; // same as NATIVEHOOK_
 constexpr uint64_t CHECK_HEARTBEAT_INTERVAL = 500;
 constexpr long BYTE_PER_KB = 1024;
 const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
-const std::string TAG_RES_COMPOSITE_HEAP = "RES_COMPOSITE_HEAP";
 #ifdef  PERFORMANCE_DEBUG
 constexpr uint64_t S_TO_NS = 1000 * 1000 * 1000;
 #endif

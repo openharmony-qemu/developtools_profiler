@@ -143,7 +143,6 @@ bool NativeMemoryProfilerSaConfig::MarshallingExt(Parcel& parcel) const
     WRITEBOOL(parcel, arkuiMemTraceEnable_);
     WRITEBOOL(parcel, discardDestroyedTraces_);
     WRITESTRING(parcel, bundleName_);
-    WRITEBOOL(parcel, compositeHeapEnable_);
     return true;
 }
 
@@ -222,7 +221,6 @@ bool NativeMemoryProfilerSaConfig::UnmarshallingExt(Parcel& parcel,
     READBOOL(parcel, config->arkuiMemTraceEnable_);
     READBOOL(parcel, config->discardDestroyedTraces_);
     READSTRING(parcel, config->bundleName_);
-    READBOOL(parcel, config->compositeHeapEnable_);
     PrintConfig(config);
     return true;
 }
@@ -260,6 +258,5 @@ void NativeMemoryProfilerSaConfig::PrintConfig(std::shared_ptr<NativeMemoryProfi
     PROFILER_LOG_DEBUG(LOG_CORE, "startType: %d", config->startType_);
     PROFILER_LOG_DEBUG(LOG_CORE, "memLeakEnable: %d, memLeakFormat_: %u, limit:%u",
         config->nativeOrphanSnapshotsEnable_, config->memLeakFormat_, config->memLeakLimit_);
-    PROFILER_LOG_DEBUG(LOG_CORE, "compositeHeapEnable: %d", config->compositeHeapEnable_);
 }
 } // namespace OHOS::Developtools::NativeDaemon

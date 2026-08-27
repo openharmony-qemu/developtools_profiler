@@ -537,6 +537,10 @@ int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint3
     CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
     CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid pid with MemSaConfig");
     CHECK_TRUE(callback, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid callback with MemSaConfig");
+    if (saConfig.mask & RES_COMPOSITE_HEAP && !(saConfig.mask & RES_ARK_GLOBAL_HANDLE)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "invalid mask, enable composite heap must enable global handle too");
+        return RET_ERR;
+    }
     CHECK_TRUE(g_profilerAsyncReqMgr.TryAddRequest(static_cast<int32_t>(pid), duration, callback, fd, ""), RET_ERR,
         "NativeMemoryProfilerSaClientManager: Started already with MemSaConfig for pid:%d", pid);
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
@@ -732,10 +736,7 @@ int32_t NativeMemoryProfilerSaClientManager::ParseResType(int32_t type,
     } else if (internalType == InternalResourceType::OH_RES_TYPE_ASHMEM) {
         config->traceMask_ = RES_FD_ASHMEM | RES_ASHMEM_MASK;
     } else if (internalType == InternalResourceType::OH_RES_TYPE_COMPOSITE_HEAP) {
-        config->traceMask_ = RES_ARK_GLOBAL_HANDLE;
-        config->mallocDisable_ = false;
-        config->memtraceEnable_ = false;
-        config->compositeHeapEnable_ = true;
+        config->traceMask_ = RES_COMPOSITE_HEAP | RES_ARK_GLOBAL_HANDLE;
     }
     return RET_OK;
 }
