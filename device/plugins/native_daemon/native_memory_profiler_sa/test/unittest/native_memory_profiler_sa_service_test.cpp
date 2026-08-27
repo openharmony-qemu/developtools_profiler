@@ -1343,7 +1343,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileReturnsOkWhenInf
     auto task = std::make_shared<TaskConfig>(nullptr, 12345, "copy_missing", -1, "", -1, false);
     ASSERT_NE(task, nullptr);
     std::string resultPath = "unchanged";
- 
+
     EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(12345, task, resultPath), RET_OK);
     EXPECT_EQ(resultPath, "unchanged");
 }
