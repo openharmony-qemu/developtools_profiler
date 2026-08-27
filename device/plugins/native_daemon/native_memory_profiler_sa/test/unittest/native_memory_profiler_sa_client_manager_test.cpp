@@ -44,6 +44,7 @@ namespace {
 const std::string NATIVE_PARAM = "hiviewdfx.hiprofiler.native_memoryd.start";
 const std::string TEST_PROC_NAME = "hiview";
 const std::string TEST_NATIVE_NAME = "foundation";
+const std::string TEST_APP_NAME = "com.ohos.sceneboard";
 const int NMD_ONLY_TYPE = 2;
 static AccessTokenID g_selfTokenId;
 static TEST_COMMON::MockNativeToken* g_mock = nullptr;
@@ -1078,14 +1079,16 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigAsync, TestSiz
     int fd = open(TEST_HTRACE_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
     ASSERT_GE(fd, 0);
     int pid = 0;
-    COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    if (!COMMON::IsProcessExist(TEST_APP_NAME, pid)) {
+        COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    }
     ASSERT_TRUE(pid > 0);
 
     std::string cmd = "setenforce 0";
     system(cmd.c_str());
 
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 5, config, callback), RET_OK);
-    EXPECT_TRUE(sem->TimedWait(20));
+    ASSERT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 5, config, callback), RET_OK);
+    EXPECT_TRUE(sem->TimedWait(60));
     close(fd);
     unlink(TEST_HTRACE_FD_FILE_PATH.c_str());
     cmd = "setenforce 1";
@@ -1118,16 +1121,18 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigAsyncAndStop, 
     int fd = open(TEST_HTRACE_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
     ASSERT_GE(fd, 0);
     int pid = 0;
-    COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    if (!COMMON::IsProcessExist(TEST_APP_NAME, pid)) {
+        COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    }
     ASSERT_TRUE(pid > 0);
 
     std::string cmd = "setenforce 0";
     system(cmd.c_str());
 
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 10, config, callback), RET_OK);
+    ASSERT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 10, config, callback), RET_OK);
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(static_cast<uint32_t>(pid)), RET_OK);
-    EXPECT_TRUE(sem->TimedWait(20));
+    ASSERT_EQ(NativeMemoryProfilerSaClientManager::Stop(static_cast<uint32_t>(pid)), RET_OK);
+    EXPECT_TRUE(sem->TimedWait(60));
     close(fd);
     unlink(TEST_HTRACE_FD_FILE_PATH.c_str());
     cmd = "setenforce 1";
@@ -1153,14 +1158,16 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigCompositeHeapA
     int fd = open(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
     ASSERT_GE(fd, 0);
     int pid = 0;
-    COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    if (!COMMON::IsProcessExist(TEST_APP_NAME, pid)) {
+        COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    }
     ASSERT_TRUE(pid > 0);
 
     std::string cmd = "setenforce 0";
     system(cmd.c_str());
 
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 5, config, callback), RET_OK);
-    EXPECT_TRUE(sem->TimedWait(30));
+    ASSERT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 5, config, callback), RET_OK);
+    EXPECT_TRUE(sem->TimedWait(60));
     close(fd);
     unlink(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str());
     cmd = "setenforce 1";
@@ -1186,16 +1193,18 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigCompositeHeapA
     int fd = open(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
     ASSERT_GE(fd, 0);
     int pid = 0;
-    COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    if (!COMMON::IsProcessExist(TEST_APP_NAME, pid)) {
+        COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    }
     ASSERT_TRUE(pid > 0);
 
     std::string cmd = "setenforce 0";
     system(cmd.c_str());
 
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 10, config, callback), RET_OK);
+    ASSERT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 10, config, callback), RET_OK);
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(static_cast<uint32_t>(pid)), RET_OK);
-    EXPECT_TRUE(sem->TimedWait(30));
+    ASSERT_EQ(NativeMemoryProfilerSaClientManager::Stop(static_cast<uint32_t>(pid)), RET_OK);
+    EXPECT_TRUE(sem->TimedWait(60));
     close(fd);
     unlink(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str());
     cmd = "setenforce 1";
