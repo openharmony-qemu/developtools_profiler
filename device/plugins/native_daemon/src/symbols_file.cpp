@@ -505,7 +505,7 @@ public:
                 }
                 HLOGM(" 0x%016" PRIx64 " %c '%s' '%s'", addr, type, nameRaw, moduleRaw);
             } else {
-                HLOGW("unknow line %d: '%s'", ret, lineBegin);
+                HLOGW("unknown line %d: '%s'", ret, lineBegin);
                 continue;
             }
             std::string name = nameRaw;

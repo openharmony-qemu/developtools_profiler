@@ -185,7 +185,7 @@ const std::string UpdatePerfContext(uint64_t addr, perf_callchain_context &perfC
         return StringPrintf("%s: %" PRIx64 "", PERF_CONTEXT_NAME.at(addr).c_str(), addr);
     } else {
         perfCallchainContext = PERF_CONTEXT_MAX;
-        return StringPrintf("unknow context: %" PRIx64 "", addr);
+        return StringPrintf("unknown context: %" PRIx64 "", addr);
     }
 }
 

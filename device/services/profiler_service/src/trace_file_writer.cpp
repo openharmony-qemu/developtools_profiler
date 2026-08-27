@@ -537,7 +537,7 @@ bool TraceFileWriter::RemapFile()
     mmapFileLength_ = newLength - remapPos;
     mapOffset_ = fileWriteLength_ - remapPos;
     fileLength_ = newLength;
-    PROFILER_LOG_INFO(LOG_CORE, "remap(%zu:%zu) data file(%zu) sucess", remapPos, mapOffset_, fileLength_);
+    PROFILER_LOG_INFO(LOG_CORE, "remap(%zu:%zu) data file(%zu) success", remapPos, mapOffset_, fileLength_);
     return true;
 }
 

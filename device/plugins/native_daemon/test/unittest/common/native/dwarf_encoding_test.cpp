@@ -164,7 +164,7 @@ HWTEST_F(DwarfEncodingTest, ApplicationNameCoversReachableBranches, TestSize.Lev
 
     data = ResetData(bytes);
     DwarfEncoding unknownApp(0x60 | DW_EH_PE_udata2, data);
-    EXPECT_EQ(unknownApp.ApplicationName(), "unknow format");
+    EXPECT_EQ(unknownApp.ApplicationName(), "unknown format");
 }
 
 HWTEST_F(DwarfEncodingTest, DefaultBranchesReturnFallbackValues, TestSize.Level0)
@@ -175,13 +175,13 @@ HWTEST_F(DwarfEncodingTest, DefaultBranchesReturnFallbackValues, TestSize.Level0
 
     EXPECT_EQ(enc.GetAppliedValue(), 0u);
     EXPECT_TRUE(enc.IsOmit());
-    EXPECT_EQ(enc.FormatName(), "unknow format");
-    EXPECT_EQ(enc.ApplicationName(), "unknow format");
+    EXPECT_EQ(enc.FormatName(), "unknown format");
+    EXPECT_EQ(enc.ApplicationName(), "unknown format");
 
     data = bytes.data();
     DwarfEncoding invalidFmt(0x0F, data);
     EXPECT_EQ(invalidFmt.GetValue(), std::numeric_limits<uint64_t>::max());
-    EXPECT_EQ(invalidFmt.FormatName(), "unknow format");
+    EXPECT_EQ(invalidFmt.FormatName(), "unknown format");
     EXPECT_EQ(invalidFmt.ApplicationName(), "DW_EH_PE_empty");
 }
 

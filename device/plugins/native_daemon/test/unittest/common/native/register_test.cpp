@@ -202,7 +202,7 @@ HWTEST_F(RegisterTest, UpdatePerfContextHandlesKnownAndUnknown, TestSize.Level0)
 
     EXPECT_NE(UpdatePerfContext(PERF_CONTEXT_USER, context).find("PERF_CONTEXT_USER"), std::string::npos);
     EXPECT_EQ(context, PERF_CONTEXT_USER);
-    EXPECT_NE(UpdatePerfContext(0x1234, context).find("unknow context"), std::string::npos);
+    EXPECT_NE(UpdatePerfContext(0x1234, context).find("unknown context"), std::string::npos);
     EXPECT_EQ(context, PERF_CONTEXT_MAX);
 }
 

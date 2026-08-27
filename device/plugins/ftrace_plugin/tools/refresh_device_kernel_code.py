@@ -80,4 +80,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    print("refresh device kernel code sucess!")
+    print("refresh device kernel code success!")
