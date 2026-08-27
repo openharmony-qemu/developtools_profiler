@@ -1656,8 +1656,13 @@ int32_t NativeMemoryProfilerSaService::CopyApiCollectorFile(uint32_t pid, std::s
     std::string& resultPath)
 {
     if (config->typeFileName.empty()) {
-        PROFILER_LOG_ERROR(LOG_CORE, "CopyApiCollectorFile: api task file info missing");
-        return RET_ERR;
+        if (config->compositeHeapEnable) {
+            PROFILER_LOG_ERROR(LOG_CORE, "CopyApiCollectorFile: api composite task file info missing");
+            return RET_ERR;
+        } else {
+            PROFILER_LOG_WARN(LOG_CORE, "CopyApiCollectorFile: api task file info missing");
+            return RET_OK;
+        }
     }
     auto pidInfoIter = g_pidInfo.find(pid);
     if (pidInfoIter == g_pidInfo.end()) {

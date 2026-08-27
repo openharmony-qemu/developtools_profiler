@@ -1334,17 +1334,17 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NotifyProfilingResultUsesCallbackWhe
 }
 
 /**
- * @tc.name: CopyApiCollectorFileRejectsEmptyTypeFileName
- * @tc.desc: Copy API collector file returns err when typeFileName is empty.
+ * @tc.name: CopyApiCollectorFileReturnsOkWhenInfoMissing
+ * @tc.desc: Copy API collector file returns ok when info missing.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileRejectsEmptyTypeFileName, TestSize.Level2)
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileReturnsOkWhenInfoMissing, TestSize.Level2)
 {
     auto task = std::make_shared<TaskConfig>(nullptr, 12345, "copy_missing", -1, "", -1, false);
     ASSERT_NE(task, nullptr);
     std::string resultPath = "unchanged";
-
-    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(12345, task, resultPath), RET_ERR);
+ 
+    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(12345, task, resultPath), RET_OK);
     EXPECT_EQ(resultPath, "unchanged");
 }
 
@@ -1646,7 +1646,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ReleaseForStopHookHandlesAsyncApiFil
     ASSERT_NE(task, nullptr);
     std::string resultPath = "unchanged";
 
-    EXPECT_EQ(NativeMemoryProfilerSaService::ReleaseForStopHook(pid, task, resultPath), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaService::ReleaseForStopHook(pid, task, resultPath), RET_OK);
     EXPECT_EQ(resultPath, "unchanged");
     EXPECT_EQ(fcntl(fd, F_GETFD), -1);
 }
@@ -1667,7 +1667,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ReleaseForStopHookHandlesSyncApiBran
     ASSERT_NE(task, nullptr);
     std::string resultPath = "unchanged";
 
-    EXPECT_EQ(NativeMemoryProfilerSaService::ReleaseForStopHook(pid, task, resultPath), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaService::ReleaseForStopHook(pid, task, resultPath), RET_OK);
     EXPECT_EQ(resultPath, "unchanged");
 }
 

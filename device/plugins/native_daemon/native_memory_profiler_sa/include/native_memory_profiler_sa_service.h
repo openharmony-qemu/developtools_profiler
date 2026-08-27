@@ -46,7 +46,7 @@ struct TaskConfig {
     uint32_t compositeHeapFd{0};
     uint32_t fd{0};
     uint32_t startType{0}; // 0:Hiveiew 1:API
-    std::string typeFileName;   // for API trace file move
+    std::string typeFileName = {""};   // for API trace file move
     sptr<IRemoteObject> callback;
 };
 
