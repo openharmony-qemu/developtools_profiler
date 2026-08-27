@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 #include <unistd.h>
 #include <cstdio>
+#include <cstdlib>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -34,6 +35,8 @@
 #include "hook_common.h"
 #include "token_setproc.h"
 #include "accesstoken_kit.h"
+#include "i_semaphore.h"
+#include "common.h"
 using namespace OHOS::Security::AccessToken;
 using namespace testing::ext;
 
@@ -45,6 +48,8 @@ const int NMD_ONLY_TYPE = 2;
 static AccessTokenID g_selfTokenId;
 static TEST_COMMON::MockNativeToken* g_mock = nullptr;
 const std::string TEST_INVALID_FILE_PATH = "/invalid/path/test_count_file";
+const std::string TEST_HTRACE_FD_FILE_PATH = "/data/test/sa_test_data.htrace";
+const std::string TEST_COMPOSITE_HEAP_FD_FILE_PATH = "/data/test/sa_test_data.zip";
 
 void ExpectRemotePathRet(int32_t ret)
 {
@@ -979,4 +984,172 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, EntryCheckRejectsInvalidPid, T
     std::vector<SimplifiedMemStats> memStats;
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(0, memStats), RET_ERR);
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(0u), RET_ERR);
+}
+
+/**
+ * @tc.name: EntryCheckRejectsInvalidPid
+ * @tc.desc: Entry check rejects invalid param.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigAsyncRejectsInvalidParam, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    MemSaConfig config;
+    config.mask = RES_COMPOSITE_HEAP;
+    auto callback = [](int32_t errCode) {};
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(0, 0, 10, config, nullptr), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(1, 0, 10, config, nullptr), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(1, 1, 10, config, nullptr), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(1, 1, 10, config, callback), RET_ERR);
+}
+
+/**
+ * @tc.name: StartMemSaConfigAsync
+ * @tc.desc: StartHook Async And Stoped By Duration.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigAsync, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    MemSaConfig config;
+    std::pair<uint64_t, uint64_t> lowRange = std::make_pair(1, 2);
+    std::pair<uint64_t, uint64_t> highRange = std::make_pair(3, 4);
+    config.mask = RES_GPU_MASK;
+    config.asyncStackEnable = true;
+    config.asyncFlag = 5;
+    config.hookSizes[TAG_RES_GPU_VK] = std::make_pair(lowRange, highRange);
+    config.hookSizes[TAG_RES_GPU_GLES_IMAGE] = std::make_pair(lowRange, highRange);
+    config.hookSizes[TAG_RES_GPU_GLES_BUFFER] = std::make_pair(lowRange, highRange);
+    config.hookSizes[TAG_RES_GPU_CL_IMAGE] = std::make_pair(lowRange, highRange);
+    config.hookSizes[TAG_RES_GPU_CL_BUFFER] = std::make_pair(lowRange, highRange);
+
+    SemaphorePtr sem = GetSemaphoreFactory().Create(0);
+    ASSERT_NE(sem, nullptr);
+    auto callback = [&sem](int32_t errCode) { sem->Post(); };
+    int fd = open(TEST_HTRACE_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    int sceneboardPid = 0;
+    COMMON::IsProcessExist("com.ohos.sceneboard", sceneboardPid);
+    ASSERT_TRUE(sceneboardPid > 0);
+
+    std::string cmd = "setenforce 0";
+    system(cmd.c_str());
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, sceneboardPid, 5, config, callback), RET_OK);
+    EXPECT_TRUE(sem->TimedWait(20));
+    close(fd);
+    unlink(TEST_HTRACE_FD_FILE_PATH.c_str());
+    cmd = "setenforce 1";
+    system(cmd.c_str());
+}
+
+/**
+ * @tc.name: StartMemSaConfigAsyncAndStop
+ * @tc.desc: StartHook Async And Stoped.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigAsyncAndStop, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    MemSaConfig config;
+    std::pair<uint64_t, uint64_t> lowRange = std::make_pair(1, 2);
+    std::pair<uint64_t, uint64_t> highRange = std::make_pair(3, 4);
+    config.mask = RES_GPU_MASK;
+    config.asyncStackEnable = true;
+    config.asyncFlag = 5;
+    config.hookSizes[TAG_RES_GPU_VK] = std::make_pair(lowRange, highRange);
+    config.hookSizes[TAG_RES_GPU_GLES_IMAGE] = std::make_pair(lowRange, highRange);
+    config.hookSizes[TAG_RES_GPU_GLES_BUFFER] = std::make_pair(lowRange, highRange);
+    config.hookSizes[TAG_RES_GPU_CL_IMAGE] = std::make_pair(lowRange, highRange);
+    config.hookSizes[TAG_RES_GPU_CL_BUFFER] = std::make_pair(lowRange, highRange);
+
+    SemaphorePtr sem = GetSemaphoreFactory().Create(0);
+    ASSERT_NE(sem, nullptr);
+    auto callback = [&sem](int32_t errCode) { sem->Post(); };
+    int fd = open(TEST_HTRACE_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    int sceneboardPid = 0;
+    COMMON::IsProcessExist("com.ohos.sceneboard", sceneboardPid);
+    ASSERT_TRUE(sceneboardPid > 0);
+
+    std::string cmd = "setenforce 0";
+    system(cmd.c_str());
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, sceneboardPid, 10, config, callback), RET_OK);
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(static_cast<uint32_t>(sceneboardPid)), RET_OK);
+    EXPECT_TRUE(sem->TimedWait(20));
+    close(fd);
+    unlink(TEST_HTRACE_FD_FILE_PATH.c_str());
+    cmd = "setenforce 1";
+    system(cmd.c_str());
+}
+
+/**
+ * @tc.name: StartMemSaConfigCompositeHeapAsync
+ * @tc.desc: StartHook composite heap Async And Stoped By Duration.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigCompositeHeapAsync, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    MemSaConfig config;
+    config.asyncStackEnable = true;
+    config.asyncFlag = 5;
+    config.mask = RES_COMPOSITE_HEAP | RES_ARK_GLOBAL_HANDLE;
+
+    SemaphorePtr sem = GetSemaphoreFactory().Create(0);
+    ASSERT_NE(sem, nullptr);
+    auto callback = [&sem](int32_t errCode) { sem->Post(); };
+    int fd = open(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    int sceneboardPid = 0;
+    COMMON::IsProcessExist("com.ohos.sceneboard", sceneboardPid);
+    ASSERT_TRUE(sceneboardPid > 0);
+
+    std::string cmd = "setenforce 0";
+    system(cmd.c_str());
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, sceneboardPid, 5, config, callback), RET_OK);
+    EXPECT_TRUE(sem->TimedWait(30));
+    close(fd);
+    unlink(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str());
+    cmd = "setenforce 1";
+    system(cmd.c_str());
+}
+
+/**
+ * @tc.name: StartMemSaConfigCompositeHeapAsyncAndStop
+ * @tc.desc: StartHook composite heap Async And Stoped.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigCompositeHeapAsyncAndStop, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    MemSaConfig config;
+    config.asyncStackEnable = true;
+    config.asyncFlag = 5;
+    config.mask = RES_COMPOSITE_HEAP | RES_ARK_GLOBAL_HANDLE;
+
+    SemaphorePtr sem = GetSemaphoreFactory().Create(0);
+    ASSERT_NE(sem, nullptr);
+    auto callback = [&sem](int32_t errCode) { sem->Post(); };
+    int fd = open(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    int sceneboardPid = 0;
+    COMMON::IsProcessExist("com.ohos.sceneboard", sceneboardPid);
+    ASSERT_TRUE(sceneboardPid > 0);
+
+    std::string cmd = "setenforce 0";
+    system(cmd.c_str());
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, sceneboardPid, 10, config, callback), RET_OK);
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(static_cast<uint32_t>(sceneboardPid)), RET_OK);
+    EXPECT_TRUE(sem->TimedWait(30));
+    close(fd);
+    unlink(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str());
+    cmd = "setenforce 1";
+    system(cmd.c_str());
 }
