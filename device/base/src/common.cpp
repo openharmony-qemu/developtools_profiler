@@ -1204,7 +1204,7 @@ bool CopyFileFast(uint32_t srcFd, const std::string& destPath)
 
 bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPath)
 {
-    int srcFd = open(srcPath.c_str(), O_RDONLY);
+    int srcFd = open(srcPath.c_str(), O_RDONLY | O_NOFOLLOW);
     if (srcFd < 0) {
         const int bufSize = 256;
         char buf[bufSize] = {0};
@@ -1222,7 +1222,7 @@ bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPat
 
 bool CopyFileToFdFastFromPath(const std::string& srcPath, int destFd)
 {
-    int srcFd = open(srcPath.c_str(), O_RDONLY);
+    int srcFd = open(srcPath.c_str(), O_RDONLY | O_NOFOLLOW);
     if (srcFd < 0) {
         const int bufSize = 256;
         char buf[bufSize] = {0};
