@@ -684,12 +684,12 @@ int32_t NativeMemoryProfilerSaClientManager::StartByType(int32_t type,
     if (!COMMON::CleanOldenFiles(NAPI_FILE_PATH_PREFIX)) {
         PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: CleanOldenFiles failed");
     }
-
     if (static_cast<InternalResourceType>(type) == InternalResourceType::OH_RES_TYPE_COMPOSITE_HEAP) {
         auto filter = [type, &config](const std::string &filename) {
-            return COMMON::StringMatch(filename, GenerateFileNamePrefix(type, config->pid_), COMPOSITE_HEAP_SUFFIX);
+            return COMMON::StringMatch(filename, GenerateFileNamePrefix(type, config->pid_), COMPOSITE_HEAP_SUFFIX) &&
+                filename != config->typeFileName_;
         };
-        if (!COMMON::DeleteFiles(std::filesystem::path(filename).parent_path().string(), filter)) {
+        if (!COMMON::DeleteFiles(std::filesystem::path(fullPath).parent_path().string(), filter)) {
             PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: Clean composite file failed");
         }
     }
