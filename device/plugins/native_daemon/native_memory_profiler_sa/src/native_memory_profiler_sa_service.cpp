@@ -921,7 +921,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         std::string filePathStr = (config->pid_ > 0) ? std::to_string(config->pid_) : config->processName_;
         config->filePath_ = FILE_PATH_HEAD + filePathStr + FILE_PATH_TAIL;
     }
-    if (fd == 0 || (fd > 0 && compositeHeapEnable)) {
+    if (fd == 0 || compositeHeapEnable) {
         auto retFile = COMMON::CheckNotExistsFilePathSafe(config->filePath_);
         if (!retFile.first) {
             PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, config->filePath_.c_str());

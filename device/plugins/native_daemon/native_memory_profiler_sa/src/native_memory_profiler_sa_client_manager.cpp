@@ -537,7 +537,7 @@ int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint3
     CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
     CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid pid with MemSaConfig");
     CHECK_TRUE(callback, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid callback with MemSaConfig");
-    if (saConfig.mask & RES_COMPOSITE_HEAP && !(saConfig.mask & RES_ARK_GLOBAL_HANDLE)) {
+    if ((saConfig.mask & RES_COMPOSITE_HEAP) && !(saConfig.mask & RES_ARK_GLOBAL_HANDLE)) {
         PROFILER_LOG_ERROR(LOG_CORE, "invalid mask, enable composite heap must enable global handle too");
         return RET_ERR;
     }
