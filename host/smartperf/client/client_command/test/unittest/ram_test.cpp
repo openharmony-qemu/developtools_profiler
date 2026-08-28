@@ -220,7 +220,7 @@ HWTEST_F(SPdaemonRamTest, ParsePssValuesTest005, TestSize.Level1)
     auto result = ram.ParsePssValues(iss, paramsInfo, "12345", 0);
 
     EXPECT_FALSE(result.empty());
-    EXPECT_EQ(result["ashmem"], "");
+    EXPECT_EQ(result["ashmem"], "NA");
 }
 
 /**
@@ -290,7 +290,7 @@ HWTEST_F(SPdaemonRamTest, ParsePssValuesTest008, TestSize.Level1)
     auto result = ram.ParsePssValues(iss, paramsInfo, "99999", 0);
 
     EXPECT_FALSE(result.empty());
-    EXPECT_EQ(result["arktsHeapMainThreadPss"], "");
+    EXPECT_EQ(result["arktsHeapMainThreadPss"], "NA");
 }
 
 /**
