@@ -1027,6 +1027,16 @@ ani_object GetRssInfoAdapter(ani_env *env)
     return rssInfo;
 }
 
+ani_string GetAppRunningUniqueId(ani_env *env)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getAppRunningUniqueId");
+    const char* id = HidebugNativeInterface::GetInstance().GetAppRunningUniqueId();
+    std::string idStr = (id != nullptr) ? std::string(id) : "";
+    ani_string result = nullptr;
+    env->String_NewUTF8(idStr.c_str(), idStr.size(), &result);
+    return result;
+}
+
 void DumpJsHeapDataAdapter(ani_env *env, ani_string fileNameAni, ani_boolean needClean)
 {
     ApiInvokeRecorder apiInvokeRecorder("dumpJsHeapData");
