@@ -16,9 +16,17 @@
 #ifndef HIVIEWDFX_HIDEBUG_NATIVE_TYPE_H
 #define HIVIEWDFX_HIDEBUG_NATIVE_TYPE_H
 #include <cstdint>
+#include <string>
+#include <vector>
 
 namespace OHOS {
 namespace HiviewDFX {
+
+struct ThreadCpuUsageInfo {
+    uint32_t tid = 0;
+    double cpuUsage = 0;
+    std::string threadName;
+};
 
 constexpr int NATIVE_SUCCESS = 0;
 constexpr int NATIVE_FAIL = -1;

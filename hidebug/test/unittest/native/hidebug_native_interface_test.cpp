@@ -162,5 +162,36 @@ HWTEST_F(HidebugNativeInterfaceTest, GetCpuUsageTest_SecondCallReturnsCached, Te
     double second = interface.GetCpuUsage();
     ASSERT_DOUBLE_EQ(first, second);
 }
+
+/**
+ * @tc.name: GetAppThreadCpuUsageTest_ReturnNonEmpty
+ * @tc.desc: test GetAppThreadCpuUsage returns non-empty vector, each item has valid tid and cpuUsage.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugNativeInterfaceTest, GetAppThreadCpuUsageTest_ReturnNonEmpty, TestSize.Level0)
+{
+    auto& interface = HidebugNativeInterface::GetInstance();
+    auto threadCpuUsageList = interface.GetAppThreadCpuUsage();
+    ASSERT_FALSE(threadCpuUsageList.empty());
+    for (const auto& item : threadCpuUsageList) {
+        ASSERT_GT(item.tid, 0u);
+        ASSERT_GE(item.cpuUsage, 0.0);
+    }
+}
+
+/**
+ * @tc.name: GetAppThreadCpuUsageTest_ThreadNameValid
+ * @tc.desc: test GetAppThreadCpuUsage each item threadName is non-empty string.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugNativeInterfaceTest, GetAppThreadCpuUsageTest_ThreadNameValid, TestSize.Level0)
+{
+    auto& interface = HidebugNativeInterface::GetInstance();
+    auto threadCpuUsageList = interface.GetAppThreadCpuUsage();
+    ASSERT_FALSE(threadCpuUsageList.empty());
+    for (const auto& item : threadCpuUsageList) {
+        ASSERT_FALSE(item.threadName.empty());
+    }
+}
 }
 }

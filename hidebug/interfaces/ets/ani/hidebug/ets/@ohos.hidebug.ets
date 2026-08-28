@@ -73,14 +73,17 @@ export default namespace hidebug {
   export interface ThreadCpuUsage {
     threadId: long;
     cpuUsage: double;
+    threadName?: string;
   }
 
   class ThreadCpuUsageImpl implements ThreadCpuUsage {
     threadId: long;
     cpuUsage: double;
+    threadName?: string;
   }
 
   export native function getAppThreadCpuUsage(): ThreadCpuUsage[];
+  export native function getAppRunningUniqueId(): string;
 
   interface SystemMemInfo {
     totalMem: bigint;

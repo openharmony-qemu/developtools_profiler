@@ -14,6 +14,7 @@
  */
 
 #include "hidebug_native_interface.h"
+#include "dfx_signal_handler.h"
 
 #include <chrono>
 #include <cstdio>
@@ -191,7 +192,8 @@ public:
     HidebugNativeInterfaceImpl& operator =(const HidebugNativeInterfaceImpl&) = delete;
     double GetCpuUsage() override;
     bool ParseProcStat(uint64_t& utime, uint64_t& stime) override;
-    std::map<uint32_t, double> GetAppThreadCpuUsage() override;
+    std::vector<ThreadCpuUsageInfo> GetAppThreadCpuUsage() override;
+    const char* GetAppRunningUniqueId() override;
     TraceErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
         uint32_t limitsize, std::string &file) override;
     TraceErrorCode StopAppTraceCapture() override;
@@ -353,7 +355,7 @@ bool HidebugNativeInterfaceImpl::ParseProcStat(uint64_t& utime, uint64_t& stime)
     return true;
 }
 
-std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
+std::vector<ThreadCpuUsageInfo> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
 {
     {
         std::lock_guard<std::mutex> guard(threadCpuMutex_);
@@ -366,11 +368,16 @@ std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
         HILOG_ERROR(LOG_CORE, "GetAppThreadCpuUsage fail, ret: %{public}d", static_cast<int>(collectResult.retCode));
         return {};
     }
-    std::map<uint32_t, double> threadMap;
+    std::vector<ThreadCpuUsageInfo> result;
+    result.reserve(collectResult.data.size());
     for (const auto &threadCpuStatInfo : collectResult.data) {
-        threadMap[threadCpuStatInfo.tid] = threadCpuStatInfo.cpuUsage;
+        ThreadCpuUsageInfo info;
+        info.tid = static_cast<uint32_t>(threadCpuStatInfo.tid);
+        info.cpuUsage = threadCpuStatInfo.cpuUsage;
+        info.threadName = threadCpuStatInfo.threadName;
+        result.push_back(info);
     }
-    return threadMap;
+    return result;
 }
 
 TraceErrorCode HidebugNativeInterfaceImpl::StartAppTraceCapture(uint64_t tags, uint32_t flag,
@@ -624,6 +631,11 @@ void RequestTraceCallBackImpl::OnTraceResponse(uint32_t retCode, const std::stri
     HidebugNativeInterface::GetInstance().SetTraceErrorCode(retCode);
     std::string tracePath = traceName.empty() ? "" : TRACE_PATH + traceName;
     task_(ConvertTraceErrorCode(retCode), tracePath);
+}
+
+const char* HidebugNativeInterfaceImpl::GetAppRunningUniqueId()
+{
+    return DFX_GetAppRunningUniqueId();
 }
 }
 }

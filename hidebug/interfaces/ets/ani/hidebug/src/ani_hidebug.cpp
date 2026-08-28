@@ -302,7 +302,8 @@ ani_double GetSystemCpuUsage(ani_env *env)
     return static_cast<ani_double>(cpuUsageOptional.value());
 }
 
-ani_object ConvertThreadCpuUsageToEts(ani_env *env, ani_class cls, uint32_t threadIdValue, double cpuUsageValue)
+ani_object ConvertThreadCpuUsageToEts(ani_env *env, ani_class cls,
+    uint32_t threadIdValue, double cpuUsageValue, const std::string &threadNameValue)
 {
     ani_method ctorMethod = nullptr;
     ani_object obj = nullptr;
@@ -312,13 +313,14 @@ ani_object ConvertThreadCpuUsageToEts(ani_env *env, ani_class cls, uint32_t thre
     }
     env->Object_SetPropertyByName_Long(obj, "threadId", static_cast<ani_long>(threadIdValue));
     AniUtil::SetNamedPropertyNumber(env, obj, "cpuUsage", cpuUsageValue);
+    AniUtil::SetNamedPropertyString(env, obj, "threadName", threadNameValue);
     return obj;
 }
 
-ani_array ConvertThreadCpuUsageMapToEts(ani_env *env, const std::map<uint32_t, double> &threadMap)
+ani_array ConvertThreadCpuUsageListToEts(ani_env *env, const std::vector<ThreadCpuUsageInfo> &threadCpuUsageList)
 {
     ani_class cls = nullptr;
-    ani_size aniSize = static_cast<ani_size>(threadMap.size());
+    ani_size aniSize = static_cast<ani_size>(threadCpuUsageList.size());
     ani_array result = nullptr;
     ani_ref undefinedRef = AniUtil::CreateUndefined(env);
     if (env->FindClass("@ohos.hidebug.hidebug.ThreadCpuUsageImpl", &cls) != ANI_OK ||
@@ -326,8 +328,8 @@ ani_array ConvertThreadCpuUsageMapToEts(ani_env *env, const std::map<uint32_t, d
         return result;
     }
     ani_size idx = 0;
-    for (const auto& [threadId, cpuUsage] : threadMap) {
-        ani_object obj = ConvertThreadCpuUsageToEts(env, cls, threadId, cpuUsage);
+    for (const auto& item : threadCpuUsageList) {
+        ani_object obj = ConvertThreadCpuUsageToEts(env, cls, item.tid, item.cpuUsage, item.threadName);
         env->Array_Set(result, idx, static_cast<ani_ref>(obj));
         idx++;
     }
@@ -337,8 +339,8 @@ ani_array ConvertThreadCpuUsageMapToEts(ani_env *env, const std::map<uint32_t, d
 ani_array GetAppThreadCpuUsage(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppThreadCpuUsage");
-    std::map<uint32_t, double> threadMap = HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
-    return ConvertThreadCpuUsageMapToEts(env, threadMap);
+    auto threadCpuUsageList = HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
+    return ConvertThreadCpuUsageListToEts(env, threadCpuUsageList);
 }
 
 ani_object GetAppNativeMemInfoAdapter(ani_env *env, ani_boolean forceRefresh)
@@ -1025,6 +1027,16 @@ ani_object GetRssInfoAdapter(ani_env *env)
     return rssInfo;
 }
 
+ani_string GetAppRunningUniqueId(ani_env *env)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getAppRunningUniqueId");
+    const char* id = HidebugNativeInterface::GetInstance().GetAppRunningUniqueId();
+    std::string idStr = (id != nullptr) ? std::string(id) : "";
+    ani_string result = nullptr;
+    env->String_NewUTF8(idStr.c_str(), idStr.size(), &result);
+    return result;
+}
+
 void DumpJsHeapDataAdapter(ani_env *env, ani_string fileNameAni, ani_boolean needClean)
 {
     ApiInvokeRecorder apiInvokeRecorder("dumpJsHeapData");
@@ -1355,6 +1367,8 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ani_native_function {"getNativeHeapFreeSizeAdapter", ":l",
             reinterpret_cast<void *>(GetNativeHeapFreeSize)},
         ani_native_function {"getVssAdapter", ":l", reinterpret_cast<void *>(GetVss)},
+        ani_native_function {"getAppRunningUniqueId", ":C{std.core.String}",
+            reinterpret_cast<void *>(GetAppRunningUniqueId)},
         ani_native_function {"getAppThreadCpuUsage", ":C{std.core.Array}",
             reinterpret_cast<void *>(GetAppThreadCpuUsage)},
         ani_native_function {"getSystemCpuUsage", ":d", reinterpret_cast<void *>(GetSystemCpuUsage)},

@@ -118,8 +118,8 @@ extern "C" {
     ThreadCpuUsageArr FfiHidebugGetAppThreadCpuUsage(int32_t &code)
     {
         ThreadCpuUsageArr arr{ .head = nullptr, .size = 0};
-        std::map<uint32_t, double> threadMap = HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
-        auto size = threadMap.size();
+        auto threadCpuUsageList = HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
+        auto size = threadCpuUsageList.size();
         if (size <= 0) {
             return arr;
         }
@@ -129,8 +129,8 @@ extern "C" {
             return arr;
         }
         size_t idx = 0;
-        for (const auto[id, usage] : threadMap) {
-            arr.head[idx] = CThreadCpuUsage{ .threadId = id, .cpuUsage = usage };
+        for (const auto& item : threadCpuUsageList) {
+            arr.head[idx] = CThreadCpuUsage{ .threadId = item.tid, .cpuUsage = item.cpuUsage };
             idx++;
         }
         arr.size = static_cast<int64_t>(idx);

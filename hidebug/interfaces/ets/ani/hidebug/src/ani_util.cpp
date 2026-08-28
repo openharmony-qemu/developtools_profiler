@@ -155,6 +155,17 @@ ani_status AniUtil::SetNamedPropertyNumber(ani_env *env, ani_object object, cons
     return status;
 }
 
+ani_status AniUtil::SetNamedPropertyString(ani_env *env, ani_object object, const std::string& name,
+    const std::string& value)
+{
+    ani_string aniStr = nullptr;
+    ani_status status = env->String_NewUTF8(value.c_str(), value.size(), &aniStr);
+    if (status != ANI_OK) {
+        return status;
+    }
+    return env->Object_SetPropertyByName_Ref(object, name.c_str(), static_cast<ani_ref>(aniStr));
+}
+
 ani_vm* AniUtil::GetAniVm(ani_env *env)
 {
     ani_vm* vm = nullptr;
