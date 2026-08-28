@@ -91,8 +91,7 @@ private:
     RAM(const RAM &);
     RAM &operator = (const RAM &);
     std::string packageName = "";
-    int arktsMainDeviceVersion_ = 70040;
-    bool arktsMainFlag_ = false;
+    bool arktsMainFlag_ = true;
     std::vector<std::string> processId;
     std::map<std::string, std::string> result = {};
 };

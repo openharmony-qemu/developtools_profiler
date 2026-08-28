@@ -558,24 +558,11 @@ std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string>&
 
 void RAM::DetermineDeviceVersion()
 {
-    std::string fullName = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::FULL_NAME), "Unknown");
-    auto pos = fullName.find('-');
-    if (pos == std::string::npos) {
-        return;
-    }
-    std::string verStr = fullName.substr(pos + 1);
-    int major = 0;
-    int minor = 0;
-    int patch = 0;
-    int build = 0;
-    char dot;
-    std::istringstream iss(verStr);
-    iss >> major >> dot >> minor >> dot >> patch >> dot >> build;
-    const int majorWeight = 10000;
-    const int minorWeight = 1000;
-    const int patchWeight = 100;
-    if ((major * majorWeight + minor * minorWeight + patch * patchWeight + build) >= arktsMainDeviceVersion_) {
-        arktsMainFlag_ = true;
+    std::vector<std::string> cmd = {"hidumper", "--mem", "99999", "--show-arktsheap"};
+    std::string cmdResult = "";
+    SPUtils::SafeLoadExec(cmd, cmdResult);
+    if (cmdResult.find("option pid missed. showarktsheap") != std::string::npos) {
+        arktsMainFlag_ = false;
     }
 }
 }
