@@ -83,6 +83,7 @@ export default namespace hidebug {
   }
 
   export native function getAppThreadCpuUsage(): ThreadCpuUsage[];
+  export native function getAppRunningUniqueId(): string;
 
   interface SystemMemInfo {
     totalMem: bigint;

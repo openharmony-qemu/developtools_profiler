@@ -818,6 +818,16 @@ ani_object GetRssInfoAdapter(ani_env *env)
     return rssInfo;
 }
 
+ani_string GetAppRunningUniqueId(ani_env *env)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getAppRunningUniqueId");
+    const char* id = HidebugNativeInterface::GetInstance().GetAppRunningUniqueId();
+    std::string idStr = (id != nullptr) ? std::string(id) : "";
+    ani_string result = nullptr;
+    env->String_NewUTF8(idStr.c_str(), idStr.size(), &result);
+    return result;
+}
+
 ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
 {
     ani_env *env = nullptr;
@@ -847,6 +857,8 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ani_native_function {"getNativeHeapFreeSizeAdapter", ":l",
             reinterpret_cast<void *>(GetNativeHeapFreeSize)},
         ani_native_function {"getVssAdapter", ":l", reinterpret_cast<void *>(GetVss)},
+        ani_native_function {"getAppRunningUniqueId", ":C{std.core.String}",
+            reinterpret_cast<void *>(GetAppRunningUniqueId)},
         ani_native_function {"getAppThreadCpuUsage", ":C{std.core.Array}",
             reinterpret_cast<void *>(GetAppThreadCpuUsage)},
         ani_native_function {"getSystemCpuUsage", ":d", reinterpret_cast<void *>(GetSystemCpuUsage)},

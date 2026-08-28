@@ -14,6 +14,7 @@
  */
 
 #include "hidebug_native_interface.h"
+#include "dfx_signal_handler.h"
 
 #include <chrono>
 #include <cstdio>
@@ -192,6 +193,7 @@ public:
     double GetCpuUsage() override;
     bool ParseProcStat(uint64_t& utime, uint64_t& stime) override;
     std::vector<ThreadCpuUsageInfo> GetAppThreadCpuUsage() override;
+    const char* GetAppRunningUniqueId() override;
     TraceErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
         uint32_t limitsize, std::string &file) override;
     TraceErrorCode StopAppTraceCapture() override;
@@ -629,6 +631,11 @@ void RequestTraceCallBackImpl::OnTraceResponse(uint32_t retCode, const std::stri
     HidebugNativeInterface::GetInstance().SetTraceErrorCode(retCode);
     std::string tracePath = traceName.empty() ? "" : TRACE_PATH + traceName;
     task_(ConvertTraceErrorCode(retCode), tracePath);
+}
+
+const char* HidebugNativeInterfaceImpl::GetAppRunningUniqueId()
+{
+    return DFX_GetAppRunningUniqueId();
 }
 }
 }

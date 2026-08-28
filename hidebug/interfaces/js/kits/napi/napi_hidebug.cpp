@@ -1251,6 +1251,15 @@ napi_value GetRssInfo(napi_env env, napi_callback_info info)
     return rssInfo;
 }
 
+napi_value GetAppRunningUniqueId(napi_env env, napi_callback_info info)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getAppRunningUniqueId");
+    napi_value result = nullptr;
+    const char* id = HidebugNativeInterface::GetInstance().GetAppRunningUniqueId();
+    napi_create_string_utf8(env, (id != nullptr) ? id : "", NAPI_AUTO_LENGTH, &result);
+    return result;
+}
+
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
 {
     ApiRecordReporter::InitProcessor();
@@ -1296,6 +1305,7 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setJsRawHeapTrimLevel", SetJsRawHeapTrimLevel),
         DECLARE_NAPI_FUNCTION("setProcDumpInSharedOOM", SetProcDumpInSharedOOM),
         DECLARE_NAPI_FUNCTION("getRssInfo", GetRssInfo),
+        DECLARE_NAPI_FUNCTION("getAppRunningUniqueId", GetAppRunningUniqueId),
         DECLARE_NAPI_FUNCTION("requestTrace", RequestTrace),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));

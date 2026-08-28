@@ -54,6 +54,7 @@ ohos_shared_library("hidebug_native") {
     "bundle_framework:appexecfwk_core_headers",
     "c_utils:utils",
     "common_event_service:cesfwk_innerkits",
+    "faultloggerd:dfx_signalhandler",
     "ffrt:libffrt",
     "hiappevent:hiappevent_innerapi",
     "hidumper:lib_dump_usage",

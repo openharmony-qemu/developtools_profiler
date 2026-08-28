@@ -1257,4 +1257,41 @@ describe("HidebugJsTest", function () {
             expect(false).assertTrue();
         }
     })
+
+    /**
+     * @tc.name: HidebugJsTest_055
+     * @tc.desc: getAppRunningUniqueId 同进程多次调用结果一致
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_055', 0, function () {
+        console.info("---------------------------HidebugJsTest_055----------------------------------");
+        try {
+            let appRunningUniqueIdFirst = hidebug.getAppRunningUniqueId();
+            let appRunningUniqueIdSecond = hidebug.getAppRunningUniqueId();
+            console.info("first: " + appRunningUniqueIdFirst + ", second: " + appRunningUniqueIdSecond);
+            expect(appRunningUniqueIdFirst === appRunningUniqueIdSecond).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_056
+     * @tc.desc: getAppRunningUniqueId 返回非空字符串
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_056', 0, function () {
+        console.info("---------------------------HidebugJsTest_056----------------------------------");
+        try {
+            let appRunningUniqueId = hidebug.getAppRunningUniqueId();
+            console.info("getAppRunningUniqueId length: " + appRunningUniqueId.length);
+            expect(appRunningUniqueId.length > 0).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
 })
