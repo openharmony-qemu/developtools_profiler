@@ -33,21 +33,21 @@ enum {
 };
 
 struct PssValues {
-    std::string gpuPssValue = "";
-    std::string graphicPssValue = "";
-    std::string arktsHeapPssValue = "";
-    std::string nativeHeapPssValue = "";
-    std::string stackPssValue = "";
-    std::string anonPagePssValue = "";
-    std::string filePagePssValue = "";
-    std::string ashmemPssValue = "";
-    std::string guardPssValue = "";
-    std::string hapPssValue = "";
-    std::string dbPssValue = "";
-    std::string soPssValue = "";
-    std::string devPssValue = "";
-    std::string ttfPssValue = "";
-    std::string arktsHeapMainThreadPssValue = "";
+    std::string gpuPssValue = "NA";
+    std::string graphicPssValue = "NA";
+    std::string arktsHeapPssValue = "NA";
+    std::string nativeHeapPssValue = "NA";
+    std::string stackPssValue = "NA";
+    std::string anonPagePssValue = "NA";
+    std::string filePagePssValue = "NA";
+    std::string ashmemPssValue = "NA";
+    std::string guardPssValue = "NA";
+    std::string hapPssValue = "NA";
+    std::string dbPssValue = "NA";
+    std::string soPssValue = "NA";
+    std::string devPssValue = "NA";
+    std::string ttfPssValue = "NA";
+    std::string arktsHeapMainThreadPssValue = "NA";
 };
 namespace OHOS {
 namespace SmartPerf {
