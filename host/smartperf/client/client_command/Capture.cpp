@@ -70,18 +70,11 @@ void Capture::ThreadGetCatch()
 {
     const std::string captureDir = "/data/local/tmp/capture";
     const std::string savePath = captureDir + "/screenCap_" + std::to_string(curTime) + ".png";
-    std::string cmdResult;
-    if (!SPUtils::FileAccess(captureDir)) {
-        std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + captureDir;
-        if (!SPUtils::LoadCmd(capturePath, cmdResult)) {
-            LOGE("%s capture not be created!", captureDir.c_str());
-            return;
-        } else {
-            LOGD("%s created successfully!", captureDir.c_str());
-        }
-    };
+    SPUtils::CreateDir(captureDir);
     std::ostringstream errorRecv;
+    mode_t oldMask = umask(0);
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
+    umask(oldMask);
     if (fd == -1) {
         LOGE("Failed to open file: %s", savePath.c_str());
         return;
@@ -100,18 +93,10 @@ void Capture::ThreadGetCatchSocket()
     std::string captureTime = std::to_string(curTime);
     std::string captureDir = "/data/local/tmp/capture";
     std::string savePath = captureDir + "/screenCap_" + captureTime + ".jpeg";
-    std::string cmdResult;
-    if (!SPUtils::FileAccess(captureDir)) {
-        std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + captureDir;
-        if (!SPUtils::LoadCmd(capturePath, cmdResult)) {
-            LOGE("%s capture not be created!", captureDir.c_str());
-            return;
-        } else {
-            LOGD("%s created successfully!", captureDir.c_str());
-        }
-    };
-
+    SPUtils::CreateDir(captureDir);
+    mode_t oldMask = umask(0);
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
+    umask(oldMask);
     if (fd == -1) {
         LOGE("Capture::ThreadGetCatchSocket Failed to open file");
         return;

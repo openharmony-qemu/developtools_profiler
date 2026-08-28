@@ -189,8 +189,51 @@ bool SPUtils::IsValidPath(const std::string& str)
     if (str.empty()) {
         return false;
     }
-    const char* specialChars = R"(\\"$`;&|><(){}[]^~*?#!%@)";
+    //拒绝所有控制字符
+    for (char c : str) {
+        if (static_cast<unsigned char>(c) <= 0x1F) {
+            return false;
+        }
+    }
+    const char* specialChars = "\\\"$`;&|><(){}[]^~*?#!%@";
     if (str.find_first_of(specialChars) != std::string::npos) {
+        return false;
+    }
+    return true;
+}
+bool SPUtils::IsTraceFileName(const std::string &name)
+{
+    if (name.find("trace_") != 0) {
+        return false;
+    }
+    size_t atPos = name.find('@');
+    if (atPos == std::string::npos) {
+        return false;
+    }
+    for (size_t i = 0; i < atPos; ++i) {
+        if (!isdigit(static_cast<unsigned char>(name[i]))) {
+            return false;
+        }
+    }
+    size_t dotPos = name.rfind('.');
+    if (dotPos == std::string::npos) {
+        return false;
+    }
+    for (char c : pidTid) {
+        if (c == '-') {
+            if (hasDash) {
+                return false;
+            }
+            hasDash = true;
+        } else if (!isdigit(static_cast<unsigned char>(c))) {
+            return false;
+        }
+    }
+    if (!hasDash) {
+        return false;
+    }
+    std::string ext = name.substr(dotPos);
+    if (ext != ".sys" && ext != ".ftrace") {
         return false;
     }
     return true;
@@ -972,24 +1015,44 @@ void SPUtils::KillStartDaemon()
     }
 }
 
+bool SPUtils::Chmod(const std::string& sourceFilePath, mode_t mode)
+{
+    mode_t oldMask = umask(0);
+    int retCode = chmod(sourceFilePath.c_str(), mode);
+    umask(oldMask);
+    if (retCode != 0) {
+        LOGE("Failed to set %s permission, error code %d", sourceFilePath.c_str(), retCode);
+        return false;
+    }
+    return true;
+}
+
 void SPUtils::CreateDir(const std::string &dirPath)
 {
     if (!SPUtils::FileAccess(dirPath)) {
-        std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + dirPath;
-        std::string cmdResult;
-        if (!SPUtils::LoadCmd(cmd, cmdResult)) {
-            WLOGE("%s capture not be created!", dirPath.c_str());
-        } else {
-            WLOGI("%s created successfully!", dirPath.c_str());
+        chmod(dirPath.c_str(), FILE_PERMISSION_FULL);
+        return;
+    }
+    std::string path = dirPath;
+    std::vector<std::string> dirsToCreate;
+    while (!path.empty() && !SPUtils::FileAccess(path)) {
+        dirsToCreate.push_back(path);
+        size_t pos = path.find_last_of('/');
+        if (pos == std::string::npos) {
+            break;
+        }
+        path = path.substr(0, pos);
+    }
+    mode_t oldMask = umask(0);
+    for (auto it = dirsToCreate.rbegin(); it != dirsToCreate.rend(); ++it) {
+        if (mkdir(it->c_str(), FILE_PERMISSION_FULL) != 0 && errno != EEXIST) {
+            umask(oldMask);
+            WLOGE("%s not be created, errno %d!", it->c_str(), errno);
             return;
         }
-
-        std::string chmodCmd = "chmod 777 " + dirPath;
-        std::string chmodResult;
-        if (!SPUtils::LoadCmd(chmodCmd, chmodResult)) {
-            WLOGE("Failed to chmod %s", dirPath.c_str());
-        }
+        WLOGI("%s created successfully!", it->c_str());
     }
+    umask(oldMask);
 }
 
 void SPUtils::RemoveDirOrFile(const std::string &dirPath)

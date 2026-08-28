@@ -32,6 +32,7 @@
 #include <fstream>
 #include <sstream>
 #include <regex>
+#include <signal.h>
 #include "unistd.h"
 #include <future>
 #include "include/common.h"
@@ -167,7 +168,7 @@ void SPTask::InitDataFile()
             LOGE("%s is not exist, init finish.", filePath.c_str());
             continue;
         }
-        std::remove(filePathChar);
+        SPUtils::RemoveDirOrFile(filePathChar);
     }
 
     LOGD("Data file initialization completed.");
@@ -227,25 +228,7 @@ void SPTask::CreatPath(const std::string& path)
         LOGE("CreatPath invalid path: %s", path.c_str());
         return;
     }
-    if (!SPUtils::FileAccess(path)) {
-        LOGD("CreatPath does not exist, attempting to create: %s", path.c_str());
-        std::string cmdResult;
-        std::string creatPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + path;
-        bool cmdSuccess = SPUtils::LoadCmd(creatPath, cmdResult);
-        if (cmdSuccess) {
-            LOGD("CreatPath created successfully: %s", path.c_str());
-        } else {
-            LOGE("Failed to create path: %s. Command result: %s", path.c_str(), cmdResult.c_str());
-        }
-    } else {
-        std::ofstream file(path, std::ios::trunc);
-        if (!file) {
-            LOGE("Unable to open file");
-            return;
-        }
-        file.close();
-        LOGD("CreatPath already exists: %s", path.c_str());
-    }
+    SPUtils::CreateDir(path);
 }
 
 std::map<std::string, std::string> SPTask::SetTaskInfo()
@@ -400,8 +383,8 @@ void SPTask::KillHiperfCmd()
     SPUtils::StrSplit(result, " ", out);
     LOGD("pidof hiprofiler_cmd size(%d)", out.size());
     for (auto it = out.begin(); out.end() != it; ++it) {
-        result.clear();
-        SPUtils::LoadCmd(killCmd + (*it), result);
+        pid_t pid = SPUtilesTye::StringToSometype<pid_t>(*it);
+        kill(pid, SIGKILL);
     }
 
     return;

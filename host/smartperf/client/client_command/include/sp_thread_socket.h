@@ -70,6 +70,8 @@ public:
     void FetchCpuStats(SpServerSocket &spSocket, std::map<std::string, std::string>& data) const;
     void HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
         const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator);
+    void HandleNullMsgTail(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
+        const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator);
     std::string GetTime(std::string &recvBuf);
     void GetTraceStartPoint(std::string &recvBuf);
     std::vector<std::string> split(const std::string &str, const std::string &delimiter);

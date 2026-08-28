@@ -53,7 +53,6 @@ OHOS::SmartPerf::TaskManager* g_mgr = nullptr;
 thread_local OHOS::SmartPerf::ThreadLocal g_datas;
 constexpr int32_t SAVE_DATA_INTERVAL_MINUTE = 5;
 constexpr int32_t THE_MINUTE = 60;
-constexpr mode_t FILE_PERMISSION_FULL = 0777;
 }
 
 namespace OHOS::SmartPerf {
@@ -211,7 +210,7 @@ void TaskManager::SetFilePath(const std::string& fileName, bool removeCurrentFil
         fileName_ = fileName;
         saveFlag_ = true;
         if (removeCurrentFile) {
-            std::remove(fileName_.c_str());
+            SPUtils::RemoveDirOrFile(fileName_);
         }
     }
     std::filesystem::path fullPath = fileName;
@@ -705,9 +704,7 @@ void TaskManager::InitDataCsv()
         mode_t oldMask = umask(0);
         std::ofstream file(safePath);
         if (file) {
-            if (chmod(safePath.c_str(), FILE_PERMISSION_FULL) != 0) {
-                LOGE("Failed to chmod %s", safePath.c_str());
-            }
+            SPUtils::Chmod(safePath, FILE_PERMISSION_FULL);
             file.close();
         } else {
             LOGE("Failed to creat file");
@@ -738,8 +735,6 @@ void TaskManager::SetFileTitleFlag()
 
 void TaskManager::ClearShaderFile()
 {
-    const std::string cmdRmShaderFile = CMD_COMMAND_MAP.at(CmdCommand::REMOVE) + "/data/local/tmp/" + processName_;
-    std::string cmdResult = "";
-    SPUtils::LoadCmd(cmdRmShaderFile, cmdResult);
+    SPUtils::RemoveDirOrFile("/data/local/tmp/" + )
 }
 }

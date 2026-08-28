@@ -175,11 +175,10 @@ std::string SmartPerfCommand::ExecCommand()
 
 void SmartPerfCommand::InitSomething()
 {
-    std::string cmdResult;
-    std::string stat = CMD_COMMAND_MAP.at(CmdCommand::PROC_STAT);
-    if (SPUtils::LoadCmd(stat, cmdResult)) {
+    if (SPUtils::Chmod("/proc/stat", FILE_PERMISSION_FULL)) {
         LOGE("SmartPerfCommand::InitSomething Privilege escalation!");
-    };
+        return;
+    }
 }
 }
 }

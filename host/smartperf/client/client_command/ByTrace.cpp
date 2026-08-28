@@ -86,7 +86,7 @@ void ByTrace::RemoveTraceFiles() const
     if (std::filesystem::is_directory(traceCpPath_)) {
         for (const auto& entry : std::filesystem::directory_iterator(traceCpPath_)) {
             if (!entry.is_directory()) {
-                std::filesystem::remove(entry.path());
+                SPUtils::RemoveDirOrFile(entry.path().string());
             }
         }
     }

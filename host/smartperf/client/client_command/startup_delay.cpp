@@ -22,6 +22,7 @@
 #include <fstream>
 #include <algorithm>
 #include <sys/wait.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -117,7 +118,8 @@ bool StartUpDelay::KillSpProcess() const
     if (vec.size() > 0) {
         std::string killCmd = CMD_COMMAND_MAP.at(CmdCommand::KILL_CMD);
         for (size_t i = 0; i < vec.size(); i++) {
-            SPUtils::LoadCmd(killCmd + vec[i], str);
+            pid_t pid = SPUtilesTye::StringToSometype<pid_t>(vec[i]);
+            kill(pid, SIGKILL);
         }
     }
     return false;

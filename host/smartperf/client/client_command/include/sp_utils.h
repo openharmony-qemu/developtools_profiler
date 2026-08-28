@@ -20,6 +20,9 @@
 #include <set>
 #include <string>
 #include <sstream>
+#include <sys/stat.h>
+
+#define FILE_PERMISSION_FULL 0777
 namespace OHOS {
 namespace SmartPerf {
 class SPUtilesTye {
@@ -164,8 +167,10 @@ std::string GetVersion();
 int& GetTtyDeviceFd();
 void GetTestsaPlugin(int command);
 void KillStartDaemon();
+bool Chmod(const std::string& sourceFilePath, mode_t mode);
 void CreateDir(const std::string &dirPath);
 void RemoveDirOrFile(const std::string &dirPath);
+bool CopyFile(const std::string &src, const std::string &dst);
 void TarFiles(const std::string& tarStr);
 size_t GetFileSize(std::string filePath);
 bool IsFindDHGame(const std::string &pkg);
@@ -178,6 +183,7 @@ bool IsValidPid(const std::string &pid);
 bool IsValidWinId(const std::string &winId);
 bool IsValidPath(const std::string& str);
 bool IsPathTraversal(const std::string& str);
+bool IsTraceFileName(const std::string &name);
 std::string GetWinId();
 void GetWinIdNum(std::string &hidumperStr, std::string &winId);
 void EnDumpFun(const std::string &winId);
