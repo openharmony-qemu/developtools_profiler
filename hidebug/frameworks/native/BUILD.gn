@@ -49,6 +49,7 @@ ohos_shared_library("hidebug_native") {
   ]
 
   external_deps = [
+    "ability_base:configuration",
     "ability_runtime:app_context",
     "bounds_checking_function:libsec_shared",
     "bundle_framework:appexecfwk_core_headers",
@@ -66,6 +67,5 @@ ohos_shared_library("hidebug_native") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "storage_service:storage_manager_acl",
-    "ability_base:configuration",
   ]
 }
