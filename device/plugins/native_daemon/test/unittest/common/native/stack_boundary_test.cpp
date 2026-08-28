@@ -291,4 +291,21 @@ HWTEST_F(StackBoundaryTest, CallFrameSymbolOffsetBoundary, TestSize.Level0)
     frame.symbolOffset_ = UINT64_MAX;
     EXPECT_EQ(frame.symbolOffset_, UINT64_MAX);
 }
+
+HWTEST_F(StackBoundaryTest, CallFrameSymbolStringCoversFormattingBranches, TestSize.Level0)
+{
+    CallFrame ipFrame(0x1234);
+    ipFrame.symbolName_ = "ip_symbol";
+    ipFrame.filePath_ = "ip_module";
+    ipFrame.symbolIndex_ = -1;
+    std::string ipText = ipFrame.ToSymbolString();
+    EXPECT_NE(ipText.find("ip:"), std::string::npos);
+    EXPECT_EQ(ipText.find(":0"), std::string::npos);
+
+    CallFrame vaFrame(0x1234, 0x4567, "va_symbol", "va_module");
+    vaFrame.symbolIndex_ = 3;
+    std::string vaText = vaFrame.ToSymbolString();
+    EXPECT_NE(vaText.find("va:"), std::string::npos);
+    EXPECT_NE(vaText.find("va_symbol@va_module:3"), std::string::npos);
+}
 } // namespace OHOS::Developtools::NativeDaemon

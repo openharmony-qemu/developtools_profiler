@@ -142,7 +142,7 @@ bool FfrtProfilerManager::CheckConfig()
         config_.set_flush_interval(1);
     }
     if (config_.clock_id() == FfrtProfilerConfig::UNKNOW) {
-        PROFILER_LOG_ERROR(LOG_CORE, "FfrtProfilerManager clock_id is unknow");
+        PROFILER_LOG_ERROR(LOG_CORE, "FfrtProfilerManager clock_id is unknown");
         return false;
     }
     return true;

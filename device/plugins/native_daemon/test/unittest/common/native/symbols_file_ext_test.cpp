@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <random>
 #include <unistd.h>
+#include "debug_logger.h"
 #include "symbols_file.h"
 #include "common.h"
 
@@ -35,6 +36,22 @@ public:
     void TearDown();
 
     default_random_engine rnd_;
+};
+
+class ScopedLogEnabled {
+public:
+    ScopedLogEnabled() : savedLogDisabled_(DebugLogger::logDisabled_)
+    {
+        DebugLogger::logDisabled_ = false;
+    }
+
+    ~ScopedLogEnabled()
+    {
+        DebugLogger::logDisabled_ = savedLogDisabled_;
+    }
+
+private:
+    bool savedLogDisabled_ = true;
 };
 
 void SymbolsFileExtTest::SetUpTestCase() {}
@@ -616,9 +633,338 @@ HWTEST_F(SymbolsFileExtTest, GetSymbolWithVaddrReturnsInvalidForGap, TestSize.Le
 HWTEST_F(SymbolsFileExtTest, GetVaddrInSymbolsForKernel, TestSize.Level0)
 {
     auto kernelSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_KERNEL_FILE);
-    
+
     // Kernel symbols should return ip directly
     EXPECT_EQ(kernelSymbols->GetVaddrInSymbols(0x12345678, 0x87654321, 0x1000), 0x12345678U);
+}
+
+HWTEST_F(SymbolsFileExtTest, SearchReadableFileAcceptsTrailingSlashPath, TestSize.Level0)
+{
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+    char tempPath[] = "/data/local/tmp/symbols_trailing_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    ASSERT_EQ(close(fd), 0);
+
+    std::string fullPath = tempPath;
+    std::string fileName = fullPath.substr(fullPath.find_last_of('/') + 1);
+    std::vector<std::string> searchPaths = {"/data/local/tmp/"};
+
+    EXPECT_EQ(symbolsFile->SearchReadableFile(searchPaths, fileName), fullPath);
+    EXPECT_EQ(unlink(tempPath), 0);
+}
+
+HWTEST_F(SymbolsFileExtTest, FindSymbolFileUsesDefaultPath, TestSize.Level0)
+{
+    ScopedLogEnabled logEnabled;
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    char tempPath[] = "/data/local/tmp/symbols_default_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    ASSERT_EQ(close(fd), 0);
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE, tempPath);
+    const bool previousRecording = SymbolsFile::onRecording_;
+    SymbolsFile::onRecording_ = true;
+
+    EXPECT_EQ(symbolsFile->FindSymbolFile({}, ""), std::string(tempPath));
+
+    SymbolsFile::onRecording_ = previousRecording;
+    EXPECT_EQ(unlink(tempPath), 0);
+}
+
+HWTEST_F(SymbolsFileExtTest, FindSymbolFileIgnoresNonHapEmbeddedPath, TestSize.Level0)
+{
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+
+    EXPECT_TRUE(symbolsFile->FindSymbolFile({}, "/data/local/tmp/demo.zip!entry.abc").empty());
+}
+
+HWTEST_F(SymbolsFileExtTest, LoadSymbolsFromSavedRestoresSymbolEntries, TestSize.Level0)
+{
+    SymbolFileStruct symbolFileStruct;
+    symbolFileStruct.filePath_ = "saved_symbols";
+    symbolFileStruct.symbolType_ = SYMBOL_ELF_FILE;
+    symbolFileStruct.textExecVaddr_ = 0;
+    symbolFileStruct.textExecVaddrFileOffset_ = 0;
+    symbolFileStruct.symbolStructs_.emplace_back(0x2000, 0x10, "second");
+    symbolFileStruct.symbolStructs_.emplace_back(0x1000, 0x10, "first");
+
+    auto symbolsFile = SymbolsFile::LoadSymbolsFromSaved(symbolFileStruct);
+
+    ASSERT_NE(symbolsFile, nullptr);
+    ASSERT_EQ(symbolsFile->symbols_.size(), 2u);
+    EXPECT_EQ(symbolsFile->symbols_[0].funcVaddr_, 0x1000u);
+    EXPECT_EQ(symbolsFile->symbols_[1].funcVaddr_, 0x2000u);
+}
+
+HWTEST_F(SymbolsFileExtTest, HapFileSymbolsReportModeSkipsRuntimeLoad, TestSize.Level0)
+{
+    ScopedLogEnabled logEnabled;
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    const bool previousRecording = SymbolsFile::onRecording_;
+    SymbolsFile::onRecording_ = false;
+    auto hapSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_HAP_FILE, "report_mode.hap", getpid());
+    auto map = std::make_shared<DfxMap>();
+    map->name = "report_mode.hap";
+
+    EXPECT_TRUE(hapSymbols->LoadSymbols(map, ""));
+    EXPECT_TRUE(hapSymbols->LoadDebugInfo(map, ""));
+
+    SymbolsFile::onRecording_ = previousRecording;
+}
+
+HWTEST_F(SymbolsFileExtTest, ArkwebV8SymbolsHandleNullMapAndCache, TestSize.Level0)
+{
+    ScopedLogEnabled logEnabled;
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    auto arkwebSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_ARKWEB_V8_FILE, "[anon:v8 runtime]", getpid());
+    auto map = std::make_shared<DfxMap>();
+    map->name = "[anon:v8 runtime]";
+    constexpr uint64_t ip = 0x1234;
+
+    EXPECT_FALSE(arkwebSymbols->LoadDebugInfo(nullptr, ""));
+    EXPECT_TRUE(arkwebSymbols->LoadDebugInfo(map, ""));
+    EXPECT_FALSE(arkwebSymbols->LoadSymbols(nullptr, ""));
+    EXPECT_TRUE(arkwebSymbols->LoadSymbols(map, ""));
+    EXPECT_FALSE(arkwebSymbols->GetSymbolWithPcAndMap(ip, nullptr).IsValid());
+
+    arkwebSymbols->symbolsMap_.emplace(ip, DfxSymbol(ip, 0x20, "cached", "arkweb"));
+    DfxSymbol cachedSymbol = arkwebSymbols->GetSymbolWithPcAndMap(ip, map);
+    EXPECT_TRUE(cachedSymbol.IsValid());
+    EXPECT_EQ(cachedSymbol.funcVaddr_, ip);
+}
+
+HWTEST_F(SymbolsFileExtTest, HapFileSymbolsReturnsCachedPcSymbol, TestSize.Level0)
+{
+    ScopedLogEnabled logEnabled;
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    auto hapSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_HAP_FILE, "cached.hap", getpid());
+    auto map = std::make_shared<DfxMap>();
+    map->name = "cached.hap";
+    constexpr uint64_t ip = 0x4321;
+
+    hapSymbols->symbolsMap_.emplace(ip, DfxSymbol(ip, 0x20, "cached_hap", "hap"));
+    DfxSymbol cachedSymbol = hapSymbols->GetSymbolWithPcAndMap(ip, map);
+
+    EXPECT_TRUE(cachedSymbol.IsValid());
+    EXPECT_EQ(cachedSymbol.funcVaddr_, ip);
+}
+
+HWTEST_F(SymbolsFileExtTest, KernelSymbolsReportModeUsesVmlinuxFallback, TestSize.Level0)
+{
+    ScopedLogEnabled logEnabled;
+    const bool previousRecording = SymbolsFile::onRecording_;
+    SymbolsFile::onRecording_ = false;
+    auto kernelSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_KERNEL_FILE);
+    auto moduleSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_KERNEL_MODULE_FILE, "missing_module");
+
+    EXPECT_FALSE(kernelSymbols->LoadSymbols(nullptr, ""));
+    EXPECT_FALSE(moduleSymbols->LoadSymbols(nullptr, ""));
+
+    SymbolsFile::onRecording_ = previousRecording;
+}
+
+HWTEST_F(SymbolsFileExtTest, UpdateBuildIdIfMatchHandlesAllStates, TestSize.Level0)
+{
+    ScopedLogEnabled logEnabled;
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+
+    EXPECT_TRUE(symbolsFile->UpdateBuildIdIfMatch(""));
+    EXPECT_EQ(symbolsFile->GetBuildId(), "");
+    EXPECT_TRUE(symbolsFile->UpdateBuildIdIfMatch("build-id-a"));
+    EXPECT_EQ(symbolsFile->GetBuildId(), "build-id-a");
+    EXPECT_TRUE(symbolsFile->UpdateBuildIdIfMatch("build-id-a"));
+    EXPECT_FALSE(symbolsFile->UpdateBuildIdIfMatch("build-id-b"));
+    EXPECT_EQ(symbolsFile->GetBuildId(), "build-id-a");
+}
+
+HWTEST_F(SymbolsFileExtTest, FindSymbolFileUsesSearchPathBaseName, TestSize.Level0)
+{
+    ScopedLogEnabled logEnabled;
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+    char tempPath[] = "/data/local/tmp/symbols_base_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    ASSERT_EQ(close(fd), 0);
+    std::string fullPath = tempPath;
+    std::string fileName = fullPath.substr(fullPath.find_last_of('/') + 1);
+
+    EXPECT_EQ(symbolsFile->FindSymbolFile({"/data/local/tmp"}, "/system/lib/" + fileName), fullPath);
+
+    EXPECT_EQ(unlink(tempPath), 0);
+}
+
+HWTEST_F(SymbolsFileExtTest, SetSymbolsFilePathKeepsReadablePathsOnly, TestSize.Level0)
+{
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+    std::vector<std::string> searchPaths = {"/data/local/tmp", "/path/to/missing/symbols"};
+
+    EXPECT_TRUE(symbolsFile->setSymbolsFilePath(searchPaths));
+    ASSERT_EQ(symbolsFile->symbolsFileSearchPaths_.size(), 1u);
+    EXPECT_EQ(symbolsFile->symbolsFileSearchPaths_[0], "/data/local/tmp");
+}
+
+HWTEST_F(SymbolsFileExtTest, ExportSymbolToFileFormatSortsMatchedSymbols, TestSize.Level0)
+{
+    ScopedLogEnabled logEnabled;
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE, "export_symbols");
+    symbolsFile->symbols_.emplace_back(0x3000, 0x20, "third", "module");
+    symbolsFile->symbols_.emplace_back(0x1000, 0x20, "first", "module");
+    symbolsFile->symbols_.emplace_back(0x1000, 0x20, "duplicate", "module");
+    symbolsFile->AdjustSymbols();
+
+    EXPECT_TRUE(symbolsFile->GetSymbolWithVaddr(0x3004).IsValid());
+    EXPECT_TRUE(symbolsFile->GetSymbolWithVaddr(0x1004).IsValid());
+    SymbolFileStruct symbolFileStruct;
+    symbolsFile->ExportSymbolToFileFormat(symbolFileStruct);
+
+    ASSERT_EQ(symbolFileStruct.symbolStructs_.size(), 2u);
+    EXPECT_EQ(symbolFileStruct.symbolStructs_[0].vaddr_, 0x1000u);
+    EXPECT_EQ(symbolFileStruct.symbolStructs_[1].vaddr_, 0x3000u);
+}
+
+HWTEST_F(SymbolsFileExtTest, ElfFileSymbolsRejectsInvalidReadableFile, TestSize.Level0)
+{
+    ScopedLogEnabled logEnabled;
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    char tempPath[] = "/data/local/tmp/symbols_invalid_elf_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    const char content[] = "not an elf";
+    ASSERT_EQ(write(fd, content, sizeof(content)), static_cast<ssize_t>(sizeof(content)));
+    ASSERT_EQ(close(fd), 0);
+    const bool previousRecording = SymbolsFile::onRecording_;
+    SymbolsFile::onRecording_ = true;
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_ELF_FILE, tempPath);
+
+    EXPECT_FALSE(symbolsFile->LoadSymbols(nullptr, ""));
+    EXPECT_TRUE(symbolsFile->SymbolsLoaded());
+
+    SymbolsFile::onRecording_ = previousRecording;
+    EXPECT_EQ(unlink(tempPath), 0);
+}
+
+HWTEST_F(SymbolsFileExtTest, BaseSymbolsFileVirtualMethodsReturnDefaultsWithLog, TestSize.Level0)
+{
+    ScopedLogEnabled logEnabled;
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    SymbolsFile symbolsFile(SYMBOL_UNKNOW_FILE, "base_symbol");
+    uint64_t sectionVaddr = 0;
+    uint64_t sectionSize = 0;
+    uint64_t sectionOffset = 0;
+
+    EXPECT_FALSE(symbolsFile.LoadSymbols(nullptr, ""));
+    EXPECT_TRUE(symbolsFile.SymbolsLoaded());
+    EXPECT_FALSE(symbolsFile.LoadDebugInfo(nullptr, ""));
+    EXPECT_FALSE(symbolsFile.GetSectionInfo(".text", sectionVaddr, sectionSize, sectionOffset));
+#ifndef __arm__
+    EXPECT_FALSE(symbolsFile.GetHDRSectionInfo(sectionVaddr, sectionSize, sectionOffset));
+#endif
+    EXPECT_FALSE(symbolsFile.GetSymbolWithPcAndMap(0x1234, nullptr).IsValid());
+    EXPECT_EQ(symbolsFile.GetVaddrInSymbols(0x1234, 0x10, 0x20), 0x1234u);
+
+    SymbolFileStruct symbolFileStruct;
+    symbolsFile.ExportSymbolToFileFormat(symbolFileStruct);
+    EXPECT_EQ(symbolFileStruct.filePath_, "base_symbol");
+    EXPECT_EQ(symbolFileStruct.symbolType_, SYMBOL_UNKNOW_FILE);
+}
+
+HWTEST_F(SymbolsFileExtTest, BaseSymbolsFileVirtualMethodsReturnDefaultsWithLogDisabled, TestSize.Level0)
+{
+    const bool savedLogDisabled = DebugLogger::logDisabled_;
+    DebugLogger::logDisabled_ = true;
+    SymbolsFile symbolsFile(SYMBOL_UNKNOW_FILE, "base_symbol_disabled");
+    uint64_t sectionVaddr = 0;
+    uint64_t sectionSize = 0;
+    uint64_t sectionOffset = 0;
+
+    EXPECT_FALSE(symbolsFile.LoadSymbols(nullptr, ""));
+    EXPECT_FALSE(symbolsFile.LoadDebugInfo(nullptr, ""));
+    EXPECT_FALSE(symbolsFile.GetSectionInfo(".text", sectionVaddr, sectionSize, sectionOffset));
+    EXPECT_EQ(sectionVaddr, 0u);
+    EXPECT_EQ(sectionSize, 0u);
+    EXPECT_EQ(sectionOffset, 0u);
+
+    DebugLogger::logDisabled_ = savedLogDisabled;
+}
+
+HWTEST_F(SymbolsFileExtTest, FindSymbolFileCoversEmptySearchAndPlainName, TestSize.Level0)
+{
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+    const bool previousRecording = SymbolsFile::onRecording_;
+    SymbolsFile::onRecording_ = false;
+
+    EXPECT_TRUE(symbolsFile->SearchReadableFile({}, "missing_symbol.so").empty());
+    EXPECT_TRUE(symbolsFile->FindSymbolFile({"/data/local/tmp"}, "plain_symbol.so").empty());
+
+    SymbolsFile::onRecording_ = previousRecording;
+}
+
+HWTEST_F(SymbolsFileExtTest, HapFileSymbolsCacheRepeatedLoadsAndNullMapLookup, TestSize.Level0)
+{
+    ScopedLogEnabled logEnabled;
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    const bool previousRecording = SymbolsFile::onRecording_;
+    SymbolsFile::onRecording_ = true;
+    auto hapSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_HAP_FILE, "cache_test.hap", getpid());
+    auto map = std::make_shared<DfxMap>(0x1000, 0x2000, 0, 0, "cache_test.hap");
+    hapSymbols->SetMapsInfo(map);
+
+    EXPECT_TRUE(hapSymbols->LoadDebugInfo(map, ""));
+    EXPECT_TRUE(hapSymbols->LoadDebugInfo(map, ""));
+    EXPECT_TRUE(hapSymbols->LoadSymbols(map, ""));
+    EXPECT_TRUE(hapSymbols->LoadSymbols(map, ""));
+    EXPECT_FALSE(hapSymbols->GetSymbolWithPcAndMap(0x1010, nullptr).IsValid());
+
+    SymbolsFile::onRecording_ = previousRecording;
+}
+
+HWTEST_F(SymbolsFileExtTest, ArkwebV8SymbolsRejectNonV8PathAndReuseCache, TestSize.Level0)
+{
+    ScopedLogEnabled logEnabled;
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    auto arkwebSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_ARKWEB_V8_FILE, "plain_symbol.so", getpid());
+    auto map = std::make_shared<DfxMap>(0x3000, 0x4000, 0, 0, "plain_symbol.so");
+
+    EXPECT_FALSE(arkwebSymbols->IsArkwebV8());
+    arkwebSymbols->SetBoolValue(true);
+    EXPECT_FALSE(arkwebSymbols->IsArkwebV8());
+    EXPECT_TRUE(arkwebSymbols->LoadDebugInfo(map, ""));
+    EXPECT_TRUE(arkwebSymbols->LoadDebugInfo(map, ""));
+    EXPECT_TRUE(arkwebSymbols->LoadSymbols(map, ""));
+    EXPECT_FALSE(arkwebSymbols->GetSymbolWithPcAndMap(0x3010, map).IsValid());
+}
+
+HWTEST_F(SymbolsFileExtTest, SymbolLookupAndExportRunWithLogDisabled, TestSize.Level0)
+{
+    const bool savedLogDisabled = DebugLogger::logDisabled_;
+    DebugLogger::logDisabled_ = true;
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE, "log_disabled_symbols");
+    symbolsFile->symbols_.emplace_back(0x3000, 0x20, "third", "module");
+    symbolsFile->symbols_.emplace_back(0x1000, 0x20, "first", "module");
+    symbolsFile->symbols_.emplace_back(0x1000, 0x20, "duplicate", "module");
+
+    symbolsFile->AdjustSymbols();
+    DfxSymbol found = symbolsFile->GetSymbolWithVaddr(0x1004);
+    DfxSymbol missing = symbolsFile->GetSymbolWithVaddr(0x2000);
+    EXPECT_TRUE(symbolsFile->UpdateBuildIdIfMatch(""));
+    EXPECT_TRUE(symbolsFile->UpdateBuildIdIfMatch("build-id-disabled"));
+    EXPECT_FALSE(symbolsFile->UpdateBuildIdIfMatch("build-id-other"));
+    SymbolFileStruct symbolFileStruct;
+    symbolsFile->ExportSymbolToFileFormat(symbolFileStruct);
+
+    EXPECT_TRUE(found.IsValid());
+    EXPECT_FALSE(missing.IsValid());
+    EXPECT_EQ(symbolFileStruct.symbolStructs_.size(), 1u);
+    if (!symbolFileStruct.symbolStructs_.empty()) {
+        EXPECT_EQ(symbolFileStruct.symbolStructs_[0].vaddr_, 0x1000u);
+    }
+    EXPECT_FALSE(symbolsFile->CheckPathReadable("/data/local/tmp/missing_symbols_file_for_cov"));
+
+    DebugLogger::logDisabled_ = savedLogDisabled;
 }
 }
 }

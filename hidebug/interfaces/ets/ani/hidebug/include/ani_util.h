@@ -16,6 +16,8 @@
 #ifndef DEVELOPTOOLS_PROFILER_HIDEBUG_ANI_UTIL_H
 #define DEVELOPTOOLS_PROFILER_HIDEBUG_ANI_UTIL_H
 
+#include <cstdint>
+#include <functional>
 #include <string>
 
 #include "ani.h"

@@ -149,7 +149,7 @@ bool NetworkProfilerManager::CheckConfig()
     }
 
     if (config_.clock_id() == NetworkProfilerConfig::UNKNOW) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NetworkProfilerManager clock_id is unknow");
+        PROFILER_LOG_ERROR(LOG_CORE, "NetworkProfilerManager clock_id is unknown");
         return false;
     }
     return true;

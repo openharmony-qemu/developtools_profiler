@@ -1036,4 +1036,340 @@ HWTEST_F(SmapsStatsTest, TestParseSmapsrollup, TestSize.Level1)
     EXPECT_EQ(privateDirty, processMemoryInfo.smapinfo(0).private_dirty());
 }
 
+HWTEST_F(SmapsStatsTest, TestGetVmaIndexDefaultCase, TestSize.Level1)
+{
+    SmapsStats plugin;
+    int32_t heapIndex[2] = {VMHEAP_UNKNOWN, VMHEAP_NULL};
+    bool swappable = false;
+
+    EXPECT_TRUE(plugin.GetVmaIndex("something.so", 12, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_SO, heapIndex[0]);
+
+    swappable = false;
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    EXPECT_FALSE(plugin.GetVmaIndex("random_text", 11, heapIndex, swappable));
+}
+
+HWTEST_F(SmapsStatsTest, TestGetVmaIndexAnonPrefix, TestSize.Level1)
+{
+    SmapsStats plugin;
+    int32_t heapIndex[2] = {VMHEAP_UNKNOWN, VMHEAP_NULL};
+    bool swappable = false;
+
+    EXPECT_TRUE(plugin.GetVmaIndex("[heap]", 6, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_NATIVE, heapIndex[0]);
+    EXPECT_FALSE(swappable);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    swappable = false;
+    EXPECT_TRUE(plugin.GetVmaIndex("[stack:123]", 11, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_STACK, heapIndex[0]);
+    EXPECT_FALSE(swappable);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    swappable = false;
+    EXPECT_TRUE(plugin.GetVmaIndex("[anon:libc_malloc]", 18, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_NATIVE, heapIndex[0]);
+    EXPECT_FALSE(swappable);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    swappable = false;
+    EXPECT_TRUE(plugin.GetVmaIndex("[anon:sensitive_vm-main space", 28, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_SENSITIVE_VM, heapIndex[0]);
+    EXPECT_EQ(VMHEAP_SENSITIVE_VM_NORMAL, heapIndex[1]);
+    EXPECT_FALSE(swappable);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    swappable = false;
+    EXPECT_TRUE(plugin.GetVmaIndex("[anon:unknown_anon]", 19, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_UNKNOWN, heapIndex[0]);
+    EXPECT_FALSE(swappable);
+}
+
+HWTEST_F(SmapsStatsTest, TestGetVmaIndexSlashPrefix, TestSize.Level1)
+{
+    SmapsStats plugin;
+    int32_t heapIndex[2] = {VMHEAP_UNKNOWN, VMHEAP_NULL};
+    bool swappable = false;
+
+    EXPECT_TRUE(plugin.GetVmaIndex("/memfd:jit-cache", 16, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_SENSITIVE_VM_OTHER, heapIndex[0]);
+    EXPECT_FALSE(swappable);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    swappable = false;
+    EXPECT_TRUE(plugin.GetVmaIndex("/dev/kgsl-3d0", 14, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_GL_DEV, heapIndex[0]);
+    EXPECT_FALSE(swappable);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    swappable = false;
+    EXPECT_TRUE(plugin.GetVmaIndex("/dev/ashmem/CursorWindow", 23, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_CURSOR, heapIndex[0]);
+    EXPECT_FALSE(swappable);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    swappable = false;
+    EXPECT_TRUE(plugin.GetVmaIndex("/dev/ashmem/something", 21, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_ASHMEM, heapIndex[0]);
+    EXPECT_FALSE(swappable);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    swappable = false;
+    EXPECT_TRUE(plugin.GetVmaIndex("/dev/unknown_dev", 16, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_UNKNOWN_DEV, heapIndex[0]);
+    EXPECT_FALSE(swappable);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    swappable = false;
+    EXPECT_TRUE(plugin.GetVmaIndex("/system/lib/libtest.so", 22, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_SO, heapIndex[0]);
+    EXPECT_TRUE(swappable);
+}
+
+HWTEST_F(SmapsStatsTest, TestGetVmaIndexSensitiveJvbin, TestSize.Level1)
+{
+    SmapsStats plugin;
+    int32_t heapIndex[2] = {VMHEAP_UNKNOWN, VMHEAP_NULL};
+    bool swappable = false;
+
+    EXPECT_FALSE(plugin.GetVmaIndex("base.sensitive_jvbin", 21, heapIndex, swappable));
+}
+
+HWTEST_F(SmapsStatsTest, TestHeapIndexFixVdex, TestSize.Level1)
+{
+    SmapsStats plugin;
+    int32_t heapIndex[2] = {VMHEAP_UNKNOWN, VMHEAP_NULL};
+
+    plugin.HeapIndexFix("/system@boot/base.vdex", ".vdex", heapIndex);
+    EXPECT_EQ(VMHEAP_SENSITIVE_JVBIN, heapIndex[0]);
+    EXPECT_EQ(VMHEAP_SENSITIVE_JVBIN_BOOT_VDEX, heapIndex[1]);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    plugin.HeapIndexFix("/data/app/base.vdex", ".vdex", heapIndex);
+    EXPECT_EQ(VMHEAP_SENSITIVE_JVBIN, heapIndex[0]);
+    EXPECT_EQ(VMHEAP_SENSITIVE_JVBIN_APP_VDEX, heapIndex[1]);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    plugin.HeapIndexFix("/apex/com.example/base.vdex", ".vdex", heapIndex);
+    EXPECT_EQ(VMHEAP_SENSITIVE_JVBIN, heapIndex[0]);
+    EXPECT_EQ(VMHEAP_SENSITIVE_JVBIN_BOOT_VDEX, heapIndex[1]);
+}
+
+HWTEST_F(SmapsStatsTest, TestHeapIndexFixHrt, TestSize.Level1)
+{
+    SmapsStats plugin;
+    int32_t heapIndex[2] = {VMHEAP_UNKNOWN, VMHEAP_NULL};
+
+    plugin.HeapIndexFix("/system@boot/module.hrt", ".hrt", heapIndex);
+    EXPECT_EQ(VMHEAP_HRT, heapIndex[0]);
+    EXPECT_EQ(VMHEAP_HRT_BOOT, heapIndex[1]);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    plugin.HeapIndexFix("/data/app/module.hrt", ".hrt", heapIndex);
+    EXPECT_EQ(VMHEAP_HRT, heapIndex[0]);
+    EXPECT_EQ(VMHEAP_HRT_APP, heapIndex[1]);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    plugin.HeapIndexFix("/boot/module.hrt]", ".hrt]", heapIndex);
+    EXPECT_EQ(VMHEAP_HRT, heapIndex[0]);
+    EXPECT_EQ(VMHEAP_HRT_BOOT, heapIndex[1]);
+}
+
+HWTEST_F(SmapsStatsTest, TestGetSwapablepssValue, TestSize.Level1)
+{
+    SmapsStats plugin;
+    MemUsageInfo memusage = {0};
+
+    EXPECT_EQ((uint64_t)0, plugin.GetSwapablepssValue(memusage, false));
+
+    memusage.pss = 100;
+    EXPECT_EQ((uint64_t)0, plugin.GetSwapablepssValue(memusage, true));
+
+    memusage.pss = 100;
+    memusage.uss = 50;
+    memusage.privateClean = 30;
+    memusage.sharedClean = 0;
+    memusage.sharedDirty = 0;
+    EXPECT_EQ((uint64_t)30, plugin.GetSwapablepssValue(memusage, true));
+
+    memusage.pss = 100;
+    memusage.uss = 50;
+    memusage.privateClean = 30;
+    memusage.sharedClean = 200;
+    memusage.sharedDirty = 300;
+    uint64_t result = plugin.GetSwapablepssValue(memusage, true);
+    EXPECT_GT(result, (uint64_t)0);
+}
+
+HWTEST_F(SmapsStatsTest, TestCollectVmemAreasDataDeletedSuffix, TestSize.Level1)
+{
+    SmapsStats plugin;
+    MapPiecesInfo mappic = {0x1000, 0x2000, "/data/app/base.so (deleted)"};
+    MemUsageInfo memusage = {0, 0, 4, 0, 0, 0, 0, 0, 0, 0};
+    uint64_t prevEnd = 0;
+    int prevHeap = 0;
+
+    plugin.CollectVmemAreasData(mappic, memusage, prevEnd, prevHeap);
+    EXPECT_EQ(0x2000, prevEnd);
+}
+
+HWTEST_F(SmapsStatsTest, TestCollectVmemAreasDataEmptyName, TestSize.Level1)
+{
+    SmapsStats plugin;
+    MapPiecesInfo mappic = {0x1000, 0x2000, ""};
+    MemUsageInfo memusage = {0, 0, 4, 0, 0, 0, 0, 0, 0, 0};
+    uint64_t prevEnd = 0x1000;
+    int prevHeap = VMHEAP_SO;
+
+    plugin.CollectVmemAreasData(mappic, memusage, prevEnd, prevHeap);
+    EXPECT_EQ(VMHEAP_SO, prevHeap);
+}
+
+HWTEST_F(SmapsStatsTest, TestSetMapAddrInfo, TestSize.Level1)
+{
+    SmapsStats plugin;
+    MapPiecesInfo head = {0};
+
+    std::string line1 = "00400000-00409000";
+    EXPECT_TRUE(plugin.SetMapAddrInfo(line1, head));
+    EXPECT_EQ((uint64_t)0x00400000, head.startAddr);
+    EXPECT_EQ((uint64_t)0x00409000, head.endAddr);
+
+    std::string line2 = "invalid";
+    EXPECT_FALSE(plugin.SetMapAddrInfo(line2, head));
+
+    std::string line3 = "00400000";
+    EXPECT_FALSE(plugin.SetMapAddrInfo(line3, head));
+}
+
+HWTEST_F(SmapsStatsTest, TestParseCategory, TestSize.Level1)
+{
+    SmapsStats plugin;
+    SmapsHeadInfo info1 = {"", "", "", "[heap]", 0};
+    EXPECT_STREQ("native heap", plugin.ParseCategory(info1).c_str());
+
+    SmapsHeadInfo info2 = {"", "", "", "/system/lib/test.so", 100};
+    EXPECT_STREQ(".so", plugin.ParseCategory(info2).c_str());
+
+    SmapsHeadInfo info3 = {"", "", "", "/data/app/base.jar", 100};
+    EXPECT_STREQ("FilePage other", plugin.ParseCategory(info3).c_str());
+
+    SmapsHeadInfo info4 = {"", "", "", "/data/file.db", 100};
+    EXPECT_STREQ(".db", plugin.ParseCategory(info4).c_str());
+
+    SmapsHeadInfo info5 = {"", "", "", "/data/unknown_mapped", 100};
+    EXPECT_STREQ("FilePage other", plugin.ParseCategory(info5).c_str());
+
+    SmapsHeadInfo info6 = {"", "", "", "[anon:something]", 0};
+    EXPECT_STREQ("AnonPage other", plugin.ParseCategory(info6).c_str());
+}
+
+HWTEST_F(SmapsStatsTest, TestGetMemFromSmapsrollup, TestSize.Level1)
+{
+    SmapsStats plugin;
+    MemUsageInfo memusage = {0};
+
+    std::string line1 = "Pss:                   4 kB";
+    EXPECT_TRUE(plugin.GetMemFromSmapsrollup(line1, memusage));
+    EXPECT_EQ((uint64_t)4, memusage.pss);
+
+    std::string line2 = "Rss:                  10 kB";
+    EXPECT_TRUE(plugin.GetMemFromSmapsrollup(line2, memusage));
+    EXPECT_EQ((uint64_t)10, memusage.rss);
+
+    std::string line3 = "Private_Clean:         3 kB";
+    EXPECT_TRUE(plugin.GetMemFromSmapsrollup(line3, memusage));
+    EXPECT_EQ((uint64_t)3, memusage.privateClean);
+    EXPECT_EQ((uint64_t)3, memusage.uss);
+
+    std::string line4 = "Private_Dirty:         7 kB";
+    EXPECT_TRUE(plugin.GetMemFromSmapsrollup(line4, memusage));
+    EXPECT_EQ((uint64_t)7, memusage.privateDirty);
+    EXPECT_EQ((uint64_t)10, memusage.uss);
+
+    std::string line5 = "Size:                 20 kB";
+    EXPECT_TRUE(plugin.GetMemFromSmapsrollup(line5, memusage));
+    EXPECT_EQ((uint64_t)20, memusage.vss);
+
+    std::string line6 = "Shared_Clean:          5 kB";
+    EXPECT_TRUE(plugin.GetMemFromSmapsrollup(line6, memusage));
+    EXPECT_EQ((uint64_t)5, memusage.sharedClean);
+
+    std::string line7 = "Shared_Dirty:          6 kB";
+    EXPECT_TRUE(plugin.GetMemFromSmapsrollup(line7, memusage));
+    EXPECT_EQ((uint64_t)6, memusage.sharedDirty);
+
+    std::string line8 = "Swap:                  8 kB";
+    EXPECT_TRUE(plugin.GetMemFromSmapsrollup(line8, memusage));
+    EXPECT_EQ((uint64_t)8, memusage.swap);
+
+    std::string line9 = "SwapPss:               9 kB";
+    EXPECT_TRUE(plugin.GetMemFromSmapsrollup(line9, memusage));
+    EXPECT_EQ((uint64_t)9, memusage.swapPss);
+
+    std::string line10 = "UnknownField:          1 kB";
+    EXPECT_TRUE(plugin.GetMemFromSmapsrollup(line10, memusage));
+
+    std::string line11 = "NoColon";
+    EXPECT_FALSE(plugin.GetMemFromSmapsrollup(line11, memusage));
+}
+
+HWTEST_F(SmapsStatsTest, TestGetProcessSystem, TestSize.Level1)
+{
+    SmapsStats plugin;
+    MapPiecesInfo mappic = {0x1000, 0x2000, "[heap]"};
+    MemUsageInfo memusage = {100, 50, 30, 20, 0, 0, 10, 10, 0, 0};
+    uint64_t prevEnd = 0;
+    int prevHeap = 0;
+
+    plugin.CollectVmemAreasData(mappic, memusage, prevEnd, prevHeap);
+    plugin.ReviseStatsData();
+
+    int system = plugin.GetProcessSystem();
+    EXPECT_GE(system, 0);
+}
+
+HWTEST_F(SmapsStatsTest, TestGetVmaIndexSensitiveVmSuffix, TestSize.Level1)
+{
+    SmapsStats plugin;
+    int32_t heapIndex[2] = {VMHEAP_UNKNOWN, VMHEAP_NULL};
+    bool swappable = false;
+
+    EXPECT_TRUE(plugin.GetVmaIndex("[anon:sensitive_vm-LinearAlloc", 29, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_SENSITIVE_VM_OTHER, heapIndex[0]);
+    EXPECT_EQ(VMHEAP_SENSITIVE_VM_OTHER_LINEARALLOC, heapIndex[1]);
+    EXPECT_FALSE(swappable);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    swappable = false;
+    EXPECT_TRUE(plugin.GetVmaIndex("[anon:sensitive_vm-large object space", 37, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_SENSITIVE_VM, heapIndex[0]);
+    EXPECT_EQ(VMHEAP_SENSITIVE_VM_LARGE, heapIndex[1]);
+    EXPECT_FALSE(swappable);
+
+    heapIndex[0] = VMHEAP_UNKNOWN;
+    heapIndex[1] = VMHEAP_NULL;
+    swappable = false;
+    EXPECT_TRUE(plugin.GetVmaIndex("[anon:sensitive_vm-zygote space", 31, heapIndex, swappable));
+    EXPECT_EQ(VMHEAP_SENSITIVE_VM, heapIndex[0]);
+    EXPECT_EQ(VMHEAP_SENSITIVE_VM_ZYGOTE, heapIndex[1]);
+    EXPECT_FALSE(swappable);
+}
+
 } // namespace

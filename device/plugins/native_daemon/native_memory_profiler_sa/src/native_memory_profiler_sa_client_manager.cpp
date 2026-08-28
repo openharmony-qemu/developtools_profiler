@@ -27,6 +27,7 @@
 #include <functional>
 #include <variant>
 #include <iostream>
+#include <map>
 #include <mutex>
 #include <sstream>
 #include <sys/stat.h>
@@ -49,6 +50,8 @@ constexpr int SIMP_NMD = 3;
 constexpr int FIVE_MINUTES = 300;
 constexpr int JS_STACK_DEPS = 10;
 const std::string NAPI_FILE_PATH_PREFIX = "/data/storage/el2/base/files/";
+const std::string NAPI_FILE_PATH = "/data/storage/el2/base/files";
+const std::string NAPI_BASE_PATH = "/data/storage/el2/base";
 constexpr uint32_t DEFINE_MIN_MAX_DURATION = 1; // 1 second
 constexpr uint32_t DEFINE_MAX_MAX_DURATION = 3600; // 60 * 60  seconds
 constexpr uint32_t DEFINE_MIN_FILTER_SIZE = 1; // bytes
@@ -58,7 +61,15 @@ constexpr uint32_t DEFINE_MIN_SAMPLE_INTERVAL = 384; // bytes
 constexpr uint32_t ASYNC_REQUEST_TIMEOUT_DELTA = 600; // seconds
 constexpr int32_t TIME_BASE = 1000;
 const std::string FILE_SUFFIX = ".htrace";
-const std::vector<std::string> resourceTypeValues = { "fd", "thread", "native", "gpu", "global_handle" };
+const std::map<InternalResourceType, std::string> resourceTypeValues = {
+    {InternalResourceType::OH_RES_TYPE_FD, "fd"},
+    {InternalResourceType::OH_RES_TYPE_THREAD, "thread"},
+    {InternalResourceType::OH_RES_TYPE_NATIVE, "native"},
+    {InternalResourceType::OH_RES_TYPE_GPU, "gpu"},
+    {InternalResourceType::OH_RES_TYPE_GLOBAL_HANDLE, "global_handle"},
+    {InternalResourceType::OH_RES_TYPE_DMA, "dma"},
+    {InternalResourceType::OH_RES_TYPE_ASHMEM, "ashmem"},
+};
 
 using ProfilingCallbackVar = std::variant<
     NativeMemoryProfilerSaClientManager::ProfilingCallback,
@@ -302,16 +313,20 @@ int32_t NativeMemoryProfilerSaClientManager::Start(NativeMemProfilerType type, u
     return Start(config);
 }
 
-int32_t NativeMemoryProfilerSaClientManager::Stop(uint32_t pid)
+int32_t NativeMemoryProfilerSaClientManager::StopWithService(const sptr<IRemoteObject>& service, uint32_t pid)
 {
-    CHECK_TRUE(pid != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: pid is 0");
-    auto service = GetRemoteService();
     if (service == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop service is null");
         return RET_ERR;
     }
     NativeMemoryProfilerSaProxy proxy(service);
     return proxy.Stop(pid);
+}
+
+int32_t NativeMemoryProfilerSaClientManager::Stop(uint32_t pid)
+{
+    CHECK_TRUE(pid != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: pid is 0");
+    return StopWithService(GetRemoteService(), pid);
 }
 
 int32_t NativeMemoryProfilerSaClientManager::Stop(const std::string& name)
@@ -701,6 +716,10 @@ int32_t NativeMemoryProfilerSaClientManager::ParseResType(int32_t type,
         config->traceMask_ = RES_THREAD_MASK;
     } else if (internalType == InternalResourceType::OH_RES_TYPE_GLOBAL_HANDLE) {
         config->traceMask_ = RES_ARK_GLOBAL_HANDLE;
+    } else if (internalType == InternalResourceType::OH_RES_TYPE_DMA) {
+        config->traceMask_ = RES_FD_DMABUF | RES_DMABUF_MASK;
+    } else if (internalType == InternalResourceType::OH_RES_TYPE_ASHMEM) {
+        config->traceMask_ = RES_FD_ASHMEM | RES_ASHMEM_MASK;
     }
     return RET_OK;
 }
@@ -800,7 +819,7 @@ ResProfilerErrorCode NativeMemoryProfilerSaClientManager::CheckInputConfig(int t
     }
 
     if (type < static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_FD) ||
-        type > static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_GLOBAL_HANDLE)) {
+        type >= static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_MAX)) {
         PROFILER_LOG_ERROR(LOG_CORE, "CheckInputConfig: type is invalid");
         return ResProfilerErrorCode::RES_PROF_RESOURCE_TYPE_INVALID_ARG;
     }
@@ -882,10 +901,11 @@ int32_t NativeMemoryProfilerSaClientManager::OnDemandStart(
 // <resource-type>-<process_name>-<pid>-<timestamp>.htrace
 std::string NativeMemoryProfilerSaClientManager::GenerateFileName(int type, int32_t pid)
 {
-    if (type < 0 || type >= static_cast<int>(resourceTypeValues.size())) {
+    auto it = resourceTypeValues.find(static_cast<InternalResourceType>(type));
+    if (it == resourceTypeValues.end()) {
         return "";
     }
-    std::string typeVal = resourceTypeValues[type];
+    std::string typeVal = it->second;
     std::string procName = COMMON::GetProcessNameByPid(pid);
     std::string timeStr = COMMON::GetTimeStr();
     return typeVal + "-" + procName + "-" + std::to_string(pid) + "-" + timeStr + FILE_SUFFIX;
@@ -914,13 +934,9 @@ std::string NativeMemoryProfilerSaClientManager::CreateFileAndGrantPermission(st
     std::shared_ptr<OHOS::AbilityRuntime::ApplicationContext> context =
         OHOS::AbilityRuntime::Context::GetApplicationContext();
     CHECK_NOTNULL(context, "", "context is NULL");
-    std::string baseDir = context->GetBaseDir();
-    CHECK_TRUE(!baseDir.empty(), "", "base dir is empty");
-    CHECK_TRUE(OHOS::StorageDaemon::AclSetAccess(baseDir, "u:3063:x") == 0, "", "grant base dir FAIL");
-    std::string filesDir = context->GetFilesDir();
-    CHECK_TRUE(!filesDir.empty(), "", "files dir is empty");
-    CHECK_TRUE(OHOS::StorageDaemon::AclSetAccess(filesDir, "u:3063:x") == 0, "", "grant files dir FAIL");
-    std::string fullPath = filesDir + "/" + filename;
+    CHECK_TRUE(OHOS::StorageDaemon::AclSetAccess(NAPI_BASE_PATH, "u:3063:x") == 0, "", "grant base dir FAIL");
+    CHECK_TRUE(OHOS::StorageDaemon::AclSetAccess(NAPI_FILE_PATH, "u:3063:x") == 0, "", "grant files dir FAIL");
+    std::string fullPath = NAPI_FILE_PATH + "/" + filename;
     CHECK_TRUE(COMMON::CreateFile(fullPath), "", "create file FAIL");
     if (OHOS::StorageDaemon::AclSetAccess(fullPath, "u:3063:rw") != 0) {
         (void)unlink(fullPath.c_str());

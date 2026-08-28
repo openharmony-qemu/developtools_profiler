@@ -189,11 +189,25 @@ bool SPUtils::IsValidPath(const std::string& str)
     if (str.empty()) {
         return false;
     }
-    const char* specialChars = R"(\\"$`;&|><(){}[]^~*?#!%@)";
+    //拒绝所有控制字符
+    for (char c : str) {
+        if (static_cast<unsigned char>(c) <= 0x1F) {
+            return false;
+        }
+    }
+    const char* specialChars = "\\\"$`;&|><(){}[]^~*?#!%@";
     if (str.find_first_of(specialChars) != std::string::npos) {
         return false;
     }
     return true;
+}
+
+bool SPUtils::IsPathTraversal(const std::string& str)
+{
+    if (str.find("..") != std::string::npos) {
+        return true;
+    }
+    return false;
 }
 
 bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak, std::string &result)

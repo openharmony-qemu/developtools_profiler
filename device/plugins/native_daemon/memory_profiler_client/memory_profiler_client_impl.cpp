@@ -104,7 +104,9 @@ bool MemoryProfilerClientImpl::CheckInput(int32_t resourceType, const MemAPIConf
     // OH_RES_TYPE_NATIVE = 2
     // OH_RES_TYPE_GPU = 3
     // OH_RES_TYPE_GLOBAL_HANDLE = 4
-    if (resourceType < 0 || resourceType > 4) {
+    // OH_RES_TYPE_DMA = 5
+    if (resourceType < static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_FD) ||
+        resourceType >= static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_MAX)) {
         PROFILER_LOG_ERROR(LOG_CORE, "Invalid resourceType: %d", resourceType);
         return false;
     }

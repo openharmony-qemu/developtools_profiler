@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <chrono>
+#include <ctime>
 #include <thread>
 #include "test_common.h"
 #include "init_param.h"
@@ -210,8 +211,8 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
 }
 
 /**
- * @tc.name: NativeMemoryProfilerSaClientManagerTest004
- * @tc.desc: Test simplified nmd mode
+ * @tc.name: NativeMemoryProfilerSaClientManagerTest006
+ * @tc.desc: Native memory profiler SA client manager test 006.
  * @tc.type: FUNC
  */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest006, TestSize.Level3)
@@ -309,7 +310,7 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, CheckInputConfigTest003, TestS
               ResProfilerErrorCode::RES_PROF_SAMPLE_INTERVAL_INVALID_ARG);
 
     invalidConfig.sampleInterval = 400;
-    type = 5;
+    type = static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_MAX);
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(type, &invalidConfig),
               ResProfilerErrorCode::RES_PROF_RESOURCE_TYPE_INVALID_ARG);
 }
@@ -349,10 +350,16 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartProfilerByTypeInvalidArgT
     inputConfig.maxStackDepth = 16;
     inputConfig.statisticsInterval = 120;
     inputConfig.sampleInterval = 512;
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartProfilerByType(5, &inputConfig, nullptr),
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartProfilerByType(
+        static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_MAX), &inputConfig, nullptr),
         static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_RESOURCE_TYPE_INVALID_ARG));
 }
 
+/**
+ * @tc.name: StartProfilerByTypeValidInputFailsWithoutRemote
+ * @tc.desc: Start profiler by type valid input fails without remote.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartProfilerByTypeValidInputFailsWithoutRemote, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
@@ -368,6 +375,11 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartProfilerByTypeValidInputF
     EXPECT_NE(ret, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG));
 }
 
+/**
+ * @tc.name: StartMemProfilerValidInputFailsWithoutRemote
+ * @tc.desc: Start Mem profiler valid input fails without remote.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemProfilerValidInputFailsWithoutRemote, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
@@ -401,6 +413,11 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseSimplifiedConfigTargetSoN
     EXPECT_EQ(config->targetSoName_, inputConfig.targetSoName);
 }
 
+/**
+ * @tc.name: ParseSimplifiedConfigUsesResponseLibraryMode
+ * @tc.desc: Parse simplified config uses response library mode.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseSimplifiedConfigUsesResponseLibraryMode, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
@@ -421,6 +438,11 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseSimplifiedConfigUsesRespo
     EXPECT_EQ(config->shareMemorySize_, 16384u);
 }
 
+/**
+ * @tc.name: CheckConfigHandlesDefaultsAndInvalidFields
+ * @tc.desc: Check config handles defaults and invalid fields.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, CheckConfigHandlesDefaultsAndInvalidFields, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
@@ -446,6 +468,11 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, CheckConfigHandlesDefaultsAndI
     EXPECT_EQ(config->shareMemorySize_, 4096u);
 }
 
+/**
+ * @tc.name: ParseResTypeSetsExpectedMasks
+ * @tc.desc: Parse res type sets expected masks.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseResTypeSetsExpectedMasks, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
@@ -483,18 +510,26 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseResTypeSetsExpectedMasks,
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseResType(
         static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_GLOBAL_HANDLE), config), RET_OK);
     EXPECT_EQ(config->traceMask_, RES_ARK_GLOBAL_HANDLE);
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseResType(
+        static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_DMA), config), RET_OK);
+    EXPECT_EQ(config->traceMask_, RES_FD_DMABUF | RES_DMABUF_MASK);
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseResType(
+        static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_ASHMEM), config), RET_OK);
+    EXPECT_EQ(config->traceMask_, RES_FD_ASHMEM | RES_ASHMEM_MASK);
 }
 
+/**
+ * @tc.name: ParseNormalConfigHandlesNullAndCopiesFields
+ * @tc.desc: Parse normal config handles null and copies fields.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigHandlesNullAndCopiesFields, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
     auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    MemAPIConfig inputConfig;
-    inputConfig.maxDuration = 12;
-    inputConfig.filterSize = 34;
-    inputConfig.maxStackDepth = 5;
-    inputConfig.statisticsInterval = 67;
-    inputConfig.sampleInterval = 890;
+    MemAPIConfig inputConfig = {12, 34, 5, 67, 890, {}};
     ASSERT_NE(config, nullptr);
 
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseNormalConfig(nullptr, &inputConfig), RET_ERR);
@@ -507,6 +542,197 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigHandlesNullAn
     EXPECT_EQ(config->sampleInterval_, inputConfig.sampleInterval);
 }
 
+/**
+ * @tc.name: GenerateFileNameHandleBoundaries
+ * @tc.desc: Generate file name handle boundaries.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, GenerateFileNameHandleBoundaries, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    EXPECT_TRUE(NativeMemoryProfilerSaClientManager::GenerateFileName(-1, getpid()).empty());
+    EXPECT_TRUE(NativeMemoryProfilerSaClientManager::GenerateFileName(
+        static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_MAX), getpid()).empty());
+    std::string fileName = NativeMemoryProfilerSaClientManager::GenerateFileName(
+        static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_NATIVE), getpid());
+    EXPECT_EQ(fileName.find("native-"), 0u);
+    EXPECT_NE(fileName.find("-" + std::to_string(getpid()) + "-"), std::string::npos);
+    EXPECT_NE(fileName.rfind(".htrace"), std::string::npos);
+}
+
+/**
+ * @tc.name: GetGwpAsanRejectsInvalidArgs
+ * @tc.desc: Get GWPAsan asan rejects invalid args.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, GetGwpAsanRejectsInvalidArgs, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    GwpAsanConfig config;
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetGwpAsan(0, getpid(), config), RET_ERR);
+    int fd1 = open("/data/test/sa_test_gwp.htrace", O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd1, 0);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetGwpAsan(fd1, 0, config), RET_ERR);
+    close(fd1);
+}
+
+/**
+ * @tc.name: StartOverloadsValidInputFailWithoutRemote
+ * @tc.desc: Start overloads valid input fail without remote.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartOverloadsValidInputFailWithoutRemote, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    SimplifiedMemConfig simplifiedConfig;
+    simplifiedConfig.sampleSize = 512;
+    MemLeakConfig memLeakConfig;
+    memLeakConfig.duration = 10;
+    memLeakConfig.limit = 3;
+    GwpAsanConfig gwpConfig;
+    gwpConfig.holdTime = 1;
+
+    int fd = open("/data/test/sa_test_output.htrace", O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    ExpectRemotePathRet(NativeMemoryProfilerSaClientManager::Start(fd, getpid(), memLeakConfig));
+    ExpectRemotePathRet(NativeMemoryProfilerSaClientManager::Start(fd, getpid(), 10, simplifiedConfig));
+    ExpectRemotePathRet(NativeMemoryProfilerSaClientManager::GetGwpAsan(fd, getpid(), gwpConfig));
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StopWithService(nullptr, getpid()), RET_ERR);
+    close(fd);
+}
+
+/**
+ * @tc.name: StartMemSaConfigCopiesGpuRangesBeforeRemoteFailure
+ * @tc.desc: Start Mem SA config copies GPU ranges before remote failure.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigCopiesGpuRangesBeforeRemoteFailure, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    MemSaConfig config;
+    std::pair<uint64_t, uint64_t> lowRange = std::make_pair(1, 2);
+    std::pair<uint64_t, uint64_t> highRange = std::make_pair(3, 4);
+    config.mask = RES_GPU_MASK;
+    config.asyncStackEnable = true;
+    config.asyncFlag = 5;
+    config.hookSizes[TAG_RES_GPU_VK] = std::make_pair(lowRange, highRange);
+    config.hookSizes[TAG_RES_GPU_GLES_IMAGE] = std::make_pair(lowRange, highRange);
+    config.hookSizes[TAG_RES_GPU_GLES_BUFFER] = std::make_pair(lowRange, highRange);
+    config.hookSizes[TAG_RES_GPU_CL_IMAGE] = std::make_pair(lowRange, highRange);
+    config.hookSizes[TAG_RES_GPU_CL_BUFFER] = std::make_pair(lowRange, highRange);
+
+    int fd2 = open("/data/test/sa_test_gpu.htrace", O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd2, 0);
+    int32_t ret = NativeMemoryProfilerSaClientManager::Start(fd2, getpid(), 10, config);
+    ExpectRemotePathRet(ret);
+    if (ret == RET_OK) {
+        EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(getpid()), RET_OK);
+    }
+    close(fd2);
+}
+
+/**
+ * @tc.name: ParseSimplifiedConfigCopiesSizeThresholds
+ * @tc.desc: Parse simplified config copies size thresholds.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseSimplifiedConfigCopiesSizeThresholds, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_NE(config, nullptr);
+    SimplifiedMemConfig inputConfig;
+    inputConfig.largestSize = 11;
+    inputConfig.secondLargestSize = 22;
+    inputConfig.maxGrowthSize = 33;
+    inputConfig.sampleSize = 512;
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseSimplifiedConfig(config, inputConfig, 44), RET_OK);
+    EXPECT_EQ(config->duration_, 44u);
+    EXPECT_EQ(config->largestSize_, 11u);
+    EXPECT_EQ(config->secondLargestSize_, 22u);
+    EXPECT_EQ(config->maxGrowthSize_, 33u);
+    EXPECT_TRUE(config->jsStackReport_);
+}
+
+/**
+ * @tc.name: NmdValidInputsReachRemoteFailure
+ * @tc.desc: NMD valid inputs reach remote failure.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NmdValidInputsReachRemoteFailure, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::vector<SimplifiedMemStats> memStats;
+
+    int fd3 = open("/data/test/sa_test_nmd.htrace", O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd3, 0);
+    int32_t statsRet = NativeMemoryProfilerSaClientManager::GetMallocStats(fd3, getpid(), 0);
+    ExpectRemotePathRet(statsRet);
+    int32_t nmdRet = NativeMemoryProfilerSaClientManager::GetMallocStats(fd3, getpid(), NMD_ONLY_TYPE, true);
+    ExpectRemotePathRet(nmdRet);
+    if (nmdRet == RET_OK) {
+        EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(getpid()), RET_OK);
+    }
+    int32_t simplifiedRet = NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(getpid(), memStats);
+    ExpectRemotePathRet(simplifiedRet);
+    close(fd3);
+}
+
+/**
+ * @tc.name: CheckInputConfigRejectsUpperAndLowerBounds
+ * @tc.desc: Check input config rejects upper and lower bounds.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, CheckInputConfigRejectsUpperAndLowerBounds, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    MemAPIConfig inputConfig;
+    inputConfig.maxDuration = 3601;
+    inputConfig.filterSize = 8;
+    inputConfig.maxStackDepth = 16;
+    inputConfig.statisticsInterval = 120;
+    inputConfig.sampleInterval = 512;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(0, &inputConfig),
+        ResProfilerErrorCode::RES_PROF_MAX_DURATION_INVALID_ARG);
+
+    inputConfig.maxDuration = 10;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(-1, &inputConfig),
+        ResProfilerErrorCode::RES_PROF_RESOURCE_TYPE_INVALID_ARG);
+}
+
+/**
+ * @tc.name: StartProfilerTypeOverloadsReachConfigBranches
+ * @tc.desc: Start profiler type overloads reach config branches.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartProfilerTypeOverloadsReachConfigBranches, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto libraryType = NativeMemoryProfilerSaClientManager::NativeMemProfilerType::MEM_PROFILER_LIBRARY;
+    auto stackType = NativeMemoryProfilerSaClientManager::NativeMemProfilerType::MEM_PROFILER_CALL_STACK;
+
+    int32_t libraryRet = NativeMemoryProfilerSaClientManager::Start(libraryType, getpid(), 10, 512);
+    ExpectRemotePathRet(libraryRet);
+    if (libraryRet == RET_OK) {
+        EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(getpid()), RET_OK);
+    }
+
+    int32_t stackRet = NativeMemoryProfilerSaClientManager::Start(stackType, getpid(), 10, 512);
+    ExpectRemotePathRet(stackRet);
+    if (stackRet == RET_OK) {
+        EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(getpid()), RET_OK);
+    }
+}
+
+#endif // NATIVE_MEMORY_PROFILER_SA_CLINET_MANAGER_TEST_H
+
+/**
+ * @tc.name: ParseNormalConfigSetsAsyncFlagWhenNestedEnabled
+ * @tc.desc: Parse normal config sets async flag when nested enabled.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigSetsAsyncFlagWhenNestedEnabled, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
@@ -529,6 +755,11 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigSetsAsyncFlag
     EXPECT_EQ(config->asyncFlag_, expectedFlag);
 }
 
+/**
+ * @tc.name: ParseNormalConfigSetsAsyncFlagWhenOnlyAsyncEnabled
+ * @tc.desc: Parse normal config sets async flag when only async enabled.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigSetsAsyncFlagWhenOnlyAsyncEnabled, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
@@ -551,6 +782,11 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigSetsAsyncFlag
     EXPECT_EQ(config->asyncFlag_, expectedFlag);
 }
 
+/**
+ * @tc.name: ParseNormalConfigSetsAsyncFlagWhenAsyncDisabled
+ * @tc.desc: Parse normal config sets async flag when async disabled.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigSetsAsyncFlagWhenAsyncDisabled, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
@@ -572,6 +808,11 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigSetsAsyncFlag
     EXPECT_EQ(config->asyncFlag_, 0x0);
 }
 
+/**
+ * @tc.name: ParseNormalConfigCopiesAsyncAndGpuHookSizes
+ * @tc.desc: Parse normal config copies async and GPU hook sizes.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigCopiesAsyncAndGpuHookSizes, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
@@ -618,6 +859,11 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigCopiesAsyncAn
     EXPECT_EQ(config->gpuRange_[4], clBufferExpected);
 }
 
+/**
+ * @tc.name: ParseNormalConfigGpuWithoutHookSizesKeepsGpuRange
+ * @tc.desc: Parse normal config GPU without hook sizes keeps GPU range.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigGpuWithoutHookSizesKeepsGpuRange, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
@@ -646,6 +892,11 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigGpuWithoutHoo
     EXPECT_EQ(config->gpuRange_[1], secondRange);
 }
 
+/**
+ * @tc.name: ParseNormalConfigNonGpuMaskIgnoresHookSizes
+ * @tc.desc: Parse normal config non GPU mask ignores hook sizes.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigNonGpuMaskIgnoresHookSizes, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
@@ -674,18 +925,11 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseNormalConfigNonGpuMaskIgn
     EXPECT_EQ(config->gpuRange_[0], preservedRange);
 }
 
-HWTEST_F(NativeMemoryProfilerSaClientManagerTest, UtilityMethodsHandleBoundaries, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    EXPECT_TRUE(NativeMemoryProfilerSaClientManager::GenerateFileName(-1, getpid()).empty());
-    EXPECT_TRUE(NativeMemoryProfilerSaClientManager::GenerateFileName(5, getpid()).empty());
-    std::string fileName = NativeMemoryProfilerSaClientManager::GenerateFileName(
-        static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_NATIVE), getpid());
-    EXPECT_EQ(fileName.find("native-"), 0u);
-    EXPECT_NE(fileName.find("-" + std::to_string(getpid()) + "-"), std::string::npos);
-    EXPECT_NE(fileName.rfind(".htrace"), std::string::npos);
-}
-
+/**
+ * @tc.name: StopWithPathAndCallbackCleanup
+ * @tc.desc: Stop with path and callback cleanup.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StopWithPathAndCallbackCleanup, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
@@ -694,90 +938,45 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StopWithPathAndCallbackCleanup
     EXPECT_TRUE(filePath.empty());
 }
 
-HWTEST_F(NativeMemoryProfilerSaClientManagerTest, GetGwpAsanRejectsInvalidArgs, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    GwpAsanConfig config;
-
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetGwpAsan(0, getpid(), config), RET_ERR);
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetGwpAsan(STDOUT_FILENO, 0, config), RET_ERR);
-}
-
-HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartOverloadsValidInputFailWithoutRemote, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    SimplifiedMemConfig simplifiedConfig;
-    simplifiedConfig.sampleSize = 512;
-    GwpAsanConfig gwpConfig;
-    gwpConfig.holdTime = 1;
-
-    int32_t simplifiedRet = NativeMemoryProfilerSaClientManager::Start(STDOUT_FILENO, getpid(), 10, simplifiedConfig);
-    ExpectRemotePathRet(simplifiedRet);
-    if (simplifiedRet == RET_OK) {
-        EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(getpid()), RET_OK);
-    }
-    int32_t gwpRet = NativeMemoryProfilerSaClientManager::GetGwpAsan(STDOUT_FILENO, getpid(), gwpConfig);
-    ExpectRemotePathRet(gwpRet);
-    if (gwpRet == RET_OK) {
-        EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(getpid()), RET_OK);
-    }
-}
-
-HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigCopiesGpuRangesBeforeRemoteFailure, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    MemSaConfig config;
-    std::pair<uint64_t, uint64_t> lowRange = std::make_pair(1, 2);
-    std::pair<uint64_t, uint64_t> highRange = std::make_pair(3, 4);
-    config.mask = RES_GPU_MASK;
-    config.asyncStackEnable = true;
-    config.asyncFlag = 5;
-    config.hookSizes[TAG_RES_GPU_VK] = std::make_pair(lowRange, highRange);
-    config.hookSizes[TAG_RES_GPU_GLES_IMAGE] = std::make_pair(lowRange, highRange);
-    config.hookSizes[TAG_RES_GPU_GLES_BUFFER] = std::make_pair(lowRange, highRange);
-    config.hookSizes[TAG_RES_GPU_CL_IMAGE] = std::make_pair(lowRange, highRange);
-    config.hookSizes[TAG_RES_GPU_CL_BUFFER] = std::make_pair(lowRange, highRange);
-
-    int32_t ret = NativeMemoryProfilerSaClientManager::Start(STDOUT_FILENO, getpid(), 10, config);
-    ExpectRemotePathRet(ret);
-    if (ret == RET_OK) {
-        EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(getpid()), RET_OK);
-    }
-}
-
-HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ParseSimplifiedConfigCopiesSizeThresholds, TestSize.Level2)
+/**
+ * @tc.name: DumpDataRejectsInvalidArgs
+ * @tc.desc: Dump data rejects invalid args.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, DumpDataRejectsInvalidArgs, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
     auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
     ASSERT_NE(config, nullptr);
-    SimplifiedMemConfig inputConfig;
-    inputConfig.largestSize = 11;
-    inputConfig.secondLargestSize = 22;
-    inputConfig.maxGrowthSize = 33;
-    inputConfig.sampleSize = 512;
-
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::ParseSimplifiedConfig(config, inputConfig, 44), RET_OK);
-    EXPECT_EQ(config->duration_, 44u);
-    EXPECT_EQ(config->largestSize_, 11u);
-    EXPECT_EQ(config->secondLargestSize_, 22u);
-    EXPECT_EQ(config->maxGrowthSize_, 33u);
-    EXPECT_TRUE(config->jsStackReport_);
+    config->duration_ = 10;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::DumpData(0, config), RET_ERR);
+    auto badConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
+    badConfig->duration_ = 0;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::DumpData(1, badConfig), RET_ERR);
 }
 
-HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NmdValidInputsReachRemoteFailure, TestSize.Level2)
+/**
+ * @tc.name: GetMallocStatsRejectsInvalidArgs
+ * @tc.desc: Get malloc stats rejects invalid args.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, GetMallocStatsRejectsInvalidArgs, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(0, getpid(), 0, false), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(1, 0, 0, false), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(1, getpid(), 99, false), RET_ERR);
+}
+
+/**
+ * @tc.name: EntryCheckRejectsInvalidPid
+ * @tc.desc: Entry check rejects invalid PID.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, EntryCheckRejectsInvalidPid, TestSize.Level2)
 {
     using namespace OHOS::Developtools::NativeDaemon;
     std::vector<SimplifiedMemStats> memStats;
-
-    int32_t statsRet = NativeMemoryProfilerSaClientManager::GetMallocStats(STDOUT_FILENO, getpid(), 0);
-    ExpectRemotePathRet(statsRet);
-    int32_t nmdRet = NativeMemoryProfilerSaClientManager::GetMallocStats(STDOUT_FILENO, getpid(), NMD_ONLY_TYPE, true);
-    ExpectRemotePathRet(nmdRet);
-    if (nmdRet == RET_OK) {
-        EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(getpid()), RET_OK);
-    }
-    int32_t simplifiedRet = NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(getpid(), memStats);
-    ExpectRemotePathRet(simplifiedRet);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(0, memStats), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(0u), RET_ERR);
 }
-
-#endif // NATIVE_MEMORY_PROFILER_SA_CLINET_MANAGER_TEST_H

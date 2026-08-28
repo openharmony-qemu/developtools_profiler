@@ -122,8 +122,17 @@ int32_t NativeMemoryProfilerSaStub::StubDumpFile(MessageParcel &data, MessagePar
             return RET_ERR;
         }
     }
-    uint32_t fd = static_cast<uint32_t>(data.ReadFileDescriptor());
-    return DumpData(fd, config);
+    int fd = data.ReadFileDescriptor();
+    if (fd < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "StubDumpFile read fd fail");
+        return RET_ERR;
+    }
+    int32_t ret = DumpData(static_cast<uint32_t>(fd), config);
+    if (ret != RET_OK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "DumpData fail, ret = %d", ret);
+        close(fd);
+    }
+    return ret;
 }
 
 int32_t NativeMemoryProfilerSaStub::StubDumpFileAsync(MessageParcel &data, MessageParcel &reply)
@@ -140,10 +149,23 @@ int32_t NativeMemoryProfilerSaStub::StubDumpFileAsync(MessageParcel &data, Messa
             return RET_ERR;
         }
     }
-    uint32_t fd = static_cast<uint32_t>(data.ReadFileDescriptor());
+    int fd = data.ReadFileDescriptor();
+    if (fd < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "StubDumpFileAsync read fd fail");
+        return RET_ERR;
+    }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
-    CHECK_NOTNULL(callback, RET_ERR, "remote callback is NULL");
-    return DumpDataAsync(fd, config, callback);
+    if (!callback) {
+        PROFILER_LOG_ERROR(LOG_CORE, "remote callback is NULL");
+        close(fd);
+        return RET_ERR;
+    }
+    int32_t ret = DumpDataAsync(fd, config, callback);
+    if (ret != RET_OK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "DumpDataAsync fail, ret = %d", ret);
+        close(fd);
+    }
+    return ret;
 }
 
 int32_t NativeMemoryProfilerSaStub::StubDumpSimpFile(MessageParcel &data, MessageParcel &reply)

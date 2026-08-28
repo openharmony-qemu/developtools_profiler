@@ -71,10 +71,6 @@ std::string SpThreadSocket::MapToString(std::map<std::string, std::string>& data
 }
 std::string SpThreadSocket::SplitMsg(const std::string &recvBuf) const
 {
-    if (!SPUtils::IsValidPath(recvBuf)) {
-        LOGE("SplitMsg recvBuf is null or Abnormal characters");
-        return "";
-    }
     size_t pos = recvBuf.find("::");
     if (pos != std::string::npos) {
         std::vector<std::string> sps;
@@ -538,8 +534,8 @@ int SpThreadSocket::SendFile(const std::string& filePath)
 
 void SpThreadSocket::ConnectAndSendFile(SpServerSocket &spSocket, const std::string filePath)
 {
-    if (filePath.empty()) {
-        WLOGE("Connect filePath does not exist.");
+    if (!SPUtils::IsValidPath(filePath) || !SPUtils::IsPathTraversal(filePath)) {
+        LOGE("filePath if null or Abnormal characters");
         return;
     }
     if (sendFileSocketPort == -1) {
@@ -645,6 +641,7 @@ void SpThreadSocket::FetchCpuStats(SpServerSocket &spSocket, std::map<std::strin
     spSocket.Sendto(resultCpu);
     LOGD("UDP send resultCpu = %s", resultCpu.c_str());
 }
+
 void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
     const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
@@ -678,8 +675,20 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
         spSocket.Sendto(retCode);
     } else if (iterator->first == MessageType::CATCH_ONE_TRACE) {
         bytrace.hiviewTrace = SplitMsg(recvBuf);
+        if (!SPUtils::IsValidPath(bytrace.hiviewTrace) || !SPUtils::IsPathTraversal(bytrace.hiviewTrace)) {
+            LOGE("bytrace.hiviewTrace if null or Abnormal characters");
+            return;
+        }
         bytrace.CpTraceFile();
-    } else if (iterator->first == MessageType::CATCH_TRACE_FINISH) {
+    } else {
+        HandleNullMsgTail(spSocket, profiler, retCode, recvBuf, iterator);
+    }
+}
+
+void SpThreadSocket::HandleNullMsgTail(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
+    const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
+{
+    if (iterator->first == MessageType::CATCH_TRACE_FINISH) {
         tracefilePath = "";
         GetSocketPort(recvBuf);
         ConnectAndSendFile(spSocket, tracefilePath);
@@ -888,6 +897,11 @@ void SpThreadSocket::GetSocketPort(const std::string& buffer)
         if (portStr.find("$") != std::string::npos) {
             fileName = portStr.substr(portStr.find("$") + 1);
             portStr = portStr.substr(0, portStr.find("$"));
+            if (SPUtils::IsPathTraversal(fileName)) {
+                LOGE("GetSocketPort path tracersal datected in fileName: %s", fileName.c_str());
+                sendFileSocketPort = -1;
+                return;
+            }
             tracefilePath = traceOriginPath + fileName;
         }
         

@@ -18,6 +18,8 @@
 #include <random>
 #include <sys/mman.h>
 
+#include "native_hook_result.pbencoder.h"
+#include "plugin_module_api.h"
 #include "virtual_runtime.h"
 #include "symbols_file.h"
 
@@ -27,6 +29,37 @@ using namespace OHOS::HiviewDFX;
 namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
+constexpr size_t VIRTUAL_RUNTIME_ENCODER_BUFFER_SIZE = 4096;
+static uint8_t g_virtualRuntimeEncoderBuffer[VIRTUAL_RUNTIME_ENCODER_BUFFER_SIZE];
+static uint32_t g_virtualRuntimeEncoderOffset = 0;
+
+static bool GetVirtualRuntimeEncoderMemory(RandomWriteCtx*, uint32_t size, uint8_t** memory, uint32_t* offset)
+{
+    if (memory == nullptr || offset == nullptr ||
+        g_virtualRuntimeEncoderOffset + size > VIRTUAL_RUNTIME_ENCODER_BUFFER_SIZE) {
+        return false;
+    }
+    *memory = g_virtualRuntimeEncoderBuffer + g_virtualRuntimeEncoderOffset;
+    *offset = g_virtualRuntimeEncoderOffset;
+    g_virtualRuntimeEncoderOffset += size;
+    return true;
+}
+
+static bool SeekVirtualRuntimeEncoderMemory(RandomWriteCtx*, uint32_t offset)
+{
+    if (offset > VIRTUAL_RUNTIME_ENCODER_BUFFER_SIZE) {
+        return false;
+    }
+    g_virtualRuntimeEncoderOffset = offset;
+    return true;
+}
+
+static RandomWriteCtx MakeVirtualRuntimeEncoderCtx()
+{
+    g_virtualRuntimeEncoderOffset = 0;
+    return {GetVirtualRuntimeEncoderMemory, SeekVirtualRuntimeEncoderMemory};
+}
+
 class VirtualRuntimeExtTest : public testing::Test {
 public:
     static void SetUpTestCase(void);
@@ -47,13 +80,18 @@ void VirtualRuntimeExtTest::TearDownTestCase() {}
 void VirtualRuntimeExtTest::SetUp()
 {
     NativeHookConfig config;
+    config.set_async_stack_enable(false);
     runtime_ = std::make_unique<VirtualRuntime>(config);
     callbackCount_ = 0;
+    std::unique_lock<std::shared_mutex> lock(g_smoMapsLock);
+    g_smoMaps.clear();
 }
 
 void VirtualRuntimeExtTest::TearDown()
 {
-    runtime_.release();
+    runtime_.reset();
+    std::unique_lock<std::shared_mutex> lock(g_smoMapsLock);
+    g_smoMaps.clear();
 }
 
 void VirtualRuntimeExtTest::PrepareTestSymbols()
@@ -63,6 +101,14 @@ void VirtualRuntimeExtTest::PrepareTestSymbols()
     symbolsFile->filePath_ = testSymbol;
     symbolsFile->symbols_.emplace_back(0x1000, 1u, "test_func", symbolsFile->filePath_);
     runtime_->symbolsFiles_[symbolsFile->filePath_] = std::move(symbolsFile);
+}
+
+static DfxSymbol GetSymbolForTest(VirtualRuntime& runtime, CallFrame& callFrame, pid_t pid, pid_t tid,
+    const perf_callchain_context& context)
+{
+    DfxSymbol symbol;
+    runtime.GetSymbol(symbol, callFrame, pid, tid, context);
+    return symbol;
 }
 
 /**
@@ -174,6 +220,59 @@ HWTEST_F(VirtualRuntimeExtTest, UpdateSymbols, TestSize.Level0)
 
     // Verify symbol file was added
     EXPECT_TRUE(runtime_->IsSymbolExist(testFile));
+}
+
+HWTEST_F(VirtualRuntimeExtTest, UpdateSymbolsKeepsExistingEntry, TestSize.Level0)
+{
+    const std::string testFile = "existing.so";
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(testFile);
+    ASSERT_NE(symbolsFile, nullptr);
+    symbolsFile->filePath_ = testFile;
+    SymbolsFile* existing = symbolsFile.get();
+    runtime_->symbolsFiles_[testFile] = std::move(symbolsFile);
+
+    auto map = std::make_shared<DfxMap>(0x1000, 0x2000, 0, PROT_EXEC, testFile);
+    runtime_->UpdateSymbols(testFile, map);
+
+    ASSERT_EQ(runtime_->symbolsFiles_.size(), 1u);
+    EXPECT_EQ(runtime_->symbolsFiles_[testFile].get(), existing);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, UpdateSymbolsCoversLoggedInsertAndExistingEntry, TestSize.Level0)
+{
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    const std::string insertedFile = "inserted_logged_symbol.so";
+    auto insertedMap = std::make_shared<DfxMap>(0x1000, 0x2000, 0, PROT_EXEC, insertedFile);
+    runtime_->UpdateSymbols(insertedFile, insertedMap);
+    EXPECT_NE(runtime_->symbolsFiles_.find(insertedFile), runtime_->symbolsFiles_.end());
+
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+    ASSERT_NE(symbolsFile, nullptr);
+    const std::string existingFile = "existing_logged_symbol.so";
+    symbolsFile->filePath_ = existingFile;
+    SymbolsFile* existing = symbolsFile.get();
+    runtime_->symbolsFiles_[existingFile] = std::move(symbolsFile);
+
+    runtime_->UpdateSymbols(existingFile, insertedMap);
+    EXPECT_EQ(runtime_->symbolsFiles_[existingFile].get(), existing);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, UpdateSymbolsStoresEntryWithSearchPath, TestSize.Level0)
+{
+    const std::string testFile = "search_path_missing.so";
+    runtime_->symbolsPaths_.push_back(".");
+    auto map = std::make_shared<DfxMap>(0x3000, 0x4000, 0, PROT_EXEC, testFile);
+
+    runtime_->UpdateSymbols(testFile, map);
+
+    EXPECT_TRUE(runtime_->IsSymbolExist(testFile));
+}
+
+HWTEST_F(VirtualRuntimeExtTest, UpdateHapSymbolsReturnsFalseWhenSymbolFileMissing, TestSize.Level0)
+{
+    auto map = std::make_shared<DfxMap>(0x1000, 0x2000, 0, PROT_EXEC,
+        "/data/local/tmp/nonexistent_update_hap_symbols.so");
+    EXPECT_FALSE(runtime_->UpdateHapSymbols(map));
 }
 
 /**
@@ -418,6 +517,7 @@ HWTEST_F(VirtualRuntimeExtTest, FindMapByPath, TestSize.Level0)
     EXPECT_EQ(runtime_->FindMapByPath(testPath), nullptr);
 
     // Add test map
+    runtime_->processMaps_.push_back(nullptr);
     auto mapItem = std::make_shared<DfxMap>(0x1000, 0x2000, 0, PROT_READ, testPath);
     runtime_->processMaps_.push_back(mapItem);
 
@@ -426,6 +526,27 @@ HWTEST_F(VirtualRuntimeExtTest, FindMapByPath, TestSize.Level0)
 
     // Test with non-existent path
     EXPECT_EQ(runtime_->FindMapByPath("non_existent.so"), nullptr);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, FindMapReturnsInnerSegmentIndex, TestSize.Level0)
+{
+    constexpr uint64_t begin = 0x1000;
+    auto firstMap = std::make_shared<DfxMap>(begin, 0x2000, 0, PROT_READ, "multi.so");
+    auto secondMap = std::make_shared<DfxMap>(0x2000, 0x3000, 0x1000, PROT_EXEC, "multi.so");
+    auto memMaps = std::make_shared<MemMaps>(1);
+    memMaps->AddMap(firstMap, true);
+    memMaps->AddMap(secondMap, false);
+    memMaps->soEnd_ = secondMap->end;
+    runtime_->mapsCache_[begin] = memMaps;
+
+    auto [maps, index] = runtime_->FindMap(0x2500);
+    ASSERT_NE(maps, nullptr);
+    EXPECT_EQ(index, 1u);
+    EXPECT_EQ(maps->GetMaps()[index]->name, "multi.so");
+
+    auto [missingMaps, missingIndex] = runtime_->FindMap(0x3500);
+    EXPECT_EQ(missingMaps, nullptr);
+    EXPECT_EQ(missingIndex, 0u);
 }
 
 /**
@@ -466,6 +587,15 @@ HWTEST_F(VirtualRuntimeExtTest, UpdateMaps, TestSize.Level0)
     EXPECT_EQ(thread.tid_, testTid);
 }
 
+HWTEST_F(VirtualRuntimeExtTest, UnwindStackReturnsTrueWhenNoStackPayload, TestSize.Level0)
+{
+    std::vector<u64> regs;
+    std::vector<CallFrame> callFrames;
+
+    EXPECT_TRUE(runtime_->UnwindStack(regs, nullptr, 0, 1, 2, callFrames, 8));
+    EXPECT_TRUE(callFrames.empty());
+}
+
 /**
  * @tc.name: ResolveMergedSoIp
  * @tc.desc: Test ResolveMergedSoIp method
@@ -486,6 +616,91 @@ HWTEST_F(VirtualRuntimeExtTest, ResolveMergedSoIp, TestSize.Level0)
     EXPECT_EQ(runtime_->ResolveMergedSoIp(testIp, testPath), testPath);
 }
 
+HWTEST_F(VirtualRuntimeExtTest, ResolveMergedSoIpHandlesSmoHitAndMisses, TestSize.Level0)
+{
+    const std::string path = "libadlt-test.so";
+    runtime_->adltBaseMap_[path] = 0x1000;
+    {
+        std::unique_lock<std::shared_mutex> lock(g_smoMapsLock);
+        auto& entry = g_smoMaps[path];
+        entry.initialized = true;
+        entry.info.set_file_path(path);
+        auto* mapEntry = entry.info.add_map_entries();
+        mapEntry->set_start_addr(0x100);
+        mapEntry->set_end_addr(0x300);
+        mapEntry->set_so_index(7);
+        auto* idEntry = entry.info.add_id_tlb_entries();
+        idEntry->set_so_index(7);
+        idEntry->set_name("libreal.so");
+    }
+
+    EXPECT_EQ(runtime_->ResolveMergedSoIp(0x1100, path), path + ":libreal.so");
+    EXPECT_EQ(runtime_->ResolveMergedSoIp(0x1500, path), path);
+
+    {
+        std::unique_lock<std::shared_mutex> lock(g_smoMapsLock);
+        g_smoMaps[path].info.clear_id_tlb_entries();
+    }
+    EXPECT_EQ(runtime_->ResolveMergedSoIp(0x1100, path), path);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, ResolveMergedSoIpHandlesInvalidBaseAndEmptySoName, TestSize.Level0)
+{
+    const std::string invalidBasePath = "invalid_base.so";
+    runtime_->adltBaseMap_[invalidBasePath] = std::numeric_limits<uint64_t>::max();
+    EXPECT_EQ(runtime_->ResolveMergedSoIp(0x1100, invalidBasePath), invalidBasePath);
+
+    const std::string emptyNamePath = "empty_name.so";
+    runtime_->adltBaseMap_[emptyNamePath] = 0x1000;
+    {
+        std::unique_lock<std::shared_mutex> lock(g_smoMapsLock);
+        auto& entry = g_smoMaps[emptyNamePath];
+        entry.initialized = true;
+        entry.info.set_file_path(emptyNamePath);
+        auto* mapEntry = entry.info.add_map_entries();
+        mapEntry->set_start_addr(0x100);
+        mapEntry->set_end_addr(0x200);
+        mapEntry->set_so_index(5);
+        entry.info.add_id_tlb_entries()->set_so_index(5);
+    }
+
+    EXPECT_EQ(runtime_->ResolveMergedSoIp(0x1100, emptyNamePath), emptyNamePath);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, TryEmitSmoMapsInfoEmitsOnceAndSkipsUninitialized, TestSize.Level0)
+{
+    const std::string readyPath = "ready.so";
+    const std::string skippedPath = "skipped.so";
+    {
+        std::unique_lock<std::shared_mutex> lock(g_smoMapsLock);
+        g_smoMaps[skippedPath].initialized = false;
+        auto& entry = g_smoMaps[readyPath];
+        entry.initialized = true;
+        entry.info.set_file_path(readyPath);
+        auto* mapEntry = entry.info.add_map_entries();
+        mapEntry->set_start_addr(0x10);
+        mapEntry->set_end_addr(0x20);
+        mapEntry->set_so_index(3);
+        auto* idEntry = entry.info.add_id_tlb_entries();
+        idEntry->set_so_index(3);
+        idEntry->set_name("inner.so");
+    }
+
+    BatchNativeHookData data;
+    runtime_->TryEmitSmoMapsInfo(data);
+    ASSERT_EQ(data.events_size(), 1);
+    const auto& smo = data.events(0).smo_map();
+    EXPECT_EQ(smo.file_path(), readyPath);
+    ASSERT_EQ(smo.map_entries_size(), 1);
+    EXPECT_EQ(smo.map_entries(0).so_index(), 3u);
+    ASSERT_EQ(smo.id_tlb_entries_size(), 1);
+    EXPECT_EQ(smo.id_tlb_entries(0).name(), "inner.so");
+
+    BatchNativeHookData secondData;
+    runtime_->TryEmitSmoMapsInfo(secondData);
+    EXPECT_EQ(secondData.events_size(), 0);
+}
+
 /**
  * @tc.name: UpdateAdltBase
  * @tc.desc: Test UpdateAdltBase method
@@ -503,6 +718,22 @@ HWTEST_F(VirtualRuntimeExtTest, UpdateAdltBase, TestSize.Level0)
     // Verify adlt base was updated
     EXPECT_NE(runtime_->adltFound_.find("/system/lib/libadlt.so"), runtime_->adltFound_.end());
     EXPECT_NE(runtime_->adltBaseMap_.find("/system/lib/libadlt.so"), runtime_->adltBaseMap_.end());
+}
+
+HWTEST_F(VirtualRuntimeExtTest, UpdateAdltBaseSkipsExecAndAlreadyFoundMaps, TestSize.Level0)
+{
+    const std::string adltPath = "/system/lib/libadlt_branch.so";
+    auto execMap = std::make_shared<DfxMap>(0x1000, 0x2000, 0, PROT_EXEC, adltPath);
+    auto readMap = std::make_shared<DfxMap>(0x3000, 0x4000, 0, PROT_READ, adltPath);
+    runtime_->processMaps_.push_back(execMap);
+    runtime_->processMaps_.push_back(readMap);
+
+    runtime_->UpdateAdltBase();
+
+    ASSERT_NE(runtime_->adltBaseMap_.find(adltPath), runtime_->adltBaseMap_.end());
+    EXPECT_EQ(runtime_->adltBaseMap_[adltPath], readMap->begin);
+    runtime_->UpdateAdltBase();
+    EXPECT_TRUE(runtime_->adltFound_[adltPath]);
 }
 
 /**
@@ -563,6 +794,46 @@ HWTEST_F(VirtualRuntimeExtTest, FillMapsCacheAppendsExecSegment, TestSize.Level0
     EXPECT_EQ(runtime_->offlineMapAddr_[0], 0x1000u);
 }
 
+HWTEST_F(VirtualRuntimeExtTest, FillMapsCacheKeepsExistingSegmentWhenNameMatches, TestSize.Level0)
+{
+    std::string currentFileName;
+    auto mapItem = std::make_shared<DfxMap>(0x1000, 0x2000, 0, PROT_READ, "repeat.so");
+    runtime_->FillMapsCache(currentFileName, mapItem);
+    runtime_->FillMapsCache(currentFileName, mapItem);
+    EXPECT_EQ(runtime_->mapsCache_.size(), 1u);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, FillMapsCacheSkipsSameNameWhenCacheMissing, TestSize.Level0)
+{
+    std::string currentFileName = "orphan.so";
+    runtime_->soBegin_ = 0xDEAD;
+    auto mapItem = std::make_shared<DfxMap>(0x1000, 0x2000, 0, PROT_EXEC, currentFileName);
+
+    runtime_->FillMapsCache(currentFileName, mapItem);
+
+    EXPECT_TRUE(runtime_->mapsCache_.empty());
+    EXPECT_EQ(runtime_->offlineMapAddr_.size(), 0u);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoAppendsExistingHapExecSegment, TestSize.Level0)
+{
+    const std::string filePath = "branch_handle.hap";
+    std::vector<uint64_t> headInfo = {0x1000, 0x1000, MAP_FIXED | PROT_READ, 0};
+    std::vector<uint64_t> execInfo = {0x2000, 0x1000, MAP_FIXED | PROT_EXEC, 0x1000};
+
+    runtime_->HandleMapInfo(headInfo, filePath, 11, 12);
+    ASSERT_NE(runtime_->mapsCache_.find(0x1000), runtime_->mapsCache_.end());
+    runtime_->HandleMapInfo(execInfo, filePath, 11, 12);
+
+    const auto& maps = runtime_->mapsCache_[0x1000]->GetMaps();
+    ASSERT_FALSE(maps.empty());
+    if (maps.size() > 1) {
+        EXPECT_EQ(maps.back()->name, filePath);
+        EXPECT_EQ(maps.back()->prevMap, maps[maps.size() - 2]);
+    }
+    EXPECT_FALSE(runtime_->offlineMapAddr_.empty());
+}
+
 /**
  * @tc.name: HandleMapInfoReuseFilePathId
  * @tc.desc: Test repeated map of same path reuses filePathId
@@ -609,6 +880,15 @@ HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoRejectsInvalidAndNonFixedMaps, Test
     EXPECT_TRUE(runtime_->mapsCache_.empty());
 }
 
+HWTEST_F(VirtualRuntimeExtTest, EnsureSmoInfoForFileRejectsMissingMapAndEmptyAdlt, TestSize.Level0)
+{
+    EXPECT_FALSE(runtime_->EnsureSmoInfoForFile("missing.so"));
+
+    auto map = std::make_shared<DfxMap>(0x1000, 0x2000, 0, PROT_EXEC, "empty.so");
+    runtime_->processMaps_.push_back(map);
+    EXPECT_FALSE(runtime_->EnsureSmoInfoForFile("empty.so"));
+}
+
 HWTEST_F(VirtualRuntimeExtTest, OfflineFileReportedTracksDuplicates, TestSize.Level0)
 {
     EXPECT_TRUE(runtime_->MarkOfflineFileReported(7));
@@ -632,15 +912,18 @@ HWTEST_F(VirtualRuntimeExtTest, FillSymbolNameId, TestSize.Level0)
 
     // Verify symbol name id was set
     EXPECT_GT(symbol.symbolNameId_, 0u);
+    EXPECT_TRUE(callFrame.needReport_ & SYMBOL_NAME_ID_REPORT);
 
     DfxSymbol secondSymbol(0x2000, "test_func");
+    callFrame.needReport_ = 0;
     runtime_->FillSymbolNameId(callFrame, secondSymbol);
     EXPECT_EQ(secondSymbol.symbolNameId_, symbol.symbolNameId_);
+    EXPECT_FALSE(callFrame.needReport_ & SYMBOL_NAME_ID_REPORT);
 }
 
 /**
  * @tc.name: FillFileSet
- * @tc.desc: Test FillFileSet method always sets FILE_PATH_ID_REPORT
+ * @tc.desc: Test FillFileSet method
  * @tc.type: FUNC
  */
 HWTEST_F(VirtualRuntimeExtTest, FillFileSet, TestSize.Level0)
@@ -649,19 +932,13 @@ HWTEST_F(VirtualRuntimeExtTest, FillFileSet, TestSize.Level0)
     DfxSymbol symbol(0x1000, "test_func");
     symbol.filePathId_ = 1;
 
-    // First call: should set FILE_PATH_ID_REPORT and insert into fileSet_
+    // Fill file set
     runtime_->FillFileSet(callFrame, symbol);
+
+    // Verify file set was updated
     EXPECT_TRUE(callFrame.needReport_ & FILE_PATH_ID_REPORT);
 
-    // Second call with same filePathId: should still set FILE_PATH_ID_REPORT
-    // even though fileSet_ already contains the ID (bug fix verification)
     callFrame.needReport_ = 0;
-    runtime_->FillFileSet(callFrame, symbol);
-    EXPECT_TRUE(callFrame.needReport_ & FILE_PATH_ID_REPORT);
-
-    // Third call with different filePathId: should set FILE_PATH_ID_REPORT
-    callFrame.needReport_ = 0;
-    symbol.filePathId_ = 2;
     runtime_->FillFileSet(callFrame, symbol);
     EXPECT_TRUE(callFrame.needReport_ & FILE_PATH_ID_REPORT);
 }
@@ -709,6 +986,711 @@ HWTEST_F(VirtualRuntimeExtTest, MakeCallFrameUsesFallbackFileAndOffset, TestSize
 
     EXPECT_EQ(callFrame.filePath_, "fallback_comm");
     EXPECT_EQ(callFrame.offset_, callFrame.ip_);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, UpdateThreadKeepsExistingNameWhenNewNameEmpty, TestSize.Level0)
+{
+    auto& thread = runtime_->UpdateThread(1, 2, "worker");
+    ASSERT_EQ(thread.name_, "worker");
+
+    auto& sameThread = runtime_->UpdateThread(1, 2, "");
+
+    EXPECT_EQ(&sameThread, &thread);
+    EXPECT_EQ(sameThread.name_, "worker");
+}
+
+HWTEST_F(VirtualRuntimeExtTest, ConstructorAndReadThreadNameHandleOfflineAndInvalidTid, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_offline_symbolization(true);
+    VirtualRuntime offlineRuntime(config);
+
+    EXPECT_EQ(offlineRuntime.GetJsSymbolCacheSize(), 1u);
+    EXPECT_TRUE(runtime_->ReadThreadName(-1).empty());
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetKernelSymbolFallsBackWhenSymbolFileMissing, TestSize.Level0)
+{
+    constexpr uint64_t ip = 0x1800;
+    std::vector<std::shared_ptr<DfxMap>> maps;
+    maps.push_back(std::make_shared<DfxMap>(0x1000, 0x2000, 0, PROT_EXEC, "kernel_missing.so"));
+    auto& thread = runtime_->UpdateThread(1, 2, "kernel_thread");
+
+    DfxSymbol symbol = runtime_->GetKernelSymbol(ip, maps, thread);
+
+    EXPECT_EQ(symbol.module_, "kernel_missing.so");
+    EXPECT_EQ(symbol.taskVaddr_, ip);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetKernelSymbolFallsBackWhenLookupMisses, TestSize.Level0)
+{
+    constexpr uint64_t ip = 0x2800;
+    const std::string module = "kernel_empty_symbols.so";
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(module);
+    ASSERT_NE(symbolsFile, nullptr);
+    symbolsFile->filePath_ = module;
+    runtime_->symbolsFiles_[module] = std::move(symbolsFile);
+    std::vector<std::shared_ptr<DfxMap>> maps;
+    maps.push_back(std::make_shared<DfxMap>(0x2000, 0x3000, 0, PROT_EXEC, module));
+    auto& thread = runtime_->UpdateThread(1, 2, "kernel_thread");
+
+    DfxSymbol symbol = runtime_->GetKernelSymbol(ip, maps, thread);
+
+    EXPECT_EQ(symbol.module_, module);
+    EXPECT_EQ(symbol.taskVaddr_, ip);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetKernelSymbolLogsMapMissBeforeHit, TestSize.Level0)
+{
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    constexpr uint64_t ip = 0x2800;
+    std::vector<std::shared_ptr<DfxMap>> maps;
+    maps.push_back(std::make_shared<DfxMap>(0x1000, 0x1800, 0, PROT_EXEC, "kernel_left.so"));
+    maps.push_back(std::make_shared<DfxMap>(0x2000, 0x3000, 0, PROT_EXEC, "kernel_target.so"));
+    auto& thread = runtime_->UpdateThread(1, 2, "kernel_thread");
+
+    DfxSymbol symbol = runtime_->GetKernelSymbol(ip, maps, thread);
+
+    EXPECT_EQ(symbol.module_, "kernel_target.so");
+    EXPECT_EQ(symbol.taskVaddr_, ip);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetUserSymbolSetsFilePathIdWhenLookupMisses, TestSize.Level0)
+{
+    constexpr uint64_t ip = 0x3500;
+    constexpr uint32_t filePathId = 23;
+    const std::string module = "user_empty_symbols.so";
+    auto map = std::make_shared<DfxMap>(0x3000, 0x4000, 0, PROT_EXEC, module);
+    auto memMaps = std::make_shared<MemMaps>(filePathId);
+    memMaps->AddMap(map, true);
+    runtime_->mapsCache_[map->begin] = memMaps;
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(module);
+    ASSERT_NE(symbolsFile, nullptr);
+    symbolsFile->filePath_ = module;
+    runtime_->symbolsFiles_[module] = std::move(symbolsFile);
+    auto& thread = runtime_->UpdateThread(1, 2, "user_thread");
+
+    DfxSymbol symbol = runtime_->GetUserSymbol(ip, memMaps, 0, thread);
+
+    EXPECT_EQ(symbol.module_, module);
+    EXPECT_EQ(symbol.filePathId_, filePathId);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetUserSymbolFallsBackWhenSymbolFileMissing, TestSize.Level0)
+{
+    constexpr uint64_t ip = 0x4500;
+    constexpr uint32_t filePathId = 24;
+    auto map = std::make_shared<DfxMap>(0x4000, 0x5000, 0, PROT_EXEC, "missing_user_symbol.so");
+    auto memMaps = std::make_shared<MemMaps>(filePathId);
+    memMaps->AddMap(map, true);
+    memMaps->soEnd_ = map->end;
+    runtime_->mapsCache_[map->begin] = memMaps;
+    auto& thread = runtime_->UpdateThread(1, 2, "user_thread");
+
+    DfxSymbol symbol = runtime_->GetUserSymbol(ip, memMaps, 0, thread);
+
+    EXPECT_TRUE(symbol.module_.empty());
+    EXPECT_EQ(symbol.filePathId_, 0u);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolReturnsUserCacheHit, TestSize.Level0)
+{
+    constexpr uint64_t ip = 0x2500;
+    constexpr uint32_t filePathId = 12;
+    auto map = std::make_shared<DfxMap>(0x2000, 0x3000, 0, PROT_EXEC, "cached_user.so");
+    auto memMaps = std::make_shared<MemMaps>(filePathId);
+    memMaps->AddMap(map, true);
+    memMaps->soEnd_ = map->end;
+    runtime_->mapsCache_[map->begin] = memMaps;
+
+    DfxSymbol cached(ip, "cached_func");
+    cached.symbolName_ = "cached_func";
+    cached.filePathId_ = filePathId;
+    cached.symbolId_ = 3;
+    runtime_->userSymbolCache_[std::pair(ip, filePathId)] = cached;
+    CallFrame callFrame(ip);
+
+    DfxSymbol symbol = GetSymbolForTest(*runtime_, callFrame, 1, 2, PERF_CONTEXT_USER);
+
+    EXPECT_EQ(symbol.symbolName_, "cached_func");
+    EXPECT_EQ(symbol.symbolId_, cached.symbolId_);
+    EXPECT_EQ(callFrame.needReport_, 0u);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolSkipsUserLookupForKernelContext, TestSize.Level0)
+{
+    CallFrame callFrame(0x1200);
+
+    DfxSymbol symbol = GetSymbolForTest(*runtime_, callFrame, 1, 2, PERF_CONTEXT_KERNEL);
+
+    EXPECT_FALSE(symbol.IsValid());
+    EXPECT_EQ(callFrame.needReport_, 0u);
+    EXPECT_TRUE(runtime_->userSymbolCache_.empty());
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolCreatesJsCacheForFpUnwindFrame, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_fp_unwind(true);
+    config.set_string_compressed(true);
+    runtime_ = std::make_unique<VirtualRuntime>(config);
+    CallFrame callFrame(0x7000);
+    callFrame.isJsFrame_ = true;
+    callFrame.filePath_ = "entry/src/main.ets";
+    callFrame.symbolName_ = "onClick";
+
+    DfxSymbol symbol = GetSymbolForTest(*runtime_, callFrame, 1, 2, PERF_CONTEXT_USER);
+
+    EXPECT_EQ(symbol.module_, "entry/src/main.ets");
+    EXPECT_EQ(symbol.symbolName_, "onClick");
+    EXPECT_GT(symbol.filePathId_, 0u);
+    EXPECT_GT(symbol.symbolNameId_, 0u);
+    EXPECT_TRUE(callFrame.needReport_ & CALL_FRAME_REPORT);
+
+    CallFrame cachedFrame(0x7000);
+    cachedFrame.isJsFrame_ = true;
+    cachedFrame.filePath_ = "entry/src/main.ets";
+    cachedFrame.symbolName_ = "onClick";
+    DfxSymbol cached = GetSymbolForTest(*runtime_, cachedFrame, 1, 2, PERF_CONTEXT_USER);
+    EXPECT_EQ(cached.symbolId_, symbol.symbolId_);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolCreatesJsCacheWithoutStringCompression, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_fp_unwind(true);
+    runtime_ = std::make_unique<VirtualRuntime>(config);
+    CallFrame callFrame(0x7100);
+    callFrame.isJsFrame_ = true;
+    callFrame.filePath_ = "entry/src/plain.ets";
+    callFrame.symbolName_ = "plainClick";
+
+    DfxSymbol symbol = GetSymbolForTest(*runtime_, callFrame, 1, 2, PERF_CONTEXT_USER);
+
+    EXPECT_EQ(symbol.module_, "entry/src/plain.ets");
+    EXPECT_EQ(symbol.symbolName_, "plainClick");
+    EXPECT_EQ(symbol.symbolNameId_, 0u);
+    EXPECT_TRUE(callFrame.needReport_ & CALL_FRAME_REPORT);
+    EXPECT_FALSE(callFrame.needReport_ & SYMBOL_NAME_ID_REPORT);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolUsesUserLookupForPerfContextMax, TestSize.Level0)
+{
+    constexpr uint64_t mapBegin = 0xB000;
+    constexpr uint64_t symbolVaddr = 0x80;
+    const std::string filePath = "context_max_user.so";
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_ELF_FILE);
+    ASSERT_NE(symbolsFile, nullptr);
+    symbolsFile->filePath_ = filePath;
+    symbolsFile->symbols_.emplace_back(symbolVaddr, 0x20, "context_max_func", filePath);
+    symbolsFile->textExecVaddrFileOffset_ = symbolVaddr;
+    symbolsFile->textExecVaddr_ = symbolVaddr;
+    runtime_->symbolsFiles_[filePath] = std::move(symbolsFile);
+    runtime_->GetThread(1, 2).CreateMapItem(filePath, mapBegin, 0x1000, 0);
+    CallFrame callFrame(mapBegin + symbolVaddr);
+
+    DfxSymbol symbol = GetSymbolForTest(*runtime_, callFrame, 1, 2, PERF_CONTEXT_MAX);
+
+    EXPECT_TRUE(symbol.IsValid());
+    EXPECT_EQ(symbol.symbolName_, "context_max_func");
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolReportsCompressedUserSymbolMapsOnce, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_string_compressed(true);
+    runtime_ = std::make_unique<VirtualRuntime>(config);
+    constexpr uint64_t mapBegin = 0xC000;
+    constexpr uint64_t symbolVaddr = 0x40;
+    constexpr uint32_t filePathId = 31;
+    const std::string filePath = "compressed_user.so";
+    auto map = std::make_shared<DfxMap>(mapBegin, mapBegin + 0x1000, 0, PROT_EXEC, filePath);
+    auto memMaps = std::make_shared<MemMaps>(filePathId);
+    memMaps->AddMap(map, true);
+    memMaps->soEnd_ = map->end;
+    runtime_->mapsCache_[mapBegin] = memMaps;
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_ELF_FILE);
+    ASSERT_NE(symbolsFile, nullptr);
+    symbolsFile->filePath_ = filePath;
+    symbolsFile->symbols_.emplace_back(symbolVaddr, 0x20, "compressed_func", filePath);
+    symbolsFile->textExecVaddrFileOffset_ = symbolVaddr;
+    symbolsFile->textExecVaddr_ = symbolVaddr;
+    runtime_->symbolsFiles_[filePath] = std::move(symbolsFile);
+
+    CallFrame firstFrame(mapBegin + symbolVaddr);
+    DfxSymbol first = GetSymbolForTest(*runtime_, firstFrame, 1, 2, PERF_CONTEXT_USER);
+    EXPECT_TRUE(first.IsValid());
+    EXPECT_TRUE(firstFrame.needReport_ & CALL_FRAME_REPORT);
+    EXPECT_TRUE(firstFrame.needReport_ & SYMBOL_NAME_ID_REPORT);
+    EXPECT_TRUE(firstFrame.needReport_ & FILE_PATH_ID_REPORT);
+
+    CallFrame secondFrame(mapBegin + symbolVaddr + 4);
+    DfxSymbol second = GetSymbolForTest(*runtime_, secondFrame, 1, 2, PERF_CONTEXT_USER);
+    EXPECT_TRUE(second.IsValid());
+    EXPECT_TRUE(secondFrame.needReport_ & CALL_FRAME_REPORT);
+    EXPECT_FALSE(secondFrame.needReport_ & SYMBOL_NAME_ID_REPORT);
+    EXPECT_TRUE(secondFrame.needReport_ & FILE_PATH_ID_REPORT);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, FindArktsMapByAddrHandlesBeforeBeginAndNullMap, TestSize.Level0)
+{
+    auto map = std::make_shared<DfxMap>(0x2000, 0x3000, 0, PROT_EXEC, "entry.abc");
+    runtime_->arktsMapTree_[map->begin] = map;
+    runtime_->arktsMapTree_[0x4000] = nullptr;
+
+    EXPECT_EQ(runtime_->FindArktsMapByAddr(0x1000), nullptr);
+    EXPECT_EQ(runtime_->FindArktsMapByAddr(0x4001), nullptr);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, SymbolizeFrameRejectsMapWithoutName, TestSize.Level0)
+{
+    auto map = std::make_shared<DfxMap>(0x1000, 0x2000, 0, PROT_EXEC, "");
+    runtime_->arktsMapTree_[map->begin] = map;
+    CallFrame callFrame(0x1008);
+
+    EXPECT_FALSE(runtime_->SymbolizeFrame(callFrame, 1, 2));
+}
+
+HWTEST_F(VirtualRuntimeExtTest, SymbolizeFrameUsesJsSymbolCache, TestSize.Level0)
+{
+    auto map = std::make_shared<DfxMap>(0x3000, 0x4000, 0, PROT_EXEC, "entry/src/main.ets");
+    runtime_->arktsMapTree_[map->begin] = map;
+    std::string_view moduleName = map->name;
+    uint32_t filePathId = runtime_->FillArkTsFilePath(moduleName);
+    DfxSymbol cachedSymbol(0x3008, "onClick");
+    cachedSymbol.module_ = map->name;
+    cachedSymbol.symbolName_ = "onClick";
+    cachedSymbol.filePathId_ = filePathId;
+    cachedSymbol.symbolId_ = 77;
+    runtime_->userSymbolCache_[VirtualRuntime::SymbolCacheKey(0x3008, filePathId)] = cachedSymbol;
+    CallFrame callFrame(0x3008);
+
+    EXPECT_TRUE(runtime_->SymbolizeFrame(callFrame, 1, 2));
+    EXPECT_TRUE(callFrame.isJsFrame_);
+    EXPECT_EQ(callFrame.filePath_, map->name);
+    EXPECT_EQ(callFrame.symbolName_, "onClick");
+    EXPECT_EQ(callFrame.callFrameId_, cachedSymbol.symbolId_);
+    EXPECT_EQ(runtime_->jsFilePathCache_[callFrame.ip_], filePathId);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, SymbolizeFrameUsesCachedFilePathId, TestSize.Level0)
+{
+    auto map = std::make_shared<DfxMap>(0x5000, 0x6000, 0, PROT_EXEC, "entry/src/cached.ets");
+    runtime_->arktsMapTree_[map->begin] = map;
+    constexpr uint32_t filePathId = 31;
+    runtime_->jsFilePathCache_[0x5008] = filePathId;
+    DfxSymbol cachedSymbol(0x5008, "cachedClick");
+    cachedSymbol.module_ = map->name;
+    cachedSymbol.symbolName_ = "cachedClick";
+    cachedSymbol.filePathId_ = filePathId;
+    cachedSymbol.symbolId_ = 78;
+    runtime_->userSymbolCache_[VirtualRuntime::SymbolCacheKey(0x5008, filePathId)] = cachedSymbol;
+    CallFrame callFrame(0x5008);
+
+    EXPECT_TRUE(runtime_->SymbolizeFrame(callFrame, 1, 2));
+    EXPECT_EQ(callFrame.filePath_, map->name);
+    EXPECT_EQ(callFrame.symbolName_, "cachedClick");
+    EXPECT_EQ(callFrame.callFrameId_, cachedSymbol.symbolId_);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, SymbolizeFrameRejectsMissingArktsMap, TestSize.Level0)
+{
+    CallFrame callFrame(0x6008);
+
+    EXPECT_FALSE(runtime_->SymbolizeFrame(callFrame, 1, 2));
+    EXPECT_FALSE(callFrame.isJsFrame_);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolNameHonorsOffsetForJsLookupMiss, TestSize.Level0)
+{
+    std::vector<CallFrame> callFrames = {CallFrame(0x6100), CallFrame(0x6200)};
+    callFrames[1].isJsFrame_ = true;
+
+    EXPECT_TRUE(runtime_->GetSymbolName(1, 2, callFrames, 1, true, SymbolType::JS_SYMBOL));
+
+    ASSERT_EQ(callFrames.size(), 1u);
+    EXPECT_EQ(callFrames[0].ip_, 0x6100u);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolNameSkipsMismatchedFrameTypes, TestSize.Level0)
+{
+    std::vector<CallFrame> nativeFrames = {CallFrame(0x1000)};
+    EXPECT_TRUE(runtime_->GetSymbolName(1, 2, nativeFrames, 0, true, SymbolType::JS_SYMBOL));
+    ASSERT_EQ(nativeFrames.size(), 1u);
+    EXPECT_FALSE(nativeFrames[0].isJsFrame_);
+
+    CallFrame jsFrame(0x2000);
+    jsFrame.isJsFrame_ = true;
+    std::vector<CallFrame> jsFrames = {jsFrame};
+    EXPECT_TRUE(runtime_->GetSymbolName(1, 2, jsFrames, 0, true, SymbolType::NATIVE_SYMBOL));
+    ASSERT_EQ(jsFrames.size(), 1u);
+    EXPECT_TRUE(jsFrames[0].isJsFrame_);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolNameSkipsPerfContextMarker, TestSize.Level0)
+{
+    std::vector<CallFrame> callFrames = {CallFrame(PERF_CONTEXT_USER)};
+
+    EXPECT_TRUE(runtime_->GetSymbolName(1, 2, callFrames, 0, false, SymbolType::NATIVE_SYMBOL));
+
+    ASSERT_EQ(callFrames.size(), 1u);
+    EXPECT_EQ(callFrames[0].ip_, static_cast<uint64_t>(PERF_CONTEXT_USER));
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolNameDropsFramesAfterNativeLookupMiss, TestSize.Level0)
+{
+    std::vector<CallFrame> callFrames = {CallFrame(0x7100), CallFrame(0x7200)};
+
+    EXPECT_TRUE(runtime_->GetSymbolName(1, 2, callFrames, 0, true, SymbolType::NATIVE_SYMBOL));
+
+    EXPECT_TRUE(callFrames.empty());
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolNameReportsPeriodicLookupMiss, TestSize.Level0)
+{
+    for (int i = 0; i < 10; ++i) {
+        std::vector<CallFrame> callFrames = {CallFrame(0x8100 + i)};
+        EXPECT_TRUE(runtime_->GetSymbolName(1, 2, callFrames, 0, true, SymbolType::NATIVE_SYMBOL));
+        EXPECT_TRUE(callFrames.empty());
+    }
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolNameKeepsTrailingJsFrameOnNativeMiss, TestSize.Level0)
+{
+    CallFrame jsFrame(0x7400);
+    jsFrame.isJsFrame_ = true;
+    std::vector<CallFrame> callFrames = {CallFrame(0x7300), jsFrame};
+
+    EXPECT_TRUE(runtime_->GetSymbolName(1, 2, callFrames, 0, true, SymbolType::NATIVE_SYMBOL));
+
+    ASSERT_EQ(callFrames.size(), 1u);
+    EXPECT_TRUE(callFrames[0].isJsFrame_);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolNameAppliesResolvedUserSymbol, TestSize.Level0)
+{
+    constexpr uint64_t mapBegin = 0x9000;
+    constexpr uint64_t symbolVaddr = 0x100;
+    const std::string filePath = "resolved_user_symbol.so";
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_ELF_FILE);
+    ASSERT_NE(symbolsFile, nullptr);
+    symbolsFile->filePath_ = filePath;
+    symbolsFile->symbols_.emplace_back(symbolVaddr, 1u, "resolved_func", filePath);
+    symbolsFile->textExecVaddrFileOffset_ = symbolVaddr;
+    symbolsFile->textExecVaddr_ = symbolVaddr;
+    runtime_->symbolsFiles_[filePath] = std::move(symbolsFile);
+    runtime_->GetThread(1, 2).CreateMapItem(filePath, mapBegin, 0x1000, 0);
+    std::vector<CallFrame> callFrames = {CallFrame(mapBegin + symbolVaddr)};
+
+    EXPECT_TRUE(runtime_->GetSymbolName(1, 2, callFrames, 0, true, SymbolType::NATIVE_SYMBOL));
+
+    ASSERT_EQ(callFrames.size(), 1u);
+    EXPECT_EQ(callFrames[0].symbolName_, "resolved_func");
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolReturnsResolvedUserSymbolWithCompressedIds, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_string_compressed(true);
+    runtime_ = std::make_unique<VirtualRuntime>(config);
+    constexpr uint64_t mapBegin = 0xA000;
+    constexpr uint64_t symbolVaddr = 0x100;
+    const std::string filePath = "direct_user_symbol.so";
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_ELF_FILE);
+    ASSERT_NE(symbolsFile, nullptr);
+    symbolsFile->filePath_ = filePath;
+    symbolsFile->symbols_.emplace_back(symbolVaddr, 0x20, "direct_func", filePath);
+    symbolsFile->textExecVaddrFileOffset_ = symbolVaddr;
+    symbolsFile->textExecVaddr_ = symbolVaddr;
+    runtime_->symbolsFiles_[filePath] = std::move(symbolsFile);
+    runtime_->GetThread(1, 2).CreateMapItem(filePath, mapBegin, 0x1000, 0);
+    CallFrame callFrame(mapBegin + symbolVaddr);
+
+    DfxSymbol symbol = GetSymbolForTest(*runtime_, callFrame, 1, 2, PERF_CONTEXT_USER);
+
+    EXPECT_TRUE(symbol.IsValid());
+    EXPECT_EQ(symbol.symbolName_, "direct_func");
+    EXPECT_GT(symbol.symbolId_, 0u);
+    EXPECT_TRUE(callFrame.needReport_ & CALL_FRAME_REPORT);
+    EXPECT_TRUE(callFrame.needReport_ & SYMBOL_NAME_ID_REPORT);
+    EXPECT_TRUE(callFrame.needReport_ & FILE_PATH_ID_REPORT);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetKernelSymbolReturnsResolvedSymbol, TestSize.Level0)
+{
+    constexpr uint64_t ip = 0x1800;
+    const std::string module = "kernel_hit.so";
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_UNKNOW_FILE);
+    ASSERT_NE(symbolsFile, nullptr);
+    symbolsFile->filePath_ = module;
+    symbolsFile->symbols_.emplace_back(ip, 0x20, "kernel_func", module);
+    runtime_->symbolsFiles_[module] = std::move(symbolsFile);
+    std::vector<std::shared_ptr<DfxMap>> maps;
+    maps.push_back(std::make_shared<DfxMap>(0x1000, 0x3000, 0, PROT_EXEC, module));
+    auto& thread = runtime_->UpdateThread(1, 2, "kernel_thread");
+
+    DfxSymbol symbol = runtime_->GetKernelSymbol(ip, maps, thread);
+
+    EXPECT_TRUE(symbol.IsValid());
+    EXPECT_EQ(symbol.GetName(), "kernel_func");
+    EXPECT_EQ(symbol.taskVaddr_, ip);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, UpdateSymbolCacheInsertsMissingIp, TestSize.Level0)
+{
+    HashList<uint64_t, DfxSymbol> cache(4);
+    DfxSymbol symbol(0x8100, "cached_symbol");
+    symbol.symbolName_ = "cached_symbol";
+
+    runtime_->UpdateSymbolCache(0x8100, symbol, cache);
+
+    ASSERT_EQ(cache.count(0x8100), 1u);
+    EXPECT_EQ((*cache.find(0x8100)).symbolName_, "cached_symbol");
+}
+
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoCreatesArktsMapWhenAsyncEnabled, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_async_stack_enable(true);
+    runtime_ = std::make_unique<VirtualRuntime>(config);
+    const std::string path = "entry/src/main.abc";
+
+    runtime_->HandleMapInfo({0x1000, 0x1000, PROT_EXEC, 0}, path, 11, 22);
+
+    auto iter = runtime_->mapsCache_.find(0x1000);
+    ASSERT_NE(iter, runtime_->mapsCache_.end());
+    EXPECT_EQ(runtime_->arktsMapTree_.count(0x1000), 1u);
+    EXPECT_NE(runtime_->userSpaceThreadMap_.find(22), runtime_->userSpaceThreadMap_.end());
+}
+
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoReplacesFrontMapForSameBegin, TestSize.Level0)
+{
+    const std::string path = "replace_front.so";
+    runtime_->processMaps_.push_back(std::make_shared<DfxMap>(0x100, 0x200, 0, PROT_READ, "seed.so"));
+    runtime_->HandleMapInfo({0x2000, 0x1000, MAP_FIXED | PROT_EXEC, 0}, path, 1, 2);
+    runtime_->HandleMapInfo({0x2000, 0x800, MAP_FIXED | PROT_READ, 0x100}, path, 1, 2);
+
+    auto iter = runtime_->mapsCache_.find(0x2000);
+    ASSERT_NE(iter, runtime_->mapsCache_.end());
+    auto maps = iter->second;
+    ASSERT_NE(maps, nullptr);
+    ASSERT_EQ(maps->GetMaps().size(), 1u);
+    EXPECT_EQ(maps->GetMaps()[0]->begin, 0x2000u);
+    EXPECT_EQ(maps->GetMaps()[0]->end, 0x2800u);
+    EXPECT_EQ(maps->soEnd_, 0x2800u);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoAppendsNonExecMapWithoutOfflineQueue, TestSize.Level0)
+{
+    const std::string path = "append_readonly.so";
+    runtime_->processMaps_.push_back(std::make_shared<DfxMap>(0x100, 0x200, 0, PROT_READ, "seed.so"));
+    runtime_->HandleMapInfo({0x3000, 0x1000, MAP_FIXED | PROT_EXEC, 0}, path, 1, 2);
+    runtime_->GetOfflineMaps().clear();
+    runtime_->HandleMapInfo({0x4000, 0x1000, MAP_FIXED | PROT_READ, 0x1000}, path, 1, 2);
+
+    auto iter = runtime_->mapsCache_.find(0x3000);
+    ASSERT_NE(iter, runtime_->mapsCache_.end());
+    auto maps = iter->second;
+    ASSERT_NE(maps, nullptr);
+    ASSERT_EQ(maps->GetMaps().size(), 2u);
+    EXPECT_EQ(maps->GetMaps()[1]->prevMap, maps->GetMaps()[0]);
+    EXPECT_TRUE(runtime_->GetOfflineMaps().empty());
+}
+
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoAsyncRecognizesArktsPathKinds, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_async_stack_enable(true);
+    runtime_ = std::make_unique<VirtualRuntime>(config);
+    runtime_->processMaps_.push_back(std::make_shared<DfxMap>(0x100, 0x200, 0, PROT_READ, "seed.so"));
+    std::vector<std::string> paths = {
+        "entry/module.hap", "[anon:ArkTS Code]", "stub.an", "feature.hsp", "entry/page.hqf"
+    };
+
+    uint64_t begin = 0x5000;
+    for (const auto& path : paths) {
+        runtime_->HandleMapInfo({begin, 0x1000, PROT_EXEC, 0}, path, 11, 22);
+        EXPECT_EQ(runtime_->arktsMapTree_.count(begin), 1u);
+        EXPECT_NE(runtime_->mapsCache_.find(begin), runtime_->mapsCache_.end());
+        begin += 0x2000;
+    }
+}
+
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoAsyncFallsThroughForNativePath, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_async_stack_enable(true);
+    runtime_ = std::make_unique<VirtualRuntime>(config);
+    runtime_->processMaps_.push_back(std::make_shared<DfxMap>(0x100, 0x200, 0, PROT_READ, "seed.so"));
+
+    runtime_->HandleMapInfo({0xF000, 0x1000, MAP_FIXED | PROT_EXEC, 0}, "native_only.so", 1, 2);
+
+    EXPECT_EQ(runtime_->arktsMapTree_.count(0xF000), 0u);
+    EXPECT_NE(runtime_->mapsCache_.find(0xF000), runtime_->mapsCache_.end());
+}
+
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoAsyncSkipsDuplicateArktsBegin, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_async_stack_enable(true);
+    runtime_ = std::make_unique<VirtualRuntime>(config);
+    const std::string path = "entry/duplicate.abc";
+
+    constexpr uint64_t begin = 0x700000000000ULL;
+    runtime_->HandleMapInfo({begin, 0x1000, PROT_EXEC, 0}, path, 1, 2);
+    const size_t cacheSize = runtime_->mapsCache_.size();
+    runtime_->HandleMapInfo({begin, 0x1000, PROT_EXEC, 0}, path, 1, 2);
+
+    EXPECT_EQ(runtime_->mapsCache_.size(), cacheSize);
+    EXPECT_EQ(runtime_->arktsMapTree_.count(begin), 1u);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoSkipsThreadUpdateWhenFpUnwind, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_fp_unwind(true);
+    runtime_ = std::make_unique<VirtualRuntime>(config);
+
+    runtime_->HandleMapInfo({0x11000, 0x1000, MAP_FIXED | PROT_EXEC, 0}, "fp_unwind.so", 1, 2);
+
+    EXPECT_NE(runtime_->mapsCache_.find(0x11000), runtime_->mapsCache_.end());
+    EXPECT_TRUE(runtime_->userSpaceThreadMap_.empty());
+    EXPECT_TRUE(runtime_->processMaps_.empty());
+}
+
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoStartupModeParsesWithoutAppendingMap, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_startup_mode(true);
+    runtime_ = std::make_unique<VirtualRuntime>(config);
+
+    runtime_->HandleMapInfo({0x12000, 0x1000, MAP_FIXED | PROT_EXEC, 0}, "startup_mode.so", 1, 2);
+
+    EXPECT_NE(runtime_->mapsCache_.find(0x12000), runtime_->mapsCache_.end());
+    EXPECT_FALSE(runtime_->processMaps_.empty());
+    EXPECT_NE(runtime_->userSpaceThreadMap_.find(2), runtime_->userSpaceThreadMap_.end());
+}
+
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoHapSegmentSetsPrevMap, TestSize.Level0)
+{
+    const std::string path = "module.hap";
+    runtime_->processMaps_.push_back(std::make_shared<DfxMap>(0x100, 0x200, 0, PROT_READ, "seed.so"));
+    runtime_->HandleMapInfo({0x13000, 0x1000, MAP_FIXED | PROT_EXEC, 0}, path, 1, 2);
+    runtime_->HandleMapInfo({0x14000, 0x1000, MAP_FIXED | PROT_EXEC, 0x1000}, path, 1, 2);
+
+    auto iter = runtime_->mapsCache_.find(0x13000);
+    ASSERT_NE(iter, runtime_->mapsCache_.end());
+    auto maps = iter->second;
+    ASSERT_EQ(maps->GetMaps().size(), 2u);
+    EXPECT_EQ(maps->GetMaps()[1]->prevMap, maps->GetMaps()[0]);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoSameBeginMultiSegmentFallsBackToAddMap, TestSize.Level0)
+{
+    const std::string path = "multi_replace.so";
+    runtime_->processMaps_.push_back(std::make_shared<DfxMap>(0x100, 0x200, 0, PROT_READ, "seed.so"));
+    runtime_->HandleMapInfo({0x16000, 0x1000, MAP_FIXED | PROT_EXEC, 0}, path, 1, 2);
+    runtime_->HandleMapInfo({0x17000, 0x1000, MAP_FIXED | PROT_READ, 0x1000}, path, 1, 2);
+    runtime_->HandleMapInfo({0x16000, 0x800, MAP_FIXED | PROT_READ, 0x2000}, path, 1, 2);
+
+    auto iter = runtime_->mapsCache_.find(0x16000);
+    ASSERT_NE(iter, runtime_->mapsCache_.end());
+    auto maps = iter->second;
+    ASSERT_EQ(maps->GetMaps().size(), 3u);
+    EXPECT_EQ(maps->GetMaps()[2]->begin, 0x16000u);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoIgnoresMismatchedSegmentName, TestSize.Level0)
+{
+    const std::string path = "base_name.so";
+    runtime_->processMaps_.push_back(std::make_shared<DfxMap>(0x100, 0x200, 0, PROT_READ, "seed.so"));
+    runtime_->HandleMapInfo({0x19000, 0x1000, MAP_FIXED | PROT_EXEC, 0}, path, 1, 2);
+    runtime_->HandleMapInfo({0x1A000, 0x1000, MAP_FIXED | PROT_READ, 0x1000}, "other_name.so", 1, 2);
+
+    auto iter = runtime_->mapsCache_.find(0x19000);
+    ASSERT_NE(iter, runtime_->mapsCache_.end());
+    EXPECT_EQ(iter->second->GetMaps().size(), 1u);
+    EXPECT_EQ(runtime_->mapsCache_.find(0x1A000), runtime_->mapsCache_.end());
+}
+
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoIgnoresOrphanFixedOffsetSegment, TestSize.Level0)
+{
+    runtime_->HandleMapInfo({0x1B000, 0x1000, MAP_FIXED | PROT_EXEC, 0x1000}, "orphan_segment.so", 1, 2);
+
+    EXPECT_TRUE(runtime_->mapsCache_.empty());
+    ASSERT_EQ(runtime_->offlineMapAddr_.size(), 1u);
+    EXPECT_EQ(runtime_->offlineMapAddr_[0], 0u);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, FindMapReturnsNullForGapInsideSoRange, TestSize.Level0)
+{
+    auto map = std::make_shared<DfxMap>(0x20000, 0x21000, 0, PROT_EXEC, "gap.so");
+    auto memMaps = std::make_shared<MemMaps>(1);
+    memMaps->AddMap(map, true);
+    memMaps->soEnd_ = 0x23000;
+    runtime_->mapsCache_[map->begin] = memMaps;
+
+    auto [maps, index] = runtime_->FindMap(0x22000);
+
+    EXPECT_EQ(maps, nullptr);
+    EXPECT_EQ(index, 0u);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, TryEmitSmoMapsInfoSupportsProtoEncoder, TestSize.Level0)
+{
+    const std::string path = "proto_ready.so";
+    {
+        std::unique_lock<std::shared_mutex> lock(g_smoMapsLock);
+        auto& entry = g_smoMaps[path];
+        entry.initialized = true;
+        entry.sent = false;
+        entry.info.set_file_path(path);
+        auto* mapEntry = entry.info.add_map_entries();
+        mapEntry->set_start_addr(0x10);
+        mapEntry->set_end_addr(0x20);
+        mapEntry->set_so_index(4);
+        auto* idEntry = entry.info.add_id_tlb_entries();
+        idEntry->set_so_index(4);
+        idEntry->set_name("proto_inner.so");
+    }
+
+    RandomWriteCtx ctx = MakeVirtualRuntimeEncoderCtx();
+    OHOS::Developtools::Profiler::ProtoEncoder::BatchNativeHookData data(&ctx);
+    runtime_->TryEmitSmoMapsInfo(data);
+
+    EXPECT_GT(data.Finish(), 0);
+    std::unique_lock<std::shared_mutex> lock(g_smoMapsLock);
+    EXPECT_TRUE(g_smoMaps[path].sent);
+}
+
+HWTEST_F(VirtualRuntimeExtTest, GetUserSymbolUsesAbcSymbolLookup, TestSize.Level0)
+{
+    ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
+    constexpr uint64_t mapBegin = 0x24000;
+    constexpr uint64_t ip = mapBegin + 0x80;
+    constexpr uint32_t filePathId = 42;
+    const std::string filePath = "entry/module.abc";
+    auto map = std::make_shared<DfxMap>(mapBegin, mapBegin + 0x1000, 0, PROT_EXEC, filePath);
+    auto memMaps = std::make_shared<MemMaps>(filePathId);
+    memMaps->AddMap(map, true);
+    memMaps->soEnd_ = map->end;
+    runtime_->mapsCache_[mapBegin] = memMaps;
+
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_HAP_FILE, filePath, getpid());
+    ASSERT_NE(symbolsFile, nullptr);
+    symbolsFile->filePath_ = filePath;
+    symbolsFile->SetBoolValue(true);
+    DfxSymbol cached(ip, 0x20, "abc_func", filePath);
+    cached.symbolName_ = "abc_func";
+    symbolsFile->symbolsMap_.emplace(ip, cached);
+    runtime_->symbolsFiles_[filePath] = std::move(symbolsFile);
+    auto& thread = runtime_->UpdateThread(1, 2, "abc_thread");
+
+    DfxSymbol symbol = runtime_->GetUserSymbol(ip, memMaps, 0, thread);
+
+    EXPECT_TRUE(symbol.IsValid());
+    EXPECT_EQ(symbol.symbolName_, "abc_func");
+    EXPECT_EQ(symbol.filePathId_, filePathId);
 }
 }
 }

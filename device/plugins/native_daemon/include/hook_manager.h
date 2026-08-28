@@ -165,6 +165,7 @@ public:
     int CreateFileCacheFd();
     void SaveInitialCacheFds(pid_t pid, uint16_t fileIndex, int fd);
     void RotateCacheFdOnReturn(pid_t pid, uint16_t returnedFileIndex, int fd);
+    bool CheckHookPid(int32_t pid);
     void SetHookConfig(const NativeHookConfig& hookConfig);
     void SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     void SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
@@ -318,7 +319,6 @@ private:
     std::string memLeakFileName_;
     std::string fileCacheDir_ = "/data/log/hiprofiler/";
     std::atomic_bool memLeakDumpDone_ {true};
-    std::atomic_bool memLeakHasData_ {false};
     std::string simplifiedNmd_;
     SemaphorePtr nmdSemaphore_{nullptr};
     bool shouldSkipGlobalFreed_ = false;

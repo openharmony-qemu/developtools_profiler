@@ -73,6 +73,20 @@ HWTEST_F(RegisterTest, GetSupportedRegMask, TestSize.Level0)
  */
 HWTEST_F(RegisterTest, RegisterGetIP, TestSize.Level0)
 {
+    EXPECT_EQ(RegisterGetIP(ArchType::ARCH_X86), PERF_REG_X86_IP);
+    EXPECT_EQ(RegisterGetIP(ArchType::ARCH_X86_64), PERF_REG_X86_IP);
+    EXPECT_EQ(RegisterGetIP(ArchType::ARCH_ARM), PERF_REG_ARM_PC);
+    EXPECT_EQ(RegisterGetIP(ArchType::ARCH_ARM64), PERF_REG_ARM64_PC);
+    EXPECT_EQ(RegisterGetIP(ArchType::ARCH_UNKNOWN), std::numeric_limits<size_t>::max());
+}
+
+/**
+ * @tc.name: RegisterGetBuildArchIP
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(RegisterTest, RegisterGetBuildArchIP, TestSize.Level0)
+{
 #if defined(target_cpu_x86_64)
     EXPECT_EQ(RegisterGetIP(ArchType::ARCH_X86_64), PERF_REG_X86_IP);
 #elif defined(target_cpu_arm)
@@ -89,8 +103,22 @@ HWTEST_F(RegisterTest, RegisterGetIP, TestSize.Level0)
  */
 HWTEST_F(RegisterTest, RegisterGetSP, TestSize.Level0)
 {
+    EXPECT_EQ(RegisterGetSP(ArchType::ARCH_X86), PERF_REG_X86_SP);
+    EXPECT_EQ(RegisterGetSP(ArchType::ARCH_X86_64), PERF_REG_X86_SP);
+    EXPECT_EQ(RegisterGetSP(ArchType::ARCH_ARM), PERF_REG_ARM_SP);
+    EXPECT_EQ(RegisterGetSP(ArchType::ARCH_ARM64), PERF_REG_ARM64_SP);
+    EXPECT_EQ(RegisterGetSP(ArchType::ARCH_UNKNOWN), std::numeric_limits<size_t>::max());
+}
+
+/**
+ * @tc.name: RegisterGetBuildArchSP
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(RegisterTest, RegisterGetBuildArchSP, TestSize.Level0)
+{
 #if defined(target_cpu_x86_64)
-    EXPECT_EQ(RegisterGetSP(ArchType::ARCH_X86_64), PERF_REG_X86_IP);
+    EXPECT_EQ(RegisterGetSP(ArchType::ARCH_X86_64), PERF_REG_X86_SP);
 #elif defined(target_cpu_arm)
     EXPECT_EQ(RegisterGetSP(ArchType::ARCH_ARM), PERF_REG_ARM_SP);
 #elif defined(target_cpu_arm64)
@@ -166,6 +194,78 @@ HWTEST_F(RegisterTest, RegisterGetName, TestSize.Level0)
     for (unsigned i = 0; i < PERF_REG_ARM64_MAX; i++) {
         EXPECT_EQ(RegisterGetName(i).empty(), false);
     }
+}
+
+HWTEST_F(RegisterTest, UpdatePerfContextHandlesKnownAndUnknown, TestSize.Level0)
+{
+    perf_callchain_context context = PERF_CONTEXT_MAX;
+
+    EXPECT_NE(UpdatePerfContext(PERF_CONTEXT_USER, context).find("PERF_CONTEXT_USER"), std::string::npos);
+    EXPECT_EQ(context, PERF_CONTEXT_USER);
+    EXPECT_NE(UpdatePerfContext(0x1234, context).find("unknown context"), std::string::npos);
+    EXPECT_EQ(context, PERF_CONTEXT_MAX);
+}
+
+HWTEST_F(RegisterTest, ArchTypeHelpersHandleKnownMachines, TestSize.Level0)
+{
+    EXPECT_EQ(GetArchTypeFromUname("armv7l"), ArchType::ARCH_ARM);
+    EXPECT_EQ(GetArchTypeFromUname("armv8l"), ArchType::ARCH_ARM64);
+    EXPECT_EQ(GetArchTypeFromUname("aarch64"), ArchType::ARCH_ARM64);
+    EXPECT_EQ(GetArchTypeFromUname("x86_64"), ArchType::ARCH_X86_64);
+    EXPECT_EQ(GetArchTypeFromUname("x86"), ArchType::ARCH_X86);
+    EXPECT_EQ(GetArchTypeFromUname("i686"), ArchType::ARCH_X86);
+    EXPECT_EQ(GetArchTypeFromUname("unknown_cpu"), ArchType::ARCH_UNKNOWN);
+}
+
+HWTEST_F(RegisterTest, ArchTypeFromAbiUsesDeviceArch, TestSize.Level0)
+{
+    ArchType oldArch = GetDeviceArch();
+
+    SetDeviceArch(ArchType::ARCH_ARM64);
+    EXPECT_EQ(GetArchTypeFromABI(true), ArchType::ARCH_ARM);
+    EXPECT_EQ(GetArchTypeFromABI(false), ArchType::ARCH_ARM64);
+    SetDeviceArch(ArchType::ARCH_X86_64);
+    EXPECT_EQ(GetArchTypeFromABI(true), ArchType::ARCH_X86);
+    EXPECT_EQ(GetArchTypeFromABI(false), ArchType::ARCH_X86_64);
+    SetDeviceArch(ArchType::ARCH_ARM);
+    EXPECT_EQ(GetArchTypeFromABI(true), ArchType::ARCH_ARM);
+
+    SetDeviceArch(oldArch);
+}
+
+HWTEST_F(RegisterTest, UpdateRegForAbiHandlesNullAndArmCompat, TestSize.Level0)
+{
+    u64 registers[PERF_REG_ARM64_MAX] = {};
+    registers[PERF_REG_ARM64_PC] = 0x12345678;
+    ArchType oldArch = GetDeviceArch();
+
+    UpdateRegForABI(ArchType::ARCH_ARM, nullptr);
+    SetDeviceArch(ArchType::ARCH_ARM64);
+    UpdateRegForABI(ArchType::ARCH_ARM, registers);
+    EXPECT_EQ(registers[PERF_REG_ARM_PC], registers[PERF_REG_ARM64_PC]);
+    registers[PERF_REG_ARM_PC] = 0;
+    UpdateRegForABI(ArchType::ARCH_ARM64, registers);
+    EXPECT_EQ(registers[PERF_REG_ARM_PC], 0u);
+
+    SetDeviceArch(oldArch);
+}
+
+HWTEST_F(RegisterTest, RegisterValueRejectsOutOfRangeWrappers, TestSize.Level0)
+{
+    uint64_t value = 0;
+    u64 registers[4] = {};
+
+    EXPECT_FALSE(RegisterGetSPValue(value, ArchType::ARCH_UNKNOWN, registers, 4));
+    EXPECT_FALSE(RegisterGetIPValue(value, ArchType::ARCH_UNKNOWN, registers, 4));
+}
+
+HWTEST_F(RegisterTest, GetArchNameCoversAllEnumValues, TestSize.Level0)
+{
+    EXPECT_EQ(GetArchName(ArchType::ARCH_X86), "X86_32");
+    EXPECT_EQ(GetArchName(ArchType::ARCH_X86_64), "X86_64");
+    EXPECT_EQ(GetArchName(ArchType::ARCH_ARM), "ARM");
+    EXPECT_EQ(GetArchName(ArchType::ARCH_ARM64), "ARM64");
+    EXPECT_EQ(GetArchName(ArchType::ARCH_UNKNOWN), "Unsupport");
 }
 } // namespace NativeDaemon
 } // namespace Developtools

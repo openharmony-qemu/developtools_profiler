@@ -968,6 +968,7 @@ std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath)
 }
 
 static const std::string DATA_TMP_DIR = "/data/local/tmp";
+static const std::string FILE_SUFFIX = ".htrace";
 
 std::pair<bool, std::string> CheckNotExistsFilePathSafe(const std::string& filePath)
 {
@@ -986,7 +987,12 @@ std::pair<bool, std::string> CheckNotExistsFilePathSafe(const std::string& fileP
         PROFILER_LOG_ERROR(LOG_CORE, "%s:not under %s: %s", __func__, DATA_TMP_DIR.c_str(), resolved.c_str());
         return {false, std::string()};
     }
-    return {true, resolved + "/" + filePath.substr(pos + 1)};
+    std::string fullPath = resolved + "/" + filePath.substr(pos + 1);
+    if (fullPath.size() < FILE_SUFFIX.size() ||
+        fullPath.compare(fullPath.size() - FILE_SUFFIX.size(), FILE_SUFFIX.size(), FILE_SUFFIX) != 0) {
+        return {false, std::string()};
+    }
+    return {true, fullPath};
 }
 
 bool CheckWhiteList(const std::string& cmdPath)

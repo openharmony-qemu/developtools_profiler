@@ -379,6 +379,7 @@ bool HookSocketClient::ApplyClientConfig(SocketContext &context, const ClientCon
         return false;
     }
     *config_ = clientConfig;
+    EnableArkTsHookIfNeeded(config_->traceMask);
     LogReceivedConfig();
     PrepareWriters(context);
     ReceiveMemLeakFd(context);
