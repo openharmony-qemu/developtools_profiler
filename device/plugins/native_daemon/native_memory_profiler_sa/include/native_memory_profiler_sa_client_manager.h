@@ -49,6 +49,7 @@ enum class InternalResourceType : int32_t {
     OH_RES_TYPE_GLOBAL_HANDLE = 4,
     OH_RES_TYPE_DMA = 5,
     OH_RES_TYPE_ASHMEM = 6,
+    OH_RES_TYPE_COMPOSITE_HEAP = 7,
     OH_RES_TYPE_MAX, // sentinel value, not a valid type
 };
 
@@ -103,6 +104,7 @@ private:
     static int32_t ParseSimplifiedConfig(std::shared_ptr<NativeMemoryProfilerSaConfig> config,
         const SimplifiedMemConfig& inputConfig, uint32_t duration);
     static ResProfilerErrorCode CheckInputConfig(int type, MemAPIConfig* inputConfig);
+    static std::string GenerateFileNamePrefix(int type, int32_t pid);
     static std::string GenerateFileName(int type, int32_t pid);
     static std::string CreateFileAndGrantPermission(std::string& filename);
     static int32_t StopWithService(const OHOS::sptr<OHOS::IRemoteObject>& service, uint32_t pid);

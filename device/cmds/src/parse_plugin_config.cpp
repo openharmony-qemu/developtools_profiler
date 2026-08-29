@@ -35,7 +35,6 @@
 
 namespace {
 constexpr int REMAINDER = 2;
-const std::string TAG_RES_COMPOSITE_HEAP = "RES_COMPOSITE_HEAP";
 }
 
 ParsePluginConfig::ParsePluginConfig()

@@ -61,6 +61,7 @@ constexpr uint32_t DEFINE_MIN_SAMPLE_INTERVAL = 384; // bytes
 constexpr uint32_t ASYNC_REQUEST_TIMEOUT_DELTA = 600; // seconds
 constexpr int32_t TIME_BASE = 1000;
 const std::string FILE_SUFFIX = ".htrace";
+const std::string COMPOSITE_HEAP_SUFFIX = ".zip";
 const std::map<InternalResourceType, std::string> resourceTypeValues = {
     {InternalResourceType::OH_RES_TYPE_FD, "fd"},
     {InternalResourceType::OH_RES_TYPE_THREAD, "thread"},
@@ -69,6 +70,7 @@ const std::map<InternalResourceType, std::string> resourceTypeValues = {
     {InternalResourceType::OH_RES_TYPE_GLOBAL_HANDLE, "global_handle"},
     {InternalResourceType::OH_RES_TYPE_DMA, "dma"},
     {InternalResourceType::OH_RES_TYPE_ASHMEM, "ashmem"},
+    {InternalResourceType::OH_RES_TYPE_COMPOSITE_HEAP, "composite_heap"},
 };
 
 using ProfilingCallbackVar = std::variant<
@@ -535,6 +537,10 @@ int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint3
     CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
     CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid pid with MemSaConfig");
     CHECK_TRUE(callback, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid callback with MemSaConfig");
+    if ((saConfig.mask & RES_COMPOSITE_HEAP) && !(saConfig.mask & RES_ARK_GLOBAL_HANDLE)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "invalid mask, enable composite heap must enable global handle too");
+        return RET_ERR;
+    }
     CHECK_TRUE(g_profilerAsyncReqMgr.TryAddRequest(static_cast<int32_t>(pid), duration, callback, fd, ""), RET_ERR,
         "NativeMemoryProfilerSaClientManager: Started already with MemSaConfig for pid:%d", pid);
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
@@ -678,6 +684,15 @@ int32_t NativeMemoryProfilerSaClientManager::StartByType(int32_t type,
     if (!COMMON::CleanOldenFiles(NAPI_FILE_PATH_PREFIX)) {
         PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: CleanOldenFiles failed");
     }
+    if (static_cast<InternalResourceType>(type) == InternalResourceType::OH_RES_TYPE_COMPOSITE_HEAP) {
+        auto filter = [type, &config](const std::string &filename) {
+            return COMMON::StringMatch(filename, GenerateFileNamePrefix(type, config->pid_), COMPOSITE_HEAP_SUFFIX) &&
+                filename != config->typeFileName_;
+        };
+        if (!COMMON::DeleteFiles(std::filesystem::path(fullPath).parent_path().string(), filter)) {
+            PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: Clean composite file failed");
+        }
+    }
 
     int32_t retStart = StartPidVoid(config, callbackObject);
     if (retStart != 0) {
@@ -720,6 +735,8 @@ int32_t NativeMemoryProfilerSaClientManager::ParseResType(int32_t type,
         config->traceMask_ = RES_FD_DMABUF | RES_DMABUF_MASK;
     } else if (internalType == InternalResourceType::OH_RES_TYPE_ASHMEM) {
         config->traceMask_ = RES_FD_ASHMEM | RES_ASHMEM_MASK;
+    } else if (internalType == InternalResourceType::OH_RES_TYPE_COMPOSITE_HEAP) {
+        config->traceMask_ = RES_COMPOSITE_HEAP | RES_ARK_GLOBAL_HANDLE;
     }
     return RET_OK;
 }
@@ -898,8 +915,8 @@ int32_t NativeMemoryProfilerSaClientManager::OnDemandStart(
     return RET_OK;
 }
 
-// <resource-type>-<process_name>-<pid>-<timestamp>.htrace
-std::string NativeMemoryProfilerSaClientManager::GenerateFileName(int type, int32_t pid)
+// <resource-type>-<process_name>
+std::string NativeMemoryProfilerSaClientManager::GenerateFileNamePrefix(int type, int32_t pid)
 {
     auto it = resourceTypeValues.find(static_cast<InternalResourceType>(type));
     if (it == resourceTypeValues.end()) {
@@ -907,8 +924,20 @@ std::string NativeMemoryProfilerSaClientManager::GenerateFileName(int type, int3
     }
     std::string typeVal = it->second;
     std::string procName = COMMON::GetProcessNameByPid(pid);
+    return typeVal + "-" + procName;
+}
+
+// <resource-type>-<process_name>-<pid>-<timestamp>.suffix(.trace or .zip)
+std::string NativeMemoryProfilerSaClientManager::GenerateFileName(int type, int32_t pid)
+{
+    std::string prefix = GenerateFileNamePrefix(type, pid);
+    if (prefix.empty()) {
+        return "";
+    }
     std::string timeStr = COMMON::GetTimeStr();
-    return typeVal + "-" + procName + "-" + std::to_string(pid) + "-" + timeStr + FILE_SUFFIX;
+    bool isCompositeHeap = type == static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_COMPOSITE_HEAP);
+    std::string suffix = isCompositeHeap ? COMPOSITE_HEAP_SUFFIX : FILE_SUFFIX;
+    return prefix + "-" + std::to_string(pid) + "-" + timeStr + suffix;
 }
 
 int32_t NativeMemoryProfilerSaClientManager::GetGwpAsan(int fd, pid_t pid, GwpAsanConfig& gwpConfig)
