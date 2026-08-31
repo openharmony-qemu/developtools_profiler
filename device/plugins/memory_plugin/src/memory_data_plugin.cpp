@@ -1257,7 +1257,7 @@ template <typename T> void MemoryDataPlugin::WriteGpuDumpInfo(T& dataProto)
     std::string content = "";
     if (!protoConfig_.report_fake_data()) {
         if (strcmp(testpath_, "/proc") == 0) {
-            content = RunCommand("hidumper -s 10 '-a dumpMem'");
+            content = RunCommand("hidumper -s 10 -a dumpMem");
         } else {
             // for UT
             content = ReadFile(std::string(testpath_) + "/dumpMem.txt");
@@ -1367,7 +1367,7 @@ template <typename T> void MemoryDataPlugin::WriteManagerServiceInfo(T& dataProt
 {
     std::string content = "";
     if (strcmp(testpath_, "/proc") == 0) {
-        content = RunCommand("hidumper -s WindowManagerService -a '-a'");
+        content = RunCommand("hidumper -s WindowManagerService -a -a");
     } else {
         // for UT
         content = ReadFile(std::string(testpath_) + "/window_manager_service.txt");
