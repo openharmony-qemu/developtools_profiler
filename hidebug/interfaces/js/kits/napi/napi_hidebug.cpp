@@ -500,7 +500,8 @@ napi_value GetAppVMMemoryInfo(napi_env env, napi_callback_info info)
     return vMMemoryInfo;
 }
 
-static void ConvertThreadCpuUsageToJs(napi_env env, napi_value &result, uint32_t threadIdValue, double cpuUsageValue)
+static void ConvertThreadCpuUsageToJs(napi_env env, napi_value &result,
+    uint32_t threadIdValue, double cpuUsageValue, const std::string &threadNameValue)
 {
     napi_create_object(env, &result);
 
@@ -511,15 +512,20 @@ static void ConvertThreadCpuUsageToJs(napi_env env, napi_value &result, uint32_t
     napi_value cpuUsage = nullptr;
     napi_create_double(env, cpuUsageValue, &cpuUsage);
     napi_set_named_property(env, result, "cpuUsage", cpuUsage);
+
+    napi_value threadName = nullptr;
+    napi_create_string_utf8(env, threadNameValue.c_str(), threadNameValue.length(), &threadName);
+    napi_set_named_property(env, result, "threadName", threadName);
 }
 
-static void ConvertThreadCpuUsageMapToJs(napi_env env, napi_value &result, const std::map<uint32_t, double> &threadMap)
+static void ConvertThreadCpuUsageListToJs(napi_env env, napi_value &result,
+    const std::vector<ThreadCpuUsageInfo> &threadCpuUsageList)
 {
     napi_create_array(env, &result);
     size_t idx = 0;
-    for (const auto& [threadId, cpuUsage] : threadMap) {
+    for (const auto& item : threadCpuUsageList) {
         napi_value obj = nullptr;
-        ConvertThreadCpuUsageToJs(env, obj, threadId, cpuUsage);
+        ConvertThreadCpuUsageToJs(env, obj, item.tid, item.cpuUsage, item.threadName);
         napi_set_element(env, result, idx, obj);
         idx++;
     }
@@ -529,8 +535,8 @@ napi_value GetAppThreadCpuUsage(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppThreadCpuUsage");
     napi_value result = nullptr;
-    std::map<uint32_t, double> threadMap = HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
-    ConvertThreadCpuUsageMapToJs(env, result, threadMap);
+    auto threadCpuUsageList = HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
+    ConvertThreadCpuUsageListToJs(env, result, threadCpuUsageList);
     return result;
 }
 
@@ -1245,6 +1251,15 @@ napi_value GetRssInfo(napi_env env, napi_callback_info info)
     return rssInfo;
 }
 
+napi_value GetAppRunningUniqueId(napi_env env, napi_callback_info info)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getAppRunningUniqueId");
+    napi_value result = nullptr;
+    const char* id = HidebugNativeInterface::GetInstance().GetAppRunningUniqueId();
+    napi_create_string_utf8(env, (id != nullptr) ? id : "", NAPI_AUTO_LENGTH, &result);
+    return result;
+}
+
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
 {
     ApiRecordReporter::InitProcessor();
@@ -1290,6 +1305,7 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setJsRawHeapTrimLevel", SetJsRawHeapTrimLevel),
         DECLARE_NAPI_FUNCTION("setProcDumpInSharedOOM", SetProcDumpInSharedOOM),
         DECLARE_NAPI_FUNCTION("getRssInfo", GetRssInfo),
+        DECLARE_NAPI_FUNCTION("getAppRunningUniqueId", GetAppRunningUniqueId),
         DECLARE_NAPI_FUNCTION("requestTrace", RequestTrace),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));

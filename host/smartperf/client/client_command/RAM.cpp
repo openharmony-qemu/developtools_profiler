@@ -21,6 +21,7 @@
 #include <thread>
 #include <string>
 #include <regex>
+#include "parameters.h"
 #include "include/sp_utils.h"
 #include "memory_collector.h"
 #include "collect_result.h"
@@ -61,6 +62,7 @@ std::map<std::string, std::string> procRamInfoLast {
         {"so", "NA"},
         {"dev", "NA"},
         {"ttf", "NA"},
+        {"arktsHeapMainThreadPss", "NA"},
         {"childCarktsHeapPss", "NA"},
         {"childGpuPss", "NA"},
         {"childGraphicPss", "NA"},
@@ -85,6 +87,7 @@ std::map<std::string, std::string> procRamInfoLast {
         {"childSo", "NA"},
         {"childDev", "NA"},
         {"childTtf", "NA"},
+        {"childArktsHeapMainThreadPss", "NA"},
 };
 std::map<std::string, std::string> RAM::ItemData()
 {
@@ -168,6 +171,7 @@ std::map<std::string, std::string> RAM::ProcMemNaInfo() const
     procMemInfo["so"] = "NA";
     procMemInfo["dev"] = "NA";
     procMemInfo["ttf"] = "NA";
+    procMemInfo["arktsHeapMainThreadPss"] = "NA";
     return procMemInfo;
 }
 
@@ -198,6 +202,7 @@ std::map<std::string, std::string> RAM::ChildProcMemNaInfo() const
     procMemInfo["childSo"] = "NA";
     procMemInfo["childDev"] = "NA";
     procMemInfo["childTtf"] = "NA";
+    procMemInfo["childArktsHeapMainThreadPss"] = "NA";
     return procMemInfo;
 }
 
@@ -239,7 +244,11 @@ std::map<std::string, std::string> RAM::CollectRam(const std::string& ramPid, si
         return emptyprocRamInfo;
     }
     std::string cmdResult;
-    if (!SPUtils::SafeLoadExec({"hidumper", "--mem", ramPid}, cmdResult)) {
+    std::vector<std::string> cmd = {"hidumper", "--mem", ramPid};
+    if (arktsMainFlag_) {
+        cmd.push_back("--show-arktsheap");
+    }
+    if (!SPUtils::SafeLoadExec(cmd, cmdResult)) {
         LOGD("RAM::SafeLoadExec failed");
         emptyprocRamInfo = ProcMemNaInfo();
         for (auto& item : emptyprocRamInfo) {
@@ -307,7 +316,8 @@ std::map<std::string, std::string> RAM::GetRamInfo()
     return dataMap;
 }
 
-std::map<std::string, std::string> RAM::GetPssRamInfo(std::istringstream &iss, const std::string& pid, size_t index)
+std::map<std::string, std::string> RAM::GetPssRamInfo(std::istringstream &iss, const std::string& pid,
+    size_t index)
 {
     std::vector<std::string> paramsInfo;
     std::map<std::string, std::string> pssRamInfo = ParsePssValues(iss, paramsInfo, pid, index);
@@ -343,14 +353,12 @@ std::map<std::string, std::string> RAM::ParsePssValues(std::istringstream &iss, 
         SPUtils::StrSplit(line, " ", params);
         GetPssAboutPid(pss, params);
         GetDevecoPssAboutPid(pss, params);
-        if (params.size() > RAM_SECOND && params[1].find("Ashmem") != std::string::npos) {
-            std::string ashmemValue = params[1];
-            size_t pos = ashmemValue.find(":");
-            if (pos != std::string::npos) {
-                std::string numberStr = ashmemValue.substr(pos + 1);
-                pss.ashmemPssValue = numberStr;
-                break;
-            }
+        if (ParseAshmenValue(pss, params)) {
+            continue;
+        }
+        if (line.find("arkts heap:") != std::string::npos) {
+            ParseArktsHeapMainThreadValue(pss, iss, pid);
+            break;
         }
         if (!pss.gpuPssValue.empty() && params.size() > 0 && params[0].find("Total") != std::string::npos) {
             paramsInfo = params;
@@ -361,6 +369,32 @@ std::map<std::string, std::string> RAM::ParsePssValues(std::istringstream &iss, 
     // 应用程序的内存占用信息
     LOGD("pssRamInfo map size(%u)", pssRamInfo.size());
     return pssRamInfo;
+}
+
+bool RAM::ParseAshmenValue(struct PssValues &pss, const std::vector<std::string> &params)
+{
+    if (params.size() > RAM_SECOND && params[1].find("Ashmem") != std::string::npos) {
+        std::string ashmemValue = params[1];
+        size_t pos = ashmemValue.find(":");
+        if (pos != std::string::npos) {
+            std::string numberStr = ashmemValue.substr(pos + 1);
+            pss.ashmemPssValue = numberStr;
+        }
+        return true;
+    }
+    return false;
+}
+
+void RAM::ParseArktsHeapMainThreadValue(struct PssValues &pss, std::istringstream &iss, const std::string &pid)
+{
+    std::string line = "";
+    while (std::getline(iss, line)) {
+        std::vector<std::string> arktsParams;
+        SPUtils::StrSplit(line, " ", arktsParams);
+        if (arktsParams.size() >= RAM_THIRD && arktsParams[0] == pid) {
+            pss.arktsHeapMainThreadPssValue = arktsParams[RAM_SECOND];
+        }
+    }
 }
 
 void RAM::GetPssAboutPid(struct PssValues &pss, std::vector<std::string> &params)
@@ -456,11 +490,12 @@ void RAM::FillPssRamInfo(size_t index, std::string pid,
         pssRamInfo["so"] = pss.soPssValue;
         pssRamInfo["dev"] = pss.devPssValue;
         pssRamInfo["ttf"] = pss.ttfPssValue;
+        pssRamInfo["arktsHeapMainThreadPss"] = pss.arktsHeapMainThreadPssValue;
     } else {
         pid.append(":");
         pssRamInfo["childGpuPss"].append(pid).append(pss.gpuPssValue).append("|");
         pssRamInfo["childGraphicPss"].append(pid).append(pss.graphicPssValue).append("|");
-        pssRamInfo["childArktsHeapPss"].append(pid).append(pss.arktsHeapPssValue).append("|");
+        pssRamInfo["childCarktsHeapPss"].append(pid).append(pss.arktsHeapPssValue).append("|");
         pssRamInfo["childNativeHeapPss"].append(pid).append(pss.nativeHeapPssValue).append("|");
         pssRamInfo["childStackPss"].append(pid).append(pss.stackPssValue).append("|");
         pssRamInfo["childAnonPage"].append(pid).append(pss.anonPagePssValue).append("|");
@@ -472,6 +507,8 @@ void RAM::FillPssRamInfo(size_t index, std::string pid,
         pssRamInfo["childSo"].append(pid).append(pss.soPssValue).append("|");
         pssRamInfo["childDev"].append(pid).append(pss.devPssValue).append("|");
         pssRamInfo["childTtf"].append(pid).append(pss.ttfPssValue).append("|");
+        pssRamInfo["childTtf"].append(pid).append(pss.ttfPssValue).append("|");
+        pssRamInfo["childArktsHeapMainThreadPss"].append(pid).append(pss.arktsHeapMainThreadPssValue).append("|");
     }
 }
 
@@ -517,6 +554,16 @@ std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string>&
     //应用程序的内存消耗信息
     LOGD("sumRamInfo map size(%u)", sumRamInfo.size());
     return sumRamInfo;
+}
+
+void RAM::DetermineDeviceVersion()
+{
+    std::vector<std::string> cmd = {"hidumper", "--mem", "99999", "--show-arktsheap"};
+    std::string cmdResult = "";
+    SPUtils::SafeLoadExec(cmd, cmdResult);
+    if (cmdResult.find("option pid missed. showarktsheap") != std::string::npos) {
+        arktsMainFlag_ = false;
+    }
 }
 }
 }

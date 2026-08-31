@@ -1349,6 +1349,140 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileReturnsOkWhenInf
 }
 
 /**
+ * @tc.name: CopyApiCollectorFileRejectsMissingPidInfo
+ * @tc.desc: Copy API collector file returns err when pid is not registered.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileRejectsMissingPidInfo, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    constexpr uint32_t pid = 24688;
+    auto task = std::make_shared<TaskConfig>(nullptr, static_cast<int32_t>(pid), "copy_no_pid", -1, "", -1, false);
+    ASSERT_NE(task, nullptr);
+    task->typeFileName = "no_pid.htrace";
+    std::string resultPath = "unchanged";
+
+    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(pid, task, resultPath), RET_ERR);
+    EXPECT_EQ(resultPath, "unchanged");
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: CopyApiCollectorFileRejectsUnsafeTypeFileName
+ * @tc.desc: Copy API collector file returns err when typeFileName has traversal or slash.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileRejectsUnsafeTypeFileName, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    constexpr uint32_t pid = 24689;
+    NativeMemoryProfilerSaService::InjectPidInfoForTest(static_cast<pid_t>(pid), 200000, 0);
+    std::string resultPath = "unchanged";
+
+    auto dotTask = std::make_shared<TaskConfig>(nullptr, static_cast<int32_t>(pid), "copy_unsafe", -1, "", -1, false);
+    ASSERT_NE(dotTask, nullptr);
+    dotTask->typeFileName = "../evil.htrace";
+    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(pid, dotTask, resultPath), RET_ERR);
+    EXPECT_EQ(resultPath, "unchanged");
+
+    auto slashTask = std::make_shared<TaskConfig>(nullptr, static_cast<int32_t>(pid), "copy_unsafe", -1, "", -1, false);
+    ASSERT_NE(slashTask, nullptr);
+    slashTask->typeFileName = "sub/dir.htrace";
+    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(pid, slashTask, resultPath), RET_ERR);
+    EXPECT_EQ(resultPath, "unchanged");
+
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: CopyApiCollectorFileRejectsCopyFailure
+ * @tc.desc: Copy API collector file returns err when dest path is not writable.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileRejectsCopyFailure, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    constexpr uint32_t pid = 24690;
+    NativeMemoryProfilerSaService::InjectPidInfoForTest(static_cast<pid_t>(pid), 200000, 0);
+    auto task = std::make_shared<TaskConfig>(nullptr, static_cast<int32_t>(pid),
+        "copy_dest_missing", -1, "", -1, false, STDOUT_FILENO);
+    ASSERT_NE(task, nullptr);
+    task->typeFileName = "copy_fail.htrace";
+    std::string resultPath = "unchanged";
+
+    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(pid, task, resultPath), RET_ERR);
+    EXPECT_EQ(resultPath, "unchanged");
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: CopyApiCollectorFileRejectsCompositeHeapCollectFailure
+ * @tc.desc: Copy API collector file returns err when CollectApm fails for composite heap.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileRejectsCompositeHeapCollectFailure, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    constexpr uint32_t pid = 24691;
+    NativeMemoryProfilerSaService::InjectPidInfoForTest(static_cast<pid_t>(pid), 200000, 0);
+    auto task = std::make_shared<TaskConfig>(nullptr, static_cast<int32_t>(pid),
+        "copy_composite", -1, "", -1, false);
+    ASSERT_NE(task, nullptr);
+    task->typeFileName = "composite.htrace";
+    task->compositeHeapEnable = true;
+    std::string resultPath = "unchanged";
+
+    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(pid, task, resultPath), RET_ERR);
+    EXPECT_EQ(resultPath, "unchanged");
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: CopyApiCollectorFileSucceedsForApiTask
+ * @tc.desc: Copy API collector file returns ok and sets sandbox path on success.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileSucceedsForApiTask, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    constexpr uint32_t pid = 24692;
+    NativeMemoryProfilerSaService::InjectPidInfoForTest(static_cast<pid_t>(pid), 200000, 0);
+    std::string processName = "api_copy_success";
+    std::string typeFileName = "api_success.htrace";
+    std::string destDir = "/data/app/el2/1/base/" + processName + "/files";
+    system(("mkdir -p " + destDir).c_str());
+    std::string probePath = destDir + "/.probe";
+    int probeFd = open(probePath.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (probeFd < 0) {
+        GTEST_SKIP() << "app sandbox dir not writable";
+    }
+    close(probeFd);
+    unlink(probePath.c_str());
+
+    std::string srcPath = "/data/local/tmp/api_copy_success_src.htrace";
+    int srcFd = open(srcPath.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(srcFd, 0);
+    std::string srcData = "API_SOURCE";
+    ASSERT_EQ(write(srcFd, srcData.data(), srcData.size()), static_cast<ssize_t>(srcData.size()));
+    (void)fsync(srcFd);
+
+    auto task = std::make_shared<TaskConfig>(nullptr, static_cast<int32_t>(pid),
+        processName, -1, "", -1, false, static_cast<uint32_t>(srcFd), TEST_START_TYPE_API);
+    ASSERT_NE(task, nullptr);
+    task->typeFileName = typeFileName;
+    std::string resultPath = "unchanged";
+
+    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(pid, task, resultPath), RET_OK);
+    EXPECT_EQ(resultPath, std::string("/data/storage/el2/base/files/") + typeFileName);
+
+    close(srcFd);
+    unlink(srcPath.c_str());
+    unlink((destDir + "/" + typeFileName).c_str());
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    system(("rm -rf /data/app/el2/1/base/" + processName).c_str());
+}
+
+/**
  * @tc.name: StopHookByTypeRoutesMissingTask
  * @tc.desc: Stop hook by type routes missing task.
  * @tc.type: FUNC
@@ -1732,5 +1866,39 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, StartHookLockHandlesPrintNmdOnlyWith
         close(static_cast<int>(fd));
     }
     EXPECT_EQ(ret, RET_OK);
+}
+
+/**
+ * @tc.name: CollectApmReturnsEmptyForNonAppPid
+ * @tc.desc: Collect APM returns empty for non app pid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CollectApmReturnsEmptyForNonAppPid, TestSize.Level2)
+{
+    auto task = std::make_shared<TaskConfig>(nullptr, static_cast<int32_t>(getpid()),
+        "collect_apm_pid", -1, "", -1, false);
+    ASSERT_NE(task, nullptr);
+
+    EXPECT_TRUE(NativeMemoryProfilerSaService::CollectApm(task).empty());
+
+    std::string compositePath = "/data/local/tmp/composite_heap_" + std::to_string(getpid()) + ".zip";
+    EXPECT_EQ(access(compositePath.c_str(), F_OK), -1);
+}
+
+/**
+ * @tc.name: CollectApmReturnsEmptyForZeroPid
+ * @tc.desc: Collect APM returns empty for zero pid using process name.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CollectApmReturnsEmptyForZeroPid, TestSize.Level2)
+{
+    std::string processName = "collect_apm_name";
+    auto task = std::make_shared<TaskConfig>(nullptr, 0, processName, -1, "", -1, false);
+    ASSERT_NE(task, nullptr);
+
+    EXPECT_TRUE(NativeMemoryProfilerSaService::CollectApm(task).empty());
+
+    std::string compositePath = "/data/local/tmp/composite_heap_" + processName + ".zip";
+    EXPECT_EQ(access(compositePath.c_str(), F_OK), -1);
 }
 

@@ -19,6 +19,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <vector>
 
 #include "hidebug_native_type.h"
 #include "hidebug/hidebug_type.h"
@@ -40,7 +41,8 @@ public:
 
     virtual double GetCpuUsage() = 0;
     virtual bool ParseProcStat(uint64_t& utime, uint64_t& stime) = 0;
-    virtual std::map<uint32_t, double> GetAppThreadCpuUsage() = 0;
+    virtual std::vector<ThreadCpuUsageInfo> GetAppThreadCpuUsage() = 0;
+    virtual const char* GetAppRunningUniqueId() = 0;
     virtual TraceErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
         uint32_t limitsize, std::string &file) = 0;
     virtual TraceErrorCode StopAppTraceCapture() = 0;

@@ -1209,4 +1209,89 @@ describe("HidebugJsTest", function () {
             expect(false).assertTrue();
         }
     })
+
+    /**
+     * @tc.name: HidebugJsTest_053
+     * @tc.desc: getAppThreadCpuUsage 返回数组元素结构验证, 包含 threadName(string)/threadId(>0)/cpuUsage(>=0) 字段
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_053', 0, function () {
+        console.info("---------------------------HidebugJsTest_053----------------------------------");
+        try {
+            let appThreadCpuUsage = hidebug.getAppThreadCpuUsage();
+            expect(appThreadCpuUsage.length > 0).assertTrue();
+            for (let i = 0; i < appThreadCpuUsage.length; i++) {
+                let item = appThreadCpuUsage[i];
+                expect(typeof item.threadName === 'string').assertTrue();
+                expect(item.threadId > 0).assertTrue();
+                expect(item.cpuUsage >= 0).assertTrue();
+            }
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_054
+     * @tc.desc: getAppThreadCpuUsage 返回数组中至少存在一个 threadName 为非空字符串的线程(主线程名)
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_054', 0, function () {
+        console.info("---------------------------HidebugJsTest_054----------------------------------");
+        try {
+            let appThreadCpuUsage = hidebug.getAppThreadCpuUsage();
+            expect(appThreadCpuUsage.length > 0).assertTrue();
+            let hasNamedThread = false;
+            for (let i = 0; i < appThreadCpuUsage.length; i++) {
+                if (appThreadCpuUsage[i].threadName.length > 0) {
+                    hasNamedThread = true;
+                    break;
+                }
+            }
+            expect(hasNamedThread).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_055
+     * @tc.desc: getAppRunningUniqueId 同进程多次调用结果一致
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_055', 0, function () {
+        console.info("---------------------------HidebugJsTest_055----------------------------------");
+        try {
+            let appRunningUniqueIdFirst = hidebug.getAppRunningUniqueId();
+            let appRunningUniqueIdSecond = hidebug.getAppRunningUniqueId();
+            console.info("first: " + appRunningUniqueIdFirst + ", second: " + appRunningUniqueIdSecond);
+            expect(appRunningUniqueIdFirst === appRunningUniqueIdSecond).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_056
+     * @tc.desc: getAppRunningUniqueId 返回非空字符串
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_056', 0, function () {
+        console.info("---------------------------HidebugJsTest_056----------------------------------");
+        try {
+            let appRunningUniqueId = hidebug.getAppRunningUniqueId();
+            console.info("getAppRunningUniqueId length: " + appRunningUniqueId.length);
+            expect(appRunningUniqueId.length > 0).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
 })

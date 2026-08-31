@@ -51,16 +51,16 @@ double OH_HiDebug_GetSystemCpuUsage()
 
 HiDebug_ThreadCpuUsagePtr OH_HiDebug_GetAppThreadCpuUsage()
 {
-    auto threadMap = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
+    auto threadCpuUsageList = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
     HiDebug_ThreadCpuUsagePtr head = nullptr;
     HiDebug_ThreadCpuUsagePtr prev = nullptr;
-    for (const auto[threadId, cpuUsage] : threadMap) {
+    for (const auto& item : threadCpuUsageList) {
         HiDebug_ThreadCpuUsagePtr node = (HiDebug_ThreadCpuUsagePtr) malloc(sizeof(HiDebug_ThreadCpuUsage));
         if (node == nullptr) {
             continue;
         }
-        node->threadId = threadId;
-        node->cpuUsage = cpuUsage;
+        node->threadId = item.tid;
+        node->cpuUsage = item.cpuUsage;
         node->next = nullptr;
         if (prev == nullptr) {
             head = node;

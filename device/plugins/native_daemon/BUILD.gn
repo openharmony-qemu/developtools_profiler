@@ -80,6 +80,7 @@ ohos_shared_library("libmemory_profiler") {
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/services/ipc/include",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
+    "${OHOS_PROFILER_DIR}/device/services/apm/include",
   ]
 
   include_dirs += [
@@ -128,6 +129,7 @@ ohos_shared_library("libmemory_profiler") {
   deps = [
     ":hiprofiler_daemon.cfg",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
+    "${OHOS_PROFILER_DIR}/device/services/apm:profiler_apm",
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source_cfi",
     "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto_cfi",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source_cfi",
@@ -158,6 +160,7 @@ ohos_shared_library("libmemory_profiler") {
     "samgr:samgr_proxy",
     "zlib:shared_libz",
     "ability_base:configuration",
+    "resource_schedule_service:ressched_client",
   ]
   external_deps += [ "faultloggerd:libasync_stack" ]
   defines = [ "ENABLE_HAP_EXTRACTOR" ]

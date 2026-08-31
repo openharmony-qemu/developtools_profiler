@@ -464,6 +464,78 @@ HWTEST_F(CommonTest, CopyFileFast, TestSize.Level1)
 }
 
 /**
+ * @tc.name: CommonTest
+ * @tc.desc: CopyFileToFdFastFromPath.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, CopyFileToFdFastFromPath, TestSize.Level1)
+{
+    std::string srcName = "/data/local/tmp/copy_src.txt";
+    std::string fileContent = "Hello world, CopyFileToFdFastFromPath";
+    EXPECT_TRUE(WriteFile(srcName, fileContent));
+
+    std::string destName = "/data/local/tmp/copy_dest.txt";
+    int destFd = open(destName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    EXPECT_GE(destFd, 0);
+    bool ret = COMMON::CopyFileToFdFastFromPath(srcName, destFd);
+    close(destFd);
+    EXPECT_TRUE(ret);
+
+    std::vector<std::string> validPaths = { "/data/local/tmp/" };
+    std::string readContent;
+    EXPECT_TRUE(COMMON::ReadFile(destName, validPaths, readContent));
+    EXPECT_EQ(readContent, fileContent);
+
+    std::string cmd = "rm " + srcName + " " + destName;
+    system(cmd.c_str());
+}
+
+/**
+ * @tc.name: CommonTest
+ * @tc.desc: CopyFileToFdFastFromPath with invalid source path.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, CopyFileToFdFastFromPathInvalid, TestSize.Level1)
+{
+    std::string destName = "/data/local/tmp/copy_dest_invalid.txt";
+    int destFd = open(destName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    EXPECT_GE(destFd, 0);
+    EXPECT_FALSE(COMMON::CopyFileToFdFastFromPath("/data/local/tmp/nonexistent_src.txt", destFd));
+    close(destFd);
+
+    std::string cmd = "rm -f " + destName;
+    system(cmd.c_str());
+}
+
+/**
+ * @tc.name: CommonTest
+ * @tc.desc: CopyFileToFdFastFromPath with a symlink source path should fail (O_NOFOLLOW).
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, CopyFileToFdFastFromPathSymlink, TestSize.Level1)
+{
+    std::string realName = "/data/local/tmp/copy_real.txt";
+    std::string fileContent = "Hello world, symlink";
+    EXPECT_TRUE(WriteFile(realName, fileContent));
+
+    std::string linkName = "/data/local/tmp/copy_link.txt";
+    unlink(linkName.c_str());
+    ASSERT_EQ(symlink(realName.c_str(), linkName.c_str()), 0);
+    struct stat st;
+    ASSERT_EQ(lstat(linkName.c_str(), &st), 0);
+    ASSERT_TRUE(S_ISLNK(st.st_mode));
+
+    std::string destName = "/data/local/tmp/copy_dest_symlink.txt";
+    int destFd = open(destName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    EXPECT_GE(destFd, 0);
+    EXPECT_FALSE(COMMON::CopyFileToFdFastFromPath(linkName, destFd));
+    close(destFd);
+
+    std::string cmd = "rm -f " + realName + " " + linkName + " " + destName;
+    system(cmd.c_str());
+}
+
+/**
  * @tc.name: GetBundleNameByPid
  * @tc.desc: GetBundleNameByPid
  * @tc.type: FUNC

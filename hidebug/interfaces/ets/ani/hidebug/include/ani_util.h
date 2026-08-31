@@ -34,6 +34,8 @@ public:
     static bool ParseBoolProperty(ani_env *env, ani_object object, const char *name, bool &value);
     static bool ParseIntProperty(ani_env *env, ani_object object, const char *name, int32_t &value);
     static ani_status SetNamedPropertyNumber(ani_env *env, ani_object object, const std::string& name, double value);
+    static ani_status SetNamedPropertyString(ani_env *env, ani_object object, const std::string& name,
+        const std::string& value);
     static ani_vm* GetAniVm(ani_env *env);
 };
 } // namespace HiviewDFX

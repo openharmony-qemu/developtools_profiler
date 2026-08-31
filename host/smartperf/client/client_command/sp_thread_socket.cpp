@@ -642,6 +642,7 @@ void SpThreadSocket::FetchCpuStats(SpServerSocket &spSocket, std::map<std::strin
     spSocket.Sendto(resultCpu);
     LOGD("UDP send resultCpu = %s", resultCpu.c_str());
 }
+
 void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
     const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {

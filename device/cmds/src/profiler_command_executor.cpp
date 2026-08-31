@@ -132,7 +132,7 @@ int ProfilerCommandExecutor::HandleEmptyConfig(const ProfilerCommandArgs& args, 
         return 1;
     }
     if (!args.isStartProcess) {
-        printf("config file argument must sepcified!\n");
+        printf("config file argument must be specified!\n");
     }
     return 1;
 }

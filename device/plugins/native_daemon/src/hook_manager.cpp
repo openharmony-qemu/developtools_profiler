@@ -48,6 +48,9 @@
 #include "app_mgr_proxy.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
+#include "res_sched_client.h"
+#include "res_type.h"
+#include "nlohmann/json.hpp"
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
@@ -360,6 +363,7 @@ unsigned long long HookManager::ConvertTagToMask() const
         {TAG_RES_ARK_LOCAL_HANDLE, RES_ARK_LOCAL_HANDLE},
         {TAG_RES_VMA_ARKWEB, RES_VMA_ARKWEB},
         {TAG_RES_DART_HEAP, RES_DART_HEAP},
+        {TAG_RES_COMPOSITE_HEAP, RES_COMPOSITE_HEAP},
         {TAG_RES_RN_HERMES_HEAP, RES_RN_HERMES_HEAP}};
     unsigned long long resMask = 0;
     for (const auto& tag : hookConfig_.restrace_tag()) {
@@ -1127,6 +1131,16 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
             return false;
         }
     }
+    if (hookConfig_.startup_mode()) {
+        nlohmann::json payload;
+        payload["bundleName"] = hookConfig_.process_name();
+        nlohmann::json reply;
+        int32_t ret = OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportSyncEvent(
+            OHOS::ResourceSchedule::ResType::SYNC_RES_TYPE_DFX_CTRL_IMAGE_INTERFACE, 0, payload, reply);
+        if (ret != 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "ReportSyncEvent clear image cache failed, ret=%d", ret);
+        }
+    }
     if ((!saMode_) && (COMMON::IsUserMode())) {
         if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
             return false;
@@ -1444,7 +1458,6 @@ void HookManager::DumpMemLeakInfo()
         memLeakDumpDone_ = true;
         return;
     }
-    memLeakHasData_ = true;
     if (tempMemLeakFd_ < 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo tmpMemLeakFd_ err");
         memLeakDumpDone_ = true;
@@ -1475,7 +1488,7 @@ bool HookManager::HandleMemLeakDone()
 
 void HookManager::WaitMemLeakDoneIfNeeded()
 {
-    if (!hookConfig_.native_orphansnapshots_enable() || memLeakDumpDone_.load() || !memLeakHasData_.load()) {
+    if (!hookConfig_.native_orphansnapshots_enable() || memLeakDumpDone_.load()) {
         return;
     }
     uint32_t waitedMs = 0;

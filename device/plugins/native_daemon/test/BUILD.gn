@@ -83,6 +83,7 @@ sources_base = [
 common_deps = [
   "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service:network_profiler_service",
   "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
+  "${OHOS_PROFILER_DIR}/device/services/apm:profiler_apm",
   "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
   "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
   "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
@@ -136,6 +137,7 @@ config("native_daemon_test_config") {
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/include",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/util/include",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
+    "${OHOS_PROFILER_DIR}/device/services/apm/include",
   ]
 }
 
@@ -169,6 +171,7 @@ ohos_unittest("native_daemon_ut") {
     "zlib:libz",
     "faultloggerd:libasync_stack",
     "ability_base:configuration",
+    "resource_schedule_service:ressched_client",
   ]
   defines = [ "ENABLE_HAP_EXTRACTOR" ]
   if (current_toolchain != host_toolchain) {
