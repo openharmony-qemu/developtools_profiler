@@ -110,8 +110,7 @@ void VisualEffectAnalysis::CapturingTraces()
     }).detach();
     sleep(ftraceTime_ / oneMin_);
     SPUtils::LoadCmd(overtrace_, cmdresult);
-    std::string permissCmd = "chmod 755 " + tracePase_;
-    SPUtils::LoadCmd(permissCmd, cmdresult);
+    SPUtils::Chmod("/" + tracePase_, FILE_PERMISSION_FULL);
     sleep(1);
     ParsingTrace();
 }

@@ -352,7 +352,6 @@ void SPTask::KillHiperfCmd()
 {
     long long now = 0;
     long long runTime = 0;
-    const std::string killCmd = CMD_COMMAND_MAP.at(CmdCommand::KILL_CMD) + "-9 ";
     std::string result;
     std::vector<std::string> out;
 

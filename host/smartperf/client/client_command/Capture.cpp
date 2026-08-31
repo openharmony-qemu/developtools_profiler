@@ -93,9 +93,10 @@ void Capture::ThreadGetCatchSocket()
     std::string captureTime = std::to_string(curTime);
     std::string captureDir = "/data/local/tmp/capture";
     std::string savePath = captureDir + "/screenCap_" + captureTime + ".jpeg";
+    std::string cmdResult = "";
     SPUtils::CreateDir(captureDir);
     mode_t oldMask = umask(0);
-    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
+    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
     umask(oldMask);
     if (fd == -1) {
         LOGE("Capture::ThreadGetCatchSocket Failed to open file");

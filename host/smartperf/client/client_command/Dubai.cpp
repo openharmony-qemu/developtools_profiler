@@ -62,7 +62,7 @@ void Dubai::MoveDubaiDb(const std::string &path)
     std::string result;
     const std::string dubaiLocalPath = "/data/local/tmp/dubai/";
     SPUtils::CreateDir(dubaiLocalPath);
-    const std::string dubaiDbLocalPath = dubaiDbLocalPath + "dubai.db";
+    const std::string dubaiDbLocalPath = dubaiLocalPath + "dubai.db";
     LOGD("cpDubai: (%s) to (%s)",
         path.c_str(), dubaiDbLocalPath.c_str());
     if (!IsFileAccessible(path)) {

@@ -528,12 +528,21 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
             LOGE("The pid is Abnormal characters");
             return;
         }
-        std::string cmdResult;
-        std::string procPath = "cat /proc/" + processIds_ + "/cmdline";
-        if (!SPUtils::LoadCmd(procPath, cmdResult)) {
+        std::string cmdLinePath = "/proc/" + processIds_ + "/cmdline";
+        FILE *fp = fopen(cmdLinePath.c_str(), "r");
+        if (fp == nullptr) {
+            LOGE("Failed to open %s", cmdLinePath.c_str());
             return;
         }
-        processName_ = cmdResult;
+        char cmdBuf[1024] = {'\0'};
+        size_t nRead = fread(cmdBuf, 1, sizeof(cmdBuf) - 1, fp);
+        fclose(fp);
+        if (nRead == 0) {
+            LOGE("Failed to read %s", cmdLinePath.c_str());
+            return;
+        }
+        cmdBuf[nRead] = '\0';
+        processName_ = cmdBuf;
     }
     FPS::GetInstance().SetProcessId(processIds_);
     FPS::GetInstance().SetPackageName(processName_);
@@ -735,6 +744,6 @@ void TaskManager::SetFileTitleFlag()
 
 void TaskManager::ClearShaderFile()
 {
-    SPUtils::RemoveDirOrFile("/data/local/tmp/" + )
+    SPUtils::RemoveDirOrFile("/data/local/tmp/" + processName_);
 }
 }

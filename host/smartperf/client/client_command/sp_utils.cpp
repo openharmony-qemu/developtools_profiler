@@ -203,6 +203,7 @@ bool SPUtils::IsValidPath(const std::string& str)
 }
 bool SPUtils::IsTraceFileName(const std::string &name)
 {
+    //白名单匹配trace文件风格
     if (name.find("trace_") != 0) {
         return false;
     }
@@ -210,7 +211,7 @@ bool SPUtils::IsTraceFileName(const std::string &name)
     if (atPos == std::string::npos) {
         return false;
     }
-    for (size_t i = 0; i < atPos; ++i) {
+    for (size_t i = 6; i < atPos; ++i) {
         if (!isdigit(static_cast<unsigned char>(name[i]))) {
             return false;
         }
@@ -219,6 +220,8 @@ bool SPUtils::IsTraceFileName(const std::string &name)
     if (dotPos == std::string::npos) {
         return false;
     }
+    std::string pidTid = name.substr(atPos + 1, dotPos - atPos - 1);
+    bool hasDash = false;
     for (char c : pidTid) {
         if (c == '-') {
             if (hasDash) {
@@ -1029,7 +1032,7 @@ bool SPUtils::Chmod(const std::string& sourceFilePath, mode_t mode)
 
 void SPUtils::CreateDir(const std::string &dirPath)
 {
-    if (!SPUtils::FileAccess(dirPath)) {
+    if (SPUtils::FileAccess(dirPath)) {
         chmod(dirPath.c_str(), FILE_PERMISSION_FULL);
         return;
     }
@@ -1063,14 +1066,62 @@ void SPUtils::RemoveDirOrFile(const std::string &dirPath)
         return;
     }
     LOGD("%s is exist, remove...", dirPath.c_str());
-
-    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::REMOVE) + dirPath;
-    std::string cmdResult;
-    if (!SPUtils::LoadCmd(cmd, cmdResult)) {
-        WLOGE("%s capture not be removed!", dirPath.c_str());
-    } else {
-        WLOGI("%s removed successfully!", dirPath.c_str());
+    struct stat pathStat;
+    if (stat(pathChar, &pathStat) != 0) {
+        WLOGE("Failed to stat %s", pathChar);
+        return;
     }
+    if (!S_ISDIR(pathStat.st_mode)) {
+        if (remove(pathChar) != 0) {
+            WLOGE("Failed to remove file %s", pathChar);
+        } else {
+            WLOGI("File %s removed successfully!", pathChar);
+        }
+        return;
+    }
+    DIR *dir = opendir(pathChar);
+    if (dir == nullptr) {
+        WLOGE("Failed to open dir %s", pathChar);
+        return;
+    }
+    struct dirent *entry = nullptr;
+    while ((entry = readdir(dir)) != nullptr) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+        std::string childPath = std::string(pathChar) + "/" + entry->d_name;
+    }
+    closedir(dir);
+    if (rmdir(pathChar) != 0) {
+        WLOGE("Failed to remove dir %s", pathChar);
+    } else {
+        WLOGI("Dir %s removed successfully", pathChar);
+    }
+}
+
+bool SPUtils::CopyFile(const std::string &src, const std::string &dst)
+{
+    char srcReal[PATH_MAX] = {0x00};
+    if (realpath(src.c_str(), srcReal) == nullptr) {
+        LOGE("CopyFile src path invalid: %s", src.c_str());
+        return false;
+    }
+    std::ifstream srcFile(srcReal, std::ios::binary);
+    if (!srcFile.is_open()) {
+        LOGE("CopyFile failed to open src: %s", srcReal);
+        return false;
+    }
+    std::ofstream dstFile(dst, std::ios::binary);
+    if (!dstFile.is_open()) {
+        LOGE("CopyFile failed to open dst: %s", dst.c_str());
+        return false;
+    }
+    dstFile << srcFile.rdbuf();
+    if (!dstFile.good()) {
+        LOGE("CopyFile write failed: %s", dst.c_str());
+        return false;
+    }
+    return true;
 }
 
 void SPUtils::TarFiles(const std::string& tarStr)
