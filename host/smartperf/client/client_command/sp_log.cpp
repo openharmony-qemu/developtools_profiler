@@ -98,11 +98,7 @@ static bool EnsureLogDirectoryExists()
     if (!std::__fs::filesystem::exists(LOG_FILE_DIR)) {
         LOGD("Try create dir: %s", LOG_FILE_DIR.c_str());
         try {
-            if (mkdir(LOG_FILE_DIR.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0) {
-                LOGE("Failed to create log directory: %s", strerror(errno));
-                return false;
-            }
-
+            SPUtils::CreateDir(LOG_FILE_DIR);
             if (!std::__fs::filesystem::exists(LOG_FILE_DIR)) {
                 LOGE("Failed to create log directory.");
                 return false;
@@ -172,17 +168,6 @@ static int CheckFileNameAndGetNumber(const std::string& fileName, const std::str
     return 0;
 }
 
-static bool Chmod(const std::string& sourceFilePath, mode_t mode)
-{
-    int retCode = chmod(sourceFilePath.c_str(), mode);
-    if (retCode != 0) {
-        LOGE("Failed to set %s permission, error code %d.", sourceFilePath.c_str(), retCode);
-        return false;
-    }
-
-    return true;
-}
-
 static void TarFile(const std::string& sourceFileName)
 {
     std::ostringstream compressedFilePath;
@@ -195,15 +180,8 @@ static void TarFile(const std::string& sourceFileName)
         LOGE("Failed to compress file %s", sourceFileName.c_str());
         return;
     }
-
-    Chmod(compressedFilePath.str(), LOG_FILE_MODE);
-
-    tarCommand = CMD_COMMAND_MAP.at(CmdCommand::REMOVE) + LOG_FILE_DIR + sourceFileName;
-    if (!SPUtils::LoadCmd(tarCommand, cmdResult)) {
-        LOGE("Failed to delete original file %s", sourceFileName.c_str());
-        return;
-    }
-
+    SPUtils::Chmod(compressedFilePath.str(), LOG_FILE_MODE);
+    SPUtils::RemoveDirOrFile(LOG_FILE_DIR + sourceFileName);
     LOGD("Successfully compressed and deleted file: %s", sourceFileName.c_str());
     return;
 }
@@ -272,7 +250,7 @@ static void WriteMessage(const char* logMessage)
     std::ofstream logFile(logFilePathChar, std::ios::app);
     if (logFile.is_open()) {
         if (chmodFlag) {
-            if (!Chmod(logFilePathChar, LOG_FILE_MODE)) {
+            if (!SPUtils::Chmod(logFilePathChar, LOG_FILE_MODE)) {
                 logFile.close();
                 return;
             }
@@ -337,11 +315,7 @@ void EnableWriteLogAndDeleteOldLogFiles()
 
         double diffSeconds = difftime(currentTime, fileStat.st_mtime);
         if (diffSeconds > MAX_FILE_KEEP_TIME) {
-            if (remove(filePathChar) == 0) {
-                LOGD("Deleted file: %s, last modified: %.2f seconds ago", filePathChar, diffSeconds);
-            } else {
-                LOGE("Failed to delete file: %s", filePathChar);
-            }
+            SPUtils::RemoveDirOrFile(filePathChar);
         }
     }
 

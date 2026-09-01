@@ -99,10 +99,9 @@ void Hiperf::GetHiperfData()
 {
     std::string cmdResult;
     char buf[1024] = {'\0'};
-    const std::string getHiperfFileCmd = "cat " + savePath_;
-    FILE *fd = popen(getHiperfFileCmd.c_str(), "r");
+    FILE *fd = fopen(savePath_.c_str(), "r");
     if (fd == nullptr) {
-        LOGE("cat hiperf test.txt failed");
+        LOGE("Failed to open hiperf file %s", savePath_.c_str());
         return;
     }
     while (fgets(buf, sizeof(buf), fd) != nullptr) {
@@ -110,10 +109,7 @@ void Hiperf::GetHiperfData()
         SetDataMap(line);
     }
     hiperfFirstCollect_ = false;
-    if (pclose(fd) == -1) {
-        LOGE("Error: Failed to close file");
-        return;
-    }
+    (void)fclose(fd);
 }
 
 void Hiperf::SetDataMap(std::string &line)

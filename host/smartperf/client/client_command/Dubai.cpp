@@ -15,6 +15,7 @@
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
+#include <sys/stat.h>
 #include "include/sp_utils.h"
 #include "include/Dubai.h"
 #include "include/sp_log.h"
@@ -42,18 +43,17 @@ void Dubai::MoveDubaiDb()
     const std::string dubaiXpower = "/data/service/el2/100/xpower/dubai.db";
     const std::string Database = "/data/app/el2/100/database/";
     const std::string PkgEntry = "/entry/rdb";
-    const std::string cpDubai = "cp " + dubaiXpower + " " + Database + dubaiPkgName + PkgEntry;
-    const std::string dubaiPathChmod = "chmod 777 " + Database + dubaiPkgName + PkgEntry + "/dubai.db";
-    LOGD("cpDubai: (%s), dubaiPathChmod: (%s)",
-        cpDubai.c_str(), dubaiPathChmod.c_str());
+    const std::string dubaiDbPath = Database + dubaiPkgName + PkgEntry + "/dubai.db";
+    LOGD("cpDubai: (%s) to (%s)",
+        dubaiXpower.c_str(), dubaiDbPath.c_str());
     if (!IsFileAccessible(dubaiXpower)) {
         sleep(1);
     }
-    SPUtils::LoadCmd(cpDubai, result);
-    if (result.empty()) {
+    if (!SPUtils::CopyFile(dubaiXpower, dubaiDbPath)) {
+        result = "";
         LOGE("Dubai::Copy dubai.db failed");
     } else {
-        SPUtils::LoadCmd(dubaiPathChmod, result);
+        SPUtils::Chmod(dubaiDbPath, FILE_PERMISSION_FULL);
     }
 }
 
@@ -62,18 +62,17 @@ void Dubai::MoveDubaiDb(const std::string &path)
     std::string result;
     const std::string dubaiLocalPath = "/data/local/tmp/dubai/";
     SPUtils::CreateDir(dubaiLocalPath);
-    const std::string cpDubai = "cp " + path + " " + dubaiLocalPath;
-    const std::string dubaiPathChmod = "chmod 777 " + dubaiLocalPath + "dubai.db";
-    LOGD("cpDubai: (%s), dubaiPathChmod: (%s)",
-        cpDubai.c_str(), dubaiPathChmod.c_str());
+    const std::string dubaiDbLocalPath = dubaiLocalPath + "dubai.db";
+    LOGD("cpDubai: (%s) to (%s)",
+        path.c_str(), dubaiDbLocalPath.c_str());
     if (!IsFileAccessible(path)) {
         sleep(1);
     }
-    SPUtils::LoadCmd(cpDubai, result);
-    if (dubaiLocalPath.empty()) {
+    if (!SPUtils::CopyFile(path, dubaiDbLocalPath)) {
+        result = "";
         LOGE("Dubai::Copy dubai.db failed");
     } else {
-        SPUtils::LoadCmd(dubaiPathChmod, result);
+        SPUtils::Chmod(dubaiDbLocalPath, FILE_PERMISSION_FULL);
     }
 }
 

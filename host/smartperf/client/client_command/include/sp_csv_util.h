@@ -43,8 +43,7 @@ public:
         outFile.open(path.c_str(), std::ios::out | std::ios::trunc);
         if (SPUtils::GetPathPermissions(path) && outFile.is_open() && path == "/data/local/tmp/data.csv" &&
             (cmdResult == "root" || cmdResult == "shell"))  {
-            std::string cmd = "chmod 777 " + path;
-            SPUtils::LoadCmd(cmd, cmdResult);
+            SPUtils::Chmod(path, FILE_PERMISSION_FULL);
         }
         int i = 0;
         for (const auto &vectorMap : vmap) {

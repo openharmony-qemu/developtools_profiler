@@ -53,7 +53,6 @@ OHOS::SmartPerf::TaskManager* g_mgr = nullptr;
 thread_local OHOS::SmartPerf::ThreadLocal g_datas;
 constexpr int32_t SAVE_DATA_INTERVAL_MINUTE = 5;
 constexpr int32_t THE_MINUTE = 60;
-constexpr mode_t FILE_PERMISSION_FULL = 0777;
 }
 
 namespace OHOS::SmartPerf {
@@ -211,7 +210,7 @@ void TaskManager::SetFilePath(const std::string& fileName, bool removeCurrentFil
         fileName_ = fileName;
         saveFlag_ = true;
         if (removeCurrentFile) {
-            std::remove(fileName_.c_str());
+            SPUtils::RemoveDirOrFile(fileName_);
         }
     }
     std::filesystem::path fullPath = fileName;
@@ -529,12 +528,21 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
             LOGE("The pid is Abnormal characters");
             return;
         }
-        std::string cmdResult;
-        std::string procPath = "cat /proc/" + processIds_ + "/cmdline";
-        if (!SPUtils::LoadCmd(procPath, cmdResult)) {
+        std::string cmdLinePath = "/proc/" + processIds_ + "/cmdline";
+        FILE *fp = fopen(cmdLinePath.c_str(), "r");
+        if (fp == nullptr) {
+            LOGE("Failed to open %s", cmdLinePath.c_str());
             return;
         }
-        processName_ = cmdResult;
+        char cmdBuf[1024] = {'\0'};
+        size_t nRead = fread(cmdBuf, 1, sizeof(cmdBuf) - 1, fp);
+        fclose(fp);
+        if (nRead == 0) {
+            LOGE("Failed to read %s", cmdLinePath.c_str());
+            return;
+        }
+        cmdBuf[nRead] = '\0';
+        processName_ = cmdBuf;
     }
     FPS::GetInstance().SetProcessId(processIds_);
     FPS::GetInstance().SetPackageName(processName_);
@@ -705,9 +713,7 @@ void TaskManager::InitDataCsv()
         mode_t oldMask = umask(0);
         std::ofstream file(safePath);
         if (file) {
-            if (chmod(safePath.c_str(), FILE_PERMISSION_FULL) != 0) {
-                LOGE("Failed to chmod %s", safePath.c_str());
-            }
+            SPUtils::Chmod(safePath, FILE_PERMISSION_FULL);
             file.close();
         } else {
             LOGE("Failed to creat file");
@@ -738,8 +744,6 @@ void TaskManager::SetFileTitleFlag()
 
 void TaskManager::ClearShaderFile()
 {
-    const std::string cmdRmShaderFile = CMD_COMMAND_MAP.at(CmdCommand::REMOVE) + "/data/local/tmp/" + processName_;
-    std::string cmdResult = "";
-    SPUtils::LoadCmd(cmdRmShaderFile, cmdResult);
+    SPUtils::RemoveDirOrFile("/data/local/tmp/" + processName_);
 }
 }

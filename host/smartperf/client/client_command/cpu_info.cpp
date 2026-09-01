@@ -143,7 +143,7 @@ void CPUInfo::Start()
 void CPUInfo::Stop()
 {
     std::system("killall hiperf > /data/local/tmp/cpu_temp_error 2>&1");
-    std::remove("/data/local/tmp/cpu_temp_error");
+    SPUtils::RemoveDirOrFile("/data/local/tmp/cpu_temp_error");
 }
 }
 }
