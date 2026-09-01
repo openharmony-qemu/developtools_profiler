@@ -32,7 +32,6 @@
 #include <fstream>
 #include <sstream>
 #include <regex>
-#include <signal.h>
 #include "unistd.h"
 #include <future>
 #include "include/common.h"
@@ -352,6 +351,7 @@ void SPTask::KillHiperfCmd()
 {
     long long now = 0;
     long long runTime = 0;
+    const std::string killCmd = CMD_COMMAND_MAP.at(CmdCommand::KILL_CMD) + "-9 ";
     std::string result;
     std::vector<std::string> out;
 
@@ -382,8 +382,8 @@ void SPTask::KillHiperfCmd()
     SPUtils::StrSplit(result, " ", out);
     LOGD("pidof hiprofiler_cmd size(%d)", out.size());
     for (auto it = out.begin(); out.end() != it; ++it) {
-        pid_t pid = SPUtilesTye::StringToSometype<pid_t>(*it);
-        kill(pid, SIGKILL);
+        result.clear();
+        SPUtils::LoadCmd(killCmd + (*it), result);
     }
 
     return;

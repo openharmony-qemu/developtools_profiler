@@ -109,7 +109,7 @@ void Hiperf::GetHiperfData()
         SetDataMap(line);
     }
     hiperfFirstCollect_ = false;
-    fclose(fd);
+    (void)fclose(fd);
 }
 
 void Hiperf::SetDataMap(std::string &line)
