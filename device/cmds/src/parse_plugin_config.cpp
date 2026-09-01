@@ -305,12 +305,21 @@ bool ParsePluginConfig::SetSerializeHookConfig(const std::string& pluginName, Pr
     auto hookConfigNolite = std::make_unique<ForStandard::NativeHookConfig>();
     // Set default values for proto3 bool fields (default is false).
     // ParseFromString merges text into this message, so explicitly set fields in config will override these defaults.
-    hookConfigNolite->set_string_compressed(true);
-    hookConfigNolite->set_callframe_compress(true);
-    hookConfigNolite->set_record_accurately(true);
+    bool hasStringCompressed = (configData.find("string_compressed") != std::string::npos);
+    bool hasCallframeCompress = (configData.find("callframe_compress") != std::string::npos);
+    bool hasRecordAccurately = (configData.find("record_accurately") != std::string::npos);
     if (!parser_.ParseFromString(configData, hookConfigNolite.get())) {
         printf("nativedaemon parse failed!\n");
         return false;
+    }
+    if (!hasStringCompressed) {
+        hookConfigNolite->set_string_compressed(true);
+    }
+    if (!hasCallframeCompress) {
+        hookConfigNolite->set_callframe_compress(true);
+    }
+    if (!hasRecordAccurately) {
+        hookConfigNolite->set_record_accurately(true);
     }
     if (!CheckRestraceTag(hookConfigNolite)) {
         return false;
