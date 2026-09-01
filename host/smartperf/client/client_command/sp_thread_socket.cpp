@@ -40,6 +40,7 @@
 #include "include/Network.h"
 #include "include/startup_delay.h"
 #include "include/Dubai.h"
+#include "include/sp_utils.h"
 #include "include/GameEvent.h"
 #include "include/GetLog.h"
 #include "include/RAM.h"
@@ -70,10 +71,6 @@ std::string SpThreadSocket::MapToString(std::map<std::string, std::string>& data
 }
 std::string SpThreadSocket::SplitMsg(const std::string &recvBuf) const
 {
-    if (recvBuf.empty()) {
-        LOGE("SplitMsg recvBuf is null");
-        return recvBuf;
-    }
     size_t pos = recvBuf.find("::");
     if (pos != std::string::npos) {
         std::vector<std::string> sps;
@@ -352,31 +349,9 @@ void SpThreadSocket::DealMsg(const std::string& recvStr, SpServerSocket &spSocke
         WLOGI("Processing 'stopRecord::' command.");
         SpProfilerFactory::editorFlag = false;
         StopRecvRecord(spSocket);
-    } else if (recvStr.find("SP_daemon -editor") != std::string::npos) {
-        EditorRecv(recvStr, spSocket);
     } else {
         WLOGW("Received unknown command: %s", recvStr.c_str());
     }
-}
-void SpThreadSocket::EditorRecv(const std::string& recvStr, const SpServerSocket &spSocket) const
-{
-    std::vector<std::string> vec;
-    size_t size = recvStr.size();
-    size_t j = 0;
-    for (size_t i = 0; i < size; i++) {
-        if (recvStr[i] == ' ') {
-            vec.push_back(recvStr.substr(j, i - j));
-            j = i + 1;
-        }
-    }
-    vec.push_back(recvStr.substr(j, size - j));
-    const int type = 2;
-    if (vec[type] == "findAppPage") {
-        BackDesktop();
-    }
-    OHOS::SmartPerf::ControlCallCmd controlCallCmd;
-    std::string result = controlCallCmd.GetResult(vec);
-    spSocket.Send(result);
 }
 void SpThreadSocket::BackDesktop() const
 {
@@ -480,6 +455,10 @@ void SpThreadSocket::UdpStartInitFunc(const std::string& recvBuf, SpServerSocket
     spTask.SetAppInitFlag();
 
     std::string fileDir = "/data/local/tmp/smartperf/" + spTask.GetCurTaskInfo().sessionId;
+    if (spTask.GetCurTaskInfo().sessionId.empty() || !SPUtils::IsValidWinId(spTask.GetCurTaskInfo().sessionId)) {
+        WLOGE("UdpStartInitFunc sessionId is invalid: %s", spTask.GetCurTaskInfo().sessionId.c_str());
+        return;
+    }
     spTask.CreatPath(fileDir);
     taskMgr_->SetFilePath(fileDir + "/t_index_info.csv");
 }
@@ -555,8 +534,8 @@ int SpThreadSocket::SendFile(const std::string& filePath)
 
 void SpThreadSocket::ConnectAndSendFile(SpServerSocket &spSocket, const std::string filePath)
 {
-    if (filePath.empty()) {
-        WLOGE("Connect filePath does not exist.");
+    if (!SPUtils::IsValidPath(filePath) || !SPUtils::IsPathTraversal(filePath)) {
+        LOGE("filePath if null or Abnormal characters");
         return;
     }
     if (sendFileSocketPort == -1) {
@@ -662,6 +641,7 @@ void SpThreadSocket::FetchCpuStats(SpServerSocket &spSocket, std::map<std::strin
     spSocket.Sendto(resultCpu);
     LOGD("UDP send resultCpu = %s", resultCpu.c_str());
 }
+
 void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
     const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
@@ -669,8 +649,12 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
         isSetPid = false;
         retCode = SplitMsg(recvBuf);
         if (recvBuf.find(SMARTPERF) != std::string::npos && retCode.find(SMARTPERF) != std::string::npos) {
-            Dubai::dubaiPkgName = retCode;
-            LOGD("UDP send smartperf: (%s)", Dubai::dubaiPkgName.c_str());
+            if (!SPUtils::IsInvalidPkgName(retCode)) {
+                LOGE("Dubai pkgName is invalid: (%s)", retCode.c_str());
+            } else {
+                Dubai::dubaiPkgName = retCode;
+                LOGD("UDP send smartperf: (%s)", Dubai::dubaiPkgName.c_str());
+            }
         } else {
             if (retCode.find("$") != std::string::npos) {
                 g_pkgAndPid = retCode;
@@ -691,8 +675,20 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
         spSocket.Sendto(retCode);
     } else if (iterator->first == MessageType::CATCH_ONE_TRACE) {
         bytrace.hiviewTrace = SplitMsg(recvBuf);
+        if (!SPUtils::IsValidPath(bytrace.hiviewTrace) || !SPUtils::IsPathTraversal(bytrace.hiviewTrace)) {
+            LOGE("bytrace.hiviewTrace if null or Abnormal characters");
+            return;
+        }
         bytrace.CpTraceFile();
-    } else if (iterator->first == MessageType::CATCH_TRACE_FINISH) {
+    } else {
+        HandleNullMsgTail(spSocket, profiler, retCode, recvBuf, iterator);
+    }
+}
+
+void SpThreadSocket::HandleNullMsgTail(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
+    const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
+{
+    if (iterator->first == MessageType::CATCH_TRACE_FINISH) {
         tracefilePath = "";
         GetSocketPort(recvBuf);
         ConnectAndSendFile(spSocket, tracefilePath);
@@ -901,6 +897,11 @@ void SpThreadSocket::GetSocketPort(const std::string& buffer)
         if (portStr.find("$") != std::string::npos) {
             fileName = portStr.substr(portStr.find("$") + 1);
             portStr = portStr.substr(0, portStr.find("$"));
+            if (SPUtils::IsPathTraversal(fileName)) {
+                LOGE("GetSocketPort path tracersal datected in fileName: %s", fileName.c_str());
+                sendFileSocketPort = -1;
+                return;
+            }
             tracefilePath = traceOriginPath + fileName;
         }
         

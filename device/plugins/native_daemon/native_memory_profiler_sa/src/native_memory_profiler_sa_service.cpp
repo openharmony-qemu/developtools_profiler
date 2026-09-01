@@ -28,17 +28,23 @@
 #include "native_memory_profiler_sa_callback_proxy.h"
 #include <sys/socket.h>
 #include <unistd.h>
+#include "apm_collect_mgr.h"
+#include "htrace_collector.h"
+#include "rawheap_collector.h"
+#include "jsmap_collector.h"
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
 constexpr int32_t TIME_BASE = 1000;
 const std::string FILE_PATH_HEAD = "/data/local/tmp/native_memory_";
 const std::string FILE_PATH_TAIL = ".htrace";
+const std::string COMPOSITE_HEAP_PATH_HEAD = "/data/local/tmp/composite_heap_";
+const std::string COMPOSITE_HEAP_PATH_TAIL = ".zip";
 const std::string PRODUCT_CONFIG_PATH = "/sys_prod/etc/hiview/hiprofiler/hiprofiler_cfg.json";
 constexpr int32_t DELAYED_SHUTDOWN_TIME = 20;
 constexpr int FILE_MODE = 0644;
 constexpr int32_t SIMP_NMD = 3;
-constexpr int32_t NMD_WAIT_MS = 5000;
+[[maybe_unused]] constexpr int32_t NMD_WAIT_MS = 5000;
 constexpr int VEC_SHIFT = 2;
 constexpr double MIN_MEM_ROM_PERCENT = 0.03;
 constexpr uint64_t MIN_MEM_AVAILABLE_KB = 2ULL * 1024 * 1024; // 2GB, /proc/meminfo unit is kB
@@ -66,15 +72,25 @@ static std::unordered_map<pid_t, int> g_pidFds;
 static std::mutex g_pidFdMtx;
 static std::unordered_map<pid_t, std::pair<uid_t, gid_t>> g_pidInfo;
 static std::vector<std::vector<uint64_t>> g_gpuRange {GPU_TYPE_COUNT, std::vector<uint64_t>(GPU_RANGE_COUNT * 2, 0)};
-static std::unordered_map<pid_t, std::string> g_fileNameInfo;
 static std::unordered_map<int32_t, int32_t> g_timerFdInfo;
 static std::mutex g_timerFdMtx;
-static std::mutex g_fileNameMtx;
 //2: double
 static std::mutex g_nmdMtx;
 static std::unordered_set<uint32_t> g_stoppingPids;
 static std::mutex g_stoppingPidsMtx;
 static std::mutex g_countFileMutex;
+#ifdef NATIVE_DAEMON_UNITTEST
+static bool g_mockIsUserMode = false;
+static bool g_mockPermissionGranted = true;
+static bool g_mockNativeDaemonRunning = false;
+static bool g_mockStartServiceAbility = true;
+static bool g_mockMemFail = false;
+static bool g_mockCpuFail = false;
+static bool g_mockRomFail = false;
+static bool g_mockSendFail = false;
+static std::string g_mockNmdResult;
+constexpr uint64_t MOCK_ROM_TOTAL_BYTES = 100ULL * 1024 * 1024 * 1024; // 100GB
+#endif
 #ifdef ENABLE_SA_AUTO_START
 const bool G_REGISTER_RESUTL = SystemAbility::MakeAndRegisterAbility(
     DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance().get());
@@ -107,9 +123,15 @@ void SendHookCommand(pid_t pid, uint32_t cmd)
     struct ProtocolHead phead;
     phead.protoType = PROTOCOL_TYPE_PROTOBUF;
     phead.protoSize = sizeof(cmd) + sizeof(struct ProtocolHead);
+#ifdef NATIVE_DAEMON_UNITTEST
+    if (g_mockSendFail) {
+        return;
+    }
+#else
     if (send(sockFd, reinterpret_cast<int8_t*>(&phead), sizeof(phead), 0) == -1) {
         return;
     }
+#endif
     (void)send(sockFd, reinterpret_cast<int8_t*>(&cmd), sizeof(cmd), 0);
 }
 
@@ -159,6 +181,16 @@ int32_t FindPidBySocket(int socketFd)
     return -1;
 }
 
+void GetPeerUcred(SocketContext &context, struct ucred &cred)
+{
+    int socketHandle = context.GetSocketHandle();
+    socklen_t len = sizeof(struct ucred);
+    if (getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetPeerUcred getsockopt failed");
+        return;
+    }
+}
+
 bool HandleMemLeakDoneBySocket(SocketContext &context)
 {
     int32_t pid = FindPidBySocket(context.GetSocketHandle());
@@ -166,6 +198,13 @@ bool HandleMemLeakDoneBySocket(SocketContext &context)
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc mem leak done without pid");
         return true;
     }
+    struct ucred cred;
+    GetPeerUcred(context, cred);
+    if (pid != static_cast<int32_t>(cred.pid)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HandleMemLeakDoneBySocket check client pid failed");
+        return true;
+    }
+
     std::lock_guard<std::mutex> guard(g_mtx);
     auto iter = g_pidCtx.find(pid);
     if (iter == g_pidCtx.end() || iter->second == nullptr || iter->second->hookMgr == nullptr) {
@@ -254,9 +293,12 @@ void NativeMemoryProfilerSaService::ClientDisconnectCallback(int socketFd)
 
 bool NativeMemoryProfilerSaService::StartServiceAbility()
 {
+#ifdef NATIVE_DAEMON_UNITTEST
+    return g_mockStartServiceAbility;
+#else
     sptr<ISystemAbilityManager> serviceManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_NOTNULL(serviceManager, false, "serviceManager is nullptr");
-    
+
     static sptr<NativeMemoryProfilerSaService> native(new NativeMemoryProfilerSaService());
     CHECK_NOTNULL(native, false, "native is nullptr");
     int32_t result = serviceManager->AddSystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, native);
@@ -275,10 +317,17 @@ bool NativeMemoryProfilerSaService::StartServiceAbility()
     }
     PROFILER_LOG_INFO(LOG_CORE, "Service native memory started successfully");
     return true;
+#endif
 }
 
 bool NativeMemoryProfilerSaService::HasProfilingPermission()
 {
+#ifdef NATIVE_DAEMON_UNITTEST
+    if (g_mockIsUserMode) {
+        return g_mockPermissionGranted;
+    }
+    return true;
+#else
     if (!COMMON::IsUserMode()) {
         return true;
     }
@@ -290,6 +339,7 @@ bool NativeMemoryProfilerSaService::HasProfilingPermission()
         return false;
     }
     return true;
+#endif
 }
 
 bool NativeMemoryProfilerSaService::ApplyNmdConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
@@ -375,41 +425,73 @@ int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfile
     return RET_OK;
 }
 
+bool NativeMemoryProfilerSaService::IsMemoryPressureCritical(uint64_t availableMem, bool memReadOk)
+{
+    if (!memReadOk) {
+        return true;
+    }
+    return availableMem < MIN_MEM_AVAILABLE_KB;
+}
+
+bool NativeMemoryProfilerSaService::IsCpuOverloaded(double cpuUsage, bool cpuReadOk)
+{
+    if (!cpuReadOk) {
+        return true;
+    }
+    return cpuUsage > MAX_MEM_PROFILER_CPU_PERCENT;
+}
+
+bool NativeMemoryProfilerSaService::IsRomInsufficient(uint64_t freeBytes, uint64_t totalBytes, bool romReadOk)
+{
+    if (!romReadOk) {
+        return true;
+    }
+    uint64_t percentThreshold = static_cast<uint64_t>(static_cast<double>(totalBytes) * MIN_MEM_ROM_PERCENT);
+    uint64_t threshold = std::max(percentThreshold, MIN_FREE_ROM_BYTES);
+    return freeBytes < threshold;
+}
+
 int32_t NativeMemoryProfilerSaService::CheckSystemResource()
 {
     const int oneHundred = 100;
     MemoryInfo memInfo;
-    if (!GetSystemMemoryInfo(&memInfo)) {
-        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_MEM_PRESSURE_CRITICAL);
-    }
-    if (memInfo.availableMem < MIN_MEM_AVAILABLE_KB) {
+#ifdef NATIVE_DAEMON_UNITTEST
+    bool memOk = !g_mockMemFail;
+    if (memOk) { memInfo.availableMem = MIN_MEM_AVAILABLE_KB + 1; }
+#else
+    bool memOk = GetSystemMemoryInfo(&memInfo);
+#endif
+    if (IsMemoryPressureCritical(memInfo.availableMem, memOk)) {
         PROFILER_LOG_ERROR(LOG_CORE, "System memory is too low: %llu KB",
             static_cast<unsigned long long>(memInfo.availableMem));
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_MEM_PRESSURE_CRITICAL);
     }
-    
     double cpuUsage = 0.0;
-    if (!GetSystemCpuUsageInfo(&cpuUsage)) {
-        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CPU_OVERLOADED);
-    }
-    if (cpuUsage > MAX_MEM_PROFILER_CPU_PERCENT) {
+#ifdef NATIVE_DAEMON_UNITTEST
+    bool cpuOk = !g_mockCpuFail;
+#else
+    bool cpuOk = GetSystemCpuUsageInfo(&cpuUsage);
+#endif
+    if (IsCpuOverloaded(cpuUsage, cpuOk)) {
         PROFILER_LOG_ERROR(LOG_CORE, "System CPU usage is too high: %.2f%%", cpuUsage * oneHundred);
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CPU_OVERLOADED);
     }
-    
     uint64_t totalBytes = 0;
     uint64_t freeBytes = 0;
-    if (!COMMON::GetRomSpaceInfo(COMMON::DEFAULT_RW_DIR, totalBytes, freeBytes)) {
+#ifdef NATIVE_DAEMON_UNITTEST
+    bool romOk = !g_mockRomFail;
+    if (romOk) {
+        totalBytes = MOCK_ROM_TOTAL_BYTES;
+        freeBytes = MOCK_ROM_TOTAL_BYTES;
+    }
+#else
+    bool romOk = COMMON::GetRomSpaceInfo(COMMON::DEFAULT_RW_DIR, totalBytes, freeBytes);
+#endif
+    if (IsRomInsufficient(freeBytes, totalBytes, romOk)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "System ROM is too low: %llu bytes",
+            static_cast<unsigned long long>(freeBytes));
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_STORAGE_PRESSURE_CRITICAL);
     }
-    uint64_t percentThreshold = static_cast<uint64_t>(static_cast<double>(totalBytes) * MIN_MEM_ROM_PERCENT);
-    uint64_t threshold = std::max(percentThreshold, MIN_FREE_ROM_BYTES);
-    if (freeBytes < threshold) {
-        PROFILER_LOG_ERROR(LOG_CORE, "System ROM is too low: %llu bytes, threshold: %llu bytes",
-            static_cast<unsigned long long>(freeBytes), static_cast<unsigned long long>(threshold));
-        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_STORAGE_PRESSURE_CRITICAL);
-    }
-
     return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS);
 }
 
@@ -433,10 +515,6 @@ int32_t NativeMemoryProfilerSaService::PreCheckPidVoid(std::shared_ptr<NativeMem
         PROFILER_LOG_ERROR(LOG_CORE, "StartPidVoid: invalid typeFileName_");
         return RET_ERR;
     }
-    {
-        std::lock_guard<std::mutex> guard(g_fileNameMtx);
-        g_fileNameInfo[pid] = config->typeFileName_;
-    }
     if (ApplyNmdConfig(config, 0)) {
         return RET_OK;
     }
@@ -453,7 +531,11 @@ int32_t NativeMemoryProfilerSaService::PreCheckPidVoid(std::shared_ptr<NativeMem
 int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
     const sptr<IRemoteObject>& callback)
 {
+#ifdef NATIVE_DAEMON_UNITTEST
+    bool isDebugApp = false;
+#else
     bool isDebugApp = COMMON::CheckApplicationPermission(config->pid_, config->processName_);
+#endif
     if (!isDebugApp) {
         std::lock_guard<std::mutex> lock(g_countFileMutex);
         std::unordered_map<std::string, QuotaRecord> records;
@@ -591,7 +673,6 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
     }
     ApplyMemtraceConfig(config);
     if (StartHook(config, fd) != RET_OK) {
-        close(fd);
         return RET_ERR;
     }
     return RET_OK;
@@ -627,7 +708,6 @@ int32_t NativeMemoryProfilerSaService::DumpDataAsync(uint32_t fd, std::shared_pt
     RefreshFileCacheModeConfig(config);
     std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
     if (StartHookLock(config, fd, hook, args, callback) != RET_OK) {
-        close(fd);
         return RET_ERR;
     }
     return RET_OK;
@@ -769,10 +849,10 @@ bool NativeMemoryProfilerSaService::IsAsyncRequest(uint32_t pid)
     return async;
 }
 
-bool NativeMemoryProfilerSaService::CheckStopPermission(int32_t calllingPid, std::shared_ptr<TaskConfig>& config)
+bool NativeMemoryProfilerSaService::CheckStopPermission(int32_t callingPid, std::shared_ptr<TaskConfig>& config)
 {
-    if (calllingPid != config->callingPid) {
-        PROFILER_LOG_ERROR(LOG_CORE, "calling pid check fail, (%d, %d)", config->callingPid, calllingPid);
+    if (callingPid != config->callingPid) {
+        PROFILER_LOG_ERROR(LOG_CORE, "calling pid check fail, (%d, %d)", config->callingPid, callingPid);
         return false;
     }
     return true;
@@ -820,6 +900,8 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
                                                      uint32_t& fd, std::shared_ptr<HookManager>& hook,
                                                      std::string& args, const sptr<IRemoteObject>& callback)
 {
+    bool compositeHeapEnable = config->traceMask_ & RES_COMPOSITE_HEAP;
+    uint32_t originFd = fd;
     std::lock_guard<std::mutex> guard(g_mtx);
     if (config->processName_.empty() && config->pid_ > 0) {
         config->processName_ = COMMON::GetBundleNameByPid(config->pid_);
@@ -835,8 +917,12 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
             "check config failed");
         return checkRet;
     }
-    if (fd == 0) {
-        auto retFile = COMMON::CheckNotExistsFilePath(config->filePath_);
+    if (fd > 0 && compositeHeapEnable) {
+        std::string filePathStr = (config->pid_ > 0) ? std::to_string(config->pid_) : config->processName_;
+        config->filePath_ = FILE_PATH_HEAD + filePathStr + FILE_PATH_TAIL;
+    }
+    if (fd == 0 || compositeHeapEnable) {
+        auto retFile = COMMON::CheckNotExistsFilePathSafe(config->filePath_);
         if (!retFile.first) {
             PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, config->filePath_.c_str());
             COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_INVALID_PATH,
@@ -844,7 +930,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
             return RET_ERR;
         }
         int fdTemp = open(retFile.second.c_str(), O_RDWR | O_CREAT, FILE_MODE);
-        if (config->startType_ == START_TYPE_API) {
+        if (config->startType_ == START_TYPE_API && !compositeHeapEnable) {
             unlink(retFile.second.c_str());
         }
         CHECK_TRUE(fdTemp >= 0, RET_ERR, "Failed to open file(%s)", config->filePath_.c_str());
@@ -905,6 +991,11 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         static_cast<int32_t>(IPCSkeleton::GetCallingPid()), config->filePath_, timerFd, config->startupMode_, fd,
         config->startType_);
     configCtx->callback = callback;
+    configCtx->compositeHeapEnable = compositeHeapEnable;
+    configCtx->typeFileName = config->typeFileName_;
+    if (compositeHeapEnable && originFd > 0) {
+        configCtx->compositeHeapFd = originFd;
+    }
     if (!g_hasStartupMode && config->startupMode_) {
         g_hasStartupMode = true;
         startupModeProcessName_ = config->processName_;
@@ -953,7 +1044,11 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     }
 
     if (config->nmdType_ == SIMP_NMD) {
+#ifdef NATIVE_DAEMON_UNITTEST
+        std::string simplifiedNmdResult = g_mockNmdResult;
+#else
         std::string simplifiedNmdResult = hook->GetSimplifiedNmdResult(NMD_WAIT_MS);
+#endif
         CHECK_TRUE(!simplifiedNmdResult.empty(), RET_ERR, "Get simplified nmd result FAIL");
         WRITESTRING(reply, simplifiedNmdResult, RET_ERR);
         return RET_OK;
@@ -1143,12 +1238,20 @@ int32_t NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryP
 void NativeMemoryProfilerSaService::FillTaskConfigContext(int32_t pid, const std::string& name)
 {
     if (auto iter = g_pidCtx.find(pid); iter != g_pidCtx.end()) {
+        if (iter->second == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "FillTaskConfigContext: null task for pid %d", pid);
+            return;
+        }
         iter->second->processName = name;
         g_nameAndFilePathCtx[name] = iter->second;
         if (iter->second->isStartupMode) {
             g_hasStartupMode = false;
         }
     } else if (auto it = g_nameAndFilePathCtx.find(name); it != g_nameAndFilePathCtx.end()) {
+        if (it->second == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "FillTaskConfigContext: null task for name %s", name.c_str());
+            return;
+        }
         it->second->pid = pid;
         g_pidCtx[pid] = it->second;
         if (it->second->isStartupMode) {
@@ -1182,6 +1285,13 @@ bool NativeMemoryProfilerSaService::ReceiveCacheFileMsg(SocketContext &context, 
         return false;
     }
     HookCacheFileMsg cacheFileMsg = *reinterpret_cast<HookCacheFileMsg *>(const_cast<int8_t*>(buf));
+    struct ucred cred;
+    GetPeerUcred(context, cred);
+    if (cacheFileMsg.hookPid != cred.pid) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ReceiveCacheFileMsg check client pid failed");
+        return false;
+    }
+
     std::lock_guard<std::mutex> guard(g_mtx);
     if (auto iter = g_pidCtx.find(cacheFileMsg.hookPid); iter != g_pidCtx.end()) {
         if (iter->second->hookMgr == nullptr) {
@@ -1236,6 +1346,12 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
     if (peerConfig == -1) {
         return false;
     }
+    struct ucred cred;
+    GetPeerUcred(context, cred);
+    if (static_cast<pid_t>(peerConfig) != cred.pid) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc check client pid failed");
+        return false;
+    }
 
     std::string filePath = "/proc/" + std::to_string(peerConfig) + "/cmdline";
     std::string bundleName;
@@ -1254,13 +1370,6 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
     FillTaskConfigContext(peerConfig, bundleName); // Save the relevant context for subsequent inspection
     if (auto iter = g_pidCtx.find(peerConfig); iter != g_pidCtx.end()) {
         if (!startupMode) {
-            int socketHandle = context.GetSocketHandle();
-            struct ucred cred;
-            socklen_t len = sizeof(struct ucred);
-            if (getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) {
-                PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc getsockopt failed");
-                return false;
-            }
             if (!((g_pidInfo.find(cred.pid) != g_pidInfo.end()) && (g_pidInfo[cred.pid].first == cred.uid) &&
                 (g_pidInfo[cred.pid].second == cred.gid))) {
                 PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc process uid gid check failed");
@@ -1391,7 +1500,7 @@ bool NativeMemoryProfilerSaService::GetSystemMemoryInfo(MemoryInfo *memInfo)
     if (!memInfo) {
         return false;
     }
-    
+
     std::ifstream memInfoFile("/proc/meminfo");
     if (!memInfoFile.is_open()) {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService: open meminfo file failed");
@@ -1511,8 +1620,12 @@ bool NativeMemoryProfilerSaService::GetSystemCpuUsageInfo(double* cpuUsage)
 
 bool NativeMemoryProfilerSaService::IsNativeDeamonRunning()
 {
+#ifdef NATIVE_DAEMON_UNITTEST
+    return g_mockNativeDaemonRunning;
+#else
     int nativeDaemonPid = 0;
     return COMMON::IsProcessExist("native_daemon", nativeDaemonPid);
+#endif
 }
 
 void NativeMemoryProfilerSaService::NotifyProfilingResult(const std::shared_ptr<TaskConfig>& config,
@@ -1526,29 +1639,61 @@ void NativeMemoryProfilerSaService::NotifyProfilingResult(const std::shared_ptr<
     callback.OnProfilingResult(config->pid, errorCode, filePath);
 }
 
+std::string NativeMemoryProfilerSaService::CollectApm(std::shared_ptr<TaskConfig>& config)
+{
+    std::string filePathStr = (config->pid > 0) ? std::to_string(config->pid) : config->processName;
+    std::string compositeFilepath = COMPOSITE_HEAP_PATH_HEAD + filePathStr + COMPOSITE_HEAP_PATH_TAIL;
+    uint32_t pid = static_cast<uint32_t>(config->pid);
+    std::string traceFilepath = config->filePath;
+    ApmCollectMgr apmMgr(compositeFilepath);
+    apmMgr.RegisterCollector(std::static_pointer_cast<IDataCollector>(std::make_shared<RawheapCollector>(pid, pid)));
+    apmMgr.RegisterCollector(std::static_pointer_cast<IDataCollector>(std::make_shared<JsmapCollector>(pid, pid)));
+    apmMgr.RegisterCollector(std::static_pointer_cast<IDataCollector>(std::make_shared<TraceCollector>(traceFilepath)));
+    return apmMgr.Collect() ? compositeFilepath : "";
+}
+
 int32_t NativeMemoryProfilerSaService::CopyApiCollectorFile(uint32_t pid, std::shared_ptr<TaskConfig> config,
     std::string& resultPath)
 {
-    std::lock_guard<std::mutex> guard(g_fileNameMtx);
+    if (config->typeFileName.empty()) {
+        if (config->compositeHeapEnable) {
+            PROFILER_LOG_ERROR(LOG_CORE, "CopyApiCollectorFile: api composite task file info missing");
+            return RET_ERR;
+        } else {
+            PROFILER_LOG_WARN(LOG_CORE, "CopyApiCollectorFile: api task file info missing");
+            return RET_OK;
+        }
+    }
     auto pidInfoIter = g_pidInfo.find(pid);
-    auto fileNameInfoIter = g_fileNameInfo.find(pid);
-    if (pidInfoIter == g_pidInfo.end() || fileNameInfoIter == g_fileNameInfo.end()) {
-        PROFILER_LOG_WARN(LOG_CORE, "CopyApiCollectorFile: api task file info missing");
-    } else {
-        std::string destPath = COMMON::GetFullTracePath(pidInfoIter->second.first, pid, config->processName,
-                                                        fileNameInfoIter->second);
-        if (destPath.empty()) {
-            PROFILER_LOG_ERROR(LOG_CORE, "CopyApiCollectorFile: invalid destPath");
+    if (pidInfoIter == g_pidInfo.end()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CopyApiCollectorFile: api task uid info missing");
+        return RET_ERR;
+    }
+    std::string destPath = COMMON::GetFullTracePath(
+        pidInfoIter->second.first, pid, config->processName, config->typeFileName);
+    if (destPath.empty()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CopyApiCollectorFile: invalid destPath");
+        return RET_ERR;
+    }
+    if (config->compositeHeapEnable) {
+        std::string compositeFilepath = CollectApm(config);
+        if (compositeFilepath.empty()) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Collect composite heap fail");
             return RET_ERR;
         }
+        if (!COMMON::CopyFileFastFromPath(compositeFilepath, destPath)) {
+            (void)unlink(compositeFilepath.c_str());
+            PROFILER_LOG_ERROR(LOG_CORE, "Copy composite file into bundle failed");
+            return RET_ERR;
+        }
+        (void)unlink(compositeFilepath.c_str());
+    } else {
         if (!COMMON::CopyFileFast(config->fd, destPath)) {
             PROFILER_LOG_ERROR(LOG_CORE, "Copy file into bundle failed");
             return RET_ERR;
-        } else {
-            resultPath = API_SANDBOX_PATH_PREFIX + fileNameInfoIter->second;
         }
     }
-    g_fileNameInfo.erase(pid);
+    resultPath = API_SANDBOX_PATH_PREFIX + config->typeFileName;
     return RET_OK;
 }
 
@@ -1569,6 +1714,18 @@ int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::sha
         g_nameAndFilePathCtx.erase(config->filePath);
         if (config->startType == START_TYPE_API) {
             ret = CopyApiCollectorFile(pid, config, resultPath);
+        } else if (config->compositeHeapEnable && config->compositeHeapFd > 0) {
+            std::string compositeFilepath = CollectApm(config);
+            if (compositeFilepath.empty()) {
+                PROFILER_LOG_ERROR(LOG_CORE, "Collect composite heap fail");
+                return RET_ERR;
+            }
+            if (!COMMON::CopyFileToFdFastFromPath(compositeFilepath, config->compositeHeapFd)) {
+                (void)unlink(compositeFilepath.c_str());
+                PROFILER_LOG_ERROR(LOG_CORE, "Copy composite file into bundle fd failed");
+                return RET_ERR;
+            }
+            (void)unlink(compositeFilepath.c_str());
         }
         g_pidCtx.erase(config->pid);
         g_pidInfo.erase(static_cast<pid_t>(pid));
@@ -1671,6 +1828,71 @@ bool NativeMemoryProfilerSaService::IsSeparateByMoreThan24Hours(long long t1, lo
     }
     return duration_cast<hours>(system_clock::from_time_t(t2) - system_clock::from_time_t(t1)) > hours(HOURS_PER_DAY);
 }
+
+#ifdef NATIVE_DAEMON_UNITTEST
+void NativeMemoryProfilerSaService::ResetTaskContextsForTest()
+{
+    std::lock_guard<std::mutex> guard(g_mtx);
+    g_pidInfo.clear();
+    g_pidCtx.clear();
+    g_nameAndFilePathCtx.clear();
+    g_hasStartupMode = false;
+    g_taskNum = 0;
+    g_nmdPidType.clear();
+    g_timerFdInfo.clear();
+}
+
+void NativeMemoryProfilerSaService::InjectPidInfoForTest(pid_t pid, uid_t uid, gid_t gid)
+{
+    std::lock_guard<std::mutex> guard(g_mtx);
+    g_pidInfo[pid] = {uid, gid};
+}
+
+void NativeMemoryProfilerSaService::InjectPidCtxForTest(int32_t pid, const std::shared_ptr<TaskConfig>& config)
+{
+    std::lock_guard<std::mutex> guard(g_mtx);
+    g_pidCtx[pid] = config;
+}
+
+void NativeMemoryProfilerSaService::SetHasStartupModeForTest(bool val)
+{
+    std::lock_guard<std::mutex> guard(g_mtx);
+    g_hasStartupMode = val;
+}
+
+void NativeMemoryProfilerSaService::SetMockPermissionForTest(bool isUserMode, bool granted)
+{
+    g_mockIsUserMode = isUserMode;
+    g_mockPermissionGranted = granted;
+}
+void NativeMemoryProfilerSaService::SetMockNativeDaemonRunningForTest(bool running)
+{
+    g_mockNativeDaemonRunning = running;
+}
+void NativeMemoryProfilerSaService::InjectPidFdsForTest(pid_t pid, int fd)
+{
+    std::lock_guard<std::mutex> guard(g_pidFdMtx);
+    g_pidFds[pid] = fd;
+}
+void NativeMemoryProfilerSaService::SetMockStartServiceAbilityForTest(bool result)
+{
+    g_mockStartServiceAbility = result;
+}
+void NativeMemoryProfilerSaService::SetMockSystemResourceForTest(bool memFail, bool cpuFail, bool romFail)
+{
+    g_mockMemFail = memFail;
+    g_mockCpuFail = cpuFail;
+    g_mockRomFail = romFail;
+}
+void NativeMemoryProfilerSaService::SetMockSendFailForTest(bool fail)
+{
+    g_mockSendFail = fail;
+}
+void NativeMemoryProfilerSaService::SetMockNmdResultForTest(const std::string& result)
+{
+    g_mockNmdResult = result;
+}
+#endif
 
 int32_t NativeMemoryProfilerSaService::GetMemProfilerUseCountToday(
     const std::unordered_map<std::string, QuotaRecord>& records, std::string name)

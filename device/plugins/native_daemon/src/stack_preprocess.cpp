@@ -40,7 +40,11 @@ constexpr uint32_t LOG_PRINT_TIMES = 10000;
 constexpr uint32_t WAIT_STOP_TIME = 5000;
 constexpr uint32_t FINAL_SNAPSHOT_TIMEOUT_MS = 3000;
 constexpr uint32_t WAIT_TIME_ONCE = 10;
+#ifdef NATIVE_DAEMON_UNITTEST
+constexpr uint32_t MAX_FILE_CACHE_INACTIVE_SECONDS = 2;
+#else
 constexpr uint32_t MAX_FILE_CACHE_INACTIVE_SECONDS = 60;
+#endif
 constexpr uint32_t WAIT_FILE_CACHE_STOP_CNT = 3600;
 constexpr uint32_t SECOND_TO_MILLISECOND = 1000;
 constexpr uint32_t MILLISECOND_TO_NANOSECOND = 1000 * 1000;
@@ -536,7 +540,7 @@ inline void StackPreprocess::IntervalFlushRecordStatistics(const struct timespec
     }
 }
 
-inline void StackPreprocess::IntervalFlushApplyAndReleaseMatchData()
+void StackPreprocess::IntervalFlushApplyAndReleaseMatchData()
 {
     // interval reporting apply and release match data
     if (hookConfig_.malloc_free_matching_interval() > 0) {
@@ -631,9 +635,11 @@ bool StackPreprocess::ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvai
         ctx.readfileSize += sizeof(uint32_t) + totalSize;
 
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + ctx.offset);
-        if (validLiveDataPtr_ != nullptr) {
+        if (validLiveDataPtr_ != nullptr && IsBaseStackRawDataRecord(dataPtr, totalSize)) {
             auto* tmpRawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
-            if (IsArkGlobalHandleRecord(tmpRawData) && ShouldSkipRecord(tmpRawData, *validLiveDataPtr_)) {
+            if (IsArkGlobalHandleRecord(tmpRawData) && ShouldSkipRecord(tmpRawData, *validLiveDataPtr_) &&
+                !(IsFreeRecord(tmpRawData) && orphanFreeWhitelistPtr_ != nullptr &&
+                  InOrphanFreeWhitelist(tmpRawData, *orphanFreeWhitelistPtr_))) {
                 ctx.offset += totalSize;
                 continue;
             }
@@ -790,6 +796,11 @@ bool StackPreprocess::ProcessRawData(const int8_t data[], uint32_t size,
 
     if (!ValidateAndPrepareData(data, size, hookRecord, rawData)) {
         return false;
+    }
+    if (hookRecord->GetType() == FREE_MSG_SIMP) {
+        uint64_t addr = hookRecord->GetAddr();
+        factory_->SaveHookRecord(std::move(hookRecord));
+        return ProcessAddressData(reinterpret_cast<const int8_t*>(&addr));
     }
     DmaFdSizeMap dmaFdSizeMap;
     uint32_t dmaFdSizePid = 0;
@@ -1263,7 +1274,8 @@ bool StackPreprocess::ProcessBatchData()
         if (!ProcessSingleRecord(batchRawStack[i])) {
             break;
         }
-        if (batchRawStack[i] && batchRawStack[i]->GetRawStack() && batchRawStack[i]->GetRawStack()->stackContext) {
+        if (batchRawStack[i] && batchRawStack[i]->GetRawStack() && batchRawStack[i]->GetRawStack()->stackContext &&
+            batchRawStack[i]->GetRawStack()->stackContext->type != MMAP_FILE_TYPE) {
             latestEventTime = batchRawStack[i]->GetRawStack()->stackContext->ts;
         }
     }
@@ -1585,7 +1597,8 @@ inline uint32_t StackPreprocess::GetNewStackId()
 
 void StackPreprocess::AddCallStackIndex(uint32_t stackId, RawStackPtr rawData)
 {
-    if (hookConfig_.async_stack_enable()) {
+    if (hookConfig_.async_stack_enable() && rawData->stackContext->type != FREE_ARKTS &&
+        rawData->stackContext->type != MALLOC_ARKTS && rawData->stackContext->type != PR_SET_VMA_MSG) {
         const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
         uint64_t stackHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
         AsyncCallStackKey key = {stackHash, GetAsyncDedupMallocSize(rawData), GetDedupTagId(rawData)};
@@ -1602,7 +1615,8 @@ void StackPreprocess::AddCallStackIndex(uint32_t stackId, RawStackPtr rawData)
 
 void StackPreprocess::AddSimplifiedCallStackIndex(uint32_t stackId, RawStackPtr rawData)
 {
-    if (hookConfig_.async_stack_enable()) {
+    if (hookConfig_.async_stack_enable() && rawData->stackContext->type != FREE_ARKTS &&
+        rawData->stackContext->type != MALLOC_ARKTS && rawData->stackContext->type != PR_SET_VMA_MSG) {
         const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
         uint64_t stackHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
         SimplifiedAsyncCallStackKey asyncKey = {stackHash, GetAsyncDedupMallocSize(rawData), GetDedupTagId(rawData)};
@@ -1662,7 +1676,7 @@ inline uint32_t StackPreprocess::GetCallStackId(const HookRecordPtr& hookRecord,
 {
     auto rawStack = hookRecord->GetRawStack();
     // ignore the first two frame if dwarf unwind
-    size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
+    size_t idx = (hookConfig_.async_stack_enable() || !hookConfig_.fp_unwind()) ? FILTER_STACK_DEPTH : 0;
     // if free_stack_report or munmap_stack_report is false, don't need to record.
     uint16_t type = hookRecord->GetType();
     if ((type == FREE_MSG) && !hookConfig_.free_stack_report()) {
@@ -1979,7 +1993,7 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
     }
 
     if ((!hookConfig_.callframe_compress() || stackMapId == 0) && hookConfig_.string_compressed()) {
-        size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
+        size_t idx = (hookConfig_.async_stack_enable() || !hookConfig_.fp_unwind()) ? FILTER_STACK_DEPTH : 0;
         for (; idx < callFrames.size(); ++idx) {
             ReportSymbolNameMap(callFrames[idx], stackData);
             ReportFilePathMap(callFrames[idx], stackData);
@@ -2271,7 +2285,7 @@ void StackPreprocess::WriteFrames(HookRecordPtr hookRecord, const std::vector<Ca
         rawStack->stackContext->pid, rawStack->stackContext->tid,
         static_cast<int64_t>(rawStack->stackContext->ts.tv_sec),
         rawStack->stackContext->ts.tv_nsec, rawStack->stackContext->mallocSize);
-    size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
+    size_t idx = (hookConfig_.async_stack_enable() || !hookConfig_.fp_unwind()) ? FILTER_STACK_DEPTH : 0;
     for (; idx < callFrames.size(); ++idx) {
         (void)fprintf(fpHookData_, "0x%" PRIx64 ";0x%" PRIx64 ";%s;%s;0x%" PRIx64 ";%" PRIu64 "\n",
             callFrames[idx].ip_, callFrames[idx].sp_, std::string(callFrames[idx].symbolName_).c_str(),
@@ -2524,7 +2538,11 @@ void StackPreprocess::Flush(const uint8_t* src, size_t size)
         PROFILER_LOG_ERROR(LOG_CORE, "Flush writer_ is nullptr");
         return;
     }
-    writer_->Write(src, size);
+    if (hookConfig_.blocked()) {
+        writer_->WriteBlock(src, size);
+    } else {
+        writer_->Write(src, size);
+    }
     writer_->Flush();
 
     std::get<::BatchNativeHookData>(stackData_).clear_events();
@@ -2883,3 +2901,7 @@ template void StackPreprocess::SetEventFrame<FreeEvent>(const ReportEventBaseDat
     FreeEvent* event, uint32_t stackMapId, const std::string& type);
 template void StackPreprocess::SetEventFrame<MmapEvent>(const ReportEventBaseData& rawStack,
     MmapEvent* event, uint32_t stackMapId, const std::string& type);
+template void StackPreprocess::SetEventFrame<TraceAllocEvent>(const ReportEventBaseData& rawStack,
+    TraceAllocEvent* event, uint32_t stackMapId, const std::string& type);
+template void StackPreprocess::SetEventFrame<TraceFreeEvent>(const ReportEventBaseData& rawStack,
+    TraceFreeEvent* event, uint32_t stackMapId, const std::string& type);

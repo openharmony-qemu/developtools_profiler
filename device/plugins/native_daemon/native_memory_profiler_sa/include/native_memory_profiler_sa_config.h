@@ -23,6 +23,7 @@ namespace OHOS::Developtools::NativeDaemon {
 namespace {
 constexpr uint32_t DEFAULT_DURATION = 20;
 constexpr uint32_t INVALID_FORMAT = 0xFFFFFFFF;
+constexpr uint32_t MAX_STRING_VECTOR_SIZE = 1024;
 constexpr uint8_t  DEFAULT_STACK_DAPTH = 30;
 constexpr size_t GPU_TYPE_SIZE = 5;
 constexpr size_t GPU_RANGE_SIZE = 2;

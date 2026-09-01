@@ -31,6 +31,7 @@
 #include "common.h"
 #include "logging.h"
 #include "musl_preinit_common.h"
+#include "memory_trace.h"
 #include "parameter.h"
 #include "stack_writer.h"
 #include "runtime_stack_range.h"
@@ -78,6 +79,56 @@ std::atomic<int> g_sharedMemCount = 1;
 std::shared_ptr<AddressHandler> g_wholeAddrHandler = nullptr;
 std::shared_ptr<AddressHandler> g_midPartHandler = nullptr;
 #endif
+
+static ArkTsHookFn ResolveArkTsHookDlopen(const char* name)
+{
+    void* handle = dlopen("libark_jsruntime.so", RTLD_LAZY | RTLD_NOLOAD);
+    if (handle == nullptr) {
+        return nullptr;
+    }
+    ArkTsHookFn fn = reinterpret_cast<ArkTsHookFn>(dlsym(handle, name));
+    dlclose(handle);
+    return fn;
+}
+
+static std::atomic<bool> g_arktsHookEnabled{false};
+static std::atomic<ArkTsHookResolver> g_arktsResolver{ResolveArkTsHookDlopen};
+
+void SetArkTsHookResolver(ArkTsHookResolver resolver)
+{
+    g_arktsResolver.store(resolver);
+}
+
+void ResetArkTsHookResolver()
+{
+    g_arktsResolver.store(ResolveArkTsHookDlopen);
+}
+
+static void CallArkTsHook(const char* name)
+{
+    ArkTsHookResolver resolver = g_arktsResolver.load();
+    if (resolver == nullptr) {
+        return;
+    }
+    ArkTsHookFn fn = resolver(name);
+    if (fn != nullptr) {
+        fn();
+    }
+}
+
+void EnableArkTsHookIfNeeded(unsigned long long traceMask)
+{
+    if ((traceMask & RES_ARKTS_HEAP_MASK) && !g_arktsHookEnabled.exchange(true)) {
+        CallArkTsHook("EnableArkTsHook");
+    }
+}
+
+void DisableArkTsHookIfNeeded()
+{
+    if (g_arktsHookEnabled.exchange(false)) {
+        CallArkTsHook("DisableArkTsHook");
+    }
+}
 
 namespace {
 static std::atomic<uint16_t> g_tagId = RESTRACE_TYPE_COUNT + 1;
@@ -308,6 +359,7 @@ void* ohos_release_on_end(void*)
     }
     g_addrHandler = nullptr;
     g_hookClient = nullptr;
+    DisableArkTsHookIfNeeded();
     g_clientConfig.Reset();
     g_sharedMemCount = 1;
     std::unique_lock<std::mutex> lock(g_tagMapMutex);
@@ -916,7 +968,9 @@ void HookFreeStatisticsInterval(void (*free_func)(void*), void* p)
 
     HookClientHolder client(g_hookClient);
     if (client.IsValid() && p) {
-        client.SendStackWithPayload(&p, sizeof(void*), nullptr, 0,
+        BaseStackRawData rawdata = {};
+        SetStackRawData(rawdata, FREE_MSG_SIMP, p, 0);
+        client.SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), nullptr, 0,
                                     reinterpret_cast<uint64_t>(p) % g_sharedMemCount);
     }
     free_func(p);
@@ -1435,21 +1489,17 @@ bool ohos_malloc_hook_set_hook_flag(bool flag)
 
 void* ohos_malloc_hook_mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
-    g_inMmapMunmap = true;
     __set_hook_flag(false);
     void* ret = hook_mmap(GetDispatch()->mmap, addr, length, prot, flags, fd, offset);
     __set_hook_flag(true);
-    g_inMmapMunmap = false;
     return ret;
 }
 
 int ohos_malloc_hook_munmap(void* addr, size_t length)
 {
-    g_inMmapMunmap = true;
     __set_hook_flag(false);
     int ret = hook_munmap(GetDispatch()->munmap, addr, length);
     __set_hook_flag(true);
-    g_inMmapMunmap = false;
     return ret;
 }
 

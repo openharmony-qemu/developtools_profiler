@@ -341,6 +341,21 @@ void HookRecordFactory::InitRawStack(RawStackPtr rawStack, const int8_t sharedMe
     ProcessDynamicTagInfo(rawStack, sharedMemData, size, callback);
 }
 
+bool HookRecordFactory::CheckSizeByType(uint16_t type, uint32_t size)
+{
+    if (hookConfig_.fp_unwind() && hookConfig_.async_stack_enable()) {
+        bool needAsyncStackData = (type == MALLOC_MSG || type == FREE_MSG || type == MMAP_MSG ||
+                                    type == MMAP_FILE_PAGE_MSG || type == MEMORY_USING_MSG ||
+                                    type == MEMORY_UNUSING_MSG);
+        if (needAsyncStackData && size < sizeof(AsyncStackData)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "GetHookRecord type %u size %u is less than AsyncStackData size %zu",
+                               type, size, sizeof(AsyncStackData));
+            return false;
+        }
+    }
+    return true;
+}
+
 std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t sharedMemData[], uint32_t size,
     bool storeData, const SaveMemTagCallBack& callback)
 {
@@ -357,6 +372,9 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
     auto rawStack = GetRawStackFromCache();
     InitRawStack(rawStack, sharedMemData, size, storeData, callback);
     uint16_t type = rawStack->stackContext->type;
+    if (!CheckSizeByType(type, size)) {
+        return nullptr;
+    }
     switch (type) {
         case GWP_ASAN_MSG:
             return std::make_shared<GwpAsanRecord>(rawStack);
@@ -372,6 +390,12 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
         case FREE_ARKTS: {
             auto freeRecord = GetRecordFromCache(arkTsFreeRecordCache_, FREE_ARKTS);
             freeRecord->rawStack_ = rawStack;
+            return freeRecord;
+        }
+        case FREE_MSG_SIMP: {
+            auto freeRecord = GetRecordFromCache(freeRecordSimpCache_, FREE_MSG_SIMP);
+            freeRecord->rawStack_ = rawStack;
+            freeRecord->SetAddr(reinterpret_cast<uint64_t>(rawStack->stackContext->addr));
             return freeRecord;
         }
         case END_MSG:
@@ -410,4 +434,9 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
     }
     return CreateStackRecord(type, rawStack);
 }
+
+#ifdef NATIVE_DAEMON_UNITTEST
+template std::shared_ptr<HookRecord> HookRecordFactory::GetRecordFromCache<HookRecord>(
+    std::deque<std::shared_ptr<HookRecord>>& dataCache, int16_t type);
+#endif
 }

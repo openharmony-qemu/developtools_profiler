@@ -22,7 +22,7 @@ config("native_memory_profiler_sa_config") {
   ldflags = []
   defines = []
 
-  if (native_daemon_test_coverage && is_ohos) {
+  if ((native_daemon_test_coverage || use_clang_coverage) && is_ohos) {
     defines += [ "TEST_COVERAGE" ]
     cflags += [
       "-fprofile-arcs",
@@ -58,6 +58,7 @@ config("native_memory_profiler_sa_config") {
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/include",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/util/include",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
+    "${OHOS_PROFILER_DIR}/device/services/apm/include",
   ]
 }
 
@@ -66,6 +67,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
   module_out_path = module_output_path
   cflags = [
     "-Dprivate=public", # allow test code access private members
+    "-DNATIVE_DAEMON_UNITTEST",
   ]
   sources = [
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_client_manager.cpp",
@@ -103,6 +105,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "unittest/native_memory_profiler_sa_client_manager_test.cpp",
     "unittest/native_memory_profiler_sa_config_test.cpp",
     "unittest/native_memory_profiler_sa_service_test.cpp",
+    "unittest/native_memory_profiler_sa_service_quota_test.cpp",
     "unittest/native_memory_profiler_sa_path_security_test.cpp",
   ]
 
@@ -122,6 +125,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "${OHOS_PROFILER_DIR}/device/base:mock_test_source",
     "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service:network_profiler_service",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
+    "${OHOS_PROFILER_DIR}/device/services/apm:profiler_apm",
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
@@ -162,6 +166,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "ability_runtime:app_context",
     "storage_service:storage_manager_acl",
     "ability_base:configuration",
+    "resource_schedule_service:ressched_client",
   ]
 
   if (hiprofiler_use_libunwinder) {

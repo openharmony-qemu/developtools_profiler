@@ -90,6 +90,7 @@ bool PluginSessionManager::CreatePluginSessions(const std::vector<ProfilerPlugin
                bufferConfigs.size(), pluginConfigs.size());
 
     std::map<std::string, PluginSessionPtr> tmpPluginSessions;
+    std::unique_lock<std::mutex> lock(mutex_);
     for (size_t i = 0; i < pluginConfigs.size(); i++) {
         auto session = CreatePluginSession(pluginConfigs[i], bufferConfigs[i], dataRepeater, stateRepeater);
 
@@ -99,7 +100,6 @@ bool PluginSessionManager::CreatePluginSessions(const std::vector<ProfilerPlugin
     }
 
     // insert all plugin session to pluginSessions_ map
-    std::unique_lock<std::mutex> lock(mutex_);
     for (auto& entry : tmpPluginSessions) {
         pluginSessions_.insert(entry);
     }
@@ -111,6 +111,7 @@ bool PluginSessionManager::CreatePluginSessions(const std::vector<ProfilerPlugin
                                                 const ProfilerStateRepeaterPtr& stateRepeater)
 {
     std::map<std::string, PluginSessionPtr> tmpPluginSessions;
+    std::unique_lock<std::mutex> lock(mutex_);
     for (size_t i = 0; i < pluginConfigs.size(); i++) {
         auto session = CreatePluginSession(pluginConfigs[i], dataRepeater, stateRepeater);
 
@@ -120,7 +121,6 @@ bool PluginSessionManager::CreatePluginSessions(const std::vector<ProfilerPlugin
     }
 
     // insert all plugin session to pluginSessions_ map
-    std::unique_lock<std::mutex> lock(mutex_);
     for (auto& entry : tmpPluginSessions) {
         pluginSessions_.insert(entry);
     }

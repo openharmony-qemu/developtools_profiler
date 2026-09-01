@@ -35,7 +35,6 @@
 
 namespace {
 constexpr int REMAINDER = 2;
-const std::string TAG_RES_COMPOSITE_HEAP = "RES_COMPOSITE_HEAP";
 }
 
 ParsePluginConfig::ParsePluginConfig()
@@ -305,6 +304,7 @@ bool ParsePluginConfig::SetSerializeHookConfig(const std::string& pluginName, Pr
     std::string configData = pluginConfigMap[pluginName];
     auto hookConfigNolite = std::make_unique<ForStandard::NativeHookConfig>();
     // Set default values for proto3 bool fields (default is false).
+    // ParseFromString merges text into this message, so explicitly set fields in config will override these defaults.
     bool hasStringCompressed = (configData.find("string_compressed") != std::string::npos);
     bool hasCallframeCompress = (configData.find("callframe_compress") != std::string::npos);
     bool hasRecordAccurately = (configData.find("record_accurately") != std::string::npos);
@@ -399,6 +399,25 @@ uint32_t ParsePluginConfig::GetHiperfPluginDuration()
         return 0;
     }
     return hiperfConfigNolite->duration();
+}
+
+bool ParsePluginConfig::CheckHookPluginComposited()
+{
+    if (pluginConfigMap.find("nativehook") == pluginConfigMap.end()) {
+        return false;
+    }
+    std::string configData = pluginConfigMap["nativehook"];
+    auto hookConfigNolite = std::make_unique<ForStandard::NativeHookConfig>();
+    if (!parser_.ParseFromString(configData, hookConfigNolite.get())) {
+        printf("nativedaemon parse failed!\n");
+        return false;
+    }
+    for (int i = 0; i < hookConfigNolite->restrace_tag_size(); ++i) {
+        if (hookConfigNolite->restrace_tag(i) == TAG_RES_COMPOSITE_HEAP) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool ParsePluginConfig::SetSerializeHisyseventConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig)

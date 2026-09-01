@@ -231,11 +231,12 @@ void HilogPlugin::StartLoopFetchData(std::unique_ptr<uint8_t[]>& buffer, std::un
                 hilogInfo = std::make_unique<ProtoEncoder::HilogInfo>(resultWriter_->startReport(resultWriter_));
             }
         }
-        if (protoConfig_.need_record() && dataBuffer_.size() >= BYTE_BUFFER_SIZE) {
+        if (protoConfig_.need_record()) {
             std::unique_lock<std::mutex> locker(mutex_);
-            g_fileCache.Write(dataBuffer_.data(), dataBuffer_.size());
-            dataBuffer_.erase(dataBuffer_.begin(), dataBuffer_.end());
-            locker.unlock();
+            if (dataBuffer_.size() >= BYTE_BUFFER_SIZE) {
+                g_fileCache.Write(dataBuffer_.data(), dataBuffer_.size());
+                dataBuffer_.erase(dataBuffer_.begin(), dataBuffer_.end());
+            }
         }
     }
 }
@@ -280,8 +281,11 @@ template <typename T> void HilogPlugin::ParseLogLineInfo(const char* data, size_
         return;
     }
 
-    for (size_t i = 0; i < len && protoConfig_.need_record(); i++) {
-        dataBuffer_.push_back(data[i]);
+    if (protoConfig_.need_record()) {
+        std::lock_guard<std::mutex> locker(mutex_);
+        for (size_t i = 0; i < len; i++) {
+            dataBuffer_.push_back(data[i]);
+        }
     }
 
     SetHilogLineDetails(data, hilogLineInfo);
@@ -461,8 +465,11 @@ bool HilogPlugin::TimeStringToNS(const char* data, struct timespec *tsTime)
         PROFILER_LOG_ERROR(LOG_CORE, "%s:snprintf_s error", __func__);
     }
     size_t buffSize = strlen(buff);
-    for (size_t i = 0; i < buffSize && protoConfig_.need_record(); i++) {
-        dataBuffer_.push_back(buff[i]);
+    if (protoConfig_.need_record()) {
+        std::lock_guard<std::mutex> locker(mutex_);
+        for (size_t i = 0; i < buffSize; i++) {
+            dataBuffer_.push_back(buff[i]);
+        }
     }
 
     return true;

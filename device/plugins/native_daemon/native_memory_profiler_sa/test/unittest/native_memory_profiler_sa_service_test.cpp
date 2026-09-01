@@ -13,184 +13,56 @@
  * limitations under the License.
  */
 
-#ifndef NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H
-#define NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H
-
-#define private public
-
-#include <gtest/gtest.h>
-#include <memory>
-#include <fstream>
-#include <ctime>
-#include "test_common.h"
-#include "init_param.h"
-#include "ipc_skeleton.h"
-#include "native_memory_profiler_sa_callback_proxy.h"
-#include "native_memory_profiler_sa_callback_stub.h"
-#include "native_memory_profiler_sa_proxy.h"
-#include "native_memory_profiler_sa_stub.h"
-#define private public
-#include "native_memory_profiler_sa_service.h"
-#undef private
-#include "hook_common.h"
-#include "socket_context.h"
-#include "utilities.h"
-#include "token_setproc.h"
-#include "accesstoken_kit.h"
-#include "singleton.h"
+#include "native_memory_profiler_sa_service_test_common.h"
 using namespace OHOS::Security::AccessToken;
 using namespace testing::ext;
-
-namespace {
-const std::string TEST_PROC_NAME = "hiview";
-const std::string TEST_NATIVE_NAME = "foundation";
-const std::string NATIVE_PARAM = "hiviewdfx.hiprofiler.native_memoryd.start";
-constexpr uint32_t TEST_DURATION = 10;
-constexpr uint32_t TEST_SHARE_MEMORY_SIZE = 4096;
-constexpr uint32_t START_TYPE_API = 1;
-static AccessTokenID g_selfTokenId;
-static TEST_COMMON::MockNativeToken* g_mock = nullptr;
-const std::string TEST_INVALID_FILE_PATH = "/invalid/path/test_count_file";
-
-bool WriteFile(const std::string& filePath, const std::string& fileContent)
-{
-    std::ofstream ofs(filePath, std::ios::trunc);
-    if (!ofs.is_open()) {
-        return false;
-    }
-    ofs << fileContent;
-    return ofs.good();
-}
-
-std::shared_ptr<OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaConfig> MakeSaConfig()
-{
-    auto config = std::make_shared<OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaConfig>();
-    if (config == nullptr) {
-        return nullptr;
-    }
-    config->processName_ = "sa_coverage_test";
-    config->filePath_ = "/data/local/tmp/sa_coverage_test.htrace";
-    config->duration_ = TEST_DURATION;
-    config->shareMemorySize_ = TEST_SHARE_MEMORY_SIZE;
-    config->typeFileName_ = "test";
-    return config;
-}
-}
-
-class NativeMemoryProfilerSaServiceTest : public testing::Test {
-public:
-    static void SetUpTestCase()
-    {
-        g_selfTokenId = GetSelfTokenID();
-        TEST_COMMON::SetTestEvironment(g_selfTokenId);
-        g_mock = new (std::nothrow) TEST_COMMON::MockNativeToken(TEST_PROC_NAME);
-    }
-
-    static void TearDownTestCase()
-    {
-        if (g_mock != nullptr) {
-            delete g_mock;
-            g_mock = nullptr;
-        }
-        SetSelfTokenID(g_selfTokenId);
-        TEST_COMMON::ResetTestEvironment();
-        SystemSetParameter(NATIVE_PARAM.c_str(), "0");
-    }
-    void SetUp() {}
-    void TearDown() {}
-};
+using namespace OHOS::Developtools::NativeDaemon;
 
 namespace OHOS::Developtools::NativeDaemon {
-class TestNativeMemoryProfilerSaStub : public NativeMemoryProfilerSaStub {
-public:
-    int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override
-    {
-        lastPid_ = config == nullptr ? -1 : config->pid_;
-        return RET_OK;
-    }
-    int32_t StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
-        const sptr<IRemoteObject>& callback) override
-    {
-        lastPid_ = config == nullptr ? -1 : config->pid_;
-        callbackIsNull_ = callback == nullptr;
-        return RET_OK;
-    }
-    int32_t Stop(uint32_t pid) override
-    {
-        lastPid_ = static_cast<int32_t>(pid);
-        return RET_OK;
-    }
-    int32_t Stop(const std::string& name) override
-    {
-        lastName_ = name;
-        return RET_OK;
-    }
-    int32_t Stop() override
-    {
-        stoppedVoid_ = true;
-        return RET_OK;
-    }
-    int32_t StopSync() override
-    {
-        stoppedSync_ = true;
-        return RET_OK;
-    }
-    int32_t DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override
-    {
-        lastFd_ = fd;
-        lastPid_ = config == nullptr ? -1 : config->pid_;
-        return RET_OK;
-    }
-    int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, std::string& replyStats) override
-    {
-        return RET_ERR;
-    }
-    int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, MessageParcel &reply) override
-    {
-        lastPid_ = config == nullptr ? -1 : config->pid_;
-        return RET_OK;
-    }
-    int32_t DumpDataAsync(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
-        const sptr<IRemoteObject>& callback) override
-    {
-        lastFd_ = fd;
-        lastPid_ = config == nullptr ? -1 : config->pid_;
-        callbackIsNull_ = callback == nullptr;
-        return RET_OK;
-    }
-
-    int32_t lastPid_ = -1;
-    uint32_t lastFd_ = 0;
-    std::string lastName_;
-    bool callbackIsNull_ = false;
-    bool stoppedVoid_ = false;
-    bool stoppedSync_ = false;
-};
-
-class TestNativeMemoryProfilerSaCallbackStub : public NativeMemoryProfilerSaCallbackStub {
-public:
-    void OnProfilingResult(int32_t pid, int32_t errorCode, const std::string& filePath) override
-    {
-        pid_ = pid;
-        errorCode_ = errorCode;
-        filePath_ = filePath;
-    }
-
-    int32_t pid_ = 0;
-    int32_t errorCode_ = 0;
-    std::string filePath_;
-};
-}
-
-static bool WriteStubConfig(OHOS::MessageParcel& data, int32_t pid)
+static bool ResetRegisteredSocketFdForStop(NativeMemoryProfilerSaService& service, TestSocketContext& context,
+    int peerConfig, const std::string& tag)
 {
     auto config = MakeSaConfig();
     if (config == nullptr) {
         return false;
     }
-    config->pid_ = pid;
-    return config->Marshalling(data);
+    config->pid_ = 0;
+    config->processName_ = tag + "_" + std::to_string(getpid());
+    config->startupMode_ = true;
+    config->filePath_ = MakeTracePath(tag);
+    if (service.Start(config) != RET_OK) {
+        return false;
+    }
+    context.SetSocketHandleForTest(0);
+    bool socketFdReset = !service.ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&peerConfig),
+        sizeof(peerConfig));
+    bool configStopped = service.Stop(config->processName_) == RET_OK;
+    return socketFdReset && configStopped;
 }
+
+static void ExpectCacheFileReadyReplenishesFd(NativeMemoryProfilerSaService& service,
+    TestSocketContext& serviceContext, TestSocketContext& peerContext, int peerConfig, int peerSock)
+{
+    constexpr uint16_t readyFileIndex = FILE_CACHE_FD_COUNT - 1;
+    char tempPath[] = "/data/local/tmp/sa_cache_ready_XXXXXX";
+    int cacheFd = mkstemp(tempPath);
+    EXPECT_GE(cacheFd, 0);
+    EXPECT_EQ(unlink(tempPath), 0);
+    EXPECT_TRUE(peerContext.SendFileDescriptor(cacheFd));
+    close(cacheFd);
+    HookCacheFileMsg readyMsg(peerConfig, readyFileIndex, CACHE_FILE_READY);
+    EXPECT_TRUE(service.ReceiveCacheFileMsg(serviceContext, reinterpret_cast<const int8_t*>(&readyMsg)));
+    ProtocolHead head = {};
+    EXPECT_EQ(read(peerSock, &head, sizeof(head)), static_cast<ssize_t>(sizeof(head)));
+    HookCacheFileMsg createdMsg;
+    EXPECT_EQ(read(peerSock, &createdMsg, sizeof(createdMsg)), static_cast<ssize_t>(sizeof(createdMsg)));
+    int replenishFd = peerContext.ReceiveFileDiscriptor();
+    EXPECT_EQ(createdMsg.msgType, CACHE_FILE_CREATED);
+    EXPECT_EQ(createdMsg.fileIndex, readyFileIndex);
+    EXPECT_GE(replenishFd, 0);
+    close(replenishFd);
+}
+} // namespace OHOS::Developtools::NativeDaemon
 
 /**
  * @tc.name: NativeMemoryProfilerSaServiceTest001
@@ -199,7 +71,6 @@ static bool WriteStubConfig(OHOS::MessageParcel& data, int32_t pid)
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest001, TestSize.Level3)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
 
@@ -213,25 +84,22 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest001
 
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
     EXPECT_EQ(service->Start(config), RET_OK);
-    sleep(3);
     EXPECT_EQ(service->Stop(config->pid_), RET_OK);
 
     uint32_t fd = open("/data/local/tmp/test_dump_data.htrace",
         O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
     EXPECT_GT(fd, 0);
     EXPECT_EQ(service->DumpData(fd, config), RET_OK);
-    sleep(2);
     EXPECT_EQ(service->Stop(config->pid_), RET_OK);
 }
 
 /**
- * @tc.name: NativeMemoryProfilerSaServiceTest
- * @tc.desc: Test the service interface with false case.
+ * @tc.name: NativeMemoryProfilerSaServiceTest002
+ * @tc.desc: Native memory profiler SA service test 002.
  * @tc.type: FUNC
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest002, TestSize.Level3)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
 
@@ -259,7 +127,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest002
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest003, TestSize.Level3)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
 
@@ -283,7 +150,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest003
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest004, TestSize.Level3)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
     int32_t pid = GetProcessPid(TEST_NATIVE_NAME);
@@ -311,7 +177,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest004
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubRejectsInvalidDescriptor, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
     ASSERT_NE(stub, nullptr);
     OHOS::MessageParcel data;
@@ -329,7 +194,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubRejectsInvalidDescriptor, Test
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubDispatchesStopRequests, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
     ASSERT_NE(stub, nullptr);
     OHOS::MessageParcel reply;
@@ -362,7 +226,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubDispatchesStopRequests, TestSi
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubDispatchesStartAndDumpRequests, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
     ASSERT_NE(stub, nullptr);
     OHOS::MessageParcel reply;
@@ -396,13 +259,95 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubDispatchesStartAndDumpRequests
 }
 
 /**
+ * @tc.name: SaStubRejectsMalformedPayloads
+ * @tc.desc: OnRemoteRequest rejects requests with missing payload fields.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubRejectsMalformedPayloads, TestSize.Level2)
+{
+    OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
+    ASSERT_NE(stub, nullptr);
+
+    auto callWithTokenOnly = [&stub](NativeMemoryProfilerSaInterfaceCode code) {
+        OHOS::MessageParcel data;
+        OHOS::MessageParcel reply;
+        OHOS::MessageOption option;
+        EXPECT_TRUE(data.WriteInterfaceToken(INativeMemoryProfilerSa::GetDescriptor()));
+        return stub->OnRemoteRequest(static_cast<uint32_t>(code), data, reply, option);
+    };
+
+    EXPECT_EQ(callWithTokenOnly(NativeMemoryProfilerSaInterfaceCode::START), RET_ERR);
+    EXPECT_EQ(callWithTokenOnly(NativeMemoryProfilerSaInterfaceCode::START_HOOK_PID_VOID), RET_ERR);
+    EXPECT_EQ(callWithTokenOnly(NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_PID), RET_ERR);
+    EXPECT_EQ(callWithTokenOnly(NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_NAME), RET_ERR);
+    EXPECT_EQ(callWithTokenOnly(NativeMemoryProfilerSaInterfaceCode::DUMP_DATA), RET_ERR);
+    EXPECT_EQ(callWithTokenOnly(NativeMemoryProfilerSaInterfaceCode::DUMP_SIMP_DATA), RET_ERR);
+}
+
+/**
+ * @tc.name: SaStubDispatchesDumpSimpRequests
+ * @tc.desc: OnRemoteRequest dispatches simplified dump request and rejects missing process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubDispatchesDumpSimpRequests, TestSize.Level2)
+{
+    OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
+    ASSERT_NE(stub, nullptr);
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option;
+
+    OHOS::MessageParcel validData;
+    ASSERT_TRUE(validData.WriteInterfaceToken(INativeMemoryProfilerSa::GetDescriptor()));
+    ASSERT_TRUE(WriteStubConfig(validData, 0));
+    EXPECT_EQ(stub->OnRemoteRequest(static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::DUMP_SIMP_DATA),
+        validData, reply, option), RET_OK);
+    EXPECT_EQ(stub->lastPid_, 0);
+
+    OHOS::MessageParcel missingPidData;
+    ASSERT_TRUE(missingPidData.WriteInterfaceToken(INativeMemoryProfilerSa::GetDescriptor()));
+    ASSERT_TRUE(WriteStubConfig(missingPidData, 999999));
+    EXPECT_EQ(stub->OnRemoteRequest(static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::DUMP_SIMP_DATA),
+        missingPidData, reply, option), RET_ERR);
+}
+
+/**
+ * @tc.name: SaStubHandlesUnknownAndExistingPidDumpRequests
+ * @tc.desc: OnRemoteRequest handles default code and dump requests for an existing process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubHandlesUnknownAndExistingPidDumpRequests, TestSize.Level2)
+{
+    OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
+    ASSERT_NE(stub, nullptr);
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option;
+
+    OHOS::MessageParcel unknownData;
+    ASSERT_TRUE(unknownData.WriteInterfaceToken(INativeMemoryProfilerSa::GetDescriptor()));
+    EXPECT_NE(stub->OnRemoteRequest(UINT32_MAX, unknownData, reply, option), RET_OK);
+
+    OHOS::MessageParcel dumpData;
+    ASSERT_TRUE(dumpData.WriteInterfaceToken(INativeMemoryProfilerSa::GetDescriptor()));
+    ASSERT_TRUE(WriteStubConfig(dumpData, getpid()));
+    ASSERT_TRUE(dumpData.WriteFileDescriptor(STDOUT_FILENO));
+    EXPECT_EQ(stub->OnRemoteRequest(static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::DUMP_DATA),
+        dumpData, reply, option), RET_OK);
+    EXPECT_EQ(stub->lastPid_, getpid());
+
+    OHOS::MessageParcel simpData;
+    ASSERT_TRUE(simpData.WriteInterfaceToken(INativeMemoryProfilerSa::GetDescriptor()));
+    ASSERT_TRUE(WriteStubConfig(simpData, getpid()));
+    EXPECT_EQ(stub->OnRemoteRequest(static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::DUMP_SIMP_DATA),
+        simpData, reply, option), RET_OK);
+}
+
+/**
  * @tc.name: SaStubRejectsInvalidProcessForDump
  * @tc.desc: StubDumpFile rejects config with missing target pid.
  * @tc.type: FUNC
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubRejectsInvalidProcessForDump, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
     ASSERT_NE(stub, nullptr);
     OHOS::MessageParcel data;
@@ -423,7 +368,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubRejectsInvalidProcessForDump, 
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, SaProxyRejectsNullRemote, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     OHOS::sptr<NativeMemoryProfilerSaProxy> proxy = new (std::nothrow) NativeMemoryProfilerSaProxy(nullptr);
     ASSERT_NE(proxy, nullptr);
     auto config = MakeSaConfig();
@@ -443,7 +387,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaProxyRejectsNullRemote, TestSize.L
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, SaProxyDispatchesStopRequests, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
     ASSERT_NE(stub, nullptr);
     OHOS::sptr<NativeMemoryProfilerSaProxy> proxy =
@@ -458,9 +401,89 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaProxyDispatchesStopRequests, TestS
 
     EXPECT_EQ(proxy->Stop(), RET_OK);
     EXPECT_TRUE(stub->stoppedVoid_);
+}
 
-    EXPECT_EQ(proxy->StopSync(), RET_OK);
-    EXPECT_TRUE(stub->stoppedSync_);
+/**
+ * @tc.name: SaProxyDispatchesStartDumpAndReplyStats
+ * @tc.desc: proxy start and dump methods dispatch to remote stub and validate reply stats.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaProxyDispatchesStartDumpAndReplyStats, TestSize.Level2)
+{
+    OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
+    ASSERT_NE(stub, nullptr);
+    OHOS::sptr<NativeMemoryProfilerSaProxy> proxy =
+        new (std::nothrow) NativeMemoryProfilerSaProxy(stub->AsObject());
+    ASSERT_NE(proxy, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+
+    EXPECT_EQ(proxy->Start(config), RET_OK);
+    EXPECT_EQ(stub->lastPid_, 0);
+
+    OHOS::sptr<TestNativeMemoryProfilerSaCallbackStub> callback =
+        new (std::nothrow) TestNativeMemoryProfilerSaCallbackStub();
+    ASSERT_NE(callback, nullptr);
+    EXPECT_EQ(proxy->StartPidVoid(config, callback->AsObject()), RET_OK);
+    EXPECT_FALSE(stub->callbackIsNull_);
+
+    EXPECT_EQ(proxy->DumpData(STDOUT_FILENO, config), RET_OK);
+    EXPECT_GT(stub->lastFd_, 0u);
+    std::string replyStats = "unchanged";
+    EXPECT_EQ(proxy->Start(config, replyStats), RET_ERR);
+    EXPECT_TRUE(replyStats.empty());
+}
+
+/**
+ * @tc.name: SaProxyHandlesRemoteErrorsAndReplyStatsSuccess
+ * @tc.desc: SA proxy handles remote errors and reply stats success.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaProxyHandlesRemoteErrorsAndReplyStatsSuccess, TestSize.Level2)
+{
+    OHOS::sptr<FailingNativeMemoryProfilerSaStub> failingStub =
+        new (std::nothrow) FailingNativeMemoryProfilerSaStub();
+    ASSERT_NE(failingStub, nullptr);
+    OHOS::sptr<NativeMemoryProfilerSaProxy> failingProxy =
+        new (std::nothrow) NativeMemoryProfilerSaProxy(failingStub->AsObject());
+    ASSERT_NE(failingProxy, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    OHOS::sptr<TestNativeMemoryProfilerSaCallbackStub> callback =
+        new (std::nothrow) TestNativeMemoryProfilerSaCallbackStub();
+    ASSERT_NE(callback, nullptr);
+
+    EXPECT_EQ(failingProxy->Start(config), RET_ERR);
+    EXPECT_EQ(failingProxy->StartPidVoid(config, callback->AsObject()), RET_ERR);
+    EXPECT_EQ(failingProxy->DumpData(STDOUT_FILENO, config), RET_ERR);
+    EXPECT_EQ(failingProxy->Stop(123), RET_ERR);
+    EXPECT_EQ(failingProxy->Stop("remote_error"), RET_ERR);
+    EXPECT_EQ(failingProxy->Stop(), RET_ERR);
+    EXPECT_EQ(failingStub->lastPid_, 123);
+    EXPECT_EQ(failingStub->lastName_, "remote_error");
+    EXPECT_TRUE(failingStub->stoppedVoid_);
+
+    OHOS::sptr<ReplyNativeMemoryProfilerSaStub> replyStub =
+        new (std::nothrow) ReplyNativeMemoryProfilerSaStub();
+    ASSERT_NE(replyStub, nullptr);
+    OHOS::sptr<NativeMemoryProfilerSaProxy> replyProxy =
+        new (std::nothrow) NativeMemoryProfilerSaProxy(replyStub->AsObject());
+    ASSERT_NE(replyProxy, nullptr);
+    std::string replyStats;
+    EXPECT_EQ(replyProxy->Start(config, replyStats), RET_OK);
+    EXPECT_EQ(replyStats, "reply_stats_ok");
+}
+
+/**
+ * @tc.name: SaProxyHandleTimeoutClearsStartParameter
+ * @tc.desc: HandleTimeout clears memprofiler start parameter when collector is missing.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaProxyHandleTimeoutClearsStartParameter, TestSize.Level2)
+{
+    NativeMemoryProfilerSaProxy::HandleTimeout();
+    EXPECT_EQ(OHOS::system::GetParameter("hiviewdfx.hiprofiler.memprofiler.start", ""), "0");
 }
 
 /**
@@ -470,7 +493,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaProxyDispatchesStopRequests, TestS
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, SaCallbackStubDispatchesResult, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     OHOS::sptr<TestNativeMemoryProfilerSaCallbackStub> stub =
         new (std::nothrow) TestNativeMemoryProfilerSaCallbackStub();
     ASSERT_NE(stub, nullptr);
@@ -481,11 +503,11 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaCallbackStubDispatchesResult, Test
 
     OHOS::MessageParcel validData;
     ASSERT_TRUE(validData.WriteInterfaceToken(INativeMemoryProfilerSaCallback::GetDescriptor()));
-    ASSERT_TRUE(validData.WriteInt32(8));
+    ASSERT_TRUE(validData.WriteInt32(100));
     ASSERT_TRUE(validData.WriteInt32(7));
     ASSERT_TRUE(validData.WriteString("/data/local/tmp/result.htrace"));
     EXPECT_EQ(stub->OnRemoteRequest(0, validData, reply, option), OHOS::ERR_NONE);
-    EXPECT_EQ(stub->pid_, 8);
+    EXPECT_EQ(stub->pid_, 100);
     EXPECT_EQ(stub->errorCode_, 7);
     EXPECT_EQ(stub->filePath_, "/data/local/tmp/result.htrace");
 }
@@ -497,11 +519,10 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaCallbackStubDispatchesResult, Test
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, SaCallbackProxyHandlesRemotePaths, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     OHOS::sptr<NativeMemoryProfilerSaCallbackProxy> nullProxy =
         new (std::nothrow) NativeMemoryProfilerSaCallbackProxy(nullptr);
     ASSERT_NE(nullProxy, nullptr);
-    nullProxy->OnProfilingResult(1, 1, "/data/local/tmp/null.htrace");
+    nullProxy->OnProfilingResult(0, 1, "/data/local/tmp/null.htrace");
 
     OHOS::sptr<TestNativeMemoryProfilerSaCallbackStub> callback =
         new (std::nothrow) TestNativeMemoryProfilerSaCallbackStub();
@@ -510,63 +531,11 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaCallbackProxyHandlesRemotePaths, T
         new (std::nothrow) NativeMemoryProfilerSaCallbackProxy(callback->AsObject());
     ASSERT_NE(proxy, nullptr);
 
-    proxy->OnProfilingResult(8, 9, "/data/local/tmp/proxy.htrace");
+    proxy->OnProfilingResult(0, 9, "/data/local/tmp/proxy.htrace");
 
-    EXPECT_EQ(callback->pid_, 8);
+    EXPECT_EQ(callback->pid_, 0);
     EXPECT_EQ(callback->errorCode_, 9);
     EXPECT_EQ(callback->filePath_, "/data/local/tmp/proxy.htrace");
-}
-
-/**
- * @tc.name: GetTaskNumConfigNull
- * @tc.desc: GetTaskNum config is nullptr
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, GetTaskNumConfigNull, TestSize.Level3)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    std::shared_ptr<NativeMemoryProfilerSaConfig> config = nullptr;
-    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
-    int32_t result = service->GetTaskNum(config);
-    EXPECT_EQ(result, 0);
-}
-
-/**
- * @tc.name: GetTaskNumConfigNull
- * @tc.desc: GetTaskNum startType is API,pid_ not found in g_pidCtx
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, GetTaskNumApiTypePidNotFound, TestSize.Level3)
-{
-    int32_t startTypeApi = 1;
-    int32_t notFoundPid = 999;
-    using namespace OHOS::Developtools::NativeDaemon;
-    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    config->startType_ = startTypeApi;
-    config->pid_ = notFoundPid;
-
-    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
-    int32_t result = service->GetTaskNum(config);
-
-    EXPECT_EQ(result, 0);
-}
-
-/**
- * @tc.name: GetTaskNumConfigNull
- * @tc.desc: GetTaskNum startType is HIVIEW Type, g_pidCtx is empty
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, GetTaskNumHiviewTypeEmpty, TestSize.Level3)
-{
-    uint32_t startTypeHiview = 0;
-    using namespace OHOS::Developtools::NativeDaemon;
-    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    config->startType_ = startTypeHiview;
-    
-    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
-
-    int32_t result = service->GetTaskNum(config);
-    EXPECT_EQ(result, 0);
 }
 
 /**
@@ -576,7 +545,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, GetTaskNumHiviewTypeEmpty, TestSize.
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, IsNativeDeamonRunningTest, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     EXPECT_FALSE(NativeMemoryProfilerSaService::IsNativeDeamonRunning());
 }
 
@@ -587,7 +555,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, IsNativeDeamonRunningTest, TestSize.
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, OnStopClearsStartedState, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
     ASSERT_NE(service, nullptr);
 
@@ -600,272 +567,29 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, OnStopClearsStartedState, TestSize.L
 }
 
 /**
- * @tc.name: CheckSystemResourceTest
- * @tc.desc: CheckSystemResourceTest
+ * @tc.name: OnStartSkipsWhenAlreadyStarted
+ * @tc.desc: On start skips when already started.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckSystemResourceTest, TestSize.Level3)
+HWTEST_F(NativeMemoryProfilerSaServiceTest, OnStartSkipsWhenAlreadyStarted, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
-    int32_t result = NativeMemoryProfilerSaService::CheckSystemResource();
-    bool isResourceResult = (result == static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) ||
-        (result == static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_MEM_PRESSURE_CRITICAL)) ||
-        (result == static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CPU_OVERLOADED)) ||
-        (result == static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_STORAGE_PRESSURE_CRITICAL));
-    EXPECT_TRUE(isResourceResult) << "unexpected result: " << result;
-}
-
-/**
- * @tc.name: GetSystemMemoryInfoTest001
- * @tc.desc: invalid params
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, GetSystemMemoryInfoTest001, TestSize.Level3)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    MemoryInfo* memInfo = nullptr;
-    bool result = NativeMemoryProfilerSaService::GetSystemMemoryInfo(memInfo);
-    EXPECT_FALSE(result);
-}
-
-/**
- * @tc.name: GetSystemMemoryInfoTest002
- * @tc.desc: normal case
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, GetSystemMemoryInfoTest002, TestSize.Level3)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    MemoryInfo memInfo;
-    bool result = NativeMemoryProfilerSaService::GetSystemMemoryInfo(&memInfo);
-    if (result) {
-        EXPECT_GT(memInfo.totalMem, 0);
-        EXPECT_GT(memInfo.usedMem, 0);
-        EXPECT_GT(memInfo.freeMem, 0);
-        EXPECT_GT(memInfo.availableMem, 0ULL);
-        EXPECT_GT(memInfo.availablePercent, 0.0);
-    }
-}
-
-/**
- * @tc.name: GetSystemCpuUsageInfoTest001
- * @tc.desc: invalid params
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, GetSystemCpuUsageInfoTest001, TestSize.Level3)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    double* cpuUsage = nullptr;
-    bool result = NativeMemoryProfilerSaService::GetSystemCpuUsageInfo(cpuUsage);
-    EXPECT_FALSE(result);
-}
-
-/**
- * @tc.name: GetSystemCpuUsageInfoTest002
- * @tc.desc: normal case
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, GetSystemCpuUsageInfoTest002, TestSize.Level3)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    double cpuUsage = 0.0;
-    bool result = NativeMemoryProfilerSaService::GetSystemCpuUsageInfo(&cpuUsage);
-    if (result) {
-        EXPECT_GE(cpuUsage, 0.0);
-        EXPECT_LE(cpuUsage, 100.0);
-    }
-}
-
-/**
- * @tc.name: ParseCpuStatsValidContent
- * @tc.desc: ParseCpuStats parses aggregate CPU line.
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, ParseCpuStatsValidContent, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    unsigned long total = 0;
-    unsigned long idle = 0;
-    std::string content = "cpu  1 2 3 4 5 6 7 8 9 10\ncpu0 1 1 1 1 1 1 1 1 1 1\n";
-    EXPECT_TRUE(NativeMemoryProfilerSaService::ParseCpuStats(content, total, idle));
-    EXPECT_EQ(total, 36UL);
-    EXPECT_EQ(idle, 9UL);
-}
-
-/**
- * @tc.name: ParseCpuStatsRejectsMissingCpuLine
- * @tc.desc: ParseCpuStats rejects content without aggregate CPU line.
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, ParseCpuStatsRejectsMissingCpuLine, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    unsigned long total = 0;
-    unsigned long idle = 0;
-    EXPECT_FALSE(NativeMemoryProfilerSaService::ParseCpuStats("intr 1 2 3\n", total, idle));
-}
-
-/**
- * @tc.name: ParseCpuStatsRejectsEmptyContent
- * @tc.desc: ParseCpuStats returns false when content has no first line.
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, ParseCpuStatsRejectsEmptyContent, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    unsigned long total = 0;
-    unsigned long idle = 0;
-    EXPECT_FALSE(NativeMemoryProfilerSaService::ParseCpuStats("", total, idle));
-}
-
-/**
- * @tc.name: GetCmdArgsIncludesConfiguredFields
- * @tc.desc: GetCmdArgs reports configured boolean and numeric fields.
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, GetCmdArgsIncludesConfiguredFields, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    auto config = MakeSaConfig();
-    ASSERT_NE(config, nullptr);
-    config->filterSize_ = 32;
-    config->mallocDisable_ = true;
-    config->mmapDisable_ = true;
-    config->asyncStackEnable_ = true;
-    config->nmdPid_ = 1234;
-    config->nmdType_ = 2;
-
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
     ASSERT_NE(service, nullptr);
-    std::string args = service->GetCmdArgs(config);
-    EXPECT_NE(args.find("filter_size: 32"), std::string::npos);
-    EXPECT_NE(args.find("malloc_disable: true"), std::string::npos);
-    EXPECT_NE(args.find("asyncStack_enable: true"), std::string::npos);
-    EXPECT_NE(args.find("nmd_pid: 1234"), std::string::npos);
+
+    service->started_ = true;
+    service->OnStart();
+    EXPECT_TRUE(service->started_);
+    service->started_ = false;
 }
 
 /**
- * @tc.name: CheckConfigRejectsMissingFilePath
- * @tc.desc: CheckConfig rejects config without output path when fd is empty.
+ * @tc.name: DelayedShutdownCancelHandlesMissingTimer
+ * @tc.desc: Delayed shutdown cancel handles missing timer.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckConfigRejectsMissingFilePath, TestSize.Level2)
+HWTEST_F(NativeMemoryProfilerSaServiceTest, DelayedShutdownCancelHandlesMissingTimer, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
-    auto config = MakeSaConfig();
-    ASSERT_NE(config, nullptr);
-    config->filePath_.clear();
-    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
-    ASSERT_NE(service, nullptr);
-    EXPECT_EQ(service->CheckConfig(config), RET_ERR);
-}
-
-/**
- * @tc.name: CheckConfigAcceptsExistingFd
- * @tc.desc: CheckConfig accepts valid process config when caller provides fd.
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckConfigAcceptsExistingFd, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    auto config = MakeSaConfig();
-    ASSERT_NE(config, nullptr);
-    config->filePath_.clear();
-    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
-    ASSERT_NE(service, nullptr);
-    EXPECT_EQ(service->CheckConfig(config, STDOUT_FILENO), RET_OK);
-}
-
-/**
- * @tc.name: ApplyNmdConfigUsesPrintMode
- * @tc.desc: ApplyNmdConfig returns whether hook should be skipped by NMD mode.
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, ApplyNmdConfigUsesPrintMode, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    auto config = MakeSaConfig();
-    ASSERT_NE(config, nullptr);
-    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
-    ASSERT_NE(service, nullptr);
-    EXPECT_FALSE(service->ApplyNmdConfig(config));
-    config->printNmd_ = true;
-    config->printNmdOnly_ = false;
-    config->nmdPid_ = 4321;
-    EXPECT_TRUE(service->ApplyNmdConfig(config));
-    config->printNmdOnly_ = true;
-    EXPECT_FALSE(service->ApplyNmdConfig(config));
-}
-
-/**
- * @tc.name: ApplyMemtraceConfigUpdatesGpuRange
- * @tc.desc: ApplyMemtraceConfig copies GPU ranges used by client config.
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, ApplyMemtraceConfigUpdatesGpuRange, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    auto config = MakeSaConfig();
-    ASSERT_NE(config, nullptr);
-    config->memtraceEnable_ = true;
-    config->gpuRange_[GPU_VK_INDEX][0] = 11;
-    config->gpuRange_[GPU_GLES_IMAGE_INDEX][1] = 22;
-    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
-    ASSERT_NE(service, nullptr);
-    service->ApplyMemtraceConfig(config);
-
-    ClientConfig clientConfig;
-    service->SetGpuConfig(clientConfig);
-    EXPECT_EQ(clientConfig.gpuRange.gpuVk[0], 11u);
-    EXPECT_EQ(clientConfig.gpuRange.gpuGlesImage[1], 22u);
-}
-
-/**
- * @tc.name: ApplyMemtraceConfigIgnoresDisabledConfig
- * @tc.desc: ApplyMemtraceConfig keeps previous GPU ranges when memtrace is disabled.
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, ApplyMemtraceConfigIgnoresDisabledConfig, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    auto enabledConfig = MakeSaConfig();
-    auto disabledConfig = MakeSaConfig();
-    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
-    ASSERT_NE(enabledConfig, nullptr);
-    ASSERT_NE(disabledConfig, nullptr);
-    ASSERT_NE(service, nullptr);
-
-    enabledConfig->memtraceEnable_ = true;
-    enabledConfig->gpuRange_[GPU_CL_BUFFER_INDEX][0] = 31;
-    enabledConfig->gpuRange_[GPU_GLES_IMAGE_INDEX][1] = 42;
-    service->ApplyMemtraceConfig(enabledConfig);
-
-    disabledConfig->memtraceEnable_ = false;
-    disabledConfig->gpuRange_[GPU_CL_BUFFER_INDEX][0] = 99;
-    disabledConfig->gpuRange_[GPU_GLES_IMAGE_INDEX][1] = 100;
-    service->ApplyMemtraceConfig(disabledConfig);
-
-    ClientConfig clientConfig;
-    service->SetGpuConfig(clientConfig);
-    EXPECT_EQ(clientConfig.gpuRange.gpuClBuffer[0], 31u);
-    EXPECT_EQ(clientConfig.gpuRange.gpuGlesImage[1], 42u);
-}
-
-/**
- * @tc.name: RefreshFileCacheModeConfigEnablesFlag
- * @tc.desc: RefreshFileCacheModeConfig enables file cache mode.
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, RefreshFileCacheModeConfigEnablesFlag, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    auto config = MakeSaConfig();
-    ASSERT_NE(config, nullptr);
-    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
-    ASSERT_NE(service, nullptr);
-    EXPECT_FALSE(config->enableFileCacheMode_);
-    service->RefreshFileCacheModeConfig(config);
-    EXPECT_TRUE(config->enableFileCacheMode_);
+    EXPECT_NO_FATAL_FAILURE(NativeMemoryProfilerSaService::DelayedShutdown(true));
 }
 
 /**
@@ -875,7 +599,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, RefreshFileCacheModeConfigEnablesFla
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, StopHookWithoutStartedTaskReturnsNotStarted, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     int32_t result = NativeMemoryProfilerSaService::StopHook(987654, "");
     EXPECT_EQ(result, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED));
 }
@@ -887,7 +610,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, StopHookWithoutStartedTaskReturnsNot
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, StartAndDumpDataRejectNullConfig, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = nullptr;
     OHOS::MessageParcel reply;
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
@@ -905,7 +627,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, StartAndDumpDataRejectNullConfig, Te
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, PrivateStartHookRejectsNullConfig, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = nullptr;
     OHOS::MessageParcel reply;
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
@@ -922,7 +643,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, PrivateStartHookRejectsNullConfig, T
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, StopVoidReturnsNotStartedWhenNoCallingPidTask, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
     ASSERT_NE(service, nullptr);
 
@@ -936,7 +656,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, StopVoidReturnsNotStartedWhenNoCalli
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, StartPidVoidRejectsMismatchedCallingPid, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     auto config = MakeSaConfig();
     ASSERT_NE(config, nullptr);
     config->pid_ = static_cast<int32_t>(OHOS::IPCSkeleton::GetCallingPid()) + 1;
@@ -947,24 +666,53 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, StartPidVoidRejectsMismatchedCalling
         static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED));
 }
 
+/**
+ * @tc.name: StartPidVoidNmdModeReturnsOkForCallerPid
+ * @tc.desc: Start PID void NMD mode returns ok for caller PID.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, StartPidVoidNmdModeReturnsOkForCallerPid, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     auto config = MakeSaConfig();
     ASSERT_NE(config, nullptr);
     config->pid_ = static_cast<int32_t>(OHOS::IPCSkeleton::GetCallingPid());
     config->printNmd_ = true;
     config->printNmdOnly_ = false;
     config->nmdPid_ = static_cast<uint32_t>(config->pid_);
+    config->typeFileName_ = "start_pid_void_nmd";
 
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
     ASSERT_NE(service, nullptr);
     EXPECT_EQ(service->StartPidVoid(config, nullptr), RET_OK);
 }
 
+/**
+ * @tc.name: StartPidVoidRejectsUnsafeTypeFileName
+ * @tc.desc: Start PID void rejects unsafe type file name.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, StartPidVoidRejectsUnsafeTypeFileName, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+
+    const std::vector<std::string> invalidNames = {"", ".", "../bad", "bad/name"};
+    for (const auto& name : invalidNames) {
+        auto config = MakeSaConfig();
+        ASSERT_NE(config, nullptr);
+        config->pid_ = static_cast<int32_t>(OHOS::IPCSkeleton::GetCallingPid());
+        config->typeFileName_ = name;
+        EXPECT_EQ(service->StartPidVoid(config, nullptr), RET_ERR);
+    }
+}
+
+/**
+ * @tc.name: StartAndDumpDataNmdModesReturnOk
+ * @tc.desc: Start and DumpData accept printNmd mode and return RET_OK.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, StartAndDumpDataNmdModesReturnOk, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     auto startConfig = MakeSaConfig();
     auto dumpConfig = MakeSaConfig();
     ASSERT_NE(startConfig, nullptr);
@@ -980,11 +728,36 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, StartAndDumpDataNmdModesReturnOk, Te
     ASSERT_NE(service, nullptr);
     EXPECT_EQ(service->Start(startConfig), RET_OK);
     EXPECT_EQ(service->DumpData(STDOUT_FILENO, dumpConfig), RET_OK);
+    EXPECT_EQ(service->Stop(startConfig->processName_), RET_OK);
 }
 
+/**
+ * @tc.name: StartWithReplyNmdModeReturnsOk
+ * @tc.desc: Start with reply accepts printNmd mode and returns RET_OK.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, StartWithReplyNmdModeReturnsOk, TestSize.Level2)
+{
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->printNmd_ = true;
+    config->printNmdOnly_ = false;
+    config->nmdPid_ = static_cast<uint32_t>(getpid());
+    OHOS::MessageParcel reply;
+
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    EXPECT_EQ(service->Start(config, reply), RET_OK);
+    EXPECT_EQ(service->Stop(config->processName_), RET_OK);
+}
+
+/**
+ * @tc.name: CheckConfigAcceptsExtendedProcessAndFd
+ * @tc.desc: Check config accepts extended process and FD.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckConfigAcceptsExtendedProcessAndFd, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     auto config = MakeSaConfig();
     ASSERT_NE(config, nullptr);
     config->extendProcesses_ = true;
@@ -995,9 +768,13 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckConfigAcceptsExtendedProcessAnd
     EXPECT_EQ(service->CheckConfig(config, STDOUT_FILENO), RET_OK);
 }
 
+/**
+ * @tc.name: PidAndNameConflictAllowsProcessNameOnly
+ * @tc.desc: PID and name conflict allows process name only.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, PidAndNameConflictAllowsProcessNameOnly, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     auto config = MakeSaConfig();
     ASSERT_NE(config, nullptr);
     config->pid_ = 0;
@@ -1013,7 +790,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, PidAndNameConflictAllowsProcessNameO
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, PidAndNameConflictRejectsNullConfig, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = nullptr;
     EXPECT_EQ(NativeMemoryProfilerSaService::PidAndNameConflict(config), RET_ERR);
 }
@@ -1025,7 +801,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, PidAndNameConflictRejectsNullConfig,
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, PidAndNameConflictRejectsMissingIdentifiers, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     auto config = MakeSaConfig();
     ASSERT_NE(config, nullptr);
     config->pid_ = 0;
@@ -1041,7 +816,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, PidAndNameConflictRejectsMissingIden
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, PidAndNameConflictClearsProcessNameForPidStart, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     auto config = MakeSaConfig();
     ASSERT_NE(config, nullptr);
     config->pid_ = TEST_DURATION;
@@ -1052,13 +826,68 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, PidAndNameConflictClearsProcessNameF
 }
 
 /**
+ * @tc.name: CheckConfigReturnsOverlimitForApiAndHiview
+ * @tc.desc: CheckConfig returns overlimit for API and hiview tasks when taskMaxNum is exhausted.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckConfigReturnsOverlimitForApiAndHiview, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    service->taskMaxNum_ = 0;
+
+    auto apiConfig = MakeSaConfig();
+    ASSERT_NE(apiConfig, nullptr);
+    apiConfig->pid_ = 1234;
+    apiConfig->startType_ = TEST_START_TYPE_API;
+    EXPECT_EQ(service->CheckConfig(apiConfig, STDOUT_FILENO),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PROCESS_OVERLIMIT));
+
+    auto hiviewConfig = MakeSaConfig();
+    ASSERT_NE(hiviewConfig, nullptr);
+    hiviewConfig->pid_ = 1234;
+    hiviewConfig->startType_ = TEST_START_TYPE_HIVIEW;
+    EXPECT_EQ(service->CheckConfig(hiviewConfig, STDOUT_FILENO), RET_ERR);
+    service->taskMaxNum_ = 4;
+}
+
+/**
+ * @tc.name: CheckConfigRejectsStartupModeConflict
+ * @tc.desc: CheckConfig rejects a second startup-mode task when one already exists.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckConfigRejectsStartupModeConflict, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+
+    auto startConfig = MakeSaConfig();
+    ASSERT_NE(startConfig, nullptr);
+    startConfig->pid_ = 0;
+    startConfig->processName_ = "startup_mode_conflict";
+    startConfig->startupMode_ = true;
+    startConfig->startType_ = TEST_START_TYPE_HIVIEW;
+    startConfig->filePath_ = MakeTracePath("startup_mode_conflict");
+    ASSERT_EQ(service->Start(startConfig), RET_OK);
+    sleep(1);
+
+    auto conflictConfig = MakeSaConfig();
+    ASSERT_NE(conflictConfig, nullptr);
+    conflictConfig->pid_ = 0;
+    conflictConfig->processName_ = "startup_mode_conflict_2";
+    conflictConfig->startupMode_ = true;
+    conflictConfig->filePath_ = MakeTracePath("startup_mode_conflict_2");
+    EXPECT_EQ(service->CheckConfig(conflictConfig, STDOUT_FILENO), RET_ERR);
+    EXPECT_EQ(service->Stop(startConfig->processName_), RET_OK);
+}
+
+/**
  * @tc.name: ReceiveCacheFileMsgRejectsNullBuffer
  * @tc.desc: ReceiveCacheFileMsg rejects nullptr buffer.
  * @tc.type: FUNC
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, ReceiveCacheFileMsgRejectsNullBuffer, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     SocketContext context;
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
     ASSERT_NE(service, nullptr);
@@ -1073,7 +902,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ReceiveCacheFileMsgRejectsNullBuffer
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcRejectsUnexpectedPacketSize, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     int value = 0;
     SocketContext context;
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
@@ -1089,7 +917,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcRejectsUnexpectedPacketS
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcRejectsCacheFileMsgWithoutContext, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     HookCacheFileMsg cacheFileMsg(7654321, 0, CACHE_FILE_STOP);
     SocketContext context;
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
@@ -1106,7 +933,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcRejectsCacheFileMsgWitho
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcHandlesMemLeakDoneWithoutContext, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     int peerConfig = static_cast<int>(MEM_LEAK_DONE_CMD);
     SocketContext context;
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
@@ -1122,7 +948,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcHandlesMemLeakDoneWithou
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcRejectsNegativePeerConfig, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     int peerConfig = -1;
     SocketContext context;
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
@@ -1130,6 +955,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcRejectsNegativePeerConfi
 
     EXPECT_FALSE(service->ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&peerConfig), sizeof(peerConfig)));
 }
+
 /**
  * @tc.name: StartApiTypePidMismatchTest
  * @tc.desc: Start returns PERMISSION_DENIED when startType is API but pid does not match calling pid.
@@ -1137,7 +963,6 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcRejectsNegativePeerConfi
  */
 HWTEST_F(NativeMemoryProfilerSaServiceTest, StartApiTypePidMismatchTest, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
     auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
     ASSERT_NE(config, nullptr);
     config->startType_ = START_TYPE_API;
@@ -1153,271 +978,927 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, StartApiTypePidMismatchTest, TestSiz
 }
 
 /**
- * @tc.name: CheckTaskLimitPassesWhenUnderLimit
- * @tc.desc: CheckTaskLimit returns RET_OK when task count is within limits.
+ * @tc.name: ProtocolProcRejectsMissingCmdline
+ * @tc.desc: Protocol proc rejects missing cmdline.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckTaskLimitPassesWhenUnderLimit, TestSize.Level2)
+HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcRejectsMissingCmdline, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
-    auto config = MakeSaConfig();
-    ASSERT_NE(config, nullptr);
-    config->extendProcesses_ = false;
-
+    int peerConfig = 987654321;
+    SocketContext context;
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
     ASSERT_NE(service, nullptr);
 
-    EXPECT_EQ(service->CheckTaskLimit(config), RET_OK);
+    EXPECT_FALSE(service->ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&peerConfig), sizeof(peerConfig)));
 }
 
 /**
- * @tc.name: CheckStartupModeConflictReturnsOkWhenNoStartupMode
- * @tc.desc: CheckStartupModeConflict returns RET_OK when no startup mode is active.
+ * @tc.name: ProtocolProcSkipsMemLeakWhenDisabled
+ * @tc.desc: Protocol proc skips mem leak when disabled.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckStartupModeConflictReturnsOkWhenNoStartupMode, TestSize.Level2)
+HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcSkipsMemLeakWhenDisabled, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+
+    int peerConfig = 0;
+    SocketContext context;
+    EXPECT_FALSE(service->ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&peerConfig), sizeof(peerConfig)));
+}
+
+/**
+ * @tc.name: ProtocolProcRejectsRegisteredPidWithInvalidSocket
+ * @tc.desc: Protocol proc rejects registered PID with invalid socket.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcRejectsRegisteredPidWithInvalidSocket, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
     auto config = MakeSaConfig();
     ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = GetProtocolProcessName();
+    ASSERT_FALSE(config->processName_.empty());
+    config->filePath_ = MakeTracePath("protocol_invalid_socket");
+    ASSERT_EQ(service->Start(config), RET_OK);
+
+    int peerConfig = static_cast<int>(getpid());
+    SocketContext context;
+    EXPECT_FALSE(service->ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&peerConfig), sizeof(peerConfig)));
+    EXPECT_EQ(service->Stop(static_cast<uint32_t>(peerConfig)), RET_OK);
+}
+
+/**
+ * @tc.name: ProtocolProcStartupModeReachesSendConfigFailure
+ * @tc.desc: Protocol proc startup mode reaches send config failure.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcStartupModeReachesSendConfigFailure, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = GetProtocolProcessName();
+    ASSERT_FALSE(config->processName_.empty());
+    config->startupMode_ = true;
+    config->filePath_ = MakeTracePath("protocol_startup_socket");
+    ASSERT_EQ(service->Start(config), RET_OK);
+
+    int peerConfig = static_cast<int>(getpid());
+    TestSocketContext context;
+    context.SetSocketHandleForTest(0);
+    EXPECT_FALSE(service->ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&peerConfig), sizeof(peerConfig)));
+    int memLeakDone = static_cast<int>(MEM_LEAK_DONE_CMD);
+    EXPECT_TRUE(service->ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&memLeakDone), sizeof(memLeakDone)));
+    EXPECT_EQ(service->Stop(static_cast<uint32_t>(peerConfig)), RET_OK);
+    EXPECT_TRUE(service->ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&memLeakDone), sizeof(memLeakDone)));
+}
+
+/**
+ * @tc.name: ProtocolProcStartupModeSendsSharedMemoryFds
+ * @tc.desc: Protocol proc startup mode sends shared memory fds.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcStartupModeSendsSharedMemoryFds, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = GetProtocolProcessName();
+    ASSERT_FALSE(config->processName_.empty());
+    config->startupMode_ = true;
+    config->offlineSymbolization_ = true;
+    config->filePath_ = MakeTracePath("protocol_startup_shared_memory");
+    ASSERT_EQ(service->Start(config), RET_OK);
+
+    ScopedSocketPair socketPair;
+    ASSERT_TRUE(socketPair.IsValid());
+    int peerConfig = static_cast<int>(getpid());
+    TestSocketContext context;
+    context.SetSocketHandleForTest(socketPair.First());
+
+    EXPECT_TRUE(service->ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&peerConfig), sizeof(peerConfig)));
+    ASSERT_TRUE(ResetRegisteredSocketFdForStop(*service, context, peerConfig, "protocol_reset_shared_memory"));
+    EXPECT_EQ(service->Stop(static_cast<uint32_t>(peerConfig)), RET_OK);
+}
+
+/**
+ * @tc.name: ProtocolProcNonStartupModeSendsConfigForCallerCredentials
+ * @tc.desc: Protocol proc non startup mode sends config for caller credentials.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcNonStartupModeSendsConfigForCallerCredentials, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = static_cast<uint32_t>(getpid());
+    config->processName_.clear();
     config->startupMode_ = false;
+    config->filePath_ = MakeTracePath("protocol_non_startup_socket");
+    ASSERT_EQ(service->Start(config), RET_OK);
 
-    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
-    ASSERT_NE(service, nullptr);
+    ScopedSocketPair socketPair;
+    ASSERT_TRUE(socketPair.IsValid());
+    int peerConfig = static_cast<int>(getpid());
+    TestSocketContext context;
+    context.SetSocketHandleForTest(socketPair.First());
 
-    EXPECT_EQ(service->CheckStartupModeConflict(config), RET_OK);
+    EXPECT_TRUE(service->ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&peerConfig), sizeof(peerConfig)));
+    ASSERT_TRUE(ResetRegisteredSocketFdForStop(*service, context, peerConfig, "protocol_reset_non_startup"));
+    EXPECT_EQ(service->Stop(static_cast<uint32_t>(peerConfig)), RET_OK);
 }
 
 /**
- * @tc.name: CheckPidNameConflictReturnsOkForUniquePid
- * @tc.desc: CheckPidNameConflict returns RET_OK when PID is not in use.
+ * @tc.name: ProtocolProcStartupModeSendsAsyncUniqueStackFd
+ * @tc.desc: Protocol proc startup mode sends async unique stack FD.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckPidNameConflictReturnsOkForUniquePid, TestSize.Level2)
+HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcStartupModeSendsAsyncUniqueStackFd, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
-    auto config = MakeSaConfig();
-    ASSERT_NE(config, nullptr);
-    config->pid_ = getpid();
-
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
     ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = GetProtocolProcessName();
+    ASSERT_FALSE(config->processName_.empty());
+    config->startupMode_ = true;
+    config->asyncStackEnable_ = true;
+    config->filePath_ = MakeTracePath("protocol_startup_async_stack");
+    ASSERT_EQ(service->Start(config), RET_OK);
 
-    EXPECT_EQ(service->CheckPidNameConflict(config), RET_OK);
+    ScopedSocketPair socketPair;
+    ASSERT_TRUE(socketPair.IsValid());
+    int peerConfig = static_cast<int>(getpid());
+    TestSocketContext context;
+    context.SetSocketHandleForTest(socketPair.First());
+
+    EXPECT_TRUE(service->ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&peerConfig), sizeof(peerConfig)));
+    ASSERT_TRUE(ResetRegisteredSocketFdForStop(*service, context, peerConfig, "protocol_reset_async_stack"));
+    EXPECT_EQ(service->Stop(static_cast<uint32_t>(peerConfig)), RET_OK);
 }
 
 /**
- * @tc.name: CheckFilePathSkipsWhenFdProvided
- * @tc.desc: CheckFilePath returns RET_OK when fd > 0 (file-cache mode).
+ * @tc.name: ProtocolProcStartupModeSendsInitialFileCacheFds
+ * @tc.desc: Protocol proc startup mode sends initial file cache fds.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckFilePathSkipsWhenFdProvided, TestSize.Level2)
+HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcStartupModeSendsInitialFileCacheFds, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
     auto config = MakeSaConfig();
     ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = GetProtocolProcessName();
+    ASSERT_FALSE(config->processName_.empty());
+    config->startupMode_ = true;
+    config->enableFileCacheMode_ = true;
+    config->filePath_ = MakeTracePath("protocol_startup_file_cache");
+    ASSERT_EQ(service->Start(config), RET_OK);
+
+    ScopedSocketPair socketPair;
+    ASSERT_TRUE(socketPair.IsValid());
+    int peerConfig = static_cast<int>(getpid());
+    TestSocketContext context;
+    context.SetSocketHandleForTest(socketPair.First());
+
+    EXPECT_TRUE(service->ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&peerConfig), sizeof(peerConfig)));
+    HookCacheFileMsg cacheStopMsg(peerConfig, 0, CACHE_FILE_STOP);
+    EXPECT_TRUE(service->ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&cacheStopMsg),
+        sizeof(cacheStopMsg)));
+    ASSERT_TRUE(ResetRegisteredSocketFdForStop(*service, context, peerConfig, "protocol_reset_file_cache"));
+    EXPECT_EQ(service->Stop(static_cast<uint32_t>(peerConfig)), RET_OK);
+}
+
+/**
+ * @tc.name: ClientDisconnectCallbackStopsSocketMappedTask
+ * @tc.desc: ClientDisconnectCallback handles disconnect for socket-mapped task.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, ClientDisconnectCallbackStopsSocketMappedTask, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = GetProtocolProcessName();
+    ASSERT_FALSE(config->processName_.empty());
+    config->startupMode_ = true;
+    config->filePath_ = MakeTracePath("client_disconnect_socket");
+    ASSERT_EQ(service->Start(config), RET_OK);
+
+    int peerConfig = static_cast<int>(getpid());
+    TestSocketContext context;
+    context.SetSocketHandleForTest(0);
+    EXPECT_FALSE(service->ProtocolProc(context, 0, reinterpret_cast<const int8_t*>(&peerConfig), sizeof(peerConfig)));
+    EXPECT_NO_FATAL_FAILURE(NativeMemoryProfilerSaService::ClientDisconnectCallback(0));
+    EXPECT_EQ(service->Stop(config->processName_), RET_OK);
+}
+
+/**
+ * @tc.name: ReceiveCacheFileMsgRejectsDisabledFileCacheMode
+ * @tc.desc: Receive cache file msg rejects disabled file cache mode.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, ReceiveCacheFileMsgRejectsDisabledFileCacheMode, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = "cache_disabled_task_" + std::to_string(getpid());
+    config->filePath_ = MakeTracePath("cache_disabled_task");
+    ASSERT_EQ(service->Start(config), RET_OK);
+
+    constexpr int32_t promotedPid = 24683;
+    service->FillTaskConfigContext(promotedPid, config->processName_);
+    HookCacheFileMsg cacheFileMsg(promotedPid, 0, CACHE_FILE_READY);
+    SocketContext context;
+    EXPECT_FALSE(service->ReceiveCacheFileMsg(context, reinterpret_cast<const int8_t*>(&cacheFileMsg)));
+    EXPECT_EQ(service->Stop(static_cast<uint32_t>(promotedPid)), RET_OK);
+}
+
+/**
+ * @tc.name: ReceiveCacheFileMsgRejectsReadyWithoutRegisteredContext
+ * @tc.desc: Receive cache file msg rejects ready without registered context.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, ReceiveCacheFileMsgRejectsReadyWithoutRegisteredContext, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    TestSocketContext context;
+    context.SetSocketHandleForTest(-1);
+    HookCacheFileMsg readyMsg(24684, 0, CACHE_FILE_READY);
+    EXPECT_FALSE(service->ReceiveCacheFileMsg(context, reinterpret_cast<const int8_t*>(&readyMsg)));
+}
+
+/**
+ * @tc.name: ReceiveCacheFileMsgReadyQueuesAndReplenishesFd
+ * @tc.desc: Receive cache file msg ready queues and replenishes FD.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, ReceiveCacheFileMsgReadyQueuesAndReplenishesFd, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = GetProtocolProcessName();
+    ASSERT_FALSE(config->processName_.empty());
+    config->startupMode_ = true;
+    config->enableFileCacheMode_ = true;
+    config->filePath_ = MakeTracePath("cache_ready_replenish");
+    ASSERT_EQ(service->Start(config), RET_OK);
+
+    ScopedSocketPair socketPair;
+    ASSERT_TRUE(socketPair.IsValid());
+    TestSocketContext serviceContext;
+    TestSocketContext peerContext;
+    serviceContext.SetSocketHandleForTest(socketPair.First());
+    peerContext.SetSocketHandleForTest(socketPair.Second());
+    int peerConfig = static_cast<int>(getpid());
+    ASSERT_TRUE(service->ProtocolProc(serviceContext, 0, reinterpret_cast<const int8_t*>(&peerConfig),
+        sizeof(peerConfig)));
+    ProtocolHead clientHead = {};
+    ASSERT_EQ(read(socketPair.Second(), &clientHead, sizeof(clientHead)), static_cast<ssize_t>(sizeof(clientHead)));
+    std::vector<uint8_t> clientConfig(clientHead.protoSize - sizeof(clientHead));
+    ASSERT_EQ(read(socketPair.Second(), clientConfig.data(), clientConfig.size()),
+        static_cast<ssize_t>(clientConfig.size()));
+    for (uint16_t i = 0; i < FILE_CACHE_FD_COUNT; ++i) {
+        int fd = peerContext.ReceiveFileDiscriptor();
+        ASSERT_GE(fd, 0);
+        close(fd);
+    }
+
+    ExpectCacheFileReadyReplenishesFd(*service, serviceContext, peerContext, peerConfig, socketPair.Second());
+    ASSERT_TRUE(ResetRegisteredSocketFdForStop(*service, serviceContext, peerConfig, "protocol_reset_ready"));
+    EXPECT_EQ(service->Stop(static_cast<uint32_t>(peerConfig)), RET_OK);
+}
+
+/**
+ * @tc.name: StartHookReplySimpNmdTimesOutAndStops
+ * @tc.desc: Start hook reply simp NMD times out and stops.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, StartHookReplySimpNmdTimesOutAndStops, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = "simp_nmd_timeout_" + std::to_string(getpid());
+    config->filePath_ = MakeTracePath("simp_nmd_timeout");
+    config->duration_ = TEST_DURATION;
+    config->nmdType_ = 3;
+    OHOS::MessageParcel reply;
+
+    EXPECT_EQ(service->StartHook(config, 0, reply), RET_ERR);
+    EXPECT_EQ(service->Stop(config->processName_), RET_OK);
+}
+
+/**
+ * @tc.name: NotifyProfilingResultUsesCallbackWhenPresent
+ * @tc.desc: Notify profiling result uses callback when present.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, NotifyProfilingResultUsesCallbackWhenPresent, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::NotifyProfilingResult(nullptr, RET_ERR, "");
+    auto task = std::make_shared<TaskConfig>(nullptr, 0, "notify_task", -1, "", -1, false);
+    ASSERT_NE(task, nullptr);
+    NativeMemoryProfilerSaService::NotifyProfilingResult(task, RET_ERR, "");
+
+    OHOS::sptr<TestNativeMemoryProfilerSaCallbackStub> callback =
+        new (std::nothrow) TestNativeMemoryProfilerSaCallbackStub();
+    ASSERT_NE(callback, nullptr);
+    task->callback = callback->AsObject();
+    NativeMemoryProfilerSaService::NotifyProfilingResult(task, RET_OK, "/data/local/tmp/notify.htrace");
+
+    EXPECT_EQ(callback->errorCode_, RET_OK);
+    EXPECT_EQ(callback->filePath_, "/data/local/tmp/notify.htrace");
+}
+
+/**
+ * @tc.name: CopyApiCollectorFileReturnsOkWhenInfoMissing
+ * @tc.desc: Copy API collector file returns ok when info missing.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileReturnsOkWhenInfoMissing, TestSize.Level2)
+{
+    auto task = std::make_shared<TaskConfig>(nullptr, 12345, "copy_missing", -1, "", -1, false);
+    ASSERT_NE(task, nullptr);
+    std::string resultPath = "unchanged";
+
+    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(12345, task, resultPath), RET_OK);
+    EXPECT_EQ(resultPath, "unchanged");
+}
+
+/**
+ * @tc.name: CopyApiCollectorFileRejectsMissingPidInfo
+ * @tc.desc: Copy API collector file returns err when pid is not registered.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileRejectsMissingPidInfo, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    constexpr uint32_t pid = 24688;
+    auto task = std::make_shared<TaskConfig>(nullptr, static_cast<int32_t>(pid), "copy_no_pid", -1, "", -1, false);
+    ASSERT_NE(task, nullptr);
+    task->typeFileName = "no_pid.htrace";
+    std::string resultPath = "unchanged";
+
+    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(pid, task, resultPath), RET_ERR);
+    EXPECT_EQ(resultPath, "unchanged");
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: CopyApiCollectorFileRejectsUnsafeTypeFileName
+ * @tc.desc: Copy API collector file returns err when typeFileName has traversal or slash.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileRejectsUnsafeTypeFileName, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    constexpr uint32_t pid = 24689;
+    NativeMemoryProfilerSaService::InjectPidInfoForTest(static_cast<pid_t>(pid), 200000, 0);
+    std::string resultPath = "unchanged";
+
+    auto dotTask = std::make_shared<TaskConfig>(nullptr, static_cast<int32_t>(pid), "copy_unsafe", -1, "", -1, false);
+    ASSERT_NE(dotTask, nullptr);
+    dotTask->typeFileName = "../evil.htrace";
+    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(pid, dotTask, resultPath), RET_ERR);
+    EXPECT_EQ(resultPath, "unchanged");
+
+    auto slashTask = std::make_shared<TaskConfig>(nullptr, static_cast<int32_t>(pid), "copy_unsafe", -1, "", -1, false);
+    ASSERT_NE(slashTask, nullptr);
+    slashTask->typeFileName = "sub/dir.htrace";
+    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(pid, slashTask, resultPath), RET_ERR);
+    EXPECT_EQ(resultPath, "unchanged");
+
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: CopyApiCollectorFileRejectsCopyFailure
+ * @tc.desc: Copy API collector file returns err when dest path is not writable.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileRejectsCopyFailure, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    constexpr uint32_t pid = 24690;
+    NativeMemoryProfilerSaService::InjectPidInfoForTest(static_cast<pid_t>(pid), 200000, 0);
+    auto task = std::make_shared<TaskConfig>(nullptr, static_cast<int32_t>(pid),
+        "copy_dest_missing", -1, "", -1, false, STDOUT_FILENO);
+    ASSERT_NE(task, nullptr);
+    task->typeFileName = "copy_fail.htrace";
+    std::string resultPath = "unchanged";
+
+    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(pid, task, resultPath), RET_ERR);
+    EXPECT_EQ(resultPath, "unchanged");
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: CopyApiCollectorFileRejectsCompositeHeapCollectFailure
+ * @tc.desc: Copy API collector file returns err when CollectApm fails for composite heap.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileRejectsCompositeHeapCollectFailure, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    constexpr uint32_t pid = 24691;
+    NativeMemoryProfilerSaService::InjectPidInfoForTest(static_cast<pid_t>(pid), 200000, 0);
+    auto task = std::make_shared<TaskConfig>(nullptr, static_cast<int32_t>(pid),
+        "copy_composite", -1, "", -1, false);
+    ASSERT_NE(task, nullptr);
+    task->typeFileName = "composite.htrace";
+    task->compositeHeapEnable = true;
+    std::string resultPath = "unchanged";
+
+    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(pid, task, resultPath), RET_ERR);
+    EXPECT_EQ(resultPath, "unchanged");
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: CopyApiCollectorFileSucceedsForApiTask
+ * @tc.desc: Copy API collector file returns ok and sets sandbox path on success.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CopyApiCollectorFileSucceedsForApiTask, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    constexpr uint32_t pid = 24692;
+    NativeMemoryProfilerSaService::InjectPidInfoForTest(static_cast<pid_t>(pid), 200000, 0);
+    std::string processName = "api_copy_success";
+    std::string typeFileName = "api_success.htrace";
+    std::string destDir = "/data/app/el2/1/base/" + processName + "/files";
+    system(("mkdir -p " + destDir).c_str());
+    std::string probePath = destDir + "/.probe";
+    int probeFd = open(probePath.c_str(), O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (probeFd < 0) {
+        GTEST_SKIP() << "app sandbox dir not writable";
+    }
+    close(probeFd);
+    unlink(probePath.c_str());
+
+    std::string srcPath = "/data/local/tmp/api_copy_success_src.htrace";
+    int srcFd = open(srcPath.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(srcFd, 0);
+    std::string srcData = "API_SOURCE";
+    ASSERT_EQ(write(srcFd, srcData.data(), srcData.size()), static_cast<ssize_t>(srcData.size()));
+    (void)fsync(srcFd);
+
+    auto task = std::make_shared<TaskConfig>(nullptr, static_cast<int32_t>(pid),
+        processName, -1, "", -1, false, static_cast<uint32_t>(srcFd), TEST_START_TYPE_API);
+    ASSERT_NE(task, nullptr);
+    task->typeFileName = typeFileName;
+    std::string resultPath = "unchanged";
+
+    EXPECT_EQ(NativeMemoryProfilerSaService::CopyApiCollectorFile(pid, task, resultPath), RET_OK);
+    EXPECT_EQ(resultPath, std::string("/data/storage/el2/base/files/") + typeFileName);
+
+    close(srcFd);
+    unlink(srcPath.c_str());
+    unlink((destDir + "/" + typeFileName).c_str());
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    system(("rm -rf /data/app/el2/1/base/" + processName).c_str());
+}
+
+/**
+ * @tc.name: StopHookByTypeRoutesMissingTask
+ * @tc.desc: Stop hook by type routes missing task.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, StopHookByTypeRoutesMissingTask, TestSize.Level2)
+{
+    std::string name = "missing_stop_task";
+
+    EXPECT_EQ(NativeMemoryProfilerSaService::StopHookByType(0, name, RET_OK, false),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED));
+    EXPECT_EQ(NativeMemoryProfilerSaService::StopHookByType(987654, name, RET_OK, true),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED));
+}
+
+/**
+ * @tc.name: CheckConfigRejectsFilePathAlreadyUsed
+ * @tc.desc: Check config rejects file path already used.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckConfigRejectsFilePathAlreadyUsed, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    std::string tracePath = MakeTracePath("file_path_conflict");
+    auto startedConfig = MakeSaConfig();
+    ASSERT_NE(startedConfig, nullptr);
+    startedConfig->pid_ = 0;
+    startedConfig->filePath_ = tracePath;
+    startedConfig->processName_ = tracePath;
+    ASSERT_EQ(service->Start(startedConfig), RET_OK);
+
+    auto conflictConfig = MakeSaConfig();
+    ASSERT_NE(conflictConfig, nullptr);
+    conflictConfig->pid_ = 0;
+    conflictConfig->processName_ = "file_path_conflict_new";
+    conflictConfig->filePath_ = tracePath;
+    EXPECT_EQ(service->CheckConfig(conflictConfig), RET_ERR);
+    EXPECT_EQ(service->Stop(startedConfig->processName_), RET_OK);
+}
+
+/**
+ * @tc.name: FillTaskConfigContextPromotesNameTaskToPid
+ * @tc.desc: Fill task config context promotes name task to PID.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, FillTaskConfigContextPromotesNameTaskToPid, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = "fill_context_name_task";
+    config->filePath_ = MakeTracePath("fill_context_name_task");
+    ASSERT_EQ(service->Start(config), RET_OK);
+
+    constexpr int32_t promotedPid = 24680;
+    service->FillTaskConfigContext(promotedPid, config->processName_);
+
+    EXPECT_EQ(service->Stop(static_cast<uint32_t>(promotedPid)), RET_OK);
+}
+
+/**
+ * @tc.name: PidAndNameConflictReportsStartedPidByStartType
+ * @tc.desc: PID and name conflict reports started PID by start type.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, PidAndNameConflictReportsStartedPidByStartType, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = "pid_conflict_name_task";
+    config->filePath_ = MakeTracePath("pid_conflict_name_task");
+    config->startType_ = TEST_START_TYPE_HIVIEW;
+    ASSERT_EQ(service->Start(config), RET_OK);
+    constexpr int32_t promotedPid = 24681;
+    service->FillTaskConfigContext(promotedPid, config->processName_);
+
+    auto sameTypeConfig = MakeSaConfig();
+    ASSERT_NE(sameTypeConfig, nullptr);
+    sameTypeConfig->pid_ = promotedPid;
+    sameTypeConfig->processName_ = "ignored_name";
+    sameTypeConfig->startType_ = TEST_START_TYPE_HIVIEW;
+    EXPECT_EQ(NativeMemoryProfilerSaService::PidAndNameConflict(sameTypeConfig),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ALREADY_STARTED));
+    EXPECT_TRUE(sameTypeConfig->processName_.empty());
+
+    auto conflictConfig = MakeSaConfig();
+    ASSERT_NE(conflictConfig, nullptr);
+    conflictConfig->pid_ = promotedPid;
+    conflictConfig->startType_ = TEST_START_TYPE_API;
+    EXPECT_EQ(NativeMemoryProfilerSaService::PidAndNameConflict(conflictConfig),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
+    EXPECT_EQ(service->Stop(static_cast<uint32_t>(promotedPid)), RET_OK);
+}
+
+/**
+ * @tc.name: CheckConfigMapsPidConflictForHiview
+ * @tc.desc: Check config maps PID conflict for hiview.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckConfigMapsPidConflictForHiview, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = "check_config_pid_conflict";
+    config->filePath_ = MakeTracePath("check_config_pid_conflict");
+    config->startType_ = TEST_START_TYPE_HIVIEW;
+    ASSERT_EQ(service->Start(config), RET_OK);
+    constexpr int32_t promotedPid = 24682;
+    service->FillTaskConfigContext(promotedPid, config->processName_);
+
+    auto apiConfig = MakeSaConfig();
+    ASSERT_NE(apiConfig, nullptr);
+    apiConfig->pid_ = promotedPid;
+    apiConfig->startType_ = TEST_START_TYPE_API;
+    EXPECT_EQ(service->CheckConfig(apiConfig, STDOUT_FILENO),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
+
+    auto hiviewConfig = MakeSaConfig();
+    ASSERT_NE(hiviewConfig, nullptr);
+    hiviewConfig->pid_ = promotedPid;
+    hiviewConfig->startType_ = TEST_START_TYPE_HIVIEW;
+    EXPECT_EQ(service->CheckConfig(hiviewConfig, STDOUT_FILENO), RET_ERR);
+    EXPECT_EQ(service->Stop(static_cast<uint32_t>(promotedPid)), RET_OK);
+}
+
+/**
+ * @tc.name: DisconnectAndCloseSkipMissingContext
+ * @tc.desc: Disconnect and close skip missing context.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, DisconnectAndCloseSkipMissingContext, TestSize.Level2)
+{
+    EXPECT_NO_FATAL_FAILURE(NativeMemoryProfilerSaService::ClientDisconnectCallback(-1));
+    EXPECT_NO_FATAL_FAILURE(NativeMemoryProfilerSaService::CloseSocketFd(987654));
+}
+
+/**
+ * @tc.name: ReleaseForStopHookHandlesAsyncApiFileCache
+ * @tc.desc: Release for stop hook handles async API file cache.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, ReleaseForStopHookHandlesAsyncApiFileCache, TestSize.Level2)
+{
+    auto hook = std::make_shared<HookManager>();
+    ASSERT_NE(hook, nullptr);
+    NativeHookConfig hookConfig;
+    hookConfig.set_use_file_cache_mode(true);
+    hook->SetHookConfig(hookConfig);
+    int fd = open(MakeTracePath("release_async_api").c_str(), O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    constexpr uint32_t pid = 24684;
+    auto task = std::make_shared<TaskConfig>(hook, pid, "release_async_api", -1, "", -1, true, fd, TEST_START_TYPE_API);
+    ASSERT_NE(task, nullptr);
+    std::string resultPath = "unchanged";
+
+    EXPECT_EQ(NativeMemoryProfilerSaService::ReleaseForStopHook(pid, task, resultPath), RET_OK);
+    EXPECT_EQ(resultPath, "unchanged");
+    EXPECT_EQ(fcntl(fd, F_GETFD), -1);
+}
+
+/**
+ * @tc.name: ReleaseForStopHookHandlesSyncApiBranch
+ * @tc.desc: Release for stop hook handles sync API branch.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, ReleaseForStopHookHandlesSyncApiBranch, TestSize.Level2)
+{
+    auto hook = std::make_shared<HookManager>();
+    ASSERT_NE(hook, nullptr);
+    NativeHookConfig hookConfig;
+    hook->SetHookConfig(hookConfig);
+    constexpr uint32_t pid = 24685;
+    auto task = std::make_shared<TaskConfig>(hook, pid, "release_sync_api", -1, "", -1, false, 0, TEST_START_TYPE_API);
+    ASSERT_NE(task, nullptr);
+    std::string resultPath = "unchanged";
+
+    EXPECT_EQ(NativeMemoryProfilerSaService::ReleaseForStopHook(pid, task, resultPath), RET_OK);
+    EXPECT_EQ(resultPath, "unchanged");
+}
+
+/**
+ * @tc.name: GetTaskNumCountsPromotedHiviewTask
+ * @tc.desc: Get task num counts promoted hiview task.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, GetTaskNumCountsPromotedHiviewTask, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = "get_task_num_hiview_task";
+    config->filePath_ = MakeTracePath("get_task_num_hiview_task");
+    config->startType_ = TEST_START_TYPE_HIVIEW;
+    ASSERT_EQ(service->Start(config), RET_OK);
+    constexpr int32_t promotedPid = 24686;
+    service->FillTaskConfigContext(promotedPid, config->processName_);
+
+    auto queryConfig = MakeSaConfig();
+    ASSERT_NE(queryConfig, nullptr);
+    queryConfig->startType_ = TEST_START_TYPE_HIVIEW;
+    EXPECT_GE(NativeMemoryProfilerSaService::GetTaskNum(queryConfig), 1);
+    EXPECT_EQ(service->Stop(static_cast<uint32_t>(promotedPid)), RET_OK);
+}
+
+/**
+ * @tc.name: FillTaskConfigContextHandlesStartupPidContext
+ * @tc.desc: Fill task config context handles startup PID context.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, FillTaskConfigContextHandlesStartupPidContext, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = "startup_pid_context";
+    config->filePath_ = MakeTracePath("startup_pid_context");
+    config->startupMode_ = true;
+    config->startType_ = TEST_START_TYPE_HIVIEW;
+    ASSERT_EQ(service->Start(config), RET_OK);
+    constexpr int32_t promotedPid = 24687;
+    service->FillTaskConfigContext(promotedPid, config->processName_);
+    service->FillTaskConfigContext(promotedPid, config->processName_);
+
+    auto nextStartup = MakeSaConfig();
+    ASSERT_NE(nextStartup, nullptr);
+    nextStartup->pid_ = 0;
+    nextStartup->processName_ = "startup_pid_context_next";
+    nextStartup->startupMode_ = true;
+    EXPECT_EQ(service->CheckConfig(nextStartup, STDOUT_FILENO), RET_OK);
+    EXPECT_EQ(service->Stop(static_cast<uint32_t>(promotedPid)), RET_OK);
+}
+
+/**
+ * @tc.name: PidAndNameConflictRejectsActiveProcessName
+ * @tc.desc: PID and name conflict rejects active process name.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, PidAndNameConflictRejectsActiveProcessName, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = "active_name_conflict_task";
+    config->filePath_ = MakeTracePath("active_name_conflict_task");
+    ASSERT_EQ(service->Start(config), RET_OK);
+
+    auto conflictConfig = MakeSaConfig();
+    ASSERT_NE(conflictConfig, nullptr);
+    conflictConfig->pid_ = 0;
+    conflictConfig->processName_ = config->processName_;
+
+    EXPECT_EQ(NativeMemoryProfilerSaService::PidAndNameConflict(conflictConfig), RET_ERR);
+    EXPECT_EQ(service->Stop(config->processName_), RET_OK);
+}
+
+/**
+ * @tc.name: CheckConfigAllowsExtendedTaskWhenLimitZero
+ * @tc.desc: Check config allows extended task when limit zero.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckConfigAllowsExtendedTaskWhenLimitZero, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    service->taskMaxNum_ = 0;
+    config->extendProcesses_ = true;
+    config->pid_ = 0;
+    config->processName_ = "extended_limit_zero_task";
+
+    EXPECT_EQ(service->CheckConfig(config, STDOUT_FILENO), RET_OK);
+    service->taskMaxNum_ = 4;
+}
+
+/**
+ * @tc.name: CheckConfigMapsNameConflictForHiview
+ * @tc.desc: Check config maps name conflict for hiview.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckConfigMapsNameConflictForHiview, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto startedConfig = MakeSaConfig();
+    ASSERT_NE(startedConfig, nullptr);
+    startedConfig->pid_ = 0;
+    startedConfig->processName_ = "hiview_name_conflict_task";
+    startedConfig->filePath_ = MakeTracePath("hiview_name_conflict_task");
+    ASSERT_EQ(service->Start(startedConfig), RET_OK);
+
+    auto conflictConfig = MakeSaConfig();
+    ASSERT_NE(conflictConfig, nullptr);
+    conflictConfig->pid_ = 0;
+    conflictConfig->processName_ = startedConfig->processName_;
+    conflictConfig->startType_ = TEST_START_TYPE_HIVIEW;
+
+    EXPECT_EQ(service->CheckConfig(conflictConfig, STDOUT_FILENO), RET_ERR);
+    EXPECT_EQ(service->Stop(startedConfig->processName_), RET_OK);
+}
+
+/**
+ * @tc.name: FillTaskConfigContextIgnoresMissingContext
+ * @tc.desc: Fill task config context ignores missing context.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, FillTaskConfigContextIgnoresMissingContext, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    constexpr int32_t missingPid = 28670;
+    std::string missingName = "fill_context_missing_task";
+
+    service->FillTaskConfigContext(missingPid, missingName);
+
+    EXPECT_EQ(NativeMemoryProfilerSaService::StopHook(missingPid, ""),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED));
+}
+
+/**
+ * @tc.name: StartHookCreatesDefaultFilePathWhenMissing
+ * @tc.desc: Start hook creates default file path when missing.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, StartHookCreatesDefaultFilePathWhenMissing, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = "default_file_path_task_" + std::to_string(getpid());
     config->filePath_.clear();
 
-    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
-    ASSERT_NE(service, nullptr);
-
-    EXPECT_EQ(service->CheckFilePath(STDOUT_FILENO, config), RET_OK);
+    ASSERT_EQ(service->Start(config), RET_OK);
+    EXPECT_NE(config->filePath_.find("/data/local/tmp/native_memory_" + config->processName_), std::string::npos);
+    EXPECT_EQ(service->Stop(config->processName_), RET_OK);
 }
 
 /**
- * @tc.name: CheckFilePathRejectsEmptyPath
- * @tc.desc: CheckFilePath returns RET_ERR when filePath_ is empty and fd is 0.
+ * @tc.name: StartHookLockHandlesPrintNmdOnlyWithInputFd
+ * @tc.desc: Start hook lock handles print NMD only with input FD.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckFilePathRejectsEmptyPath, TestSize.Level2)
+HWTEST_F(NativeMemoryProfilerSaServiceTest, StartHookLockHandlesPrintNmdOnlyWithInputFd, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
     auto config = MakeSaConfig();
     ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = "print_nmd_only_task_" + std::to_string(getpid());
     config->filePath_.clear();
+    config->printNmdOnly_ = true;
+    uint32_t fd = static_cast<uint32_t>(open(MakeTracePath("print_nmd_only_fd").c_str(),
+        O_CREAT | O_RDWR, S_IRUSR | S_IWUSR));
+    ASSERT_GT(fd, 0u);
+    auto hook = std::make_shared<HookManager>();
+    ASSERT_NE(hook, nullptr);
+    std::string args = service->GetCmdArgs(config);
 
-    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
-    ASSERT_NE(service, nullptr);
+    int32_t ret = service->StartHookLock(config, fd, hook, args);
 
-    EXPECT_EQ(service->CheckFilePath(0, config), RET_ERR);
+    if (ret == RET_OK) {
+        EXPECT_EQ(service->Stop(config->processName_), RET_OK);
+    } else {
+        close(static_cast<int>(fd));
+    }
+    EXPECT_EQ(ret, RET_OK);
 }
 
 /**
- * @tc.name: CheckTryBeginStopHook
- * @tc.desc: Check try stop hook fail when hook is stopping
+ * @tc.name: CollectApmReturnsEmptyForNonAppPid
+ * @tc.desc: Collect APM returns empty for non app pid.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckTryBeginStopHook, TestSize.Level2)
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CollectApmReturnsEmptyForNonAppPid, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
-    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
-    ASSERT_NE(service, nullptr);
-    uint32_t pid = static_cast<uint32_t>(getpid());
-    EXPECT_TRUE(service->TryBeginStopHook(pid));
-    EXPECT_FALSE(service->TryBeginStopHook(pid));
-    service->EndStopHook(pid);
-    EXPECT_TRUE(service->TryBeginStopHook(pid));
-    service->EndStopHook(pid);
+    auto task = std::make_shared<TaskConfig>(nullptr, static_cast<int32_t>(getpid()),
+        "collect_apm_pid", -1, "", -1, false);
+    ASSERT_NE(task, nullptr);
+
+    EXPECT_TRUE(NativeMemoryProfilerSaService::CollectApm(task).empty());
+
+    std::string compositePath = "/data/local/tmp/composite_heap_" + std::to_string(getpid()) + ".zip";
+    EXPECT_EQ(access(compositePath.c_str(), F_OK), -1);
 }
 
 /**
- * @tc.name: SaServiceReadQuotaFileTest001
- * @tc.desc: quota file not exist -> empty records
+ * @tc.name: CollectApmReturnsEmptyForZeroPid
+ * @tc.desc: Collect APM returns empty for zero pid using process name.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceReadQuotaFileTest001, TestSize.Level2)
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CollectApmReturnsEmptyForZeroPid, TestSize.Level2)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
-    const std::string dir = "/data/log/hiprofiler";
-    const std::string quotaFile = dir + "/profiling_rate_limits_quota";
-    ASSERT_EQ(system(("mkdir -p " + dir).c_str()), 0);
-    unlink(quotaFile.c_str());
-    std::unordered_map<std::string, QuotaRecord> records;
-    EXPECT_TRUE(NativeMemoryProfilerSaService::ReadQuotaFile(records));
-    EXPECT_TRUE(records.empty());
+    std::string processName = "collect_apm_name";
+    auto task = std::make_shared<TaskConfig>(nullptr, 0, processName, -1, "", -1, false);
+    ASSERT_NE(task, nullptr);
+
+    EXPECT_TRUE(NativeMemoryProfilerSaService::CollectApm(task).empty());
+
+    std::string compositePath = "/data/local/tmp/composite_heap_" + processName + ".zip";
+    EXPECT_EQ(access(compositePath.c_str(), F_OK), -1);
 }
 
-/**
- * @tc.name: SaServiceReadQuotaFileTest002
- * @tc.desc: multi-record parse
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceReadQuotaFileTest002, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    const std::string dir = "/data/log/hiprofiler";
-    const std::string quotaFile = dir + "/profiling_rate_limits_quota";
-    ASSERT_EQ(system(("mkdir -p " + dir).c_str()), 0);
-    std::string content = "bundleA 100 2\nbundleB 200 3\n";
-    EXPECT_TRUE(WriteFile(quotaFile, content));
-    std::unordered_map<std::string, QuotaRecord> records;
-    EXPECT_TRUE(NativeMemoryProfilerSaService::ReadQuotaFile(records));
-    EXPECT_EQ(records.size(), 2U);
-    EXPECT_EQ(records["bundleA"].count, 2);
-    EXPECT_EQ(records["bundleB"].count, 3);
-    unlink(quotaFile.c_str());
-}
-
-/**
- * @tc.name: SaServiceReadQuotaFileTest003
- * @tc.desc: empty file -> empty records
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceReadQuotaFileTest003, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    const std::string dir = "/data/log/hiprofiler";
-    const std::string quotaFile = dir + "/profiling_rate_limits_quota";
-    ASSERT_EQ(system(("mkdir -p " + dir).c_str()), 0);
-    EXPECT_TRUE(WriteFile(quotaFile, ""));
-    std::unordered_map<std::string, QuotaRecord> records;
-    EXPECT_TRUE(NativeMemoryProfilerSaService::ReadQuotaFile(records));
-    EXPECT_TRUE(records.empty());
-    unlink(quotaFile.c_str());
-}
-
-/**
- * @tc.name: SaServiceWriteQuotaFileTest
- * @tc.desc: write records and read back
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceWriteQuotaFileTest, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    const std::string dir = "/data/log/hiprofiler";
-    const std::string quotaFile = dir + "/profiling_rate_limits_quota";
-    ASSERT_EQ(system(("mkdir -p " + dir).c_str()), 0);
-    unlink(quotaFile.c_str());
-    std::unordered_map<std::string, QuotaRecord> records;
-    records["bundleX"] = {100, 5};
-    EXPECT_TRUE(NativeMemoryProfilerSaService::WriteQuotaFile(records));
-    std::unordered_map<std::string, QuotaRecord> result;
-    EXPECT_TRUE(NativeMemoryProfilerSaService::ReadQuotaFile(result));
-    EXPECT_EQ(result["bundleX"].count, 5);
-    unlink(quotaFile.c_str());
-}
-
-/**
- * @tc.name: SaServiceGetMemProfilerUseCountTodayTest
- * @tc.desc: query count from records
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceGetMemProfilerUseCountTodayTest, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    std::unordered_map<std::string, QuotaRecord> records;
-    records["ut_bundle"] = {static_cast<long long>(time(nullptr)), 2};
-    EXPECT_EQ(NativeMemoryProfilerSaService::GetMemProfilerUseCountToday(records, "ut_bundle"), 2);
-    EXPECT_EQ(NativeMemoryProfilerSaService::GetMemProfilerUseCountToday(records, "ut_nonexist"), 0);
-}
-
-/**
- * @tc.name: SaServiceIsSeparateByMoreThan24HoursTest
- * @tc.desc: boundary cases for 24h separation
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceIsSeparateByMoreThan24HoursTest, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    EXPECT_FALSE(NativeMemoryProfilerSaService::IsSeparateByMoreThan24Hours(-1, 0));
-    EXPECT_FALSE(NativeMemoryProfilerSaService::IsSeparateByMoreThan24Hours(100, 100 + 24 * 60 * 60));
-    EXPECT_TRUE(NativeMemoryProfilerSaService::IsSeparateByMoreThan24Hours(100 + 25 * 60 * 60, 100));
-}
-
-/**
- * @tc.name: SaServiceCountFileUpdateAndRollback
- * @tc.desc: update, rollback daily count in single quota file
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceCountFileUpdateAndRollback, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    const std::string dir = "/data/log/hiprofiler";
-    const std::string quotaFile = dir + "/profiling_rate_limits_quota";
-    ASSERT_EQ(system(("mkdir -p " + dir).c_str()), 0);
-    unlink(quotaFile.c_str());
-
-    std::unordered_map<std::string, QuotaRecord> records;
-    EXPECT_TRUE(NativeMemoryProfilerSaService::UpdateMemProfilerUserCount(records, "ut_rollback"));
-    EXPECT_EQ(NativeMemoryProfilerSaService::GetMemProfilerUseCountToday(records, "ut_rollback"), 1);
-    EXPECT_TRUE(NativeMemoryProfilerSaService::UpdateMemProfilerUserCount(records, "ut_rollback"));
-    EXPECT_EQ(NativeMemoryProfilerSaService::GetMemProfilerUseCountToday(records, "ut_rollback"), 2);
-    EXPECT_TRUE(NativeMemoryProfilerSaService::WriteQuotaFile(records));
-    EXPECT_TRUE(NativeMemoryProfilerSaService::RollbackMemProfilerUserCount(false, "ut_rollback"));
-    std::unordered_map<std::string, QuotaRecord> after;
-    EXPECT_TRUE(NativeMemoryProfilerSaService::ReadQuotaFile(after));
-    EXPECT_EQ(after["ut_rollback"].count, 1);
-
-    unlink(quotaFile.c_str());
-}
-
-/**
- * @tc.name: SaServiceGetMemProfilerTotalUseCountTodayTest
- * @tc.desc: total count accumulates 24h-valid records
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceGetMemProfilerTotalUseCountTodayTest, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    std::unordered_map<std::string, QuotaRecord> records;
-    long long now = static_cast<long long>(time(nullptr));
-    records["ut_total_a"] = {now, 1};
-    records["ut_total_b"] = {now, 2};
-    EXPECT_EQ(NativeMemoryProfilerSaService::GetMemProfilerTotalUseCountToday(records), 3);
-}
-
-/**
- * @tc.name: SaServiceTotalCountSkipExpiredTest
- * @tc.desc: total count skips records older than 24h
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaServiceTest, SaServiceTotalCountSkipExpiredTest, TestSize.Level2)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    std::unordered_map<std::string, QuotaRecord> records;
-    long long expiredTs = static_cast<long long>(time(nullptr)) - 25 * 60 * 60;
-    records["ut_expired"] = {expiredTs, 5};
-    records["ut_valid"] = {static_cast<long long>(time(nullptr)), 2};
-    EXPECT_EQ(NativeMemoryProfilerSaService::GetMemProfilerTotalUseCountToday(records), 2);
-}
-#endif // NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H

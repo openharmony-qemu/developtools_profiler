@@ -23,6 +23,10 @@ class Writer {
 public:
     virtual ~Writer() {}
     virtual long Write(const void* data, size_t size) = 0;
+    virtual long WriteBlock(const void* data, size_t size)
+    {
+        return 0;
+    }
     virtual bool Flush() = 0;
     virtual void SetClockId(clockid_t clockId) {}
 

@@ -21,6 +21,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
+#include <unordered_set>
 #include "hook_record_factory.h"
 #include "hook_record.h"
 #include "buffer_writer.h"
@@ -163,6 +165,7 @@ public:
     int CreateFileCacheFd();
     void SaveInitialCacheFds(pid_t pid, uint16_t fileIndex, int fd);
     void RotateCacheFdOnReturn(pid_t pid, uint16_t returnedFileIndex, int fd);
+    bool CheckHookPid(int32_t pid);
     void SetHookConfig(const NativeHookConfig& hookConfig);
     void SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     void SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
@@ -316,11 +319,11 @@ private:
     std::string memLeakFileName_;
     std::string fileCacheDir_ = "/data/log/hiprofiler/";
     std::atomic_bool memLeakDumpDone_ {true};
-    std::atomic_bool memLeakHasData_ {false};
     std::string simplifiedNmd_;
     SemaphorePtr nmdSemaphore_{nullptr};
     bool shouldSkipGlobalFreed_ = false;
     std::unordered_map<void*, struct timespec> validLiveData_;
+    std::unordered_map<void*, struct timespec> orphanFreeWhitelist_;
     size_t totalRecord_{0};
     size_t skipRecord_{0};
 };

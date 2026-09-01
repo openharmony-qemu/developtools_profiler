@@ -183,6 +183,18 @@ typedef enum HiDebug_ErrorCode {
      * @since 24
      */
     HIDEBUG_RES_PROF_FAILURE = 11400430,
+    /**
+     * @brief Invalid maximum asynchronous nesting depth.
+     *
+     * @since 26.1.0
+     */
+    HIDEBUG_RES_PROF_INVALID_MAX_ASYNC_NESTING_DEPTH = 11400431,
+    /**
+     * @brief Invalid maximum asynchronous task stack depth.
+     *
+     * @since 26.1.0
+     */
+    HIDEBUG_RES_PROF_INVALID_MAX_ASYNC_TASK_STACK_DEPTH = 11400432
 } HiDebug_ErrorCode;
 
 /**
@@ -604,7 +616,27 @@ typedef enum OH_HiDebug_ResourceType {
      * Global handle
      * @since 24
      */
-    OH_RES_TYPE_GLOBAL_HANDLE
+    OH_RES_TYPE_GLOBAL_HANDLE,
+    /**
+     * @brief DMA memory.
+     *
+     * @since 26.1.0
+     */
+    OH_RES_TYPE_DMA,
+
+    /**
+     * @brief Anonymous Shared Memory.
+     *
+     * @since 26.1.0
+     */
+    OH_RES_TYPE_ASHMEM,
+
+    /**
+     * @brief Composite heap.
+     *
+     * @since 26.1.0
+     */
+    OH_RES_TYPE_COMPOSITE_HEAP
 } OH_HiDebug_ResourceType;
 
 /**

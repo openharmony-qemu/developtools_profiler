@@ -42,8 +42,11 @@ struct TaskConfig {
     std::string filePath;
     int32_t timerFd{-1};
     bool isStartupMode{false};
+    bool compositeHeapEnable{false};
+    uint32_t compositeHeapFd{0};
     uint32_t fd{0};
     uint32_t startType{0}; // 0:Hiveiew 1:API
+    std::string typeFileName = {""};   // for API trace file move
     sptr<IRemoteObject> callback;
 };
 
@@ -100,7 +103,7 @@ private:
     static bool TryBeginStopHook(uint32_t pid);
     static void EndStopHook(uint32_t pid);
     static bool IsAsyncRequest(uint32_t pid);
-    static bool CheckStopPermission(int32_t calllingPid, std::shared_ptr<TaskConfig>& config);
+    static bool CheckStopPermission(int32_t callingPid, std::shared_ptr<TaskConfig>& config);
     int32_t CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
     int32_t CheckTaskLimit(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     int32_t CheckStartupModeConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
@@ -124,6 +127,7 @@ private:
     static int32_t PidAndNameConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     static void NotifyProfilingResult(const std::shared_ptr<TaskConfig>& config, int32_t errorCode,
         const std::string& filePath);
+    static std::string CollectApm(std::shared_ptr<TaskConfig>& config);
     static int32_t CopyApiCollectorFile(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath);
     static int32_t ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath);
     int32_t PreCheckPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
@@ -137,8 +141,24 @@ private:
     static bool ReadQuotaFile(std::unordered_map<std::string, QuotaRecord>& records);
     static bool WriteQuotaFile(const std::unordered_map<std::string, QuotaRecord>& records);
     static bool IsSeparateByMoreThan24Hours(long long t1, long long t2);
+#ifdef NATIVE_DAEMON_UNITTEST
+    static void ResetTaskContextsForTest();
+    static void InjectPidInfoForTest(pid_t pid, uid_t uid, gid_t gid);
+    static void InjectPidCtxForTest(int32_t pid, const std::shared_ptr<TaskConfig>& config);
+    static void InjectPidFdsForTest(pid_t pid, int fd);
+    static void SetHasStartupModeForTest(bool val);
+    static void SetMockPermissionForTest(bool isUserMode, bool granted);
+    static void SetMockNativeDaemonRunningForTest(bool running);
+    static void SetMockStartServiceAbilityForTest(bool result);
+    static void SetMockSystemResourceForTest(bool memFail, bool cpuFail, bool romFail);
+    static void SetMockSendFailForTest(bool fail);
+    static void SetMockNmdResultForTest(const std::string& result);
+#endif
 
 private:
+    static bool IsMemoryPressureCritical(uint64_t availableMem, bool memReadOk);
+    static bool IsCpuOverloaded(double cpuUsage, bool cpuReadOk);
+    static bool IsRomInsufficient(uint64_t freeBytes, uint64_t totalBytes, bool romReadOk);
     std::mutex gpuMtx_;
     std::string startupModeProcessName_;
     int32_t taskMaxNum_ = 2;

@@ -66,7 +66,7 @@ HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest001, TestSize.Level3)
     MemAPIConfig apiConfig;
     int32_t resType = -1;
     EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
-    resType = 5;
+    resType = 6;
     EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
     resType = 2;
     apiConfig.maxDuration = 4000;

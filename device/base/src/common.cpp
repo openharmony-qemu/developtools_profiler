@@ -967,6 +967,34 @@ std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath)
     return {true, std::string(pathDirRealPath.get()) + "/" + filePath.substr(pos + 1)};
 }
 
+static const std::string DATA_TMP_DIR = "/data/local/tmp";
+static const std::string FILE_SUFFIX = ".htrace";
+
+std::pair<bool, std::string> CheckNotExistsFilePathSafe(const std::string& filePath)
+{
+    size_t pos = filePath.rfind('/');
+    if (pos == std::string::npos || pos == filePath.size() - 1) {
+        return {false, std::string()};
+    }
+    std::string pathDir = filePath.substr(0, pos);
+    char realDir[PATH_MAX] = {0};
+    if (realpath(pathDir.c_str(), realDir) == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:realpath fail: %s", __func__, pathDir.c_str());
+        return {false, std::string()};
+    }
+    std::string resolved(realDir);
+    if (resolved != DATA_TMP_DIR && resolved.rfind(DATA_TMP_DIR + "/", 0) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:not under %s: %s", __func__, DATA_TMP_DIR.c_str(), resolved.c_str());
+        return {false, std::string()};
+    }
+    std::string fullPath = resolved + "/" + filePath.substr(pos + 1);
+    if (fullPath.size() < FILE_SUFFIX.size() ||
+        fullPath.compare(fullPath.size() - FILE_SUFFIX.size(), FILE_SUFFIX.size(), FILE_SUFFIX) != 0) {
+        return {false, std::string()};
+    }
+    return {true, fullPath};
+}
+
 bool CheckWhiteList(const std::string& cmdPath)
 {
     if (cmdPath.empty()) {
@@ -1115,6 +1143,23 @@ static bool DoSendfileCopyOnce(int srcFd, int destFd, ssize_t &outTotal)
     return static_cast<ssize_t>(statBuf.st_size) == outTotal;
 }
 
+static bool CopyFdContentWithRetry(int srcFd, int destFd, int maxRetries)
+{
+    bool ret = false;
+    do {
+        ssize_t total = 0;
+        if (DoSendfileCopyOnce(srcFd, destFd, total)) {
+            ret = true;
+            break;
+        }
+        if (ftruncate(destFd, 0) < 0 || lseek(destFd, 0, SEEK_SET) < 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "clear destFd fail,error:%s", strerror(errno));
+            break;
+        }
+    } while (maxRetries-- > 0);
+    return ret;
+}
+
 static bool CopyFileWithRetry(uint32_t srcFd, const std::string& destPath, int maxRetries)
 {
     if (srcFd < 0) {
@@ -1159,7 +1204,7 @@ bool CopyFileFast(uint32_t srcFd, const std::string& destPath)
 
 bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPath)
 {
-    int srcFd = open(srcPath.c_str(), O_RDONLY);
+    int srcFd = open(srcPath.c_str(), O_RDONLY | O_NOFOLLOW);
     if (srcFd < 0) {
         const int bufSize = 256;
         char buf[bufSize] = {0};
@@ -1170,6 +1215,24 @@ bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPat
     bool result = COMMON::CopyFileFast(srcFd, destPath);
     if (!result) {
         PROFILER_LOG_ERROR(LOG_CORE, "CopyFileFast fail");
+    }
+    close(srcFd);
+    return result;
+}
+
+bool CopyFileToFdFastFromPath(const std::string& srcPath, int destFd)
+{
+    int srcFd = open(srcPath.c_str(), O_RDONLY | O_NOFOLLOW);
+    if (srcFd < 0) {
+        const int bufSize = 256;
+        char buf[bufSize] = {0};
+        strerror_r(errno, buf, bufSize);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, srcPath.c_str(), errno, buf);
+        return false;
+    }
+    bool result = CopyFdContentWithRetry(srcFd, destFd, 3);
+    if (!result) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CopyFileToFdFastFromPath fail");
     }
     close(srcFd);
     return result;

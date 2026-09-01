@@ -14,6 +14,7 @@
  */
 
 #include "hidebug_native_interface.h"
+#include "dfx_signal_handler.h"
 
 #include <chrono>
 #include <cstdio>
@@ -191,7 +192,8 @@ public:
     HidebugNativeInterfaceImpl& operator =(const HidebugNativeInterfaceImpl&) = delete;
     double GetCpuUsage() override;
     bool ParseProcStat(uint64_t& utime, uint64_t& stime) override;
-    std::map<uint32_t, double> GetAppThreadCpuUsage() override;
+    std::vector<ThreadCpuUsageInfo> GetAppThreadCpuUsage() override;
+    const char* GetAppRunningUniqueId() override;
     TraceErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
         uint32_t limitsize, std::string &file) override;
     TraceErrorCode StopAppTraceCapture() override;
@@ -210,12 +212,16 @@ public:
     std::optional<RssInfo> GetRssInfo() override;
 private:
     bool CheckTraceErrorCode();
+    void SubmitDelayedTask();
+    void UpdateCpuUsage();
 private:
     std::atomic<bool> cpuUsageTaskFlag_{false};
     std::atomic<uint64_t> lastUtime_{0};
     std::atomic<uint64_t> lastStime_{0};
     std::atomic<int64_t>  lastTimeMs_{0};
+    std::atomic<double> cpuUsage_{0.0};
     std::function<void()> cpuUsageTask_;
+    std::mutex cpuUsageTaskMutex_;
     long cpuTicksPerSec_;
     long cpuCoreCount_;
     std::unique_ptr<HidebugAppThreadCpu> threadCpu_;
@@ -241,45 +247,77 @@ HidebugNativeInterface& HidebugNativeInterface::GetInstance()
 
 double HidebugNativeInterfaceImpl::GetCpuUsage()
 {
-    static double cpuUsage = 0.0;
-
-    if (cpuUsageTaskFlag_.load()) {
-        return cpuUsage;
+    bool expected = false;
+    if (!cpuUsageTaskFlag_.compare_exchange_strong(expected, true)) {
+        return cpuUsage_.load();
     }
+
     cpuTicksPerSec_ = sysconf(_SC_CLK_TCK);
     cpuCoreCount_ = sysconf(_SC_NPROCESSORS_ONLN);
-    cpuUsageTask_ = [this]() {
-        uint64_t curUtime = 0;
-        uint64_t curStime = 0;
-        if (!ParseProcStat(curUtime, curStime)) {
-            HILOG_ERROR(LOG_CORE, "get cpuUsageInfo Failed");
-            return;
-        }
+    {
+        std::lock_guard<std::mutex> lock(cpuUsageTaskMutex_);
+        cpuUsageTask_ = [this]() { UpdateCpuUsage(); };
+    }
+    cpuUsageTask_();
+    return cpuUsage_.load();
+}
 
-        struct timespec ts;
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        int64_t curTimeMs = ts.tv_sec * MILLISECONDS_PER_SECOND +
-                            ts.tv_nsec / NANOSECONDS_PER_MILLISECOND;
+void HidebugNativeInterfaceImpl::UpdateCpuUsage()
+{
+    uint64_t curUtime = 0;
+    uint64_t curStime = 0;
+    if (!ParseProcStat(curUtime, curStime)) {
+        HILOG_ERROR(LOG_CORE, "get cpuUsageInfo Failed");
+        SubmitDelayedTask();
+        return;
+    }
 
-        int64_t DeltaMs = curTimeMs - lastTimeMs_.load();
-        uint64_t cpuDelta = (curUtime - lastUtime_.load()) + (curStime - lastStime_.load());
-        if (DeltaMs > 0 && cpuTicksPerSec_ > 0) {
-            double cpuDeltaMs = cpuDelta * MILLISECONDS_PER_SECOND / cpuTicksPerSec_;
-            if (cpuCoreCount_ > 0) {
-                cpuUsage = cpuDeltaMs / DeltaMs / cpuCoreCount_;
-            } else {
-                cpuUsage = cpuDeltaMs / DeltaMs;
-            }
-        }
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    int64_t curTimeMs = ts.tv_sec * MILLISECONDS_PER_SECOND +
+                        ts.tv_nsec / NANOSECONDS_PER_MILLISECOND;
+
+    if (lastTimeMs_.load() == 0) {
         lastUtime_.store(curUtime);
         lastStime_.store(curStime);
         lastTimeMs_.store(curTimeMs);
+        SubmitDelayedTask();
+        return;
+    }
 
+    uint64_t lastUtime = lastUtime_.load();
+    uint64_t lastStime = lastStime_.load();
+    if (curUtime < lastUtime || curStime < lastStime) {
+        HILOG_ERROR(LOG_CORE, "cpu ticks rolled back, skip this round");
+        lastUtime_.store(curUtime);
+        lastStime_.store(curStime);
+        lastTimeMs_.store(curTimeMs);
+        SubmitDelayedTask();
+        return;
+    }
+
+    int64_t deltaMs = curTimeMs - lastTimeMs_.load();
+    uint64_t cpuDelta = (curUtime - lastUtime) + (curStime - lastStime);
+    if (deltaMs > 0 && cpuTicksPerSec_ > 0) {
+        double cpuDeltaMs = static_cast<double>(cpuDelta) * MILLISECONDS_PER_SECOND / cpuTicksPerSec_;
+        if (cpuCoreCount_ > 0) {
+            cpuUsage_.store(cpuDeltaMs / deltaMs / cpuCoreCount_);
+        } else {
+            cpuUsage_.store(cpuDeltaMs / deltaMs);
+        }
+    }
+    lastUtime_.store(curUtime);
+    lastStime_.store(curStime);
+    lastTimeMs_.store(curTimeMs);
+    SubmitDelayedTask();
+}
+
+void HidebugNativeInterfaceImpl::SubmitDelayedTask()
+{
+    std::lock_guard<std::mutex> lock(cpuUsageTaskMutex_);
+    if (cpuUsageTask_) {
         ffrt::submit(cpuUsageTask_, {}, {}, ffrt::task_attr().delay(CPU_USAGE_DELAY_TIME));
-    };
-    cpuUsageTaskFlag_.store(true);
-    cpuUsageTask_();
-    return cpuUsage;
+    }
 }
 
 bool HidebugNativeInterfaceImpl::ParseProcStat(uint64_t& utime, uint64_t& stime)
@@ -317,7 +355,7 @@ bool HidebugNativeInterfaceImpl::ParseProcStat(uint64_t& utime, uint64_t& stime)
     return true;
 }
 
-std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
+std::vector<ThreadCpuUsageInfo> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
 {
     {
         std::lock_guard<std::mutex> guard(threadCpuMutex_);
@@ -330,11 +368,16 @@ std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
         HILOG_ERROR(LOG_CORE, "GetAppThreadCpuUsage fail, ret: %{public}d", static_cast<int>(collectResult.retCode));
         return {};
     }
-    std::map<uint32_t, double> threadMap;
+    std::vector<ThreadCpuUsageInfo> result;
+    result.reserve(collectResult.data.size());
     for (const auto &threadCpuStatInfo : collectResult.data) {
-        threadMap[threadCpuStatInfo.tid] = threadCpuStatInfo.cpuUsage;
+        ThreadCpuUsageInfo info;
+        info.tid = static_cast<uint32_t>(threadCpuStatInfo.tid);
+        info.cpuUsage = threadCpuStatInfo.cpuUsage;
+        info.threadName = threadCpuStatInfo.threadName;
+        result.push_back(info);
     }
-    return threadMap;
+    return result;
 }
 
 TraceErrorCode HidebugNativeInterfaceImpl::StartAppTraceCapture(uint64_t tags, uint32_t flag,
@@ -588,6 +631,11 @@ void RequestTraceCallBackImpl::OnTraceResponse(uint32_t retCode, const std::stri
     HidebugNativeInterface::GetInstance().SetTraceErrorCode(retCode);
     std::string tracePath = traceName.empty() ? "" : TRACE_PATH + traceName;
     task_(ConvertTraceErrorCode(retCode), tracePath);
+}
+
+const char* HidebugNativeInterfaceImpl::GetAppRunningUniqueId()
+{
+    return DFX_GetAppRunningUniqueId();
 }
 }
 }

@@ -17,6 +17,7 @@
 #include "sp_profiler.h"
 #include <future>
 #include <string>
+#include <sstream>
 
 enum {
     RAM_ONE = 1,
@@ -32,20 +33,21 @@ enum {
 };
 
 struct PssValues {
-    std::string gpuPssValue = "";
-    std::string graphicPssValue = "";
-    std::string arktsHeapPssValue = "";
-    std::string nativeHeapPssValue = "";
-    std::string stackPssValue = "";
-    std::string anonPagePssValue = "";
-    std::string filePagePssValue = "";
-    std::string ashmemPssValue = "";
-    std::string guardPssValue = "";
-    std::string hapPssValue = "";
-    std::string dbPssValue = "";
-    std::string soPssValue = "";
-    std::string devPssValue = "";
-    std::string ttfPssValue = "";
+    std::string gpuPssValue = "NA";
+    std::string graphicPssValue = "NA";
+    std::string arktsHeapPssValue = "NA";
+    std::string nativeHeapPssValue = "NA";
+    std::string stackPssValue = "NA";
+    std::string anonPagePssValue = "NA";
+    std::string filePagePssValue = "NA";
+    std::string ashmemPssValue = "NA";
+    std::string guardPssValue = "NA";
+    std::string hapPssValue = "NA";
+    std::string dbPssValue = "NA";
+    std::string soPssValue = "NA";
+    std::string devPssValue = "NA";
+    std::string ttfPssValue = "NA";
+    std::string arktsHeapMainThreadPssValue = "NA";
 };
 namespace OHOS {
 namespace SmartPerf {
@@ -53,11 +55,13 @@ class RAM : public SpProfiler {
 public:
     std::map<std::string, std::string> GetSysRamInfo() const;
     std::map<std::string, std::string> GetRamInfo();
-    std::map<std::string, std::string> GetPssRamInfo(FILE *fd, const std::string& pid, size_t index);
-    std::map<std::string, std::string> ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo,
+    std::map<std::string, std::string> GetPssRamInfo(std::istringstream &iss, const std::string& pid, size_t index);
+    std::map<std::string, std::string> ParsePssValues(std::istringstream &iss, std::vector<std::string> &paramsInfo,
         const std::string pid, size_t index);
     void GetPssAboutPid(struct PssValues &pss, std::vector<std::string> &params);
     void GetDevecoPssAboutPid(struct PssValues &pss, std::vector<std::string> &params);
+    bool ParseAshmenValue(struct PssValues &pss, const std::vector<std::string> &params);
+    void ParseArktsHeapMainThreadValue(struct PssValues &pss, std::istringstream &iss, const std::string &pid);
     void FillPssRamInfo(size_t index, std::string pid, const PssValues &pssValues,
         std::map<std::string, std::string> &pssRamInfo) const;
     std::map<std::string, std::string> SaveSumRamInfo(std::vector<std::string>& paramsInfo,
@@ -81,11 +85,13 @@ public:
     void SetFirstFlag();
     void SetHapFirstFlag();
     void SetProcessId(const std::string &pid);
+    void DetermineDeviceVersion();
 private:
     RAM() {};
     RAM(const RAM &);
     RAM &operator = (const RAM &);
     std::string packageName = "";
+    bool arktsMainFlag_ = true;
     std::vector<std::string> processId;
     std::map<std::string, std::string> result = {};
 };

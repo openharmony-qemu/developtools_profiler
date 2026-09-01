@@ -25,7 +25,7 @@
 #ifdef HOOK_ENABLE
 #include "musl_preinit_common.h"
 static volatile struct MallocDispatchType *g_lastDispatchTable = nullptr;
-static struct HiDebug_MallocDispatch g_defaultDispatchDatable = {
+static struct HiDebug_MallocDispatch g_defaultDispatchTable = {
     .malloc = __libc_malloc_default_dispatch.malloc,
     .calloc = __libc_malloc_default_dispatch.calloc,
     .realloc = __libc_malloc_default_dispatch.realloc,
@@ -33,7 +33,7 @@ static struct HiDebug_MallocDispatch g_defaultDispatchDatable = {
     .mmap = __libc_malloc_default_dispatch.mmap,
     .munmap = __libc_malloc_default_dispatch.munmap,
 };
-static struct MallocDispatchType g_currentDispatchDatable = __libc_malloc_default_dispatch;
+static struct MallocDispatchType g_currentDispatchTable = __libc_malloc_default_dispatch;
 #endif
 double OH_HiDebug_GetAppCpuUsage()
 {
@@ -51,16 +51,16 @@ double OH_HiDebug_GetSystemCpuUsage()
 
 HiDebug_ThreadCpuUsagePtr OH_HiDebug_GetAppThreadCpuUsage()
 {
-    auto threadMap = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
+    auto threadCpuUsageList = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
     HiDebug_ThreadCpuUsagePtr head = nullptr;
     HiDebug_ThreadCpuUsagePtr prev = nullptr;
-    for (const auto[threadId, cpuUsage] : threadMap) {
+    for (const auto& item : threadCpuUsageList) {
         HiDebug_ThreadCpuUsagePtr node = (HiDebug_ThreadCpuUsagePtr) malloc(sizeof(HiDebug_ThreadCpuUsage));
         if (node == nullptr) {
             continue;
         }
-        node->threadId = threadId;
-        node->cpuUsage = cpuUsage;
+        node->threadId = item.tid;
+        node->cpuUsage = item.cpuUsage;
         node->next = nullptr;
         if (prev == nullptr) {
             head = node;
@@ -233,26 +233,26 @@ HiDebug_ErrorCode OH_HiDebug_SetMallocDispatchTable(struct HiDebug_MallocDispatc
         g_lastDispatchTable = lastDispatchTable;
     }
     if (newDispatchTable->malloc != nullptr) {
-        g_currentDispatchDatable.malloc = newDispatchTable->malloc;
+        g_currentDispatchTable.malloc = newDispatchTable->malloc;
     }
     if (newDispatchTable->free != nullptr) {
-        g_currentDispatchDatable.free = newDispatchTable->free;
+        g_currentDispatchTable.free = newDispatchTable->free;
     }
     if (newDispatchTable->mmap != nullptr) {
-        g_currentDispatchDatable.mmap = newDispatchTable->mmap;
+        g_currentDispatchTable.mmap = newDispatchTable->mmap;
     }
     if (newDispatchTable->munmap != nullptr) {
-        g_currentDispatchDatable.munmap = newDispatchTable->munmap;
+        g_currentDispatchTable.munmap = newDispatchTable->munmap;
     }
     if (newDispatchTable->calloc != nullptr) {
-        g_currentDispatchDatable.calloc = newDispatchTable->calloc;
+        g_currentDispatchTable.calloc = newDispatchTable->calloc;
     }
     if (newDispatchTable->realloc != nullptr) {
-        g_currentDispatchDatable.realloc = newDispatchTable->realloc;
+        g_currentDispatchTable.realloc = newDispatchTable->realloc;
     }
     atomic_store_explicit(&__custom_hook_flag, (volatile bool)true, memory_order_seq_cst);
     atomic_exchange_explicit(&__musl_libc_globals.current_dispatch_table,
-                             (volatile const long long)&g_currentDispatchDatable, memory_order_acq_rel);
+                             (volatile const long long)&g_currentDispatchTable, memory_order_acq_rel);
     return HIDEBUG_SUCCESS;
 #else
     return HIDEBUG_INVALID_ARGUMENT;
@@ -262,7 +262,7 @@ HiDebug_ErrorCode OH_HiDebug_SetMallocDispatchTable(struct HiDebug_MallocDispatc
 HiDebug_MallocDispatch* OH_HiDebug_GetDefaultMallocDispatchTable(void)
 {
 #ifdef HOOK_ENABLE
-    return &g_defaultDispatchDatable;
+    return &g_defaultDispatchTable;
 #else
     return nullptr;
 #endif
@@ -274,7 +274,7 @@ void OH_HiDebug_RestoreMallocDispatchTable(void)
     atomic_store_explicit(&__custom_hook_flag, (volatile bool)false, memory_order_seq_cst);
     atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile const long long)g_lastDispatchTable,
                           memory_order_seq_cst);
-    g_currentDispatchDatable = __libc_malloc_default_dispatch;
+    g_currentDispatchTable = __libc_malloc_default_dispatch;
     g_lastDispatchTable = nullptr;
 #endif
 }

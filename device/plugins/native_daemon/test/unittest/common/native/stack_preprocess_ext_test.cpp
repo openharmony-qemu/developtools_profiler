@@ -17,6 +17,9 @@
 #include <google/protobuf/text_format.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <array>
+#include <cstring>
+#include <variant>
 #define private public
 #include "stack_preprocess.h"
 #undef private
@@ -92,6 +95,36 @@ static RawStackPtr MakeAsyncRawStack(uint16_t type)
     return raw;
 }
 
+static HookRecordPtr MakeConcreteRecord(uint16_t type, uint64_t addr, uint32_t tagId = 0)
+{
+    auto rawStack = MakeRawStack(1, type, tagId);
+    rawStack->stackContext->type = type;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(addr);
+    rawStack->stackContext->newAddr = reinterpret_cast<void*>(addr + 0x10);
+    rawStack->stackContext->mallocSize = 64;
+    rawStack->stackContext->pid = 123;
+    rawStack->stackContext->tid = 456;
+    if (type == MALLOC_MSG) {
+        return std::make_shared<MallocRecord>(rawStack);
+    }
+    if (type == MMAP_FILE_PAGE_MSG) {
+        return std::make_shared<MmapFilePageRecord>(rawStack);
+    }
+    if (type == MEMORY_USING_MSG) {
+        return std::make_shared<MemoryUsingRecord>(rawStack);
+    }
+    if (type == MEMORY_UNUSING_MSG) {
+        return std::make_shared<MemoryUnusingRecord>(rawStack);
+    }
+    if (type == FREE_ARKTS) {
+        return std::make_shared<ArktsFreeRecord>(rawStack);
+    }
+    if (type == MALLOC_ARKTS) {
+        return std::make_shared<ArktsMallocRecord>(rawStack);
+    }
+    return std::make_shared<HookRecord>(rawStack);
+}
+
 static bool AppendSizedRecord(std::vector<uint8_t>& buffer, const void* data, uint32_t size)
 {
     size_t offset = buffer.size();
@@ -106,6 +139,24 @@ static bool AppendSizedRecord(std::vector<uint8_t>& buffer, const void* data, ui
     ret = memcpy_s(buffer.data() + offset + sizeof(uint32_t),
         buffer.size() - offset - sizeof(uint32_t), data, size);
     return ret == EOK;
+}
+
+static std::vector<uint8_t> MakeRawDataBuffer(uint16_t type, const char* payload, uint32_t tagId)
+{
+    size_t payloadSize = payload == nullptr ? 0 : strlen(payload) + 1;
+    std::vector<uint8_t> buffer(sizeof(BaseStackRawData) + payloadSize);
+    auto* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data());
+    baseData->type = type;
+    baseData->tagId = tagId;
+    baseData->tid = 1;
+    if (payloadSize == 0) {
+        return buffer;
+    }
+    errno_t ret = memcpy_s(buffer.data() + sizeof(BaseStackRawData), payloadSize, payload, payloadSize);
+    if (ret != EOK) {
+        buffer.clear();
+    }
+    return buffer;
 }
 
 static int CreateTempCacheFd()
@@ -128,6 +179,17 @@ static bool WriteBufferToFd(int fd, const std::vector<uint8_t>& buffer)
         return false;
     }
     return lseek(fd, 0, SEEK_SET) == 0;
+}
+
+static RandomWriteCtx* ReturnNullRandomWriteCtx(WriterStruct*)
+{
+    return nullptr;
+}
+
+static RandomWriteCtx* ReturnValidRandomWriteCtx(WriterStruct*)
+{
+    static RandomWriteCtx ctx = {nullptr, nullptr};
+    return &ctx;
 }
 
 static thread_local std::vector<uint64_t> g_callStack;
@@ -788,11 +850,18 @@ HWTEST_F(StackPreprocessExtTest, InitStatisticsTimeTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
-    
-    // Just call the method to ensure it doesn't crash
+    auto staleTime = std::chrono::steady_clock::now() - std::chrono::seconds(5);
+    preprocess.lastStatisticsTime_ = staleTime;
     preprocess.InitStatisticsTime();
-    // We can't easily verify the time, but we can ensure the method executes without error
-    EXPECT_TRUE(true);
+    EXPECT_GT(preprocess.lastStatisticsTime_, staleTime);
+
+    NativeHookConfig fileCacheConfig;
+    fileCacheConfig.set_use_file_cache_mode(true);
+    StackPreprocess fileCachePreprocess(nullptr, fileCacheConfig, 0);
+    fileCachePreprocess.lastCacheStatisticsTime_ = {3, 4};
+    fileCachePreprocess.InitStatisticsTime();
+    EXPECT_EQ(fileCachePreprocess.lastCacheStatisticsTime_.tv_sec, 0);
+    EXPECT_EQ(fileCachePreprocess.lastCacheStatisticsTime_.tv_nsec, 0);
 }
 
 /*
@@ -810,8 +879,7 @@ HWTEST_F(StackPreprocessExtTest, WriteHookConfigTest, TestSize.Level0)
     
     // Just call the method to ensure it doesn't crash
     preprocess.WriteHookConfig();
-    // We can't easily verify the output, but we can ensure the method executes without error
-    EXPECT_TRUE(true);
+    EXPECT_TRUE(std::holds_alternative<BatchNativeHookData>(preprocess.stackData_));
 }
 
 /*
@@ -826,8 +894,7 @@ HWTEST_F(StackPreprocessExtTest, FinishTraceFileTest, TestSize.Level0)
     
     // Just call the method to ensure it doesn't crash
     preprocess.FinishTraceFile();
-    // We can't easily verify the output, but we can ensure the method executes without error
-    EXPECT_TRUE(true);
+    EXPECT_EQ(preprocess.writer_, nullptr);
 }
 
 /*
@@ -935,6 +1002,137 @@ HWTEST_F(StackPreprocessExtTest, FlushRecordApplyAndReleaseMatchDataSerializesEv
     EXPECT_TRUE(preprocess.releasedPeriodListData_.empty());
 }
 
+HWTEST_F(StackPreprocessExtTest, FlushRecordApplyAndReleaseMatchDataHandlesMissingTags, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_callframe_compress(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.applyAndReleaseMatchPeriodListData_.push_back(MakeReportEvent(MMAP_FILE_PAGE_MSG, 0x3100, 99, 21));
+    preprocess.applyAndReleaseMatchPeriodListData_.push_back(MakeReportEvent(MEMORY_USING_MSG, 0x5100, 99, 22));
+    preprocess.applyAndReleaseMatchPeriodListData_.push_back(MakeReportEvent(MEMORY_UNUSING_MSG, 0x6100, 99, 23));
+
+    preprocess.FlushRecordApplyAndReleaseMatchData();
+
+    auto& stackData = std::get<BatchNativeHookData>(preprocess.stackData_);
+    ASSERT_EQ(stackData.events_size(), 3);
+    EXPECT_EQ(stackData.events(0).mmap_event().type(), "");
+    EXPECT_EQ(stackData.events(1).trace_alloc_event().tag_name(), "");
+    EXPECT_EQ(stackData.events(2).trace_free_event().tag_name(), "");
+    EXPECT_TRUE(preprocess.applyAndReleaseMatchPeriodListData_.empty());
+    EXPECT_TRUE(preprocess.releasedPeriodListData_.empty());
+}
+
+HWTEST_F(StackPreprocessExtTest, FlushDataHandlesEmptyAndOversizedBatch, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.buffer_ = std::make_unique<uint8_t[]>(8);
+    preprocess.bufferSize_ = 8;
+    auto& stackData = std::get<BatchNativeHookData>(preprocess.stackData_);
+
+    preprocess.FlushData(stackData);
+    EXPECT_EQ(stackData.events_size(), 0);
+
+    stackData.add_events()->set_tv_sec(1);
+    preprocess.bufferSize_ = 1;
+    preprocess.FlushData(stackData);
+    EXPECT_EQ(stackData.events_size(), 0);
+}
+
+HWTEST_F(StackPreprocessExtTest, SetWriterHandlesNullAndValidWriterStruct, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    WriterStructPtr nullWriter = nullptr;
+    preprocess.SetWriter(nullWriter);
+    EXPECT_EQ(preprocess.resultWriter_, nullptr);
+
+    WriterStruct writer {};
+    writer.startReport = ReturnNullRandomWriteCtx;
+    preprocess.SetWriter(&writer);
+    EXPECT_EQ(preprocess.resultWriter_, &writer);
+    EXPECT_EQ(std::get<BatchNativeHookData>(preprocess.stackData_).events_size(), 0);
+
+    writer.startReport = ReturnValidRandomWriteCtx;
+    preprocess.SetWriter(&writer);
+    EXPECT_EQ(preprocess.resultWriter_, &writer);
+}
+
+HWTEST_F(StackPreprocessExtTest, WaitForFinalSnapshotWithoutCallbackReturnsImmediately, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    preprocess.WaitForFinalSnapshot();
+
+    EXPECT_FALSE(preprocess.waitingFinalSnapshot_);
+    EXPECT_FALSE(preprocess.finalSnapshotDone_);
+}
+
+HWTEST_F(StackPreprocessExtTest, CacheFileActivityTimeUpdatesOnlyWhenWaiting, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto oldTime = std::chrono::steady_clock::now() - std::chrono::seconds(10);
+    preprocess.lastCacheFileActivityTime_ = oldTime;
+
+    preprocess.waitingCacheFileStop_ = false;
+    preprocess.UpdateLastCacheFileActivityTime();
+    EXPECT_EQ(preprocess.lastCacheFileActivityTime_, oldTime);
+
+    preprocess.waitingCacheFileStop_ = true;
+    preprocess.UpdateLastCacheFileActivityTime();
+    EXPECT_GT(preprocess.lastCacheFileActivityTime_, oldTime);
+}
+
+HWTEST_F(StackPreprocessExtTest, CacheFileInactiveWithTimeChecksElapsedSeconds, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    preprocess.lastCacheFileActivityTime_ = std::chrono::steady_clock::now() - std::chrono::seconds(3);
+    EXPECT_TRUE(preprocess.IsCacheFileInactiveWithTime(1));
+    preprocess.lastCacheFileActivityTime_ = std::chrono::steady_clock::now();
+    EXPECT_FALSE(preprocess.IsCacheFileInactiveWithTime(1));
+}
+
+HWTEST_F(StackPreprocessExtTest, CheckIsFileCacheFinshRequiresAllConditions, TestSize.Level0)
+{
+    NativeHookConfig normalConfig;
+    auto repeater = std::make_shared<StackDataRepeater>(4);
+    StackPreprocess normalPreprocess(repeater, normalConfig, 0);
+    normalPreprocess.isCacheFileParseDone_ = true;
+    EXPECT_FALSE(normalPreprocess.CheckIsFileCacheFinsh());
+
+    NativeHookConfig cacheConfig;
+    cacheConfig.set_use_file_cache_mode(true);
+    StackPreprocess cachePreprocess(repeater, cacheConfig, 0);
+    cachePreprocess.isCacheFileParseDone_ = false;
+    EXPECT_FALSE(cachePreprocess.CheckIsFileCacheFinsh());
+    cachePreprocess.isCacheFileParseDone_ = true;
+    EXPECT_TRUE(cachePreprocess.CheckIsFileCacheFinsh());
+}
+
+HWTEST_F(StackPreprocessExtTest, ProcessEndMsgHandlesCacheAndOfflineModes, TestSize.Level0)
+{
+    NativeHookConfig cacheConfig;
+    cacheConfig.set_use_file_cache_mode(true);
+    StackPreprocess cachePreprocess(nullptr, cacheConfig, 0);
+    EXPECT_FALSE(cachePreprocess.ProcessEndMsg());
+    EXPECT_TRUE(cachePreprocess.isStopTakeData_.load());
+
+    NativeHookConfig offlineConfig;
+    offlineConfig.set_offline_symbolization(true);
+    StackPreprocess offlinePreprocess(nullptr, offlineConfig, 0);
+    EXPECT_TRUE(offlinePreprocess.ProcessEndMsg());
+    EXPECT_FALSE(offlinePreprocess.isStopTakeData_.load());
+    for (int i = 1; i < SHARED_MEMORY_NUM; ++i) {
+        EXPECT_EQ(offlinePreprocess.ProcessEndMsg(), i < SHARED_MEMORY_NUM - 1);
+    }
+    EXPECT_TRUE(offlinePreprocess.isStopTakeData_.load());
+}
+
 /*
 @tc.name: ReportFrameMapHandlesOfflineAndDwarfErrorFrames
 @tc.desc: test ReportFrameMap frame serialization paths.
@@ -977,11 +1175,12 @@ HWTEST_F(StackPreprocessExtTest, InitializeGpuDataTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
-    
-    // Just call the method to ensure it doesn't crash
+    std::string tagName;
+
     preprocess.InitializeGpuData();
-    // We can't easily verify the output, but we can ensure the method executes without error
-    EXPECT_TRUE(true);
+
+    EXPECT_TRUE(preprocess.GetMemTag(GPU_VK_INDEX + 1, tagName));
+    EXPECT_EQ(tagName, TAG_RES_GPU_VK);
 }
 
 /*
@@ -1041,6 +1240,115 @@ HWTEST_F(StackPreprocessExtTest, ProcessRawDataHandlesSnapshotMarkers, TestSize.
     EXPECT_TRUE(preprocess.finalSnapshotDone_);
 }
 
+HWTEST_F(StackPreprocessExtTest, ProcessRawDataHandlesSmallBufferAndStopFlag, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetFactory(std::make_shared<HookRecordFactory>(hookConfig));
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+    std::array<int8_t, 2> tinyBuffer = {};
+
+    EXPECT_FALSE(preprocess.ProcessRawData(tinyBuffer.data(),
+        static_cast<uint32_t>(tinyBuffer.size()), rawData, hookRecord));
+
+    constexpr uint32_t tagId = 701;
+    auto tagData = MakeRawDataBuffer(MEMORY_TAG, "native_tag", tagId);
+    ASSERT_FALSE(tagData.empty());
+    preprocess.isStopTakeData_ = true;
+    EXPECT_FALSE(preprocess.ProcessRawData(reinterpret_cast<const int8_t*>(tagData.data()),
+        static_cast<uint32_t>(tagData.size()), rawData, hookRecord));
+
+    preprocess.isStopTakeData_ = false;
+    EXPECT_TRUE(preprocess.ProcessRawData(reinterpret_cast<const int8_t*>(tagData.data()),
+        static_cast<uint32_t>(tagData.size()), rawData, hookRecord));
+    preprocess.SaveMemTag(tagId, "native_tag");
+    std::string tagName;
+    EXPECT_TRUE(preprocess.GetMemTag(tagId, tagName));
+    EXPECT_EQ(tagName, "native_tag");
+}
+
+HWTEST_F(StackPreprocessExtTest, ProcessRawDataSkipsOlderDuplicateMalloc, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(true);
+    hookConfig.set_statistics_interval(1);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetFactory(std::make_shared<HookRecordFactory>(hookConfig));
+    constexpr uint64_t addr = 0xA100;
+    constexpr uint32_t stackId = 7;
+    RecordStatistic statistic;
+    statistic.callstackId = stackId;
+    preprocess.recordStatisticsMap_[stackId] = statistic;
+    preprocess.allocAddrMap_[addr] = AllocAddrInfo {64, stackId, {10, 0}};
+
+    auto mallocData = MakeRawDataBuffer(MALLOC_MSG, nullptr, 0);
+    ASSERT_EQ(mallocData.size(), sizeof(BaseStackRawData));
+    auto* baseData = reinterpret_cast<BaseStackRawData*>(mallocData.data());
+    baseData->addr = reinterpret_cast<void*>(addr);
+    baseData->mallocSize = 64;
+    baseData->ts = {9, 0};
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+
+    EXPECT_TRUE(preprocess.ProcessRawData(reinterpret_cast<const int8_t*>(mallocData.data()),
+        static_cast<uint32_t>(mallocData.size()), rawData, hookRecord));
+    ASSERT_NE(preprocess.allocAddrMap_.find(addr), preprocess.allocAddrMap_.end());
+    EXPECT_EQ(preprocess.allocAddrMap_[addr].ts.tv_sec, 10);
+}
+
+HWTEST_F(StackPreprocessExtTest, ProcessRawDataDispatchesNmdEndAndJsMessages, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetFactory(std::make_shared<HookRecordFactory>(hookConfig));
+    int nmdFd = CreateTempCacheFd();
+    ASSERT_GE(nmdFd, 0);
+    preprocess.SetNmdFd(static_cast<uint32_t>(nmdFd));
+
+    auto nmdData = MakeRawDataBuffer(NMD_MSG, "nmd-result", 0);
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+    EXPECT_TRUE(preprocess.ProcessRawData(reinterpret_cast<const int8_t*>(nmdData.data()),
+        static_cast<uint32_t>(nmdData.size()), rawData, hookRecord));
+    EXPECT_EQ(close(nmdFd), 0);
+
+    auto jsData = MakeRawDataBuffer(JS_STACK_MSG, "js-stack", 0);
+    auto* jsBase = reinterpret_cast<BaseStackRawData*>(jsData.data());
+    jsBase->jsChainId = 58;
+    EXPECT_TRUE(preprocess.ProcessRawData(reinterpret_cast<const int8_t*>(jsData.data()),
+        static_cast<uint32_t>(jsData.size()), rawData, hookRecord));
+    ASSERT_NE(preprocess.GetJsRawStack(58), nullptr);
+    EXPECT_STREQ(preprocess.GetJsRawStack(58), "js-stack");
+
+    NativeHookConfig cacheConfig;
+    cacheConfig.set_fp_unwind(true);
+    cacheConfig.set_use_file_cache_mode(true);
+    StackPreprocess cachePreprocess(nullptr, cacheConfig, 0);
+    cachePreprocess.SetFactory(std::make_shared<HookRecordFactory>(cacheConfig));
+    auto endData = MakeRawDataBuffer(END_MSG, nullptr, 0);
+    EXPECT_FALSE(cachePreprocess.ProcessRawData(reinterpret_cast<const int8_t*>(endData.data()),
+        static_cast<uint32_t>(endData.size()), rawData, hookRecord));
+    EXPECT_TRUE(cachePreprocess.isStopTakeData_);
+}
+
+HWTEST_F(StackPreprocessExtTest, ProcessRawDataSnapshotEndWithoutWaitingKeepsFlag, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.waitingFinalSnapshot_ = false;
+    preprocess.finalSnapshotDone_ = false;
+    std::array<uint8_t, sizeof(uint32_t)> snapshotEnd = {};
+    uint32_t marker = ALIVE_ADDR_SNAPSHOT_END_MARKER;
+    ASSERT_EQ(memcpy_s(snapshotEnd.data(), snapshotEnd.size(), &marker, sizeof(marker)), EOK);
+
+    EXPECT_TRUE(preprocess.ProcessRawData(reinterpret_cast<const int8_t*>(snapshotEnd.data()),
+        static_cast<uint32_t>(snapshotEnd.size()), nullptr, nullptr));
+    EXPECT_FALSE(preprocess.finalSnapshotDone_);
+}
+
 /*
 @tc.name: WaitForFinalSnapshotReturnsAfterCallbackSignal
 @tc.desc: WaitForFinalSnapshot should exit after callback marks snapshot completion.
@@ -1083,22 +1391,6 @@ HWTEST_F(StackPreprocessExtTest, WaitForFinalSnapshotTimesOutWithoutSignal, Test
     EXPECT_EQ(requestCmd, FINAL_SNAPSHOT_REQUEST_CMD);
     EXPECT_FALSE(preprocess.finalSnapshotDone_);
     EXPECT_FALSE(preprocess.waitingFinalSnapshot_);
-}
-
-/*
-@tc.name: WaitForFinalSnapshotWithoutCallbackReturnsImmediately
-@tc.desc: WaitForFinalSnapshot should return directly when callback is absent.
-@tc.type: FUNC
-*/
-HWTEST_F(StackPreprocessExtTest, WaitForFinalSnapshotWithoutCallbackReturnsImmediately, TestSize.Level0)
-{
-    NativeHookConfig hookConfig;
-    StackPreprocess preprocess(nullptr, hookConfig, 0);
-
-    preprocess.WaitForFinalSnapshot();
-
-    EXPECT_FALSE(preprocess.waitingFinalSnapshot_);
-    EXPECT_FALSE(preprocess.finalSnapshotDone_);
 }
 
 /*
@@ -1361,11 +1653,11 @@ HWTEST_F(StackPreprocessExtTest, SetMapsInfoTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
-    
-    // Just call the method to ensure it doesn't crash
+
     preprocess.SetMapsInfo();
-    // We can't easily verify the output, but we can ensure the method executes without error
-    EXPECT_TRUE(true);
+
+    auto& stackData = std::get<BatchNativeHookData>(preprocess.stackData_);
+    EXPECT_EQ(stackData.events_size(), 0);
 }
 
 /*
@@ -1566,5 +1858,685 @@ HWTEST_F(StackPreprocessExtTest, GetBuildIdEmptyPathTest, TestSize.Level0)
     // Test with empty path
     std::string result = preprocess.GetBuildId("");
     EXPECT_EQ(result, "");
+}
+
+HWTEST_F(StackPreprocessExtTest, SetApplyAndReleaseMatchFrameMatchesAndReleases, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_malloc_free_matching_interval(10);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto frames = MakeFrames(0x1000);
+    auto allocRecord = std::make_shared<HookRecord>(MakeRawStack(1, 100, 0));
+    allocRecord->GetRawStack()->stackContext->type = MALLOC_MSG;
+    allocRecord->GetRawStack()->stackContext->addr = reinterpret_cast<void*>(0x2000);
+    allocRecord->GetRawStack()->stackContext->mallocSize = 64;
+    BatchNativeHookData data;
+
+    preprocess.SetApplyAndReleaseMatchFrame(allocRecord, frames, data);
+    EXPECT_EQ(preprocess.applyAndReleaseMatchPeriodListData_.size(), 1u);
+    EXPECT_EQ(preprocess.applyAndReleaseMatchIntervallMap_.size(), 1u);
+
+    auto freeRecord = std::make_shared<HookRecord>(MakeRawStack(1, 100, 0));
+    freeRecord->GetRawStack()->stackContext->type = FREE_MSG;
+    freeRecord->GetRawStack()->stackContext->addr = reinterpret_cast<void*>(0x2000);
+    preprocess.SetApplyAndReleaseMatchFrame(freeRecord, frames, data);
+    EXPECT_TRUE(preprocess.applyAndReleaseMatchPeriodListData_.empty());
+    EXPECT_TRUE(preprocess.applyAndReleaseMatchIntervallMap_.empty());
+    EXPECT_TRUE(preprocess.releasedPeriodListData_.empty());
+}
+
+HWTEST_F(StackPreprocessExtTest, SetApplyAndReleaseMatchFrameStoresUnmatchedRelease, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_malloc_free_matching_interval(10);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto frames = MakeFrames(0x1000);
+    auto freeRecord = std::make_shared<HookRecord>(MakeRawStack(1, 100, 0));
+    freeRecord->GetRawStack()->stackContext->type = FREE_MSG;
+    freeRecord->GetRawStack()->stackContext->addr = reinterpret_cast<void*>(0x3000);
+    BatchNativeHookData data;
+
+    preprocess.SetApplyAndReleaseMatchFrame(freeRecord, frames, data);
+    EXPECT_TRUE(preprocess.applyAndReleaseMatchPeriodListData_.empty());
+    EXPECT_TRUE(preprocess.applyAndReleaseMatchIntervallMap_.empty());
+    EXPECT_EQ(preprocess.releasedPeriodListData_.size(), 1u);
+}
+
+HWTEST_F(StackPreprocessExtTest, SetApplyAndReleaseMatchFrameStoresPrSetVmaTag, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_malloc_free_matching_interval(10);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto frames = MakeFrames(0x1000);
+    auto rawStack = MakeRawStack(1, 100, 0);
+    rawStack->stackContext->type = PR_SET_VMA_MSG;
+    std::array<char, 16> tag = {'j', 'i', 't', '_', 'c', 'o', 'd', 'e', '\0'};
+    rawStack->data = reinterpret_cast<uint8_t*>(tag.data());
+    auto record = std::make_shared<HookRecord>(rawStack);
+    BatchNativeHookData data;
+
+    preprocess.SetApplyAndReleaseMatchFrame(record, frames, data);
+    EXPECT_EQ(preprocess.prctlPeriodTags_.size(), 1u);
+    EXPECT_EQ(preprocess.prctlPeriodTags_.front(), "jit_code");
+    EXPECT_EQ(preprocess.applyAndReleaseMatchPeriodListData_.size(), 1u);
+    EXPECT_EQ(rawStack->stackContext->tagId, 0u);
+}
+
+HWTEST_F(StackPreprocessExtTest, SetApplyAndReleaseMatchFrameCoversMapAndTraceTypes, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_malloc_free_matching_interval(10);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto frames = MakeFrames(0x1100);
+    BatchNativeHookData data;
+    std::vector<uint16_t> applyTypes = {MMAP_MSG, MMAP_FILE_PAGE_MSG, MEMORY_USING_MSG, MEMORY_UNUSING_MSG};
+
+    for (size_t index = 0; index < applyTypes.size(); ++index) {
+        auto rawStack = MakeRawStack(1, 200 + index, 0);
+        rawStack->stackContext->type = applyTypes[index];
+        rawStack->stackContext->addr = reinterpret_cast<void*>(0x8000 + index * 0x100);
+        auto record = std::make_shared<HookRecord>(rawStack);
+        preprocess.SetApplyAndReleaseMatchFrame(record, frames, data);
+    }
+
+    EXPECT_EQ(preprocess.applyAndReleaseMatchPeriodListData_.size(), applyTypes.size());
+    EXPECT_EQ(preprocess.applyAndReleaseMatchIntervallMap_.size(), applyTypes.size());
+
+    auto munmapRecord = std::make_shared<HookRecord>(MakeRawStack(1, 300, 0));
+    munmapRecord->GetRawStack()->stackContext->type = MUNMAP_MSG;
+    munmapRecord->GetRawStack()->stackContext->addr = reinterpret_cast<void*>(0xDEAD);
+    preprocess.SetApplyAndReleaseMatchFrame(munmapRecord, frames, data);
+    EXPECT_EQ(preprocess.releasedPeriodListData_.size(), 1u);
+}
+
+HWTEST_F(StackPreprocessExtTest, IntervalFlushApplyAndReleaseMatchDataKeepsPendingBeforeTimeout, TestSize.Level0)
+{
+    NativeHookConfig noIntervalConfig;
+    StackPreprocess noInterval(nullptr, noIntervalConfig, 0);
+    noInterval.applyAndReleaseMatchPeriodListData_.push_back(MakeReportEvent(MALLOC_MSG, 0x9100, 0, 31));
+    noInterval.IntervalFlushApplyAndReleaseMatchData();
+    EXPECT_EQ(noInterval.applyAndReleaseMatchPeriodListData_.size(), 1u);
+
+    NativeHookConfig intervalConfig;
+    intervalConfig.set_malloc_free_matching_interval(3600);
+    StackPreprocess intervalPreprocess(nullptr, intervalConfig, 0);
+    intervalPreprocess.applyAndReleaseMatchPeriodListData_.push_back(MakeReportEvent(MALLOC_MSG, 0x9200, 0, 32));
+    intervalPreprocess.IntervalFlushApplyAndReleaseMatchData();
+    EXPECT_EQ(intervalPreprocess.applyAndReleaseMatchPeriodListData_.size(), 1u);
+}
+
+HWTEST_F(StackPreprocessExtTest, SetSymbolInfoHandlesEmptyAndValidTable, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    StackPreprocess::ElfSymbolTable emptyTable {};
+    BatchNativeHookData emptyData;
+    preprocess.SetSymbolInfo(1, emptyTable, emptyData);
+    EXPECT_EQ(emptyData.events_size(), 0);
+
+    StackPreprocess::ElfSymbolTable symbolTable {};
+    symbolTable.textVaddr = 0x1000;
+    symbolTable.textOffset = 0x20;
+    symbolTable.symEntSize = 4;
+    symbolTable.symTable = {1, 2, 3, 4};
+    symbolTable.strTable = {5, 6, 7, 8};
+    BatchNativeHookData data;
+    preprocess.SetSymbolInfo(2, symbolTable, data);
+    ASSERT_EQ(data.events_size(), 1);
+    EXPECT_EQ(data.events(0).symbol_tab().file_path_id(), 2u);
+    EXPECT_EQ(data.events(0).symbol_tab().sym_entry_size(), 4u);
+}
+
+HWTEST_F(StackPreprocessExtTest, SetHookDataStatisticsBranchesCoverAllocAndFreeTypes, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    hookConfig.set_arkui_mem_trace_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto frames = MakeFrames(0x1111);
+    auto makeAllocRecord = [&]() {
+        auto rawStack = MakeRawStack(1, 100, 0);
+        rawStack->stackContext->ts = {1, 2};
+        rawStack->stackContext->addr = reinterpret_cast<void*>(0x4000);
+        rawStack->stackContext->mallocSize = 64;
+        rawStack->stackContext->pid = 123;
+        return std::make_shared<HookRecord>(rawStack);
+    };
+
+    BatchNativeHookData allocData;
+    auto mallocRecord = makeAllocRecord();
+    mallocRecord->GetRawStack()->stackContext->type = MALLOC_MSG;
+    preprocess.SetHookData(mallocRecord, frames, allocData);
+    EXPECT_TRUE(preprocess.statisticsModelFlushCallstack_);
+    ASSERT_EQ(preprocess.recordStatisticsMap_.size(), 1u);
+    EXPECT_EQ(preprocess.recordStatisticsMap_.begin()->second.applyCount, 1u);
+    EXPECT_EQ(preprocess.recordStatisticsMap_.begin()->second.releaseCount, 0u);
+
+    BatchNativeHookData freeData;
+    auto freeRecord = makeAllocRecord();
+    freeRecord->GetRawStack()->stackContext->type = FREE_MSG;
+    preprocess.SetHookData(freeRecord, frames, freeData);
+    EXPECT_EQ(preprocess.recordStatisticsMap_.begin()->second.releaseCount, 1u);
+    EXPECT_TRUE(preprocess.allocAddrMap_.empty());
+    EXPECT_TRUE(preprocess.statisticsPeriodSet_.count(preprocess.recordStatisticsMap_.begin()->first) > 0);
+
+    auto secondAllocRecord = makeAllocRecord();
+    secondAllocRecord->GetRawStack()->stackContext->type = MALLOC_MSG;
+    secondAllocRecord->GetRawStack()->stackContext->addr = reinterpret_cast<void*>(0x4010);
+    preprocess.SetHookData(secondAllocRecord, frames, allocData);
+
+    auto munmapRecord = makeAllocRecord();
+    munmapRecord->GetRawStack()->stackContext->addr = reinterpret_cast<void*>(0x4010);
+    munmapRecord->GetRawStack()->stackContext->type = MUNMAP_MSG;
+    BatchNativeHookData munmapData;
+    preprocess.SetHookData(munmapRecord, frames, munmapData);
+    EXPECT_EQ(preprocess.recordStatisticsMap_.begin()->second.releaseCount, 2u);
+
+    auto usingRecord = makeAllocRecord();
+    usingRecord->GetRawStack()->stackContext->type = MEMORY_USING_MSG;
+    BatchNativeHookData usingData;
+    preprocess.SetHookData(usingRecord, frames, usingData);
+    EXPECT_TRUE(preprocess.addrSet_.count(reinterpret_cast<uint64_t>(usingRecord->GetRawStack()->stackContext->addr)) > 0);
+    EXPECT_GE(preprocess.recordStatisticsMap_.begin()->second.applyCount, 3u);
+}
+
+HWTEST_F(StackPreprocessExtTest, SetHookDataStatisticsSkipsNoopTypes, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto frames = MakeFrames(0x2222);
+    auto makeRecord = [&](uint16_t type) {
+        auto rawStack = MakeRawStack(1, 100, 0);
+        rawStack->stackContext->type = type;
+        rawStack->stackContext->addr = reinterpret_cast<void*>(0x5000);
+        return std::make_shared<HookRecord>(rawStack);
+    };
+
+    BatchNativeHookData prSetVmaData;
+    preprocess.SetHookData(makeRecord(PR_SET_VMA_MSG), frames, prSetVmaData);
+    EXPECT_EQ(prSetVmaData.events_size(), 0);
+
+    BatchNativeHookData arktsMallocData;
+    preprocess.SetHookData(makeRecord(MALLOC_ARKTS), frames, arktsMallocData);
+    EXPECT_EQ(arktsMallocData.events_size(), 0);
+
+    BatchNativeHookData arktsFreeData;
+    preprocess.SetHookData(makeRecord(FREE_ARKTS), frames, arktsFreeData);
+    EXPECT_EQ(arktsFreeData.events_size(), 0);
+
+    BatchNativeHookData defaultData;
+    preprocess.SetHookData(makeRecord(0xFFFF), frames, defaultData);
+    EXPECT_EQ(defaultData.events_size(), 0);
+}
+
+HWTEST_F(StackPreprocessExtTest, StatisticsStateHelpersHandleMissingRecords, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    hookConfig.set_arkui_mem_trace_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    constexpr uint64_t addr = 0x7100;
+    constexpr uint64_t newAddr = 0x7200;
+    constexpr uint32_t stackId = 7;
+
+    preprocess.HandleMoveAddr(addr, newAddr, 128);
+    EXPECT_TRUE(preprocess.allocAddrMap_.empty());
+
+    preprocess.allocAddrMap_[addr] = AllocAddrInfo {64, stackId, {1, 0}};
+    preprocess.addrSet_.insert(addr);
+    preprocess.HandleMoveAddr(addr, newAddr, 128);
+    EXPECT_EQ(preprocess.allocAddrMap_.count(addr), 1u);
+    EXPECT_EQ(preprocess.allocAddrMap_.count(newAddr), 0u);
+
+    RecordStatistic statistic;
+    statistic.callstackId = stackId;
+    preprocess.recordStatisticsMap_[stackId] = statistic;
+    preprocess.HandleMoveAddr(addr, newAddr, 128);
+    EXPECT_EQ(preprocess.allocAddrMap_.count(addr), 0u);
+    EXPECT_EQ(preprocess.allocAddrMap_.count(newAddr), 1u);
+
+    preprocess.CleanupFullyReleasedStack(99);
+    EXPECT_EQ(preprocess.recordStatisticsMap_.count(stackId), 1u);
+    preprocess.CleanupFullyReleasedStack(stackId);
+    EXPECT_EQ(preprocess.recordStatisticsMap_.count(stackId), 0u);
+}
+
+HWTEST_F(StackPreprocessExtTest, FlushRecordStatisticsSkipsMissingStackIds, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    constexpr uint32_t missingStackId = 123;
+    preprocess.statisticsPeriodSet_.insert(missingStackId);
+
+    EXPECT_TRUE(preprocess.FlushRecordStatistics());
+
+    auto& stackData = std::get<BatchNativeHookData>(preprocess.stackData_);
+    EXPECT_TRUE(preprocess.statisticsPeriodSet_.empty());
+    EXPECT_EQ(stackData.events_size(), 0);
+}
+
+HWTEST_F(StackPreprocessExtTest, ReportFilePathMapRequestsBuildIdForSoPath, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    BatchNativeHookData data;
+    CallFrame soFrame(4);
+    soFrame.filePath_ = "/system/lib/libc.so";
+    soFrame.filePathId_ = 4;
+    soFrame.needReport_ |= FILE_PATH_ID_REPORT;
+
+    preprocess.ReportFilePathMap(soFrame, data);
+    ASSERT_EQ(data.events_size(), 1);
+    EXPECT_EQ(data.events(0).file_path().id(), 4u);
+    EXPECT_EQ(data.events(0).file_path().name(), "/system/lib/libc.so");
+}
+
+HWTEST_F(StackPreprocessExtTest, ResolveTagTypeCoversKnownAndFallbackPaths, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    RecordStatisticsEvent::MemoryType type = RecordStatisticsEvent::MALLOC;
+
+    EXPECT_TRUE(preprocess.ResolveTagType(TAG_RES_GPU_VK, type));
+    EXPECT_EQ(type, RecordStatisticsEvent::GPU_VK);
+
+    EXPECT_FALSE(preprocess.ResolveTagType(TAG_RES_JS_HEAP_MASK, type));
+    EXPECT_EQ(type, RecordStatisticsEvent::JS_HEAP);
+
+    EXPECT_TRUE(preprocess.ResolveTagType("ashmem", type));
+    EXPECT_EQ(type, RecordStatisticsEvent::ASHMEM);
+
+    EXPECT_FALSE(preprocess.ResolveTagType("/system/lib/libdemo.so", type));
+    EXPECT_EQ(type, RecordStatisticsEvent::SO);
+
+    EXPECT_FALSE(preprocess.ResolveTagType("plain_name", type));
+    EXPECT_EQ(type, RecordStatisticsEvent::MEMORY_USING_MSG);
+}
+
+HWTEST_F(StackPreprocessExtTest, SetStopTakeDataRequiresFileCacheMode, TestSize.Level0)
+{
+    NativeHookConfig sharedConfig;
+    StackPreprocess sharedPreprocess(nullptr, sharedConfig, 0);
+    sharedPreprocess.SetStopTakeData();
+    EXPECT_FALSE(sharedPreprocess.isStopTakeData_);
+
+    NativeHookConfig cacheConfig;
+    cacheConfig.set_use_file_cache_mode(true);
+    StackPreprocess cachePreprocess(nullptr, cacheConfig, 0);
+    cachePreprocess.SetStopTakeData();
+    EXPECT_TRUE(cachePreprocess.isStopTakeData_);
+}
+
+HWTEST_F(StackPreprocessExtTest, CheckIsFileCacheFinishRequiresAllConditions, TestSize.Level0)
+{
+    NativeHookConfig cacheConfig;
+    cacheConfig.set_use_file_cache_mode(true);
+    StackDataRepeaterPtr repeater = std::make_shared<StackDataRepeater>(4);
+    StackPreprocess cachePreprocess(repeater, cacheConfig, 0);
+
+    EXPECT_FALSE(cachePreprocess.CheckIsFileCacheFinsh());
+    cachePreprocess.SetIsCacheFileParseDone(true);
+    EXPECT_TRUE(cachePreprocess.CheckIsFileCacheFinsh());
+
+    NativeHookConfig sharedConfig;
+    StackPreprocess sharedPreprocess(repeater, sharedConfig, 0);
+    sharedPreprocess.SetIsCacheFileParseDone(true);
+    EXPECT_FALSE(sharedPreprocess.CheckIsFileCacheFinsh());
+}
+
+HWTEST_F(StackPreprocessExtTest, CleanupBatchRecordsStopsAtFirstNull, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetFactory(std::make_shared<HookRecordFactory>(hookConfig));
+    constexpr uint32_t batchCount = 3;
+    HookRecordPtr batchRawStack[batchCount] = {nullptr};
+    auto mallocRaw = MakeRawStack(1, 1, 0);
+    mallocRaw->stackContext->type = MALLOC_MSG;
+    batchRawStack[0] = std::make_shared<MallocRecord>(mallocRaw);
+    auto freeRaw = MakeRawStack(1, 2, 0);
+    freeRaw->stackContext->type = FREE_MSG;
+    batchRawStack[1] = std::make_shared<FreeRecord>(freeRaw);
+
+    preprocess.CleanupBatchRecords(batchRawStack, batchCount);
+
+    EXPECT_EQ(batchRawStack[0], nullptr);
+    EXPECT_EQ(batchRawStack[1], nullptr);
+    EXPECT_EQ(batchRawStack[2], nullptr);
+}
+
+HWTEST_F(StackPreprocessExtTest, HandleSimpleMessagesUpdatesArktsAddressState, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    hookConfig.set_arkui_mem_trace_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    RecordStatistic freeStatistic;
+    freeStatistic.callstackId = 3;
+    preprocess.recordStatisticsMap_[3] = freeStatistic;
+    preprocess.allocAddrMap_[0x1000] = AllocAddrInfo {64, 3, {1, 0}};
+    preprocess.addrSet_.insert(0x1000);
+    auto freeRaw = MakeRawStack(1, 1, 0);
+    freeRaw->stackContext->type = FREE_ARKTS;
+    HookRecordPtr freeRecord = std::make_shared<ArktsFreeRecord>(freeRaw);
+    freeRecord->GetRawStack()->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    freeRecord->GetRawStack()->stackContext->mallocSize = 64;
+
+    EXPECT_FALSE(preprocess.HandleSimpleMessages(freeRecord));
+    EXPECT_EQ(preprocess.allocAddrMap_.count(0x1000), 0u);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[3].releaseCount, 1u);
+
+    RecordStatistic moveStatistic;
+    moveStatistic.callstackId = 4;
+    preprocess.recordStatisticsMap_[4] = moveStatistic;
+    preprocess.allocAddrMap_[0x3000] = AllocAddrInfo {64, 4, {1, 0}};
+    preprocess.addrSet_.insert(0x3000);
+    auto moveRaw = MakeRawStack(1, 2, 0);
+    moveRaw->stackContext->type = MALLOC_ARKTS;
+    HookRecordPtr moveRecord = std::make_shared<ArktsMallocRecord>(moveRaw);
+    moveRecord->GetRawStack()->stackContext->addr = reinterpret_cast<void*>(0x3000);
+    moveRecord->GetRawStack()->stackContext->newAddr = reinterpret_cast<void*>(0x4000);
+    moveRecord->GetRawStack()->stackContext->mallocSize = 128;
+
+    EXPECT_FALSE(preprocess.HandleSimpleMessages(moveRecord));
+    EXPECT_EQ(preprocess.allocAddrMap_.count(0x3000), 0u);
+    EXPECT_EQ(preprocess.allocAddrMap_.count(0x4000), 1u);
+}
+
+HWTEST_F(StackPreprocessExtTest, ProcessSingleRecordHandlesEndAndNmd, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    RawStackPtr endRaw = MakeRawStack(1, 1, 0);
+    endRaw->stackContext->type = END_MSG;
+    HookRecordPtr endRecord = std::make_shared<HookRecord>(endRaw);
+
+    EXPECT_FALSE(preprocess.ProcessSingleRecord(endRecord));
+    EXPECT_TRUE(preprocess.isStopTakeData_);
+
+    StackPreprocess nmdPreprocess(nullptr, hookConfig, 0);
+    RawStackPtr nmdRaw = MakeRawStack(1, 2, 0);
+    nmdRaw->stackContext->type = NMD_MSG;
+    HookRecordPtr nmdRecord = std::make_shared<HookRecord>(nmdRaw);
+    EXPECT_FALSE(nmdPreprocess.ProcessSingleRecord(nmdRecord));
+    EXPECT_TRUE(nmdPreprocess.isStartTakeData_);
+}
+
+HWTEST_F(StackPreprocessExtTest, ReportThreadNameMapSkipsDuplicateName, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto& stackData = std::get<BatchNativeHookData>(preprocess.stackData_);
+
+    preprocess.ReportThreadNameMap(101, "worker");
+    ASSERT_EQ(stackData.events_size(), 1);
+    preprocess.ReportThreadNameMap(101, "worker");
+    EXPECT_EQ(stackData.events_size(), 1);
+    preprocess.ReportThreadNameMap(101, "worker_new");
+    ASSERT_EQ(stackData.events_size(), 2);
+    EXPECT_EQ(stackData.events(1).thread_name_map().name(), "worker_new");
+}
+
+HWTEST_F(StackPreprocessExtTest, BuildCallFramesAsyncSkipsSpecialRecordTypes, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_async_stack_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.InitializeDirector();
+    std::vector<CallFrame> callFrames;
+
+    for (uint16_t type : {FREE_ARKTS, MALLOC_ARKTS, PR_SET_VMA_MSG}) {
+        RawStackPtr rawData = MakeRawStack(1, type, 0);
+        rawData->stackContext->type = type;
+        HookRecordPtr hookRecord = std::make_shared<HookRecord>(rawData);
+        EXPECT_TRUE(preprocess.BuildCallFrames(hookRecord, rawData, callFrames));
+        EXPECT_TRUE(callFrames.empty());
+    }
+}
+
+HWTEST_F(StackPreprocessExtTest, BuildCallFramesUsesNestedAsyncPath, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_async_stack_enable(true);
+    hookConfig.set_nested_async_stack_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.InitializeDirector();
+    RawStackPtr rawData = MakeAsyncRawStack(MALLOC_MSG);
+    auto* asyncData = reinterpret_cast<AsyncStackData*>(rawData->stackContext);
+    asyncData->syncStackId = 0;
+    asyncData->nestedAsyncCount = 1;
+    asyncData->nestedAsyncIds[0] = 0;
+    auto hookRecord = std::make_shared<MallocRecord>(rawData);
+    std::vector<CallFrame> callFrames;
+
+    EXPECT_TRUE(preprocess.BuildCallFrames(hookRecord, rawData, callFrames));
+    EXPECT_EQ(asyncData->nestedAsyncCount, 1u);
+}
+
+HWTEST_F(StackPreprocessExtTest, SetHookDataSkipsFreeAndMunmapStacksWhenDisabled, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_callframe_compress(true);
+    hookConfig.set_free_stack_report(false);
+    hookConfig.set_munmap_stack_report(false);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    std::vector<CallFrame> callFrames = MakeFrames(0x3333);
+
+    RawStackPtr freeRaw = MakeRawStack(1, 1, 0);
+    freeRaw->stackContext->type = FREE_MSG;
+    auto freeRecord = std::make_shared<FreeRecord>(freeRaw);
+    BatchNativeHookData freeData;
+    preprocess.SetHookData(freeRecord, callFrames, freeData);
+    ASSERT_EQ(freeData.events_size(), 1);
+    EXPECT_EQ(freeData.events(0).free_event().stack_id(), 0u);
+
+    RawStackPtr munmapRaw = MakeRawStack(1, 2, 0);
+    munmapRaw->stackContext->type = MUNMAP_MSG;
+    auto munmapRecord = std::make_shared<MunmapRecord>(munmapRaw);
+    BatchNativeHookData munmapData;
+    preprocess.SetHookData(munmapRecord, callFrames, munmapData);
+    ASSERT_EQ(munmapData.events_size(), 1);
+    EXPECT_EQ(munmapData.events(0).munmap_event().stack_id(), 0u);
+}
+
+HWTEST_F(StackPreprocessExtTest, SetHookDataAddsNapiSyntheticFrame, TestSize.Level0)
+{
+    constexpr int napiCallStack = 2;
+    constexpr uint16_t napiTagId = 77;
+    NativeHookConfig hookConfig;
+    hookConfig.set_callframe_compress(true);
+    hookConfig.set_js_stack_report(napiCallStack);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SaveMemTag(napiTagId, "napi_callback");
+    RawStackPtr rawData = MakeRawStack(1, 1, napiTagId);
+    rawData->stackContext->type = MEMORY_USING_MSG;
+    auto hookRecord = std::make_shared<MemoryUsingRecord>(rawData);
+    std::vector<CallFrame> callFrames = MakeFrames(0x4444);
+    BatchNativeHookData stackData;
+
+    preprocess.SetHookData(hookRecord, callFrames, stackData);
+
+    ASSERT_GE(stackData.events_size(), 1);
+    const auto& event = stackData.events(stackData.events_size() - 1);
+    EXPECT_GT(event.trace_alloc_event().stack_id(), 0u);
+}
+
+HWTEST_F(StackPreprocessExtTest, FlushRecordStatisticsUsesCacheTimestamp, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    hookConfig.set_use_file_cache_mode(true);
+    hookConfig.set_arkui_mem_trace_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    constexpr uint32_t stackId = 88;
+    RecordStatistic statistic;
+    statistic.callstackId = stackId;
+    statistic.type = RecordStatisticsEvent::MEMORY_USING_MSG;
+    statistic.applyCount = 1;
+    statistic.applySize = 64;
+    preprocess.recordStatisticsMap_[stackId] = statistic;
+    preprocess.statisticsPeriodSet_.insert(stackId);
+    preprocess.lastCacheStatisticsTime_ = {9, 8};
+
+    EXPECT_TRUE(preprocess.FlushRecordStatistics());
+
+    auto& stackData = std::get<BatchNativeHookData>(preprocess.stackData_);
+    ASSERT_EQ(stackData.events_size(), 1);
+    EXPECT_EQ(stackData.events(0).tv_sec(), 9);
+    EXPECT_EQ(stackData.events(0).tv_nsec(), 8);
+}
+
+HWTEST_F(StackPreprocessExtTest, ReportThreadNameMapDefersStatisticsFlushWithoutCallstack, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto& stackData = std::get<BatchNativeHookData>(preprocess.stackData_);
+
+    preprocess.ReportThreadNameMap(123, "stat_worker");
+
+    ASSERT_EQ(stackData.events_size(), 1);
+    EXPECT_EQ(stackData.events(0).thread_name_map().name(), "stat_worker");
+    EXPECT_FALSE(preprocess.statisticsModelFlushCallstack_);
+}
+
+HWTEST_F(StackPreprocessExtTest, SetHookDataAddsOfflineNapiSyntheticFrame, TestSize.Level0)
+{
+    constexpr int napiCallStack = 2;
+    constexpr uint16_t napiTagId = 78;
+    NativeHookConfig hookConfig;
+    hookConfig.set_callframe_compress(true);
+    hookConfig.set_js_stack_report(napiCallStack);
+    hookConfig.set_offline_symbolization(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SaveMemTag(napiTagId, "napi_offline_callback");
+    RawStackPtr rawData = MakeRawStack(1, 1, napiTagId);
+    rawData->stackContext->type = MEMORY_USING_MSG;
+    rawData->stackSize = 0;
+    auto hookRecord = std::make_shared<MemoryUsingRecord>(rawData);
+    std::vector<CallFrame> callFrames = MakeFrames(0x5555);
+    BatchNativeHookData stackData;
+
+    preprocess.SetHookData(hookRecord, callFrames, stackData);
+
+    ASSERT_GE(stackData.events_size(), 1);
+    EXPECT_GT(stackData.events(stackData.events_size() - 1).trace_alloc_event().stack_id(), 0u);
+}
+
+HWTEST_F(StackPreprocessExtTest, SetHookDataStatisticsAddsNapiAllocFrame, TestSize.Level0)
+{
+    constexpr int napiCallStack = 2;
+    constexpr uint16_t napiTagId = 79;
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    hookConfig.set_js_stack_report(napiCallStack);
+    hookConfig.set_arkui_mem_trace_enable(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SaveMemTag(napiTagId, "napi_statistics_callback");
+    RawStackPtr rawData = MakeRawStack(1, 1, napiTagId);
+    rawData->stackContext->type = MEMORY_USING_MSG;
+    rawData->stackContext->addr = reinterpret_cast<void*>(0x6000);
+    rawData->stackContext->mallocSize = 96;
+    auto hookRecord = std::make_shared<MemoryUsingRecord>(rawData);
+    std::vector<CallFrame> callFrames = MakeFrames(0x6666);
+    BatchNativeHookData stackData;
+
+    preprocess.SetHookData(hookRecord, callFrames, stackData);
+
+    EXPECT_TRUE(preprocess.statisticsModelFlushCallstack_);
+    ASSERT_EQ(preprocess.recordStatisticsMap_.size(), 1u);
+    EXPECT_EQ(preprocess.recordStatisticsMap_.begin()->second.applySize, 96u);
+}
+
+HWTEST_F(StackPreprocessExtTest, FlushRejectsNullSourceAndMissingWriter, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    const uint8_t payload[] = {1, 2, 3};
+
+    preprocess.Flush(nullptr, sizeof(payload));
+    preprocess.Flush(payload, sizeof(payload));
+
+    EXPECT_EQ(preprocess.writer_, nullptr);
+}
+
+HWTEST_F(StackPreprocessExtTest, SetEventFrameSkipsStackIdWhenCompressionDisabled, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    ReportEventBaseData rawStack = MakeReportEvent(MALLOC_MSG, 0x9000, 0, 33);
+    AllocEvent allocEvent;
+    FreeEvent freeEvent;
+    MmapEvent mmapEvent;
+
+    preprocess.SetEventFrame(rawStack, &allocEvent, 33);
+    preprocess.SetEventFrame(rawStack, &freeEvent, 33);
+    preprocess.SetEventFrame(rawStack, &mmapEvent, 33, "FilePage:branch");
+
+    EXPECT_EQ(allocEvent.thread_name_id(), rawStack.tid);
+    EXPECT_EQ(allocEvent.stack_id(), 0u);
+    EXPECT_EQ(freeEvent.stack_id(), 0u);
+    EXPECT_EQ(mmapEvent.type(), "FilePage:branch");
+    EXPECT_EQ(mmapEvent.stack_id(), 0u);
+}
+
+HWTEST_F(StackPreprocessExtTest, ProcessStackDataCoversSaveFileModes, TestSize.Level0)
+{
+    auto frames = MakeFrames(0x7000);
+    NativeHookConfig standaloneConfig;
+    standaloneConfig.set_save_file(true);
+    standaloneConfig.set_file_name("standalone");
+    StackPreprocess standalone(nullptr, standaloneConfig, 0, nullptr, true);
+    auto standaloneRecord = MakeConcreteRecord(MALLOC_MSG, 0x7100);
+    BatchNativeHookData standaloneData;
+    standalone.ProcessStackData(standaloneRecord, frames, standaloneData);
+    ASSERT_EQ(standaloneData.events_size(), 1);
+    EXPECT_TRUE(standaloneData.events(0).has_alloc_event());
+
+    char tempPath[] = "/data/local/tmp/stack_preprocess_write_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    FILE* fp = fdopen(fd, "w+");
+    ASSERT_NE(fp, nullptr);
+    NativeHookConfig fileConfig;
+    fileConfig.set_save_file(true);
+    fileConfig.set_file_name("text");
+    StackPreprocess text(nullptr, fileConfig, 0, fp, false);
+    auto textRecord = MakeConcreteRecord(MALLOC_MSG, 0x7200);
+    BatchNativeHookData textData;
+    text.ProcessStackData(textRecord, frames, textData);
+    ASSERT_EQ(fflush(fp), 0);
+    ASSERT_EQ(fseek(fp, 0, SEEK_SET), 0);
+    char buffer[64] = {0};
+    EXPECT_GT(fread(buffer, 1, sizeof(buffer) - 1, fp), 0u);
+    EXPECT_EQ(fclose(fp), 0);
+    EXPECT_EQ(unlink(tempPath), 0);
+}
+
+HWTEST_F(StackPreprocessExtTest, SetHookDataSerializesTagAwareRecordTypes, TestSize.Level0)
+{
+    constexpr uint32_t tagId = 91;
+    NativeHookConfig hookConfig;
+    hookConfig.set_callframe_compress(true);
+    hookConfig.set_string_compressed(true);
+    hookConfig.set_fp_unwind(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SaveMemTag(tagId, "tagged.so");
+    auto frames = MakeFrames(0x7300);
+
+    auto mmapRecord = MakeConcreteRecord(MMAP_FILE_PAGE_MSG, 0x7300, tagId);
+    BatchNativeHookData mmapData;
+    preprocess.SetHookData(mmapRecord, frames, mmapData);
+    ASSERT_GT(mmapData.events_size(), 0);
+    EXPECT_EQ(mmapData.events(mmapData.events_size() - 1).mmap_event().type(), "FilePage:tagged.so");
+
+    for (uint16_t type : {MEMORY_USING_MSG, MEMORY_UNUSING_MSG, FREE_ARKTS, MALLOC_ARKTS}) {
+        auto record = MakeConcreteRecord(type, 0x7400 + type, tagId);
+        BatchNativeHookData data;
+        preprocess.SetHookData(record, frames, data);
+        EXPECT_GT(data.events_size(), 0);
+    }
 }
 }

@@ -241,7 +241,7 @@ class FtraceEventFormatParser(object):
                 cursor_line += 1
             else:
                 Common.logger.warning(
-                    "ignore unknow line at {}:{}".format(
+                    "ignore unknown line at {}:{}".format(
                         ftrace_info.format_path, cursor_line
                     )
                 )

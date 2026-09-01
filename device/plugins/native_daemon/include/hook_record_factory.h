@@ -54,6 +54,7 @@ private:
     void ProcessDynamicTagInfo(RawStackPtr rawStack, const int8_t sharedMemData[], uint32_t& size,
         const SaveMemTagCallBack& callback);
     uint32_t GetOriginStackDataSize(const int8_t sharedMemData[], uint32_t size);
+    bool CheckSizeByType(uint16_t type, uint32_t size);
 
     NativeHookConfig hookConfig_;
     std::unordered_map<std::string, uint32_t> tagNameToIdMap_;

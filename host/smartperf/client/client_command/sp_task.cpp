@@ -102,8 +102,8 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
     if (snf.isEffective && (!isFPS)) {
         return ExceptionMsg::TASK_CONFIG_NULL;
     }
-    if (sessionId.empty()) {
-        LOGE("ExceptionMsg ParseToTask sessoin id is null");
+    if (!SPUtils::IsValidWinId(sessionId)) {
+        LOGE("ExceptionMsg ParseToTask sessionId is invalid: %s", sessionId.c_str());
         return ExceptionMsg::SESSION_ID_NULL;
     } else if (configs.size() == 0) {
         LOGE("ExceptionMsg ParseToTask configs size is 0");
@@ -194,6 +194,10 @@ ErrCode SPTask::StartTask(std::function<void(const std::string&)> msgTask)
         WLOGE("Initialization failed.");
         return ErrCode::FAILED;
     }
+    if (curTaskInfo.sessionId.empty() || !SPUtils::IsValidWinId(curTaskInfo.sessionId)) {
+        WLOGE("SessionId is invalid: %s", curTaskInfo.sessionId.c_str());
+        return ErrCode::FAILED;
+    }
     isRunning = true;
     LOGD("Task initialized, realTimeStart = %lld", SPUtils::GetCurTime());
     InitDataFile();
@@ -219,6 +223,10 @@ ErrCode SPTask::StartTask(std::function<void(const std::string&)> msgTask)
 
 void SPTask::CreatPath(const std::string& path)
 {
+    if (!SPUtils::IsValidPath(path)) {
+        LOGE("CreatPath invalid path: %s", path.c_str());
+        return;
+    }
     if (!SPUtils::FileAccess(path)) {
         LOGD("CreatPath does not exist, attempting to create: %s", path.c_str());
         std::string cmdResult;
