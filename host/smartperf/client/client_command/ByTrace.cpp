@@ -102,17 +102,9 @@ void ByTrace::CpTraceFile() const
         return;
     }
     const std::string cpHiviewTracePath = hiviewTracePath_ + hiviewTrace;
-    std::error_code ec;
-    std::filesystem::copy(cpHiviewTracePath, traceCpPath_,
-        std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing, ec);
-    if (ec) {
-        LOGE("Copy failed: %s", ec.message().c_str());
-        return;
-    }
-    std::filesystem::permissions(traceCpPath_,
-        std::filesystem::perms::all, std::filesystem::perm_options::replace, ec);
-    if (ec) {
-        LOGE("Chmod failed: %s", ec.message().c_str());
+    const std::string dstFilePath = traceCpPath_ + "/" + hiviewTrace;
+    if (!SPUtils::CopyFile(cpHiviewTracePath, dstFilePath)) {
+        LOGE("copy failed: %s -> %s", cpHiviewTracePath.c_str(), dstFilePath.c_str());
         return;
     }
     LOGD("ByTrace::CpTraceFile result = (success)");

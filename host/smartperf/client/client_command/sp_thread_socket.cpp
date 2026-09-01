@@ -535,7 +535,7 @@ int SpThreadSocket::SendFile(const std::string& filePath)
 void SpThreadSocket::ConnectAndSendFile(SpServerSocket &spSocket, const std::string filePath)
 {
     if (!SPUtils::IsTraceFileName(filePath) &&
-        (!SPUtils::IsValidPath(filePath) || !SPUtils::IsPathTraversal(filePath))) {
+        (!SPUtils::IsValidPath(filePath) || SPUtils::IsPathTraversal(filePath))) {
         LOGE("filePath is null or Abnormal characters");
         return;
     }
@@ -677,7 +677,7 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
     } else if (iterator->first == MessageType::CATCH_ONE_TRACE) {
         bytrace.hiviewTrace = SplitMsg(recvBuf);
         if (!SPUtils::IsTraceFileName(bytrace.hiviewTrace) &&
-            (!SPUtils::IsValidPath(bytrace.hiviewTrace) || !SPUtils::IsPathTraversal(bytrace.hiviewTrace))) {
+            (!SPUtils::IsValidPath(bytrace.hiviewTrace) || SPUtils::IsPathTraversal(bytrace.hiviewTrace))) {
             LOGE("bytrace.hiviewTrace is null or Abnormal characters");
             return;
         }

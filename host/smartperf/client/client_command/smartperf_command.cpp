@@ -175,7 +175,7 @@ std::string SmartPerfCommand::ExecCommand()
 
 void SmartPerfCommand::InitSomething()
 {
-    if (SPUtils::Chmod("/proc/stat", FILE_PERMISSION_FULL)) {
+    if (SPUtils::Chmod("/proc/stat", FILE_PERMISSION_READ)) {
         LOGE("SmartPerfCommand::InitSomething Privilege escalation!");
         return;
     }

@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 
 #define FILE_PERMISSION_FULL 0777
+#define FILE_PERMISSION_READ 0644
 namespace OHOS {
 namespace SmartPerf {
 class SPUtilesTye {

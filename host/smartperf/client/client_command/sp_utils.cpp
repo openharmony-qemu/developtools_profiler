@@ -201,20 +201,27 @@ bool SPUtils::IsValidPath(const std::string& str)
     }
     return true;
 }
+
 bool SPUtils::IsTraceFileName(const std::string &name)
 {
-    //白名单匹配trace文件风格
-    if (name.find("trace_") != 0) {
-        return false;
-    }
     size_t atPos = name.find('@');
     if (atPos == std::string::npos) {
         return false;
     }
-    for (size_t i = 6; i < atPos; ++i) {
-        if (!isdigit(static_cast<unsigned char>(name[i]))) {
-            return false;
+    if (name.find("trace_") == 0) {
+        for (size_t i = 6; i < atPos; ++i) {
+            if (!isdigit(static_cast<unsigned char>(name[i]))) {
+                return false;
+            }
         }
+    } else if (name.find("Other_trace_") == 0) {
+        for (size_t i = 13; i < atPos; ++i) {
+            if (!isdigit(static_cast<unsigned char>(name[i]))) {
+                return false;
+            }
+        }
+    } else {
+        return false;
     }
     size_t dotPos = name.rfind('.');
     if (dotPos == std::string::npos) {
@@ -1033,7 +1040,7 @@ bool SPUtils::Chmod(const std::string& sourceFilePath, mode_t mode)
 void SPUtils::CreateDir(const std::string &dirPath)
 {
     if (SPUtils::FileAccess(dirPath)) {
-        chmod(dirPath.c_str(), FILE_PERMISSION_FULL);
+        Chmod(dirPath.c_str(), FILE_PERMISSION_FULL);
         return;
     }
     std::string path = dirPath;
@@ -1090,12 +1097,11 @@ void SPUtils::RemoveDirOrFile(const std::string &dirPath)
             continue;
         }
         std::string childPath = std::string(pathChar) + "/" + entry->d_name;
+        RemoveDirOrFile(childPath);
     }
     closedir(dir);
     if (rmdir(pathChar) != 0) {
         WLOGE("Failed to remove dir %s", pathChar);
-    } else {
-        WLOGI("Dir %s removed successfully", pathChar);
     }
 }
 
