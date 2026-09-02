@@ -38,6 +38,8 @@ ohos_shared_headers("smartperf_daemon") {
 }
 
 ohos_executable("SP_daemon") {
+  branch_protector_ret = "pac_ret"
+
   sources = [
     "AI_schedule.cpp",
     "ByTrace.cpp",
