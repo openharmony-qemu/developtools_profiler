@@ -513,12 +513,12 @@ void TaskManager::CollectData(std::map<uint32_t, std::map<std::string, std::stri
 void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValue& value)
 {
     if (type == CommandType::CT_PKG) {
-    std::string processName = std::get<std::string>(value);
-    if (!SPUtils::IsInvalidPkgName(processName)) {
-        LOGE("The pkgName is Abnormal characters");
-        return;
-    }
-    processName_ = processName;
+        std::string processName = std::get<std::string>(value);
+        if (!SPUtils::IsInvalidPkgName(processName)) {
+            LOGE("The pkgName is Abnormal characters");
+            return;
+        }
+        processName_ = processName;
         OHOS::SmartPerf::StartUpDelay sp;
         sp.GetPidByPkg(processName_, &processIds_);
     }
