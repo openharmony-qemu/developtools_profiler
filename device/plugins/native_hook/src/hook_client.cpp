@@ -1223,7 +1223,12 @@ int hook_prctl(int(*fn)(int, ...),
     rawdata.mallocSize = arg4;
     rawdata.addr = reinterpret_cast<void*>(arg3);
     size_t tagLen = strlen(reinterpret_cast<char*>(arg5)) + 1;
-    if (memcpy_s(rawdata.name, sizeof(rawdata.name), reinterpret_cast<char*>(arg5), tagLen) != EOK) {
+    size_t maxLen = sizeof(rawdata.name);
+    if (tagLen > maxLen) {
+        HILOG_BASE_ERROR(LOG_CORE, "tag too long: tagLen=%zu, maxLen=%zu", tagLen, maxLen);
+        tagLen = maxLen;
+    }
+    if (memcpy_s(rawdata.name, maxLen, reinterpret_cast<char*>(arg5), tagLen) != EOK) {
         HILOG_BASE_ERROR(LOG_CORE, "memcpy_s tag failed");
     }
     rawdata.name[sizeof(rawdata.name) - 1] = '\0';
