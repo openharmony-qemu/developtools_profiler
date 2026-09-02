@@ -721,7 +721,9 @@ void NativeMemoryProfilerSaService::CloseSocketFd(pid_t pid)
         int socketFd = g_pidFds[pid];
         g_pidFds.erase(pid);
         lock.unlock();
-        g_serviceEntry->RemoveContext(socketFd);
+        if (g_serviceEntry != nullptr) {
+            g_serviceEntry->RemoveContext(socketFd);
+        }
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService::CloseSocketFd pid invalid");
     }

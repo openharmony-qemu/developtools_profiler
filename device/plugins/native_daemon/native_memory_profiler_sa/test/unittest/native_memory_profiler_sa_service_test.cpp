@@ -1047,6 +1047,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcStartupModeReachesSendCo
     ASSERT_FALSE(config->processName_.empty());
     config->startupMode_ = true;
     config->filePath_ = MakeTracePath("protocol_startup_socket");
+    service->Stop(config->processName_);
     ASSERT_EQ(service->Start(config), RET_OK);
 
     int peerConfig = static_cast<int>(getpid());
@@ -1076,6 +1077,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcStartupModeSendsSharedMe
     config->startupMode_ = true;
     config->offlineSymbolization_ = true;
     config->filePath_ = MakeTracePath("protocol_startup_shared_memory");
+    service->Stop(config->processName_);
     ASSERT_EQ(service->Start(config), RET_OK);
 
     ScopedSocketPair socketPair;
@@ -1104,6 +1106,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcNonStartupModeSendsConfi
     config->processName_.clear();
     config->startupMode_ = false;
     config->filePath_ = MakeTracePath("protocol_non_startup_socket");
+    service->Stop(GetProtocolProcessName());
     ASSERT_EQ(service->Start(config), RET_OK);
 
     ScopedSocketPair socketPair;
@@ -1134,6 +1137,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcStartupModeSendsAsyncUni
     config->startupMode_ = true;
     config->asyncStackEnable_ = true;
     config->filePath_ = MakeTracePath("protocol_startup_async_stack");
+    service->Stop(config->processName_);
     ASSERT_EQ(service->Start(config), RET_OK);
 
     ScopedSocketPair socketPair;
@@ -1164,6 +1168,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ProtocolProcStartupModeSendsInitialF
     config->startupMode_ = true;
     config->enableFileCacheMode_ = true;
     config->filePath_ = MakeTracePath("protocol_startup_file_cache");
+    service->Stop(config->processName_);
     ASSERT_EQ(service->Start(config), RET_OK);
 
     ScopedSocketPair socketPair;
@@ -1196,6 +1201,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ClientDisconnectCallbackStopsSocketM
     ASSERT_FALSE(config->processName_.empty());
     config->startupMode_ = true;
     config->filePath_ = MakeTracePath("client_disconnect_socket");
+    service->Stop(config->processName_);
     ASSERT_EQ(service->Start(config), RET_OK);
 
     int peerConfig = static_cast<int>(getpid());
@@ -1262,6 +1268,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, ReceiveCacheFileMsgReadyQueuesAndRep
     config->startupMode_ = true;
     config->enableFileCacheMode_ = true;
     config->filePath_ = MakeTracePath("cache_ready_replenish");
+    service->Stop(config->processName_);
     ASSERT_EQ(service->Start(config), RET_OK);
 
     ScopedSocketPair socketPair;
