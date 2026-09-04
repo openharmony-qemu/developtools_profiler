@@ -877,9 +877,9 @@ Status ProfilerService::DestroySessionImpl(uint32_t requestId, uint32_t sessionI
         for (size_t i = 0; i < ctx->pluginNames.size(); i++) {
             auto pluginName = ctx->pluginNames[i];
             std::tie(pluginId, pluginCtx) = pluginService_->GetPluginContext(pluginName);
-            if (pluginCtx->isStandaloneFileData == true) {
+            if (pluginCtx && pluginCtx->isStandaloneFileData) {
                 MergeStandaloneFile(ctx->sessionConfig.result_file(), pluginName, pluginCtx->outFileName,
-                                        pluginCtx->pluginVersion);
+                    pluginCtx->pluginVersion);
             }
         }
     }
