@@ -202,6 +202,7 @@ bool ProfilerService::SessionContext::StopPluginSessions(bool timerTask)
             }
         }
         CHECK_NOTNULL(traceFileWriter, false, "traceFileWriter invalid!");
+        traceFileWriter->SetStopSplitFile(true);
         traceFileWriter->SetDurationTime();
     }
 
