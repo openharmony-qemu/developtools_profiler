@@ -1603,6 +1603,101 @@ HWTEST_F(ProfilerServiceTest, KeepSessionInvalidContext, TestSize.Level1)
 
 /**
  * @tc.name: server
+ * @tc.desc: session expire handle with online session.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, SessionExpireHandleOnline, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ASSERT_NE(context_, nullptr);
+
+    uint32_t sessionId = CreateOnlineSession();
+    EXPECT_NE(sessionId, 0);
+
+    EXPECT_NE(service_->GetSessionContext(sessionId), nullptr);
+    service_->SessionExpireHandle(sessionId);
+    EXPECT_EQ(service_->GetSessionContext(sessionId), nullptr);
+
+    EXPECT_NE(DestroySession(sessionId).error_code(), grpc::StatusCode::OK);
+}
+
+/**
+ * @tc.name: server
+ * @tc.desc: session expire handle with offline session.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, SessionExpireHandleOffline, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ASSERT_NE(context_, nullptr);
+
+    uint32_t sessionId = CreateOfflineSession();
+    EXPECT_NE(sessionId, 0);
+
+    EXPECT_NE(service_->GetSessionContext(sessionId), nullptr);
+    service_->SessionExpireHandle(sessionId);
+    EXPECT_EQ(service_->GetSessionContext(sessionId), nullptr);
+
+    EXPECT_NE(DestroySession(sessionId).error_code(), grpc::StatusCode::OK);
+}
+
+/**
+ * @tc.name: server
+ * @tc.desc: session expire handle with started session.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, SessionExpireHandleStartedSession, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ASSERT_NE(context_, nullptr);
+
+    uint32_t sessionId = CreateOnlineSession();
+    EXPECT_NE(sessionId, 0);
+    EXPECT_EQ(StartSession(sessionId).error_code(), grpc::StatusCode::OK);
+
+    service_->SessionExpireHandle(sessionId);
+    EXPECT_EQ(service_->GetSessionContext(sessionId), nullptr);
+
+    EXPECT_NE(StopSession(sessionId).error_code(), grpc::StatusCode::OK);
+    EXPECT_NE(DestroySession(sessionId).error_code(), grpc::StatusCode::OK);
+}
+
+/**
+ * @tc.name: server
+ * @tc.desc: session expire handle with invalid session id.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, SessionExpireHandleInvalidSessionId, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ASSERT_NE(context_, nullptr);
+
+    service_->SessionExpireHandle(0);
+    EXPECT_EQ(service_->GetSessionContext(0), nullptr);
+}
+
+/**
+ * @tc.name: server
+ * @tc.desc: session expire handle called twice.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, SessionExpireHandleTwice, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ASSERT_NE(context_, nullptr);
+
+    uint32_t sessionId = CreateOnlineSession();
+    EXPECT_NE(sessionId, 0);
+
+    service_->SessionExpireHandle(sessionId);
+    EXPECT_EQ(service_->GetSessionContext(sessionId), nullptr);
+
+    service_->SessionExpireHandle(sessionId);
+    EXPECT_EQ(service_->GetSessionContext(sessionId), nullptr);
+}
+
+/**
+ * @tc.name: server
  * @tc.desc: start service.
  * @tc.type: FUNC
  */
