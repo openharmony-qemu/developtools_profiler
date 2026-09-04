@@ -210,7 +210,9 @@ HWTEST_F(HidebugProfilerCallbackTest, ProfilerOptionsSetterInvalidValueTest, Tes
     EXPECT_EQ(OH_HiDebug_SetMaxDurationSec(opts, 0), HIDEBUG_RES_PROF_INVALID_MAX_DURATION);
     EXPECT_EQ(OH_HiDebug_SetMaxDurationSec(opts, 3601), HIDEBUG_RES_PROF_INVALID_MAX_DURATION);
     EXPECT_EQ(OH_HiDebug_SetFilterSize(opts, 0), HIDEBUG_RES_PROF_INVALID_FILTER_SIZE);
+    EXPECT_EQ(OH_HiDebug_SetMaxStackDepth(opts, 0), HIDEBUG_RES_PROF_INVALID_MAX_STACK_DEPTH);
     EXPECT_EQ(OH_HiDebug_SetMaxStackDepth(opts, 31), HIDEBUG_RES_PROF_INVALID_MAX_STACK_DEPTH);
+    EXPECT_EQ(OH_HiDebug_SetStatisticsIntervalSec(opts, 0), HIDEBUG_RES_PROF_INVALID_STATISTICS_INTERVAL);
     EXPECT_EQ(OH_HiDebug_SetStatisticsIntervalSec(opts, 3601), HIDEBUG_RES_PROF_INVALID_STATISTICS_INTERVAL);
     EXPECT_EQ(OH_HiDebug_SetSampleIntervalBytes(opts, 383), HIDEBUG_RES_PROF_INVALID_SAMPLE_INTERVAL);
     EXPECT_EQ(OH_HiDebug_SetMaxAsyncNestingDepth(opts, 0), HIDEBUG_RES_PROF_INVALID_MAX_ASYNC_NESTING_DEPTH);
@@ -251,9 +253,9 @@ HWTEST_F(HidebugProfilerCallbackTest, ProfilerOptionsSetterBoundaryValueTest, Te
     EXPECT_EQ(OH_HiDebug_SetMaxDurationSec(opts, 1), HIDEBUG_SUCCESS);
     EXPECT_EQ(OH_HiDebug_SetMaxDurationSec(opts, 3600), HIDEBUG_SUCCESS);
     EXPECT_EQ(OH_HiDebug_SetFilterSize(opts, 1), HIDEBUG_SUCCESS);
-    EXPECT_EQ(OH_HiDebug_SetMaxStackDepth(opts, 0), HIDEBUG_SUCCESS);
+    EXPECT_EQ(OH_HiDebug_SetMaxStackDepth(opts, 1), HIDEBUG_SUCCESS);
     EXPECT_EQ(OH_HiDebug_SetMaxStackDepth(opts, 30), HIDEBUG_SUCCESS);
-    EXPECT_EQ(OH_HiDebug_SetStatisticsIntervalSec(opts, 0), HIDEBUG_SUCCESS);
+    EXPECT_EQ(OH_HiDebug_SetStatisticsIntervalSec(opts, 1), HIDEBUG_SUCCESS);
     EXPECT_EQ(OH_HiDebug_SetStatisticsIntervalSec(opts, 3600), HIDEBUG_SUCCESS);
     EXPECT_EQ(OH_HiDebug_SetSampleIntervalBytes(opts, 384), HIDEBUG_SUCCESS);
     EXPECT_EQ(OH_HiDebug_SetMaxAsyncNestingDepth(opts, 1), HIDEBUG_SUCCESS);

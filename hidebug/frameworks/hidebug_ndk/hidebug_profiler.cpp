@@ -268,7 +268,7 @@ HiDebug_ErrorCode OH_HiDebug_SetMaxStackDepth(OH_HiDebug_ProfilerOptions* opts,
     if (opts == nullptr) {
         return HIDEBUG_RES_PROF_INVALID_ARG;
     }
-    if (depth > MAX_STACK_DEPTH) {
+    if (depth == 0 || depth > MAX_STACK_DEPTH) {
         return HIDEBUG_RES_PROF_INVALID_MAX_STACK_DEPTH;
     }
     opts->maxStackDepth = depth;
@@ -281,7 +281,7 @@ HiDebug_ErrorCode OH_HiDebug_SetStatisticsIntervalSec(OH_HiDebug_ProfilerOptions
     if (opts == nullptr) {
         return HIDEBUG_RES_PROF_INVALID_ARG;
     }
-    if (seconds > MAX_STATISTICS_INTERVAL_SEC) {
+    if (seconds == 0 || seconds > MAX_STATISTICS_INTERVAL_SEC) {
         return HIDEBUG_RES_PROF_INVALID_STATISTICS_INTERVAL;
     }
     opts->statisticsInterval = seconds;
