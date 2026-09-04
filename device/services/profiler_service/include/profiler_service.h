@@ -144,13 +144,11 @@ private:
         std::shared_ptr<NativeHookConfig>& nativeHookConfig);
     bool NativeHookConfigHasCompositeTag(const std::shared_ptr<NativeHookConfig>& nativeHookConfig);
 
-    ::grpc::Status StopSessionImpl(::grpc::ServerContext* context,
-                               const ::StopSessionRequest* request,
-                               ::StopSessionResponse* response, uint32_t sessionId);
+    ::grpc::Status StopSessionImpl(uint32_t requestId, uint32_t sessionId);
 
-    ::grpc::Status DestroySessionImpl(::grpc::ServerContext* context,
-                                  const ::DestroySessionRequest* request,
-                                  ::DestroySessionResponse* response, uint32_t sessionId);
+    ::grpc::Status DestroySessionImpl(uint32_t requestId, uint32_t sessionId);
+
+    void SessionExpireHandle(uint32_t sessionId);
 
 private:
     mutable std::mutex sessionContextMutex_ = {};

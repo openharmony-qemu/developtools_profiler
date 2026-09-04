@@ -398,7 +398,7 @@ void CaptureChildProcessImpl()
         std::this_thread::sleep_for(std::chrono::milliseconds(5000)); //5000: 5s
     }
     if (!profilerExit) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(KEEP_SESSION_TIMEOUT_MS * DOUBLE));
+        std::this_thread::sleep_for(std::chrono::milliseconds(KEEP_SESSION_TIMEOUT_LONG_MS / DOUBLE));
         ProfilerProcessManager::GetInstance().KillDependentProcess();
     }
 }
