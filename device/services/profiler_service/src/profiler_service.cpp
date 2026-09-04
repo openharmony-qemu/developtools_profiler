@@ -871,17 +871,15 @@ Status ProfilerService::DestroySessionImpl(uint32_t requestId, uint32_t sessionI
         PROFILER_LOG_INFO(LOG_CORE, "result file %s size is %ld KB", ctx->sessionConfig.result_file().c_str(), result);
     }
 
-    if (ctx->sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
+    if (ctx->sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE && !ctx->sessionConfig.split_file()) {
         uint32_t pluginId = 0;
         PluginContextPtr pluginCtx = nullptr;
         for (size_t i = 0; i < ctx->pluginNames.size(); i++) {
             auto pluginName = ctx->pluginNames[i];
             std::tie(pluginId, pluginCtx) = pluginService_->GetPluginContext(pluginName);
             if (pluginCtx->isStandaloneFileData == true) {
-                if (!ctx->sessionConfig.split_file()) {
-                    MergeStandaloneFile(ctx->sessionConfig.result_file(), pluginName, pluginCtx->outFileName,
+                MergeStandaloneFile(ctx->sessionConfig.result_file(), pluginName, pluginCtx->outFileName,
                                         pluginCtx->pluginVersion);
-                }
             }
         }
     }
