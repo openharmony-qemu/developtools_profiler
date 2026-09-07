@@ -73,19 +73,15 @@ bool ShouldFilterBySize(void* ptr, size_t mallocSize)
     if (mallocSize >= g_clientConfig.sampleInterval) {
         return false;
     }
-
     size_t usableSize = malloc_usable_size(ptr);
-
     if (usableSize >= g_clientConfig.sampleInterval) {
         return false;
     }
-
     if ((usableSize == g_clientConfig.largestSize) ||
         (usableSize == g_clientConfig.secondLargestSize) ||
         (usableSize == g_clientConfig.maxGrowthSize)) {
         return false;
     }
-
     return true;
 }
 
