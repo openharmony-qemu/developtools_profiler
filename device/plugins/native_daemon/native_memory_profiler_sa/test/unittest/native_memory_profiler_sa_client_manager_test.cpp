@@ -305,8 +305,16 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, CheckInputConfigTest003, TestS
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(type, &invalidConfig),
               ResProfilerErrorCode::RES_PROF_MAX_STACK_DEPTH_INVALID_ARG);
 
+    invalidConfig.maxStackDepth = 0;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(type, &invalidConfig),
+              ResProfilerErrorCode::RES_PROF_MAX_STACK_DEPTH_INVALID_ARG);
+
     invalidConfig.maxStackDepth = 30;
     invalidConfig.statisticsInterval = 3601;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(type, &invalidConfig),
+              ResProfilerErrorCode::RES_PROF_STATISTICS_INTERVAL_INVALID_ARG);
+
+    invalidConfig.statisticsInterval = 0;
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(type, &invalidConfig),
               ResProfilerErrorCode::RES_PROF_STATISTICS_INTERVAL_INVALID_ARG);
 

@@ -822,11 +822,11 @@ ResProfilerErrorCode NativeMemoryProfilerSaClientManager::CheckInputConfig(int t
         PROFILER_LOG_ERROR(LOG_CORE, "CheckInputConfig: filterSize is invalid");
         return ResProfilerErrorCode::RES_PROF_FILTER_SIZE_INVALID_ARG;
     }
-    if (inputConfig->maxStackDepth > DEFINE_MAX_STACK_DEPTH) {
+    if (inputConfig->maxStackDepth == 0 || inputConfig->maxStackDepth > DEFINE_MAX_STACK_DEPTH) {
         PROFILER_LOG_ERROR(LOG_CORE, "CheckInputConfig: maxStackDepth is invalid");
         return ResProfilerErrorCode::RES_PROF_MAX_STACK_DEPTH_INVALID_ARG;
     }
-    if (inputConfig->statisticsInterval > DEFINE_MAX_STATISTICS_INTERVAL) {
+    if (inputConfig->statisticsInterval == 0 || inputConfig->statisticsInterval > DEFINE_MAX_STATISTICS_INTERVAL) {
         PROFILER_LOG_ERROR(LOG_CORE, "CheckInputConfig: statisticsInterval is invalid");
         return ResProfilerErrorCode::RES_PROF_STATISTICS_INTERVAL_INVALID_ARG;
     }

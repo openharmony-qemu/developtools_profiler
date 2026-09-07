@@ -118,11 +118,11 @@ bool MemoryProfilerClientImpl::CheckInput(int32_t resourceType, const MemAPIConf
         PROFILER_LOG_ERROR(LOG_CORE, "Invalid filterSize: %u", config.filterSize);
         return false;
     }
-    if (config.maxStackDepth > DEFINE_MAX_STACK_DEPTH) {
+    if (config.maxStackDepth == 0 || config.maxStackDepth > DEFINE_MAX_STACK_DEPTH) {
         PROFILER_LOG_ERROR(LOG_CORE, "Invalid maxStackDepth: %u", config.maxStackDepth);
         return false;
     }
-    if (config.statisticsInterval > DEFINE_MAX_STATISTICS_INTERVAL) {
+    if (config.statisticsInterval == 0 || config.statisticsInterval > DEFINE_MAX_STATISTICS_INTERVAL) {
         PROFILER_LOG_ERROR(LOG_CORE, "Invalid statisticsInterval: %u", config.statisticsInterval);
         return false;
     }
