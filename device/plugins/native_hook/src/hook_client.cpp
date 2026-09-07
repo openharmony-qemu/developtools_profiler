@@ -1084,6 +1084,9 @@ void* __attribute__((noinline)) hook_mmap(void*(*fn)(void*, size_t, int, int, in
     if (ret == MAP_FAILED) {
         return ret;
     }
+    if (g_clientConfig.mmapSpecificAddrOnly && addr == nullptr) {
+        return ret;
+    }
 
     if (!HookGuard::IsReady() || HookGuard::IsPidChanged()) {
         return ret;
@@ -1108,10 +1111,12 @@ void* __attribute__((noinline)) hook_mmap(void*(*fn)(void*, size_t, int, int, in
     if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
         return ret;
     }
-    if (((static_cast<uint32_t>(flags) & MAP_FIXED) != 0) && !SendMmapFixedReleaseEvent(client, addr, length)) {
+    if (!g_clientConfig.mmapSpecificAddrOnly &&
+        ((static_cast<uint32_t>(flags) & MAP_FIXED) != 0) &&
+        !SendMmapFixedReleaseEvent(client, addr, length)) {
         PROFILER_LOG_WARN(LOG_CORE, "hook_mmap send MAP_FIXED release event failed");
     }
-    SetStackRawData(rawdata, MMAP_MSG, ret, length);
+    SetStackRawData(rawdata, MMAP_MSG, g_clientConfig.mmapSpecificAddrOnly ? addr : ret, length);
     char fileName[MAX_HOOK_PATH + 1] = {0};
     if (!RefreshMmapRawData(rawdata, prot, flags, fd, offset, length, fileName, sizeof(fileName))) {
         return ret;
@@ -1156,6 +1161,9 @@ int __attribute__((noinline)) hook_munmap(int(*fn)(void*, size_t), void* addr, s
     struct timespec unmapTime = {};
     clock_gettime(g_clientConfig.clockId, &unmapTime);
     int ret = fn ? fn(addr, length) : -1;
+    if (g_clientConfig.mmapSpecificAddrOnly) {
+        return ret;
+    }
 
     if (!HookGuard::IsReady()) {
         return ret;
@@ -1207,6 +1215,9 @@ int hook_prctl(int(*fn)(int, ...),
     int option, unsigned long arg2, unsigned long arg3, unsigned long arg4, unsigned long arg5)
 {
     int ret = fn ? fn(option, arg2, arg3, arg4, arg5) : -1;
+    if (g_clientConfig.mmapSpecificAddrOnly) {
+        return ret;
+    }
 
     if ((!HookGuard::IsReady()) || reinterpret_cast<char*>(arg5) == nullptr || HookGuard::ShouldSkipMmap()) {
         return ret;

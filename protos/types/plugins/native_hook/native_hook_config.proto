@@ -78,4 +78,5 @@ message NativeHookConfig {
     uint32 async_task_stack_depth = 43;
     bool arkui_mem_trace_enable = 44;
     bool discard_destroyed_traces = 45;
+    bool mmap_specific_addr_only = 46;
 }

@@ -580,6 +580,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.asyncTaskStackDepth = hookConfig_.async_task_stack_depth();
     clientConfig.arkuiMemTraceEnable = hookConfig_.arkui_mem_trace_enable();
     clientConfig.discardDestroyedTraces = hookConfig_.discard_destroyed_traces();
+    clientConfig.mmapSpecificAddrOnly = hookConfig_.mmap_specific_addr_only();
     GetClientConfigExt(clientConfig);
 }
 
@@ -1200,6 +1201,12 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
 
     UpdateAsyncFlagConfig();
     UpdateFileCacheModeConfig();
+    if (hookConfig_.mmap_specific_addr_only()) {
+        hookConfig_.set_statistics_interval(0);
+        hookConfig_.clear_restrace_tag();
+        hookConfig_.set_memtrace_enable(false);
+        hookConfig_.set_malloc_disable(true);
+    }
 
     if (!SetLocalHandle("1")) {
         return false;
