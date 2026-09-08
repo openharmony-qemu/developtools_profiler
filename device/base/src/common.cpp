@@ -972,6 +972,20 @@ static const std::string FILE_SUFFIX = ".htrace";
 
 std::pair<bool, std::string> CheckNotExistsFilePathSafe(const std::string& filePath)
 {
+    auto retFile = CheckFilePathPrefixSafe(filePath);
+    if (!retFile.first) {
+        return {false, std::string()};
+    }
+    std::string fullPath = retFile.second;
+    if (fullPath.size() < FILE_SUFFIX.size() ||
+        fullPath.compare(fullPath.size() - FILE_SUFFIX.size(), FILE_SUFFIX.size(), FILE_SUFFIX) != 0) {
+        return {false, std::string()};
+    }
+    return {true, fullPath};
+}
+
+std::pair<bool, std::string> CheckFilePathPrefixSafe(const std::string& filePath)
+{
     size_t pos = filePath.rfind('/');
     if (pos == std::string::npos || pos == filePath.size() - 1) {
         return {false, std::string()};
@@ -988,10 +1002,6 @@ std::pair<bool, std::string> CheckNotExistsFilePathSafe(const std::string& fileP
         return {false, std::string()};
     }
     std::string fullPath = resolved + "/" + filePath.substr(pos + 1);
-    if (fullPath.size() < FILE_SUFFIX.size() ||
-        fullPath.compare(fullPath.size() - FILE_SUFFIX.size(), FILE_SUFFIX.size(), FILE_SUFFIX) != 0) {
-        return {false, std::string()};
-    }
     return {true, fullPath};
 }
 
