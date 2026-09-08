@@ -969,6 +969,7 @@ std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath)
 
 static const std::string DATA_TMP_DIR = "/data/local/tmp";
 static const std::string FILE_SUFFIX = ".htrace";
+static const std::string ZIP_FILE_SUFFIX = ".zip";
 
 std::pair<bool, std::string> CheckNotExistsFilePathSafe(const std::string& filePath)
 {
@@ -988,8 +989,9 @@ std::pair<bool, std::string> CheckNotExistsFilePathSafe(const std::string& fileP
         return {false, std::string()};
     }
     std::string fullPath = resolved + "/" + filePath.substr(pos + 1);
-    if (fullPath.size() < FILE_SUFFIX.size() ||
-        fullPath.compare(fullPath.size() - FILE_SUFFIX.size(), FILE_SUFFIX.size(), FILE_SUFFIX) != 0) {
+    if (fullPath.compare(fullPath.size() - FILE_SUFFIX.size(), FILE_SUFFIX.size(), FILE_SUFFIX) != 0 &&
+        fullPath.compare(fullPath.size() - ZIP_FILE_SUFFIX.size(), ZIP_FILE_SUFFIX.size(), ZIP_FILE_SUFFIX) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:invalid file suffix: %s", __func__, fullPath.c_str());
         return {false, std::string()};
     }
     return {true, fullPath};
