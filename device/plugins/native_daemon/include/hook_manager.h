@@ -148,14 +148,16 @@ public:
     bool HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx);
     void StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, gid_t>>* pidInfo = nullptr);
     void ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex);
-    void RefreshValidLiveDataFromFile(int fd);
-    void ScanFileForLiveData(int fd, uint64_t& readfileSize);
-    bool ProcessFileChunk(int fd, uint8_t* buffer, uint32_t& remainSize, uint64_t& readfileSize);
+    void RefreshValidLiveDataFromFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd);
+    void ScanFileForLiveData(CacheFileReadContext& ctx);
+    bool ProcessFileChunk(CacheFileReadContext& ctx);
     uint32_t HandleRemainData(uint8_t* buffer, uint32_t totalAvail, uint32_t offset,
                               int fd, uint64_t& readfileSize);
     bool RefreshValidLiveDataFromBuffer(uint8_t* buffer, uint32_t totalAvail,
-                                        uint32_t& offset, uint64_t& fileSize);
+                                        uint32_t& offset, uint64_t& fileSize, bool isCrashFile);
     void ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd);
+    bool ParseCacheFileLoop(const std::shared_ptr<HookManagerCtx>& hookCtx, CacheFileReadContext& ctx);
+    bool HandleParsedRemainder(CacheFileReadContext& ctx, uint32_t totalAvail, uint32_t offset);
     bool HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex);
     bool HandleCacheFileStopByPid(pid_t pid);
     bool HandleClientDisconnectedByPid(pid_t pid);
@@ -275,7 +277,8 @@ private:
         bool takeNotifier);
     void FlushPendingRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx);
     bool ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& hookCtx, uint8_t* buffer,
-        uint32_t totalAvail, uint32_t& offset, uint64_t& readfileSize);
+        uint32_t totalAvail, uint32_t& offset, uint64_t& readfileSize, bool isCrashFile);
+    bool ShouldSkipGlobalFreedRecord(const int8_t* data, uint32_t size) const;
     std::string GetMemLeakFileName(MemLeakFormat format);
     void UpdateFreezeExcludedPid(bool isAdd, int32_t targetPid, int32_t profilerPid);
     bool CloseMemLeakTempFile();

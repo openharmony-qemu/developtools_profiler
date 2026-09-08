@@ -84,6 +84,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "../../../api/src/buffer_writer.cpp",
     "../../../api/src/command_poller.cpp",
     "../../../api/src/writer_adapter.cpp",
+    "../../src/cache_file_reader.cpp",
     "../../src/call_stack.cpp",
     "../../src/debug_logger.cpp",
     "../../src/dwarf_encoding.cpp",

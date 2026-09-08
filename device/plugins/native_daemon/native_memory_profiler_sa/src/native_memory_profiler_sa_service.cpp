@@ -261,6 +261,7 @@ void NativeMemoryProfilerSaService::ClientDisconnectCallback(int socketFd)
     }
     bool isAsync = false;
     std::string name = "";
+    std::shared_ptr<HookManager> hookMgr = nullptr;
     // Lock the mutex to ensure safe access to the shared resource g_pidCtx
     {
         std::lock_guard<std::mutex> guard(g_mtx);
@@ -276,6 +277,11 @@ void NativeMemoryProfilerSaService::ClientDisconnectCallback(int socketFd)
         }
         isAsync = config->callback != nullptr;
         name = config->processName;
+        hookMgr = config->hookMgr;
+    }
+    // rescue unwritten-full cache file: push active cache fd into parse queue before normal stop chain
+    if (hookMgr != nullptr) {
+        (void)hookMgr->HandleClientDisconnectedByPid(pidval);
     }
     {
         std::lock_guard<std::mutex> guard(g_timerFdMtx);

@@ -51,33 +51,34 @@ private:
     bool ReturnCurrentCacheFile();
     bool SwitchToNextCacheFile();
     bool WaitForNextCacheFile();
+    bool MapFileToMemory(int fd);
+    void UnmapMemory();
+    void UpdateDataSizeHeader();
     bool WriteToMemoryCache(const void* data, size_t size);
+    bool PrepareRecordWrite(uint32_t totalSize, size_t incomingSize);
+    bool FinishRecordWrite(bool ok, uint32_t originalOffset, size_t incomingSize);
     bool FlushMemoryCacheToFile();
-    bool WriteToFile(const uint8_t* data, size_t size);
     bool NotifyFileEvent(uint16_t fileIndex, uint16_t eventType, int fd);
     void CloseCacheFile(int& fd);
     void ApplyBackpressureDelay();
     void AdaptiveWait(uint32_t delayNs);
     bool ShouldApplyBackpressure();
-    uint8_t* AllocateMmapCache(uint32_t capacity);
-    void ReleaseMmapCache();
 
 private:
     std::mutex writeMutex_;
     FileEventCallback fileEventCallback_ = nullptr;
-    uint8_t* memoryCache_ = nullptr;
-    uint32_t memoryCacheCapacity_ = 0;
-    size_t memoryCacheSize_ = 0;
+    uint8_t* mmapAddr_ = nullptr;
+    uint32_t mmapSize_ = 0;
+    uint32_t writeOffset_ = 0;
+    uint32_t fileRecordCount_ = 0;
     std::array<int, FILE_CACHE_FD_COUNT> pendingFileFds_ {{-1, -1, -1}};
     int currentFileFd_ = -1;
     uint16_t currentFileIndex_ = INVALID_CACHE_FILE_INDEX;
     uint16_t nextFileIndex_ = 0;
-    uint64_t currentFileSize_ = 0;
     std::atomic<bool> initialized_ = false;
     bool isCacheFileEnded_ = false;
     bool stopModeEnabled_ = false;
-    uint32_t memoryCacheDataSizeLimit_;
-    
+
     std::atomic<uint64_t> delayCount_{0};
     std::atomic<uint32_t> currentBackpressureDelay_{0};
 

@@ -93,6 +93,7 @@ ohos_shared_library("libmemory_profiler") {
     "../api/src/buffer_writer.cpp",
     "../api/src/command_poller.cpp",
     "../api/src/writer_adapter.cpp",
+    "src/cache_file_reader.cpp",
     "src/dwarf_encoding.cpp",
     "src/get_thread_id.cpp",
     "src/hook_manager.cpp",

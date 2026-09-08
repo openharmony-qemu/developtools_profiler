@@ -21,6 +21,7 @@
 #include <fstream>
 #include <sstream>
 #include <unordered_set>
+#include "cache_file_reader.h"
 #include "common.h"
 #include "logging.h"
 #include "plugin_service_types.pb.h"
@@ -612,19 +613,23 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
 }
 
 bool StackPreprocess::ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvail, ParseContext& ctx,
-    RawStackPtr& rawData, std::shared_ptr<HookRecord>& hookRecord)
+    RawStackPtr& rawData, std::shared_ptr<HookRecord>& hookRecord, bool isCrashFile)
 {
     while (ctx.offset + sizeof(uint32_t) <= totalAvail) {
         uint32_t totalSize = 0;
-        errno_t ret = memcpy_s(&totalSize, sizeof(uint32_t), buffer + ctx.offset, sizeof(uint32_t));
-        if (ret != EOK) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer memcpy_s failed, ret=%d", ret);
-            return false;
-        }
-
-        if (totalSize == 0 || totalSize > DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer invalid totalSize=%u", totalSize);
-            return false;
+        if (isCrashFile) {
+            if (!GetRecordHeadWithRetry(buffer, totalAvail, ctx.offset, totalSize, isCrashFile)) {
+                return true;
+            }
+        } else {
+            RecordHeadStatus headStatus = GetRecordHead(buffer, ctx.offset, isCrashFile, totalSize);
+            if (headStatus == RECORD_HEAD_INVALID) {
+                DumpInvalidRecordHead(buffer, totalAvail, ctx.offset, ctx.readfileSize);
+                return false;
+            }
+            if (headStatus == RECORD_HEAD_END) {
+                return true;
+            }
         }
 
         if (ctx.offset + sizeof(uint32_t) + totalSize > totalAvail) {
@@ -666,74 +671,89 @@ void StackPreprocess::TakeResultsFromCacheFile(int fd)
         SetIsStopTakeData(true);
         return;
     }
-    constexpr uint32_t readBufSize = 4 * 1024 * 1024;
-    auto readBuffer = std::make_unique<uint8_t[]>(readBufSize);
-    uint32_t remainSize = 0;
-    uint64_t readfileSize = 0;
+    InitializeDirector();
+    uint32_t dataSize = 0;
+    if (!ReadCacheFileHeader(fd, dataSize)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile read data size header failed, fd=%d errno=%d",
+            fd, errno);
+        close(fd);
+        return;
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "ReadCacheFileHeader fd=%d dataSize=%u", fd, dataSize);
+    if (!SanitizeCacheDataSize(dataSize)) {
+        PROFILER_LOG_WARN(LOG_CORE, "TakeResultsFromCacheFile dataSize exceeds max, fallback to crash mode");
+    }
+    CacheFileReadContext ctx;
+    ctx.fd = fd;
+    ctx.isCrashFile = (dataSize == 0);
+    ctx.bytesToRead = ctx.isCrashFile ? MAX_CACHE_DATA_SIZE : dataSize;
+    auto readBuffer = std::make_unique<uint8_t[]>(FILE_CACHE_READ_BUFFER_SIZE);
+    ctx.readBuffer = readBuffer.get();
     bool ret = false;
     bool hasError = false;
     RawStackPtr rawData = nullptr;
     std::shared_ptr<HookRecord> hookRecord = nullptr;
-    InitializeDirector();
-    lseek(fd, 0, SEEK_SET);
+    PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile dataSize=%u crashFile=%d",
+        dataSize, static_cast<int>(ctx.isCrashFile));
 
     while (!isStopTakeData_ && !hasError) {
-        ssize_t bytesRead = read(fd, readBuffer.get() + remainSize, readBufSize - remainSize);
+        uint32_t maxRead = GetCacheFileReadSize(ctx);
+        if (ctx.readDone) {
+            ret = true;
+            break;
+        }
+        ssize_t bytesRead = read(ctx.fd, ctx.readBuffer + ctx.remainSize, maxRead);
         if (bytesRead < 0) {
             PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile read failed errno=%d", errno);
             hasError = true;
             break;
         }
         if (bytesRead == 0) {
-            if (remainSize == 0) {
-                ret = true;
-            } else {
+            if (ctx.remainSize != 0 && !ctx.isCrashFile) {
                 PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile incomplete record at EOF, remainSize=%u",
-                    remainSize);
+                    ctx.remainSize);
                 hasError = true;
+            } else {
+                ret = true;
             }
             break;
         }
 
-        uint32_t totalAvail = remainSize + static_cast<uint32_t>(bytesRead);
-        ParseContext ctx = {0, readfileSize};
+        uint32_t totalAvail = ctx.remainSize + static_cast<uint32_t>(bytesRead);
+        ParseContext parseCtx = {0, ctx.readfileSize};
         UpdateLastCacheFileActivityTime();
-        if (!ParseRecordsFromBuffer(readBuffer.get(), totalAvail, ctx, rawData, hookRecord)) {
-            hasError = true;
+        if (!ParseRecordsFromBuffer(ctx.readBuffer, totalAvail, parseCtx, rawData, hookRecord,
+                                    ctx.isCrashFile)) {
+            ret = ctx.isCrashFile;
+            hasError = !ctx.isCrashFile;
             break;
         }
 
-        readfileSize = ctx.readfileSize;
-        remainSize = totalAvail - ctx.offset;
-        if (remainSize > 0 && ctx.offset == 0) {
-            uint32_t oversizeRecord = 0;
-            if (memcpy_s(&oversizeRecord, sizeof(uint32_t), readBuffer.get(), sizeof(uint32_t)) != EOK) {
+        ctx.readfileSize = parseCtx.readfileSize;
+        ctx.remainSize = totalAvail - parseCtx.offset;
+        if (ctx.remainSize > 0 && parseCtx.offset == 0) {
+            if (!HandleOversizeRecord(ctx)) {
                 hasError = true;
                 break;
             }
-            PROFILER_LOG_WARN(LOG_CORE, "TakeResultsFromCacheFile record too large for buffer, "
-                "totalSize=%u, bufSize=%u, skipping", oversizeRecord, readBufSize);
-            off_t skipBytes = static_cast<off_t>(oversizeRecord) + sizeof(uint32_t) - remainSize;
-            if (lseek(fd, skipBytes, SEEK_CUR) < 0) {
-                PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile lseek skip failed errno=%d", errno);
-                hasError = true;
+            if (ctx.readDone) {
+                ret = true;
                 break;
             }
-            readfileSize += sizeof(uint32_t) + oversizeRecord;
-            remainSize = 0;
             continue;
         }
-        if (remainSize > 0) {
-            if (memmove_s(readBuffer.get(), readBufSize, readBuffer.get() + ctx.offset, remainSize) != EOK) {
-                PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile memmove_s failed");
-                hasError = true;
-                break;
-            }
+        if (ctx.remainSize > 0 &&
+            memmove_s(ctx.readBuffer, FILE_CACHE_READ_BUFFER_SIZE, ctx.readBuffer + parseCtx.offset,
+                      ctx.remainSize) != EOK) {
+            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile memmove_s failed");
+            hasError = true;
+            break;
         }
     }
 
     close(fd);
-    PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile [%" PRIu64 "]completed, ret %d.", readfileSize, ret);
+    PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile [%llu]completed, ret %d.",
+        static_cast<unsigned long long>(ctx.readfileSize), ret);
 }
 
 void StackPreprocess::InitializeDirector()

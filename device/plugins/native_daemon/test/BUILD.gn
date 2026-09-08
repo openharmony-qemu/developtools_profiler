@@ -18,6 +18,7 @@ import("native_daemon.gni")
 module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/device"
 
 sources_base = [
+  "unittest/common/native/cache_file_reader_test.cpp",
   "unittest/common/native/callstack_test.cpp",
   "unittest/common/native/debug_logger_test.cpp",
   "unittest/common/native/dwarf_encoding_test.cpp",
@@ -55,6 +56,7 @@ sources_base = [
   "../../api/src/buffer_writer.cpp",
   "../../api/src/command_poller.cpp",
   "../../api/src/writer_adapter.cpp",
+  "../src/cache_file_reader.cpp",
   "../src/hook_manager.cpp",
   "../src/hook_record.cpp",
   "../src/hook_record_factory.cpp",

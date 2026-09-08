@@ -954,8 +954,9 @@ HWTEST_F(HookManagerTest, FormatGwpAsanOutputEmptyFrameMap, TestSize.Level0)
 HWTEST_F(HookManagerTest, ScanFileForLiveData_ReadError, TestSize.Level0)
 {
     HookManager hookManager;
-    uint64_t readfileSize = 0;
-    hookManager.ScanFileForLiveData(-1, readfileSize);
+    CacheFileReadContext ctx;
+    ctx.fd = -1;
+    hookManager.ScanFileForLiveData(ctx);
 }
 
 /*
@@ -966,7 +967,6 @@ HWTEST_F(HookManagerTest, ScanFileForLiveData_ReadError, TestSize.Level0)
 HWTEST_F(HookManagerTest, ScanFileForLiveData_InvalidData, TestSize.Level0)
 {
     HookManager hookManager;
-    uint64_t readfileSize = 0;
 
     char path[] = "/data/local/tmp/test_hook_manager_XXXXXX";
     int fd = mkstemp(path);
@@ -977,7 +977,10 @@ HWTEST_F(HookManagerTest, ScanFileForLiveData_InvalidData, TestSize.Level0)
     write(fd, &size, sizeof(uint32_t));
     lseek(fd, 0, SEEK_SET);
 
-    hookManager.ScanFileForLiveData(fd, readfileSize);
+    CacheFileReadContext ctx;
+    ctx.fd = fd;
+    ctx.bytesToRead = MMAP_FILE_SIZE;
+    hookManager.ScanFileForLiveData(ctx);
     close(fd);
 }
 } // namespace

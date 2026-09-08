@@ -15,10 +15,10 @@
 
 #include "cache_file_writer.h"
 
-#include <algorithm>
+#include <cerrno>
 #include <chrono>
+#include <fcntl.h>
 #include <sys/mman.h>
-#include <sys/prctl.h>
 #include <sys/syscall.h>
 #include <thread>
 #include <unistd.h>
@@ -27,51 +27,23 @@
 #include "securec.h"
 
 namespace {
-constexpr size_t WRITE_CHUNK_SIZE = 4 * 1024 * 1024;
-constexpr uint64_t MAX_CACHE_FILE_SIZE = 96 * 1024 * 1024;
 constexpr auto WAIT_NEXT_CACHE_FILE_INTERVAL = std::chrono::milliseconds(5);
 constexpr auto WAIT_NEXT_CACHE_FILE_TIMEOUT = std::chrono::seconds(3);
-constexpr const char* CACHE_VMA_NAME = "hooknativesmb";
 }
 
 using namespace OHOS::Developtools::NativeDaemon;
 
+// aligns with daemon GetRecordHead limit, a record larger than this is rejected by daemon parsing
+constexpr uint64_t MAX_SINGLE_RECORD_SIZE = DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES;
+
 CacheFileWriter::CacheFileWriter(uint32_t cacheMemorySize)
 {
-    if (cacheMemorySize < MIN_FILE_CACHE_MEMORY_SIZE || cacheMemorySize > MAX_FILE_CACHE_MEMORY_SIZE) {
-        memoryCacheDataSizeLimit_ = DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES;
-    } else {
-        memoryCacheDataSizeLimit_ = cacheMemorySize * MB_TO_BYTES;
-    }
-    uint32_t extraSize = sizeof(StackRawData) + sizeof(uint32_t);
-    memoryCacheCapacity_ = memoryCacheDataSizeLimit_ + extraSize;
-    memoryCache_ = AllocateMmapCache(memoryCacheCapacity_);
-}
-
-uint8_t* CacheFileWriter::AllocateMmapCache(uint32_t capacity)
-{
-    void* base = mmap(nullptr, capacity, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    if (base == MAP_FAILED) {
-        return nullptr;
-    }
-    (void)prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, reinterpret_cast<uintptr_t>(base), capacity,
-                reinterpret_cast<uintptr_t>(CACHE_VMA_NAME));
-    return reinterpret_cast<uint8_t*>(base);
-}
-
-void CacheFileWriter::ReleaseMmapCache()
-{
-    if (memoryCache_ != nullptr) {
-        munmap(memoryCache_, memoryCacheCapacity_);
-        memoryCache_ = nullptr;
-        memoryCacheCapacity_ = 0;
-        memoryCacheSize_ = 0;
-    }
+    (void)cacheMemorySize;
 }
 
 CacheFileWriter::~CacheFileWriter()
 {
-    if (!isCacheFileEnded_ && (memoryCacheSize_ > 0 || currentFileSize_ > 0)) {
+    if (!isCacheFileEnded_ && writeOffset_ > DATA_SIZE_HEADER_LEN) {
         SetCacheFileWriterEnd();
     } else {
         Flush();
@@ -80,7 +52,7 @@ CacheFileWriter::~CacheFileWriter()
     for (auto& fd : pendingFileFds_) {
         CloseCacheFile(fd);
     }
-    ReleaseMmapCache();
+    UnmapMemory();
 }
 
 void CacheFileWriter::Prepare(FileEventCallback callback)
@@ -109,64 +81,73 @@ bool CacheFileWriter::AddCacheFile(uint16_t fileIndex, int fd)
     return true;
 }
 
-bool CacheFileWriter::Write(const void* data, size_t size)
+// caller must hold writeMutex_; backpressure, writable file, flush and zero-size guard before writing
+bool CacheFileWriter::PrepareRecordWrite(uint32_t totalSize, size_t incomingSize)
 {
-    if (data == nullptr || size == 0 || size > memoryCacheDataSizeLimit_ || !initialized_ || isCacheFileEnded_ ||
-        memoryCache_ == nullptr) {
-        return false;
-    }
-    uint32_t totalSize = size;
-    size_t incomingSize = sizeof(totalSize) + size;
-    std::lock_guard<std::mutex> lock(writeMutex_);
-    
     if (!stopModeEnabled_ && ShouldApplyBackpressure()) {
         ApplyBackpressureDelay();
     }
-    
     if (!EnsureWritableCacheFile()) {
         return false;
     }
-    if (memoryCacheSize_ + incomingSize >= memoryCacheDataSizeLimit_ && !FlushMemoryCacheToFile()) {
+    if (writeOffset_ + incomingSize > mmapSize_ && !FlushMemoryCacheToFile()) {
         return false;
     }
-    size_t originalSize = memoryCacheSize_;
-    if (!WriteToMemoryCache(&totalSize, sizeof(totalSize)) || !WriteToMemoryCache(data, size)) {
-        memoryCacheSize_ = originalSize;
+    if (totalSize == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CacheFileWriter zero totalSize before write, totalSize=%u tid=%ld",
+            totalSize, syscall(SYS_gettid));
         return false;
     }
     return true;
 }
 
+// caller must hold writeMutex_; rollback on failure or count the committed record
+bool CacheFileWriter::FinishRecordWrite(bool ok, uint32_t originalOffset, size_t incomingSize)
+{
+    if (!ok) {
+        PROFILER_LOG_WARN(LOG_CORE, "CacheFileWriter rollback, originalOffset=%u incoming=%zu tid=%ld",
+            originalOffset, incomingSize, syscall(SYS_gettid));
+        writeOffset_ = originalOffset;
+        return false;
+    }
+    fileRecordCount_++;
+    return true;
+}
+
+bool CacheFileWriter::Write(const void* data, size_t size)
+{
+    if (data == nullptr || size == 0 || size > MAX_SINGLE_RECORD_SIZE || !initialized_ || isCacheFileEnded_) {
+        return false;
+    }
+    uint32_t totalSize = size;
+    size_t incomingSize = sizeof(totalSize) + size;
+    std::lock_guard<std::mutex> lock(writeMutex_);
+    if (!PrepareRecordWrite(totalSize, incomingSize)) {
+        return false;
+    }
+    uint32_t originalOffset = writeOffset_;
+    bool ok = WriteToMemoryCache(&totalSize, sizeof(totalSize)) && WriteToMemoryCache(data, size);
+    return FinishRecordWrite(ok, originalOffset, incomingSize);
+}
+
 bool CacheFileWriter::WriteWithPayload(const void* data, size_t size, const void* payload, size_t payloadSize)
 {
-    if (data == nullptr || size == 0 || size > memoryCacheDataSizeLimit_ || payloadSize > memoryCacheDataSizeLimit_ ||
-        !initialized_ || isCacheFileEnded_ || memoryCache_ == nullptr) {
+    if (data == nullptr || size == 0 || size + payloadSize > MAX_SINGLE_RECORD_SIZE ||
+        !initialized_ || isCacheFileEnded_) {
         return false;
     }
     uint32_t totalSize = size + payloadSize;
     size_t incomingSize = sizeof(totalSize) + size + payloadSize;
     std::lock_guard<std::mutex> lock(writeMutex_);
-    
-    if (!stopModeEnabled_ && ShouldApplyBackpressure()) {
-        ApplyBackpressureDelay();
-    }
-    
-    if (!EnsureWritableCacheFile()) {
+    if (!PrepareRecordWrite(totalSize, incomingSize)) {
         return false;
     }
-    if (memoryCacheSize_ + incomingSize >= memoryCacheDataSizeLimit_ && !FlushMemoryCacheToFile()) {
-        return false;
-    }
-    size_t originalSize = memoryCacheSize_;
+    uint32_t originalOffset = writeOffset_;
     bool ok = WriteToMemoryCache(&totalSize, sizeof(totalSize)) && WriteToMemoryCache(data, size);
     if (payload != nullptr && payloadSize > 0) {
         ok = ok && WriteToMemoryCache(payload, payloadSize);
     }
-    if (!ok) {
-        memoryCacheSize_ = originalSize;
-        return false;
-    }
-    return true;
+    return FinishRecordWrite(ok, originalOffset, incomingSize);
 }
 
 bool CacheFileWriter::WriteWithExtraData(const void* data, size_t size, const void* payload, size_t payloadSize,
@@ -182,24 +163,15 @@ bool CacheFileWriter::WriteWithExtraData(const void* data, size_t size, const vo
         secondExtraSize = 0;
     }
     uint32_t totalSize = size + payloadSize + firstExtraSize + secondExtraSize;
-    if (data == nullptr || size == 0 || totalSize > memoryCacheDataSizeLimit_ || !initialized_ || isCacheFileEnded_ ||
-        memoryCache_ == nullptr) {
+    if (data == nullptr || size == 0 || totalSize > MAX_SINGLE_RECORD_SIZE || !initialized_ || isCacheFileEnded_) {
         return false;
     }
     size_t incomingSize = sizeof(totalSize) + totalSize;
     std::lock_guard<std::mutex> lock(writeMutex_);
-    
-    if (!stopModeEnabled_ && ShouldApplyBackpressure()) {
-        ApplyBackpressureDelay();
-    }
-    
-    if (!EnsureWritableCacheFile()) {
+    if (!PrepareRecordWrite(totalSize, incomingSize)) {
         return false;
     }
-    if (memoryCacheSize_ + incomingSize >= memoryCacheDataSizeLimit_ && !FlushMemoryCacheToFile()) {
-        return false;
-    }
-    size_t originalSize = memoryCacheSize_;
+    uint32_t originalOffset = writeOffset_;
     bool ok = WriteToMemoryCache(&totalSize, sizeof(totalSize)) && WriteToMemoryCache(data, size);
     if (payloadSize > 0) {
         ok = ok && WriteToMemoryCache(payload, payloadSize);
@@ -210,11 +182,7 @@ bool CacheFileWriter::WriteWithExtraData(const void* data, size_t size, const vo
     if (secondExtraSize > 0) {
         ok = ok && WriteToMemoryCache(secondExtra, secondExtraSize);
     }
-    if (!ok) {
-        memoryCacheSize_ = originalSize;
-        return false;
-    }
-    return true;
+    return FinishRecordWrite(ok, originalOffset, incomingSize);
 }
 
 void CacheFileWriter::SetCacheFileWriterEnd()
@@ -224,17 +192,84 @@ void CacheFileWriter::SetCacheFileWriterEnd()
         return;
     }
     isCacheFileEnded_ = true;
-    if (memoryCacheSize_ > 0) {
+    if (writeOffset_ > DATA_SIZE_HEADER_LEN) {
         (void)FlushMemoryCacheToFile();
         return;
     }
-    if (currentFileSize_ > 0) {
+    UnmapMemory();
+    if (currentFileFd_ >= 0) {
         (void)ReturnCurrentCacheFile();
-    } else {
-        CloseCacheFile(currentFileFd_);
-        currentFileIndex_ = INVALID_CACHE_FILE_INDEX;
     }
     (void)NotifyStopEvent();
+}
+
+bool CacheFileWriter::MapFileToMemory(int fd)
+{
+    if (fd < 0) {
+        return false;
+    }
+    int fdFlags = fcntl(fd, F_GETFL);
+    if (fdFlags < 0 || (static_cast<unsigned int>(fdFlags) & O_ACCMODE) != O_RDWR) {
+        PROFILER_LOG_ERROR(LOG_CORE, "MapFileToMemory fd not O_RDWR, fd=%d errno=%d", fd, errno);
+        return false;
+    }
+    if (fallocate(fd, 0, 0, static_cast<off_t>(MMAP_FILE_SIZE)) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "MapFileToMemory fallocate failed, fd=%d errno=%d", fd, errno);
+        return false;
+    }
+    // bypass libc mmap via syscall: plain mmap goes through musl malloc dispatch and gets
+    // captured by hook_mmap as a spurious 64MB MMAP_MSG polluting application memory statistics
+#if defined(__NR_mmap)
+    void* addr = reinterpret_cast<void*>(syscall(__NR_mmap, nullptr, MMAP_FILE_SIZE,
+        PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+#else
+    // arm32 musl only defines __NR_mmap2 whose offset is in page units (0 here)
+    void* addr = reinterpret_cast<void*>(syscall(__NR_mmap2, nullptr, MMAP_FILE_SIZE,
+        PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+#endif
+    if (addr == reinterpret_cast<void*>(-1)) {  // syscall returns -1 on error, same as MAP_FAILED
+        PROFILER_LOG_ERROR(LOG_CORE, "MapFileToMemory mmap failed, fd=%d errno=%d", fd, errno);
+        return false;
+    }
+    mmapAddr_ = static_cast<uint8_t*>(addr);
+    mmapSize_ = MMAP_FILE_SIZE;
+    writeOffset_ = DATA_SIZE_HEADER_LEN;
+    fileRecordCount_ = 0;
+    PROFILER_LOG_INFO(LOG_CORE, "CacheFileWriter mmap done, addr=%p size=%u fd=%d tid=%ld",
+        static_cast<void*>(mmapAddr_), mmapSize_, fd, syscall(SYS_gettid));
+    uint32_t dataSize = 0;
+    if (memcpy_s(mmapAddr_, mmapSize_, &dataSize, DATA_SIZE_HEADER_LEN) != EOK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "MapFileToMemory init data size header failed");
+        UnmapMemory();
+        return false;
+    }
+    return true;
+}
+
+void CacheFileWriter::UnmapMemory()
+{
+    if (mmapAddr_ != nullptr && mmapSize_ > 0) {
+        void* addr = static_cast<void*>(mmapAddr_);
+        uint32_t size = mmapSize_;
+        // bypass libc munmap via syscall to avoid hook_munmap capture, same as mmap above
+        syscall(SYS_munmap, mmapAddr_, mmapSize_);
+        PROFILER_LOG_INFO(LOG_CORE, "CacheFileWriter munmap done, addr=%p size=%u tid=%ld",
+            addr, size, syscall(SYS_gettid));
+    }
+    mmapAddr_ = nullptr;
+    mmapSize_ = 0;
+    writeOffset_ = 0;
+}
+
+void CacheFileWriter::UpdateDataSizeHeader()
+{
+    if (mmapAddr_ == nullptr || mmapSize_ < DATA_SIZE_HEADER_LEN || writeOffset_ < DATA_SIZE_HEADER_LEN) {
+        return;
+    }
+    uint32_t dataSize = writeOffset_ - DATA_SIZE_HEADER_LEN;
+    if (memcpy_s(mmapAddr_, DATA_SIZE_HEADER_LEN, &dataSize, DATA_SIZE_HEADER_LEN) != EOK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "UpdateDataSizeHeader memcpy_s failed");
+    }
 }
 
 bool CacheFileWriter::WriteToMemoryCache(const void* data, size_t size)
@@ -242,30 +277,38 @@ bool CacheFileWriter::WriteToMemoryCache(const void* data, size_t size)
     if (size == 0) {
         return true;
     }
-    if (memoryCache_ == nullptr || data == nullptr ||
-        memoryCacheSize_ + size > memoryCacheCapacity_) {
+    if (mmapAddr_ == nullptr || data == nullptr || writeOffset_ + size > mmapSize_) {
         return false;
     }
-    if (memcpy_s(memoryCache_ + memoryCacheSize_, memoryCacheCapacity_ - memoryCacheSize_, data, size) != EOK) {
+    if (memcpy_s(mmapAddr_ + writeOffset_, mmapSize_ - writeOffset_, data, size) != EOK) {
         return false;
     }
-    memoryCacheSize_ += size;
+    writeOffset_ += size;
     return true;
 }
 
 bool CacheFileWriter::EnsureWritableCacheFile()
 {
-    return currentFileFd_ >= 0 || SwitchToNextCacheFile();
+    return (currentFileFd_ >= 0 && mmapAddr_ != nullptr) || SwitchToNextCacheFile();
 }
 
 bool CacheFileWriter::FlushEndedCacheFile()
 {
-    bool ret = WriteToFile(memoryCache_, memoryCacheSize_);
-    if (!ret) {
+    if (mmapAddr_ == nullptr) {
+        return NotifyStopEvent();
+    }
+    UpdateDataSizeHeader();
+    PROFILER_LOG_INFO(LOG_CORE,
+        "CacheFileWriter flush ended file, datasize=%u writeOffset=%u recordCount=%u fd=%d tid=%ld",
+        static_cast<uint32_t>(writeOffset_ - DATA_SIZE_HEADER_LEN),
+        writeOffset_,
+        fileRecordCount_, currentFileFd_, syscall(SYS_gettid));
+    if (msync(mmapAddr_, mmapSize_, MS_SYNC) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "FlushEndedCacheFile msync failed, errno=%d", errno);
         return false;
     }
-    memoryCacheSize_ = 0;
-    if (currentFileSize_ > 0 && !ReturnCurrentCacheFile()) {
+    UnmapMemory();
+    if (currentFileFd_ >= 0 && !ReturnCurrentCacheFile()) {
         return false;
     }
     return NotifyStopEvent();
@@ -278,7 +321,7 @@ bool CacheFileWriter::NotifyStopEvent()
 
 bool CacheFileWriter::ReturnCurrentCacheFile()
 {
-    if (fsync(currentFileFd_) != 0) {
+    if (currentFileFd_ < 0) {
         return false;
     }
     if (!NotifyFileEvent(currentFileIndex_, CACHE_FILE_READY, currentFileFd_)) {
@@ -286,7 +329,6 @@ bool CacheFileWriter::ReturnCurrentCacheFile()
     }
     CloseCacheFile(currentFileFd_);
     currentFileIndex_ = INVALID_CACHE_FILE_INDEX;
-    currentFileSize_ = 0;
     return true;
 }
 
@@ -300,8 +342,12 @@ bool CacheFileWriter::SwitchToNextCacheFile()
         currentFileFd_ = pendingFileFds_[fileIndex];
         pendingFileFds_[fileIndex] = -1;
         currentFileIndex_ = fileIndex;
-        currentFileSize_ = 0;
         nextFileIndex_ = (fileIndex + 1) % FILE_CACHE_FD_COUNT;
+        if (!MapFileToMemory(currentFileFd_)) {
+            CloseCacheFile(currentFileFd_);
+            currentFileIndex_ = INVALID_CACHE_FILE_INDEX;
+            continue;
+        }
         return true;
     }
     return false;
@@ -320,32 +366,9 @@ bool CacheFileWriter::WaitForNextCacheFile()
     return SwitchToNextCacheFile();
 }
 
-bool CacheFileWriter::WriteToFile(const uint8_t* data, size_t size)
-{
-    if (size == 0) {
-        return true;
-    }
-    if (currentFileFd_ < 0) {
-        return false;
-    }
-    size_t remaining = size;
-    size_t offset = 0;
-    while (remaining > 0) {
-        size_t writeSize = std::min(remaining, WRITE_CHUNK_SIZE);
-        ssize_t written = write(currentFileFd_, data + offset, writeSize);
-        if (written < 0 || static_cast<size_t>(written) != writeSize) {
-            return false;
-        }
-        offset += writeSize;
-        remaining -= writeSize;
-    }
-    currentFileSize_ += size;
-    return true;
-}
-
 bool CacheFileWriter::FlushMemoryCacheToFile()
 {
-    if (memoryCacheSize_ == 0) {
+    if (writeOffset_ <= DATA_SIZE_HEADER_LEN) {
         return true;
     }
     if (!EnsureWritableCacheFile()) {
@@ -354,22 +377,34 @@ bool CacheFileWriter::FlushMemoryCacheToFile()
     if (isCacheFileEnded_) {
         return FlushEndedCacheFile();
     }
-    if (!stopModeEnabled_ && currentFileSize_ + memoryCacheSize_ >= MAX_CACHE_FILE_SIZE) {
-        if (!ReturnCurrentCacheFile() || !WaitForNextCacheFile()) {
-            return false;
-        }
+    UpdateDataSizeHeader();
+    PROFILER_LOG_INFO(LOG_CORE,
+        "CacheFileWriter flush file, datasize=%u writeOffset=%u recordCount=%u fd=%d tid=%ld",
+        static_cast<uint32_t>(writeOffset_ - DATA_SIZE_HEADER_LEN),
+        writeOffset_,
+        fileRecordCount_, currentFileFd_, syscall(SYS_gettid));
+    if (msync(mmapAddr_, mmapSize_, MS_SYNC) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "FlushMemoryCacheToFile msync failed, errno=%d", errno);
+        return false;
     }
-    bool ret = WriteToFile(memoryCache_, memoryCacheSize_);
-    if (ret) {
-        memoryCacheSize_ = 0;
+    UnmapMemory();
+    if (!ReturnCurrentCacheFile() || !WaitForNextCacheFile()) {
+        return false;
     }
-    return ret;
+    return true;
 }
 
 bool CacheFileWriter::Flush()
 {
     std::lock_guard<std::mutex> lock(writeMutex_);
-    return FlushMemoryCacheToFile();
+    if (mmapAddr_ == nullptr || writeOffset_ <= DATA_SIZE_HEADER_LEN) {
+        return true;
+    }
+    if (msync(mmapAddr_, mmapSize_, MS_SYNC) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Flush msync failed, errno=%d", errno);
+        return false;
+    }
+    return true;
 }
 
 bool CacheFileWriter::NotifyFileEvent(uint16_t fileIndex, uint16_t eventType, int fd)
@@ -426,7 +461,7 @@ void CacheFileWriter::AdaptiveWait(uint32_t delayNs)
     if (delayNs == 0) {
         return;
     }
-    
+
     if (delayNs <= BACKPRESSURE_HIGH_DELAY_NS) {
         auto start = std::chrono::steady_clock::now();
         auto target = start + std::chrono::nanoseconds(delayNs);
