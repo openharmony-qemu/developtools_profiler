@@ -328,6 +328,11 @@ Status ProfilerService::CreateSession(ServerContext* context,
     // check buffer configs
     std::shared_ptr<ProfilerSessionConfig> sessionConfig =
     std::make_shared<ProfilerSessionConfig>(request->session_config());
+    if (!sessionConfig->result_file().empty()) {
+        auto retFile = COMMON::CheckNotExistsFilePathSafe(sessionConfig->result_file());
+        CHECK_EXPRESSION_TRUE(retFile.first, "result_file is invalid!");
+        sessionConfig->set_result_file(retFile.second);
+    }
     const int nBuffers = sessionConfig->buffers_size();
     CHECK_EXPRESSION_TRUE(nBuffers == 0 || nBuffers == 1 || nBuffers == nConfigs, "buffers config invalid!");
     // copy plugin configs from request
@@ -341,12 +346,6 @@ Status ProfilerService::CreateSession(ServerContext* context,
     if (pluginConfigs.empty()) {
         PROFILER_LOG_ERROR(LOG_CORE, "No plugins are loaded!");
         return Status(StatusCode::PERMISSION_DENIED, "");
-    }
-
-    if (!sessionConfig->result_file().empty()) {
-        auto retFile = COMMON::CheckNotExistsFilePathSafe(sessionConfig->result_file());
-        CHECK_EXPRESSION_TRUE(retFile.first, "result_file is invalid!");
-        sessionConfig->set_result_file(retFile.second);
     }
     std::shared_ptr<NativeHookConfig> nativeHookConfig = nullptr;
     CHECK_EXPRESSION_TRUE(TryAbstractNativeHookConfig(pluginConfigs, nativeHookConfig), "nativehook config invalid!");
