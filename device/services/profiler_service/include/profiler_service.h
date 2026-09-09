@@ -137,7 +137,7 @@ private:
 
     void CheckClientStatus();
 
-    bool HandleResultFilepath(std::shared_ptr<ProfilerSessionConfig>& sessionConfig);
+    bool HandleResultFilePath(std::shared_ptr<ProfilerSessionConfig>& sessionConfig);
 
     void MergeStandaloneFile(const std::string& resultFile, const std::string& pluginName,
         const std::string& outputFile, const std::string& pluginVersion);
