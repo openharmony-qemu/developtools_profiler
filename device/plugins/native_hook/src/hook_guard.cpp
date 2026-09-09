@@ -15,7 +15,6 @@
 
 #include "hook_guard.h"
 #include <atomic>
-#include <mutex>
 #include <unordered_map>
 #include <malloc.h>
 #include <sys/mman.h>
@@ -74,31 +73,15 @@ bool ShouldFilterBySize(void* ptr, size_t mallocSize)
     if (mallocSize >= g_clientConfig.sampleInterval) {
         return false;
     }
-
-    size_t usableSize = 0;
-    if (mallocSize == 0) {
-        usableSize = malloc_usable_size(ptr);
-    } else {
-        std::unique_lock<std::mutex> lock(g_usableSizeMapMutex);
-        auto it = g_mallocUsableSizeMap.find(mallocSize);
-        if (it == g_mallocUsableSizeMap.end()) {
-            usableSize = malloc_usable_size(ptr);
-            g_mallocUsableSizeMap[mallocSize] = usableSize;
-        } else {
-            usableSize = it->second;
-        }
-    }
-
+    size_t usableSize = malloc_usable_size(ptr);
     if (usableSize >= g_clientConfig.sampleInterval) {
         return false;
     }
-
     if ((usableSize == g_clientConfig.largestSize) ||
         (usableSize == g_clientConfig.secondLargestSize) ||
         (usableSize == g_clientConfig.maxGrowthSize)) {
         return false;
     }
-
     return true;
 }
 
