@@ -60,7 +60,7 @@ using PluginContextPtr = std::shared_ptr<PluginContext>;
 
 namespace {
 constexpr int MIN_SESSION_TIMEOUT_MS = 1000;
-constexpr int MAX_SESSION_TIMEOUT_MS = 1000 * 3600;
+constexpr int MAX_SESSION_TIMEOUT_MS = 1000 * 3600 * 3;
 constexpr int DEFAULT_KEEP_ALIVE_DELTA = 3000;
 constexpr int PLUGIN_SESSION_STOP_TIMEOUT_SECONDS = 3605; // same as NATIVEHOOK_SEM_WAIT_TIME
 constexpr uint64_t CHECK_HEARTBEAT_INTERVAL = 500;

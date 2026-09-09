@@ -32,13 +32,13 @@ using google::protobuf::TextFormat;
 namespace {
 constexpr int MS_PER_S = 1000;
 constexpr int KEEP_SESSION_TIMEOUT_MS = 5 * 1000;
-constexpr int KEEP_SESSION_TIMEOUT_LONG_MS = 3600 * 1000;
+constexpr int KEEP_SESSION_TIMEOUT_LONG_MS = 3600 * 3 * 1000;
 constexpr int KEEP_SESSION_SLEEP_SECOND = 3;
 constexpr int DEFAULT_SESSION_TIME_S = 10;
-constexpr int MAX_LONG_RUNNING_DURATION_S = 3600;  // Maximum 1 hour
+constexpr int MAX_LONG_RUNNING_DURATION_S = 3600 * 3;  // Maximum 3 hour
 constexpr uint32_t INT_MAX_LEN = 10;
 constexpr int ADDR_BUFFER_SIZE = 128;
-constexpr int DOUBLE = 2;
+constexpr int DEFAULT_LONG_RUNNING_PROCESS_MS = 3600 * 1000;
 static uint32_t g_sampleDuration = 0;
 const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 }
@@ -387,7 +387,8 @@ void CaptureChildProcessImpl()
 {
     int profilerPid = 0;
     bool profilerExit = false;
-    for (int i = 0; i < 720; ++i) { //720: loop times
+    int loopTimes = KEEP_SESSION_TIMEOUT_LONG_MS / KEEP_SESSION_TIMEOUT_MS;
+    for (int i = 0; i < loopTimes; ++i) {
         if (profilerPid == 0 && (!COMMON::IsProcessExist(HIPROFILER_PLUGINS_NAME, profilerPid))) {
             profilerExit = true;
             break;
@@ -395,10 +396,10 @@ void CaptureChildProcessImpl()
             profilerExit = true;
             break;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(5000)); //5000: 5s
+        std::this_thread::sleep_for(std::chrono::milliseconds(KEEP_SESSION_TIMEOUT_MS)); //5000: 5s
     }
     if (!profilerExit) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(KEEP_SESSION_TIMEOUT_LONG_MS / DOUBLE));
+        std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_LONG_RUNNING_PROCESS_MS));
         ProfilerProcessManager::GetInstance().KillDependentProcess();
     }
 }

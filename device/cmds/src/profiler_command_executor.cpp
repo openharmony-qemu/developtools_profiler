@@ -205,8 +205,8 @@ void ProfilerCommandExecutor::ExecuteProfilerCapture(const ProfilerCommandArgs& 
 
 int ProfilerCommandExecutor::HandleStartCommand(const ProfilerCommandArgs& args, const std::string& config)
 {
-    // For start command, set maximum duration to 3600 seconds
-    std::string duration = "3600";
+    // For start command, set maximum duration to 3 hours
+    std::string duration = "10800";
     if (!args.traceKeepSecond.empty()) {
         if (COMMON::IsNumeric(args.traceKeepSecond)) {
             duration = args.traceKeepSecond;
