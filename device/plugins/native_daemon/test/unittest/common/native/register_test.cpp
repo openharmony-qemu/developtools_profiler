@@ -56,7 +56,7 @@ HWTEST_F(RegisterTest, GetSupportedRegMask, TestSize.Level0)
     EXPECT_EQ(regMasker.count(), PERF_REG_X86_32_MAX);
 
     regMasker = GetSupportedRegMask(ArchType::ARCH_X86_64);
-    // dont support PERF_REG_X86_DS,PERF_REG_X86_ES,PERF_REG_X86_FS,PERF_REG_X86_GS
+    // don't support PERF_REG_X86_DS,PERF_REG_X86_ES,PERF_REG_X86_FS,PERF_REG_X86_GS
     EXPECT_EQ(regMasker.count(), PERF_REG_X86_64_MAX - 4u);
 
     regMasker = GetSupportedRegMask(ArchType::ARCH_ARM);

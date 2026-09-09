@@ -124,7 +124,7 @@ static void StopHiebpfServer()
     }
 
     if (SendIpcCommand(ipcClient, HiebpfIpcCommand::CMD_STOP, IPC_RECV_TIMEOUT)) {
-        printf("send STOP command to hiebpf server sucess");
+        printf("send STOP command to hiebpf server success");
         fflush(stdout);
         while (SendIpcCommand(ipcClient, HiebpfIpcCommand::CMD_HEART_BEAT, IPC_RECV_TIMEOUT)) {
             sleep(1);

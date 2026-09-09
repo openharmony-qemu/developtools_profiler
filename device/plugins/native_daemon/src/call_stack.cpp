@@ -207,7 +207,7 @@ int CallStack::FindUnwindTable(SymbolsFile *symbolsFile, std::shared_ptr<DfxMap>
     if (odi.has_value()) {
         unw_dyn_info_t &di = odi.value();
         /*
-            we dont use dwarf_search_unwind_table
+            we don't use dwarf_search_unwind_table
             because in arm it will search two function:
             1 arm_search_unwind_table first
             2 dwarf_search_unwind_table

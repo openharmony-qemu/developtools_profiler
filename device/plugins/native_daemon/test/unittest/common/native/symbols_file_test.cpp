@@ -671,7 +671,7 @@ HWTEST_F(SymbolsFileTest, GetVaddrInSymbols, TestSize.Level0)
     EXPECT_EQ(elfSymbols->GetVaddrInSymbols(0x002ca123, 0x002c5000, 0x000c0000), 0x002c5123U);
     EXPECT_EQ(elfSymbols->GetVaddrInSymbols(0x002c4123, 0x002c5000, 0x000c6000), 0x002c5123U);
 
-    // kernel dont care offset
+    // kernel don't care offset
     auto kernelSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_KERNEL_FILE);
     EXPECT_EQ(kernelSymbols->GetVaddrInSymbols(0x001234, 0x002c5000, 0x000c5000), 0x001234U);
 }
