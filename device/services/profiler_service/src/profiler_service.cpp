@@ -60,7 +60,7 @@ using PluginContextPtr = std::shared_ptr<PluginContext>;
 
 namespace {
 constexpr int MIN_SESSION_TIMEOUT_MS = 1000;
-constexpr int MAX_SESSION_TIMEOUT_MS = 1000 * 3600;
+constexpr int MAX_SESSION_TIMEOUT_MS = 1000 * 3600 * 3;
 constexpr int DEFAULT_KEEP_ALIVE_DELTA = 3000;
 constexpr int PLUGIN_SESSION_STOP_TIMEOUT_SECONDS = 3605; // same as NATIVEHOOK_SEM_WAIT_TIME
 constexpr uint64_t CHECK_HEARTBEAT_INTERVAL = 500;
@@ -201,6 +201,8 @@ bool ProfilerService::SessionContext::StopPluginSessions(bool timerTask)
                 return true;
             }
         }
+        CHECK_NOTNULL(traceFileWriter, false, "traceFileWriter invalid!");
+        traceFileWriter->SetStopSplitFile(true);
         traceFileWriter->SetDurationTime();
     }
 
@@ -301,7 +303,7 @@ void ProfilerService::SessionContext::StartSessionExpireTask(ScheduleTaskManager
 {
     if (sessionConfig.keep_alive_time() > 0 && timeoutScheduleTaskFd == -1) {
         timeoutScheduleTaskFd = task.ScheduleTask(
-            std::bind(&ProfilerService::RemoveSessionContext, service, id),
+            std::bind(&ProfilerService::SessionExpireHandle, service, id),
             sessionConfig.keep_alive_time(), true);
     }
 }
@@ -809,25 +811,18 @@ Status ProfilerService::SubscribeProfilerEvt(ServerContext* context,
     return Status::OK;
 }
 
-Status ProfilerService::StopSessionImpl(ServerContext* context,
-                                        const ::StopSessionRequest* request,
-                                        ::StopSessionResponse* response, uint32_t sessionId)
+Status ProfilerService::StopSessionImpl(uint32_t requestId, uint32_t sessionId)
 {
 #ifdef PERFORMANCE_DEBUG
     struct timespec start = {};
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
-    CHECK_REQUEST_RESPONSE(context, request, response);
-    PROFILER_LOG_INFO(LOG_CORE, "StopSession %d %u start", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "StopSession %u %u start", requestId, sessionId);
 
     auto ctx = GetSessionContext(sessionId);
     CHECK_POINTER_NOTNULL(ctx, "session_id invalid!");
-    if (ctx->sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
-        CHECK_POINTER_NOTNULL(ctx->traceFileWriter, "traceFileWriter invalid!");
-        ctx->traceFileWriter.get()->SetStopSplitFile(true);
-    }
     CHECK_EXPRESSION_TRUE(ctx->StopPluginSessions(), "stop plugin sessions failed!");
-    PROFILER_LOG_INFO(LOG_CORE, "StopSession %d %u done!", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "StopSession %u %u done!", requestId, sessionId);
 #ifdef PERFORMANCE_DEBUG
     struct timespec end = {};
     clock_gettime(CLOCK_REALTIME, &end);
@@ -841,9 +836,7 @@ Status ProfilerService::StopSession(ServerContext* context,
                                     const ::StopSessionRequest* request,
                                     ::StopSessionResponse* response)
 {
-    if (request == nullptr) {
-        return {StatusCode::INTERNAL, "request is null"};
-    }
+    CHECK_REQUEST_RESPONSE(context, request, response);
     if (request->stop_all()) {
         std::vector<uint32_t> sessionList;
         {
@@ -853,21 +846,17 @@ Status ProfilerService::StopSession(ServerContext* context,
             }
         }
         for (auto sessionId : sessionList) {
-            StopSessionImpl(context, request, response, sessionId);
+            StopSessionImpl(request->request_id(), sessionId);
         }
         return Status::OK;
     } else {
-        uint32_t sessionId = request->session_id();
-        return StopSessionImpl(context, request, response, sessionId);
+        return StopSessionImpl(request->request_id(), request->session_id());
     }
 }
 
-Status ProfilerService::DestroySessionImpl(ServerContext* context,
-                                           const ::DestroySessionRequest* request,
-                                           ::DestroySessionResponse* response, uint32_t sessionId)
+Status ProfilerService::DestroySessionImpl(uint32_t requestId, uint32_t sessionId)
 {
-    CHECK_REQUEST_RESPONSE(context, request, response);
-    PROFILER_LOG_INFO(LOG_CORE, "DestroySession %d %u start", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "DestroySession %u %u start", requestId, sessionId);
 
     auto ctx = GetSessionContext(sessionId);
     CHECK_POINTER_NOTNULL(ctx, "session_id invalid!");
@@ -875,7 +864,7 @@ Status ProfilerService::DestroySessionImpl(ServerContext* context,
     CHECK_EXPRESSION_TRUE(RemoveSessionContext(sessionId), "remove session FAILED!");
     CHECK_EXPRESSION_TRUE(pluginSessionManager_->RemovePluginSessions(ctx->pluginNames),
                           "remove plugin session FAILED!");
-    PROFILER_LOG_INFO(LOG_CORE, "DestroySession %d %u done!", request->request_id(), sessionId);
+    PROFILER_LOG_INFO(LOG_CORE, "DestroySession %u %u done!", requestId, sessionId);
 
     struct stat fileInfo;
     if (stat(ctx->sessionConfig.result_file().c_str(), &fileInfo) == 0) {
@@ -883,17 +872,15 @@ Status ProfilerService::DestroySessionImpl(ServerContext* context,
         PROFILER_LOG_INFO(LOG_CORE, "result file %s size is %ld KB", ctx->sessionConfig.result_file().c_str(), result);
     }
 
-    if (ctx->sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
+    if (ctx->sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE && !ctx->sessionConfig.split_file()) {
         uint32_t pluginId = 0;
         PluginContextPtr pluginCtx = nullptr;
         for (size_t i = 0; i < ctx->pluginNames.size(); i++) {
             auto pluginName = ctx->pluginNames[i];
             std::tie(pluginId, pluginCtx) = pluginService_->GetPluginContext(pluginName);
-            if (pluginCtx->isStandaloneFileData == true) {
-                if (!ctx->sessionConfig.split_file()) {
-                    MergeStandaloneFile(ctx->sessionConfig.result_file(), pluginName, pluginCtx->outFileName,
-                                        pluginCtx->pluginVersion);
-                }
+            if (pluginCtx && pluginCtx->isStandaloneFileData) {
+                MergeStandaloneFile(ctx->sessionConfig.result_file(), pluginName, pluginCtx->outFileName,
+                    pluginCtx->pluginVersion);
             }
         }
     }
@@ -905,9 +892,7 @@ Status ProfilerService::DestroySession(ServerContext* context,
                                        const ::DestroySessionRequest* request,
                                        ::DestroySessionResponse* response)
 {
-    if (request == nullptr) {
-        return {StatusCode::INTERNAL, "request is null"};
-    }
+    CHECK_REQUEST_RESPONSE(context, request, response);
     if (request->destroy_all()) {
         std::vector<uint32_t> sessionIds;
         {
@@ -918,7 +903,7 @@ Status ProfilerService::DestroySession(ServerContext* context,
         }
         bool success = true;
         for (const auto& sessionId : sessionIds) {
-            grpc::Status status = DestroySessionImpl(context, request, response, sessionId);
+            grpc::Status status = DestroySessionImpl(request->request_id(), sessionId);
             if (!status.ok()) {
                 success = false;
             }
@@ -929,9 +914,14 @@ Status ProfilerService::DestroySession(ServerContext* context,
             return {StatusCode::INTERNAL, "ProfilerService::DestroySession failed to destroy all sessions"};
         }
     } else {
-        uint32_t sessionId = request->session_id();
-        return DestroySessionImpl(context, request, response, sessionId);
+        return DestroySessionImpl(request->request_id(), request->session_id());
     }
+}
+
+void ProfilerService::SessionExpireHandle(uint32_t sessionId)
+{
+    StopSessionImpl(0, sessionId);
+    DestroySessionImpl(0, sessionId);
 }
 
 ::grpc::Status ProfilerService::KeepSession(::grpc::ServerContext* context,
