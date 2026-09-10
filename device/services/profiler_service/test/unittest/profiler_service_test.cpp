@@ -172,7 +172,7 @@ protected:
         CHECK_NOTNULL(sessionConfig, 0, "request.mutable_session_config() return nullptr!");
 
         sessionConfig->set_session_mode(ProfilerSessionConfig::OFFLINE);
-        sessionConfig->set_result_file("trace.bin");
+        sessionConfig->set_result_file("/data/local/tmp/trace.bin");
         auto pluginConfig = request.add_plugin_configs();
         CHECK_NOTNULL(pluginConfig, 0, "request.add_plugin_configs() return nullptr!");
 
@@ -379,7 +379,7 @@ HWTEST_F(ProfilerServiceTest, CreateSessionOffline, TestSize.Level1)
     auto sessionConfig = request.mutable_session_config();
     ASSERT_NE(sessionConfig, nullptr);
     sessionConfig->set_session_mode(ProfilerSessionConfig::OFFLINE);
-    sessionConfig->set_result_file("trace.bin");
+    sessionConfig->set_result_file("/data/local/tmp/trace.bin");
 
     auto pluginConfig = request.add_plugin_configs();
     ASSERT_NE(pluginConfig, nullptr);
