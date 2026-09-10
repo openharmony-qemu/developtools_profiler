@@ -1057,10 +1057,10 @@ void SPUtils::CreateDir(const std::string &dirPath)
     for (auto it = dirsToCreate.rbegin(); it != dirsToCreate.rend(); ++it) {
         if (mkdir(it->c_str(), FILE_PERMISSION_FULL) != 0 && errno != EEXIST) {
             umask(oldMask);
-            WLOGE("%s not be created, errno %d!", it->c_str(), errno);
+            LOGE("%s not be created, errno %d!", it->c_str(), errno);
             return;
         }
-        WLOGI("%s created successfully!", it->c_str());
+        LOGD("%s created successfully!", it->c_str());
     }
     umask(oldMask);
 }
@@ -1117,14 +1117,19 @@ bool SPUtils::CopyFile(const std::string &src, const std::string &dst)
         LOGE("CopyFile failed to open src: %s", srcReal);
         return false;
     }
-    std::ofstream dstFile(dst, std::ios::binary);
+    char dstReal[PATH_MAX] = {0x00};
+    if (realpath(dst.c_str(), dstReal) == nullptr) {
+        LOGE("CopyFile dst path invalid: %s", dst.c_str());
+        return false;
+    }
+    std::ofstream dstFile(dstReal, std::ios::binary);
     if (!dstFile.is_open()) {
-        LOGE("CopyFile failed to open dst: %s", dst.c_str());
+        LOGE("CopyFile failed to open dst: %s", dstReal);
         return false;
     }
     dstFile << srcFile.rdbuf();
     if (!dstFile.good()) {
-        LOGE("CopyFile write failed: %s", dst.c_str());
+        LOGE("CopyFile write failed: %s", dstReal);
         return false;
     }
     return true;
