@@ -195,6 +195,7 @@ HWTEST_F(HidebugProfilerCallbackTest, ProfilerOptionsSetterNullSafeTest, TestSiz
     EXPECT_EQ(OH_HiDebug_SetSampleIntervalBytes(nullptr, 384), HIDEBUG_RES_PROF_INVALID_ARG);
     EXPECT_EQ(OH_HiDebug_SetMaxAsyncNestingDepth(nullptr, 1), HIDEBUG_RES_PROF_INVALID_ARG);
     EXPECT_EQ(OH_HiDebug_SetMaxAsyncTaskStackDepth(nullptr, 16), HIDEBUG_RES_PROF_INVALID_ARG);
+    EXPECT_EQ(OH_HiDebug_SetStackTraceMode(nullptr, OH_HIDEBUG_STACK_TRACE_KEEP_ALL), HIDEBUG_RES_PROF_INVALID_ARG);
     EXPECT_EQ(OH_HiDebug_DestroyProfilerOptions(nullptr), HIDEBUG_RES_PROF_INVALID_ARG);
 }
 
@@ -219,6 +220,8 @@ HWTEST_F(HidebugProfilerCallbackTest, ProfilerOptionsSetterInvalidValueTest, Tes
     EXPECT_EQ(OH_HiDebug_SetMaxAsyncNestingDepth(opts, 17), HIDEBUG_RES_PROF_INVALID_MAX_ASYNC_NESTING_DEPTH);
     EXPECT_EQ(OH_HiDebug_SetMaxAsyncTaskStackDepth(opts, 0), HIDEBUG_RES_PROF_INVALID_MAX_ASYNC_TASK_STACK_DEPTH);
     EXPECT_EQ(OH_HiDebug_SetMaxAsyncTaskStackDepth(opts, 257), HIDEBUG_RES_PROF_INVALID_MAX_ASYNC_TASK_STACK_DEPTH);
+    EXPECT_EQ(OH_HiDebug_SetStackTraceMode(opts, static_cast<OH_HiDebug_ProfilerStackTraceMode>(2)),
+        HIDEBUG_RES_PROF_INVALID_STACK_TRACE_MODE);
     OH_HiDebug_DestroyProfilerOptions(opts);
 }
 
@@ -238,6 +241,8 @@ HWTEST_F(HidebugProfilerCallbackTest, ProfilerOptionsSetterValidValueTest, TestS
     EXPECT_EQ(OH_HiDebug_SetSampleIntervalBytes(opts, 384), HIDEBUG_SUCCESS);
     EXPECT_EQ(OH_HiDebug_SetMaxAsyncNestingDepth(opts, 1), HIDEBUG_SUCCESS);
     EXPECT_EQ(OH_HiDebug_SetMaxAsyncTaskStackDepth(opts, 16), HIDEBUG_SUCCESS);
+    EXPECT_EQ(OH_HiDebug_SetStackTraceMode(opts, OH_HIDEBUG_STACK_TRACE_KEEP_ALL), HIDEBUG_SUCCESS);
+    EXPECT_EQ(OH_HiDebug_SetStackTraceMode(opts, OH_HIDEBUG_STACK_TRACE_DISCARD_DESTROYED), HIDEBUG_SUCCESS);
     EXPECT_EQ(OH_HiDebug_DestroyProfilerOptions(opts), HIDEBUG_SUCCESS);
 }
 

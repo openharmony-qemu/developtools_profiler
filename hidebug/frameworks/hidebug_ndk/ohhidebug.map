@@ -41,6 +41,7 @@
             OH_HiDebug_SetMaxStackDepth;
             OH_HiDebug_SetFilterSize;
             OH_HiDebug_SetMaxDurationSec;
+            OH_HiDebug_SetStackTraceMode;
             OH_HiDebug_StartProfilerWithOptions;
         };
         extern "C++" {

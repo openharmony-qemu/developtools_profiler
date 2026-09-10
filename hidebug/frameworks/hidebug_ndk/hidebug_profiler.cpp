@@ -64,6 +64,7 @@ struct OH_HiDebug_ProfilerOptions {
     uint32_t sampleInterval = 384;
     uint32_t maxAsyncNestingDepth = 1;
     uint32_t maxAsyncStackDepth = 16;
+    OH_HiDebug_ProfilerStackTraceMode discardMode = OH_HIDEBUG_STACK_TRACE_KEEP_ALL;
 };
 
 static constexpr uint32_t MIN_DURATION_SEC = 1;
@@ -301,6 +302,19 @@ HiDebug_ErrorCode OH_HiDebug_SetSampleIntervalBytes(OH_HiDebug_ProfilerOptions* 
     return HIDEBUG_SUCCESS;
 }
 
+HiDebug_ErrorCode OH_HiDebug_SetStackTraceMode(OH_HiDebug_ProfilerOptions* opts,
+    OH_HiDebug_ProfilerStackTraceMode mode)
+{
+    if (opts == nullptr) {
+        return HIDEBUG_RES_PROF_INVALID_ARG;
+    }
+    if (mode != OH_HIDEBUG_STACK_TRACE_KEEP_ALL && mode != OH_HIDEBUG_STACK_TRACE_DISCARD_DESTROYED) {
+        return HIDEBUG_RES_PROF_INVALID_STACK_TRACE_MODE;
+    }
+    opts->discardMode = mode;
+    return HIDEBUG_SUCCESS;
+}
+
 HiDebug_ErrorCode OH_HiDebug_StartProfilerWithOptions(OH_HiDebug_ResourceType type,
     OH_HiDebug_ProfilerOptions* opts, OH_HiDebug_ProfilingCallback callback)
 {
@@ -315,5 +329,6 @@ HiDebug_ErrorCode OH_HiDebug_StartProfilerWithOptions(OH_HiDebug_ResourceType ty
     profilerConfig.sampleInterval = opts->sampleInterval;
     profilerConfig.asyncNestingDepth = opts->maxAsyncNestingDepth;
     profilerConfig.asyncTaskStackDepth = opts->maxAsyncStackDepth;
+    profilerConfig.discardDestroyedTraces = (opts->discardMode == OH_HIDEBUG_STACK_TRACE_DISCARD_DESTROYED);
     return StartProfilerWithConfig(type, &profilerConfig, callback);
 }

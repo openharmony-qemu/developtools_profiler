@@ -772,6 +772,7 @@ int32_t NativeMemoryProfilerSaClientManager::ParseNormalConfig(
     config->nestedAsyncStackEnable_ = inputConfig->nestedAsyncStackEnable;
     config->asyncNestingDepth_ = inputConfig->asyncNestingDepth;
     config->asyncTaskStackDepth_ = inputConfig->asyncTaskStackDepth;
+    config->discardDestroyedTraces_ = inputConfig->discardDestroyedTraces;
     if (config->traceMask_ == RES_GPU_MASK && !inputConfig->hookSizes.empty()) {
         std::vector<std::vector<uint64_t>> gpuRange;
         gpuRange.push_back(ConvertToVec(inputConfig->hookSizes[TAG_RES_GPU_VK]));

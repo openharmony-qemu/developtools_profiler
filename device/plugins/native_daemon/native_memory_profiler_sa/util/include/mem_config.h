@@ -93,6 +93,7 @@ struct MemAPIConfig {
     bool nestedAsyncStackEnable = true;
     uint32_t asyncNestingDepth = 1;     // default: 1, ranges: [1, 16]
     uint32_t asyncTaskStackDepth = 16;  // default: 16, ranges: [1, 256]
+    bool discardDestroyedTraces = false;
 };
 
 } // namespace NativeDaemon

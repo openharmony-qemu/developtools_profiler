@@ -554,6 +554,20 @@ HiDebug_ErrorCode OH_HiDebug_SetFilterSize(OH_HiDebug_ProfilerOptions *opts, uin
 HiDebug_ErrorCode OH_HiDebug_SetMaxDurationSec(OH_HiDebug_ProfilerOptions *opts, uint32_t seconds);
 
 /**
+ * @brief Sets the stack trace mode.
+ *
+ * @param opts [in] Pointer to the OH_HiDebug_ProfilerOptions structure. It must not be NULL.
+ * @param mode [in] Stack trace mode.
+ * @return Result code.
+ *     <ul><li>{@link HIDEBUG_SUCCESS} Success.</li>
+ *     <li>{@link HIDEBUG_RES_PROF_INVALID_ARG} opts is a null pointer.</li>
+ *     <li>{@link HIDEBUG_RES_PROF_INVALID_STACK_TRACE_MODE} Invalid stack trace mode.</li></ul>
+ * @since 26.0.1
+ */
+HiDebug_ErrorCode OH_HiDebug_SetStackTraceMode(OH_HiDebug_ProfilerOptions *opts,
+    OH_HiDebug_ProfilerStackTraceMode mode);
+
+/**
  * @brief Starts the profiler with the specified options and resource type.
  *
  * @param type [in] The resource type to be profiled (OH_HiDebug_ResourceType).
@@ -571,7 +585,8 @@ HiDebug_ErrorCode OH_HiDebug_SetMaxDurationSec(OH_HiDebug_ProfilerOptions *opts,
  *     is invalid.</li>
  *     <li>{@link HIDEBUG_RES_PROF_INVALID_MAX_ASYNC_TASK_STACK_DEPTH} Maximum asynchronous task stack depth
  *     is invalid.</li>
- *     <li>{@link HIDEBUG_RES_PROF_INVALID_RESOURCE_TYPE} ResourceType is invalid.</li>
+ *     <li>{@link HIDEBUG_RES_PROF_INVALID_STACK_TRACE_MODE} Stack trace mode is invalid.</li>
+ *     <li>{@link HIDEBUG_RES_PROF_INVALID_RESOURCE_TYPE} Resource Type is invalid.</li>
  *     <li>{@link HIDEBUG_RES_PROF_PERMISSION_DENIED} Permission denied.</li>
  *     <li>{@link HIDEBUG_RES_PROF_ALREADY_STARTED} Profiler has already been started.</li>
  *     <li>{@link HIDEBUG_RES_PROF_PROCESS_OVERLIMIT} Process exceeds the limit.</li>
