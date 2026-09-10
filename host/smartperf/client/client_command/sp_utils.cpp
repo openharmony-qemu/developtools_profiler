@@ -1117,11 +1117,11 @@ bool SPUtils::CopyFile(const std::string &src, const std::string &dst)
         LOGE("CopyFile failed to open src: %s", srcReal);
         return false;
     }
-    size_t lastSlash = dst.find_first_of('/');
+    size_t lastSlash = dst.find_last_of('/');
     std::string fileName = (lastSlash != std::string::npos) ? dst.substr(lastSlash + 1) :
         dst;
     std::string safePath;
-    if (!lastSlash != std::string::npos) {
+    if (lastSlash != std::string::npos) {
         std::string dirPath = dst.substr(0, lastSlash);
         char dstReal[PATH_MAX] = {0x00};
         if (realpath(dirPath.c_str(), dstReal) == nullptr) {
