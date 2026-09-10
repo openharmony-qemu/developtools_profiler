@@ -1057,10 +1057,10 @@ void SPUtils::CreateDir(const std::string &dirPath)
     for (auto it = dirsToCreate.rbegin(); it != dirsToCreate.rend(); ++it) {
         if (mkdir(it->c_str(), FILE_PERMISSION_FULL) != 0 && errno != EEXIST) {
             umask(oldMask);
-            LOGE("%s not be created, errno %d!", it->c_str(), errno);
+            WLOGE("%s not be created, errno %d!", it->c_str(), errno);
             return;
         }
-        LOGD("%s created successfully!", it->c_str());
+        WLOGI("%s created successfully!", it->c_str());
     }
     umask(oldMask);
 }
@@ -1117,19 +1117,29 @@ bool SPUtils::CopyFile(const std::string &src, const std::string &dst)
         LOGE("CopyFile failed to open src: %s", srcReal);
         return false;
     }
-    char dstReal[PATH_MAX] = {0x00};
-    if (realpath(dst.c_str(), dstReal) == nullptr) {
-        LOGE("CopyFile dst path invalid: %s", dst.c_str());
-        return false;
+    size_t lastSlash = dst.find_first_of('/');
+    std::string fileName = (lastSlash != std::string::npos) ? dst.substr(lastSlash + 1) :
+        dst;
+    std::string safePath;
+    if (!lastSlash != std::string::npos) {
+        std::string dirPath = dst.substr(0, lastSlash);
+        char dstReal[PATH_MAX] = {0x00};
+        if (realpath(dirPath.c_str(), dstReal) == nullptr) {
+            LOGE("data dir %s is nullptr", dirPath.c_str());
+            return false;
+        }
+        safePath = std::string(dstReal) + "/" + fileName;
+    } else {
+        safePath = fileName;
     }
-    std::ofstream dstFile(dstReal, std::ios::binary);
+    std::ofstream dstFile(safePath, std::ios::binary);
     if (!dstFile.is_open()) {
-        LOGE("CopyFile failed to open dst: %s", dstReal);
+        LOGE("CopyFile failed to open dst: %s", safePath.c_str());
         return false;
     }
     dstFile << srcFile.rdbuf();
     if (!dstFile.good()) {
-        LOGE("CopyFile write failed: %s", dstReal);
+        LOGE("CopyFile write failed: %s", safePath.c_str());
         return false;
     }
     return true;
