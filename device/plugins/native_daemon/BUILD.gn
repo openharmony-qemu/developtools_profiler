@@ -350,6 +350,7 @@ ohos_shared_library("libnative_daemon_client") {
   innerapi_tags = [ "platformsdk" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
+  version_script = "libnative_daemon_client.map"
 }
 
 ohos_shared_library("memory_profiler_client") {
@@ -378,4 +379,5 @@ ohos_shared_library("memory_profiler_client") {
   innerapi_tags = [ "platformsdk" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
+  version_script = "memory_profiler_client.map"
 }

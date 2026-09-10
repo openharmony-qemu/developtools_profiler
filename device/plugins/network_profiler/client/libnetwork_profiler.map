@@ -1,0 +1,12 @@
+{
+    global:
+        extern "C++" {
+            OHOS::Developtools::Profiler::NetworkProfiler::GetInstance*;
+            OHOS::Developtools::Profiler::NetworkProfiler::IsProfilerEnable*;
+            OHOS::Developtools::Profiler::NetworkProfiler::NetworkProfiling*;
+            NetworkProfiler*;
+            g_pluginModule;
+        };
+    local:
+        *;
+};

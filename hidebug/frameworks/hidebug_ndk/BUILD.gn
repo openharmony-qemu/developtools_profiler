@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 
 ohos_shared_library("ohhidebug") {
   branch_protector_ret = "pac_ret"
+  version_script = "ohhidebug.map"
   include_dirs = [
     "../../interfaces/native/kits/include",
     "../../interfaces/innerkits/native/hidebug_dump/include",

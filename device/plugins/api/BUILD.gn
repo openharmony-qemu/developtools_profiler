@@ -130,9 +130,7 @@ ohos_shared_library("libhidebug") {
   deps =
       [ "//developtools/profiler/device/plugins/api:libhidebug_source" ]
 
-  if (!is_asan && !is_debug) {
-    version_script = "../api/libhidebug.map"
-  }
+  version_script = "libhidebug.map"
 
   external_deps = [
     "hilog:libhilog",

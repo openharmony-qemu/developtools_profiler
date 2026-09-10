@@ -127,6 +127,7 @@ ohos_shared_library("libstack_common") {
   ]
   install_enable = true
   innerapi_tags = [ "platformsdk" ]
+  version_script = "libstack_common.map"
 }
 
 ohos_static_library("hiprofiler_base_static") {
@@ -187,6 +188,7 @@ ohos_shared_library("libhiprofiler_base") {
     "samgr:samgr_proxy",
   ]
   install_enable = true
+  version_script = "libhiprofiler_base.map"
 }
 
 ohos_source_set("hiprofiler_base") {

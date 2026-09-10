@@ -1,0 +1,33 @@
+{
+    global:
+        extern "C++" {
+            OHOS::HiviewDFX::Profiler*;
+            OHOS::HiviewDFX::ProfilerCommand*;
+            OHOS::HiviewDFX::ProfilerConfig*;
+            OHOS::HiviewDFX::ProfilerSession*;
+            OHOS::HiviewDFX::ProfilerProcess*;
+            OHOS::HiviewDFX::SingleRecordReporter*;
+            OHOS::HiviewDFX::ApiInvokeRecorder*;
+            OHOS::HiviewDFX::ApiRecordReporter*;
+            OHOS::HiviewDFX::SmartFile*;
+            OHOS::HiviewDFX::GetProcessDir*;
+            OHOS::HiviewDFX::DirectoryType*;
+            OHOS::HiviewDFX::IsLegalPath*;
+            OHOS::HiviewDFX::CreateFile*;
+            OHOS::HiviewDFX::IsBetaVersion*;
+            OHOS::HiviewDFX::GetRealNanoSecondsTimestamp*;
+            OHOS::HiviewDFX::GetFileSize*;
+            OHOS::HiviewDFX::SetXAttr*;
+            OHOS::HiviewDFX::GetXAttr*;
+            OHOS::HiviewDFX::SplitStr*;
+            OHOS::HiviewDFX::CreateDirectory*;
+            OHOS::Developtools::StackCommon::*;
+            EventNotifier*;
+            EpollEventPoller*;
+            ScheduleTaskManager*;
+            COMMON::*;
+            GetSemaphoreFactory*;
+        };
+    local:
+        *;
+};

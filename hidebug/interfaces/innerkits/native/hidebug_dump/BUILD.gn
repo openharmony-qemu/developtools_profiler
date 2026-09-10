@@ -36,4 +36,5 @@ ohos_shared_library("hidebug_dump") {
   output_extension = "so"
   part_name = "hiprofiler"
   subsystem_name = "developtools"
+  version_script = "hidebug_dump.map"
 }

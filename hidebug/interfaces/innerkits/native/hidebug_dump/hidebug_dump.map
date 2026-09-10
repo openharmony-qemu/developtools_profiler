@@ -1,7 +1,7 @@
 {
     global:
       extern "C++" {
-          "OHOS::HiviewDFX::HidebugMemDumpListener::TriggerListener*";
+          OHOS::HiviewDFX::HidebugMemDumpListener*;
       };
     local:
       *;

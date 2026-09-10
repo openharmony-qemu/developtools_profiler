@@ -69,4 +69,5 @@ ohos_shared_library("libnetwork_profiler") {
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
+  version_script = "libnetwork_profiler.map"
 }
