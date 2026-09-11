@@ -109,7 +109,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
 void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
 {
     LOGD("SpProfilerFactory setPKG:%s", pkg.c_str());
-    if (!SPUtils::IsInvalidPkgName(pkg)) {
+    if (!SPUtils::IsValidPkgName(pkg)) {
         LOGE("invalid pkg name");
         return;
     }

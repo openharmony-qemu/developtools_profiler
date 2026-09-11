@@ -764,7 +764,7 @@ bool SPUtils::VerifyValueStr(std::map<std::string, std::string> &mapInfo, std::s
         return false;
     }
     a = mapInfo.find("PKG");
-    if (mapInfo.end() != a && !IsInvalidPkgName(a->second)) {
+    if (mapInfo.end() != a && !IsValidPkgName(a->second)) {
         errorInfo += "invalid parameter, invalid package name -- '" + a->second + "'";
         return false;
     }
@@ -962,7 +962,7 @@ bool SPUtils::GetPathPermissions(const std::string &path)
 
 bool SPUtils::GetIsGameApp(const std::string& pkg)
 {
-    if (!IsInvalidPkgName(pkg)) {
+    if (!IsValidPkgName(pkg)) {
         LOGE("SPUtils::GetIsGameApp invalid pkg name");
         return false;
     }
@@ -1166,7 +1166,7 @@ size_t SPUtils::GetFileSize(std::string filePath)
 
 bool SPUtils::IsFindDHGame(const std::string &pkg)
 {
-    if (!IsInvalidPkgName(pkg)) {
+    if (!IsValidPkgName(pkg)) {
         LOGE("SPUtils::IsFindDHGame invalid pkg name");
         return false;
     }
@@ -1220,7 +1220,7 @@ std::string SPUtils::EscapeShellArgs(const std::string& args)
     return escaped;
 }
 
-bool SPUtils::IsInvalidPkgName(const std::string& pkgName)
+bool SPUtils::IsValidPkgName(const std::string& pkgName)
 {
     if (pkgName.empty() || !isalpha(pkgName[0])) {
         return false;

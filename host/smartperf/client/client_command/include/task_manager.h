@@ -69,6 +69,8 @@ public:
 private:
     std::map<std::string, std::string> TaskFun(SpProfiler* pro, uint32_t batch, bool record);
     void GetProcessInfo(CommandType type, const ArgumentParser::ArgValue& value);
+    void GetPkgByPid();
+    void SetPkgAndPid();
     std::string MapToString(std::map<std::string, std::string>& myMap);
     void StartSaveFileThread();
     void CollectThreadsData();
