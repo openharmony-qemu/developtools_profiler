@@ -832,6 +832,29 @@ HWTEST_F(HookManagerMemLeakTest, GetClientConfig_discardDestroyedTraces, TestSiz
 }
 
 /*
+ * @tc.name: GetClientConfig_mmapSpecificAddrOnly
+ * @tc.desc: test GetClientConfig propagates mmap_specific_addr_only to clientConfig.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, GetClientConfig_mmapSpecificAddrOnly, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_pid(TEST_PID);
+    config.set_process_name(TEST_PROCESS_NAME);
+    config.set_mmap_specific_addr_only(true);
+    hookManager_->SetHookConfig(config);
+
+    ClientConfig clientConfig;
+    hookManager_->GetClientConfig(clientConfig);
+    EXPECT_TRUE(clientConfig.mmapSpecificAddrOnly);
+
+    config.set_mmap_specific_addr_only(false);
+    hookManager_->SetHookConfig(config);
+    hookManager_->GetClientConfig(clientConfig);
+    EXPECT_FALSE(clientConfig.mmapSpecificAddrOnly);
+}
+
+/*
  * @tc.name: RefreshValidLiveDataFromFile_DiscardMallocFreed
  * @tc.desc: test RefreshValidLiveDataFromFile builds validLiveData_ where malloc matched by free is removed.
  * @tc.type: FUNC

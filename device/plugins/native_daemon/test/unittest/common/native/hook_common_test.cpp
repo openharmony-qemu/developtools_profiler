@@ -98,6 +98,53 @@ HWTEST_F(HookCommonTest, HookCommonTest004, TestSize.Level3)
 }
 
 /**
+ * @tc.name: HookCommonTest006
+ * @tc.desc: Test mmapSpecificAddrOnly propagation in IPC (ToIpc and FromIpc)
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookCommonTest, HookCommonTest006, TestSize.Level3)
+{
+    ClientConfig config;
+    config.mmapSpecificAddrOnly = true;
+
+    ClientConfigIpc ipc;
+    EXPECT_TRUE(ConvertClientConfigToIpc(config, ipc));
+    EXPECT_EQ(ipc.mmapSpecificAddrOnly, true);
+
+    ClientConfig resultConfig;
+    ConvertClientConfigFromIpc(ipc, resultConfig);
+    EXPECT_EQ(resultConfig.mmapSpecificAddrOnly, true);
+}
+
+/**
+ * @tc.name: HookCommonTest007
+ * @tc.desc: Test default value of mmapSpecificAddrOnly (should be false)
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookCommonTest, HookCommonTest007, TestSize.Level3)
+{
+    ClientConfig config;
+    EXPECT_EQ(config.mmapSpecificAddrOnly, false);
+
+    ClientConfigIpc ipc;
+    ConvertClientConfigToIpc(config, ipc);
+    EXPECT_EQ(ipc.mmapSpecificAddrOnly, false);
+}
+
+/**
+ * @tc.name: HookCommonTest008
+ * @tc.desc: Test Reset() sets mmapSpecificAddrOnly to false
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookCommonTest, HookCommonTest008, TestSize.Level3)
+{
+    ClientConfig config;
+    config.mmapSpecificAddrOnly = true;
+    config.Reset();
+    EXPECT_EQ(config.mmapSpecificAddrOnly, false);
+}
+
+/**
  * @tc.name: HookCommonTest005
  * @tc.desc: Test TsLess timespec dictionary-order comparison
  * @tc.type: FUNC

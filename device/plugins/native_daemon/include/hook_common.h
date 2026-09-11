@@ -359,6 +359,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         asyncTaskStackDepth = 0;
         arkuiMemTraceEnable = false;
         discardDestroyedTraces = false;
+        mmapSpecificAddrOnly = false;
     }
 
     std::string ToString()
@@ -377,6 +378,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable
             << ", arkuiMemTraceEnable: " << arkuiMemTraceEnable
             << ", discardDestroyedTraces: " << discardDestroyedTraces
+            << ", mmapSpecificAddrOnly: " << mmapSpecificAddrOnly
             << ", jsStackReport: "
             << arktsConfig.jsStackReport << ", maxJsStackDepth: "
             << std::to_string(arktsConfig.maxJsStackDepth) << ", filterNapiName: "
@@ -443,6 +445,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     uint32_t asyncTaskStackDepth = 0;
     bool arkuiMemTraceEnable = false;
     bool discardDestroyedTraces = false;
+    bool mmapSpecificAddrOnly = false;
 };
 
 struct alignas(8) ClientConfigIpc { // 8 is 8 bit
@@ -491,6 +494,7 @@ struct alignas(8) ClientConfigIpc { // 8 is 8 bit
     uint32_t asyncTaskStackDepth = 0;
     bool arkuiMemTraceEnable = false;
     bool discardDestroyedTraces = false;
+    bool mmapSpecificAddrOnly = false;
 };
 
 inline bool CopyClientConfigString(char* dest, size_t destSize, const std::string& src)
@@ -555,6 +559,7 @@ inline void CopyClientConfigExtToIpc(const ClientConfig& config, ClientConfigIpc
     ipc.maxGrowthSize = config.maxGrowthSize;
     ipc.arkuiMemTraceEnable = config.arkuiMemTraceEnable;
     ipc.discardDestroyedTraces = config.discardDestroyedTraces;
+    ipc.mmapSpecificAddrOnly = config.mmapSpecificAddrOnly;
 }
 
 inline void CopyClientConfigTailToIpc(const ClientConfig& config, ClientConfigIpc& ipc)
@@ -641,6 +646,7 @@ inline void CopyClientConfigExtFromIpc(const ClientConfigIpc& ipc, ClientConfig&
     config.maxGrowthSize = ipc.maxGrowthSize;
     config.arkuiMemTraceEnable = ipc.arkuiMemTraceEnable;
     config.discardDestroyedTraces = ipc.discardDestroyedTraces;
+    config.mmapSpecificAddrOnly = ipc.mmapSpecificAddrOnly;
 }
 
 inline void CopyClientConfigTailFromIpc(const ClientConfigIpc& ipc, ClientConfig& config)

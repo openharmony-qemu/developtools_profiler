@@ -1127,6 +1127,32 @@ HWTEST_F(HookManagerExtTest, CreatePluginSessionEnablesSamplingNoQueueConfig, Te
 }
 
 /*
+ * @tc.name: CreatePluginSession_mmapSpecificAddrOnlyOverride
+ * @tc.desc: test CreatePluginSession overrides config when mmap_specific_addr_only is true.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, CreatePluginSession_mmapSpecificAddrOnlyOverride, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_pid(getpid());
+    config.set_clock("monotonic");
+    config.set_smb_pages(TEST_SMB_PAGES);
+    config.set_mmap_specific_addr_only(true);
+    config.set_statistics_interval(1000);
+    config.set_memtrace_enable(true);
+    config.set_malloc_disable(false);
+    hookManager_->SetHookConfig(config);
+    hookManager_->SetSaMode(true);
+
+    EXPECT_TRUE(hookManager_->CreatePluginSession({}));
+    EXPECT_EQ(hookManager_->hookConfig_.statistics_interval(), 0u);
+    EXPECT_FALSE(hookManager_->hookConfig_.memtrace_enable());
+    EXPECT_TRUE(hookManager_->hookConfig_.malloc_disable());
+    EXPECT_EQ(hookManager_->hookConfig_.restrace_tag_size(), 0);
+    EXPECT_TRUE(hookManager_->DestroyPluginSession({0}));
+}
+
+/*
  * @tc.name: StartPluginSessionEmptyContext
  * @tc.desc: test StartPluginSession with empty hook context.
  * @tc.type: FUNC

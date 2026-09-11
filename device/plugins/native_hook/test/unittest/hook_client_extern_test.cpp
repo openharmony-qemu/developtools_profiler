@@ -46,6 +46,11 @@ void* FakeMmapFixed(void* addr, size_t, int, int, int, off_t)
     return addr;
 }
 
+void* FakeMmapDifferentRet(void*, size_t, int, int, int, off_t)
+{
+    return reinterpret_cast<void*>(0x5000);
+}
+
 struct SendInfoVec {
     std::vector<uint64_t>* addrVec = nullptr;
     std::vector<size_t>* sendSizeVec = nullptr;
@@ -591,6 +596,81 @@ HWTEST_F(HookClientExternTest, HookSendHookMiscDataTest, TestSize.Level0)
     EXPECT_EQ(typeVec, expectedTypeVec);
     std::vector<int> expectedsizeVec = {0};
     EXPECT_EQ(sizeVec, expectedsizeVec);
+}
+
+
+/**
+ * @tc.name: HookMmapSpecificAddrOnlyAddrNotNullTest
+ * @tc.desc: Test hook_mmap with mmapSpecificAddrOnly=true and addr != nullptr collects event with addr (not ret).
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientExternTest, HookMmapSpecificAddrOnlyAddrNotNullTest, TestSize.Level0)
+{
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    std::vector<uint64_t> addrVec;
+    StartMock(typeVec, sizeVec, addrVec);
+    g_clientConfig.mmapDisable = false;
+    g_clientConfig.memtraceEnable = false;
+    g_clientConfig.sampleInterval = 0;
+    g_clientConfig.fpunwind = false;
+    g_clientConfig.asyncStackEnable = false;
+    g_clientConfig.mmapSpecificAddrOnly = true;
+
+    void* addr = reinterpret_cast<void*>(0x2000);
+    void* result = hook_mmap(FakeMmapDifferentRet, addr, SIZE, PROT_READ, MAP_PRIVATE, -1, 0);
+    EXPECT_EQ(result, reinterpret_cast<void*>(0x5000));
+
+    ASSERT_GE(typeVec.size(), 1);
+    auto mmapIt = std::find(typeVec.begin(), typeVec.end(), MMAP_MSG);
+    ASSERT_NE(mmapIt, typeVec.end());
+    size_t mmapIdx = std::distance(typeVec.begin(), mmapIt);
+    EXPECT_EQ(addrVec[mmapIdx], reinterpret_cast<uint64_t>(addr));
+    g_clientConfig.mmapSpecificAddrOnly = false;
+}
+
+/**
+ * @tc.name: HookMmapSpecificAddrOnlyAddrNullTest
+ * @tc.desc: Test hook_mmap with mmapSpecificAddrOnly=true and addr == nullptr skips collection.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientExternTest, HookMmapSpecificAddrOnlyAddrNullTest, TestSize.Level0)
+{
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    StartMock(typeVec, sizeVec);
+    g_clientConfig.mmapDisable = false;
+    g_clientConfig.memtraceEnable = false;
+    g_clientConfig.sampleInterval = 0;
+    g_clientConfig.fpunwind = false;
+    g_clientConfig.asyncStackEnable = false;
+    g_clientConfig.mmapSpecificAddrOnly = true;
+
+    void* result = hook_mmap(FakeMmapFixed, nullptr, SIZE, PROT_READ, MAP_PRIVATE, -1, 0);
+    EXPECT_NE(result, MAP_FAILED);
+    EXPECT_TRUE(typeVec.empty());
+    EXPECT_TRUE(sizeVec.empty());
+    g_clientConfig.mmapSpecificAddrOnly = false;
+}
+
+/**
+ * @tc.name: HookMunmapSpecificAddrOnlyTest
+ * @tc.desc: Test hook_munmap with mmapSpecificAddrOnly=true skips collection.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientExternTest, HookMunmapSpecificAddrOnlyTest, TestSize.Level0)
+{
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    StartMock(typeVec, sizeVec);
+    g_clientConfig.mmapSpecificAddrOnly = true;
+
+    size_t length = 100;
+    int ret = ohos_malloc_hook_munmap(reinterpret_cast<void*>(0x1000), length);
+    EXPECT_NE(ret, -1);
+    EXPECT_TRUE(typeVec.empty());
+    EXPECT_TRUE(sizeVec.empty());
+    g_clientConfig.mmapSpecificAddrOnly = false;
 }
 
 }
