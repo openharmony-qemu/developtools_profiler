@@ -81,7 +81,7 @@ bool GetOptionValue(argsVector &args, std::string optionName, T &value)
                 // if the last one we request is empty , we remove it
                 localValues.pop_back();
                 // nothing more needed
-                // we dont allow empty value
+                // we don't allow empty value
                 break;
             }
         }
@@ -107,7 +107,7 @@ bool GetOptionValue(argsVector &args, std::string optionName, T &value)
             it = args.erase(it);
             // some specail case
             if constexpr (std::is_same<T, bool>::value) {
-                // for bool we dont need get value.
+                // for bool we don't need get value.
                 // this always return true
                 GetValueFromString(optionName, optionName, value);
                 return true;

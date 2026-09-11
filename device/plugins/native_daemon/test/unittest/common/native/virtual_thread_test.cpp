@@ -104,7 +104,7 @@ int VirtualThreadTest::PhdrCallBack(struct dl_phdr_info *info, size_t size, void
         dlpiName = myFilePath;
     }
     if (info->dlpi_name == nullptr || info->dlpi_name[0] == '\0') {
-        // dont care empty pt
+        // don't care empty pt
         return 0;
     } else {
         MakeMapsFromDlpi(dlpiName, info, phdrMaps);

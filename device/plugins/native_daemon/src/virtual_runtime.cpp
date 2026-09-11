@@ -200,7 +200,7 @@ bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>&
             continue;
         }
         if (callFrame.ip_ >= PERF_CONTEXT_MAX) {
-            // dont care, this is not issue.
+            // don't care, this is not issue.
             HLOGV("%s", UpdatePerfContext(callFrame.ip_, perfCallchainContext).c_str());
             continue;
         }

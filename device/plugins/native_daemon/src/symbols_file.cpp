@@ -369,7 +369,7 @@ private:
 #endif
         if (buildId_.empty()) {
             HLOGD("buildId not found from elf '%s'.", elfPath.c_str());
-            // dont failed. some time the lib have not got the build id
+            // don't failed. some time the lib have not got the build id
             // buildId not found from elf '/system/bin/ld-musl-arm.so.1'.
         }
     }
@@ -417,7 +417,7 @@ private:
         } else {
             HLOGW("symbols will not update for '%s' because buildId is not match.",
                   elfPath.c_str());
-            // this mean failed . we dont goon for this.
+            // this mean failed . we don't goon for this.
             return false;
         }
 
