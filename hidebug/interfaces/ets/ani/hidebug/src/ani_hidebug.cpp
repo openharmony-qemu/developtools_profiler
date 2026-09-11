@@ -133,21 +133,24 @@ struct RequestTraceParam {
     uint32_t duration = 0;
 };
 
-bool GetDumpParam(ani_env *env, ani_array argsAni, std::vector<std::u16string> &args)
+bool GetDumpParam(ani_env *env, ani_array argsAni, std::vector<std::u16string> &args, std::string* errMsg)
 {
     ani_size arraySize = 0;
     if (env->Array_GetLength(argsAni, &arraySize) != ANI_OK) {
-        HILOG_ERROR(LOG_CORE, "Get input tags size failed.");
+        if (errMsg != nullptr) { *errMsg = "Invalid parameter, get input args size failed."; }
+        HILOG_ERROR(LOG_CORE, "Get input args size failed.");
         return false;
     }
     for (ani_size i = 0; i < arraySize; i++) {
         ani_ref aniValue = nullptr;
         if (env->Object_CallMethodByName_Ref(argsAni, "$_get", "i:Y", &aniValue, i) != ANI_OK) {
+            if (errMsg != nullptr) { *errMsg = "Invalid parameter, get input args element failed."; }
             HILOG_ERROR(LOG_CORE, "get_element -> Get input args failed.");
             return false;
         }
         std::string strValue;
         if (AniUtil::ParseAniString(env, static_cast<ani_string>(aniValue), strValue) != ANI_OK) {
+            if (errMsg != nullptr) { *errMsg = "Invalid parameter, parse input args string failed."; }
             HILOG_ERROR(LOG_CORE, "get_value -> Get input args failed.");
             return false;
         }
@@ -157,14 +160,16 @@ bool GetDumpParam(ani_env *env, ani_array argsAni, std::vector<std::u16string> &
     return true;
 }
 
-bool GetTraceParam(ani_env *env, ani_array tagsAni, std::vector<uint64_t> &tags)
+bool GetTraceParam(ani_env *env, ani_array tagsAni, std::vector<uint64_t> &tags, std::string* errMsg)
 {
     ani_size arraySize = 0;
     if (env->Array_GetLength(static_cast<ani_array>(tagsAni), &arraySize) != ANI_OK) {
+        if (errMsg != nullptr) { *errMsg = "Invalid parameter, get input tags size failed."; }
         HILOG_ERROR(LOG_CORE, "Get input tags size failed.");
         return false;
     }
     if (arraySize > static_cast<ani_size>(MAX_TAGS_ARRAY_LENGTH)) {
+        if (errMsg != nullptr) { *errMsg = "Invalid parameter, the length of tags array exceeds the limit."; }
         HILOG_ERROR(LOG_CORE, "The length of tags array exceeds the limit.");
         return false;
     }
@@ -172,6 +177,7 @@ bool GetTraceParam(ani_env *env, ani_array tagsAni, std::vector<uint64_t> &tags)
     ani_method toLong {};
     ani_status status = env->FindClass("std.core.Long", &longClass);
     if (status != ANI_OK) {
+        if (errMsg != nullptr) { *errMsg = "Invalid parameter, find class std.core.Long failed."; }
         HILOG_ERROR(LOG_CORE, "Get input tags value failed.");
         return false;
     }
@@ -181,11 +187,13 @@ bool GetTraceParam(ani_env *env, ani_array tagsAni, std::vector<uint64_t> &tags)
         ani_long longValue {};
         status = env->Array_Get(tagsAni, i, &longRef);
         if (status != ANI_OK) {
+            if (errMsg != nullptr) { *errMsg = "Invalid parameter, get tags array element failed."; }
             HILOG_ERROR(LOG_CORE, "Array_Get failed, status: %{public}d", status);
             return false;
         }
         status = env->Object_CallMethod_Long(static_cast<ani_object>(longRef), toLong, &longValue);
         if (status != ANI_OK) {
+            if (errMsg != nullptr) { *errMsg = "Invalid parameter, invoke toLong failed."; }
             HILOG_ERROR(LOG_CORE, "Invoke toLong, status: %{public}d", status);
             return false;
         }
@@ -195,9 +203,10 @@ bool GetTraceParam(ani_env *env, ani_array tagsAni, std::vector<uint64_t> &tags)
 }
 
 bool GetRequestTraceParam(ani_env *env, ani_string identifierAni, ani_int bufferSizeAni, ani_int durationAni,
-    RequestTraceParam &param)
+    RequestTraceParam &param, std::string* errMsg)
 {
     if (AniUtil::ParseAniString(env, identifierAni, param.identifier) != ANI_OK) {
+        if (errMsg != nullptr) { *errMsg = "Invalid parameter, get input identifier failed."; }
         HILOG_ERROR(LOG_CORE, "Get input identifier failed.");
         return false;
     }
@@ -261,9 +270,9 @@ void GetServiceDump(ani_env *env,
     int serviceAbilityId = static_cast<int>(serviceIdAni);
     int fd = static_cast<int>(fdAni);
     std::vector<std::u16string> args;
-    if (!GetDumpParam(env, argsAni, args)) {
-        std::string paramErrorMessage = "The parameter check failed.";
-        AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::PARAMETER_ERROR);
+    std::string errMsg;
+    if (!GetDumpParam(env, argsAni, args, &errMsg)) {
+        AniUtil::ThrowErrorMessage(env, errMsg, ErrorCode::PARAMETER_ERROR);
         return;
     }
     sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -407,10 +416,18 @@ ani_string StartAppTraceCapture(ani_env *env,
     uint32_t traceFlag = 0;
     uint32_t limitSize = static_cast<uint32_t>(limitSizeAni);
     std::vector<uint64_t> tags;
-    if (AniUtil::ParseAniEnum(env, flagAni, traceFlag) != ANI_OK || !GetTraceParam(env, tagsAni, tags)) {
-        std::string paramErrorMessage = "Invalid argument";
+    std::string errMsg;
+    bool paramOk = false;
+    if (AniUtil::ParseAniEnum(env, flagAni, traceFlag) != ANI_OK) {
+        errMsg = "Invalid parameter, parse trace flag failed.";
+    } else if (!GetTraceParam(env, tagsAni, tags, &errMsg)) {
+        HILOG_ERROR(LOG_CORE, "%{public}s", errMsg.c_str());
+    } else {
+        paramOk = true;
+    }
+    if (!paramOk) {
         apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
-        AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::PARAMETER_ERROR);
+        AniUtil::ThrowErrorMessage(env, errMsg, ErrorCode::PARAMETER_ERROR);
         return nullptr;
     }
     uint64_t tag = std::accumulate(tags.begin(), tags.end(), 0ull, [](uint64_t a, uint64_t b) { return a | b; });
@@ -474,9 +491,10 @@ ani_string RequestTraceAdapter(ani_env *env, ani_string identifierAni, ani_int b
     ApiInvokeRecorder apiInvokeRecorder("requestTrace");
     (void)reservedAni;
     RequestTraceParam param;
-    if (!GetRequestTraceParam(env, identifierAni, bufferSizeAni, durationAni, param)) {
+    std::string errMsg;
+    if (!GetRequestTraceParam(env, identifierAni, bufferSizeAni, durationAni, param, &errMsg)) {
         apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
-        AniUtil::ThrowErrorMessage(env, "Invalid parameter.", ErrorCode::PARAMETER_ERROR);
+        AniUtil::ThrowErrorMessage(env, errMsg, ErrorCode::PARAMETER_ERROR);
         return nullptr;
     }
     std::mutex mutex;
@@ -546,15 +564,17 @@ ani_object GetGraphicsMemoryAdapter(ani_env *env, ani_int interval)
     return AniUtil::CreateUndefined(env);
 }
 
-bool GetTheOnlyStringParam(ani_env *env, ani_string filenameAni, std::string &fileName)
+bool GetTheOnlyStringParam(ani_env *env, ani_string filenameAni, std::string &fileName, std::string* errMsg)
 {
     if (AniUtil::ParseAniString(env, filenameAni, fileName) != ANI_OK) {
+        if (errMsg != nullptr) { *errMsg = "Invalid parameter, failed to parse ani_string filename."; }
         HILOG_ERROR(LOG_CORE, "Failed to parse ani_string filename");
         return false;
     }
     size_t bufLen = fileName.size();
     const int bufMax = 128;
     if (bufLen > bufMax || bufLen == 0) {
+        if (errMsg != nullptr) { *errMsg = "Invalid parameter, input filename param length is illegal."; }
         HILOG_ERROR(LOG_CORE, "input filename param length is illegal.");
         return false;
     }
@@ -588,10 +608,10 @@ void StartJsCpuProfiling(ani_env *env, ani_string fileNameAni)
 {
     ApiInvokeRecorder apiInvokeRecorder("startJsCpuProfiling");
     std::string fileName;
-    if (!GetTheOnlyStringParam(env, fileNameAni, fileName)) {
+    std::string paramErrMsg;
+    if (!GetTheOnlyStringParam(env, fileNameAni, fileName, &paramErrMsg)) {
         apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
-        std::string paramErrorMessage = "Invalid parameter, require a string parameter.";
-        AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::PARAMETER_ERROR);
+        AniUtil::ThrowErrorMessage(env, paramErrMsg, ErrorCode::PARAMETER_ERROR);
         return;
     }
     HILOG_INFO(LOG_CORE, "filename: %{public}s.", fileName.c_str());
@@ -701,9 +721,9 @@ ani_long GetVMRuntimeStat(ani_env *env, ani_string itemAni)
 {
     ApiInvokeRecorder apiInvokeRecorder("getVMRuntimeStat");
     std::string param;
-    if (!GetTheOnlyStringParam(env, itemAni, param)) {
-        std::string paramErrorMessage = "Invalid parameter, a string parameter required.";
-        AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::PARAMETER_ERROR);
+    std::string errMsg;
+    if (!GetTheOnlyStringParam(env, itemAni, param, &errMsg)) {
+        AniUtil::ThrowErrorMessage(env, errMsg, ErrorCode::PARAMETER_ERROR);
         apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         return 0;
     }
@@ -1041,10 +1061,10 @@ void DumpJsHeapDataAdapter(ani_env *env, ani_string fileNameAni, ani_boolean nee
 {
     ApiInvokeRecorder apiInvokeRecorder("dumpJsHeapData");
     std::string fileName;
-    if (!GetTheOnlyStringParam(env, fileNameAni, fileName)) {
+    std::string paramErrMsg;
+    if (!GetTheOnlyStringParam(env, fileNameAni, fileName, &paramErrMsg)) {
         apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
-        std::string paramErrorMessage = "Invalid parameter, require a string parameter.";
-        AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::PARAMETER_ERROR);
+        AniUtil::ThrowErrorMessage(env, paramErrMsg, ErrorCode::PARAMETER_ERROR);
         return;
     }
     std::string filesDir = GetProcessDir(DirectoryType::FILE);
