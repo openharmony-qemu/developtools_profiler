@@ -543,7 +543,7 @@ void TaskManager::GetPkgByPid()
     }
     char cmdBuf[1024] = {'\0'};
     size_t nRead = fread(cmdBuf, 1, sizeof(cmdBuf) - 1, fp);
-    fclose(fp);
+    (void)fclose(fp);
     if (nRead == 0) {
         LOGE("Failed to read %s", cmdLinePath.c_str());
         return;
