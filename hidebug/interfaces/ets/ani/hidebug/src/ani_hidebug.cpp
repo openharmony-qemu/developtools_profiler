@@ -131,6 +131,7 @@ struct RequestTraceParam {
     std::string identifier;
     uint32_t bufferSize = 0;
     uint32_t duration = 0;
+    std::string errMsg;
 };
 
 bool GetDumpParam(ani_env *env, ani_array argsAni, std::vector<std::u16string> &args, std::string* errMsg)
@@ -203,10 +204,10 @@ bool GetTraceParam(ani_env *env, ani_array tagsAni, std::vector<uint64_t> &tags,
 }
 
 bool GetRequestTraceParam(ani_env *env, ani_string identifierAni, ani_int bufferSizeAni, ani_int durationAni,
-    RequestTraceParam &param, std::string* errMsg)
+    RequestTraceParam &param)
 {
     if (AniUtil::ParseAniString(env, identifierAni, param.identifier) != ANI_OK) {
-        if (errMsg != nullptr) { *errMsg = "Invalid parameter, get input identifier failed."; }
+        param.errMsg = "Invalid parameter, get input identifier failed.";
         HILOG_ERROR(LOG_CORE, "Get input identifier failed.");
         return false;
     }
@@ -491,10 +492,9 @@ ani_string RequestTraceAdapter(ani_env *env, ani_string identifierAni, ani_int b
     ApiInvokeRecorder apiInvokeRecorder("requestTrace");
     (void)reservedAni;
     RequestTraceParam param;
-    std::string errMsg;
-    if (!GetRequestTraceParam(env, identifierAni, bufferSizeAni, durationAni, param, &errMsg)) {
+    if (!GetRequestTraceParam(env, identifierAni, bufferSizeAni, durationAni, param)) {
         apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
-        AniUtil::ThrowErrorMessage(env, errMsg, ErrorCode::PARAMETER_ERROR);
+        AniUtil::ThrowErrorMessage(env, param.errMsg, ErrorCode::PARAMETER_ERROR);
         return nullptr;
     }
     std::mutex mutex;
