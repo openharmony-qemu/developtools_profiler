@@ -73,7 +73,7 @@ void Capture::ThreadGetCatch()
     SPUtils::CreateDir(captureDir);
     std::ostringstream errorRecv;
     mode_t oldMask = umask(0);
-    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
+    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
     umask(oldMask);
     if (fd == -1) {
         LOGE("Failed to open file: %s", savePath.c_str());
@@ -96,7 +96,7 @@ void Capture::ThreadGetCatchSocket()
     std::string cmdResult = "";
     SPUtils::CreateDir(captureDir);
     mode_t oldMask = umask(0);
-    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
+    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
     umask(oldMask);
     if (fd == -1) {
         LOGE("Capture::ThreadGetCatchSocket Failed to open file");

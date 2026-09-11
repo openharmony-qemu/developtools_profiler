@@ -1117,14 +1117,29 @@ bool SPUtils::CopyFile(const std::string &src, const std::string &dst)
         LOGE("CopyFile failed to open src: %s", srcReal);
         return false;
     }
-    std::ofstream dstFile(dst, std::ios::binary);
+    size_t lastSlash = dst.find_last_of('/');
+    std::string fileName = (lastSlash != std::string::npos) ? dst.substr(lastSlash + 1) :
+        dst;
+    std::string safePath;
+    if (lastSlash != std::string::npos) {
+        std::string dirPath = dst.substr(0, lastSlash);
+        char dstReal[PATH_MAX] = {0x00};
+        if (realpath(dirPath.c_str(), dstReal) == nullptr) {
+            LOGE("data dir %s is nullptr", dirPath.c_str());
+            return false;
+        }
+        safePath = std::string(dstReal) + "/" + fileName;
+    } else {
+        safePath = fileName;
+    }
+    std::ofstream dstFile(safePath, std::ios::binary);
     if (!dstFile.is_open()) {
-        LOGE("CopyFile failed to open dst: %s", dst.c_str());
+        LOGE("CopyFile failed to open dst: %s", safePath.c_str());
         return false;
     }
     dstFile << srcFile.rdbuf();
     if (!dstFile.good()) {
-        LOGE("CopyFile write failed: %s", dst.c_str());
+        LOGE("CopyFile write failed: %s", safePath.c_str());
         return false;
     }
     return true;
