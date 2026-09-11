@@ -330,6 +330,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
     // check buffer configs
     std::shared_ptr<ProfilerSessionConfig> sessionConfig =
     std::make_shared<ProfilerSessionConfig>(request->session_config());
+    CHECK_EXPRESSION_TRUE(HandleResultFilePath(sessionConfig), "result_file is invalid!");
     const int nBuffers = sessionConfig->buffers_size();
     CHECK_EXPRESSION_TRUE(nBuffers == 0 || nBuffers == 1 || nBuffers == nConfigs, "buffers config invalid!");
     // copy plugin configs from request
@@ -516,6 +517,21 @@ void ProfilerService::CheckClientStatus()
             checkStatusManager_.UnscheduleTask(heartbeatFd_);
         }
     }
+}
+
+bool ProfilerService::HandleResultFilePath(std::shared_ptr<ProfilerSessionConfig>& sessionConfig)
+{
+    if (sessionConfig->result_file().empty()) {
+        return true;
+    }
+#if !defined(is_sandbox) || !is_sandbox
+    auto retFile = COMMON::CheckFilePathPrefixSafe(sessionConfig->result_file());
+    if (!retFile.first) {
+        return false;
+    }
+    sessionConfig->set_result_file(retFile.second);
+#endif
+    return true;
 }
 
 ProfilerService::SessionContextPtr ProfilerService::GetSessionContext(uint32_t sessionId) const
