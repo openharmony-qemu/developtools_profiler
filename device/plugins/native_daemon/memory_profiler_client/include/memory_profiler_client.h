@@ -64,7 +64,7 @@ public:
     /**
      * @desc: Start simplified nmd mode profiler.
      * @param memStats: The simplified memory stats vector to store the result.
-     * @param isProfiling: Is profilling task exist or not.
+     * @param isProfiling: Is profiling task exist or not.
      * @return: RET_OK on success, RET_ERR on failure.
      */
     virtual int32_t StartPrintSimplifiedNmd(std::vector<SimplifiedMemStats>& memStats, bool isProfiling = false) = 0;

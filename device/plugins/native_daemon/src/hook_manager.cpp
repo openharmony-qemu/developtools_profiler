@@ -161,12 +161,12 @@ bool CopyFdContent(int destFd, int srcFd)
 bool ReadFdContent(std::string& destStr, int srcFd)
 {
     if (lseek(srcFd, 0, SEEK_SET) < 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "CopyFdContentToString lseek failed errno=%d", errno);
+        PROFILER_LOG_ERROR(LOG_CORE, "ReadFdContent lseek failed errno=%d", errno);
         return false;
     }
     struct stat statBuf;
     if (fstat(srcFd, &statBuf) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "CopyFdContentToString fstat failed errno=%d", errno);
+        PROFILER_LOG_ERROR(LOG_CORE, "ReadFdContent fstat failed errno=%d", errno);
         return false;
     }
     char buf[MAX_BUFFER_SIZE];
@@ -176,7 +176,7 @@ bool ReadFdContent(std::string& destStr, int srcFd)
             if (errno == EINTR) {
                 continue;
             }
-            PROFILER_LOG_ERROR(LOG_CORE, "CopyFdContentToString read failed errno=%d", errno);
+            PROFILER_LOG_ERROR(LOG_CORE, "ReadFdContent read failed errno=%d", errno);
             return false;
         }
         if (readed == 0) {

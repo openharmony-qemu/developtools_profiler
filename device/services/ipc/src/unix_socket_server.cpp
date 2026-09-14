@@ -82,11 +82,12 @@ void UnixSocketServer::RemoveContext(int fd)
 std::shared_ptr<ClientConnection> UnixSocketServer::GetClientConnection(int fd)
 {
     std::unique_lock<std::mutex> lock(mtx_);
-    if (socketClients_.find(fd) == socketClients_.end()) {
+    auto it = socketClients_.find(fd);
+    if (it == socketClients_.end()) {
         PROFILER_LOG_ERROR(LOG_CORE, "Client %d not found", fd);
         return nullptr;
     }
-    return socketClients_[fd];
+    return it->second;
 }
 
 void UnixSocketServer::UnixSocketAccept(void (*callback)(int))
