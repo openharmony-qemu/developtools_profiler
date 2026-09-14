@@ -99,28 +99,38 @@ bool GetNapiDoubleValue(napi_env env, napi_value value, double& ret)
     return false;
 }
 
-bool GetNapiBoolValue(napi_env env, napi_value value, bool& ret)
+bool GetNapiBoolValue(napi_env env, napi_value value, bool& ret, std::string* errMsg)
 {
-    if (MatchValueType(env, value, napi_boolean)) {
-        return napi_get_value_bool(env, value, &ret) == napi_ok;
+    if (!MatchValueType(env, value, napi_boolean)) {
+        if (errMsg != nullptr) { *errMsg = "Invalid parameter, type error, should be bool type."; }
+        HILOG_ERROR(LOG_CORE, "Type error, should be bool type.");
+        return false;
     }
-    return false;
+    if (napi_get_value_bool(env, value, &ret) != napi_ok) {
+        if (errMsg != nullptr) { *errMsg = "Invalid parameter, get input bool value failed."; }
+        HILOG_ERROR(LOG_CORE, "Get input bool value failed.");
+        return false;
+    }
+    return true;
 }
 
-bool GetNapiStringValue(napi_env env, napi_value value, std::string& ret, size_t maxSize)
+bool GetNapiStringValue(napi_env env, napi_value value, std::string& ret, size_t maxSize, std::string* errMsg)
 {
     if (!MatchValueType(env, value, napi_string)) {
-        HILOG_ERROR(LOG_CORE, "Type error, should be string type!");
+        if (errMsg != nullptr) { *errMsg = "Invalid parameter, type error, should be string type."; }
+        HILOG_ERROR(LOG_CORE, "Type error, should be string type.");
         return false;
     }
     size_t bufLen = 0;
     napi_status status = napi_get_value_string_utf8(env, value, nullptr, 0, &bufLen);
     if (status != napi_ok) {
-        HILOG_ERROR(LOG_CORE, "Get input filename param length failed.");
+        if (errMsg != nullptr) { *errMsg = "Invalid parameter, get input string param length failed."; }
+        HILOG_ERROR(LOG_CORE, "Get input string param length failed.");
         return false;
     }
     if (maxSize > 0 && (bufLen > maxSize || bufLen == 0)) {
-        HILOG_ERROR(LOG_CORE, "input filename param length is illegal.");
+        if (errMsg != nullptr) { *errMsg = "Invalid parameter, input string param length is illegal."; }
+        HILOG_ERROR(LOG_CORE, "Input string param length is illegal.");
         return false;
     }
     ret = std::string(bufLen, '\0');

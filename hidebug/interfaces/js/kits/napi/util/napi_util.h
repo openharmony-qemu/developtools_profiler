@@ -42,9 +42,10 @@ bool GetNapiUint32Value(napi_env env, napi_value value, uint32_t& ret);
 
 bool GetNapiDoubleValue(napi_env env, napi_value value, double& ret);
 
-bool GetNapiBoolValue(napi_env env, napi_value value, bool& ret);
+bool GetNapiBoolValue(napi_env env, napi_value value, bool& ret, std::string* errMsg = nullptr);
 
-bool GetNapiStringValue(napi_env env, napi_value value, std::string& ret, size_t maxSize = 0);
+bool GetNapiStringValue(napi_env env, napi_value value, std::string& ret, size_t maxSize = 0,
+    std::string* errMsg = nullptr);
 
 bool GetNapiObjectProperty(napi_env env, napi_value value, const std::string& propertyName, napi_value& ret);
 

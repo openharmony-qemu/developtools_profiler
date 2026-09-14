@@ -82,7 +82,8 @@ constexpr std::pair<int, const char*> DumpErrCodeMap[] = {
     "Please wait until the number of available invocations for the interface is reset."},
     {DumpRawHeapErrors::FORK_FAILED, "Fork operation failed."},
     {DumpRawHeapErrors::FAILED_WAIT_CHILD_PROCESS_FINISHED, "Failed to wait for the child process to finish."},
-    {DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED, "Timeout while waiting for the child process to finish."}
+    {DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED, "Timeout while waiting for the child process to finish."},
+    {DumpRawHeapErrors::NAPI_INTERFACE_ERROR, "Napi create promise failed."}
 };
 
 bool DumpLimitEnable()
@@ -251,7 +252,7 @@ napi_value DumpHeapSnapshot(const std::string& fileName, napi_env env, bool need
     return CreateUndefined(env);
 }
 
-bool GetDumpHeapParams(napi_env env, napi_callback_info info, std::string& fileName, bool& needClean, std::string msg)
+bool GetDumpHeapParams(napi_env env, napi_callback_info info, std::string& fileName, bool& needClean, std::string& msg)
 {
     size_t argc = TWO_VALUE_LIMIT;
     napi_value argv[TWO_VALUE_LIMIT] = {nullptr};
@@ -264,21 +265,16 @@ bool GetDumpHeapParams(napi_env env, napi_callback_info info, std::string& fileN
         return false;
     }
     constexpr int paramLen = 128;
-    if (argc == ONE_VALUE_LIMIT && !GetNapiStringValue(env, argv[FIRST_PARAM_POS], fileName, paramLen)) {
-        msg = "Invalid parameter(s), the first parameter must be of type string.";
+    if (argc == ONE_VALUE_LIMIT && !GetNapiStringValue(env, argv[FIRST_PARAM_POS], fileName, paramLen, &msg)) {
         HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu!", __func__, argc);
         return false;
     }
     if (argc == TWO_VALUE_LIMIT) {
-        bool getFirstParamSuccess = GetNapiStringValue(env, argv[FIRST_PARAM_POS], fileName, paramLen);
-        if (!getFirstParamSuccess) {
-            msg = "Invalid parameter(s), the first parameter must be of type string.";
+        if (!GetNapiStringValue(env, argv[FIRST_PARAM_POS], fileName, paramLen, &msg)) {
             HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu!", __func__, argc);
             return false;
         }
-        bool needCleanResult = GetNapiBoolValue(env, argv[SECOND_PARAM_POS], needClean);
-        if (!needCleanResult) {
-            msg = "Invalid parameter(s), the second parameter must be of type bool.";
+        if (!GetNapiBoolValue(env, argv[SECOND_PARAM_POS], needClean, &msg)) {
             HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu!", __func__, argc);
             return false;
         }
@@ -454,7 +450,13 @@ napi_value DumpJsRawHeapData(napi_env env, napi_callback_info info)
     auto apiInvokeRecorder = std::make_shared<ApiInvokeRecorder>("dumpJsRawHeapData");
     napi_deferred deferred = nullptr;
     napi_value promise = nullptr;
-    napi_create_promise(env, &deferred, &promise);
+    if (napi_create_promise(env, &deferred, &promise) != napi_ok) {
+        HILOG_ERROR(LOG_CORE, "DumpJsRawHeapData: napi_create_promise failed.");
+        apiInvokeRecorder->SetErrorCode(DumpRawHeapErrors::NAPI_INTERFACE_ERROR);
+        napi_throw_error(env, std::to_string(DumpRawHeapErrors::NAPI_INTERFACE_ERROR).c_str(),
+            "Napi create promise failed.");
+        return CreateUndefined(env);
+    }
     DumpJsRawHeapOptions options;
     int32_t errCode = GetDumpJsRawHeapParams(env, info, options);
     napi_value err = ResolveErrorCode(env, errCode);
