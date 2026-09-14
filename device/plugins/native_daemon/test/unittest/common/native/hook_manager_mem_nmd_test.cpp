@@ -25,13 +25,14 @@ using namespace testing::ext;
 using namespace OHOS::Developtools::NativeDaemon;
 namespace {
 const std::string SIMP_NMD_TEMP_FILE_DIR = "/data/log/hiprofiler/";
+constexpr unsigned SIMP_NMD_TEMP_FILE_DIR_MODE = 0755;
 
 class HookManagerMemNmdTest : public ::testing::Test {
 public:
     static void SetUpTestCase()
     {
         if (access(SIMP_NMD_TEMP_FILE_DIR.c_str(), F_OK) != 0) {
-            mkdir(SIMP_NMD_TEMP_FILE_DIR.c_str(), 0755);
+            mkdir(SIMP_NMD_TEMP_FILE_DIR.c_str(), SIMP_NMD_TEMP_FILE_DIR_MODE);
         }
     }
 

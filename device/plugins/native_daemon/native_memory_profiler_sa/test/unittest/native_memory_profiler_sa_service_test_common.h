@@ -159,7 +159,7 @@ public:
         callbackIsNull_ = callback == nullptr;
         return RET_OK;
     }
-    virtual int32_t Update(std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override
+    int32_t Update(std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override
     {
         return RET_OK;
     }
