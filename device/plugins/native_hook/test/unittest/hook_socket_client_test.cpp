@@ -15,6 +15,10 @@
 
 #include <dlfcn.h>
 #include <gtest/gtest.h>
+#include <cstring>
+#include <cstdlib>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "hook_socket_client.h"
 #include "hook_service.h"
@@ -256,4 +260,109 @@ HWTEST_F(HookSocketClientTest, SendSimplifiedNmdInfo, TestSize.Level0)
     sleep(WAIT_THREAD_TIME);
 }
 #endif
+
+/*
+ * @tc.name: WriteDataToFdInvalidFd
+ * @tc.desc: test WriteDataToFd returns false with invalid fd.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, WriteDataToFdInvalidFd, TestSize.Level0)
+{
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
+    uint8_t data[] = {1, 2, 3};
+    EXPECT_FALSE(hookClient.WriteDataToFd(-1, data, sizeof(data)));
+}
+
+/*
+ * @tc.name: WriteDataToFdSuccess
+ * @tc.desc: test WriteDataToFd writes data to a regular file fd and verifies content.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, WriteDataToFdSuccess, TestSize.Level0)
+{
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
+    char path[] = "/data/local/tmp/write_data_fd_test_XXXXXX";
+    int fd = mkstemp(path);
+    ASSERT_GE(fd, 0);
+    unlink(path);
+    uint8_t data[] = {0xAB, 0xCD, 0xEF};
+    EXPECT_TRUE(hookClient.WriteDataToFd(fd, data, sizeof(data)));
+    EXPECT_EQ(lseek(fd, 0, SEEK_SET), 0);
+    uint8_t buf[sizeof(data)] = {0};
+    EXPECT_EQ(read(fd, buf, sizeof(buf)), static_cast<ssize_t>(sizeof(data)));
+    EXPECT_EQ(memcmp(buf, data, sizeof(data)), 0);
+    close(fd);
+}
+
+/*
+ * @tc.name: WriteDataToFdEmptyData
+ * @tc.desc: test WriteDataToFd with zero-length data succeeds on a valid fd.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, WriteDataToFdEmptyData, TestSize.Level0)
+{
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
+    char path[] = "/data/local/tmp/write_data_fd_empty_XXXXXX";
+    int fd = mkstemp(path);
+    ASSERT_GE(fd, 0);
+    unlink(path);
+    uint8_t data[] = {0};
+    EXPECT_TRUE(hookClient.WriteDataToFd(fd, data, 0));
+    close(fd);
+}
+
+/*
+ * @tc.name: HandleSimplifiedMemConfigChangedNullBuf
+ * @tc.desc: test HandleSimplifiedMemConfigChanged returns false with null buffer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, HandleSimplifiedMemConfigChangedNullBuf, TestSize.Level0)
+{
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
+    SocketContext context;
+    EXPECT_FALSE(hookClient.HandleSimplifiedMemConfigChanged(context, nullptr, sizeof(SimplifiedMemConfigMsg)));
+}
+
+/*
+ * @tc.name: HandleSimplifiedMemConfigChangedWrongSize
+ * @tc.desc: test HandleSimplifiedMemConfigChanged returns false when size mismatches.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, HandleSimplifiedMemConfigChangedWrongSize, TestSize.Level0)
+{
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
+    SocketContext context;
+    uint8_t data[] = {1, 2, 3};
+    EXPECT_FALSE(hookClient.HandleSimplifiedMemConfigChanged(context, data, sizeof(data)));
+}
+
+/*
+ * @tc.name: HandleSimplifiedMemConfigChangedSuccess
+ * @tc.desc: test HandleSimplifiedMemConfigChanged updates maxGrowthSize from message.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, HandleSimplifiedMemConfigChangedSuccess, TestSize.Level0)
+{
+    ClientConfig config;
+    HookSocketClient hookClient(1, &config, nullptr);
+    SocketContext context;
+    SimplifiedMemConfigMsg msg;
+    msg.maxGrowthSize = 4096;
+    auto buf = reinterpret_cast<const int8_t*>(&msg);
+    EXPECT_TRUE(hookClient.HandleSimplifiedMemConfigChanged(context, buf, sizeof(msg)));
+    EXPECT_EQ(hookClient.maxGrowthSize_, 4096u);
+    EXPECT_EQ(config.maxGrowthSize, 4096u);
+}
+
+/*
+ * @tc.name: HandleSimplifiedNmdDumpRequestInvalidFd
+ * @tc.desc: test HandleSimplifiedNmdDumpRequest returns false when fd receive fails.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, HandleSimplifiedNmdDumpRequestInvalidFd, TestSize.Level0)
+{
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
+    SocketContext context;
+    EXPECT_FALSE(hookClient.HandleSimplifiedNmdDumpRequest(context));
+}
 } // namespace

@@ -362,6 +362,77 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubRejectsInvalidProcessForDump, 
 }
 
 /**
+ * @tc.name: SaStubDispatchesUpdateRequest
+ * @tc.desc: OnRemoteRequest dispatches update request for an existing process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubDispatchesUpdateRequest, TestSize.Level2)
+{
+    OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
+    ASSERT_NE(stub, nullptr);
+    OHOS::MessageParcel data;
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option;
+    ASSERT_TRUE(data.WriteInterfaceToken(INativeMemoryProfilerSa::GetDescriptor()));
+    ASSERT_TRUE(WriteStubConfig(data, getpid()));
+    EXPECT_EQ(stub->OnRemoteRequest(static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::UPDATE_HOOK_CONFIG),
+        data, reply, option), RET_OK);
+}
+
+/**
+ * @tc.name: SaStubUpdateRejectsZeroPid
+ * @tc.desc: StubUpdate rejects config with non-positive pid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubUpdateRejectsZeroPid, TestSize.Level2)
+{
+    OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
+    ASSERT_NE(stub, nullptr);
+    OHOS::MessageParcel data;
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option;
+    ASSERT_TRUE(data.WriteInterfaceToken(INativeMemoryProfilerSa::GetDescriptor()));
+    ASSERT_TRUE(WriteStubConfig(data, 0));
+    EXPECT_EQ(stub->OnRemoteRequest(static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::UPDATE_HOOK_CONFIG),
+        data, reply, option), RET_ERR);
+}
+
+/**
+ * @tc.name: SaStubUpdateRejectsMissingProcess
+ * @tc.desc: StubUpdate rejects config when target process does not exist.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubUpdateRejectsMissingProcess, TestSize.Level2)
+{
+    OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
+    ASSERT_NE(stub, nullptr);
+    OHOS::MessageParcel data;
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option;
+    ASSERT_TRUE(data.WriteInterfaceToken(INativeMemoryProfilerSa::GetDescriptor()));
+    ASSERT_TRUE(WriteStubConfig(data, 999999));
+    EXPECT_EQ(stub->OnRemoteRequest(static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::UPDATE_HOOK_CONFIG),
+        data, reply, option), RET_ERR);
+}
+
+/**
+ * @tc.name: SaStubUpdateRejectsMalformedPayload
+ * @tc.desc: StubUpdate rejects request with token only and no config data.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaStubUpdateRejectsMalformedPayload, TestSize.Level2)
+{
+    OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
+    ASSERT_NE(stub, nullptr);
+    OHOS::MessageParcel data;
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option;
+    ASSERT_TRUE(data.WriteInterfaceToken(INativeMemoryProfilerSa::GetDescriptor()));
+    EXPECT_EQ(stub->OnRemoteRequest(static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::UPDATE_HOOK_CONFIG),
+        data, reply, option), RET_ERR);
+}
+
+/**
  * @tc.name: SaProxyRejectsNullRemote
  * @tc.desc: proxy methods return RET_ERR when remote object is null.
  * @tc.type: FUNC
@@ -484,6 +555,56 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, SaProxyHandleTimeoutClearsStartParam
 {
     NativeMemoryProfilerSaProxy::HandleTimeout();
     EXPECT_EQ(OHOS::system::GetParameter("hiviewdfx.hiprofiler.memprofiler.start", ""), "0");
+}
+
+/**
+ * @tc.name: SaProxyDispatchesUpdateRequest
+ * @tc.desc: proxy Update dispatches to remote stub and returns RET_OK.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaProxyDispatchesUpdateRequest, TestSize.Level2)
+{
+    OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
+    ASSERT_NE(stub, nullptr);
+    OHOS::sptr<NativeMemoryProfilerSaProxy> proxy =
+        new (std::nothrow) NativeMemoryProfilerSaProxy(stub->AsObject());
+    ASSERT_NE(proxy, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = getpid();
+    EXPECT_EQ(proxy->Update(config), RET_OK);
+}
+
+/**
+ * @tc.name: SaProxyUpdateRejectsInvalidPid
+ * @tc.desc: proxy Update returns RET_ERR when stub rejects invalid pid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaProxyUpdateRejectsInvalidPid, TestSize.Level2)
+{
+    OHOS::sptr<TestNativeMemoryProfilerSaStub> stub = new (std::nothrow) TestNativeMemoryProfilerSaStub();
+    ASSERT_NE(stub, nullptr);
+    OHOS::sptr<NativeMemoryProfilerSaProxy> proxy =
+        new (std::nothrow) NativeMemoryProfilerSaProxy(stub->AsObject());
+    ASSERT_NE(proxy, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    EXPECT_EQ(proxy->Update(config), RET_ERR);
+}
+
+/**
+ * @tc.name: SaProxyUpdateRejectsNullRemote
+ * @tc.desc: proxy Update returns RET_ERR when remote object is null.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, SaProxyUpdateRejectsNullRemote, TestSize.Level2)
+{
+    OHOS::sptr<NativeMemoryProfilerSaProxy> proxy = new (std::nothrow) NativeMemoryProfilerSaProxy(nullptr);
+    ASSERT_NE(proxy, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    EXPECT_EQ(proxy->Update(config), RET_ERR);
 }
 
 /**
@@ -1909,3 +2030,304 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, CollectApmReturnsEmptyForZeroPid, Te
     EXPECT_EQ(access(compositePath.c_str(), F_OK), -1);
 }
 
+namespace {
+constexpr int32_t SIMP_NMD_TYPE = 3;
+constexpr int32_t TEST_UPDATE_PID = 50100;
+
+std::shared_ptr<TaskConfig> MakeUpdateTask(int32_t pid, int32_t callingPid)
+{
+    auto hook = std::make_shared<HookManager>();
+    return std::make_shared<TaskConfig>(hook, pid, "update_task", callingPid, "", -1, false);
+}
+}
+
+/**
+ * @tc.name: UpdateRejectsNullConfig
+ * @tc.desc: Update returns RET_ERR when config is nullptr.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, UpdateRejectsNullConfig, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = nullptr;
+    EXPECT_EQ(service->Update(config), RET_ERR);
+}
+
+/**
+ * @tc.name: UpdateRejectsWhenPermissionDenied
+ * @tc.desc: Update returns RET_ERR when profiling permission denied for non-API start.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, UpdateRejectsWhenPermissionDenied, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::SetMockPermissionForTest(true, false);
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->startType_ = TEST_START_TYPE_HIVIEW;
+    config->pid_ = TEST_UPDATE_PID;
+    EXPECT_EQ(service->Update(config), RET_ERR);
+    NativeMemoryProfilerSaService::SetMockPermissionForTest(false, true);
+}
+
+/**
+ * @tc.name: UpdateApiRejectsPidMismatch
+ * @tc.desc: Update returns permission denied when API start type pid mismatches calling pid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, UpdateApiRejectsPidMismatch, TestSize.Level2)
+{
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->startType_ = START_TYPE_API;
+    config->pid_ = 99999;
+    EXPECT_EQ(service->Update(config),
+              static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED));
+}
+
+/**
+ * @tc.name: UpdateFailsWhenPidNotStarted
+ * @tc.desc: Update returns RET_ERR when pid has no started hook task.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, UpdateFailsWhenPidNotStarted, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    NativeMemoryProfilerSaService::SetMockPermissionForTest(false, true);
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->startType_ = TEST_START_TYPE_HIVIEW;
+    config->pid_ = TEST_UPDATE_PID;
+    EXPECT_EQ(service->Update(config), RET_ERR);
+    NativeMemoryProfilerSaService::SetMockPermissionForTest(false, true);
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: UpdateSucceeds
+ * @tc.desc: Update succeeds and propagates config to hook manager.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, UpdateSucceeds, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    NativeMemoryProfilerSaService::SetMockPermissionForTest(false, true);
+    int32_t callingPid = static_cast<int32_t>(OHOS::IPCSkeleton::GetCallingPid());
+    ScopedSocketPair sockets;
+    ASSERT_TRUE(sockets.IsValid());
+    NativeMemoryProfilerSaService::InjectPidFdsForTest(static_cast<pid_t>(TEST_UPDATE_PID), sockets.First());
+    auto hook = std::make_shared<HookManager>();
+    auto task = std::make_shared<TaskConfig>(hook, TEST_UPDATE_PID, "update_ok", callingPid, "", -1, false);
+    NativeMemoryProfilerSaService::InjectPidCtxForTest(TEST_UPDATE_PID, task);
+
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->startType_ = TEST_START_TYPE_HIVIEW;
+    config->pid_ = TEST_UPDATE_PID;
+    config->maxGrowthSize_ = 4096;
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    EXPECT_EQ(service->Update(config), RET_OK);
+    EXPECT_EQ(hook->maxGrowthSize_, 4096u);
+
+    NativeMemoryProfilerSaService::SetMockPermissionForTest(false, true);
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: UpdateSimplifiedMemConfigRejectsUnknownPid
+ * @tc.desc: UpdateSimplifiedMemConfig returns RET_ERR when pid has no started task.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, UpdateSimplifiedMemConfigRejectsUnknownPid, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    auto config = std::make_shared<SimplifiedMemConfig>();
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    EXPECT_EQ(service->UpdateSimplifiedMemConfig(static_cast<pid_t>(TEST_UPDATE_PID), config), RET_ERR);
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: UpdateSimplifiedMemConfigRejectsInvalidHookMgr
+ * @tc.desc: UpdateSimplifiedMemConfig returns RET_ERR when task hookMgr is null.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, UpdateSimplifiedMemConfigRejectsInvalidHookMgr, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    auto task = std::make_shared<TaskConfig>(nullptr, TEST_UPDATE_PID, "upd_no_hook", -1, "", -1, false);
+    NativeMemoryProfilerSaService::InjectPidCtxForTest(TEST_UPDATE_PID, task);
+    auto config = std::make_shared<SimplifiedMemConfig>();
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    EXPECT_EQ(service->UpdateSimplifiedMemConfig(static_cast<pid_t>(TEST_UPDATE_PID), config), RET_ERR);
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: UpdateSimplifiedMemConfigRejectsCallingPermissionFail
+ * @tc.desc: UpdateSimplifiedMemConfig returns RET_ERR when calling pid mismatches.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, UpdateSimplifiedMemConfigRejectsCallingPermissionFail, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    auto task = MakeUpdateTask(TEST_UPDATE_PID, -1);
+    NativeMemoryProfilerSaService::InjectPidCtxForTest(TEST_UPDATE_PID, task);
+    auto config = std::make_shared<SimplifiedMemConfig>();
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    EXPECT_EQ(service->UpdateSimplifiedMemConfig(static_cast<pid_t>(TEST_UPDATE_PID), config), RET_ERR);
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: UpdateSimplifiedMemConfigRollsBackOnSendFail
+ * @tc.desc: UpdateSimplifiedMemConfig rolls back hook config when SendHookConfigMsg fails.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, UpdateSimplifiedMemConfigRollsBackOnSendFail, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    int32_t callingPid = static_cast<int32_t>(OHOS::IPCSkeleton::GetCallingPid());
+    auto hook = std::make_shared<HookManager>();
+    hook->maxGrowthSize_ = 1000;
+    auto task = std::make_shared<TaskConfig>(hook, TEST_UPDATE_PID, "upd_rollback", callingPid, "", -1, false);
+    NativeMemoryProfilerSaService::InjectPidCtxForTest(TEST_UPDATE_PID, task);
+
+    auto config = std::make_shared<SimplifiedMemConfig>();
+    config->maxGrowthSize = 5000;
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    EXPECT_EQ(service->UpdateSimplifiedMemConfig(static_cast<pid_t>(TEST_UPDATE_PID), config), RET_ERR);
+    EXPECT_EQ(hook->maxGrowthSize_, 1000u);
+
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: UpdateSimplifiedMemConfigSucceeds
+ * @tc.desc: UpdateSimplifiedMemConfig succeeds and updates hook manager config.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, UpdateSimplifiedMemConfigSucceeds, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    int32_t callingPid = static_cast<int32_t>(OHOS::IPCSkeleton::GetCallingPid());
+    ScopedSocketPair sockets;
+    ASSERT_TRUE(sockets.IsValid());
+    NativeMemoryProfilerSaService::InjectPidFdsForTest(static_cast<pid_t>(TEST_UPDATE_PID), sockets.First());
+    auto hook = std::make_shared<HookManager>();
+    auto task = std::make_shared<TaskConfig>(hook, TEST_UPDATE_PID, "upd_ok", callingPid, "", -1, false);
+    NativeMemoryProfilerSaService::InjectPidCtxForTest(TEST_UPDATE_PID, task);
+
+    auto config = std::make_shared<SimplifiedMemConfig>();
+    config->maxGrowthSize = 8192;
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    EXPECT_EQ(service->UpdateSimplifiedMemConfig(static_cast<pid_t>(TEST_UPDATE_PID), config), RET_OK);
+    EXPECT_EQ(hook->maxGrowthSize_, 8192u);
+
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: PrintSimplifiedNmdInHookRejectsInvalidParams
+ * @tc.desc: PrintSimplifiedNmdInHook returns RET_ERR for invalid param combinations.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, PrintSimplifiedNmdInHookRejectsInvalidParams, TestSize.Level2)
+{
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    MessageParcel reply;
+
+    config->pid_ = 0;
+    config->printNmd_ = true;
+    config->printNmdOnly_ = true;
+    config->nmdType_ = SIMP_NMD_TYPE;
+    EXPECT_EQ(NativeMemoryProfilerSaService::PrintSimplifiedNmdInHook(config, reply), RET_ERR);
+
+    config->pid_ = TEST_UPDATE_PID;
+    config->printNmd_ = false;
+    EXPECT_EQ(NativeMemoryProfilerSaService::PrintSimplifiedNmdInHook(config, reply), RET_ERR);
+
+    config->printNmd_ = true;
+    config->printNmdOnly_ = false;
+    EXPECT_EQ(NativeMemoryProfilerSaService::PrintSimplifiedNmdInHook(config, reply), RET_ERR);
+
+    config->printNmdOnly_ = true;
+    config->nmdType_ = 0;
+    EXPECT_EQ(NativeMemoryProfilerSaService::PrintSimplifiedNmdInHook(config, reply), RET_ERR);
+}
+
+/**
+ * @tc.name: PrintSimplifiedNmdInHookRejectsNoTask
+ * @tc.desc: PrintSimplifiedNmdInHook returns RET_ERR when no task for pid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, PrintSimplifiedNmdInHookRejectsNoTask, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = TEST_UPDATE_PID;
+    config->printNmd_ = true;
+    config->printNmdOnly_ = true;
+    config->nmdType_ = SIMP_NMD_TYPE;
+    MessageParcel reply;
+    EXPECT_EQ(NativeMemoryProfilerSaService::PrintSimplifiedNmdInHook(config, reply), RET_ERR);
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: PrintSimplifiedNmdInHookRejectsInvalidHookMgr
+ * @tc.desc: PrintSimplifiedNmdInHook returns RET_ERR when task hookMgr is null.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, PrintSimplifiedNmdInHookRejectsInvalidHookMgr, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    auto task = std::make_shared<TaskConfig>(nullptr, TEST_UPDATE_PID, "print_no_hook", -1, "", -1, false);
+    NativeMemoryProfilerSaService::InjectPidCtxForTest(TEST_UPDATE_PID, task);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = TEST_UPDATE_PID;
+    config->printNmd_ = true;
+    config->printNmdOnly_ = true;
+    config->nmdType_ = SIMP_NMD_TYPE;
+    MessageParcel reply;
+    EXPECT_EQ(NativeMemoryProfilerSaService::PrintSimplifiedNmdInHook(config, reply), RET_ERR);
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: PrintSimplifiedNmdInHookFailsWhenStartDumpFails
+ * @tc.desc: PrintSimplifiedNmdInHook returns RET_ERR when StartInHookSimpNmdDump fails.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, PrintSimplifiedNmdInHookFailsWhenStartDumpFails, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    auto hook = std::make_shared<HookManager>();
+    auto task = std::make_shared<TaskConfig>(hook, TEST_UPDATE_PID, "print_simp", -1, "", -1, false);
+    NativeMemoryProfilerSaService::InjectPidCtxForTest(TEST_UPDATE_PID, task);
+
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = TEST_UPDATE_PID;
+    config->printNmd_ = true;
+    config->printNmdOnly_ = true;
+    config->nmdType_ = SIMP_NMD_TYPE;
+    MessageParcel reply;
+    EXPECT_EQ(NativeMemoryProfilerSaService::PrintSimplifiedNmdInHook(config, reply), RET_ERR);
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
