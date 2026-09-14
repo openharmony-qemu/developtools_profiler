@@ -1,0 +1,14 @@
+{
+    global:
+        extern "C++" {
+            OHOS::Developtools::StackCommon::LookupMapByAddrIndexed*;
+            OHOS::Developtools::StackCommon::LookupMapByAddrContiguous*;
+            OHOS::Developtools::StackCommon::FindMapByFileOffset*;
+            OHOS::Developtools::StackCommon::SortMapIndicesByEndAscending*;
+            OHOS::Developtools::StackCommon::SortSharedMapsByEndAscending*;
+            OHOS::Developtools::StackCommon::FindFirstMapContainingIp*;
+            StackCommon::*;
+        };
+    local:
+        *;
+};

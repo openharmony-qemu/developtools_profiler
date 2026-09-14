@@ -1,0 +1,14 @@
+{
+    global:
+        extern "C" {
+            FfiHidebugGetPss;
+            FfiHidebugGetVss;
+            FfiHidebugGetNativeHeapSize;
+            FfiHidebugGetNativeHeapAllocatedSize;
+            FfiHidebugGetNativeHeapFreeSize;
+            FfiHidebugGetSharedDirty;
+            FfiHidebugGetPrivateDirty;
+        };
+    local:
+        *;
+};

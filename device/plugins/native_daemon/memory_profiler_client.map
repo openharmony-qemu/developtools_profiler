@@ -1,0 +1,15 @@
+{
+    global:
+        extern "C++" {
+            OHOS::Developtools::NativeDaemon::MemoryProfilerClient*;
+            OHOS::Developtools::NativeDaemon::MemoryProfilerClientImpl*;
+            OHOS::Developtools::NativeDaemon::SimplifiedMemConfig*;
+            OHOS::Developtools::NativeDaemon::SimplifiedMemStats*;
+            OHOS::Developtools::NativeDaemon::MemAPIConfig*;
+            OHOS::Developtools::NativeDaemon::ResProfilerErrorCode*;
+            OHOS::Developtools::NativeDaemon::Start*;
+            "vtable for OHOS::Developtools::NativeDaemon::MemoryProfilerClientImpl";
+        };
+    local:
+        *;
+};

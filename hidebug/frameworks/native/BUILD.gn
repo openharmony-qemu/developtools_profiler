@@ -34,6 +34,7 @@ ohos_source_set("libhidebug_init_source") {
 
 ohos_shared_library("hidebug_native") {
   branch_protector_ret = "pac_ret"
+  version_script = "hidebug_native.map"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   include_dirs = [

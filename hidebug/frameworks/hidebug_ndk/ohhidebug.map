@@ -1,0 +1,51 @@
+{
+    global:
+        extern "C" {
+            OH_HiDebug_GetSystemCpuUsage;
+            OH_HiDebug_GetAppCpuUsage;
+            OH_HiDebug_GetAppThreadCpuUsage;
+            OH_HiDebug_FreeThreadCpuUsage;
+            OH_HiDebug_GetSystemMemInfo;
+            OH_HiDebug_GetAppNativeMemInfo;
+            OH_HiDebug_GetAppNativeMemInfoWithCache;
+            OH_HiDebug_GetAppMemoryLimit;
+            OH_HiDebug_StartAppTraceCapture;
+            OH_HiDebug_StopAppTraceCapture;
+            OH_HiDebug_RequestTrace;
+            OH_HiDebug_GetGraphicsMemory;
+            OH_HiDebug_SetMallocDispatchTable;
+            OH_HiDebug_GetDefaultMallocDispatchTable;
+            OH_HiDebug_RestoreMallocDispatchTable;
+            OH_HiDebug_BacktraceFromFp;
+            OH_HiDebug_SymbolicAddress;
+            OH_HiDebug_CreateBacktraceObject;
+            OH_HiDebug_DestroyBacktraceObject;
+            OH_HiDebug_GetGraphicsMemorySummary;
+            OH_HiDebug_RequestThreadLiteSampling;
+            OH_HiDebug_SetCrashObj;
+            OH_HiDebug_ResetCrashObj;
+            OH_HiDebug_StartProfiler;
+            OH_HiDebug_StopProfiler;
+            OH_HiDebug_RegisterMemDumpListener;
+            OH_HiDebug_UnregisterMemDumpListener;
+            OH_HiDebug_AcquireAsyncContext;
+            OH_HiDebug_PushAsyncContext;
+            OH_HiDebug_PopAsyncContext;
+            OH_HiDebug_ReleaseAsyncContext;
+            OH_HiDebug_CreateProfilerOptions;
+            OH_HiDebug_DestroyProfilerOptions;
+            OH_HiDebug_SetMaxAsyncNestingDepth;
+            OH_HiDebug_SetMaxAsyncTaskStackDepth;
+            OH_HiDebug_SetSampleIntervalBytes;
+            OH_HiDebug_SetStatisticsIntervalSec;
+            OH_HiDebug_SetMaxStackDepth;
+            OH_HiDebug_SetFilterSize;
+            OH_HiDebug_SetMaxDurationSec;
+            OH_HiDebug_StartProfilerWithOptions;
+        };
+        extern "C++" {
+            OHOS::HiviewDFX::HiDebug::OhHidebug*;
+        };
+    local:
+        *;
+};

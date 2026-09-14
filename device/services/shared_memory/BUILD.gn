@@ -91,6 +91,7 @@ ohos_shared_library("shared_memory") {
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
+  version_script = "shared_memory.map"
 }
 
 ohos_static_library("shared_memory_lite") {

@@ -1,0 +1,22 @@
+{
+    global:
+        extern "C++" {
+            OHOS::Developtools::NativeDaemon::HookManager*;
+            OHOS::Developtools::NativeDaemon::HookService*;
+            OHOS::Developtools::NativeDaemon::HookRecord*;
+            OHOS::Developtools::NativeDaemon::StackBuilder*;
+            OHOS::Developtools::NativeDaemon::VirtualRuntime*;
+            OHOS::Developtools::NativeDaemon::NativeDaemonClient*;
+            OHOS::Developtools::NativeDaemon::SimplifiedMemConfig*;
+            OHOS::Developtools::NativeDaemon::MemSaConfig*;
+            OHOS::Developtools::NativeDaemon::MemLeakConfig*;
+            OHOS::Developtools::NativeDaemon::GwpAsanConfig*;
+            OHOS::Developtools::NativeDaemon::InternalResourceType*;
+            OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaClientManager*;            
+            "vtable for OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaConfig";
+            "VTT for OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaConfig";
+            COMMON::*;
+        };
+    local:
+        *;
+};

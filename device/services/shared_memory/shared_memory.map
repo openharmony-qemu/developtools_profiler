@@ -1,0 +1,15 @@
+{
+    global:
+        extern "C++" {
+            ShareMemoryAllocator*;
+            ShareMemoryAllocator::GetInstance*;
+            ShareMemoryAllocator::CreateMemoryBlockLocal*;
+            ShareMemoryAllocator::CreateMemoryBlockRemote*;
+            ShareMemoryAllocator::ReleaseMemoryBlockLocal*;
+            ShareMemoryAllocator::ReleaseMemoryBlockRemote*;
+            ShareMemoryAllocator::FindMemoryBlockByName*;
+            ShareMemoryBlock*;
+        };
+    local:
+        *;
+};
