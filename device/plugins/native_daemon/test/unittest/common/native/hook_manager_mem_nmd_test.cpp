@@ -63,7 +63,9 @@ HWTEST_F(HookManagerMemNmdTest, SetSimplifiedMemConfig_Basic, TestSize.Level0)
     auto config = std::make_shared<SimplifiedMemConfig>();
     config->maxGrowthSize = 4096;
     hookManager_->SetSimplifiedMemConfig(config);
-    EXPECT_EQ(hookManager_->maxGrowthSize_, 4096u);
+    auto result = std::make_shared<SimplifiedMemConfig>();
+    hookManager_->GetSimplifiedMemConfig(result);
+    EXPECT_EQ(result->maxGrowthSize, 4096u);
 }
 
 /*
@@ -73,9 +75,13 @@ HWTEST_F(HookManagerMemNmdTest, SetSimplifiedMemConfig_Basic, TestSize.Level0)
  */
 HWTEST_F(HookManagerMemNmdTest, SetSimplifiedMemConfig_Nullptr, TestSize.Level0)
 {
-    hookManager_->maxGrowthSize_ = 1024;
+    auto initConfig = std::make_shared<SimplifiedMemConfig>();
+    initConfig->maxGrowthSize = 1024;
+    hookManager_->SetSimplifiedMemConfig(initConfig);
     hookManager_->SetSimplifiedMemConfig(nullptr);
-    EXPECT_EQ(hookManager_->maxGrowthSize_, 1024u);
+    auto result = std::make_shared<SimplifiedMemConfig>();
+    hookManager_->GetSimplifiedMemConfig(result);
+    EXPECT_EQ(result->maxGrowthSize, 1024u);
 }
 
 /*
@@ -85,9 +91,11 @@ HWTEST_F(HookManagerMemNmdTest, SetSimplifiedMemConfig_Nullptr, TestSize.Level0)
  */
 HWTEST_F(HookManagerMemNmdTest, GetSimplifiedMemConfig_Basic, TestSize.Level0)
 {
-    hookManager_->largestSize_ = 100;
-    hookManager_->secondLargestSize_ = 50;
-    hookManager_->maxGrowthSize_ = 200;
+    auto saConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
+    saConfig->largestSize_ = 100;
+    saConfig->secondLargestSize_ = 50;
+    saConfig->maxGrowthSize_ = 200;
+    hookManager_->SetHookConfig(saConfig);
     NativeHookConfig hookConfig;
     hookConfig.set_sample_interval(8192);
     hookManager_->SetHookConfig(hookConfig);

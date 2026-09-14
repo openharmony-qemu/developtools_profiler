@@ -264,7 +264,7 @@ int32_t NativeMemoryProfilerSaProxy::Start(std::shared_ptr<NativeMemoryProfilerS
 int32_t NativeMemoryProfilerSaProxy::Update(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
     MessageParcel data;
-    CHECK_TURE(data.WriteInterfaceToken(NativeMemoryProfilerSaProxy::GetDescriptor()), RET_ERR,
+    CHECK_TRUE(data.WriteInterfaceToken(NativeMemoryProfilerSaProxy::GetDescriptor()), RET_ERR,
         "Update failed to write descriptor");
     CHECK_TRUE(config->Marshalling(data), RET_ERR, "NativeMemoryProfilerSaConfig marshalling failed");
 
