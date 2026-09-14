@@ -81,6 +81,7 @@ public:
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, MessageParcel &reply) override;
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
                   std::string& replyStats) override { return 0; }
+    int32_t Update(std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override;
     static void ClientDisconnectCallback(int socketFd);
     static bool HasProfilingPermission();
     static void CloseSocketFd(int pid);
@@ -103,7 +104,7 @@ private:
     static bool TryBeginStopHook(uint32_t pid);
     static void EndStopHook(uint32_t pid);
     static bool IsAsyncRequest(uint32_t pid);
-    static bool CheckStopPermission(int32_t callingPid, std::shared_ptr<TaskConfig>& config);
+    static bool CheckCallingPermission(int32_t callingPid, std::shared_ptr<TaskConfig>& config);
     int32_t CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
     int32_t CheckTaskLimit(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     int32_t CheckStartupModeConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
@@ -141,6 +142,9 @@ private:
     static bool ReadQuotaFile(std::unordered_map<std::string, QuotaRecord>& records);
     static bool WriteQuotaFile(const std::unordered_map<std::string, QuotaRecord>& records);
     static bool IsSeparateByMoreThan24Hours(long long t1, long long t2);
+    static int32_t PrintSimplifiedNmdInHook(
+        std::shared_ptr<NativeMemoryProfilerSaConfig>& config, MessageParcel &reply);
+    int32_t UpdateSimplifiedMemConfig(pid_t pid, std::shared_ptr<SimplifiedMemConfig>& config);
 #ifdef NATIVE_DAEMON_UNITTEST
     static void ResetTaskContextsForTest();
     static void InjectPidInfoForTest(pid_t pid, uid_t uid, gid_t gid);

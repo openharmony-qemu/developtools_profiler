@@ -34,6 +34,7 @@ struct ProtocolHead {
 };
 
 class UnixSocketServer;
+class ClientConnection;
 
 class ServiceEntry {
 public:
@@ -47,6 +48,8 @@ public:
     const ServiceBase* FindServiceByName(const std::string& service_name);
 
     void RemoveContext(int fd);
+
+    std::shared_ptr<ClientConnection> GetClientConnection(int fd);
 
 private:
     std::shared_ptr<UnixSocketServer> unixSocketServer_;

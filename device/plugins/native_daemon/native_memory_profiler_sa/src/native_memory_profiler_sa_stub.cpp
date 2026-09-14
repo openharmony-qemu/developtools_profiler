@@ -58,6 +58,9 @@ int32_t NativeMemoryProfilerSaStub::OnRemoteRequest(uint32_t code, MessageParcel
         case static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_SYNC) : {
             return StubStopSync(data, reply);
         }
+        case static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::UPDATE_HOOK_CONFIG): {
+            return StubUpdate(data, reply);
+        }
         default : {
             PROFILER_LOG_ERROR(LOG_CORE, "Unknown code:%u", code);
             return IPCObjectStub::OnRemoteRequest(code, data, reply, options);
@@ -183,5 +186,20 @@ int32_t NativeMemoryProfilerSaStub::StubDumpSimpFile(MessageParcel &data, Messag
         }
     }
     return Start(config, reply);
+}
+
+int32_t NativeMemoryProfilerSaStub::StubUpdate(MessageParcel &data, MessageParcel &reply)
+{
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    if (!NativeMemoryProfilerSaConfig::Unmarshalling(data, config) || config->pid_ <= 0) {
+        return RET_ERR;
+    }
+    struct stat statBuf;
+    std::string pidPath = "/proc/" + std::to_string(config->pid_) + "/status";
+    if (stat(pidPath.c_str(), &statBuf) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "StubUpdate hook process does not exist");
+        return RET_ERR;
+    }
+    return Update(config);
 }
 } // namespace OHOS::Developtools::NativeDaemon

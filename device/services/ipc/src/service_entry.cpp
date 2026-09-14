@@ -42,6 +42,14 @@ void ServiceEntry::RemoveContext(int fd)
     }
 }
 
+std::shared_ptr<ClientConnection> ServiceEntry::GetClientConnection(int fd)
+{
+    if (unixSocketServer_ == nullptr) {
+        return nullptr;
+    }
+    return unixSocketServer_->GetClientConnection(fd);
+}
+
 bool ServiceEntry::RegisterService(ServiceBase& psb)
 {
     CHECK_TRUE(serviceMap_.find(psb.serviceName_) == serviceMap_.end(), false, "RegisterService FAIL");

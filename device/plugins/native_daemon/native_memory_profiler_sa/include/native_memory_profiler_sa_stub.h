@@ -43,6 +43,7 @@ protected:
     int32_t StubDumpFile(MessageParcel &data, MessageParcel &reply);
     int32_t StubDumpSimpFile(MessageParcel &data, MessageParcel &reply);
     int32_t StubDumpFileAsync(MessageParcel &data, MessageParcel &reply);
+    int32_t StubUpdate(MessageParcel &data, MessageParcel &reply);
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

@@ -57,15 +57,23 @@ public:
     /**
      * @desc: Start simplified nmd mode profiler.
      * @param memStats: The simplified memory stats vector to store the result.
+     * @param isProfiling: Is profilling task exist or not.
      * @return: RET_OK on success, RET_ERR on failure.
      */
-    int32_t StartPrintSimplifiedNmd(std::vector<SimplifiedMemStats>& memStats) override;
+    int32_t StartPrintSimplifiedNmd(std::vector<SimplifiedMemStats>& memStats, bool isProfiling = false) override;
 
     /**
      * @desc: Stop memory profiler.
      * @return: RET_OK on success, RET_ERR on failure.
      */
     int32_t Stop() override;
+
+    /**
+     * @desc: UpdateSimplifiedMemConfig.
+     * @param config: The simplified memory profiler configuration.
+     * @return: RET_OK on success, RET_ERR on failure.
+     */
+    int32_t UpdateSimplifiedMemConfig(const SimplifiedMemConfig& config) override;
 
 private:
     bool CheckInput(int32_t resourceType, const MemAPIConfig& config) const;

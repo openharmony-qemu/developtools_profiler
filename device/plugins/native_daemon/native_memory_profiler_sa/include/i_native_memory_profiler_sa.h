@@ -41,6 +41,7 @@ public:
     virtual int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, MessageParcel &reply) = 0;
     virtual int32_t DumpDataAsync(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
         const sptr<IRemoteObject>& callback) = 0;
+    virtual int32_t Update(std::shared_ptr<NativeMemoryProfilerSaConfig>& config) = 0;
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

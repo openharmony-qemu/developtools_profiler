@@ -75,12 +75,14 @@ public:
     static int32_t Stop(std::string& filePath);
     static int32_t DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     static int32_t GetMallocStats(int fd, int pid, int type, bool printNmdOnly = false);
-    static int32_t StartPrintSimplifiedNmd(pid_t pid, std::vector<SimplifiedMemStats>& memStats);
+    static int32_t StartPrintSimplifiedNmd(
+        pid_t pid, std::vector<SimplifiedMemStats>& memStats, bool isProfiling = false);
     static int32_t Start(int fd, pid_t pid, uint32_t duration, SimplifiedMemConfig& config);
     static int32_t Start(int fd, pid_t pid, uint32_t duration, MemSaConfig& saConfig);
     static int32_t Start(int fd, pid_t pid, MemLeakConfig& memLeakConfig);
     using ProfilingCallback = std::function<void(int32_t, const std::string&)>;
     static int32_t StartMemProfiler(uint32_t duration, SimplifiedMemConfig& config, ProfilingCallback callback);
+    static int32_t UpdateSimplifiedMemConfig(pid_t pid, const SimplifiedMemConfig& config);
     static int32_t StartProfilerByType(int32_t type, MemAPIConfig *inputConfig, ProfilingCallback callback);
     static int32_t GetGwpAsan(int fd, pid_t pid, GwpAsanConfig& config);
     static sptr<IRemoteObject> GetRemoteService();

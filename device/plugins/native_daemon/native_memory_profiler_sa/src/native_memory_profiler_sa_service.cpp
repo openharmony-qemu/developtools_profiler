@@ -19,6 +19,7 @@
 #include "ipc_skeleton.h"
 #include "trace_file_writer.h"
 #include "socket_context.h"
+#include "client_connection.h"
 #include "hook_common.h"
 #include "init_param.h"
 #include "token_setproc.h"
@@ -110,29 +111,40 @@ bool SendFileCacheFd(SocketContext &context, HookManager& hookMgr, int32_t pid, 
     return ret;
 }
 
-void SendHookCommand(pid_t pid, uint32_t cmd)
+bool SendHookConfigMsg(pid_t pid, const uint8_t *msg, size_t size)
 {
     std::unique_lock<std::mutex> lock(g_pidFdMtx);
     auto it = g_pidFds.find(pid);
     if (it == g_pidFds.end() || it->second < 0) {
-        return;
+        PROFILER_LOG_ERROR(LOG_CORE, "fd not found for pid:%d", pid);
+        return false;
     }
     int sockFd = it->second;
     lock.unlock();
 
     struct ProtocolHead phead;
     phead.protoType = PROTOCOL_TYPE_PROTOBUF;
-    phead.protoSize = sizeof(cmd) + sizeof(struct ProtocolHead);
+    phead.protoSize = size + sizeof(struct ProtocolHead);
 #ifdef NATIVE_DAEMON_UNITTEST
     if (g_mockSendFail) {
-        return;
+        return false;
     }
 #else
-    if (send(sockFd, reinterpret_cast<int8_t*>(&phead), sizeof(phead), 0) == -1) {
-        return;
+    if (send(sockFd, reinterpret_cast<int8_t *>(&phead), sizeof(phead), 0) == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "send protocol head fail for pid:%d", pid);
+        return false;
     }
 #endif
-    (void)send(sockFd, reinterpret_cast<int8_t*>(&cmd), sizeof(cmd), 0);
+    if (send(sockFd, msg, size, 0) == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "send hook cmd fail for pid:%d", pid);
+        return false;
+    }
+    return true;
+}
+
+bool SendHookCommand(pid_t pid, uint32_t cmd)
+{
+    return SendHookConfigMsg(pid, reinterpret_cast<const uint8_t *>(&cmd), sizeof(cmd));
 }
 
 bool SendInitialFileCacheFds(SocketContext &context, HookManager& hookMgr, int32_t pid, const std::string& name)
@@ -168,6 +180,22 @@ bool SendMemLeakFd(SocketContext &context, HookManager& hookMgr, const ClientCon
     bool ret = context.SendFileDescriptor(fd);
     PROFILER_LOG_INFO(LOG_CORE, "SendMemLeakFd sent fd %d", fd);
     return ret;
+}
+
+bool SendDumpSimplifiedNmdRequest(pid_t pid, uint32_t cmd, int recvFd)
+{
+    CHECK_NOTNULL(g_serviceEntry, false, "service Entry is NULL");
+    std::unique_lock<std::mutex> lock(g_pidFdMtx);
+    auto it = g_pidFds.find(pid);
+    CHECK_TRUE(it != g_pidFds.end() && it->second >= 0, false, "fd not found for pid:%d", static_cast<int32_t>(pid));
+    int sockFd = it->second;
+    lock.unlock();
+    std::shared_ptr<ClientConnection> connection = g_serviceEntry->GetClientConnection(sockFd);
+    CHECK_NOTNULL(connection, false, "connection not found for pid:%d", static_cast<int32_t>(pid));
+    CHECK_TRUE(connection->SendHookConfig(reinterpret_cast<const uint8_t *>(&cmd), sizeof(cmd)), false, "send fail");
+    CHECK_TRUE(connection->SendFileDescriptor(recvFd), false, "send recvFd fail");
+    PROFILER_LOG_INFO(LOG_CORE, "send dump simplified nmd request success: %d", static_cast<int32_t>(pid));
+    return true;
 }
 
 int32_t FindPidBySocket(int socketFd)
@@ -212,6 +240,31 @@ bool HandleMemLeakDoneBySocket(SocketContext &context)
         return true;
     }
     if (!iter->second->hookMgr->HandleMemLeakDone()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc mem leak done failed");
+    }
+    return true;
+}
+
+bool HandleInHookSimpNmdDoneBySocket(SocketContext &context)
+{
+    int32_t pid = FindPidBySocket(context.GetSocketHandle());
+    if (pid <= 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc in hook simp nmd done without pid");
+        return true;
+    }
+    struct ucred cred;
+    GetPeerUcred(context, cred);
+    if (pid != static_cast<int32_t>(cred.pid)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HandleInHookSimpNmdDoneBySocket check client pid failed");
+        return true;
+    }
+    std::lock_guard<std::mutex> guard(g_mtx);
+    auto iter = g_pidCtx.find(pid);
+    if (iter == g_pidCtx.end() || iter->second == nullptr || iter->second->hookMgr == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc simp nmd done without hook manager");
+        return true;
+    }
+    if (!iter->second->hookMgr->HandleInHookSimpNmdDone()) {
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc mem leak done failed");
     }
     return true;
@@ -276,15 +329,6 @@ void NativeMemoryProfilerSaService::ClientDisconnectCallback(int socketFd)
         }
         isAsync = config->callback != nullptr;
         name = config->processName;
-    }
-    {
-        std::lock_guard<std::mutex> guard(g_timerFdMtx);
-        auto fdTimerIter = g_timerFdInfo.find(pidval);
-        if (fdTimerIter != g_timerFdInfo.end()) {
-            // delete schedule task.
-            g_scheduleTaskManager.UnscheduleTask(fdTimerIter->second);
-            g_timerFdInfo.erase(fdTimerIter);
-        }
     }
     // Note: The same mutex g_mtx is also used in the StopHook function.
     // Be cautious to avoid potential deadlocks.
@@ -410,6 +454,9 @@ int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfile
         PROFILER_LOG_ERROR(LOG_CORE, "Start failed, api pid mismatch!");
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
     }
+    if (config->printNmdInHook_) {
+        return PrintSimplifiedNmdInHook(config, reply);
+    }
     if (IsNativeDeamonRunning()) {
         PROFILER_LOG_ERROR(LOG_CORE, "Native Daemon is already running,errorcode is:%d.",
             static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
@@ -422,6 +469,72 @@ int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfile
     if (StartHook(config, 0, reply) != RET_OK) { // inner interface error
         return RET_ERR;
     }
+    return RET_OK;
+}
+
+int32_t NativeMemoryProfilerSaService::Update(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
+    if (config == nullptr) {
+        return RET_ERR;
+    }
+    if (config->startType_ != START_TYPE_API && !HasProfilingPermission()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Update failed, no profiling permission!");
+        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", GetCmdArgs(config),
+            COMMON::ErrorType::RET_NO_PERMISSION, "no profiling permission");
+        return RET_ERR;
+    }
+    if (config->startType_ == START_TYPE_API &&
+        config->pid_ != static_cast<int32_t>(IPCSkeleton::GetCallingPid())) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Update failed, api pid mismatch!");
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
+    }
+
+    std::shared_ptr<SimplifiedMemConfig> updateConfig = std::make_shared<SimplifiedMemConfig>();
+    updateConfig->largestSize = config->largestSize_;
+    updateConfig->secondLargestSize = config->secondLargestSize_;
+    updateConfig->maxGrowthSize = config->maxGrowthSize_;
+    updateConfig->sampleSize = config->sampleInterval_;
+    updateConfig->asyncStackEnable =  config->asyncStackEnable_;
+    updateConfig->asyncFlag = config->asyncFlag_;
+    updateConfig->targetSoName = config->targetSoName_;
+    updateConfig->responseLibraryMode = config->responseLibraryMode_;
+    updateConfig->nestedAsyncStackEnable = config->nestedAsyncStackEnable_;
+    updateConfig->asyncNestingDepth = config->asyncNestingDepth_;
+    updateConfig->asyncTaskStackDepth = config->asyncTaskStackDepth_;
+    return UpdateSimplifiedMemConfig(config->pid_, updateConfig);
+}
+
+int32_t NativeMemoryProfilerSaService::UpdateSimplifiedMemConfig(
+    pid_t pid, std::shared_ptr<SimplifiedMemConfig>& config)
+{
+    std::lock_guard<std::mutex> guard(g_mtx);
+    auto taskIter = g_pidCtx.find(pid);
+    if (taskIter == g_pidCtx.end()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "hook task of pid(%d) not started", pid);
+        return RET_ERR;
+    }
+    std::shared_ptr<TaskConfig> task = taskIter->second;
+    if (!task || !task->hookMgr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "hook task of pid(%d) is invalid", pid);
+        return RET_ERR;
+    }
+    CHECK_TRUE(CheckCallingPermission(static_cast<int32_t>(IPCSkeleton::GetCallingPid()), task),
+        RET_ERR, "CheckCallingPermission fail");
+    std::shared_ptr<SimplifiedMemConfig> origin = std::make_shared<SimplifiedMemConfig>();
+    task->hookMgr->GetSimplifiedMemConfig(origin);
+    task->hookMgr->SetSimplifiedMemConfig(config);
+    SimplifiedMemConfigMsg msg;
+    msg.pid = static_cast<int32_t>(pid);
+    msg.largestSize = config->largestSize;
+    msg.secondLargestSize = config->secondLargestSize;
+    msg.maxGrowthSize = config->maxGrowthSize;
+    msg.sampleSize = config->sampleSize;
+    if (!SendHookConfigMsg(pid, reinterpret_cast<const uint8_t *>(&msg), sizeof(msg))) {
+        task->hookMgr->SetSimplifiedMemConfig(origin);
+        PROFILER_LOG_ERROR(LOG_CORE, "send notify nook config change cmd fail");
+        return RET_ERR;
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "hook tast of pid(%d) udate simplified mem config done", pid);
     return RET_OK;
 }
 
@@ -581,17 +694,7 @@ int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemory
 // only for API
 int32_t NativeMemoryProfilerSaService::Stop()
 {
-    pid_t pid = IPCSkeleton::GetCallingPid();
-    {
-        std::lock_guard<std::mutex> guard(g_timerFdMtx);
-        auto fdTimerIter = g_timerFdInfo.find(pid);
-        if (fdTimerIter != g_timerFdInfo.end()) {
-            // delete schedule task.
-            g_scheduleTaskManager.UnscheduleTask(fdTimerIter->second);
-            g_timerFdInfo.erase(fdTimerIter);
-        }
-    }
-    int32_t retStopHook = StopHookAsync(static_cast<uint32_t>(pid),
+    int32_t retStopHook = StopHookAsync(static_cast<uint32_t>(IPCSkeleton::GetCallingPid()),
         static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS));
     PROFILER_LOG_INFO(LOG_CORE, "StopHookAsync ret:%d", retStopHook);
     if (retStopHook != RET_OK) {
@@ -606,15 +709,6 @@ int32_t NativeMemoryProfilerSaService::StopSync()
     if (pid <= 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "invalid pid: %d", pid);
         return RET_ERR;
-    }
-    {
-        std::lock_guard<std::mutex> guard(g_timerFdMtx);
-        auto fdTimerIter = g_timerFdInfo.find(pid);
-        if (fdTimerIter != g_timerFdInfo.end()) {
-            // delete schedule task.
-            g_scheduleTaskManager.UnscheduleTask(fdTimerIter->second);
-            g_timerFdInfo.erase(fdTimerIter);
-        }
     }
     int32_t retStopHook = StopHook(static_cast<uint32_t>(pid), "",
         static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS));
@@ -749,7 +843,7 @@ int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, 
             pid, name.c_str(), ret);
         return ret;
     }
-    if (!innerCall && !CheckStopPermission(static_cast<int32_t>(IPCSkeleton::GetCallingPid()), config)) {
+    if (!innerCall && !CheckCallingPermission(static_cast<int32_t>(IPCSkeleton::GetCallingPid()), config)) {
         PROFILER_LOG_ERROR(LOG_CORE, "Permission Denied,errorcode is:%d.",
             static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED));
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
@@ -766,6 +860,15 @@ int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, 
 int32_t NativeMemoryProfilerSaService::StopHookTask(uint32_t pid, std::shared_ptr<TaskConfig> config,
     int32_t finishErrorCode)
 {
+    {
+        std::lock_guard<std::mutex> guard(g_timerFdMtx);
+        auto fdTimerIter = g_timerFdInfo.find(static_cast<int32_t>(pid));
+        if (fdTimerIter != g_timerFdInfo.end()) {
+            // delete schedule task.
+            g_scheduleTaskManager.UnscheduleTask(fdTimerIter->second);
+            g_timerFdInfo.erase(fdTimerIter);
+        }
+    }
     std::string resultPath;
     int32_t retRelease = ReleaseForStopHook(pid, config, resultPath);
     int32_t callbackError = retRelease == RET_OK ? finishErrorCode :
@@ -795,7 +898,7 @@ int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finis
         PROFILER_LOG_ERROR(LOG_CORE, "StopHookAsync has stop, pid: %d, errorcode is:%d.", pid, ret);
         return ret;
     }
-    if (!innerCall && !CheckStopPermission(static_cast<int32_t>(IPCSkeleton::GetCallingPid()), config)) {
+    if (!innerCall && !CheckCallingPermission(static_cast<int32_t>(IPCSkeleton::GetCallingPid()), config)) {
         PROFILER_LOG_ERROR(LOG_CORE, "Permission Denied,errorcode is:%d.",
             static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED));
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
@@ -851,7 +954,7 @@ bool NativeMemoryProfilerSaService::IsAsyncRequest(uint32_t pid)
     return async;
 }
 
-bool NativeMemoryProfilerSaService::CheckStopPermission(int32_t callingPid, std::shared_ptr<TaskConfig>& config)
+bool NativeMemoryProfilerSaService::CheckCallingPermission(int32_t callingPid, std::shared_ptr<TaskConfig>& config)
 {
     if (callingPid != config->callingPid) {
         PROFILER_LOG_ERROR(LOG_CORE, "calling pid check fail, (%d, %d)", config->callingPid, callingPid);
@@ -1345,6 +1448,9 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
     if (static_cast<uint32_t>(peerConfig) == MEM_LEAK_DONE_CMD) {
         return HandleMemLeakDoneBySocket(context);
     }
+    if (static_cast<uint32_t>(peerConfig) == DUMP_SIMP_NMD_DONE_CMD) {
+        return HandleInHookSimpNmdDoneBySocket(context);
+    }
     if (peerConfig == -1) {
         return false;
     }
@@ -1829,6 +1935,29 @@ bool NativeMemoryProfilerSaService::IsSeparateByMoreThan24Hours(long long t1, lo
         std::swap(t1, t2);
     }
     return duration_cast<hours>(system_clock::from_time_t(t2) - system_clock::from_time_t(t1)) > hours(HOURS_PER_DAY);
+}
+
+int32_t NativeMemoryProfilerSaService::PrintSimplifiedNmdInHook(
+    std::shared_ptr<NativeMemoryProfilerSaConfig>& config, MessageParcel &reply)
+{
+    if (config->pid_ <= 0 || !config->printNmd_ || !config->printNmdOnly_|| config->nmdType_ != SIMP_NMD) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Invalid param, pid: %d, printNmd:%d, printNmdOnly:%d, nmdType:%d",
+            config->pid_, config->printNmd_, config->printNmdOnly_, config->nmdType_);
+        return RET_ERR;
+    }
+    std::unique_lock<std::mutex> lock(g_mtx);
+    auto taskIter = g_pidCtx.find(config->pid_);
+    CHECK_TRUE(taskIter != g_pidCtx.end(), RET_ERR, "hook task of pid(%d) not started", config->pid_);
+    std::shared_ptr<TaskConfig> task = taskIter->second;
+    CHECK_TRUE(task && task->hookMgr, RET_ERR, "hook task of pid(%d) is invalid", config->pid_);
+    pid_t pid = static_cast<pid_t>(config->pid_);
+    auto postProcessor = [pid](int recvFd) { return SendDumpSimplifiedNmdRequest(pid, DUMP_SIMP_NMD_CMD, recvFd); };
+    CHECK_TRUE(task->hookMgr->StartInHookSimpNmdDump(postProcessor), RET_ERR, "StartInHookSimpNmdDump fail");
+    lock.unlock();
+    std::string simplifiedNmdResult = task->hookMgr->GetInHookSimpNmdResult(NMD_WAIT_MS);
+    CHECK_TRUE(!simplifiedNmdResult.empty(), RET_ERR, "Dump in hook simplified nmd result FAIL");
+    WRITESTRING(reply, simplifiedNmdResult, RET_ERR);
+    return RET_OK;
 }
 
 #ifdef NATIVE_DAEMON_UNITTEST

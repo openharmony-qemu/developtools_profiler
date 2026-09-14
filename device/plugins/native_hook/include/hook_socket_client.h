@@ -67,6 +67,8 @@ private:
     void HandleFileCacheMode(SocketContext &context);
     bool HandleFileCacheMsg(SocketContext &context, const HookCacheFileMsg& cacheFileMsg);
     bool HandleBackpressureState(SocketContext &context, const int8_t *buf, uint32_t size);
+    bool HandleSimplifiedMemConfigChanged(SocketContext &context, const int8_t *buf, uint32_t size);
+    bool HandleSimplifiedNmdDumpRequest(SocketContext &context);
     bool HandleControlCommand(uint32_t cmd);
     bool ApplyClientConfig(SocketContext &context, const ClientConfig& clientConfig);
     void HandleSharedMemoryMode(SocketContext &context);
@@ -80,6 +82,7 @@ private:
     bool WriteMemLeakInfo(const std::string& data);
     bool SendMemLeakDone();
     void SetAsyncStack();
+    bool WriteDataToFd(int fd, const uint8_t *data, size_t size);
 
 private:
     std::shared_ptr<UnixSocketClient> unixSocketClient_;

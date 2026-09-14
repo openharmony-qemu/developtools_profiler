@@ -243,3 +243,41 @@ HWTEST_F(MemoryProfilerClientTest, MemConfigTest004, TestSize.Level3)
     EXPECT_EQ(config.asyncTaskStackDepth, 16);
     GTEST_LOG_(INFO) << "MemConfigTest004 end.";
 }
+
+/**
+ * @tc.name: MemoryProfilerClientTest004
+ * @tc.desc: Test simplified nmd mode in hook mode.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest004, TestSize.Level3)
+{
+#if defined(__LP64__)
+    GTEST_LOG_(INFO) << "MemoryProfilerClientTest004 start.";
+    using namespace OHOS::Developtools::NativeDaemon;
+    MemoryProfilerClient* client = new MemoryProfilerClientImpl();
+    std::vector<SimplifiedMemStats> memStats;
+    EXPECT_TRUE(client->StartPrintSimplifiedNmd(memStats, true) != RET_OK);
+    GTEST_LOG_(INFO) << "MemoryProfilerClientTest004 end.";
+#endif
+}
+
+/**
+ * @tc.name: MemoryProfilerClientTest005
+ * @tc.desc: Test update mem config err.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest005, TestSize.Level3)
+{
+#if defined(__LP64__)
+    GTEST_LOG_(INFO) << "MemoryProfilerClientTest005 start.";
+    using namespace OHOS::Developtools::NativeDaemon;
+    MemoryProfilerClient* client = new MemoryProfilerClientImpl();
+    SimplifiedMemConfig config;
+    config.sampleSize = 384;
+    config.largestSize = 8;
+    config.secondLargestSize = 4;
+    config.maxGrowthSize = 8;
+    EXPECT_TRUE(client->UpdateSimplifiedMemConfig(config) != RET_OK);
+    GTEST_LOG_(INFO) << "MemoryProfilerClientTest005 end.";
+#endif
+}

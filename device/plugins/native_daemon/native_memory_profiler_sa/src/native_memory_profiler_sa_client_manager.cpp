@@ -434,13 +434,14 @@ int32_t NativeMemoryProfilerSaClientManager::GetMallocStats(int fd, int pid, int
     });
 }
 
-int32_t NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid_t pid,
-                                                                     std::vector<SimplifiedMemStats>& memStats)
+int32_t NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(
+    pid_t pid, std::vector<SimplifiedMemStats>& memStats, bool isProfiling)
 {
     CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: StartPrintSimplifiedNmd invalid pid");
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     config->printNmd_ = true;
     config->printNmdOnly_ = true;
+    config->printNmdInHook_ = isProfiling;
     config->pid_ = static_cast<int32_t>(pid);
     config->duration_ = NMD_DURATION;
     config->mallocDisable_ = true;
@@ -452,11 +453,11 @@ int32_t NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid_t pid,
         config->startType_ = 1; // 1:API
     }
     CHECK_TRUE(CheckConfig(config), RET_ERR, "CheckConfig failed");
-    int32_t ret = InvokeWithProxy([&config, &memStats](NativeMemoryProfilerSaProxy& proxy) {
+    int32_t ret = InvokeWithProxy([&config, &memStats, isProfiling, pid](NativeMemoryProfilerSaProxy& proxy) {
         std::string replyStats;
         int32_t r = proxy.Start(config, replyStats);
         if (r != RET_OK) {
-            if (config->startType_ == 1 && proxy.StopSync() != RET_OK) {
+            if (!isProfiling && proxy.Stop(static_cast<uint32_t>(pid)) != RET_OK) {
                 PROFILER_LOG_ERROR(LOG_CORE, "StartPrintSimplifiedNmd Stop failed.");
             }
             return r;
@@ -466,8 +467,8 @@ int32_t NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid_t pid,
             replyStats.erase(0, newlinePos + 1);
         }
         ParseMemStatsFromString(replyStats, memStats);
-        if (config->startType_ == 1) {
-            r = proxy.StopSync();
+        if (!isProfiling) {
+            r = proxy.Stop(static_cast<uint32_t>(pid));
             CHECK_TRUE(r == RET_OK, r, "StartPrintSimplifiedNmd Stop failed.");
         }
         return RET_OK;
@@ -626,6 +627,17 @@ int32_t NativeMemoryProfilerSaClientManager::StartMemProfiler(uint32_t duration,
     CHECK_TRUE(ParseSimplifiedConfig(nConfig, config, duration) == RET_OK,
         static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG), "Parse simplified config failed");
     return StartByType(static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_NATIVE), nConfig, callback);
+}
+
+int32_t NativeMemoryProfilerSaClientManager::UpdateSimplifiedMemConfig(pid_t pid, const SimplifiedMemConfig& config)
+{
+    CHECK_TRUE(pid > 0, RET_ERR, "UpdateSimplifiedMemConfig: invalid pid:%d", pid);
+    std::shared_ptr<NativeMemoryProfilerSaConfig> nConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
+    CHECK_TRUE(ParseSimplifiedConfig(nConfig, config, 0) == RET_OK, RET_ERR, "Parse simplified config failed");
+    nConfig->pid_ = static_cast<int32_t>(pid);
+    return InvokeWithProxy([&nConfig](NativeMemoryProfilerSaProxy& proxy) {
+        return proxy.Update(nConfig);
+    });
 }
 
 int32_t NativeMemoryProfilerSaClientManager::StartProfilerByType(
