@@ -1070,6 +1070,12 @@ static bool SendMmapFixedReleaseEvent(HookClientHolder& client, void* addr, size
     if (addr == nullptr || length == 0) {
         return true;
     }
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
+    if (isAsyncStack) {
+        AsyncStackData asyncData = {{{{0}}}};
+        SetStackRawData(asyncData, MUNMAP_MSG, addr, length);
+        return client.SendStackWithPayload(&asyncData, sizeof(asyncData), nullptr, 0);
+    }
     BaseStackRawData rawdata = {};
     SetStackRawData(rawdata, MUNMAP_MSG, addr, length);
     return client.SendStackWithPayload(&rawdata, sizeof(rawdata), nullptr, 0);
