@@ -2248,7 +2248,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, PrintSimplifiedNmdInHookRejectsInval
 {
     auto config = MakeSaConfig();
     ASSERT_NE(config, nullptr);
-    MessageParcel reply;
+    OHOS::MessageParcel reply;
 
     config->pid_ = 0;
     config->printNmd_ = true;
@@ -2283,7 +2283,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, PrintSimplifiedNmdInHookRejectsNoTas
     config->printNmd_ = true;
     config->printNmdOnly_ = true;
     config->nmdType_ = SIMP_NMD_TYPE;
-    MessageParcel reply;
+    OHOS::MessageParcel reply;
     EXPECT_EQ(NativeMemoryProfilerSaService::PrintSimplifiedNmdInHook(config, reply), RET_ERR);
     NativeMemoryProfilerSaService::ResetTaskContextsForTest();
 }
@@ -2304,7 +2304,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, PrintSimplifiedNmdInHookRejectsInval
     config->printNmd_ = true;
     config->printNmdOnly_ = true;
     config->nmdType_ = SIMP_NMD_TYPE;
-    MessageParcel reply;
+    OHOS::MessageParcel reply;
     EXPECT_EQ(NativeMemoryProfilerSaService::PrintSimplifiedNmdInHook(config, reply), RET_ERR);
     NativeMemoryProfilerSaService::ResetTaskContextsForTest();
 }
@@ -2327,7 +2327,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, PrintSimplifiedNmdInHookFailsWhenSta
     config->printNmd_ = true;
     config->printNmdOnly_ = true;
     config->nmdType_ = SIMP_NMD_TYPE;
-    MessageParcel reply;
+    OHOS::MessageParcel reply;
     EXPECT_EQ(NativeMemoryProfilerSaService::PrintSimplifiedNmdInHook(config, reply), RET_ERR);
     NativeMemoryProfilerSaService::ResetTaskContextsForTest();
 }

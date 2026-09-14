@@ -333,7 +333,8 @@ HWTEST_F(HookSocketClientTest, HandleSimplifiedMemConfigChangedWrongSize, TestSi
     HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
     SocketContext context;
     uint8_t data[] = {1, 2, 3};
-    EXPECT_FALSE(hookClient.HandleSimplifiedMemConfigChanged(context, data, sizeof(data)));
+    EXPECT_FALSE(
+        hookClient.HandleSimplifiedMemConfigChanged(context, reinterpret_cast<const int8_t*>(data), sizeof(data)));
 }
 
 /*
