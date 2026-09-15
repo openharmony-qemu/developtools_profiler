@@ -364,7 +364,9 @@ unsigned long long HookManager::ConvertTagToMask() const
         {TAG_RES_VMA_ARKWEB, RES_VMA_ARKWEB},
         {TAG_RES_DART_HEAP, RES_DART_HEAP},
         {TAG_RES_COMPOSITE_HEAP, RES_COMPOSITE_HEAP},
-        {TAG_RES_RN_HERMES_HEAP, RES_RN_HERMES_HEAP}};
+        {TAG_RES_RN_HERMES_HEAP, RES_RN_HERMES_HEAP},
+        {TAG_RES_CHROMIUM_HEAP, RES_CHROMIUM_HEAP},
+        {TAG_RES_VMA_CHROMIUM, RES_VMA_CHROMIUM}};
     unsigned long long resMask = 0;
     for (const auto& tag : hookConfig_.restrace_tag()) {
         auto it = tagToMask.find(tag);

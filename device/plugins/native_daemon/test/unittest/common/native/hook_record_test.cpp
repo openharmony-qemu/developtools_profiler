@@ -255,6 +255,10 @@ HWTEST_F(HookRecordTest, TestSetTraceType001, TestSize.Level0)
     EXPECT_EQ(traceAllocEvent->trace_type(), TraceType::DART_HEAP);
     hookRecord->SetTraceType(traceAllocEvent, TAG_RES_RN_HERMES_HEAP);
     EXPECT_EQ(traceAllocEvent->trace_type(), TraceType::RN_HERMES_HEAP);
+    hookRecord->SetTraceType(traceAllocEvent, TAG_RES_CHROMIUM_HEAP);
+    EXPECT_EQ(traceAllocEvent->trace_type(), TraceType::CHROMIUM_HEAP);
+    hookRecord->SetTraceType(traceAllocEvent, TAG_RES_VMA_CHROMIUM);
+    EXPECT_EQ(traceAllocEvent->trace_type(), TraceType::VMA_CHROMIUM);
 }
 
 }

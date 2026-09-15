@@ -507,6 +507,8 @@ HWTEST_F(StackPreprocessTest, InitializeGpuDataTest, TestSize.Level0)
         {THREAD_MASK_INDEX + 1, TAG_RES_THREAD_ALL},
         {DART_HEAP_INDEX + 1, TAG_RES_DART_HEAP},
         {RN_HERMES_HEAP_INDEX + 1, TAG_RES_RN_HERMES_HEAP},
+        {CHROMIUM_HEAP_INDEX + 1, TAG_RES_CHROMIUM_HEAP},
+        {VMA_CHROMIUM_INDEX + 1, TAG_RES_VMA_CHROMIUM},
     };
 
     for (const auto& [tagId, tagName] : expectedTags) {

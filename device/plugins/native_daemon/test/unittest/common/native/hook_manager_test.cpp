@@ -307,13 +307,50 @@ HWTEST_F(HookManagerTest, ConvertTagToMaskAllTagsConversion, TestSize.Level0)
     config.add_restrace_tag("RES_DMABUF_MASK");
     config.add_restrace_tag("RES_DART_HEAP");
     config.add_restrace_tag("RES_RN_HERMES_HEAP");
+    config.add_restrace_tag("RES_CHROMIUM_HEAP");
+    config.add_restrace_tag("RES_VMA_CHROMIUM");
+
     hookManager.SetHookConfig(config);
 
     unsigned long long result = hookManager.ConvertTagToMask();
     EXPECT_EQ(result, RES_GPU_VK | RES_GPU_GLES_IMAGE | RES_GPU_GLES_BUFFER | RES_GPU_CL_IMAGE | RES_GPU_CL_BUFFER |
               RES_FD_OPEN | RES_FD_EPOLL | RES_FD_EVENTFD | RES_FD_SOCKET | RES_FD_PIPE | RES_FD_DUP |
               RES_FD_MASK | RES_THREAD_PTHREAD | RES_THREAD_MASK | RES_ARKTS_HEAP_MASK | RES_JS_HEAP_MASK |
-              RES_KOTLIN_HEAP_MASK | RES_DMABUF_MASK | RES_DART_HEAP | RES_RN_HERMES_HEAP | RES_ARKTS_STATIC_HEAP);
+              RES_KOTLIN_HEAP_MASK | RES_DMABUF_MASK | RES_DART_HEAP | RES_RN_HERMES_HEAP | RES_ARKTS_STATIC_HEAP |
+              RES_CHROMIUM_HEAP | RES_VMA_CHROMIUM);
+}
+/**
+ * @tc.name: ConvertTagToMaskChromiumHeapConversion
+ * @tc.desc: Test ConvertTagToMask with CHROMIUM_HEAP tag.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskChromiumHeapConversion, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    config.add_restrace_tag("RES_CHROMIUM_HEAP");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, RES_CHROMIUM_HEAP);
+}
+
+/**
+ * @tc.name: ConvertTagToMaskVmaChromiumConversion
+ * @tc.desc: Test ConvertTagToMask with VMA_CHROMIUM tag.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskVmaChromiumConversion, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    config.add_restrace_tag("RES_VMA_CHROMIUM");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, RES_VMA_CHROMIUM);
 }
 
 /*

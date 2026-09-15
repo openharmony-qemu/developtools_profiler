@@ -157,6 +157,8 @@ void HookRecord::SetTraceType(T* event, std::string tagName)
         {TAG_RES_VMA_ARKWEB, TraceType::VMA_ARKWEB},
         {TAG_RES_DART_HEAP, TraceType::DART_HEAP},
         {TAG_RES_RN_HERMES_HEAP, TraceType::RN_HERMES_HEAP},
+        {TAG_RES_CHROMIUM_HEAP, TraceType::CHROMIUM_HEAP},
+        {TAG_RES_VMA_CHROMIUM, TraceType::VMA_CHROMIUM},
     };
 
     auto it = tagToType.find(tagName);
