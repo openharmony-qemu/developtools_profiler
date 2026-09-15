@@ -169,9 +169,14 @@ bool ReadFdContent(std::string& destStr, int srcFd)
         PROFILER_LOG_ERROR(LOG_CORE, "ReadFdContent fstat failed errno=%d", errno);
         return false;
     }
+    if (statBuf.st_size <= 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ReadFdContent fail, no content");
+        return false;
+    }
+    destStr.reserve(destStr.size() + static_cast<size_t>(statBuf.st_size));
     char buf[MAX_BUFFER_SIZE];
-    for (;;) {
-        ssize_t readed = read(srcFd, buf, sizeof(buf));
+    ssize_t readed = 0;
+    while ((readed = read(srcFd, buf, sizeof(buf))) != 0) {
         if (readed < 0) {
             if (errno == EINTR) {
                 continue;
@@ -179,13 +184,11 @@ bool ReadFdContent(std::string& destStr, int srcFd)
             PROFILER_LOG_ERROR(LOG_CORE, "ReadFdContent read failed errno=%d", errno);
             return false;
         }
-        if (readed == 0) {
-            break;
-        }
         destStr.append(buf, static_cast<size_t>(readed));
     }
     return true;
 }
+
 static thread_local std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> g_rawDataArray = {};
 static thread_local uint32_t g_rawStackCount = 0;
 }
