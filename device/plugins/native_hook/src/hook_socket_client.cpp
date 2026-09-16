@@ -238,6 +238,7 @@ bool HookSocketClient::HandleSimplifiedMemConfigChanged(SocketContext &context, 
     if (config_ != nullptr) {
         config_->maxGrowthSize = msg.maxGrowthSize;
     }
+    g_mutableClientConfig.maxGrowthSize.store(msg.maxGrowthSize, std::memory_order_relaxed);
     PROFILER_LOG_INFO(LOG_CORE, "HookSocketClient::ProtocolProc update, ts1.1 = %d, ts1.2 = %d, ts2 = %d, ts3 = %d",
         largestSize_, secondLargestSize_, maxGrowthSize_, sampleInterval_);
     return true;
@@ -335,6 +336,7 @@ void HookSocketClient::HandleCommonConfig()
     largestSize_ = config_->largestSize;
     secondLargestSize_ = config_->secondLargestSize;
     maxGrowthSize_ = config_->maxGrowthSize;
+    g_mutableClientConfig.maxGrowthSize.store(config_->maxGrowthSize, std::memory_order_relaxed);
     sampleInterval_ = config_->sampleInterval;
     PROFILER_LOG_INFO(LOG_CORE, "HookSocketClient::ProtocolProc, ts1.1 = %d, ts1.2 = %d, ts2 = %d, ts3 = %d",
         largestSize_, secondLargestSize_, maxGrowthSize_, sampleInterval_);

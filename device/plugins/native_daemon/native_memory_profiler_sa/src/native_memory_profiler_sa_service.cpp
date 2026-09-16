@@ -97,6 +97,17 @@ const bool G_REGISTER_RESUTL = SystemAbility::MakeAndRegisterAbility(
     DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance().get());
 #endif
 
+std::shared_ptr<ClientConnection> GetClientConnectionByPid(pid_t pid)
+{
+    CHECK_NOTNULL(g_serviceEntry, nullptr, "service Entry is NULL");
+    std::unique_lock<std::mutex> lock(g_pidFdMtx);
+    auto it = g_pidFds.find(pid);
+    CHECK_TRUE(it != g_pidFds.end() && it->second >= 0, nullptr, "fd not found for pid:%d", static_cast<int32_t>(pid));
+    int sockFd = it->second;
+    lock.unlock();
+    return g_serviceEntry->GetClientConnection(sockFd);
+}
+
 bool SendFileCacheFd(SocketContext &context, HookManager& hookMgr, int32_t pid, uint16_t fileIndex)
 {
     int cacheFd = hookMgr.CreateFileCacheFd();
@@ -113,32 +124,14 @@ bool SendFileCacheFd(SocketContext &context, HookManager& hookMgr, int32_t pid, 
 
 bool SendHookConfigMsg(pid_t pid, const uint8_t *msg, size_t size)
 {
-    std::unique_lock<std::mutex> lock(g_pidFdMtx);
-    auto it = g_pidFds.find(pid);
-    if (it == g_pidFds.end() || it->second < 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "fd not found for pid:%d", pid);
-        return false;
-    }
-    int sockFd = it->second;
-    lock.unlock();
-
-    struct ProtocolHead phead;
-    phead.protoType = PROTOCOL_TYPE_PROTOBUF;
-    phead.protoSize = size + sizeof(struct ProtocolHead);
 #ifdef NATIVE_DAEMON_UNITTEST
     if (g_mockSendFail) {
         return false;
     }
-#else
-    if (send(sockFd, reinterpret_cast<int8_t *>(&phead), sizeof(phead), 0) == -1) {
-        PROFILER_LOG_ERROR(LOG_CORE, "send protocol head fail for pid:%d", pid);
-        return false;
-    }
 #endif
-    if (send(sockFd, msg, size, 0) == -1) {
-        PROFILER_LOG_ERROR(LOG_CORE, "send hook cmd fail for pid:%d", pid);
-        return false;
-    }
+    std::shared_ptr<ClientConnection> connection = GetClientConnectionByPid(pid);
+    CHECK_NOTNULL(connection, false, "connection not found for pid:%d", static_cast<int32_t>(pid));
+    CHECK_TRUE(connection->SendHookConfig(msg, size), false, "send hook config msg fail");
     return true;
 }
 
@@ -184,13 +177,7 @@ bool SendMemLeakFd(SocketContext &context, HookManager& hookMgr, const ClientCon
 
 bool SendDumpSimplifiedNmdRequest(pid_t pid, uint32_t cmd, int recvFd)
 {
-    CHECK_NOTNULL(g_serviceEntry, false, "service Entry is NULL");
-    std::unique_lock<std::mutex> lock(g_pidFdMtx);
-    auto it = g_pidFds.find(pid);
-    CHECK_TRUE(it != g_pidFds.end() && it->second >= 0, false, "fd not found for pid:%d", static_cast<int32_t>(pid));
-    int sockFd = it->second;
-    lock.unlock();
-    std::shared_ptr<ClientConnection> connection = g_serviceEntry->GetClientConnection(sockFd);
+    std::shared_ptr<ClientConnection> connection = GetClientConnectionByPid(pid);
     CHECK_NOTNULL(connection, false, "connection not found for pid:%d", static_cast<int32_t>(pid));
     CHECK_TRUE(connection->SendHookConfig(reinterpret_cast<const uint8_t *>(&cmd), sizeof(cmd)), false, "send fail");
     CHECK_TRUE(connection->SendFileDescriptor(recvFd), false, "send recvFd fail");

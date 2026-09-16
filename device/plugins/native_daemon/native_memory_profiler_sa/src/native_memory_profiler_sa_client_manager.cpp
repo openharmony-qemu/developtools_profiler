@@ -635,6 +635,9 @@ int32_t NativeMemoryProfilerSaClientManager::UpdateSimplifiedMemConfig(pid_t pid
     std::shared_ptr<NativeMemoryProfilerSaConfig> nConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
     CHECK_TRUE(ParseSimplifiedConfig(nConfig, config, 0) == RET_OK, RET_ERR, "Parse simplified config failed");
     nConfig->pid_ = static_cast<int32_t>(pid);
+    if (pid == getpid()) {
+        nConfig->startType_ = 1; // 1:API
+    }
     return InvokeWithProxy([&nConfig](NativeMemoryProfilerSaProxy& proxy) {
         return proxy.Update(nConfig);
     });

@@ -66,6 +66,7 @@ std::atomic<const MallocDispatchType*> g_dispatch {nullptr};
 std::atomic<pid_t> g_hookPid = 0;
 std::atomic<bool> g_hookReady = false;
 ClientConfig g_clientConfig = {0};
+MutableClientConfig g_mutableClientConfig;
 std::atomic<bool> g_isPidChanged = false;
 std::shared_ptr<AddressHandler> g_addrHandler = nullptr;
 std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
@@ -268,6 +269,7 @@ void* MallocHookStart(void* disableHookCallback)
         return nullptr;
     } else {
         g_clientConfig.Reset();
+        g_mutableClientConfig.Reset();
         g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_clientConfig,
                                                           &g_targetLibRange, &g_sharedMemCount,
                                                           reinterpret_cast<void (*)()>(disableHookCallback));
@@ -359,6 +361,7 @@ void* ohos_release_on_end(void*)
     g_hookClient = nullptr;
     DisableArkTsHookIfNeeded();
     g_clientConfig.Reset();
+    g_mutableClientConfig.Reset();
     g_sharedMemCount = 1;
     std::unique_lock<std::mutex> lock(g_tagMapMutex);
     g_memTagMap.clear();

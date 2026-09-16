@@ -31,6 +31,15 @@
 struct ClientConfig;
 class Sampling;
 
+struct MutableClientConfig {
+    void Reset()
+    {
+        maxGrowthSize.store(0, std::memory_order_relaxed);
+    }
+
+    std::atomic<uint32_t> maxGrowthSize{0};
+};
+
 #define EXPORT_API __attribute__((visibility("default")))
 
 #ifdef __cplusplus
@@ -42,6 +51,7 @@ extern std::atomic<pid_t> g_hookPid;
 extern std::atomic<bool> g_hookReady;
 extern std::atomic<bool> g_isPidChanged;
 extern ClientConfig g_clientConfig;
+extern MutableClientConfig g_mutableClientConfig;
 extern std::vector<std::pair<uint64_t, uint64_t>> g_targetLibRange;
 extern std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
 extern std::recursive_timed_mutex g_FilterMapMutex;
