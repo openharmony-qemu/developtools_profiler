@@ -159,6 +159,8 @@ constexpr uint32_t ALIVE_ADDR_SNAPSHOT_END_MARKER = 0xADD50003;
 constexpr uint32_t FINAL_SNAPSHOT_REQUEST_CMD = 0xADD50004;
 constexpr uint32_t STOP_HOOK_CMD = 0xADD50005;
 constexpr uint32_t MEM_LEAK_DONE_CMD = 0xADD50006;
+constexpr uint32_t DUMP_SIMP_NMD_CMD = 0xADD50007;
+constexpr uint32_t DUMP_SIMP_NMD_DONE_CMD = 0xADD50008;
 
 enum SymbolType {
     NATIVE_SYMBOL,
@@ -726,5 +728,13 @@ inline uint64_t GetBackpressureCurrentTimeMs()
     auto duration = now.time_since_epoch();
     return std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 }
+
+struct alignas(8) SimplifiedMemConfigMsg {
+    int32_t pid = -1;
+    uint32_t largestSize = 0;
+    uint32_t secondLargestSize = 0;
+    uint32_t maxGrowthSize = 0;
+    uint32_t sampleSize = 0;
+};
 
 #endif // HOOK_COMMON_H

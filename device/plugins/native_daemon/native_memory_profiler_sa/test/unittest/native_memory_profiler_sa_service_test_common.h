@@ -159,6 +159,10 @@ public:
         callbackIsNull_ = callback == nullptr;
         return RET_OK;
     }
+    int32_t Update(std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override
+    {
+        return RET_OK;
+    }
 
     int32_t lastPid_ = -1;
     uint32_t lastFd_ = 0;

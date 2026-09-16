@@ -27,6 +27,7 @@ sources_base = [
   "unittest/common/native/hook_manager_test.cpp",
   "unittest/common/native/hook_manager_ext_test.cpp",
   "unittest/common/native/hook_manager_mem_leak_test.cpp",
+  "unittest/common/native/hook_manager_mem_nmd_test.cpp",
   "unittest/common/native/async_stack_config_test.cpp",
   "unittest/common/native/stack_preprocess_ext_test.cpp",
   "unittest/common/native/hook_record_ext_test.cpp",
@@ -76,6 +77,7 @@ sources_base = [
   "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_death_recipient.cpp",
   "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_service.cpp",
   "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_stub.cpp",
+  "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/util/src/mem_config.cpp",
   "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_helper.cpp",
   "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_writer.cpp",
 ]

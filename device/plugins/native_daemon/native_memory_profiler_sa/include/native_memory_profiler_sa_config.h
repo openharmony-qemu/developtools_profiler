@@ -69,6 +69,7 @@ public:
     bool responseLibraryMode_{false};
     bool printNmd_{false};
     bool printNmdOnly_{false};
+    bool printNmdInHook_{false};
     bool hookstandalone_{false};
     bool saveFile_{false};
     bool extendProcesses_{false};

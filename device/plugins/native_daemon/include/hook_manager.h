@@ -31,6 +31,7 @@
 #include "share_memory_allocator.h"
 #include "event_notifier.h"
 #include "i_semaphore.h"
+#include "mem_config.h"
 #include "native_hook_config.pb.h"
 #include "native_hook_result.pb.h"
 #include "virtual_runtime.h"
@@ -169,6 +170,8 @@ public:
     void SetHookConfig(const NativeHookConfig& hookConfig);
     void SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     void SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    void SetSimplifiedMemConfig(const std::shared_ptr<SimplifiedMemConfig>& config);
+    void GetSimplifiedMemConfig(std::shared_ptr<SimplifiedMemConfig>& config);
     int32_t CreatePluginSession();
     void RegisterWriter(const std::shared_ptr<Writer> writer);
     void RegisterFdForSa(uint32_t saFd);
@@ -221,6 +224,9 @@ public:
     void WaitMemLeakDoneIfNeeded();
     void FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                             std::shared_ptr<HookRecord>& hookRecord);
+    bool StartInHookSimpNmdDump(std::function<bool(int)> postProcessor);
+    std::string GetInHookSimpNmdResult(uint32_t waitMs);
+    bool HandleInHookSimpNmdDone();
     std::shared_ptr<ShareMemoryBlock> uniqueTableBlock_;
 
 private:
@@ -282,6 +288,7 @@ private:
     void SendBackpressureState(pid_t pid, const BackpressureStateMsg& state);
     void HandleBackpressure(const std::shared_ptr<HookManagerCtx>& ctx);
     uint32_t CalculateRecommendedDelay(uint32_t queueDepth);
+    int CreateInHookSimpNmdFd();
 
     const BackpressureConfig bpConfig_ = BackpressureConfig();
     std::shared_ptr<HookService> hookService_;
@@ -321,6 +328,9 @@ private:
     std::atomic_bool memLeakDumpDone_ {true};
     std::string simplifiedNmd_;
     SemaphorePtr nmdSemaphore_{nullptr};
+    std::atomic_bool inHookSimpNmdStarted_{false};
+    int inHookSimpNmdFd_{-1};
+    SemaphorePtr inHookSimpNmdSem_{nullptr};
     bool shouldSkipGlobalFreed_ = false;
     std::unordered_map<void*, struct timespec> validLiveData_;
     std::unordered_map<void*, struct timespec> orphanFreeWhitelist_;

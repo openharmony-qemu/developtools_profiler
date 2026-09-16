@@ -113,6 +113,8 @@ constexpr uint64_t ALL_NESTED_MASK_TYPE = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFR
 const std::string MEM_LEAK_FILE_PERFIX = "memleak-native-orphansnapshot-";
 const std::string MEM_LEAK_FILE_SUFFIX = ".txt";
 const std::string MEM_LEAK_FILE_PATH = "/data/local/tmp/";
+const std::string SIMPLIFIED_NMD_TEMP_FILE = "/data/log/hiprofiler/simplified_nmd.tmp.XXXXXX";
+constexpr uint32_t MAX_BUFFER_SIZE = 8192;
 
 // Constant definitions
 constexpr uint32_t VALID_LIVE_DATA_RESERVE_COUNT = 9 * 1024 * 1024;
@@ -155,6 +157,38 @@ bool CopyFdContent(int destFd, int srcFd)
     }
     return true;
 }
+
+bool ReadFdContent(std::string& destStr, int srcFd)
+{
+    if (lseek(srcFd, 0, SEEK_SET) < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ReadFdContent lseek failed errno=%d", errno);
+        return false;
+    }
+    struct stat statBuf;
+    if (fstat(srcFd, &statBuf) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ReadFdContent fstat failed errno=%d", errno);
+        return false;
+    }
+    if (statBuf.st_size <= 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ReadFdContent fail, no content");
+        return false;
+    }
+    destStr.reserve(destStr.size() + static_cast<size_t>(statBuf.st_size));
+    char buf[MAX_BUFFER_SIZE];
+    ssize_t readed = 0;
+    while ((readed = read(srcFd, buf, sizeof(buf))) != 0) {
+        if (readed < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            PROFILER_LOG_ERROR(LOG_CORE, "ReadFdContent read failed errno=%d", errno);
+            return false;
+        }
+        destStr.append(buf, static_cast<size_t>(readed));
+    }
+    return true;
+}
+
 static thread_local std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> g_rawDataArray = {};
 static thread_local uint32_t g_rawStackCount = 0;
 }
@@ -183,6 +217,9 @@ HookManager::~HookManager()
             item->stackData = nullptr;
         }
         item->CloseAllCacheFds();
+    }
+    if (inHookSimpNmdFd_ >= 0) {
+        close(inHookSimpNmdFd_);
     }
 }
 
@@ -1493,6 +1530,86 @@ bool HookManager::HandleMemLeakDone()
     return memLeakDumpDone_.load();
 }
 
+int HookManager::CreateInHookSimpNmdFd()
+{
+    std::vector<char> tempPathBuf(SIMPLIFIED_NMD_TEMP_FILE.begin(), SIMPLIFIED_NMD_TEMP_FILE.end());
+    tempPathBuf.push_back('\0');
+    int fd = mkstemp(tempPathBuf.data());
+    if (fd < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CreateInHookSimpNmdFd mkstemp failed errno=%d", errno);
+        return -1;
+    }
+    if (unlink(tempPathBuf.data()) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CreateInHookSimpNmdFd unlink failed errno=%d", errno);
+        close(fd);
+        return -1;
+    }
+    return fd;
+}
+
+bool HookManager::StartInHookSimpNmdDump(std::function<bool(int recvFd)> postProcessor)
+{
+    CHECK_TRUE(postProcessor, false, "postProcessor is invalid");
+    bool expect = false;
+    CHECK_TRUE(inHookSimpNmdStarted_.compare_exchange_strong(expect, true), false, "already in dumping");
+    inHookSimpNmdSem_ = GetSemaphoreFactory().Create(0);
+    if (inHookSimpNmdSem_ == nullptr) {
+        inHookSimpNmdStarted_.store(false);
+        PROFILER_LOG_ERROR(LOG_CORE, "StartInHookSimpNmdDump fail, create sem fail");
+        return false;
+    }
+    inHookSimpNmdFd_ = CreateInHookSimpNmdFd();
+    if (inHookSimpNmdFd_ < 0) {
+        inHookSimpNmdSem_ = nullptr;
+        inHookSimpNmdStarted_.store(false);
+        PROFILER_LOG_ERROR(LOG_CORE, "StartInHookSimpNmdDump fail, create simp nmd fd fail");
+        return false;
+    }
+    if (!postProcessor(inHookSimpNmdFd_)) {
+        close(inHookSimpNmdFd_);
+        inHookSimpNmdFd_ = -1;
+        inHookSimpNmdSem_ = nullptr;
+        inHookSimpNmdStarted_.store(false);
+        PROFILER_LOG_ERROR(LOG_CORE, "StartInHookSimpNmdDump fail, post process fail");
+        return false;
+    }
+    return true;
+}
+
+std::string HookManager::GetInHookSimpNmdResult(uint32_t waitMs)
+{
+    std::string result;
+    CHECK_TRUE(inHookSimpNmdStarted_.load(), result, "GetInHookSimpNmdResult fail, dump not started");
+    CHECK_NOTNULL(inHookSimpNmdSem_, result, "GetInHookSimpNmdResult fail, sem is NULL");
+    CHECK_TRUE(inHookSimpNmdFd_ >= 0, result, "GetInHookSimpNmdResult fail, recv fd is invalid");
+    bool notified = inHookSimpNmdSem_->TimedWait(waitMs / MS_PER_SEC, (waitMs % MS_PER_SEC) * NS_PER_MS);
+    if (!notified) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetInHookSimpNmdResult fail, timeout");
+        close(inHookSimpNmdFd_);
+        inHookSimpNmdFd_ = -1;
+        inHookSimpNmdStarted_.store(false);
+        return result;
+    }
+    if (!ReadFdContent(result, inHookSimpNmdFd_)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetInHookSimpNmdResult fail, read fd content error");
+        result.clear();
+    }
+    close(inHookSimpNmdFd_);
+    inHookSimpNmdFd_ = -1;
+    inHookSimpNmdStarted_.store(false);
+    return result;
+}
+
+bool HookManager::HandleInHookSimpNmdDone()
+{
+    PROFILER_LOG_DEBUG(LOG_CORE, "HookManager::HandleInHookSimpNmdDone start");
+    CHECK_TRUE(inHookSimpNmdStarted_.load(), false, "in hook simp nmd dump task not started");
+    CHECK_NOTNULL(inHookSimpNmdSem_, false, "in hook simp nmd sem is NULL");
+    inHookSimpNmdSem_->Post();
+    PROFILER_LOG_DEBUG(LOG_CORE, "HookManager::HandleInHookSimpNmdDone done");
+    return true;
+}
+
 void HookManager::WaitMemLeakDoneIfNeeded()
 {
     if (!hookConfig_.native_orphansnapshots_enable() || memLeakDumpDone_.load()) {
@@ -2242,6 +2359,25 @@ void HookManager::SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaC
     gwpAsanHoldTime_ = config->gwpAsanHoldTime_;
     gwpAsanMaxEntries_ = config->gwpAsanMaxEntries_;
     gwpAsanMaxStackDepth_ = config->gwpAsanMaxStackDepth_;
+}
+
+void HookManager::SetSimplifiedMemConfig(const std::shared_ptr<SimplifiedMemConfig>& config)
+{
+    if (config == nullptr) {
+        return;
+    }
+    maxGrowthSize_ = config->maxGrowthSize;
+}
+
+void HookManager::GetSimplifiedMemConfig(std::shared_ptr<SimplifiedMemConfig>& config)
+{
+    if (config == nullptr) {
+        return;
+    }
+    config->largestSize = largestSize_;
+    config->secondLargestSize = secondLargestSize_;
+    config->maxGrowthSize = maxGrowthSize_;
+    config->sampleSize = hookConfig_.sample_interval();
 }
 
 int32_t HookManager::CreatePluginSession()

@@ -232,9 +232,9 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckStopPermissionVerifiesCallingPi
     int32_t callingPid = OHOS::IPCSkeleton::GetCallingPid();
     auto hook = std::make_shared<HookManager>();
     auto task = std::make_shared<TaskConfig>(hook, 0, "perm_check", callingPid, "", -1, false);
-    EXPECT_TRUE(NativeMemoryProfilerSaService::CheckStopPermission(callingPid, task));
+    EXPECT_TRUE(NativeMemoryProfilerSaService::CheckCallingPermission(callingPid, task));
     constexpr int32_t mismatchedPid = 99999;
-    EXPECT_FALSE(NativeMemoryProfilerSaService::CheckStopPermission(mismatchedPid, task));
+    EXPECT_FALSE(NativeMemoryProfilerSaService::CheckCallingPermission(mismatchedPid, task));
 }
 
 /**

@@ -79,7 +79,7 @@ bool ShouldFilterBySize(void* ptr, size_t mallocSize)
     }
     if ((usableSize == g_clientConfig.largestSize) ||
         (usableSize == g_clientConfig.secondLargestSize) ||
-        (usableSize == g_clientConfig.maxGrowthSize)) {
+        (usableSize == g_mutableClientConfig.maxGrowthSize.load(std::memory_order_relaxed))) {
         return false;
     }
     return true;
@@ -95,7 +95,7 @@ bool ShouldFilterBySize(size_t usableSize)
     }
     if ((usableSize == g_clientConfig.largestSize) ||
         (usableSize == g_clientConfig.secondLargestSize) ||
-        (usableSize == g_clientConfig.maxGrowthSize)) {
+        (usableSize == g_mutableClientConfig.maxGrowthSize.load(std::memory_order_relaxed))) {
         return false;
     }
     return true;

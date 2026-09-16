@@ -79,10 +79,10 @@ ResProfilerErrorCode MemoryProfilerClientImpl::Start(int32_t resourceType, MemAP
     return static_cast<ResProfilerErrorCode>(ret);
 }
 
-int32_t MemoryProfilerClientImpl::StartPrintSimplifiedNmd(std::vector<SimplifiedMemStats>& memStats)
+int32_t MemoryProfilerClientImpl::StartPrintSimplifiedNmd(std::vector<SimplifiedMemStats>& memStats, bool isProfiling)
 {
     PROFILER_LOG_INFO(LOG_CORE, "Start simplified nmd mode profiler");
-    return NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(getpid(), memStats);
+    return NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(getpid(), memStats, isProfiling);
 }
 
 int32_t MemoryProfilerClientImpl::Stop()
@@ -91,6 +91,17 @@ int32_t MemoryProfilerClientImpl::Stop()
     int32_t ret =  NativeMemoryProfilerSaClientManager::Stop();
     if (ret != RET_OK) {
         PROFILER_LOG_ERROR(LOG_CORE, "Stop memory profiler failed, ret = %d", ret);
+        return RET_ERR;
+    }
+    return RET_OK;
+}
+
+int32_t MemoryProfilerClientImpl::UpdateSimplifiedMemConfig(const SimplifiedMemConfig& config)
+{
+    PROFILER_LOG_INFO(LOG_CORE, "Update simplified memory mem config");
+    int32_t ret =  NativeMemoryProfilerSaClientManager::UpdateSimplifiedMemConfig(getpid(), config);
+    if (ret != RET_OK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Update simplified memory mem config failed, ret = %d", ret);
         return RET_ERR;
     }
     return RET_OK;

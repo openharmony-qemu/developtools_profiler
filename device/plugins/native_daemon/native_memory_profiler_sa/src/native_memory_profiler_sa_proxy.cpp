@@ -260,4 +260,24 @@ int32_t NativeMemoryProfilerSaProxy::Start(std::shared_ptr<NativeMemoryProfilerS
     READSTRING(reply, replyStats, RET_ERR);
     return RET_OK;
 }
+
+int32_t NativeMemoryProfilerSaProxy::Update(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
+    MessageParcel data;
+    CHECK_TRUE(data.WriteInterfaceToken(NativeMemoryProfilerSaProxy::GetDescriptor()), RET_ERR,
+        "Update failed to write descriptor");
+    CHECK_TRUE(config->Marshalling(data), RET_ERR, "NativeMemoryProfilerSaConfig marshalling failed");
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    CHECK_NOTNULL(remote, RET_ERR, "remote is nullptr");
+    int32_t ret = remote->SendRequest(
+        static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::UPDATE_HOOK_CONFIG), data, reply, option);
+    if (ret != RET_OK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Update failed, ret:%d", ret);
+        return ret;
+    }
+    return RET_OK;
+}
 } // namespace OHOS::Developtools::NativeDaemon

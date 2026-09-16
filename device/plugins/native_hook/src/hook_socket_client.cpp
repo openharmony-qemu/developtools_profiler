@@ -223,6 +223,61 @@ bool HookSocketClient::HandleBackpressureState(SocketContext &context, const int
     return true;
 }
 
+bool HookSocketClient::HandleSimplifiedMemConfigChanged(SocketContext &context, const int8_t *buf, uint32_t size)
+{
+    (void)context;
+    if (buf == nullptr || size != sizeof(SimplifiedMemConfigMsg)) {
+        return false;
+    }
+    SimplifiedMemConfigMsg msg;
+    if (memcpy_s(&msg, sizeof(msg), buf, size) != EOK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HandleSimplifiedMemConfigChanged memcpy_s failed");
+        return false;
+    }
+    maxGrowthSize_ = msg.maxGrowthSize;
+    if (config_ != nullptr) {
+        config_->maxGrowthSize = msg.maxGrowthSize;
+    }
+    g_mutableClientConfig.maxGrowthSize.store(msg.maxGrowthSize, std::memory_order_relaxed);
+    PROFILER_LOG_INFO(LOG_CORE, "HookSocketClient::ProtocolProc update, ts1.1 = %d, ts1.2 = %d, ts2 = %d, ts3 = %d",
+        largestSize_, secondLargestSize_, maxGrowthSize_, sampleInterval_);
+    return true;
+}
+
+bool HookSocketClient::HandleSimplifiedNmdDumpRequest(SocketContext &context)
+{
+    int nmdRecvFd = context.ReceiveFileDiscriptor();
+    if (nmdRecvFd < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HandleSimplifiedNmdDumpRequest fail, recv fd err");
+        return false;
+    }
+    void *nmdBuf = malloc(MEMCHECK_DETAILINFO_MAXSIZE);
+    if (nmdBuf == nullptr) {
+        close(nmdRecvFd);
+        return false;
+    }
+    struct OptArg opt = {0, reinterpret_cast<char *>(nmdBuf) };
+    malloc_stats_print(NmdWriteStat, &opt, "s");
+    if (!WriteDataToFd(nmdRecvFd, reinterpret_cast<const uint8_t *>(opt.buf), strlen(opt.buf) + 1)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HandleSimplifiedNmdDumpRequest: failed to write data");
+        close(nmdRecvFd);
+        free(nmdBuf);
+        return false;
+    }
+    close(nmdRecvFd);
+    free(nmdBuf);
+    if (unixSocketClient_ == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "unixSocketClient_ is NULL");
+        return false;
+    }
+    uint32_t cmd = DUMP_SIMP_NMD_DONE_CMD;
+    if (!unixSocketClient_->SendHookConfig(reinterpret_cast<uint8_t*>(&cmd), sizeof(cmd))) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HandleSimplifiedNmdDumpRequest: failed to send cmd, errno: %d", errno);
+        return false;
+    }
+    return true;
+}
+
 bool HookSocketClient::HandleControlCommand(uint32_t cmd)
 {
     if (cmd == SNAPSHOT_REQUEST_CMD) {
@@ -281,6 +336,7 @@ void HookSocketClient::HandleCommonConfig()
     largestSize_ = config_->largestSize;
     secondLargestSize_ = config_->secondLargestSize;
     maxGrowthSize_ = config_->maxGrowthSize;
+    g_mutableClientConfig.maxGrowthSize.store(config_->maxGrowthSize, std::memory_order_relaxed);
     sampleInterval_ = config_->sampleInterval;
     PROFILER_LOG_INFO(LOG_CORE, "HookSocketClient::ProtocolProc, ts1.1 = %d, ts1.2 = %d, ts2 = %d, ts3 = %d",
         largestSize_, secondLargestSize_, maxGrowthSize_, sampleInterval_);
@@ -402,10 +458,16 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
         }
         return HandleFileCacheMsg(context, cacheFileMsg);
     }
+    if (size == sizeof(SimplifiedMemConfigMsg)) {
+        return HandleSimplifiedMemConfigChanged(context, buf, size);
+    }
     if (size == sizeof(uint32_t)) {
         uint32_t cmd = 0;
         if (memcpy_s(&cmd, sizeof(cmd), buf, size) != EOK) {
             return false;
+        }
+        if (cmd == DUMP_SIMP_NMD_CMD) {
+            return HandleSimplifiedNmdDumpRequest(context);
         }
         return HandleControlCommand(cmd);
     }
@@ -766,4 +828,29 @@ void HookSocketClient::SetAsyncStack()
         // the default mode is MODE_LAST_STACKTRACE.
     }
 #endif
+}
+
+bool HookSocketClient::WriteDataToFd(int fd, const uint8_t *data, size_t size)
+{
+    if (fd < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "WriteDataToFd invalid fd %d", fd);
+        return false;
+    }
+    size_t writtenSize = 0;
+    while (writtenSize < size) {
+        ssize_t written = write(fd, data + writtenSize, size - writtenSize);
+        if (written < 0 && errno == EINTR) {
+            continue;
+        }
+        if (written <= 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "WriteDataToFd write failed, errno=%d", errno);
+            return false;
+        }
+        writtenSize += static_cast<size_t>(written);
+    }
+    if (fsync(fd) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "WriteDataToFd fsync failed, errno=%d", errno);
+        return false;
+    }
+    return true;
 }

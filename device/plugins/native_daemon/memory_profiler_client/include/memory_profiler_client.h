@@ -64,15 +64,23 @@ public:
     /**
      * @desc: Start simplified nmd mode profiler.
      * @param memStats: The simplified memory stats vector to store the result.
+     * @param isProfiling: Is profiling task exist or not.
      * @return: RET_OK on success, RET_ERR on failure.
      */
-    virtual int32_t StartPrintSimplifiedNmd(std::vector<SimplifiedMemStats>& memStats) = 0;
+    virtual int32_t StartPrintSimplifiedNmd(std::vector<SimplifiedMemStats>& memStats, bool isProfiling = false) = 0;
 
     /**
      * @desc: Stop memory profiler.
      * @return: RET_OK on success, RET_ERR on failure.
      */
     virtual int32_t Stop() = 0;
+
+    /**
+     * @desc: UpdateSimplifiedMemConfig.
+     * @param config: The simplified memory profiler configuration.
+     * @return: RET_OK on success, RET_ERR on failure.
+     */
+    virtual int32_t UpdateSimplifiedMemConfig(const SimplifiedMemConfig& config) = 0;
 };
 }   // namespace NativeDaemon
 }   // namespace Developtools

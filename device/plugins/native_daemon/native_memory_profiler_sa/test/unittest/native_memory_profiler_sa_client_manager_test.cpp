@@ -56,6 +56,21 @@ void ExpectRemotePathRet(int32_t ret)
 {
     EXPECT_TRUE(ret == RET_OK || ret == RET_ERR);
 }
+
+void MallocTest()
+{
+    int size = 10;
+    void* arr[size];
+    for (int i = 0; i < size; i++) {
+        GTEST_LOG_(INFO) << "======i=" << i << "======";
+        useconds_t sleepTime = 500000; // 500ms
+        usleep(sleepTime);
+        arr[i] = malloc(sizeof(int));
+    }
+    for (int i = 0; i < size; i++) {
+        free(arr[i]);
+    }
+}
 }
 
 class NativeMemoryProfilerSaClientManagerTest : public testing::Test {
@@ -1215,6 +1230,170 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigCompositeHeapA
     EXPECT_TRUE(sem->TimedWait(60));
     close(fd);
     unlink(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str());
+    cmd = "setenforce 1";
+    system(cmd.c_str());
+}
+
+/**
+ * @tc.name: StartPrintSimplifiedNmdInHook
+ * @tc.desc: Print simplefiled nmd check
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartPrintSimplifiedNmdInHook, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::vector<SimplifiedMemStats> memStats;
+    int pid = getpid();
+    SemaphorePtr sem = GetSemaphoreFactory().Create(0);
+    SimplifiedMemConfig config;
+    config.sampleSize = 384;
+    config.largestSize = 8;
+    config.secondLargestSize = 4;
+    config.maxGrowthSize = 8;
+    NativeMemoryProfilerSaClientManager::ProfilingDumpCallback profilingCallback = [&sem](int32_t errCode) {
+        GTEST_LOG_(INFO) << "Post nmd result:" << errCode;
+        sem->Post();
+    };
+    int fd = open(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    std::thread t(MallocTest);
+    int32_t result = NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid, memStats);
+    EXPECT_EQ(result, RET_OK);
+    GTEST_LOG_(INFO) << "StartPrintSimplifiedNmd 1 returned:" << result << ", memStats size: " << memStats.size();
+
+    result = NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 60, config, profilingCallback);
+    EXPECT_EQ(result, RET_OK);
+    GTEST_LOG_(INFO) << "StartAsync returned:" << result;
+    std::this_thread::sleep_for(std::chrono::seconds(3));   // wait StartAsync done
+
+    memStats.clear();
+    result = NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid, memStats, true);
+    EXPECT_EQ(result, RET_OK);
+    GTEST_LOG_(INFO) << "StartPrintSimplifiedNmd 2 returned:" << result << ", memStats size: " << memStats.size();
+
+    memStats.clear();
+    result = NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid, memStats, true);
+    EXPECT_EQ(result, RET_OK);
+    GTEST_LOG_(INFO) << "StartPrintSimplifiedNmd 3 returned:" << result << ", memStats size: " << memStats.size();
+
+    std::string cmd = "setenforce 0";
+    system(cmd.c_str());
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(static_cast<uint32_t>(pid)), RET_OK);
+    EXPECT_TRUE(sem->TimedWait(80));
+    close(fd);
+    if (t.joinable()) {
+        t.join();
+    }
+    cmd = "setenforce 1";
+    system(cmd.c_str());
+}
+
+/**
+ * @tc.name: StartPrintOtherSimplifiedNmdInHook
+ * @tc.desc: Print simplefiled nmd of other pid check
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartPrintOtherSimplifiedNmdInHook, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::vector<SimplifiedMemStats> memStats;
+    int pid = 0;
+    if (!COMMON::IsProcessExist(TEST_APP_NAME, pid)) {
+        COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    }
+    ASSERT_TRUE(pid > 0);
+    int fd = open(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    SemaphorePtr sem = GetSemaphoreFactory().Create(0);
+    SimplifiedMemConfig config;
+    config.sampleSize = 384;
+    config.largestSize = 8;
+    config.secondLargestSize = 4;
+    config.maxGrowthSize = 8;
+    NativeMemoryProfilerSaClientManager::ProfilingDumpCallback profilingCallback = [&sem](int32_t errCode) {
+        GTEST_LOG_(INFO) << "StartPrintOtherSimplifiedNmdInHook Post nmd result:" << errCode;
+        sem->Post();
+    };
+
+    int32_t result = NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid, memStats);
+    EXPECT_EQ(result, RET_OK);
+    GTEST_LOG_(INFO) << "StartPrintSimplifiedNmd 1 returned:" << result << ", memStats size: " << memStats.size();
+
+    result = NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 60, config, profilingCallback);
+    EXPECT_EQ(result, RET_OK);
+    GTEST_LOG_(INFO) << "StartAsync returned:" << result;
+    std::this_thread::sleep_for(std::chrono::seconds(3));   // wait StartAsync done
+
+    memStats.clear();
+    result = NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid, memStats, true);
+    EXPECT_EQ(result, RET_OK);
+    GTEST_LOG_(INFO) << "StartPrintSimplifiedNmd 2 returned:" << result << ", memStats size: " << memStats.size();
+
+    memStats.clear();
+    result = NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid, memStats, true);
+    EXPECT_EQ(result, RET_OK);
+    GTEST_LOG_(INFO) << "StartPrintSimplifiedNmd 3 returned:" << result << ", memStats size: " << memStats.size();
+
+    std::string cmd = "setenforce 0";
+    system(cmd.c_str());
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(static_cast<uint32_t>(pid)), RET_OK);
+    EXPECT_TRUE(sem->TimedWait(80));
+    close(fd);
+    cmd = "setenforce 1";
+    system(cmd.c_str());
+}
+
+/**
+ * @tc.name: StartPrintOtherSimplifiedNmdInHookAndUpdateConfig
+ * @tc.desc: Print simplefiled nmd of other pid and update config
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartPrintOtherSimplifiedNmdInHookAndUpdateConfig, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::vector<SimplifiedMemStats> memStats;
+    int pid = 0;
+    if (!COMMON::IsProcessExist(TEST_APP_NAME, pid)) {
+        COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    }
+    ASSERT_TRUE(pid > 0);
+    int fd = open(TEST_COMPOSITE_HEAP_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    SemaphorePtr sem = GetSemaphoreFactory().Create(0);
+    SimplifiedMemConfig config;
+    config.sampleSize = 384;
+    config.largestSize = 8;
+    config.secondLargestSize = 4;
+    config.maxGrowthSize = 0;
+    NativeMemoryProfilerSaClientManager::ProfilingDumpCallback profilingCallback = [&sem](int32_t errCode) {
+        GTEST_LOG_(INFO) << "StartPrintOtherSimplifiedNmdInHook Post nmd result:" << errCode;
+        sem->Post();
+    };
+
+    int32_t result = NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid, memStats);
+    EXPECT_EQ(result, RET_OK);
+    GTEST_LOG_(INFO) << "StartPrintSimplifiedNmd 1 returned:" << result << ", memStats size: " << memStats.size();
+
+    result = NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 60, config, profilingCallback);
+    EXPECT_EQ(result, RET_OK);
+    GTEST_LOG_(INFO) << "StartAsync returned:" << result;
+    std::this_thread::sleep_for(std::chrono::seconds(3));   // wait StartAsync done
+
+    memStats.clear();
+    result = NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid, memStats, true);
+    EXPECT_EQ(result, RET_OK);
+    GTEST_LOG_(INFO) << "StartPrintSimplifiedNmd 2 returned:" << result << ", memStats size: " << memStats.size();
+
+    config.maxGrowthSize = 8;
+    result = NativeMemoryProfilerSaClientManager::UpdateSimplifiedMemConfig(pid, config);
+    EXPECT_EQ(result, RET_OK);
+    GTEST_LOG_(INFO) << "UpdateSimplifiedMemConfig returned:" << result;
+
+    std::string cmd = "setenforce 0";
+    system(cmd.c_str());
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(static_cast<uint32_t>(pid)), RET_OK);
+    EXPECT_TRUE(sem->TimedWait(80));
+    close(fd);
     cmd = "setenforce 1";
     system(cmd.c_str());
 }

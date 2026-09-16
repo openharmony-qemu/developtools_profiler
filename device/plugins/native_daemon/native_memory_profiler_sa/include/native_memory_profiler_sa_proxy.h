@@ -43,6 +43,7 @@ public:
         const sptr<IRemoteObject>& callback) override;
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, std::string& replyStats) override;
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, MessageParcel &reply) override { return 0; }
+    int32_t Update(std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override;
 
 private:
     static void HandleTimeout();

@@ -27,6 +27,7 @@ enum class NativeMemoryProfilerSaInterfaceCode {
     STOP_HOOK_PID_VOID = 6,
     STOP_HOOK_SYNC = 7,
     DUMP_DATA_ASYNC = 8,
+    UPDATE_HOOK_CONFIG = 9,
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

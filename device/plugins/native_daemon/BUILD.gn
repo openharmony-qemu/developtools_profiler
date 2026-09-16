@@ -122,6 +122,7 @@ ohos_shared_library("libmemory_profiler") {
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_death_recipient.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_service.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_stub.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/util/src/mem_config.cpp",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_helper.cpp",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_writer.cpp",
   ]

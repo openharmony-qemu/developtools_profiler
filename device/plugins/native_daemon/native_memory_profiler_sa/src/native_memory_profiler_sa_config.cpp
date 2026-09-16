@@ -143,6 +143,7 @@ bool NativeMemoryProfilerSaConfig::MarshallingExt(Parcel& parcel) const
     WRITEBOOL(parcel, arkuiMemTraceEnable_);
     WRITEBOOL(parcel, discardDestroyedTraces_);
     WRITESTRING(parcel, bundleName_);
+    WRITEBOOL(parcel, printNmdInHook_);
     return true;
 }
 
@@ -221,6 +222,7 @@ bool NativeMemoryProfilerSaConfig::UnmarshallingExt(Parcel& parcel,
     READBOOL(parcel, config->arkuiMemTraceEnable_);
     READBOOL(parcel, config->discardDestroyedTraces_);
     READSTRING(parcel, config->bundleName_);
+    READBOOL(parcel, config->printNmdInHook_);
     PrintConfig(config);
     return true;
 }
