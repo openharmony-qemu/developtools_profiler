@@ -155,7 +155,7 @@ private:
     static void SetMockNativeDaemonRunningForTest(bool running);
     static void SetMockStartServiceAbilityForTest(bool result);
     static void SetMockSystemResourceForTest(bool memFail, bool cpuFail, bool romFail);
-    static void SetMockSendFailForTest(bool fail);
+    static void SetMockSendSuccessForTest(bool success);
     static void SetMockNmdResultForTest(const std::string& result);
 #endif
 

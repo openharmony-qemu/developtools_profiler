@@ -80,6 +80,7 @@ static std::mutex g_nmdMtx;
 static std::unordered_set<uint32_t> g_stoppingPids;
 static std::mutex g_stoppingPidsMtx;
 static std::mutex g_countFileMutex;
+static std::mutex g_socketSendMtx;
 #ifdef NATIVE_DAEMON_UNITTEST
 static bool g_mockIsUserMode = false;
 static bool g_mockPermissionGranted = true;
@@ -88,7 +89,7 @@ static bool g_mockStartServiceAbility = true;
 static bool g_mockMemFail = false;
 static bool g_mockCpuFail = false;
 static bool g_mockRomFail = false;
-static bool g_mockSendFail = false;
+static bool g_mockSendSuccess = true;
 static std::string g_mockNmdResult;
 constexpr uint64_t MOCK_ROM_TOTAL_BYTES = 100ULL * 1024 * 1024 * 1024; // 100GB
 #endif
@@ -115,8 +116,10 @@ bool SendFileCacheFd(SocketContext &context, HookManager& hookMgr, int32_t pid, 
         return false;
     }
     HookCacheFileMsg cacheFileMsg(pid, fileIndex, CACHE_FILE_CREATED);
+    std::unique_lock<std::mutex> sendLock(g_socketSendMtx);
     bool ret = context.SendHookConfig(reinterpret_cast<uint8_t*>(&cacheFileMsg), sizeof(cacheFileMsg)) &&
         context.SendFileDescriptor(cacheFd);
+    sendLock.unlock();
     hookMgr.RotateCacheFdOnReturn(pid, fileIndex, cacheFd);
     close(cacheFd);
     return ret;
@@ -125,12 +128,13 @@ bool SendFileCacheFd(SocketContext &context, HookManager& hookMgr, int32_t pid, 
 bool SendHookConfigMsg(pid_t pid, const uint8_t *msg, size_t size)
 {
 #ifdef NATIVE_DAEMON_UNITTEST
-    if (g_mockSendFail) {
-        return false;
+    if (g_mockSendSuccess) {
+        return true;
     }
 #endif
     std::shared_ptr<ClientConnection> connection = GetClientConnectionByPid(pid);
     CHECK_NOTNULL(connection, false, "connection not found for pid:%d", static_cast<int32_t>(pid));
+    std::lock_guard<std::mutex> sendLock(g_socketSendMtx);
     CHECK_TRUE(connection->SendHookConfig(msg, size), false, "send hook config msg fail");
     return true;
 }
@@ -145,6 +149,7 @@ bool SendInitialFileCacheFds(SocketContext &context, HookManager& hookMgr, int32
     if (!hookMgr.PrepareFileCacheContext(pid, name)) {
         return false;
     }
+    std::lock_guard<std::mutex> sendLock(g_socketSendMtx);
     for (uint16_t fileIndex = 0; fileIndex < FILE_CACHE_FD_COUNT; ++fileIndex) {
         int cacheFd = hookMgr.CreateFileCacheFd();
         if (cacheFd < 0) {
@@ -170,6 +175,7 @@ bool SendMemLeakFd(SocketContext &context, HookManager& hookMgr, const ClientCon
         PROFILER_LOG_ERROR(LOG_CORE, "SendMemLeakFd invalid fd");
         return false;
     }
+    std::lock_guard<std::mutex> sendLock(g_socketSendMtx);
     bool ret = context.SendFileDescriptor(fd);
     PROFILER_LOG_INFO(LOG_CORE, "SendMemLeakFd sent fd %d", fd);
     return ret;
@@ -179,6 +185,7 @@ bool SendDumpSimplifiedNmdRequest(pid_t pid, uint32_t cmd, int recvFd)
 {
     std::shared_ptr<ClientConnection> connection = GetClientConnectionByPid(pid);
     CHECK_NOTNULL(connection, false, "connection not found for pid:%d", static_cast<int32_t>(pid));
+    std::lock_guard<std::mutex> sendLock(g_socketSendMtx);
     CHECK_TRUE(connection->SendHookConfig(reinterpret_cast<const uint8_t *>(&cmd), sizeof(cmd)), false, "send fail");
     CHECK_TRUE(connection->SendFileDescriptor(recvFd), false, "send recvFd fail");
     PROFILER_LOG_INFO(LOG_CORE, "send dump simplified nmd request success: %d", static_cast<int32_t>(pid));
@@ -2002,9 +2009,9 @@ void NativeMemoryProfilerSaService::SetMockSystemResourceForTest(bool memFail, b
     g_mockCpuFail = cpuFail;
     g_mockRomFail = romFail;
 }
-void NativeMemoryProfilerSaService::SetMockSendFailForTest(bool fail)
+void NativeMemoryProfilerSaService::SetMockSendSuccessForTest(bool success)
 {
-    g_mockSendFail = fail;
+    g_mockSendSuccess = success;
 }
 void NativeMemoryProfilerSaService::SetMockNmdResultForTest(const std::string& result)
 {

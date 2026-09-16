@@ -2197,6 +2197,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, UpdateSimplifiedMemConfigRejectsCall
 HWTEST_F(NativeMemoryProfilerSaServiceTest, UpdateSimplifiedMemConfigRollsBackOnSendFail, TestSize.Level2)
 {
     NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    NativeMemoryProfilerSaService::SetMockSendSuccessForTest(false);
     int32_t callingPid = static_cast<int32_t>(OHOS::IPCSkeleton::GetCallingPid());
     auto hook = std::make_shared<HookManager>();
     hook->maxGrowthSize_ = 1000;
@@ -2211,6 +2212,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, UpdateSimplifiedMemConfigRollsBackOn
     EXPECT_EQ(hook->maxGrowthSize_, 1000u);
 
     NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    NativeMemoryProfilerSaService::SetMockSendSuccessForTest(true);
 }
 
 /**
