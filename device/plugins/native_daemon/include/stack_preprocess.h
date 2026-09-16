@@ -81,6 +81,9 @@ public:
     const char* GetJsRawStack(uint64_t jsChainId);
     void ReportBasicData();
     void WriteHookConfig();
+#ifdef NATIVE_DAEMON_UNITTEST
+    static std::vector<uint64_t>& GetThreadCallStack();
+#endif
     bool BuildCallFrames(const std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData,
         std::vector<CallFrame>& callFrames);
     void TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&, const std::shared_ptr<ShareMemoryBlock>&);
@@ -178,13 +181,15 @@ private:
     template <typename T>
     void ProcessStackData(std::shared_ptr<HookRecord>& hookRecord, std::vector<CallFrame>& callFrames, T& stackData);
     template <typename T>
-    void FillOfflineCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData);
+    void FillOfflineCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData,
+        std::vector<uint64_t>& callStack);
     template <typename T>
-    void FillCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData);
+    void FillCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData, std::vector<uint64_t>& callStack);
     template <typename T>
-    uint32_t SetCallStackMap(T& stackData, const HookRecordPtr& hookRecord);
+    uint32_t SetCallStackMap(T& stackData, const HookRecordPtr& hookRecord, std::vector<uint64_t>& callStack);
     template <typename T>
-    uint32_t GetCallStackId(const HookRecordPtr& hookRecord, std::vector<CallFrame>& callFrames, T& stackData);
+    uint32_t GetCallStackId(const HookRecordPtr& hookRecord, std::vector<CallFrame>& callFrames, T& stackData,
+        std::vector<uint64_t>& callStack);
     uint32_t FindCallStackId(std::vector<uint64_t>& callStack, const HookRecordPtr& hookRecord);
     template <typename T>
     void SetEventFrame(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames,
@@ -193,9 +198,10 @@ private:
     void SetEventFrame(const ReportEventBaseData& rawStack, T* event, uint32_t stackMapId,
                        const std::string& type = "");
     template <typename T>
-    void SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, std::vector<CallFrame>& callFrames, T& stackData);
+    void SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, std::vector<CallFrame>& callFrames, T& stackData,
+        std::vector<uint64_t>& callStack);
     template <typename T>
-    void SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, T& stackData);
+    void SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, T& stackData, std::vector<uint64_t>& callStack);
     template <typename T>
     void SetApplyAndReleaseMatchFrame(HookRecordPtr hookRecord, std::vector<CallFrame>& callFrames, T& stackData);
     void IntervalFlushRecordStatistics(const struct timespec& eventTime);
@@ -252,7 +258,7 @@ private:
     DmaFdSizeMap LoadDmaFdSizeMap(uint32_t pid) const;
     bool PassesSizeFilter(size_t size) const;
     uint32_t GetDmaFd(uint64_t addr) const;
-    bool GetPcsByStackId(StackId stackId, std::vector<uintptr_t>& pcs, const std::string& errorMsg);
+    bool GetPcsByStackId(StackId stackId, std::vector<uintptr_t>& pcs, const char* errorMsg);
     bool BuildNestedAsyncCallFrames(const AsyncStackData* asyncData,
         const std::shared_ptr<HookRecord>& hookRecord, std::vector<CallFrame>& callFrames);
     bool BuildRegularAsyncCallFrames(const AsyncStackData* asyncData,

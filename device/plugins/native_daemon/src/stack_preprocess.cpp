@@ -49,6 +49,7 @@ constexpr uint32_t WAIT_FILE_CACHE_STOP_CNT = 3600;
 constexpr uint32_t SECOND_TO_MILLISECOND = 1000;
 constexpr uint32_t MILLISECOND_TO_NANOSECOND = 1000 * 1000;
 constexpr uint32_t MAX_BATCH_CNT = 40;
+
 constexpr uint64_t JS_OFFLINE_IP_MASK = 0xFFFFFE0000000000;
 constexpr uint64_t DWARF_NAPI_CALLBACK = 999999;
 constexpr uint64_t STATISTICS_PERIOD_DATA_FLUSH_BATCH = 10000;
@@ -67,6 +68,13 @@ using namespace OHOS::Developtools::Profiler;
 thread_local std::vector<uint64_t> g_callStack;
 
 thread_local std::shared_ptr<BuildStackDirector> g_director{nullptr};
+
+#ifdef NATIVE_DAEMON_UNITTEST
+std::vector<uint64_t>& StackPreprocess::GetThreadCallStack()
+{
+    return g_callStack;
+}
+#endif
 
 static uint64_t TimespecToMilliseconds(const struct timespec& time)
 {
@@ -1021,12 +1029,13 @@ bool StackPreprocess::ResolveDmaSize(HookRecordPtr& hookRecord, DmaFdSizeMap& dm
     return true;
 }
 
-bool StackPreprocess::GetPcsByStackId(StackId stackIdUnion, std::vector<uintptr_t>& pcs, const std::string& errorMsg)
+bool StackPreprocess::GetPcsByStackId(StackId stackIdUnion, std::vector<uintptr_t>& pcs, const char* errorMsg)
 {
     if (stackIdUnion.value > 0) {
+        pcs.reserve(MAX_CALL_FRAME_UNWIND_SIZE);
         auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
         if (!table->GetPcsByStackId(stackIdUnion, pcs, true)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "%s", errorMsg.c_str());
+            PROFILER_LOG_ERROR(LOG_CORE, "%s", errorMsg);
             return false;
         }
     }
@@ -1046,14 +1055,12 @@ bool StackPreprocess::BuildNestedAsyncCallFrames(const AsyncStackData* asyncData
     nestedAsyncPcs.reserve(extendCount);
     for (uint32_t i = 0; i < extendCount; i++) {
         std::vector<uintptr_t> asyncPcs;
-        std::string errorMsg = "BuildCallFrames Get nestedAsyncPcs[" + std::to_string(i) + "] Failed";
-        GetPcsByStackId({asyncData->nestedAsyncIds[i]}, asyncPcs, errorMsg);
+        GetPcsByStackId({asyncData->nestedAsyncIds[i]}, asyncPcs, "BuildCallFrames Get nestedAsyncPcs Failed");
         nestedAsyncPcs.push_back(std::move(asyncPcs));
     }
 
     if (!syncStackPcs.empty() || !nestedAsyncPcs.empty()) {
-        callFrames = g_director->ConstructNestedCallFrames(
-            hookRecord, syncStackPcs, nestedAsyncPcs);
+        g_director->ConstructNestedCallFrames(hookRecord, syncStackPcs, nestedAsyncPcs);
     }
     return true;
 }
@@ -1070,8 +1077,7 @@ bool StackPreprocess::BuildRegularAsyncCallFrames(const AsyncStackData* asyncDat
         "BuildCallFrames Get asyncStackPcs Failed");
 
     if (!syncStackPcs.empty() || !asyncStackPcs.empty()) {
-        callFrames = g_director->ConstructCallFrames(
-            hookRecord, syncStackPcs, asyncStackPcs);
+        g_director->ConstructCallFrames(hookRecord, syncStackPcs, asyncStackPcs);
     }
     return true;
 }
@@ -1081,7 +1087,7 @@ bool StackPreprocess::BuildCallFrames(const std::shared_ptr<HookRecord>& hookRec
     std::vector<CallFrame>& callFrames)
 {
     if (!hookConfig_.async_stack_enable()) {
-        callFrames = g_director->ConstructCallFrames(hookRecord);
+        g_director->ConstructCallFrames(hookRecord);
         return true;
     }
     CHECK_NOTNULL(rawData, false, "rawData is null");
@@ -1118,7 +1124,8 @@ bool StackPreprocess::ProcessRegularStackData(std::shared_ptr<HookRecord>& hookR
         rawData->jsStackData = GetJsRawStack(rawData->stackContext->jsChainId);
     }
 
-    std::vector<CallFrame> callFrames;
+    std::vector<CallFrame>& callFrames = g_director->GetCallFrames();
+    callFrames.clear();
     if (!BuildCallFrames(hookRecord, rawData, callFrames)) {
         PROFILER_LOG_ERROR(LOG_CORE, "ProcessRegularStackData: BuildCallFrames failed for type %u",
                            hookRecord->GetType());
@@ -1352,7 +1359,8 @@ void StackPreprocess::BuildAndReportStack(HookRecordPtr& hookRecord)
     auto rawData = hookRecord->GetRawStack();
     uint16_t type = hookRecord->GetType();
 
-    std::vector<CallFrame> callFrames;
+    std::vector<CallFrame>& callFrames = g_director->GetCallFrames();
+    callFrames.clear();
     if (!BuildCallFrames(hookRecord, rawData, callFrames)) {
         PROFILER_LOG_ERROR(LOG_CORE, "BuildAndReportStack: BuildCallFrames failed for type %u", type);
         return;
@@ -1460,25 +1468,27 @@ inline void StackPreprocess::ReportThreadNameMap(uint32_t tid, const std::string
 }
 
 template <typename T>
-inline void StackPreprocess::FillOfflineCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData)
+inline void StackPreprocess::FillOfflineCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData,
+    std::vector<uint64_t>& callStack)
 {
     for (; idx < callFrames.size(); ++idx) {
         if (callFrames[idx].isJsFrame_) {
             ReportFrameMap(callFrames[idx], stackData);
-            g_callStack.push_back(callFrames[idx].callFrameId_ | JS_OFFLINE_IP_MASK);
+            callStack.push_back(callFrames[idx].callFrameId_ | JS_OFFLINE_IP_MASK);
             continue;
         }
-        g_callStack.push_back(callFrames[idx].ip_);
+        callStack.push_back(callFrames[idx].ip_);
     }
 }
 
 template <typename T>
-inline void StackPreprocess::FillCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData)
+inline void StackPreprocess::FillCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData,
+    std::vector<uint64_t>& callStack)
 {
     for (; idx < callFrames.size(); ++idx) {
         ReportFrameMap(callFrames[idx], stackData);
         // for call stack id
-        g_callStack.push_back(callFrames[idx].callFrameId_);
+        callStack.push_back(callFrames[idx].callFrameId_);
     }
 }
 
@@ -1604,8 +1614,9 @@ void StackPreprocess::AddCallStackIndex(uint32_t stackId, RawStackPtr rawData)
         AsyncCallStackKey key = {stackHash, GetAsyncDedupMallocSize(rawData), GetDedupTagId(rawData)};
             asyncCallStackIndex_[key] = stackId;
     } else {
-        uint64_t stackHash = CallStackHash{}(g_callStack);
-        uint32_t stackSize = static_cast<uint32_t>(g_callStack.size());
+        auto& callStack = g_callStack;
+        uint64_t stackHash = CallStackHash{}(callStack);
+        uint32_t stackSize = static_cast<uint32_t>(callStack.size());
         uint64_t nodeId = hookConfig_.arkui_mem_trace_enable() ? rawData->stackContext->nodeId : 0;
         uint32_t nodeType = hookConfig_.arkui_mem_trace_enable() ? rawData->stackContext->nodeType : 0;
         CallStackKey key = {stackHash, nodeId, stackSize, nodeType, GetDedupTagId(rawData)};
@@ -1622,8 +1633,9 @@ void StackPreprocess::AddSimplifiedCallStackIndex(uint32_t stackId, RawStackPtr 
         SimplifiedAsyncCallStackKey asyncKey = {stackHash, GetAsyncDedupMallocSize(rawData), GetDedupTagId(rawData)};
         simplifiedAsyncCallStackIndex_[asyncKey] = stackId;
     } else {
-        uint64_t stackHash = CallStackHash{}(g_callStack);
-        uint32_t stackSize = static_cast<uint32_t>(g_callStack.size());
+        auto& callStack = g_callStack;
+        uint64_t stackHash = CallStackHash{}(callStack);
+        uint32_t stackSize = static_cast<uint32_t>(callStack.size());
         SimplifiedCallStackKey key = {stackHash, stackSize, GetDedupTagId(rawData)};
         simplifiedCallStackIndex_[key] = stackId;
     }
@@ -1633,7 +1645,8 @@ void StackPreprocess::AddSimplifiedCallStackIndex(uint32_t stackId, RawStackPtr 
  * @return '0' is invalid stack id, '> 0' is valid stack id
  */
 template <typename T>
-inline uint32_t StackPreprocess::SetCallStackMap(T& stackData, const HookRecordPtr& hookRecord)
+uint32_t StackPreprocess::SetCallStackMap(T& stackData, const HookRecordPtr& hookRecord,
+    std::vector<uint64_t>& callStack)
 {
     std::lock_guard<std::mutex> guard(mtx_);
     uint32_t stackId = 0;
@@ -1644,18 +1657,20 @@ inline uint32_t StackPreprocess::SetCallStackMap(T& stackData, const HookRecordP
     // offline symbolization use ip, other use frame_map_id
     if (hookConfig_.offline_symbolization()) {
         if constexpr (std::is_same<T, ProtoEncoder::BatchNativeHookData>::value) {
-            stackmap->add_ip(g_callStack);
+            stackmap->add_ip(callStack);
         } else {
-            for (size_t i = 0; i < g_callStack.size(); i++) {
-                stackmap->add_ip(g_callStack[i]);
+            stackmap->mutable_ip()->Reserve(callStack.size());
+            for (size_t i = 0; i < callStack.size(); i++) {
+                stackmap->add_ip(callStack[i]);
             }
         }
     } else {
         if constexpr (std::is_same<T, ProtoEncoder::BatchNativeHookData>::value) {
-            stackmap->add_frame_map_id(g_callStack);
+            stackmap->add_frame_map_id(callStack);
         } else {
-            for (size_t i = 0; i < g_callStack.size(); i++) {
-                stackmap->add_frame_map_id(g_callStack[i]);
+            stackmap->mutable_frame_map_id()->Reserve(callStack.size());
+            for (size_t i = 0; i < callStack.size(); i++) {
+                stackmap->add_frame_map_id(callStack[i]);
             }
         }
     }
@@ -1672,7 +1687,7 @@ inline uint32_t StackPreprocess::SetCallStackMap(T& stackData, const HookRecordP
  */
 template <typename T>
 inline uint32_t StackPreprocess::GetCallStackId(const HookRecordPtr& hookRecord, std::vector<CallFrame>& callFrames,
-    T& stackData)
+    T& stackData, std::vector<uint64_t>& callStack)
 {
     auto rawStack = hookRecord->GetRawStack();
     // ignore the first two frame if dwarf unwind
@@ -1684,31 +1699,31 @@ inline uint32_t StackPreprocess::GetCallStackId(const HookRecordPtr& hookRecord,
     } else if ((type == MUNMAP_MSG) && !hookConfig_.munmap_stack_report()) {
         return 0;
     }
-    g_callStack.clear();
+    callStack.clear();
     bool isNapi = false;
     if (type == MEMORY_USING_MSG && hookConfig_.js_stack_report() == NAPI_CALL_STACK) {
         std::string tagName;
         GetMemTag(rawStack->stackContext->tagId, tagName);
         if (tagName.find("napi") != std::string::npos) {
-            g_callStack.reserve(callFrames.size() + 1);  // 1 : insert a frame
+            callStack.reserve(callFrames.size() + 1);  // 1 : insert a frame
             if (!hookConfig_.offline_symbolization()) {
-                g_callStack.push_back(DWARF_NAPI_CALLBACK + napiIndex_);
+                callStack.push_back(DWARF_NAPI_CALLBACK + napiIndex_);
             } else {
                 // just for offline symbolization
-                g_callStack.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
+                callStack.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
             }
             isNapi = true;
         }
     } else {
-        g_callStack.reserve(callFrames.size());
+        callStack.reserve(callFrames.size());
     }
     if (!hookConfig_.offline_symbolization()) {
-        FillCallStack(callFrames, idx, stackData);
+        FillCallStack(callFrames, idx, stackData, callStack);
     } else {
         if ((!hookConfig_.fp_unwind()) && rawStack->stackSize == 0) {
             idx = 0;
         }
-        FillOfflineCallStack(callFrames, idx, stackData);
+        FillOfflineCallStack(callFrames, idx, stackData, callStack);
     }
     if (isNapi) {
         // insert a frame
@@ -1719,11 +1734,11 @@ inline uint32_t StackPreprocess::GetCallStackId(const HookRecordPtr& hookRecord,
         ++napiIndex_;
     }
     // return call stack id
-    uint32_t stackId = FindCallStackId(g_callStack, hookRecord);
+    uint32_t stackId = FindCallStackId(callStack, hookRecord);
     if (stackId > 0) {
         return stackId;
     } else {
-        return SetCallStackMap(stackData, hookRecord);
+        return SetCallStackMap(stackData, hookRecord, callStack);
     }
 }
 
@@ -1771,34 +1786,34 @@ void StackPreprocess::FillNapiStack(std::string& tagName, std::vector<CallFrame>
 
 template <typename T>
 void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, std::vector<CallFrame>& callFrames,
-    T& stackData)
+    T& stackData, std::vector<uint64_t>& callStack)
 {
     // ignore the first two frame if dwarf unwind
     auto rawStack = hookRecord->GetRawStack();
     size_t idx = (hookConfig_.async_stack_enable() || !hookConfig_.fp_unwind()) ? FILTER_STACK_DEPTH : 0;
-    g_callStack.clear();
+    callStack.clear();
     bool isNapi = false;
     if (hookConfig_.js_stack_report() == NAPI_CALL_STACK) {
         std::string tagName;
         GetMemTag(rawStack->stackContext->tagId, tagName);
         if (tagName.find("napi") != std::string::npos) {
-            g_callStack.reserve(callFrames.size() + FRAME_DEPTH);  // insert a frame
+            callStack.reserve(callFrames.size() + FRAME_DEPTH);  // insert a frame
             if (!hookConfig_.offline_symbolization()) {
-                g_callStack.push_back(DWARF_NAPI_CALLBACK + napiIndex_);
+                callStack.push_back(DWARF_NAPI_CALLBACK + napiIndex_);
             } else {
                 // just for offline symbolization
-                g_callStack.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
+                callStack.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
             }
             isNapi = true;
         }
     } else {
-        g_callStack.reserve(callFrames.size() + 1);
+        callStack.reserve(callFrames.size() + 1);
     }
-    g_callStack.push_back(rawStack->stackContext->mallocSize | SIZE_MASK);
+    callStack.push_back(rawStack->stackContext->mallocSize | SIZE_MASK);
     if (!hookConfig_.offline_symbolization()) {
-        FillCallStack(callFrames, idx, stackData);
+        FillCallStack(callFrames, idx, stackData, callStack);
     } else {
-        FillOfflineCallStack(callFrames, idx, stackData);
+        FillOfflineCallStack(callFrames, idx, stackData, callStack);
     }
     // insert a frame
     if (isNapi) {
@@ -1809,11 +1824,11 @@ void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, s
         ++napiIndex_;
     }
     spinLock_.Lock();
-    uint32_t stackId = FindCallStackId(g_callStack, hookRecord);
+    uint32_t stackId = FindCallStackId(callStack, hookRecord);
     if (stackId > 0) {
         SetAllocStatisticsData(hookRecord, stackId, IsStackIdExistsInStatistics(stackId));
     } else {
-        stackId = SetCallStackMap(stackData, hookRecord);
+        stackId = SetCallStackMap(stackData, hookRecord, callStack);
         statisticsModelFlushCallstack_ = true;
         SetAllocStatisticsData(hookRecord, stackId);
     }
@@ -1826,29 +1841,30 @@ void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, s
 }
 
 template <typename T>
-void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, T& stackData)
+void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, T& stackData,
+    std::vector<uint64_t>& callStack)
 {
     auto rawStack = hookRecord->GetRawStack();
-    g_callStack.resize(rawStack->fpDepth + 1);
-    g_callStack[0] = (rawStack->stackContext->mallocSize | SIZE_MASK);
+    callStack.resize(rawStack->fpDepth + 1);
+    callStack[0] = (rawStack->stackContext->mallocSize | SIZE_MASK);
     uint64_t* fpIp = reinterpret_cast<uint64_t *>(rawStack->data);
     for (uint8_t idx = 0; idx < rawStack->fpDepth ; ++idx) {
         if (fpIp[idx] != 0) {
             fpIp[idx] = StripPac(fpIp[idx], 0);
         }
     }
-    if (memcpy_s(g_callStack.data() + 1, sizeof(uint64_t) * rawStack->fpDepth,
+    if (memcpy_s(callStack.data() + 1, sizeof(uint64_t) * rawStack->fpDepth,
                  rawStack->data, sizeof(uint64_t) * rawStack->fpDepth) != EOK) {
         PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s g_callStack failed");
         return;
     }
     // by call stack id set alloc statistics data.
     spinLock_.Lock();
-    uint32_t stackId = FindCallStackId(g_callStack, hookRecord);
+    uint32_t stackId = FindCallStackId(callStack, hookRecord);
     if (stackId > 0) {
         SetAllocStatisticsData(hookRecord, stackId, true);
     } else {
-        stackId = SetCallStackMap(stackData, hookRecord);
+        stackId = SetCallStackMap(stackData, hookRecord, callStack);
         statisticsModelFlushCallstack_ = true;
         SetAllocStatisticsData(hookRecord, stackId);
     }
@@ -1873,7 +1889,9 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, T& stackData)
             case MMAP_MSG:
             case MMAP_FILE_PAGE_MSG:
             case MEMORY_USING_MSG: {
-                SetAllocStatisticsFrame(hookRecord, stackData);
+                auto* cs = &g_callStack;
+                asm volatile("" : "+r"(cs) : : "memory");
+                SetAllocStatisticsFrame(hookRecord, stackData, *cs);
                 break;
             }
             case PR_SET_VMA_MSG: {
@@ -1920,7 +1938,9 @@ void StackPreprocess::SetApplyAndReleaseMatchFrame(HookRecordPtr hookRecord, std
     auto rawStack = hookRecord->GetRawStack();
     uint16_t type = hookRecord->GetType();
     if (type != PR_SET_VMA_MSG) {
-        stackMapId = GetCallStackId(hookRecord, callFrames, stackData);
+        auto* cs = &g_callStack;
+        asm volatile("" : "+r"(cs) : : "memory");
+        stackMapId = GetCallStackId(hookRecord, callFrames, stackData, *cs);
     } else {
         rawStack->stackContext->tagId = prctlPeriodTags_.size();
         prctlPeriodTags_.emplace_back(reinterpret_cast<char*>(rawStack->data));
@@ -1966,7 +1986,9 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
             case MMAP_MSG:
             case MMAP_FILE_PAGE_MSG:
             case MEMORY_USING_MSG: {
-                SetAllocStatisticsFrame(hookRecord, callFrames, stackData);
+                auto* cs = &g_callStack;
+                asm volatile("" : "+r"(cs) : : "memory");
+                SetAllocStatisticsFrame(hookRecord, callFrames, stackData, *cs);
                 break;
             }
             case PR_SET_VMA_MSG: {
@@ -1989,7 +2011,9 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
     uint32_t stackMapId = 0;
     if (hookConfig_.callframe_compress() &&
         !(type == MEMORY_TAG || type == PR_SET_VMA_MSG)) {
-        stackMapId = GetCallStackId(hookRecord, callFrames, stackData);
+        auto* cs = &g_callStack;
+        asm volatile("" : "+r"(cs) : : "memory");
+        stackMapId = GetCallStackId(hookRecord, callFrames, stackData, *cs);
     }
 
     if ((!hookConfig_.callframe_compress() || stackMapId == 0) && hookConfig_.string_compressed()) {

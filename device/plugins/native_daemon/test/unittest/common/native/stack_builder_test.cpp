@@ -43,8 +43,8 @@ void StackBuilderTest::TearDown() {}
 static HookRecordPtr CreateHookRecord(uint16_t type)
 {
     RawStackPtr rawData = std::make_shared<RawStack>();
-    rawData->baseStackData = std::make_unique<uint8_t[]>(sizeof(BaseStackRawData));
-    auto* baseData = reinterpret_cast<BaseStackRawData*>(rawData->baseStackData.get());
+    rawData->baseStackData.resize(sizeof(BaseStackRawData));
+    auto* baseData = reinterpret_cast<BaseStackRawData*>(rawData->baseStackData.data());
     *baseData = {};
     baseData->type = type;
     baseData->pid = 10;
@@ -66,8 +66,8 @@ static NativeHookConfig CreateStackBuilderConfig(bool fpUnwind)
 static RawStackPtr CreateRawStackWithContext(uint16_t type)
 {
     RawStackPtr rawData = std::make_shared<RawStack>();
-    rawData->baseStackData = std::make_unique<uint8_t[]>(sizeof(BaseStackRawData));
-    auto* baseData = reinterpret_cast<BaseStackRawData*>(rawData->baseStackData.get());
+    rawData->baseStackData.resize(sizeof(BaseStackRawData));
+    auto* baseData = reinterpret_cast<BaseStackRawData*>(rawData->baseStackData.data());
     *baseData = {};
     baseData->type = type;
     baseData->pid = 10;
@@ -184,7 +184,7 @@ HWTEST_F(StackBuilderTest, FpStackBuilderFillAsyncJsSymbolsTest, TestSize.Level0
     map->name = "test.hap";
     map->begin = 0x1000;
     map->end = 0x2000;
-    runtime->arktsMapTree_[0x1000] = map;
+    runtime->arktsMapTree_[0x1000] = {map, 1};
     runtime->jsUrlMap_["test.hap"] = 1;
 
     for (uint64_t ip = 0x1000; ip <= 0x1002; ++ip) {

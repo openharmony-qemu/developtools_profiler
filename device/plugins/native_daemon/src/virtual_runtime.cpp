@@ -53,6 +53,7 @@ void VirtualRuntime::ClearMaps()
     reportedOfflineFileIds_.clear();
     adltFound_.clear();
     adltBaseMap_.clear();
+    arktsMapCache_.clear();
 }
 
 VirtualRuntime::VirtualRuntime(const NativeHookConfig& hookConfig): hookConfig_(hookConfig)
@@ -136,9 +137,8 @@ void VirtualRuntime::MakeCallFrame(const DfxSymbol &symbol, CallFrame &callFrame
 
 bool VirtualRuntime::SymbolizeFrame(CallFrame& callFrame, pid_t pid, pid_t tid)
 {
-    DfxSymbol symbol;
-
-    auto map = FindArktsMapByAddr(callFrame.ip_);
+    auto entry = FindArktsMapEntryByAddr(callFrame.ip_);
+    auto map = entry.map;
     if (!map) {
         return false;
     }
@@ -148,35 +148,21 @@ bool VirtualRuntime::SymbolizeFrame(CallFrame& callFrame, pid_t pid, pid_t tid)
         return false;
     }
 
-    uint32_t jsfilePathId = 0;
-    auto cacheIter = jsFilePathCache_.find(callFrame.ip_);
-    if (cacheIter != jsFilePathCache_.end()) {
-        jsfilePathId = cacheIter->second;
-    } else {
-        std::string_view moduleName = map->name;
-        jsfilePathId = FindArkTsFilePath(moduleName);
-        if (jsfilePathId != 0) {
-            jsFilePathCache_.emplace(callFrame.ip_, jsfilePathId);
-        }
+    auto found = userSymbolCache_.find(std::pair(callFrame.ip_, entry.filePathId));
+    if (entry.filePathId != 0 && found != userSymbolCache_.end()) {
+        MakeCallFrame(found->second, callFrame);
+        callFrame.isJsFrame_ = true;
+        return true;
     }
 
-    auto found = userSymbolCache_.find(std::pair(callFrame.ip_, jsfilePathId));
-    if (jsfilePathId != 0 && found != userSymbolCache_.end()) {
-        symbol = found->second;
-    } else {
-        const perf_callchain_context context = PERF_CONTEXT_MAX;
-        GetSymbol(symbol, callFrame, pid, tid, context);
-    }
-
+    DfxSymbol symbol;
+    const perf_callchain_context context = PERF_CONTEXT_MAX;
+    GetSymbol(symbol, callFrame, pid, tid, context, map, entry.filePathId, true);
     callFrame.isJsFrame_ = true;
-
     if (!symbol.IsValid()) {
-        PROFILER_LOG_INFO(LOG_CORE, "SymbolizeFrame symbol.IsValid=false !!! ");
         return false;
     }
-
     MakeCallFrame(symbol, callFrame);
-
     return true;
 }
 
@@ -497,25 +483,36 @@ const DfxSymbol VirtualRuntime::GetKernelSymbol(uint64_t ip, const std::vector<s
 const DfxSymbol VirtualRuntime::GetUserSymbol(uint64_t ip, std::shared_ptr<MemMaps> curMaps, uint32_t itemIndex,
     const VirtualThread &thread)
 {
+    std::shared_ptr<DfxMap> map = nullptr;
+    uint32_t filePathId = 0;
+    if (curMaps != nullptr && itemIndex < curMaps->GetMaps().size()) {
+        map = curMaps->GetMaps()[itemIndex];
+        filePathId = curMaps->filePathId_;
+    }
+    return GetUserSymbol(ip, map, filePathId, thread);
+}
+
+const DfxSymbol VirtualRuntime::GetUserSymbol(uint64_t ip, std::shared_ptr<DfxMap> map, uint32_t filePathId,
+    const VirtualThread &thread)
+{
     DfxSymbol vaddrSymbol(ip, thread.name_);
-    if (curMaps != nullptr) {
-        auto symbolsFilesIter = symbolsFiles_.find((curMaps->GetMaps())[itemIndex]->name);
+    if (map != nullptr) {
+        auto symbolsFilesIter = symbolsFiles_.find(map->name);
         if (symbolsFilesIter != symbolsFiles_.end()) {
             auto symbolsFile = symbolsFilesIter->second.get();
-            symbolsFile->LoadDebugInfo((curMaps->GetMaps())[itemIndex]);
+            symbolsFile->LoadDebugInfo(map);
             vaddrSymbol.fileVaddr_ =
-                symbolsFile->GetVaddrInSymbols(ip, (curMaps->GetMaps())[itemIndex]->begin,
-                                               (curMaps->GetMaps())[itemIndex]->offset);
-            vaddrSymbol.module_ = (curMaps->GetMaps())[itemIndex]->name;
+                symbolsFile->GetVaddrInSymbols(ip, map->begin, map->offset);
+            vaddrSymbol.module_ = map->name;
             vaddrSymbol.symbolName_ = vaddrSymbol.GetName();
             if (!symbolsFile->SymbolsLoaded()) {
-                symbolsFile->LoadSymbols((curMaps->GetMaps())[itemIndex]);
+                symbolsFile->LoadSymbols(map);
             }
 
             DfxSymbol foundSymbols;
             if (symbolsFile->IsAbc() || symbolsFile->IsArkwebV8()) {
                 HLOGD("ABC or V8 file, symbolsFile: %s", symbolsFile->filePath_.c_str());
-                foundSymbols = symbolsFile->GetSymbolWithPcAndMap(ip, curMaps->GetMaps()[itemIndex]);
+                foundSymbols = symbolsFile->GetSymbolWithPcAndMap(ip, map);
             } else {
                 HLOGD("symbolsFile: %s", symbolsFile->filePath_.c_str());
                 foundSymbols = symbolsFile->GetSymbolWithVaddr(vaddrSymbol.fileVaddr_);
@@ -523,15 +520,15 @@ const DfxSymbol VirtualRuntime::GetUserSymbol(uint64_t ip, std::shared_ptr<MemMa
             foundSymbols.taskVaddr_ = ip;
             foundSymbols.symbolName_ = foundSymbols.GetName();
             if (!foundSymbols.IsValid()) {
-                vaddrSymbol.filePathId_ = curMaps->filePathId_;
+                vaddrSymbol.filePathId_ = filePathId;
                 return vaddrSymbol;
             } else {
-                foundSymbols.filePathId_ = curMaps->filePathId_;
+                foundSymbols.filePathId_ = filePathId;
                 return foundSymbols;
             }
         } else {
             HLOGW("addr 0x%" PRIx64 " in map but NOT found the symbol file %s", ip,
-                  curMaps->name_.c_str());
+                  map->name.c_str());
         }
     } else {
         HLOGW("ReportVaddrMapMiss");
@@ -542,15 +539,15 @@ const DfxSymbol VirtualRuntime::GetUserSymbol(uint64_t ip, std::shared_ptr<MemMa
     return vaddrSymbol;
 }
 
-bool VirtualRuntime::GetSymbolCache(uint64_t ip, std::shared_ptr<MemMaps> curMaps, DfxSymbol &symbol,
-    const VirtualThread &thread)
+bool VirtualRuntime::GetSymbolCache(uint64_t ip, uint32_t filePathId, DfxSymbol &symbol)
 {
-    if (curMaps != nullptr) {
-        auto foundSymbolIter = userSymbolCache_.find(std::pair(ip, curMaps->filePathId_));
-        if (foundSymbolIter != userSymbolCache_.end()) {
-            symbol = foundSymbolIter->second;
-            return true;
-        }
+    if (filePathId == 0) {
+        return false;
+    }
+    auto foundSymbolIter = userSymbolCache_.find(std::pair(ip, filePathId));
+    if (foundSymbolIter != userSymbolCache_.end()) {
+        symbol = foundSymbolIter->second;
+        return true;
     }
     return false;
 }
@@ -563,34 +560,55 @@ void VirtualRuntime::UpdateSymbolCache(uint64_t ip, DfxSymbol &symbol,
     cache[ip] = symbol;
 }
 
+void VirtualRuntime::FillFpUnwindJsSymbol(CallFrame& callFrame, DfxSymbol &symbol)
+{
+    if (ArktsGetSymbolCache(callFrame, symbol)) {
+        return;
+    }
+    symbol.filePathId_ = FillArkTsFilePath(callFrame.filePath_);
+    symbol.module_ = callFrame.filePath_;
+    symbol.symbolName_ = callFrame.symbolName_;
+    symbol.symbolId_ = userSymbolCache_.size() + 1;
+    if (hookConfig_.string_compressed()) {
+        FillSymbolNameId(callFrame, symbol);
+        FillFileSet(callFrame, symbol);
+    }
+    callFrame.needReport_ |= CALL_FRAME_REPORT;
+    userSymbolCache_[std::pair(callFrame.ip_, symbol.filePathId_)] = symbol;
+}
+
 void VirtualRuntime::GetSymbol(DfxSymbol &symbol, CallFrame& callFrame, pid_t pid, pid_t tid,
-    const perf_callchain_context &context)
+    const perf_callchain_context &context, std::shared_ptr<DfxMap> knownMap, uint32_t knownFilePathId,
+    bool cacheChecked)
 {
     HLOGM("try find tid %u ip 0x%" PRIx64 " in %zu symbolsFiles ", tid, callFrame.ip_, symbolsFiles_.size());
     if (hookConfig_.fp_unwind() && callFrame.isJsFrame_) {
-        if (ArktsGetSymbolCache(callFrame, symbol)) {
-            return;
-        } else {
-            symbol.filePathId_ = FillArkTsFilePath(callFrame.filePath_);
-            symbol.module_ = callFrame.filePath_;
-            symbol.symbolName_ = callFrame.symbolName_;
-            symbol.symbolId_ = userSymbolCache_.size() + 1;
-            if (hookConfig_.string_compressed()) {
-                FillSymbolNameId(callFrame, symbol);
-                FillFileSet(callFrame, symbol);
-            }
-            callFrame.needReport_ |= CALL_FRAME_REPORT;
-            userSymbolCache_[std::pair(callFrame.ip_, symbol.filePathId_)] = symbol;
-            return;
+        FillFpUnwindJsSymbol(callFrame, symbol);
+        return;
+    }
+    std::shared_ptr<MemMaps> curMaps = nullptr;
+    uint32_t itemIndex = 0;
+    uint32_t filePathId = 0;
+    if (knownMap) {
+        filePathId = knownFilePathId;
+    } else {
+        auto [foundMaps, foundIdx] = FindMap(callFrame.ip_);
+        curMaps = foundMaps;
+        itemIndex = foundIdx;
+        if (curMaps != nullptr) {
+            filePathId = curMaps->filePathId_;
         }
     }
-    auto [curMaps, itemIndex] = FindMap(callFrame.ip_);
-    if (GetSymbolCache(callFrame.ip_, curMaps, symbol, GetThread(pid, tid))) {
+    if (!cacheChecked && GetSymbolCache(callFrame.ip_, filePathId, symbol)) {
         return;
     }
     if (context == PERF_CONTEXT_USER || (context == PERF_CONTEXT_MAX && !symbol.IsValid())) {
         // check userspace memmap
-        symbol = GetUserSymbol(callFrame.ip_, curMaps, itemIndex, GetThread(pid, tid));
+        if (knownMap) {
+            symbol = GetUserSymbol(callFrame.ip_, knownMap, filePathId, GetThread(pid, tid));
+        } else {
+            symbol = GetUserSymbol(callFrame.ip_, curMaps, itemIndex, GetThread(pid, tid));
+        }
         if (symbol.IsValid()) {
             HLOGM("GetUserSymbol valid tid = %d ip = 0x%" PRIx64 "", tid, callFrame.ip_);
             symbol.symbolId_ = userSymbolCache_.size() + 1;
@@ -675,25 +693,33 @@ bool VirtualRuntime::IsArktsMap(const std::shared_ptr<DfxMap>& map) const
 }
 
 
+VirtualRuntime::ArktsMapEntry VirtualRuntime::FindArktsMapEntryByAddr(uint64_t ip) const
+{
+    uint64_t page = ip >> 12;
+    auto c = arktsMapCache_.find(page);
+    if (c != arktsMapCache_.end()) {
+        if (!c->second.map || (ip >= c->second.map->begin && ip < c->second.map->end)) {
+            return {c->second.map, c->second.filePathId};
+        }
+    }
+    ArktsMapEntry result{};
+    if (!arktsMapTree_.empty()) {
+        auto it = arktsMapTree_.upper_bound(ip);
+        if (it != arktsMapTree_.begin()) {
+            --it;
+            const auto &e = it->second;
+            if (e.map && ip >= e.map->begin && ip < e.map->end) {
+                result = e;
+            }
+        }
+    }
+    arktsMapCache_[page] = {result.map, result.filePathId};
+    return result;
+}
+
 std::shared_ptr<DfxMap> VirtualRuntime::FindArktsMapByAddr(uint64_t ip) const
 {
-    if (arktsMapTree_.empty()) {
-        return nullptr;
-    }
-
-    auto it = arktsMapTree_.upper_bound(ip);
-    if (it == arktsMapTree_.begin()) {
-        return nullptr;
-    }
-
-    --it;
-
-    const auto &map = it->second;
-    if (map && ip >= map->begin && ip < map->end) {
-        return map;
-    }
-
-    return nullptr;
+    return FindArktsMapEntryByAddr(ip).map;
 }
 
 void VirtualRuntime::MaskArktsFrame(CallFrame& callFrame)
@@ -842,7 +868,8 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info,
                 processMaps_.emplace_back(mapItem);
                 thread.SortMaps();
                 QueueOfflineMap(soBegin_);
-                arktsMapTree_[begin] = mapItem;
+                arktsMapTree_[begin] = {mapItem, memMaps->filePathId_};
+                arktsMapCache_.clear();
 
                 return;
             }

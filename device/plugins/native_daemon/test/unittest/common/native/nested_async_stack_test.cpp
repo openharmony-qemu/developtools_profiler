@@ -210,7 +210,7 @@ HWTEST_F(NestedAsyncStackTest, DirectorConstructNestedCallFramesWithJsTest, Test
     map->name = "test.hap";
     map->begin = 0x1000;
     map->end = 0x2000;
-    runtime->arktsMapTree_[0x1000] = map;
+    runtime->arktsMapTree_[0x1000] = {map, 1};
     runtime->jsUrlMap_["test.hap"] = 1;
     
     std::vector<uintptr_t> syncPcs = {0x1111, 0x2222};

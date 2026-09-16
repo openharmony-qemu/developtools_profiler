@@ -99,7 +99,14 @@ public:
     BuildStackDirector(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime, std::mutex& mtx);
     std::vector<CallFrame>& ConstructCallFrames(HookRecordPtr hookRecord, const std::vector<uintptr_t>& syncPcs = {},
                                                 const std::vector<uintptr_t>& asyncPcs = {});
-    void SetBuilder(std::shared_ptr<StackBuilder> builder) { builder_ = builder; }
+    void SetBuilder(std::shared_ptr<StackBuilder> builder)
+    {
+        builder_ = builder;
+    }
+    std::vector<CallFrame>& GetCallFrames()
+    {
+        return callFrames_;
+    }
     bool IsRecordUnwindable(HookRecordPtr);
     std::vector<CallFrame>& ConstructNestedCallFrames(HookRecordPtr hookRecord, const std::vector<uintptr_t>& syncPcs,
                                                       const std::vector<std::vector<uintptr_t>>& nestedAsyncPcs);

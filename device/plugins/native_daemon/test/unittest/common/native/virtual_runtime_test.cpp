@@ -204,17 +204,18 @@ HWTEST_F(VirtualRuntimeTest, SymbolizeFrame, TestSize.Level0)
     mapEmpty->name = "";
     mapEmpty->begin = TEST_USET_VADDR;
     mapEmpty->end = TEST_USET_MAP_BEGIN;
-    runtime_->arktsMapTree_[TEST_USET_VADDR] = mapEmpty;
+    runtime_->arktsMapTree_[TEST_USET_VADDR] = {mapEmpty, 0};
     result = runtime_->SymbolizeFrame(callFrame, 1, 1);
     EXPECT_FALSE(result);
 
     runtime_->arktsMapTree_.clear();
+    runtime_->arktsMapCache_.clear();
 
     auto map = std::make_shared<DfxMap>();
     map->name = "test.hap";
     map->begin = TEST_USET_VADDR;
     map->end = 0x2000;
-    runtime_->arktsMapTree_[TEST_USET_VADDR] = map;
+    runtime_->arktsMapTree_[TEST_USET_VADDR] = {map, 1};
 
     runtime_->jsUrlMap_["test.hap"] = 1;
 
@@ -238,7 +239,7 @@ HWTEST_F(VirtualRuntimeTest, SymbolizeFrame, TestSize.Level0)
     mapUser->name = "user_symbol";
     mapUser->begin = TEST_USET_MAP_BEGIN;
     mapUser->end = TEST_USET_MAP_BEGIN + TEST_USET_MAP_LEN;
-    runtime_->arktsMapTree_[TEST_USET_MAP_BEGIN] = mapUser;
+    runtime_->arktsMapTree_[TEST_USET_MAP_BEGIN] = {mapUser, 0};
 
     runtime_->jsUrlMap_["user_symbol"] = 2;
 
