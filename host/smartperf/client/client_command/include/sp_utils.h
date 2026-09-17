@@ -178,7 +178,7 @@ bool IsFindDHGame(const std::string &pkg);
 std::string GetSurface();
 std::string GetProductName();
 std::string EscapeShellArgs(const std::string& args);
-bool IsInvalidPkgName(const std::string& pkgName);
+bool IsValidPkgName(const std::string& pkgName);
 bool SafeLoadExec(const std::vector<std::string> &args, std::string &result);
 bool IsValidPid(const std::string &pid);
 bool IsValidWinId(const std::string &winId);

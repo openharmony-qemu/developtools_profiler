@@ -514,7 +514,7 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
 {
     if (type == CommandType::CT_PKG) {
         std::string processName = std::get<std::string>(value);
-        if (!SPUtils::IsInvalidPkgName(processName)) {
+        if (!SPUtils::IsValidPkgName(processName)) {
             LOGE("The pkgName is Abnormal characters");
             return;
         }
@@ -528,22 +528,37 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
             LOGE("The pid is Abnormal characters");
             return;
         }
-        std::string cmdLinePath = "/proc/" + processIds_ + "/cmdline";
-        FILE *fp = fopen(cmdLinePath.c_str(), "r");
-        if (fp == nullptr) {
-            LOGE("Failed to open %s", cmdLinePath.c_str());
-            return;
-        }
-        char cmdBuf[1024] = {'\0'};
-        size_t nRead = fread(cmdBuf, 1, sizeof(cmdBuf) - 1, fp);
-        fclose(fp);
-        if (nRead == 0) {
-            LOGE("Failed to read %s", cmdLinePath.c_str());
-            return;
-        }
-        cmdBuf[nRead] = '\0';
-        processName_ = cmdBuf;
+        GetPkgByPid();
     }
+    SetPkgAndPid();
+}
+
+void TaskManager::GetPkgByPid()
+{
+    std::string cmdLinePath = "/proc/" + processIds_ + "/cmdline";
+    FILE *fp = fopen(cmdLinePath.c_str(), "r");
+    if (fp == nullptr) {
+        LOGE("Failed to open %s", cmdLinePath.c_str());
+        return;
+    }
+    char cmdBuf[1024] = {'\0'};
+    size_t nRead = fread(cmdBuf, 1, sizeof(cmdBuf) - 1, fp);
+    (void)fclose(fp);
+    if (nRead == 0) {
+        LOGE("Failed to read %s", cmdLinePath.c_str());
+        return;
+    }
+    cmdBuf[nRead] = '\0';
+    std::string processName = cmdBuf;
+    if (!SPUtils::IsValidPkgName(processName)) {
+        LOGE("processName is invalid: (%s)", processName.c_str());
+        return;
+    }
+    processName_ = processName;
+}
+
+void TaskManager::SetPkgAndPid()
+{
     FPS::GetInstance().SetProcessId(processIds_);
     FPS::GetInstance().SetPackageName(processName_);
     Jitters::GetInstance().SetProcessId(processIds_);

@@ -215,7 +215,7 @@ bool StartUpDelay::ExecuteCommand(const std::string& pkgName, std::string& outpu
 std::string StartUpDelay::GetAppInforByPs(const std::string& curPkgName) const
 {
     const std::string pkgName = SPUtils::EscapeShellArgs(curPkgName);
-    bool isInvalidPkgName = SPUtils::IsInvalidPkgName(pkgName);
+    bool isInvalidPkgName = SPUtils::IsValidPkgName(pkgName);
     if (!isInvalidPkgName) {
         return std::to_string(ErrorSpCode::INVALID_PKG_NAME);
     }

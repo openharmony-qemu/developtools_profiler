@@ -650,7 +650,7 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
         isSetPid = false;
         retCode = SplitMsg(recvBuf);
         if (recvBuf.find(SMARTPERF) != std::string::npos && retCode.find(SMARTPERF) != std::string::npos) {
-            if (!SPUtils::IsInvalidPkgName(retCode)) {
+            if (!SPUtils::IsValidPkgName(retCode)) {
                 LOGE("Dubai pkgName is invalid: (%s)", retCode.c_str());
             } else {
                 Dubai::dubaiPkgName = retCode;
