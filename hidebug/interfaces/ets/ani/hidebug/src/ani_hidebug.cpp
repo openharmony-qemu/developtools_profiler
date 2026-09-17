@@ -1268,32 +1268,51 @@ static void OnDumpHeapSnapshotDone(std::shared_ptr<DumpRawHeapContext> ctx, uint
         cbEnv->PromiseResolver_Reject(ctx->deferred, err);
         return;
     }
+    bool dynamicValid = GetFileSize(ctx->dynamicFilePath) != 0;
+    bool staticValid = GetFileSize(ctx->staticFilePath) != 0;
     PostDumpSuccess(ctx->dynamicFilePath);
-    ani_string dynamicResult = nullptr;
-    ani_string staticResult = nullptr;
-    if (cbEnv->String_NewUTF8(ctx->dynamicFilePath.c_str(), ctx->dynamicFilePath.size(), &dynamicResult) != ANI_OK ||
-        cbEnv->String_NewUTF8(ctx->staticFilePath.c_str(), ctx->staticFilePath.size(), &staticResult) != ANI_OK) {
-        HILOG_ERROR(LOG_CORE, "OnDumpHeapSnapshotDone: String_NewUTF8 failed");
-        g_dumpingCount.fetch_sub(1);
-        ani_error err = CreateBusinessError(cbEnv, ErrorCode::SYSTEM_STATUS_ABNORMAL,
-            "Create dump file path string failed");
-        cbEnv->PromiseResolver_Reject(ctx->deferred, err);
-        return;
+    if (!dynamicValid) {
+        remove(ctx->dynamicFilePath.c_str());
+        HILOG_INFO(LOG_CORE, "OnDumpHeapSnapshotDone: dynamic dump file is empty, removed: %{public}s",
+            ctx->dynamicFilePath.c_str());
+    }
+    if (!staticValid) {
+        remove(ctx->staticFilePath.c_str());
+        HILOG_INFO(LOG_CORE, "OnDumpHeapSnapshotDone: static dump file is empty, removed: %{public}s",
+            ctx->staticFilePath.c_str());
+    }
+    const std::string* validPaths[RAW_HEAP_RESULT_ARRAY_SIZE] = {nullptr, nullptr};
+    size_t validCount = 0;
+    if (dynamicValid) {
+        validPaths[validCount++] = &ctx->dynamicFilePath;
+    }
+    if (staticValid) {
+        validPaths[validCount++] = &ctx->staticFilePath;
     }
     ani_array arr = nullptr;
     ani_ref initElem = cbEnv->GetUndefined(&initElem) == ANI_OK ? initElem : nullptr;
-    if (cbEnv->Array_New(RAW_HEAP_RESULT_ARRAY_SIZE, initElem, &arr) == ANI_OK) {
-        cbEnv->Array_Set(arr, 0, static_cast<ani_ref>(dynamicResult));
-        cbEnv->Array_Set(arr, 1, static_cast<ani_ref>(staticResult));
+    if (cbEnv->Array_New(validCount, initElem, &arr) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "OnDumpHeapSnapshotDone: Array_New failed, reject");
         g_dumpingCount.fetch_sub(1);
-        cbEnv->PromiseResolver_Resolve(ctx->deferred, static_cast<ani_ref>(arr));
+        ani_error err = CreateBusinessError(cbEnv, ErrorCode::SYSTEM_STATUS_ABNORMAL,
+            "Failed to create result array");
+        cbEnv->PromiseResolver_Reject(ctx->deferred, err);
         return;
     }
-    HILOG_ERROR(LOG_CORE, "OnDumpHeapSnapshotDone: Array_New failed, reject");
+    for (size_t i = 0; i < validCount; i++) {
+        ani_string pathStr = nullptr;
+        if (cbEnv->String_NewUTF8(validPaths[i]->c_str(), validPaths[i]->size(), &pathStr) != ANI_OK) {
+            HILOG_ERROR(LOG_CORE, "OnDumpHeapSnapshotDone: String_NewUTF8 failed");
+            g_dumpingCount.fetch_sub(1);
+            ani_error err = CreateBusinessError(cbEnv, ErrorCode::SYSTEM_STATUS_ABNORMAL,
+                "Create dump file path string failed");
+            cbEnv->PromiseResolver_Reject(ctx->deferred, err);
+            return;
+        }
+        cbEnv->Array_Set(arr, i, static_cast<ani_ref>(pathStr));
+    }
     g_dumpingCount.fetch_sub(1);
-    ani_error err = CreateBusinessError(cbEnv, ErrorCode::SYSTEM_STATUS_ABNORMAL,
-        "Failed to create result array");
-    cbEnv->PromiseResolver_Reject(ctx->deferred, err);
+    cbEnv->PromiseResolver_Resolve(ctx->deferred, static_cast<ani_ref>(arr));
 }
 
 ani_object DumpJsRawHeapDataAdapter(ani_env *env, ani_boolean needGC, ani_boolean needClean, ani_boolean processDump)
