@@ -258,7 +258,7 @@ bool HookSocketClient::HandleSimplifiedNmdDumpRequest(SocketContext &context)
     }
     struct OptArg opt = {0, reinterpret_cast<char *>(nmdBuf) };
     malloc_stats_print(NmdWriteStat, &opt, "s");
-    if (!WriteDataToFd(nmdRecvFd, reinterpret_cast<const uint8_t *>(opt.buf), strlen(opt.buf) + 1)) {
+    if (!WriteDataToFd(nmdRecvFd, reinterpret_cast<const uint8_t *>(opt.buf), strlen(opt.buf) + 1), false) {
         PROFILER_LOG_ERROR(LOG_CORE, "HandleSimplifiedNmdDumpRequest: failed to write data");
         close(nmdRecvFd);
         free(nmdBuf);
@@ -830,7 +830,7 @@ void HookSocketClient::SetAsyncStack()
 #endif
 }
 
-bool HookSocketClient::WriteDataToFd(int fd, const uint8_t *data, size_t size)
+bool HookSocketClient::WriteDataToFd(int fd, const uint8_t *data, size_t size, bool needFlush)
 {
     if (fd < 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "WriteDataToFd invalid fd %d", fd);
@@ -848,7 +848,7 @@ bool HookSocketClient::WriteDataToFd(int fd, const uint8_t *data, size_t size)
         }
         writtenSize += static_cast<size_t>(written);
     }
-    if (fsync(fd) != 0) {
+    if (needFlush && fsync(fd) != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "WriteDataToFd fsync failed, errno=%d", errno);
         return false;
     }
