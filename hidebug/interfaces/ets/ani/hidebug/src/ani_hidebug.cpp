@@ -1248,26 +1248,14 @@ struct DumpRawHeapContext {
     std::shared_ptr<ApiInvokeRecorder> recorder;
 };
 
-static void OnDumpHeapSnapshotDone(std::shared_ptr<DumpRawHeapContext> ctx, uint8_t retCode)
+static void RejectDumpDeferred(ani_env *env, ani_resolver deferred, int32_t errCode, const char *errMsg)
 {
-    AniThreadEnvGuard guard(g_vm);
-    ani_env *cbEnv = guard.GetEnv();
-    if (cbEnv == nullptr) {
-        HILOG_ERROR(LOG_CORE, "OnDumpHeapSnapshotDone: get ani_env failed");
-        ctx->recorder->SetErrorCode(DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED);
-        g_dumpingCount.fetch_sub(1);
-        return;
-    }
-    if (retCode != 0) {
-        int32_t errCode = TransferRetCodeToErrorCode(retCode);
-        ctx->recorder->SetErrorCode(errCode);
-        remove(ctx->dynamicFilePath.c_str());
-        remove(ctx->staticFilePath.c_str());
-        g_dumpingCount.fetch_sub(1);
-        ani_error err = CreateBusinessError(cbEnv, errCode, GetDumpRawHeapErrMsg(errCode));
-        cbEnv->PromiseResolver_Reject(ctx->deferred, err);
-        return;
-    }
+    ani_error err = CreateBusinessError(env, errCode, errMsg);
+    env->PromiseResolver_Reject(deferred, err);
+}
+
+static void ResolveDumpSuccess(std::shared_ptr<DumpRawHeapContext> ctx, ani_env *cbEnv)
+{
     bool dynamicValid = GetFileSize(ctx->dynamicFilePath) != 0;
     bool staticValid = GetFileSize(ctx->staticFilePath) != 0;
     PostDumpSuccess(ctx->dynamicFilePath);
@@ -1292,27 +1280,46 @@ static void OnDumpHeapSnapshotDone(std::shared_ptr<DumpRawHeapContext> ctx, uint
     ani_array arr = nullptr;
     ani_ref initElem = cbEnv->GetUndefined(&initElem) == ANI_OK ? initElem : nullptr;
     if (cbEnv->Array_New(validCount, initElem, &arr) != ANI_OK) {
-        HILOG_ERROR(LOG_CORE, "OnDumpHeapSnapshotDone: Array_New failed, reject");
         g_dumpingCount.fetch_sub(1);
-        ani_error err = CreateBusinessError(cbEnv, ErrorCode::SYSTEM_STATUS_ABNORMAL,
+        RejectDumpDeferred(cbEnv, ctx->deferred, ErrorCode::SYSTEM_STATUS_ABNORMAL,
             "Failed to create result array");
-        cbEnv->PromiseResolver_Reject(ctx->deferred, err);
         return;
     }
     for (size_t i = 0; i < validCount; i++) {
         ani_string pathStr = nullptr;
         if (cbEnv->String_NewUTF8(validPaths[i]->c_str(), validPaths[i]->size(), &pathStr) != ANI_OK) {
-            HILOG_ERROR(LOG_CORE, "OnDumpHeapSnapshotDone: String_NewUTF8 failed");
             g_dumpingCount.fetch_sub(1);
-            ani_error err = CreateBusinessError(cbEnv, ErrorCode::SYSTEM_STATUS_ABNORMAL,
+            RejectDumpDeferred(cbEnv, ctx->deferred, ErrorCode::SYSTEM_STATUS_ABNORMAL,
                 "Create dump file path string failed");
-            cbEnv->PromiseResolver_Reject(ctx->deferred, err);
             return;
         }
         cbEnv->Array_Set(arr, i, static_cast<ani_ref>(pathStr));
     }
     g_dumpingCount.fetch_sub(1);
     cbEnv->PromiseResolver_Resolve(ctx->deferred, static_cast<ani_ref>(arr));
+}
+
+static void OnDumpHeapSnapshotDone(std::shared_ptr<DumpRawHeapContext> ctx, uint8_t retCode)
+{
+    AniThreadEnvGuard guard(g_vm);
+    ani_env *cbEnv = guard.GetEnv();
+    if (cbEnv == nullptr) {
+        HILOG_ERROR(LOG_CORE, "OnDumpHeapSnapshotDone: get ani_env failed");
+        ctx->recorder->SetErrorCode(DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED);
+        g_dumpingCount.fetch_sub(1);
+        return;
+    }
+    if (retCode != 0) {
+        int32_t errCode = TransferRetCodeToErrorCode(retCode);
+        ctx->recorder->SetErrorCode(errCode);
+        remove(ctx->dynamicFilePath.c_str());
+        remove(ctx->staticFilePath.c_str());
+        g_dumpingCount.fetch_sub(1);
+        ani_error err = CreateBusinessError(cbEnv, errCode, GetDumpRawHeapErrMsg(errCode));
+        cbEnv->PromiseResolver_Reject(ctx->deferred, err);
+        return;
+    }
+    ResolveDumpSuccess(ctx, cbEnv);
 }
 
 ani_object DumpJsRawHeapDataAdapter(ani_env *env, ani_boolean needGC, ani_boolean needClean, ani_boolean processDump)
