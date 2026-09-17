@@ -82,7 +82,7 @@ private:
     bool WriteMemLeakInfo(const std::string& data);
     bool SendMemLeakDone();
     void SetAsyncStack();
-    bool WriteDataToFd(int fd, const uint8_t *data, size_t size);
+    bool WriteDataToFd(int fd, const uint8_t *data, size_t size, bool needFlush = true);
 
 private:
     std::shared_ptr<UnixSocketClient> unixSocketClient_;
