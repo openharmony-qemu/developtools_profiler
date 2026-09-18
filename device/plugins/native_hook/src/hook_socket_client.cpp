@@ -258,7 +258,7 @@ bool HookSocketClient::HandleSimplifiedNmdDumpRequest(SocketContext &context)
     }
     struct OptArg opt = {0, reinterpret_cast<char *>(nmdBuf) };
     malloc_stats_print(NmdWriteStat, &opt, "s");
-    if (!WriteDataToFd(nmdRecvFd, reinterpret_cast<const uint8_t *>(opt.buf), strlen(opt.buf) + 1), false) {
+    if (!WriteDataToFd(nmdRecvFd, reinterpret_cast<const uint8_t *>(opt.buf), strlen(opt.buf), false)) {
         PROFILER_LOG_ERROR(LOG_CORE, "HandleSimplifiedNmdDumpRequest: failed to write data");
         close(nmdRecvFd);
         free(nmdBuf);
