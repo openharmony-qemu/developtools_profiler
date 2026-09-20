@@ -164,7 +164,7 @@ private:
     void ReportFrameMap(CallFrame& callFrame, T& stackData);
     void ReportThreadNameMap(uint32_t tid, const std::string& tname);
     bool ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvail, ParseContext& ctx,
-        RawStackPtr& rawData, std::shared_ptr<HookRecord>& hookRecord);
+        RawStackPtr& rawData, std::shared_ptr<HookRecord>& hookRecord, bool isCrashFile);
     void SetMapsInfo();
     template <typename T>
     void SetSymbolInfo(uint32_t filePathId, ElfSymbolTable& symbolInfo, T& batchNativeHookData);

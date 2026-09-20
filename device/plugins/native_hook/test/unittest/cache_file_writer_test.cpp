@@ -19,8 +19,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <fcntl.h>
-#include <fstream>
-#include <sstream>
 #include <sys/stat.h>
 #include <thread>
 #include <unistd.h>
@@ -35,6 +33,8 @@ using namespace OHOS::Developtools::NativeDaemon;
 
 namespace {
 constexpr size_t TEST_DATA_SIZE = 128;
+// slack for record framing: length prefix + payload + two extra segments
+constexpr size_t READ_ALL_SLACK_SIZE = 64;
 const std::string TEST_CACHE_DIR = "/data/local/tmp/cache_file_writer_test/";
 
 struct FileEventRecord {
@@ -58,7 +58,14 @@ int CreateAnonCacheFd()
 std::string ReadAll(int fd)
 {
     lseek(fd, 0, SEEK_SET);
-    std::vector<char> buffer(TEST_DATA_SIZE + 16, 0);
+    uint32_t dataSize = 0;
+    if (read(fd, &dataSize, DATA_SIZE_HEADER_LEN) != static_cast<ssize_t>(DATA_SIZE_HEADER_LEN)) {
+        return "";
+    }
+    if (dataSize == 0 || dataSize > TEST_DATA_SIZE + READ_ALL_SLACK_SIZE) {
+        return "";
+    }
+    std::vector<char> buffer(dataSize, 0);
     ssize_t bytes = read(fd, buffer.data(), buffer.size());
     if (bytes <= 0) {
         return "";
@@ -66,23 +73,16 @@ std::string ReadAll(int fd)
     return std::string(buffer.data(), static_cast<size_t>(bytes));
 }
 
-bool AddressInNamedVma(uintptr_t addr, size_t size, const std::string& vmaName)
+std::string FinalizeAndRead(CacheFileWriter& writer)
 {
-    std::ifstream maps("/proc/self/maps");
-    std::string line;
-    while (std::getline(maps, line)) {
-        uintptr_t start = 0;
-        uintptr_t end = 0;
-        char dash = 0;
-        std::istringstream iss(line);
-        if (!(iss >> std::hex >> start >> dash >> end)) {
-            continue;
-        }
-        if (addr >= start && addr + size <= end && line.find(vmaName) != std::string::npos) {
-            return true;
-        }
+    if (writer.currentFileFd_ < 0) {
+        return "";
     }
-    return false;
+    int checkFd = dup(writer.currentFileFd_);
+    writer.SetCacheFileWriterEnd();
+    std::string content = ReadAll(checkFd);
+    close(checkFd);
+    return content;
 }
 
 class CacheFileWriterTest : public ::testing::Test {
@@ -109,7 +109,8 @@ HWTEST_F(CacheFileWriterTest, AddCacheFileAndWrite, TestSize.Level0)
     ASSERT_TRUE(writer.Write(data, sizeof(data)));
     ASSERT_TRUE(writer.Flush());
     EXPECT_GE(writer.currentFileFd_, 0);
-    EXPECT_FALSE(ReadAll(writer.currentFileFd_).empty());
+    EXPECT_EQ(writer.fileRecordCount_, 1u);
+    EXPECT_FALSE(FinalizeAndRead(writer).empty());
 }
 
 HWTEST_F(CacheFileWriterTest, WriteFailsWithoutWritableFd, TestSize.Level0)
@@ -134,26 +135,21 @@ HWTEST_F(CacheFileWriterTest, RotateReturnsReadyFd, TestSize.Level0)
     });
     ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
     ASSERT_TRUE(writer.AddCacheFile(1, CreateAnonCacheFd()));
-    writer.currentFileFd_ = writer.pendingFileFds_[0];
-    writer.pendingFileFds_[0] = -1;
-    writer.currentFileIndex_ = 0;
-    uint8_t existingData[TEST_DATA_SIZE] = {0x11};
-    ASSERT_TRUE(writer.WriteToFile(existingData, sizeof(existingData)));
-    writer.currentFileSize_ = 96 * 1024 * 1024;
+    ASSERT_TRUE(writer.SwitchToNextCacheFile());
+    ASSERT_TRUE(writer.mmapAddr_ != nullptr);
     uint8_t data[TEST_DATA_SIZE] = {0x33};
-    writer.WriteToMemoryCache(data, sizeof(data));
+    ASSERT_TRUE(writer.WriteToMemoryCache(data, sizeof(data)));
     ASSERT_TRUE(writer.FlushMemoryCacheToFile());
     ASSERT_EQ(events.size(), 1u);
     EXPECT_EQ(events[0].eventType, CACHE_FILE_READY);
     EXPECT_EQ(events[0].fileIndex, 0);
     EXPECT_EQ(writer.currentFileIndex_, 1);
     EXPECT_FALSE(ReadAll(events[0].dupFd).empty());
-    EXPECT_FALSE(ReadAll(writer.currentFileFd_).empty());
     close(events[0].dupFd);
     writer.Prepare(nullptr);
 }
 
-HWTEST_F(CacheFileWriterTest, StopModeSkipsMaxFileSizeRotation, TestSize.Level0)
+HWTEST_F(CacheFileWriterTest, StopModeFlushStillReturnsFile, TestSize.Level0)
 {
     std::vector<FileEventRecord> events;
     CacheFileWriter writer(1);
@@ -167,17 +163,16 @@ HWTEST_F(CacheFileWriterTest, StopModeSkipsMaxFileSizeRotation, TestSize.Level0)
     });
     ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
     ASSERT_TRUE(writer.AddCacheFile(1, CreateAnonCacheFd()));
-    writer.currentFileFd_ = writer.pendingFileFds_[0];
-    writer.pendingFileFds_[0] = -1;
-    writer.currentFileIndex_ = 0;
-    writer.currentFileSize_ = 96 * 1024 * 1024;
+    ASSERT_TRUE(writer.SwitchToNextCacheFile());
     writer.EnterStopMode();
     uint8_t data[TEST_DATA_SIZE] = {0x66};
-    writer.WriteToMemoryCache(data, sizeof(data));
+    ASSERT_TRUE(writer.WriteToMemoryCache(data, sizeof(data)));
     ASSERT_TRUE(writer.FlushMemoryCacheToFile());
-    EXPECT_TRUE(events.empty());
-    EXPECT_EQ(writer.currentFileIndex_, 0);
-    EXPECT_GT(writer.currentFileSize_, 96 * 1024 * 1024);
+    EXPECT_FALSE(events.empty());
+    EXPECT_EQ(events[0].eventType, CACHE_FILE_READY);
+    EXPECT_EQ(events[0].fileIndex, 0);
+    EXPECT_FALSE(ReadAll(events[0].dupFd).empty());
+    close(events[0].dupFd);
     writer.Prepare(nullptr);
 }
 
@@ -186,12 +181,9 @@ HWTEST_F(CacheFileWriterTest, WaitForNextCacheFileTimeout, TestSize.Level0)
     CacheFileWriter writer(1);
     writer.Prepare(nullptr);
     ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
-    writer.currentFileFd_ = writer.pendingFileFds_[0];
-    writer.pendingFileFds_[0] = -1;
-    writer.currentFileIndex_ = 0;
-    writer.currentFileSize_ = 96 * 1024 * 1024;
+    ASSERT_TRUE(writer.SwitchToNextCacheFile());
     uint8_t data[TEST_DATA_SIZE] = {0x77};
-    writer.WriteToMemoryCache(data, sizeof(data));
+    ASSERT_TRUE(writer.WriteToMemoryCache(data, sizeof(data)));
     auto start = std::chrono::steady_clock::now();
     EXPECT_FALSE(writer.FlushMemoryCacheToFile());
     auto elapsed = std::chrono::steady_clock::now() - start;
@@ -257,7 +249,7 @@ HWTEST_F(CacheFileWriterTest, WriteWithPayloadStoresCombinedRecord, TestSize.Lev
     uint8_t payload[4] = {9, 10, 11, 12};
     ASSERT_TRUE(writer.WriteWithPayload(header, sizeof(header), payload, sizeof(payload)));
     ASSERT_TRUE(writer.Flush());
-    std::string content = ReadAll(writer.currentFileFd_);
+    std::string content = FinalizeAndRead(writer);
     EXPECT_GT(content.size(), sizeof(uint32_t) + sizeof(header));
 }
 
@@ -276,7 +268,7 @@ HWTEST_F(CacheFileWriterTest, WriteWithExtraDataAllParts, TestSize.Level0)
         firstExtra, sizeof(firstExtra), secondExtra, sizeof(secondExtra)));
     ASSERT_TRUE(writer.Flush());
     
-    std::string content = ReadAll(writer.currentFileFd_);
+    std::string content = FinalizeAndRead(writer);
     uint32_t expectedTotalSize = sizeof(header) + sizeof(payload) + sizeof(firstExtra) + sizeof(secondExtra);
     EXPECT_GE(content.size(), sizeof(uint32_t) + expectedTotalSize);
 }
@@ -295,7 +287,7 @@ HWTEST_F(CacheFileWriterTest, WriteWithExtraDataNoPayload, TestSize.Level0)
         firstExtra, sizeof(firstExtra), secondExtra, sizeof(secondExtra)));
     ASSERT_TRUE(writer.Flush());
     
-    std::string content = ReadAll(writer.currentFileFd_);
+    std::string content = FinalizeAndRead(writer);
     EXPECT_GT(content.size(), sizeof(uint32_t));
 }
 
@@ -313,7 +305,7 @@ HWTEST_F(CacheFileWriterTest, WriteWithExtraDataNoFirstExtra, TestSize.Level0)
         nullptr, 0, secondExtra, sizeof(secondExtra)));
     ASSERT_TRUE(writer.Flush());
     
-    std::string content = ReadAll(writer.currentFileFd_);
+    std::string content = FinalizeAndRead(writer);
     EXPECT_GT(content.size(), sizeof(uint32_t));
 }
 
@@ -331,7 +323,7 @@ HWTEST_F(CacheFileWriterTest, WriteWithExtraDataNoSecondExtra, TestSize.Level0)
         firstExtra, sizeof(firstExtra), nullptr, 0));
     ASSERT_TRUE(writer.Flush());
     
-    std::string content = ReadAll(writer.currentFileFd_);
+    std::string content = FinalizeAndRead(writer);
     EXPECT_GT(content.size(), sizeof(uint32_t));
 }
 
@@ -346,7 +338,7 @@ HWTEST_F(CacheFileWriterTest, WriteWithExtraDataOnlyHeader, TestSize.Level0)
     ASSERT_TRUE(writer.WriteWithExtraData(header, sizeof(header), nullptr, 0, nullptr, 0, nullptr, 0));
     ASSERT_TRUE(writer.Flush());
     
-    std::string content = ReadAll(writer.currentFileFd_);
+    std::string content = FinalizeAndRead(writer);
     EXPECT_GT(content.size(), sizeof(uint32_t));
 }
 
@@ -376,7 +368,7 @@ HWTEST_F(CacheFileWriterTest, WriteWithExtraDataExceedsCacheSize, TestSize.Level
     writer.Prepare(nullptr);
     ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
     
-    size_t hugeSize = writer.memoryCacheDataSizeLimit_ + 1;
+    size_t hugeSize = MMAP_FILE_SIZE + 1;
     std::vector<uint8_t> hugeData(hugeSize, 0);
     
     EXPECT_FALSE(writer.WriteWithExtraData(hugeData.data(), hugeSize, nullptr, 0, nullptr, 0, nullptr, 0));
@@ -422,7 +414,7 @@ HWTEST_F(CacheFileWriterTest, WriteWithExtraDataMultipleWrites, TestSize.Level0)
         firstExtra, sizeof(firstExtra), secondExtra, sizeof(secondExtra)));
     ASSERT_TRUE(writer.Flush());
     
-    std::string content = ReadAll(writer.currentFileFd_);
+    std::string content = FinalizeAndRead(writer);
     EXPECT_GT(content.size(), sizeof(uint32_t) * 2);
 }
 
@@ -683,16 +675,25 @@ HWTEST_F(CacheFileWriterTest, BackpressureIntegrationTest, TestSize.Level0)
     EXPECT_FALSE(writer.ShouldApplyBackpressure());
 }
 
-HWTEST_F(CacheFileWriterTest, MemoryCacheIsOffHeapAndNamedVma, TestSize.Level0)
+HWTEST_F(CacheFileWriterTest, MapFileToMemoryCreatesFileMapping, TestSize.Level0)
 {
     CacheFileWriter writer(1);
     writer.Prepare(nullptr);
-    ASSERT_TRUE(writer.memoryCache_ != nullptr);
-    ASSERT_GT(writer.memoryCacheCapacity_, 0u);
-    EXPECT_EQ(writer.memoryCacheSize_, 0u);
-    bool inNamedVma = AddressInNamedVma(reinterpret_cast<uintptr_t>(writer.memoryCache_),
-                                        writer.memoryCacheCapacity_, "hooknativesmb");
-    EXPECT_TRUE(inNamedVma);
+    int fd = CreateAnonCacheFd();
+    ASSERT_GE(fd, 0);
+    ASSERT_TRUE(writer.AddCacheFile(0, fd));
+    ASSERT_TRUE(writer.SwitchToNextCacheFile());
+    ASSERT_TRUE(writer.mmapAddr_ != nullptr);
+    EXPECT_EQ(writer.mmapSize_, MMAP_FILE_SIZE);
+    EXPECT_EQ(writer.writeOffset_, DATA_SIZE_HEADER_LEN);
+    struct stat st = {};
+    EXPECT_EQ(fstat(writer.currentFileFd_, &st), 0);
+    EXPECT_EQ(static_cast<uint64_t>(st.st_size), MMAP_FILE_SIZE);
+    uint32_t dataSize = 1;
+    EXPECT_EQ(pread(writer.currentFileFd_, &dataSize, DATA_SIZE_HEADER_LEN, 0),
+        static_cast<ssize_t>(DATA_SIZE_HEADER_LEN));
+    EXPECT_EQ(dataSize, 0u);
+    writer.Prepare(nullptr);
 }
 
 HWTEST_F(CacheFileWriterTest, WriteWithExtraDataRollsBackOnPartialCopy, TestSize.Level0)
@@ -700,13 +701,122 @@ HWTEST_F(CacheFileWriterTest, WriteWithExtraDataRollsBackOnPartialCopy, TestSize
     CacheFileWriter writer(1);
     writer.Prepare(nullptr);
     ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
-    // Shrink the reported capacity so a later segment overflows the bounds
+    ASSERT_TRUE(writer.SwitchToNextCacheFile());
+    // Shrink the reported mapping size so a later segment overflows the bounds
     // check after the length prefix and header have already been copied.
-    writer.memoryCacheCapacity_ = sizeof(uint32_t) + 8;
+    writer.mmapSize_ = DATA_SIZE_HEADER_LEN + sizeof(uint32_t) + 8 + 2;
     uint8_t header[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     uint8_t payload[4] = {9, 10, 11, 12};
     EXPECT_FALSE(writer.WriteWithExtraData(header, sizeof(header), payload, sizeof(payload),
         nullptr, 0, nullptr, 0));
-    EXPECT_EQ(writer.memoryCacheSize_, 0u);
+    EXPECT_EQ(writer.writeOffset_, DATA_SIZE_HEADER_LEN);
+}
+
+/*
+ * @tc.name: MapFileToMemoryRejectsInvalidFd
+ * @tc.desc: test MapFileToMemory rejects negative fd.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, MapFileToMemoryRejectsInvalidFd, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    EXPECT_FALSE(writer.MapFileToMemory(-1));
+}
+
+/*
+ * @tc.name: MapFileToMemoryRejectsReadOnlyFd
+ * @tc.desc: test MapFileToMemory rejects fd opened without O_RDWR.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, MapFileToMemoryRejectsReadOnlyFd, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    std::string filePath = TEST_CACHE_DIR + "readonly_fd_test";
+    constexpr int testFileMode = 0600;
+    int fd = open(filePath.c_str(), O_RDONLY | O_CREAT, testFileMode);
+    ASSERT_GE(fd, 0);
+    EXPECT_FALSE(writer.MapFileToMemory(fd));
+    close(fd);
+    unlink(filePath.c_str());
+}
+
+/*
+ * @tc.name: UpdateDataSizeHeaderGuard
+ * @tc.desc: test UpdateDataSizeHeader does nothing when mapping is invalid or empty.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, UpdateDataSizeHeaderGuard, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    writer.UpdateDataSizeHeader();
+    EXPECT_EQ(writer.writeOffset_, 0u);
+
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    ASSERT_TRUE(writer.SwitchToNextCacheFile());
+    writer.UpdateDataSizeHeader();
+    uint32_t dataSize = 1;
+    EXPECT_EQ(pread(writer.currentFileFd_, &dataSize, DATA_SIZE_HEADER_LEN, 0),
+        static_cast<ssize_t>(DATA_SIZE_HEADER_LEN));
+    EXPECT_EQ(dataSize, 0u);
+    writer.Prepare(nullptr);
+}
+/*
+ * @tc.name: PrepareRecordWriteRejectsZeroTotalSize
+ * @tc.desc: test PrepareRecordWrite rejects zero record size before writing.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, PrepareRecordWriteRejectsZeroTotalSize, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    ASSERT_TRUE(writer.SwitchToNextCacheFile());
+    EXPECT_FALSE(writer.PrepareRecordWrite(0, sizeof(uint32_t)));
+    EXPECT_EQ(writer.writeOffset_, DATA_SIZE_HEADER_LEN);
+    writer.Prepare(nullptr);
+}
+
+/*
+ * @tc.name: PrepareRecordWriteRejectsWithoutWritableFile
+ * @tc.desc: test PrepareRecordWrite fails when no writable file is available.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, PrepareRecordWriteRejectsWithoutWritableFile, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    EXPECT_FALSE(writer.PrepareRecordWrite(TEST_DATA_SIZE, sizeof(uint32_t) + TEST_DATA_SIZE));
+    EXPECT_EQ(writer.writeOffset_, 0u);
+}
+
+/*
+ * @tc.name: FinishRecordWriteRollbackAndCount
+ * @tc.desc: test FinishRecordWrite rolls back offset on failure and counts record on success.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CacheFileWriterTest, FinishRecordWriteRollbackAndCount, TestSize.Level0)
+{
+    CacheFileWriter writer(1);
+    writer.Prepare(nullptr);
+    ASSERT_TRUE(writer.AddCacheFile(0, CreateAnonCacheFd()));
+    ASSERT_TRUE(writer.SwitchToNextCacheFile());
+    constexpr size_t incomingSize = sizeof(uint32_t) + TEST_DATA_SIZE;
+
+    size_t rollbackOffset = writer.writeOffset_;
+    EXPECT_FALSE(writer.FinishRecordWrite(false, rollbackOffset, incomingSize));
+    EXPECT_EQ(writer.writeOffset_, rollbackOffset);
+    EXPECT_EQ(writer.fileRecordCount_, 0u);
+
+    uint8_t data[TEST_DATA_SIZE] = {0x5A};
+    uint32_t totalSize = TEST_DATA_SIZE;
+    ASSERT_TRUE(writer.WriteToMemoryCache(&totalSize, sizeof(totalSize)));
+    ASSERT_TRUE(writer.WriteToMemoryCache(data, sizeof(data)));
+    EXPECT_TRUE(writer.FinishRecordWrite(true, rollbackOffset, incomingSize));
+    EXPECT_EQ(writer.writeOffset_, rollbackOffset + incomingSize);
+    EXPECT_EQ(writer.fileRecordCount_, 1u);
+    writer.Prepare(nullptr);
 }
 } // namespace

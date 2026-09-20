@@ -40,6 +40,7 @@ const int TEST_MAX_STACK_DEPTH = 20;
 const int TEST_MAX_JS_STACK_DEPTH = 10;
 const uint32_t TEST_PAGE_BYTES = 4096;
 const uint32_t TEST_WAIT_MS = 1000;
+constexpr size_t TEST_RECORD_MALLOC_SIZE = 64;
 const std::string TEST_NMD_FILE_PATH = "/data/local/tmp/nmd_test_process.txt";
 
 class HookManagerExtTest : public ::testing::Test {
@@ -165,8 +166,40 @@ protected:
         rawData.nodeId = 1;
         rawData.ts = {1, 1};
         uint32_t totalSize = sizeof(rawData);
+        uint32_t dataSize = sizeof(uint32_t) + totalSize;
+        EXPECT_EQ(write(fd, &dataSize, sizeof(dataSize)), static_cast<ssize_t>(sizeof(dataSize)));
         EXPECT_EQ(write(fd, &totalSize, sizeof(totalSize)), static_cast<ssize_t>(sizeof(totalSize)));
         EXPECT_EQ(write(fd, &rawData, sizeof(rawData)), static_cast<ssize_t>(sizeof(rawData)));
+        EXPECT_EQ(lseek(fd, 0, SEEK_SET), 0);
+        return fd;
+    }
+
+    int CreateCrashCacheFileWithRecord(uint16_t type)
+    {
+        char tempPath[] = "/data/local/tmp/crash_cache_record_XXXXXX";
+        int fd = mkstemp(tempPath);
+        EXPECT_GE(fd, 0);
+        EXPECT_EQ(unlink(tempPath), 0);
+        if (fd < 0) {
+            return -1;
+        }
+
+        StackRawData rawData = {};
+        rawData.type = type;
+        rawData.pid = TEST_PID;
+        rawData.tid = TEST_PID;
+        rawData.mallocSize = TEST_RECORD_MALLOC_SIZE;
+        rawData.nodeType = 1;
+        rawData.nodeId = 1;
+        rawData.ts = {1, 1};
+        uint32_t totalSize = sizeof(rawData);
+        uint32_t dataSize = 0;
+        EXPECT_EQ(write(fd, &dataSize, sizeof(dataSize)), static_cast<ssize_t>(sizeof(dataSize)));
+        EXPECT_EQ(write(fd, &totalSize, sizeof(totalSize)), static_cast<ssize_t>(sizeof(totalSize)));
+        EXPECT_EQ(write(fd, &rawData, sizeof(rawData)), static_cast<ssize_t>(sizeof(rawData)));
+        constexpr size_t zeroTailSize = 16;
+        uint8_t zeros[CRASH_ZERO_THRESHOLD + zeroTailSize] = {0};
+        EXPECT_EQ(write(fd, zeros, sizeof(zeros)), static_cast<ssize_t>(sizeof(zeros)));
         EXPECT_EQ(lseek(fd, 0, SEEK_SET), 0);
         return fd;
     }
@@ -2687,5 +2720,166 @@ HWTEST_F(HookManagerExtTest, CalculateRecommendedDelayBoundaryValues, TestSize.L
     EXPECT_EQ(hookManager_->CalculateRecommendedDelay(BACKPRESSURE_LOW_WATERMARK), BACKPRESSURE_MIN_DELAY_NS);
     EXPECT_EQ(hookManager_->CalculateRecommendedDelay(BACKPRESSURE_MID_WATERMARK), BACKPRESSURE_MID_DELAY_NS);
     EXPECT_EQ(hookManager_->CalculateRecommendedDelay(BACKPRESSURE_HIGH_WATERMARK), BACKPRESSURE_HIGH_DELAY_NS);
+}
+
+/*
+ * @tc.name: ReadFromCacheFileCrashFileRecoversRecord
+ * @tc.desc: test ReadFromCacheFile recovers records from a crash file (size=0) via zero region probe.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, ReadFromCacheFileCrashFileRecoversRecord, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    int fd = CreateCrashCacheFileWithRecord(MALLOC_MSG);
+    ASSERT_GE(fd, 0);
+
+    hookManager_->ReadFromCacheFile(ctx, fd);
+
+    EXPECT_EQ(ctx->stackData->Size(), 1u);
+}
+
+/*
+ * @tc.name: ReadFromCacheFileCrashFileMultiBlockRecoversAllRecords
+ * @tc.desc: test crash recovery across read-buffer boundaries: a record straddling the 4MB
+ *           boundary whose content is all zero must not trigger premature zero-probe stop.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, ReadFromCacheFileCrashFileMultiBlockRecoversAllRecords, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    const uint32_t blockSize = FILE_CACHE_READ_BUFFER_SIZE;
+    // record A fills most of block 1; record B straddles the 4MB boundary with zero content;
+    // record C follows in block 2 to prove parsing continued past the boundary
+    const uint32_t lenA = blockSize - 520;
+    const uint32_t lenB = 1020;
+    const uint32_t lenC = 100;
+    char tempPath[] = "/data/local/tmp/crash_multiblock_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    EXPECT_EQ(unlink(tempPath), 0);
+
+    uint32_t dataSize = 0;
+    ASSERT_EQ(write(fd, &dataSize, sizeof(dataSize)), static_cast<ssize_t>(sizeof(dataSize)));
+    ASSERT_EQ(write(fd, &lenA, sizeof(lenA)), static_cast<ssize_t>(sizeof(lenA)));
+    std::vector<uint8_t> bodyA(lenA, 0);
+    ASSERT_EQ(write(fd, bodyA.data(), bodyA.size()), static_cast<ssize_t>(bodyA.size()));
+    ASSERT_EQ(write(fd, &lenB, sizeof(lenB)), static_cast<ssize_t>(sizeof(lenB)));
+    std::vector<uint8_t> bodyB(lenB, 0);
+    ASSERT_EQ(write(fd, bodyB.data(), bodyB.size()), static_cast<ssize_t>(bodyB.size()));
+    ASSERT_EQ(write(fd, &lenC, sizeof(lenC)), static_cast<ssize_t>(sizeof(lenC)));
+    // body must start with a valid BaseStackRawData type (MALLOC_MSG = 0); arbitrary non-zero
+    // fill (e.g. 0x5A) yields an unknown type that HookRecordFactory rejects and drops
+    std::vector<uint8_t> bodyC(lenC, 0);
+    ASSERT_EQ(write(fd, bodyC.data(), bodyC.size()), static_cast<ssize_t>(bodyC.size()));
+    constexpr size_t zeroTailSize = 16;
+    uint8_t zeros[CRASH_ZERO_THRESHOLD + zeroTailSize] = {0};
+    ASSERT_EQ(write(fd, zeros, sizeof(zeros)), static_cast<ssize_t>(sizeof(zeros)));
+    ASSERT_EQ(lseek(fd, 0, SEEK_SET), 0);
+
+    hookManager_->ReadFromCacheFile(ctx, fd);
+
+    EXPECT_EQ(ctx->stackData->Size(), 3u);
+}
+
+/*
+ * @tc.name: ReadFromCacheFileStopsAtDeclaredDataSize
+ * @tc.desc: test ReadFromCacheFile must not read beyond declared dataSize when a record straddles
+ *           the read buffer boundary, buffered remainSize must be deducted from the read bound.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, ReadFromCacheFileStopsAtDeclaredDataSize, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    constexpr uint32_t straddleRemainSize = 100;
+    const uint32_t recordABodySize = FILE_CACHE_READ_BUFFER_SIZE - sizeof(uint32_t) - straddleRemainSize;
+    char tempPath[] = "/data/local/tmp/cache_boundary_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    EXPECT_EQ(unlink(tempPath), 0);
+
+    StackRawData recordHead = {};
+    recordHead.type = MALLOC_MSG;
+    recordHead.pid = TEST_PID;
+    recordHead.tid = TEST_PID;
+    recordHead.ts = {1, 1};
+
+    const uint32_t recordBFootprint = sizeof(uint32_t) + sizeof(StackRawData);
+    const uint32_t dataSize = sizeof(uint32_t) + recordABodySize + recordBFootprint;
+    ASSERT_EQ(write(fd, &dataSize, sizeof(dataSize)), static_cast<ssize_t>(sizeof(dataSize)));
+
+    uint32_t lenA = recordABodySize;
+    ASSERT_EQ(write(fd, &lenA, sizeof(lenA)), static_cast<ssize_t>(sizeof(lenA)));
+    std::vector<uint8_t> bodyA(recordABodySize, 0);
+    ASSERT_EQ(memcpy_s(bodyA.data(), bodyA.size(), &recordHead, sizeof(recordHead)), EOK);
+    ASSERT_EQ(write(fd, bodyA.data(), bodyA.size()), static_cast<ssize_t>(bodyA.size()));
+
+    uint32_t lenB = sizeof(recordHead);
+    ASSERT_EQ(write(fd, &lenB, sizeof(lenB)), static_cast<ssize_t>(sizeof(lenB)));
+    ASSERT_EQ(write(fd, &recordHead, sizeof(recordHead)), static_cast<ssize_t>(sizeof(recordHead)));
+
+    BaseStackRawData phantomHead = {};
+    phantomHead.type = MALLOC_MSG;
+    phantomHead.pid = TEST_PID;
+    phantomHead.tid = TEST_PID;
+    uint32_t phantomLen = sizeof(phantomHead);
+    ASSERT_EQ(write(fd, &phantomLen, sizeof(phantomLen)), static_cast<ssize_t>(sizeof(phantomLen)));
+    ASSERT_EQ(write(fd, &phantomHead, sizeof(phantomHead)), static_cast<ssize_t>(sizeof(phantomHead)));
+    ASSERT_EQ(lseek(fd, 0, SEEK_SET), 0);
+
+    hookManager_->ReadFromCacheFile(ctx, fd);
+
+    EXPECT_EQ(ctx->stackData->Size(), 2u);
+}
+
+/*
+ * @tc.name: ShouldSkipGlobalFreedRecordInvalidInput
+ * @tc.desc: test ShouldSkipGlobalFreedRecord rejects invalid input and disabled switch.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, ShouldSkipGlobalFreedRecordInvalidInput, TestSize.Level0)
+{
+    BaseStackRawData record = {};
+    record.type = MALLOC_MSG;
+    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(nullptr, sizeof(BaseStackRawData)));
+    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(
+        reinterpret_cast<const int8_t*>(&record), 0));
+
+    hookManager_->shouldSkipGlobalFreed_ = false;
+    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(
+        reinterpret_cast<const int8_t*>(&record), sizeof(BaseStackRawData)));
+
+    hookManager_->shouldSkipGlobalFreed_ = true;
+    record.type = THREAD_NAME_MSG;
+    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(
+        reinterpret_cast<const int8_t*>(&record), sizeof(BaseStackRawData)));
+}
+
+/*
+ * @tc.name: ShouldSkipGlobalFreedRecordSkipsStaleMalloc
+ * @tc.desc: test ShouldSkipGlobalFreedRecord skips malloc older than live data entry.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, ShouldSkipGlobalFreedRecordSkipsStaleMalloc, TestSize.Level0)
+{
+    hookManager_->shouldSkipGlobalFreed_ = true;
+    hookManager_->validLiveData_.clear();
+    constexpr uintptr_t testRecordAddr = 0x1234;
+    BaseStackRawData record = {};
+    record.type = MALLOC_MSG;
+    record.addr = reinterpret_cast<void*>(testRecordAddr);
+    record.ts = {1, 0};
+    hookManager_->validLiveData_[record.addr] = {2, 0};
+    EXPECT_TRUE(hookManager_->ShouldSkipGlobalFreedRecord(
+        reinterpret_cast<const int8_t*>(&record), sizeof(BaseStackRawData)));
+
+    record.ts = {3, 0};
+    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(
+        reinterpret_cast<const int8_t*>(&record), sizeof(BaseStackRawData)));
 }
 } // namespace

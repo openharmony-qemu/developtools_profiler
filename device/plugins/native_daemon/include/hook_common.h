@@ -26,6 +26,7 @@
 #include "utilities.h"
 #include "async_context_manager.h"
 #include <memory_trace.h>
+#include <unistd.h>
 #include <algorithm>
 #include <limits.h>
 #include <sstream>
@@ -110,6 +111,14 @@ constexpr size_t MAX_HOOK_PATH = 256;
 constexpr size_t CLIENT_CONFIG_TARGET_SO_NAME_SIZE = PATH_MAX;
 constexpr size_t CLIENT_CONFIG_FILTER_LIB_NAME_SIZE = MAX_HOOK_PATH + 1;
 constexpr size_t CLIENT_CONFIG_FILTER_LIB_COUNT = 16;
+constexpr uint64_t MMAP_FILE_SIZE = 64 * 1024 * 1024;
+// 4-byte dataSize header: uint32 covers 64M-4 max data; single aligned store is
+// tear-free on arm64, shrinking the crash-tearing window from 8B to 4B
+constexpr size_t DATA_SIZE_HEADER_LEN = 4;
+constexpr size_t CRASH_ZERO_THRESHOLD = 100;
+constexpr uint32_t FILE_CACHE_READ_BUFFER_SIZE = 4 * 1024 * 1024;
+constexpr uint32_t MAX_CACHE_DATA_SIZE = static_cast<uint32_t>(MMAP_FILE_SIZE) -
+    static_cast<uint32_t>(DATA_SIZE_HEADER_LEN);
 
 enum {
     MALLOCDISABLE = (1u << 0),
@@ -695,6 +704,59 @@ struct alignas(8) HookCacheFileMsg {
     uint16_t fileIndex = 0;
     uint16_t msgType = CACHE_FILE_CREATED;
 };
+
+inline bool ReadCacheFileHeader(int fd, uint32_t& dataSize)
+{
+    dataSize = 0;
+    if (fd < 0 || lseek(fd, 0, SEEK_SET) < 0 ||
+        read(fd, &dataSize, DATA_SIZE_HEADER_LEN) != static_cast<ssize_t>(DATA_SIZE_HEADER_LEN)) {
+        dataSize = 0;
+        return false;
+    }
+    return true;
+}
+
+// resets dataSize to 0 (crash fallback mode) when it exceeds the physical maximum
+inline bool SanitizeCacheDataSize(uint32_t& dataSize)
+{
+    if (dataSize > MAX_CACHE_DATA_SIZE) {
+        dataSize = 0;
+        return false;
+    }
+    return true;
+}
+
+inline bool IsBufferAllZero(const uint8_t* data, size_t size)
+{
+    if (data == nullptr || size == 0) {
+        return false;
+    }
+    return std::all_of(data, data + size, [](uint8_t byte) { return byte == 0; });
+}
+
+inline bool IsNextCacheDataAllZero(int fd)
+{
+    off_t curPos = fd < 0 ? -1 : lseek(fd, 0, SEEK_CUR);
+    if (curPos < 0) {
+        return true;
+    }
+    uint8_t probe[CRASH_ZERO_THRESHOLD] = {0};
+    ssize_t probed = pread(fd, probe, CRASH_ZERO_THRESHOLD, curPos);
+    return probed <= 0 || IsBufferAllZero(probe, static_cast<size_t>(probed));
+}
+
+struct CacheFileReadContext {
+    int fd = -1;
+    uint8_t* readBuffer = nullptr;
+    uint32_t bytesToRead = 0;
+    bool isCrashFile = false;
+    uint32_t remainSize = 0;
+    uint64_t readfileSize = 0;
+    bool readDone = false;
+};
+
+// max retry count for GetRecordHeadWithRetry when totalSize==0 in crash mode
+constexpr uint32_t MAX_ZERO_HEAD_RETRY = 5;
 
 constexpr uint32_t BACKPRESSURE_LOW_WATERMARK = 5;
 constexpr uint32_t BACKPRESSURE_MID_WATERMARK = 10;

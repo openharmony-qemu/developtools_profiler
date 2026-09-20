@@ -181,6 +181,15 @@ static bool WriteBufferToFd(int fd, const std::vector<uint8_t>& buffer)
     return lseek(fd, 0, SEEK_SET) == 0;
 }
 
+static bool WriteCacheHeaderToFd(int fd, uint32_t dataSize)
+{
+    if (fd < 0) {
+        return false;
+    }
+    ssize_t writeSize = write(fd, &dataSize, DATA_SIZE_HEADER_LEN);
+    return writeSize == static_cast<ssize_t>(DATA_SIZE_HEADER_LEN);
+}
+
 static RandomWriteCtx* ReturnNullRandomWriteCtx(WriterStruct*)
 {
     return nullptr;
@@ -618,7 +627,7 @@ HWTEST_F(StackPreprocessExtTest, ParseRecordsFromBufferStopsGracefullyOnEndMsg, 
     std::shared_ptr<HookRecord> hookRecord = nullptr;
 
     EXPECT_TRUE(preprocess.ParseRecordsFromBuffer(buffer.data(),
-        static_cast<uint32_t>(buffer.size()), ctx, rawData, hookRecord));
+        static_cast<uint32_t>(buffer.size()), ctx, rawData, hookRecord, false));
     EXPECT_TRUE(preprocess.isStopTakeData_);
     EXPECT_EQ(ctx.offset, static_cast<uint32_t>(buffer.size()));
 }
@@ -638,7 +647,26 @@ HWTEST_F(StackPreprocessExtTest, ParseRecordsFromBufferRejectsZeroLengthRecord, 
     std::shared_ptr<HookRecord> hookRecord = nullptr;
 
     EXPECT_FALSE(preprocess.ParseRecordsFromBuffer(buffer.data(),
-        static_cast<uint32_t>(buffer.size()), ctx, rawData, hookRecord));
+        static_cast<uint32_t>(buffer.size()), ctx, rawData, hookRecord, false));
+    EXPECT_EQ(ctx.offset, 0u);
+}
+
+/*
+@tc.name: ParseRecordsFromBufferCrashFileStopsOnZeroLength
+@tc.desc: test ParseRecordsFromBuffer treats zero-sized record as end of data for crash files.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ParseRecordsFromBufferCrashFileStopsOnZeroLength, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    std::vector<uint8_t> buffer(sizeof(uint32_t), 0);
+    StackPreprocess::ParseContext ctx = {0, 0};
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+
+    EXPECT_TRUE(preprocess.ParseRecordsFromBuffer(buffer.data(),
+        static_cast<uint32_t>(buffer.size()), ctx, rawData, hookRecord, true));
     EXPECT_EQ(ctx.offset, 0u);
 }
 
@@ -672,7 +700,7 @@ HWTEST_F(StackPreprocessExtTest, ParseRecordsFromBufferSkipsInvalidPayloadAndCon
     std::shared_ptr<HookRecord> hookRecord = nullptr;
 
     EXPECT_TRUE(preprocess.ParseRecordsFromBuffer(buffer.data() + dataOffset,
-        dataSize, ctx, rawData, hookRecord));
+        dataSize, ctx, rawData, hookRecord, false));
     EXPECT_EQ(ctx.offset, dataSize);
     EXPECT_EQ(ctx.readfileSize, static_cast<uint64_t>(dataSize));
     EXPECT_FALSE(preprocess.isStopTakeData_);
@@ -695,7 +723,7 @@ HWTEST_F(StackPreprocessExtTest, ParseRecordsFromBufferLeavesIncompleteRecordFor
     std::shared_ptr<HookRecord> hookRecord = nullptr;
 
     EXPECT_TRUE(preprocess.ParseRecordsFromBuffer(buffer.data(),
-        static_cast<uint32_t>(buffer.size()), ctx, rawData, hookRecord));
+        static_cast<uint32_t>(buffer.size()), ctx, rawData, hookRecord, false));
     EXPECT_EQ(ctx.offset, 0u);
     EXPECT_EQ(ctx.readfileSize, 0u);
 }
@@ -1434,6 +1462,7 @@ HWTEST_F(StackPreprocessExtTest, TakeResultsFromCacheFileHandlesPartialWindowAnd
 
     int fd = CreateTempCacheFd();
     ASSERT_GE(fd, 0);
+    ASSERT_TRUE(WriteCacheHeaderToFd(fd, buffer.size()));
     ASSERT_TRUE(WriteBufferToFd(fd, buffer));
 
     preprocess.TakeResultsFromCacheFile(fd);
@@ -1478,6 +1507,7 @@ HWTEST_F(StackPreprocessExtTest, TakeResultsFromCacheFileSkipsOversizeRecord, Te
     ASSERT_EQ(memcpy_s(buffer.data(), buffer.size(), &oversizeRecord, sizeof(oversizeRecord)), EOK);
     int fd = CreateTempCacheFd();
     ASSERT_GE(fd, 0);
+    ASSERT_TRUE(WriteCacheHeaderToFd(fd, buffer.size()));
     ASSERT_TRUE(WriteBufferToFd(fd, buffer));
 
     preprocess.TakeResultsFromCacheFile(fd);
@@ -1498,6 +1528,33 @@ HWTEST_F(StackPreprocessExtTest, TakeResultsFromCacheFileHandlesEmptyFile, TestS
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     int fd = CreateTempCacheFd();
     ASSERT_GE(fd, 0);
+
+    preprocess.TakeResultsFromCacheFile(fd);
+
+    EXPECT_NE(StackPreprocess::GetDirectorForTest(), nullptr);
+    EXPECT_FALSE(preprocess.isStopTakeData_);
+}
+
+/*
+@tc.name: TakeResultsFromCacheFileCrashFileStopsAtZeroRegion
+@tc.desc: TakeResultsFromCacheFile recovers records from a crash file (size=0) and stops at zero region.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, TakeResultsFromCacheFileCrashFileStopsAtZeroRegion, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_use_file_cache_mode(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    std::vector<uint8_t> buffer;
+    uint64_t freeAddr = 0x12345678ULL;
+    ASSERT_TRUE(AppendSizedRecord(buffer, &freeAddr, sizeof(freeAddr)));
+    constexpr size_t zeroTailPaddingSize = 16;
+    buffer.resize(buffer.size() + CRASH_ZERO_THRESHOLD + zeroTailPaddingSize, 0);
+
+    int fd = CreateTempCacheFd();
+    ASSERT_GE(fd, 0);
+    ASSERT_TRUE(WriteCacheHeaderToFd(fd, 0));
+    ASSERT_TRUE(WriteBufferToFd(fd, buffer));
 
     preprocess.TakeResultsFromCacheFile(fd);
 

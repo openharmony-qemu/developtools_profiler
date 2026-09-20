@@ -875,6 +875,8 @@ HWTEST_F(HookManagerMemLeakTest, RefreshValidLiveDataFromFile_DiscardMallocFreed
     freeRec.addr = reinterpret_cast<void*>(0x1234);
     freeRec.ts = {2, 0};
 
+    uint32_t dataSize = 2 * (sizeof(uint32_t) + sizeof(BaseStackRawData));
+    ASSERT_TRUE(write(fd, &dataSize, DATA_SIZE_HEADER_LEN) == static_cast<ssize_t>(DATA_SIZE_HEADER_LEN));
     uint32_t mallocSize = sizeof(BaseStackRawData);
     ASSERT_TRUE(write(fd, &mallocSize, sizeof(uint32_t)) == sizeof(uint32_t));
     ASSERT_TRUE(write(fd, &mallocRec, sizeof(BaseStackRawData)) == sizeof(BaseStackRawData));
@@ -882,12 +884,84 @@ HWTEST_F(HookManagerMemLeakTest, RefreshValidLiveDataFromFile_DiscardMallocFreed
     ASSERT_TRUE(write(fd, &freeSize, sizeof(uint32_t)) == sizeof(uint32_t));
     ASSERT_TRUE(write(fd, &freeRec, sizeof(BaseStackRawData)) == sizeof(BaseStackRawData));
 
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
     hookManager_->shouldSkipGlobalFreed_ = true;
     hookManager_->validLiveData_.clear();
-    hookManager_->RefreshValidLiveDataFromFile(fd);
+    hookManager_->RefreshValidLiveDataFromFile(ctx, fd);
     close(fd);
 
     EXPECT_EQ(hookManager_->validLiveData_.count(reinterpret_cast<void*>(0x1234)), 0u);
     EXPECT_TRUE(ShouldSkipRecord(&mallocRec, hookManager_->validLiveData_));
+}
+
+/*
+ * @tc.name: RefreshValidLiveDataFromFile_CrashFileStopsAtZeroRegion
+ * @tc.desc: test RefreshValidLiveDataFromFile scans crash file (size=0) until zero region.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, RefreshValidLiveDataFromFile_CrashFileStopsAtZeroRegion, TestSize.Level0)
+{
+    char path[] = "/data/local/tmp/test_malloc_crash_XXXXXX";
+    int fd = mkstemp(path);
+    ASSERT_GE(fd, 0);
+    unlink(path);
+
+    constexpr uintptr_t crashRecordAddr = 0x5678;
+    BaseStackRawData mallocRec{};
+    mallocRec.type = MALLOC_MSG;
+    mallocRec.addr = reinterpret_cast<void*>(crashRecordAddr);
+    mallocRec.ts = {1, 0};
+    uint32_t mallocSize = sizeof(BaseStackRawData);
+    uint32_t dataSize = 0;
+    ASSERT_TRUE(write(fd, &dataSize, DATA_SIZE_HEADER_LEN) == static_cast<ssize_t>(DATA_SIZE_HEADER_LEN));
+    ASSERT_TRUE(write(fd, &mallocSize, sizeof(uint32_t)) == sizeof(uint32_t));
+    ASSERT_TRUE(write(fd, &mallocRec, sizeof(BaseStackRawData)) == sizeof(BaseStackRawData));
+    constexpr size_t zeroTailSize = 16;
+    uint8_t zeros[CRASH_ZERO_THRESHOLD + zeroTailSize] = {0};
+    ASSERT_TRUE(write(fd, zeros, sizeof(zeros)) == sizeof(zeros));
+
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    hookManager_->shouldSkipGlobalFreed_ = true;
+    hookManager_->validLiveData_.clear();
+    hookManager_->RefreshValidLiveDataFromFile(ctx, fd);
+    close(fd);
+
+    EXPECT_EQ(hookManager_->validLiveData_.count(reinterpret_cast<void*>(crashRecordAddr)), 1u);
+    EXPECT_FALSE(ShouldSkipRecord(&mallocRec, hookManager_->validLiveData_));
+}
+
+/*
+ * @tc.name: RefreshValidLiveDataFromFile_CrashHeaderWithQueuedFdsDiscards
+ * @tc.desc: test RefreshValidLiveDataFromFile skips zero-header fd when other fds are still queued.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerMemLeakTest, RefreshValidLiveDataFromFile_CrashHeaderWithQueuedFdsDiscards, TestSize.Level0)
+{
+    char path[] = "/data/local/tmp/test_malloc_crash_queue_XXXXXX";
+    int fd = mkstemp(path);
+    ASSERT_GE(fd, 0);
+    unlink(path);
+
+    constexpr uintptr_t crashRecordAddr = 0x5679;
+    BaseStackRawData mallocRec{};
+    mallocRec.type = MALLOC_MSG;
+    mallocRec.addr = reinterpret_cast<void*>(crashRecordAddr);
+    mallocRec.ts = {1, 0};
+    uint32_t mallocSize = sizeof(BaseStackRawData);
+    uint32_t dataSize = 0;
+    ASSERT_TRUE(write(fd, &dataSize, DATA_SIZE_HEADER_LEN) == static_cast<ssize_t>(DATA_SIZE_HEADER_LEN));
+    ASSERT_TRUE(write(fd, &mallocSize, sizeof(uint32_t)) == sizeof(uint32_t));
+    ASSERT_TRUE(write(fd, &mallocRec, sizeof(BaseStackRawData)) == sizeof(BaseStackRawData));
+
+    constexpr int dummyQueuedFd = -2; // negative fd only inflates queue size, never used for I/O
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ctx->PushBackFdQueue(fd);
+    ctx->PushBackFdQueue(dummyQueuedFd);
+    hookManager_->shouldSkipGlobalFreed_ = true;
+    hookManager_->validLiveData_.clear();
+    hookManager_->RefreshValidLiveDataFromFile(ctx, fd);
+    close(fd);
+
+    EXPECT_EQ(hookManager_->validLiveData_.count(reinterpret_cast<void*>(crashRecordAddr)), 0u);
 }
 } // namespace
