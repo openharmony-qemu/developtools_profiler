@@ -63,7 +63,7 @@ std::map<std::string, std::string> procRamInfoLast {
         {"dev", "NA"},
         {"ttf", "NA"},
         {"arktsHeapMainThreadPss", "NA"},
-        {"childCarktsHeapPss", "NA"},
+        {"childArktsHeapPss", "NA"},
         {"childGpuPss", "NA"},
         {"childGraphicPss", "NA"},
         {"childHeapAlloc", "NA" },
@@ -178,7 +178,7 @@ std::map<std::string, std::string> RAM::ProcMemNaInfo() const
 std::map<std::string, std::string> RAM::ChildProcMemNaInfo() const
 {
     std::map<std::string, std::string> procMemInfo;
-    procMemInfo["childCarktsHeapPss"] = "NA";
+    procMemInfo["childArktsHeapPss"] = "NA";
     procMemInfo["childGpuPss"] = "NA";
     procMemInfo["childGraphicPss"] = "NA";
     procMemInfo["childHeapAlloc"] = "NA";
@@ -495,7 +495,7 @@ void RAM::FillPssRamInfo(size_t index, std::string pid,
         pid.append(":");
         pssRamInfo["childGpuPss"].append(pid).append(pss.gpuPssValue).append("|");
         pssRamInfo["childGraphicPss"].append(pid).append(pss.graphicPssValue).append("|");
-        pssRamInfo["childCarktsHeapPss"].append(pid).append(pss.arktsHeapPssValue).append("|");
+        pssRamInfo["childArktsHeapPss"].append(pid).append(pss.arktsHeapPssValue).append("|");
         pssRamInfo["childNativeHeapPss"].append(pid).append(pss.nativeHeapPssValue).append("|");
         pssRamInfo["childStackPss"].append(pid).append(pss.stackPssValue).append("|");
         pssRamInfo["childAnonPage"].append(pid).append(pss.anonPagePssValue).append("|");

@@ -53,7 +53,7 @@ private:
 
     std::unordered_map<std::string, ArgumentSpec> specs_ = {
         {"-N", {ArgumentParser::ArgType::INT,
-            "set the collection times(default value is 0) range[1,2147483647], for example: -N 10", 1, 2147483647}
+            "set the collection times, range[1,2147483647], for example: -N 10", 1, 2147483647}
         },
         {"-PKG", {ArgumentParser::ArgType::STRING, "set package name, must add, for example: -PKG ohos.samples.ecg"}},
         {"-PID", {ArgumentParser::ArgType::INT, "set process pid, must add, for example: -PID 3568"}},
@@ -64,12 +64,12 @@ private:
             "get file descriptor, must add -PID or -PKG, for example: -fds -PID 3568 or -fds -PKG ohos.samples.ecg"}
         },
         {"-c", {ArgumentParser::ArgType::BOOL,
-            "get device CPU frequency and CPU usage, process CPU usage and CPU load"}},
+            "get device cpu frequency and cpu usage, process cpu usage and cpu load ..."}},
         {"-g", {ArgumentParser::ArgType::BOOL, "get device GPU frequency and GPU load"}},
         {"-f", {ArgumentParser::ArgType::BOOL,
-            "get app refresh fps(frames per second), fps jitters, and refresh rate"}},
+            "get app refresh fps (frames per second) and fps jitters and refreshrate"}},
         {"-profilerfps", {ArgumentParser::ArgType::BOOL, "get refresh fps and timestamp"}},
-        {"-t", {ArgumentParser::ArgType::BOOL, "get remaining battery power and temperature"}},
+        {"-t", {ArgumentParser::ArgType::BOOL, "get the temperature of the gpu and soc ... "}},
         {"-p", {ArgumentParser::ArgType::BOOL,
             "get battery power consumption and voltage (Not supported by some devices)"}
         },
@@ -79,26 +79,26 @@ private:
         {"-net", {ArgumentParser::ArgType::BOOL, "get uplink and downlink traffic"}},
         {"-start", {ArgumentParser::ArgType::BOOL, "collection start command"}},
         {"-stop", {ArgumentParser::ArgType::BOOL, "collection stop command"}},
-        {"-VIEW", {ArgumentParser::ArgType::STRING, "set layler, for example: -VIEW DisplayNode"}},
+        {"-VIEW", {ArgumentParser::ArgType::STRING, "set layer, for example: -VIEW ScreenNode"}},
         {"-OUT", {ArgumentParser::ArgType::STRING, "set csv output path"}},
         {"-d", {ArgumentParser::ArgType::BOOL, "get device DDR information"}},
         {"-screen", {ArgumentParser::ArgType::BOOL, "get screen resolution"}},
         {"-deviceinfo", {ArgumentParser::ArgType::BOOL, "get device information"}},
         {"-ohtestfps", {ArgumentParser::ArgType::BOOL,
-            "used by the vilidator to obtain the fps, the collection times can be set"}
+            "used by the validator to obtain the fps, the collection times can be set"}
         },
         {"-editorServer", {ArgumentParser::ArgType::BOOL,
             "start a process to listen to the socket message of the editor"}},
         {"-deviceServer", {ArgumentParser::ArgType::BOOL,
             "start a process to listen to the socket message of the device"}},
-        {"-recordcapacity", {ArgumentParser::ArgType::BOOL, "get the battery level difference"}},
+        {"-recordcapacity", {ArgumentParser::ArgType::BOOL, "get current battery level"}},
         {"--version", {ArgumentParser::ArgType::BOOL, "get version"}},
         {"--help", {ArgumentParser::ArgType::BOOL, "get help"}},
         {"responseTime", {ArgumentParser::ArgType::BOOL,
             "get the page response delay after an application is operated"}},
         {"completeTime", {ArgumentParser::ArgType::BOOL,
             "get the page completion delay after an application is operated"}},
-        {"fpsohtest", {ArgumentParser::ArgType::BOOL, "used by the vilidator to obtain the fps"}},
+        {"fpsohtest", {ArgumentParser::ArgType::BOOL, "used by the validator to obtain the fps"}},
         {"-gc", {ArgumentParser::ArgType::BOOL, "get gpu counter default frequency is 50"}},
         {"-GPU_COUNTER", {ArgumentParser::ArgType::INT,
             std::string("get gpu counter frequency which can be set in range [50,1000] and ") +
@@ -109,7 +109,7 @@ private:
         {"-fc", {ArgumentParser::ArgType::BOOL, "get caton info"}},
         {"-server", {ArgumentParser::ArgType::BOOL, "server"}},
         {"-o", {ArgumentParser::ArgType::BOOL, "sdk data recv"}},
-        {"-ci", {ArgumentParser::ArgType::BOOL, "get cpu instructions and cycles"}},
+        {"-ci", {ArgumentParser::ArgType::BOOL, "get cpu instructions and cycles (only supported for root)"}},
         {"-fl", {ArgumentParser::ArgType::INT, "set fps"}},
         {"-ftl", {ArgumentParser::ArgType::INT, "set frameTime"}},
         {"-lockfreq", {ArgumentParser::ArgType::BOOL}},
