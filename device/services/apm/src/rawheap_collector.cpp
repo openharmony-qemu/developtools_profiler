@@ -33,11 +33,7 @@
 namespace {
 const std::string SRC_RAWHEAP_FILE_DIR = "/data/log/faultlog/temp";
 const std::string DEST_RAWHEAP_FILE_DIR = "/data/local/tmp";
-#if defined(__arm__)
-const std::string METADATA_PATH = "/system/lib/module/arkcompiler/metadata.json";
-#else
-const std::string METADATA_PATH = "/system/lib64/module/arkcompiler/metadata.json";
-#endif
+const std::string METADATA_PATH = "/system/etc/arkcompiler/metadata.json";
 constexpr int32_t WAIT_FOR_RAWHEAP_FILE_READY_MS = 60 * 1000;
 }
 
