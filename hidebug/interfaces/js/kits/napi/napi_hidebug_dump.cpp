@@ -136,7 +136,7 @@ bool AppendMetaData(const std::string& newPath)
         HILOG_ERROR(LOG_CORE, "%{public}s is not existed or empty.",  newPath.c_str());
         return false;
     }
-    constexpr auto metaDataPath = "/system/lib64/module/arkcompiler/metadata.json";
+    constexpr auto metaDataPath = "/system/etc/arkcompiler/metadata.json";
     auto metaDataFileSize = static_cast<uint32_t>(GetFileSize(metaDataPath));
     if (metaDataFileSize == 0) {
         HILOG_ERROR(LOG_CORE, "%{public}s is not existed or empty.",  metaDataPath);
