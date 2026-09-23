@@ -50,6 +50,17 @@ HiperfPluginConfig g_config;
 std::shared_ptr<TraceFileWriter> g_splitTraceWriter {nullptr};
 std::thread g_perfThread;
 
+bool UpdatePluginOutFileName(const std::string& outfile)
+{
+    if (outfile.empty()) {
+        return true;
+    }
+    size_t fileSize = sizeof(g_pluginModule.outFileName);
+    int ret = strncpy_s(g_pluginModule.outFileName, fileSize, outfile.c_str(), fileSize - 1);
+    CHECK_TRUE(ret == EOK, false, "strncpy_s error! outfile is %s", outfile.c_str());
+    return true;
+}
+
 bool ParseConfigToCmd(const HiperfPluginConfig& config, std::vector<std::string>& cmds)
 {
     g_isRoot = config.is_root();
@@ -76,9 +87,8 @@ bool ParseConfigToCmd(const HiperfPluginConfig& config, std::vector<std::string>
 
     if (!config.outfile_name().empty()) {
         prepareCmd += " -o " + config.outfile_name();
-        size_t fileSize = sizeof(g_pluginModule.outFileName);
-        int ret = strncpy_s(g_pluginModule.outFileName, fileSize, config.outfile_name().c_str(), fileSize - 1);
-        CHECK_TRUE(ret == EOK, false, "strncpy_s error! outfile is %s", config.outfile_name().c_str());
+        CHECK_TRUE(UpdatePluginOutFileName(config.outfile_name()), false,
+                   "update outfile failed, outfile is %s", config.outfile_name().c_str());
     }
     if (!config.record_args().empty()) {
         prepareCmd += " " + config.record_args();
@@ -141,9 +151,11 @@ int HiperfPluginSessionStart(const uint8_t* configData, const uint32_t configSiz
         return -1;
     }
     std::lock_guard<std::mutex> guard(g_taskMutex);
-    (void)remove("/data/local/tmp/perf.data");
     bool res = g_config.ParseFromArray(configData, configSize);
     CHECK_TRUE(res, -1, "HiperfPluginSessionStart, parse config from array FAILED! configSize: %u", configSize);
+    CHECK_TRUE(UpdatePluginOutFileName(g_config.outfile_name()), -1,
+               "HiperfPluginSessionStart, update outfile FAILED!");
+    (void)remove(g_pluginModule.outFileName);
 
     if (!g_config.split_outfile_name().empty()) {
         g_splitTraceWriter = std::make_shared<TraceFileWriter>(g_config.split_outfile_name());

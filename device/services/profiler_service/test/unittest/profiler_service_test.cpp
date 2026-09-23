@@ -28,6 +28,7 @@
 #include "profiler_service.h"
 #include "schedule_task_manager.h"
 #include "common.h"
+#include "hiperf_plugin_config.pb.h"
 
 using namespace testing::ext;
 
@@ -1737,6 +1738,280 @@ HWTEST_F(ProfilerServiceTest, MergeStandaloneFile, TestSize.Level1)
     service_->MergeStandaloneFile(targetPath, pluginName, "", "1.02");
     service_->MergeStandaloneFile("", pluginName, testPath, "1.02");
     service_->MergeStandaloneFile(targetPath, "hiperf-plugin", testPath, "1.02");
+}
+
+/**
+ * @tc.name: GetStandalonePluginOutputFileHiperfConfig
+ * @tc.desc: hiperf merge uses outfile_name from plugin config instead of default tmp path
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, GetStandalonePluginOutputFileHiperfConfig, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    HiperfPluginConfig hiperfCfg;
+    const std::string physicalOutfile = "/storage/media/100/local/files/Docs/perf.data";
+    hiperfCfg.set_outfile_name(physicalOutfile);
+    std::string cfgData;
+    ASSERT_TRUE(hiperfCfg.SerializeToString(&cfgData));
+
+    ProfilerPluginConfig pluginConfig;
+    pluginConfig.set_name("hiperf-plugin");
+    pluginConfig.set_config_data(cfgData);
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    pluginConfigs.push_back(pluginConfig);
+
+    const std::string fallbackOutFile = "/data/local/tmp/perf.data";
+    EXPECT_EQ(service_->GetStandalonePluginOutputFile("hiperf-plugin", pluginConfigs, fallbackOutFile),
+              physicalOutfile);
+}
+
+/**
+ * @tc.name: GetStandalonePluginOutputFileHiperfTmpOutfile
+ * @tc.desc: hiperf merge uses the configured /data/local/tmp outfile and does not rewrite it
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, GetStandalonePluginOutputFileHiperfTmpOutfile, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    HiperfPluginConfig hiperfCfg;
+    const std::string tmpOutfile = "/data/local/tmp/custom_perf.data";
+    hiperfCfg.set_outfile_name(tmpOutfile);
+    std::string cfgData;
+    ASSERT_TRUE(hiperfCfg.SerializeToString(&cfgData));
+
+    ProfilerPluginConfig pluginConfig;
+    pluginConfig.set_name("hiperf-plugin");
+    pluginConfig.set_config_data(cfgData);
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    pluginConfigs.push_back(pluginConfig);
+
+    const std::string fallbackOutFile = "/data/local/tmp/perf.data";
+    EXPECT_EQ(service_->GetStandalonePluginOutputFile("hiperf-plugin", pluginConfigs, fallbackOutFile), tmpOutfile);
+}
+
+/**
+ * @tc.name: GetStandalonePluginOutputFileHiperfEmptyFallback
+ * @tc.desc: hiperf merge falls back to plugin outFileName when config outfile is empty
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, GetStandalonePluginOutputFileHiperfEmptyFallback, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    HiperfPluginConfig hiperfCfg;
+    std::string cfgData;
+    ASSERT_TRUE(hiperfCfg.SerializeToString(&cfgData));
+
+    ProfilerPluginConfig pluginConfig;
+    pluginConfig.set_name("hiperf-plugin");
+    pluginConfig.set_config_data(cfgData);
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    pluginConfigs.push_back(pluginConfig);
+
+    const std::string fallbackOutFile = "/data/local/tmp/perf.data";
+    EXPECT_EQ(service_->GetStandalonePluginOutputFile("hiperf-plugin", pluginConfigs, fallbackOutFile),
+              fallbackOutFile);
+}
+
+/**
+ * @tc.name: GetStandalonePluginOutputFileOtherPlugin
+ * @tc.desc: hiebpf plugin with empty config data falls back to the plugin outfile
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, GetStandalonePluginOutputFileOtherPlugin, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ProfilerPluginConfig pluginConfig;
+    pluginConfig.set_name("hiebpf-plugin");
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    pluginConfigs.push_back(pluginConfig);
+    const std::string fallbackOutFile = "/data/local/tmp/hiebpf.data";
+    EXPECT_EQ(service_->GetStandalonePluginOutputFile("hiebpf-plugin", pluginConfigs, fallbackOutFile),
+              fallbackOutFile);
+}
+
+/**
+ * @tc.name: GetStandalonePluginOutputFileHiebpfConfig
+ * @tc.desc: hiebpf merge uses outfile_name from plugin config instead of default tmp path
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, GetStandalonePluginOutputFileHiebpfConfig, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    HiebpfConfig hiebpfCfg;
+    const std::string physicalOutfile = "/storage/media/100/local/files/Docs/hiebpf.data";
+    hiebpfCfg.set_outfile_name(physicalOutfile);
+    std::string cfgData;
+    ASSERT_TRUE(hiebpfCfg.SerializeToString(&cfgData));
+
+    ProfilerPluginConfig pluginConfig;
+    pluginConfig.set_name("hiebpf-plugin");
+    pluginConfig.set_config_data(cfgData);
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    pluginConfigs.push_back(pluginConfig);
+
+    const std::string fallbackOutFile = "/data/local/tmp/hiebpf.data";
+    EXPECT_EQ(service_->GetStandalonePluginOutputFile("hiebpf-plugin", pluginConfigs, fallbackOutFile),
+              physicalOutfile);
+}
+
+/**
+ * @tc.name: GetStandalonePluginOutputFileHiebpfTmpOutfile
+ * @tc.desc: hiebpf merge uses the configured /data/local/tmp outfile and does not rewrite it
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, GetStandalonePluginOutputFileHiebpfTmpOutfile, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    HiebpfConfig hiebpfCfg;
+    const std::string tmpOutfile = "/data/local/tmp/custom_hiebpf.data";
+    hiebpfCfg.set_outfile_name(tmpOutfile);
+    std::string cfgData;
+    ASSERT_TRUE(hiebpfCfg.SerializeToString(&cfgData));
+
+    ProfilerPluginConfig pluginConfig;
+    pluginConfig.set_name("hiebpf-plugin");
+    pluginConfig.set_config_data(cfgData);
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    pluginConfigs.push_back(pluginConfig);
+
+    const std::string fallbackOutFile = "/data/local/tmp/hiebpf.data";
+    EXPECT_EQ(service_->GetStandalonePluginOutputFile("hiebpf-plugin", pluginConfigs, fallbackOutFile), tmpOutfile);
+}
+
+/**
+ * @tc.name: ResolveStandaloneMergePathFallback
+ * @tc.desc: merge path falls back to CanonicalizeSpecPath when parent realpath fails
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, ResolveStandaloneMergePathFallback, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    const std::string missingParentPath = "/this/does/not/exist/perf.data";
+    EXPECT_EQ(service_->ResolveStandaloneMergePath(missingParentPath), missingParentPath);
+}
+
+/**
+ * @tc.name: GetStandalonePluginOutputFileNeitherPlugin
+ * @tc.desc: plugins other than hiperf and hiebpf keep the fallback outfile
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, GetStandalonePluginOutputFileNeitherPlugin, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ProfilerPluginConfig pluginConfig;
+    pluginConfig.set_name("memory-plugin");
+    pluginConfig.set_config_data("unused");
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    pluginConfigs.push_back(pluginConfig);
+    const std::string fallbackOutFile = "/data/local/tmp/memory.data";
+    EXPECT_EQ(service_->GetStandalonePluginOutputFile("memory-plugin", pluginConfigs, fallbackOutFile),
+              fallbackOutFile);
+}
+
+/**
+ * @tc.name: GetStandalonePluginOutputFileInvalidHiperfData
+ * @tc.desc: invalid hiperf config data falls back to the plugin outfile
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, GetStandalonePluginOutputFileInvalidHiperfData, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ProfilerPluginConfig pluginConfig;
+    pluginConfig.set_name("hiperf-plugin");
+    pluginConfig.set_config_data(std::string("\x80", 1));
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    pluginConfigs.push_back(pluginConfig);
+    const std::string fallbackOutFile = "/data/local/tmp/perf.data";
+    EXPECT_EQ(service_->GetStandalonePluginOutputFile("hiperf-plugin", pluginConfigs, fallbackOutFile),
+              fallbackOutFile);
+}
+
+/**
+ * @tc.name: GetStandalonePluginOutputFileEmptyList
+ * @tc.desc: missing plugin config falls back to the plugin outfile
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, GetStandalonePluginOutputFileEmptyList, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    const std::string fallbackOutFile = "/data/local/tmp/perf.data";
+    EXPECT_EQ(service_->GetStandalonePluginOutputFile("hiperf-plugin", pluginConfigs, fallbackOutFile),
+              fallbackOutFile);
+}
+
+/**
+ * @tc.name: GetStandalonePluginOutputFileHiebpfEmptyFallback
+ * @tc.desc: hiebpf merge falls back to plugin outFileName when config outfile is empty
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, GetStandalonePluginOutputFileHiebpfEmptyFallback, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    HiebpfConfig hiebpfCfg;
+    std::string cfgData;
+    ASSERT_TRUE(hiebpfCfg.SerializeToString(&cfgData));
+
+    ProfilerPluginConfig pluginConfig;
+    pluginConfig.set_name("hiebpf-plugin");
+    pluginConfig.set_config_data(cfgData);
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    pluginConfigs.push_back(pluginConfig);
+
+    const std::string fallbackOutFile = "/data/local/tmp/hiebpf.data";
+    EXPECT_EQ(service_->GetStandalonePluginOutputFile("hiebpf-plugin", pluginConfigs, fallbackOutFile),
+              fallbackOutFile);
+}
+
+/**
+ * @tc.name: ResolveStandaloneMergePathEmpty
+ * @tc.desc: empty merge path stays empty
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, ResolveStandaloneMergePathEmpty, TestSize.Level2)
+{
+    ASSERT_NE(service_, nullptr);
+    EXPECT_EQ(service_->ResolveStandaloneMergePath(""), "");
+}
+
+/**
+ * @tc.name: GetStandalonePluginOutputFileNameMismatch
+ * @tc.desc: hiperf lookup ignores a config whose plugin name does not match
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, GetStandalonePluginOutputFileNameMismatch, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    HiperfPluginConfig hiperfCfg;
+    hiperfCfg.set_outfile_name("/storage/media/100/local/files/Docs/perf.data");
+    std::string cfgData;
+    ASSERT_TRUE(hiperfCfg.SerializeToString(&cfgData));
+    ProfilerPluginConfig pluginConfig;
+    pluginConfig.set_name("memory-plugin");
+    pluginConfig.set_config_data(cfgData);
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    pluginConfigs.push_back(pluginConfig);
+    const std::string fallbackOutFile = "/data/local/tmp/perf.data";
+    EXPECT_EQ(service_->GetStandalonePluginOutputFile("hiperf-plugin", pluginConfigs, fallbackOutFile),
+              fallbackOutFile);
+}
+
+/**
+ * @tc.name: GetStandalonePluginOutputFileInvalidHiebpfData
+ * @tc.desc: invalid hiebpf config data falls back to the plugin outfile
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, GetStandalonePluginOutputFileInvalidHiebpfData, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ProfilerPluginConfig pluginConfig;
+    pluginConfig.set_name("hiebpf-plugin");
+    pluginConfig.set_config_data(std::string("\x80", 1));
+    std::vector<ProfilerPluginConfig> pluginConfigs;
+    pluginConfigs.push_back(pluginConfig);
+    const std::string fallbackOutFile = "/data/local/tmp/hiebpf.data";
+    EXPECT_EQ(service_->GetStandalonePluginOutputFile("hiebpf-plugin", pluginConfigs, fallbackOutFile),
+              fallbackOutFile);
 }
 
 /**

@@ -17,6 +17,7 @@
 #include <vector>
 #include <gtest/gtest.h>
 #include "google/protobuf/text_format.h"
+#include "hiperf_plugin_config_standard.pb.h"
 #include "native_hook_config_standard.pb.h"
 #include "parse_plugin_config.h"
 #include "logging.h"
@@ -289,5 +290,311 @@ HWTEST_F(ParsePluginConfigTest, TestNativeHookRestraceTag, TestSize.Level0)
     ProfilerPluginConfig pluginConfig;
     parseConfig.pluginConfigMap["nativehook"] = oss.str();
     EXPECT_FALSE(parseConfig.SetSerializeHookConfig("nativehook", pluginConfig));
+}
+
+/**
+ * @tc.name: TestConvertHiperfSandboxPaths
+ * @tc.desc: hiperf plugin config converts sandbox and ~/ outfile to physical Docs path
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestConvertHiperfSandboxPaths, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    ForStandard::HiperfPluginConfig hiperfConfig;
+    hiperfConfig.set_outfile_name("/storage/Users/currentUser/perf.data");
+    hiperfConfig.set_split_outfile_name("~/split.htrace");
+    hiperfConfig.set_record_args("-a -d 1");
+    constexpr int32_t sandboxCallingUid = 20000001;
+    parseConfig.ConvertHiperfSandboxPaths(hiperfConfig, sandboxCallingUid);
+    EXPECT_EQ(hiperfConfig.outfile_name(), "/storage/media/100/local/files/Docs/perf.data");
+    EXPECT_EQ(hiperfConfig.split_outfile_name(), "/storage/media/100/local/files/Docs/split.htrace");
+    EXPECT_EQ(hiperfConfig.record_args(), "-a -d 1");
+}
+
+/**
+ * @tc.name: TestSerializeHiperfNormalOutfile
+ * @tc.desc: hiperf plugin config keeps /data/local/tmp outfile unchanged
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestSerializeHiperfNormalOutfile, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    const std::string normalOutfile = "/data/local/tmp/perf.data";
+    parseConfig.pluginConfigMap["hiperf-plugin"] =
+        "outfile_name: \"" + normalOutfile + "\"\n"
+        "record_args: \"-a -d 1\"\n";
+    ProfilerPluginConfig pluginConfig;
+    ASSERT_TRUE(parseConfig.SetSerializeHiperfConfig("hiperf-plugin", pluginConfig));
+
+    ForStandard::HiperfPluginConfig hiperfConfig;
+    ASSERT_TRUE(hiperfConfig.ParseFromString(pluginConfig.config_data()));
+    EXPECT_EQ(hiperfConfig.outfile_name(), normalOutfile);
+}
+
+/**
+ * @tc.name: TestConvertHiperfTmpOutfileForSandboxUid
+ * @tc.desc: sandbox uid keeps hiperf /data/local/tmp outfile unchanged
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestConvertHiperfTmpOutfileForSandboxUid, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    ForStandard::HiperfPluginConfig hiperfConfig;
+    const std::string tmpOutfile = "/data/local/tmp/perf.data";
+    hiperfConfig.set_outfile_name(tmpOutfile);
+    constexpr int32_t sandboxCallingUid = 20000001;
+    parseConfig.ConvertHiperfSandboxPaths(hiperfConfig, sandboxCallingUid);
+    EXPECT_EQ(hiperfConfig.outfile_name(), tmpOutfile);
+}
+
+/**
+ * @tc.name: TestConvertHiperfEmptyOutfileForSandboxUid
+ * @tc.desc: empty hiperf outfile stays empty for a sandbox uid
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestConvertHiperfEmptyOutfileForSandboxUid, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    ForStandard::HiperfPluginConfig hiperfConfig;
+    constexpr int32_t sandboxCallingUid = 20000001;
+    parseConfig.ConvertHiperfSandboxPaths(hiperfConfig, sandboxCallingUid);
+    EXPECT_TRUE(hiperfConfig.outfile_name().empty());
+}
+
+/**
+ * @tc.name: TestConvertHiperfTmpOutfileForNonSandboxUid
+ * @tc.desc: non-sandbox uid keeps hiperf /data/local/tmp outfile unchanged
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestConvertHiperfTmpOutfileForNonSandboxUid, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    ForStandard::HiperfPluginConfig hiperfConfig;
+    const std::string tmpOutfile = "/data/local/tmp/perf.data";
+    hiperfConfig.set_outfile_name(tmpOutfile);
+    constexpr int32_t nonSandboxCallingUid = 20000000;
+    parseConfig.ConvertHiperfSandboxPaths(hiperfConfig, nonSandboxCallingUid);
+    EXPECT_EQ(hiperfConfig.outfile_name(), tmpOutfile);
+}
+
+/**
+ * @tc.name: TestConvertHiperfTmpSplitOutfileForSandboxUid
+ * @tc.desc: sandbox uid keeps hiperf tmp split outfile unchanged
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestConvertHiperfTmpSplitOutfileForSandboxUid, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    ForStandard::HiperfPluginConfig hiperfConfig;
+    const std::string tmpOutfile = "/data/local/tmp/perf.data";
+    const std::string tmpSplitOutfile = "/data/local/tmp/split.htrace";
+    hiperfConfig.set_outfile_name(tmpOutfile);
+    hiperfConfig.set_split_outfile_name(tmpSplitOutfile);
+    constexpr int32_t sandboxCallingUid = 20000001;
+    parseConfig.ConvertHiperfSandboxPaths(hiperfConfig, sandboxCallingUid);
+    EXPECT_EQ(hiperfConfig.outfile_name(), tmpOutfile);
+    EXPECT_EQ(hiperfConfig.split_outfile_name(), tmpSplitOutfile);
+}
+
+/**
+ * @tc.name: TestConvertHiebpfSandboxPaths
+ * @tc.desc: hiebpf plugin config converts sandbox and ~/ outfile to physical Docs path
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestConvertHiebpfSandboxPaths, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    ForStandard::HiebpfConfig hiebpfConfig;
+    hiebpfConfig.set_outfile_name("/storage/Users/currentUser/hiebpf.data");
+    hiebpfConfig.set_split_outfile_name("~/split.htrace");
+    hiebpfConfig.set_cmd_line("hiebpf --start true");
+    constexpr int32_t sandboxCallingUid = 20000001;
+    parseConfig.ConvertHiebpfSandboxPaths(hiebpfConfig, sandboxCallingUid);
+    EXPECT_EQ(hiebpfConfig.outfile_name(), "/storage/media/100/local/files/Docs/hiebpf.data");
+    EXPECT_EQ(hiebpfConfig.split_outfile_name(), "/storage/media/100/local/files/Docs/split.htrace");
+    EXPECT_EQ(hiebpfConfig.cmd_line(), "hiebpf --start true");
+}
+
+/**
+ * @tc.name: TestConvertHiebpfTmpOutfileUnchanged
+ * @tc.desc: sandbox uid keeps hiebpf /data/local/tmp outfile and empty outfile unchanged
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestConvertHiebpfTmpOutfileUnchanged, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    ForStandard::HiebpfConfig hiebpfConfig;
+    const std::string tmpOutfile = "/data/local/tmp/hiebpf.data";
+    hiebpfConfig.set_outfile_name(tmpOutfile);
+    constexpr int32_t sandboxCallingUid = 20000001;
+    parseConfig.ConvertHiebpfSandboxPaths(hiebpfConfig, sandboxCallingUid);
+    EXPECT_EQ(hiebpfConfig.outfile_name(), tmpOutfile);
+
+    ForStandard::HiebpfConfig emptyConfig;
+    parseConfig.ConvertHiebpfSandboxPaths(emptyConfig, sandboxCallingUid);
+    EXPECT_TRUE(emptyConfig.outfile_name().empty());
+}
+
+/**
+ * @tc.name: TestConvertHiperfSandboxPathsForNonSandboxUid
+ * @tc.desc: non-sandbox uid keeps hiperf sandbox and ~/ outfile unchanged
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestConvertHiperfSandboxPathsForNonSandboxUid, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    ForStandard::HiperfPluginConfig hiperfConfig;
+    const std::string sandboxOutfile = "/storage/Users/currentUser/perf.data";
+    const std::string homeSplitOutfile = "~/split.htrace";
+    hiperfConfig.set_outfile_name(sandboxOutfile);
+    hiperfConfig.set_split_outfile_name(homeSplitOutfile);
+    constexpr int32_t nonSandboxCallingUid = 20000000;
+    parseConfig.ConvertHiperfSandboxPaths(hiperfConfig, nonSandboxCallingUid);
+    EXPECT_EQ(hiperfConfig.outfile_name(), sandboxOutfile);
+    EXPECT_EQ(hiperfConfig.split_outfile_name(), homeSplitOutfile);
+}
+
+/**
+ * @tc.name: TestConvertHiperfSplitOutfileOnly
+ * @tc.desc: hiperf converts only the sandbox split outfile and keeps a tmp outfile
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestConvertHiperfSplitOutfileOnly, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    ForStandard::HiperfPluginConfig hiperfConfig;
+    const std::string tmpOutfile = "/data/local/tmp/perf.data";
+    hiperfConfig.set_outfile_name(tmpOutfile);
+    hiperfConfig.set_split_outfile_name("~/split.htrace");
+    constexpr int32_t sandboxCallingUid = 20000001;
+    parseConfig.ConvertHiperfSandboxPaths(hiperfConfig, sandboxCallingUid);
+    EXPECT_EQ(hiperfConfig.outfile_name(), tmpOutfile);
+    EXPECT_EQ(hiperfConfig.split_outfile_name(), "/storage/media/100/local/files/Docs/split.htrace");
+}
+
+/**
+ * @tc.name: TestSerializeHiperfSandboxOutfileWithoutMacro
+ * @tc.desc: serialize keeps sandbox outfile when is_sandbox is not enabled
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestSerializeHiperfSandboxOutfileWithoutMacro, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    const std::string sandboxOutfile = "/storage/Users/currentUser/perf.data";
+    parseConfig.pluginConfigMap["hiperf-plugin"] = "outfile_name: \"" + sandboxOutfile + "\"\n";
+    ProfilerPluginConfig pluginConfig;
+    ASSERT_TRUE(parseConfig.SetSerializeHiperfConfig("hiperf-plugin", pluginConfig));
+
+    ForStandard::HiperfPluginConfig hiperfConfig;
+    ASSERT_TRUE(hiperfConfig.ParseFromString(pluginConfig.config_data()));
+    EXPECT_EQ(hiperfConfig.outfile_name(), sandboxOutfile);
+}
+
+/**
+ * @tc.name: TestSerializeHiebpfNormalOutfile
+ * @tc.desc: hiebpf plugin config keeps /data/local/tmp outfile unchanged
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestSerializeHiebpfNormalOutfile, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    const std::string normalOutfile = "/data/local/tmp/hiebpf.data";
+    parseConfig.pluginConfigMap["hiebpf-plugin"] = "outfile_name: \"" + normalOutfile + "\"\n";
+    ProfilerPluginConfig pluginConfig;
+    ASSERT_TRUE(parseConfig.SetSerializeHiebpfConfig("hiebpf-plugin", pluginConfig));
+
+    ForStandard::HiebpfConfig hiebpfConfig;
+    ASSERT_TRUE(hiebpfConfig.ParseFromString(pluginConfig.config_data()));
+    EXPECT_EQ(hiebpfConfig.outfile_name(), normalOutfile);
+}
+
+/**
+ * @tc.name: TestConvertHiebpfSandboxPathsForNonSandboxUid
+ * @tc.desc: non-sandbox uid keeps hiebpf sandbox and ~/ outfile unchanged
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestConvertHiebpfSandboxPathsForNonSandboxUid, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    ForStandard::HiebpfConfig hiebpfConfig;
+    const std::string sandboxOutfile = "/storage/Users/currentUser/hiebpf.data";
+    const std::string homeSplitOutfile = "~/split.htrace";
+    hiebpfConfig.set_outfile_name(sandboxOutfile);
+    hiebpfConfig.set_split_outfile_name(homeSplitOutfile);
+    constexpr int32_t nonSandboxCallingUid = 20000000;
+    parseConfig.ConvertHiebpfSandboxPaths(hiebpfConfig, nonSandboxCallingUid);
+    EXPECT_EQ(hiebpfConfig.outfile_name(), sandboxOutfile);
+    EXPECT_EQ(hiebpfConfig.split_outfile_name(), homeSplitOutfile);
+}
+
+/**
+ * @tc.name: TestConvertHiebpfTmpSplitOutfileUnchanged
+ * @tc.desc: sandbox uid keeps hiebpf tmp outfile and tmp split outfile unchanged
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestConvertHiebpfTmpSplitOutfileUnchanged, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    ForStandard::HiebpfConfig hiebpfConfig;
+    const std::string tmpOutfile = "/data/local/tmp/hiebpf.data";
+    const std::string tmpSplitOutfile = "/data/local/tmp/split.htrace";
+    hiebpfConfig.set_outfile_name(tmpOutfile);
+    hiebpfConfig.set_split_outfile_name(tmpSplitOutfile);
+    constexpr int32_t sandboxCallingUid = 20000001;
+    parseConfig.ConvertHiebpfSandboxPaths(hiebpfConfig, sandboxCallingUid);
+    EXPECT_EQ(hiebpfConfig.outfile_name(), tmpOutfile);
+    EXPECT_EQ(hiebpfConfig.split_outfile_name(), tmpSplitOutfile);
+}
+
+/**
+ * @tc.name: TestConvertHiperfEmptySplitStaysEmpty
+ * @tc.desc: hiperf converts a sandbox outfile and leaves an empty split outfile empty
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestConvertHiperfEmptySplitStaysEmpty, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    ForStandard::HiperfPluginConfig hiperfConfig;
+    hiperfConfig.set_outfile_name("/storage/Users/currentUser/perf.data");
+    constexpr int32_t sandboxCallingUid = 20000001;
+    parseConfig.ConvertHiperfSandboxPaths(hiperfConfig, sandboxCallingUid);
+    EXPECT_EQ(hiperfConfig.outfile_name(), "/storage/media/100/local/files/Docs/perf.data");
+    EXPECT_TRUE(hiperfConfig.split_outfile_name().empty());
+}
+
+/**
+ * @tc.name: TestConvertHiebpfSplitOutfileOnly
+ * @tc.desc: hiebpf converts only the sandbox split outfile and keeps a tmp outfile
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestConvertHiebpfSplitOutfileOnly, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    ForStandard::HiebpfConfig hiebpfConfig;
+    const std::string tmpOutfile = "/data/local/tmp/hiebpf.data";
+    hiebpfConfig.set_outfile_name(tmpOutfile);
+    hiebpfConfig.set_split_outfile_name("~/split.htrace");
+    constexpr int32_t sandboxCallingUid = 20000001;
+    parseConfig.ConvertHiebpfSandboxPaths(hiebpfConfig, sandboxCallingUid);
+    EXPECT_EQ(hiebpfConfig.outfile_name(), tmpOutfile);
+    EXPECT_EQ(hiebpfConfig.split_outfile_name(), "/storage/media/100/local/files/Docs/split.htrace");
+}
+
+/**
+ * @tc.name: TestSerializeHiebpfSandboxOutfileWithoutMacro
+ * @tc.desc: serialize keeps hiebpf sandbox outfile when is_sandbox is not enabled
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestSerializeHiebpfSandboxOutfileWithoutMacro, TestSize.Level1)
+{
+    ParsePluginConfig parseConfig;
+    const std::string sandboxOutfile = "/storage/Users/currentUser/hiebpf.data";
+    parseConfig.pluginConfigMap["hiebpf-plugin"] = "outfile_name: \"" + sandboxOutfile + "\"\n";
+    ProfilerPluginConfig pluginConfig;
+    ASSERT_TRUE(parseConfig.SetSerializeHiebpfConfig("hiebpf-plugin", pluginConfig));
+
+    ForStandard::HiebpfConfig hiebpfConfig;
+    ASSERT_TRUE(hiebpfConfig.ParseFromString(pluginConfig.config_data()));
+    EXPECT_EQ(hiebpfConfig.outfile_name(), sandboxOutfile);
 }
 }

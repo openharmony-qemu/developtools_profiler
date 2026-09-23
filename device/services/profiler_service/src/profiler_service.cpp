@@ -280,6 +280,9 @@ bool ProfilerService::SessionContext::CollectApm()
 }
 
 namespace {
+const std::string HIPERF_PLUGIN_NAME = "hiperf-plugin";
+const std::string HIEBPF_PLUGIN_NAME = "hiebpf-plugin";
+
 bool IsValidKeepAliveTime(uint32_t timeout)
 {
     if (timeout < MIN_SESSION_TIMEOUT_MS) {
@@ -558,6 +561,58 @@ bool ProfilerService::RemoveSessionContext(uint32_t sessionId)
     return false;
 }
 
+std::string ProfilerService::GetStandalonePluginOutputFile(const std::string& pluginName,
+    const std::vector<ProfilerPluginConfig>& pluginConfigs, const std::string& fallbackOutFile) const
+{
+    // Prefer the session outfile_name. Sandbox and ~/ paths are already physical; tmp stays tmp.
+    if ((pluginName != HIPERF_PLUGIN_NAME) && (pluginName != HIEBPF_PLUGIN_NAME)) {
+        return fallbackOutFile;
+    }
+    for (const auto& pluginConfig : pluginConfigs) {
+        if (pluginConfig.name() != pluginName) {
+            continue;
+        }
+        const std::string& cfgData = pluginConfig.config_data();
+        std::string outfile;
+        bool parsed = false;
+        if (pluginName == HIPERF_PLUGIN_NAME) {
+            HiperfPluginConfig hiperfConfig;
+            parsed = hiperfConfig.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.data()),
+                                                 static_cast<int>(cfgData.size()));
+            if (parsed) {
+                outfile = hiperfConfig.outfile_name();
+            }
+        } else if (pluginName == HIEBPF_PLUGIN_NAME) {
+            HiebpfConfig hiebpfConfig;
+            parsed = hiebpfConfig.ParseFromArray(reinterpret_cast<const uint8_t*>(cfgData.data()),
+                                                 static_cast<int>(cfgData.size()));
+            if (parsed) {
+                outfile = hiebpfConfig.outfile_name();
+            }
+        }
+        if (!parsed) {
+            break;
+        }
+        if (!outfile.empty()) {
+            return outfile;
+        }
+        break;
+    }
+    return fallbackOutFile;
+}
+
+std::string ProfilerService::ResolveStandaloneMergePath(const std::string& filePath) const
+{
+    if (filePath.empty()) {
+        return "";
+    }
+    auto retFile = COMMON::CheckNotExistsFilePath(filePath);
+    if (retFile.first) {
+        return retFile.second;
+    }
+    return COMMON::CanonicalizeSpecPath(filePath.c_str());
+}
+
 void ProfilerService::MergeStandaloneFile(const std::string& resultFile, const std::string& pluginName,
     const std::string& outputFile, const std::string& pluginVersion)
 {
@@ -566,24 +621,24 @@ void ProfilerService::MergeStandaloneFile(const std::string& resultFile, const s
                            pluginName.c_str(), outputFile.c_str());
         return;
     }
-    auto retFile = COMMON::CheckNotExistsFilePath(outputFile);
-    if (!retFile.first) {
+    std::string resolvedOutput = ResolveStandaloneMergePath(outputFile);
+    if (resolvedOutput.empty()) {
         PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, outputFile.c_str());
         return;
     }
     std::ifstream fsFile {}; // read from output file
-    fsFile.open(retFile.second, std::ios_base::in | std::ios_base::binary);
+    fsFile.open(resolvedOutput, std::ios_base::in | std::ios_base::binary);
     if (!fsFile.good()) {
         PROFILER_LOG_ERROR(LOG_CORE, "open file(%s) failed: %d", outputFile.c_str(), fsFile.rdstate());
         return;
     }
-    auto targetFile = COMMON::CheckNotExistsFilePath(resultFile);
-    if (!targetFile.first) {
+    std::string resolvedTarget = ResolveStandaloneMergePath(resultFile);
+    if (resolvedTarget.empty()) {
         PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, resultFile.c_str());
         return;
     }
     std::ofstream fsTarget {}; // write to profiler ouput file
-    fsTarget.open(targetFile.second, std::ios_base::in | std::ios_base::out | std::ios_base::binary);
+    fsTarget.open(resolvedTarget, std::ios_base::in | std::ios_base::out | std::ios_base::binary);
     if (!fsTarget.good()) {
         PROFILER_LOG_ERROR(LOG_CORE, "open file(%s) failed: %d", resultFile.c_str(), fsTarget.rdstate());
         return;
@@ -592,7 +647,7 @@ void ProfilerService::MergeStandaloneFile(const std::string& resultFile, const s
     int posFile = fsTarget.tellp(); // for update sha256
 
     TraceFileHeader header {};
-    if (pluginName == "hiperf-plugin") {
+    if (pluginName == HIPERF_PLUGIN_NAME) {
         header.data_.dataType = DataType::HIPERF_DATA;
     } else {
         header.data_.dataType = DataType::STANDALONE_DATA;
@@ -895,7 +950,9 @@ Status ProfilerService::DestroySessionImpl(uint32_t requestId, uint32_t sessionI
             auto pluginName = ctx->pluginNames[i];
             std::tie(pluginId, pluginCtx) = pluginService_->GetPluginContext(pluginName);
             if (pluginCtx && pluginCtx->isStandaloneFileData) {
-                MergeStandaloneFile(ctx->sessionConfig.result_file(), pluginName, pluginCtx->outFileName,
+                std::string outputFile = GetStandalonePluginOutputFile(pluginName, ctx->pluginConfigs,
+                    pluginCtx->outFileName);
+                MergeStandaloneFile(ctx->sessionConfig.result_file(), pluginName, outputFile,
                     pluginCtx->pluginVersion);
             }
         }

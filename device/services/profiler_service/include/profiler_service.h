@@ -20,6 +20,7 @@
 #include "logging.h"
 #include "nocopyable.h"
 #include "hiperf_plugin_config.pb.h"
+#include "hiebpf_plugin_config.pb.h"
 #include "profiler_service.grpc.pb.h"
 #include "native_hook_config.pb.h"
 #include "schedule_task_manager.h"
@@ -141,6 +142,11 @@ private:
 
     void MergeStandaloneFile(const std::string& resultFile, const std::string& pluginName,
         const std::string& outputFile, const std::string& pluginVersion);
+
+    std::string GetStandalonePluginOutputFile(const std::string& pluginName,
+        const std::vector<ProfilerPluginConfig>& pluginConfigs, const std::string& fallbackOutFile) const;
+
+    std::string ResolveStandaloneMergePath(const std::string& filePath) const;
 
     bool TryAbstractNativeHookConfig(const std::vector<ProfilerPluginConfig>& pluginConfigs,
         std::shared_ptr<NativeHookConfig>& nativeHookConfig);

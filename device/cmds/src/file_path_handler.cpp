@@ -25,6 +25,9 @@ namespace {
 constexpr int USER_ID_MOD = 200000;
 constexpr int APP_ID_THRESH = 20000000;
 const std::string SANDBOX_PATH_ROOT = "/storage/Users/currentUser/";
+const std::string HOME_PATH_PREFIX = "~/";
+const std::string PHYSICAL_PATH_PREFIX = "/storage/media/";
+const std::string PHYSICAL_PATH_SUFFIX = "/local/files/Docs/";
 const std::string DEFAULT_OUTPUT_FILE = "/data/local/tmp/hiprofiler_data.htrace";
 const std::string DEFAULT_OUTPUT_ROOT = "/data/local/tmp/";
 const std::string COMPOSITE_OUTPUT_FILE_PREFIX = "hiprofiler_data_";
@@ -33,6 +36,29 @@ const std::string COMPOSITE_OUTPUT_FILE_SUFFFIX = ".zip";
 
 SandboxFilePathHandler::SandboxFilePathHandler()
 {
+}
+
+bool SandboxFilePathHandler::IsSandboxAppUid(int32_t callingUid)
+{
+    return callingUid > APP_ID_THRESH;
+}
+
+std::string SandboxFilePathHandler::ConvertToPhysicalPath(const std::string& path, int32_t callingUid)
+{
+    if (path.empty() || !IsSandboxAppUid(callingUid)) {
+        return path;
+    }
+    std::string fileName = path;
+    if (fileName.compare(0, HOME_PATH_PREFIX.size(), HOME_PATH_PREFIX) == 0) {
+        fileName.replace(0, HOME_PATH_PREFIX.size(), SANDBOX_PATH_ROOT);
+    }
+    if (fileName.compare(0, SANDBOX_PATH_ROOT.size(), SANDBOX_PATH_ROOT) != 0) {
+        return path;
+    }
+    int32_t userId = callingUid / USER_ID_MOD;
+    std::string physicalRoot = PHYSICAL_PATH_PREFIX + std::to_string(userId) + PHYSICAL_PATH_SUFFIX;
+    fileName.replace(0, SANDBOX_PATH_ROOT.size(), physicalRoot);
+    return COMMON::CanonicalizeSpecPath(fileName.c_str());
 }
 
 std::string SandboxFilePathHandler::GetConfigFilePath(const std::string& configFile)
@@ -78,31 +104,30 @@ std::string SandboxFilePathHandler::GetSandboxFileName(const std::string& output
 bool SandboxFilePathHandler::HandleSandboxFilename(const std::string& outputFile, ProfilerSessionConfig* sessionConfig)
 {
     int32_t callingUid = OHOS::IPCSkeleton::GetCallingUid();
-    if (callingUid <= APP_ID_THRESH) {
+    if (!IsSandboxAppUid(callingUid)) {
         return false; // Not a sandbox app
     }
 
     std::string fileName = GetSandboxFileName(outputFile, sessionConfig);
-    if (fileName.substr(0, SANDBOX_PATH_ROOT.size()) == SANDBOX_PATH_ROOT) {
-        size_t lastSlash = fileName.find_last_of('/');
-        if (lastSlash == std::string::npos) {
-            printf("HandleSandboxFilename filename invalid!\n");
-            return false;
-        }
-        std::string pathName = fileName.substr(0, lastSlash + 1);
-        struct stat st;
-        if (stat(pathName.c_str(), &st) != 0) {
-            printf("Filepath unable to write!\n");
-            return false;
-        }
-        int32_t userId = callingUid / USER_ID_MOD;
-        fileName.replace(0, SANDBOX_PATH_ROOT.size(),
-                         "/storage/media/" + std::to_string(userId) + "/local/files/Docs/");
-    } else {
+    if (fileName.compare(0, HOME_PATH_PREFIX.size(), HOME_PATH_PREFIX) == 0) {
+        fileName.replace(0, HOME_PATH_PREFIX.size(), SANDBOX_PATH_ROOT);
+    }
+    if (fileName.compare(0, SANDBOX_PATH_ROOT.size(), SANDBOX_PATH_ROOT) != 0) {
         printf("Filepath unable to write! Please use /storage/Users/currentUser/ at the beginning.\n");
         return false;
     }
-    sessionConfig->set_result_file(COMMON::CanonicalizeSpecPath(fileName.c_str()));
+    size_t lastSlash = fileName.find_last_of('/');
+    if (lastSlash == std::string::npos) {
+        printf("HandleSandboxFilename filename invalid!\n");
+        return false;
+    }
+    std::string pathName = fileName.substr(0, lastSlash + 1);
+    struct stat st;
+    if (stat(pathName.c_str(), &st) != 0) {
+        printf("Filepath unable to write!\n");
+        return false;
+    }
+    sessionConfig->set_result_file(ConvertToPhysicalPath(fileName, callingUid));
     return true;
 }
 
@@ -209,8 +234,7 @@ std::unique_ptr<FilePathHandler> FilePathHandlerFactory::CreateHandler(bool need
 {
 #if defined(is_sandbox) && is_sandbox
     int32_t callingUid = OHOS::IPCSkeleton::GetCallingUid();
-    constexpr int APP_ID_THRESH = 20000000;
-    if (callingUid > APP_ID_THRESH) {
+    if (SandboxFilePathHandler::IsSandboxAppUid(callingUid)) {
         if (needComposite) {
             return std::make_unique<CompositeSandboxFilePathHandler>();
         } else {

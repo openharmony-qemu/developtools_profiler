@@ -16,6 +16,7 @@
 #ifndef FILE_PATH_HANDLER_H
 #define FILE_PATH_HANDLER_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <memory>
@@ -43,6 +44,8 @@ public:
     bool HandleOutputFilePath(const std::string& outputFile, ProfilerSessionConfig* sessionConfig) override;
     std::string GetConfigFilePath(const std::string& configFile) override;
     std::vector<std::string> GetValidPaths() override;
+    static std::string ConvertToPhysicalPath(const std::string& path, int32_t callingUid);
+    static bool IsSandboxAppUid(int32_t callingUid);
 
 protected:
     std::string GetDefaultOutputFile() override;
