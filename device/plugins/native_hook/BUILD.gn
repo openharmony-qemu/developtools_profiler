@@ -97,10 +97,7 @@ ohos_source_set("native_hook_source") {
   }
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
-  defines += [
-    "NO_PROTOBUF",
-    "_GNU_SOURCE",
-  ]
+  defines += [ "NO_PROTOBUF" ]
   cflags = [
     "-Wno-error=inline-asm",
     "-DPERF_TEST_DATA",

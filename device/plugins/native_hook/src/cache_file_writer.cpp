@@ -213,10 +213,6 @@ bool CacheFileWriter::MapFileToMemory(int fd)
         PROFILER_LOG_ERROR(LOG_CORE, "MapFileToMemory fd not O_RDWR, fd=%d errno=%d", fd, errno);
         return false;
     }
-    if (fallocate(fd, 0, 0, static_cast<off_t>(MMAP_FILE_SIZE)) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "MapFileToMemory fallocate failed, fd=%d errno=%d", fd, errno);
-        return false;
-    }
     // bypass libc mmap via syscall: plain mmap goes through musl malloc dispatch and gets
     // captured by hook_mmap as a spurious 64MB MMAP_MSG polluting application memory statistics
 #if defined(__NR_mmap)

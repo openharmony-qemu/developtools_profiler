@@ -51,6 +51,12 @@ int CreateAnonCacheFd()
     int fd = mkstemp(filePath.data());
     if (fd >= 0) {
         unlink(filePath.data());
+        // the daemon pre-allocates cache files before fd handoff; mirror that here so the first
+        // mapped write does not run past EOF (SIGBUS) now that MapFileToMemory no longer extends
+        if (ftruncate(fd, static_cast<off_t>(MMAP_FILE_SIZE)) != 0) {
+            close(fd);
+            fd = -1;
+        }
     }
     return fd;
 }
