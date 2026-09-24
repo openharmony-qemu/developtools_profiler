@@ -194,7 +194,13 @@ typedef enum HiDebug_ErrorCode {
      *
      * @since 26.1.0
      */
-    HIDEBUG_RES_PROF_INVALID_MAX_ASYNC_TASK_STACK_DEPTH = 11400432
+    HIDEBUG_RES_PROF_INVALID_MAX_ASYNC_TASK_STACK_DEPTH = 11400432,
+    /**
+     * @brief Invalid stack trace mode.
+     *
+     * @since 26.0.1
+     */
+    HIDEBUG_RES_PROF_INVALID_STACK_TRACE_MODE = 11400433
 } HiDebug_ErrorCode;
 
 /**
@@ -687,6 +693,24 @@ typedef enum OH_HiDebug_MemListenerType {
      */
     OH_HIDEBUG_DUMP_SNAPSHOT = 2
 } OH_HiDebug_MemListenerType;
+
+/**
+ * @brief Defines an enum for stack trace mode.
+ *
+ * @since 26.0.1
+ */
+typedef enum {
+    /**
+     * @brief Keep all traces including destroyed ones.
+     * @since 26.0.1
+     */
+    OH_HIDEBUG_STACK_TRACE_KEEP_ALL = 0,
+    /**
+     * @brief Discard destroyed traces.
+     * @since 26.0.1
+     */
+    OH_HIDEBUG_STACK_TRACE_DISCARD_DESTROYED = 1,
+} OH_HiDebug_ProfilerStackTraceMode;
 
 #ifdef __cplusplus
 }
