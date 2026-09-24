@@ -45,6 +45,10 @@ static uint8_t g_encoderBuffer[ENCODER_BUFFER_SIZE];
 static uint32_t g_encoderOffset = 0;
 static int32_t g_writerFinishSize = 0;
 static uint32_t g_writerFlushCount = 0;
+// Reusable scratch buffer passed to the 4-arg GetCallStackId/
+// SetAllocStatisticsFrame overloads in these tests; the impl clears it on
+// every call, so sharing one file-scope instance is safe (tests are serial).
+static std::vector<uint64_t>& callStack = StackPreprocess::GetThreadCallStack();
 
 static bool GetEncoderMemory(RandomWriteCtx*, uint32_t size, uint8_t** memory, uint32_t* offset)
 {
@@ -273,7 +277,6 @@ static void AddMatchPeriodEvents(StackPreprocess& preprocess)
     preprocess.releasedPeriodListData_.push_back(MakeReportEvent(MUNMAP_MSG, 0x2000, 8));
 }
 
-static thread_local std::vector<uint64_t> g_callStack;
 static thread_local std::shared_ptr<BuildStackDirector> g_director{nullptr};
 class StackPreprocessTest : public testing::Test {
 public:
@@ -801,7 +804,7 @@ HWTEST_F(StackPreprocessTest, CallStackHash01, TestSize.Level0)
     auto hookRecord = MakeHookRecord(1, 100, 0);
     auto frames = MakeFrames(1111);
     BatchNativeHookData data;
-    uint32_t id1 = preprocess.GetCallStackId(hookRecord, frames, data);
+    uint32_t id1 = preprocess.GetCallStackId(hookRecord, frames, data, callStack);
     EXPECT_GT(id1, 0u);
     std::vector<uint64_t> lookupStack {static_cast<uint64_t>(frames[0].callFrameId_)};
     uint32_t id2 = preprocess.FindCallStackId(lookupStack, hookRecord);
@@ -826,13 +829,13 @@ HWTEST_F(StackPreprocessTest, CallStackHash02, TestSize.Level0)
     auto frames = MakeFrames(2222);
 
     BatchNativeHookData data1;
-    uint32_t id1 = preprocess.GetCallStackId(hr1, frames, data1);
+    uint32_t id1 = preprocess.GetCallStackId(hr1, frames, data1, callStack);
     EXPECT_GT(id1, 0u);
 
     // same frames but different nodeType/nodeId
     auto hr2 = MakeHookRecord(2, 200, 0);
     BatchNativeHookData data2;
-    uint32_t id2 = preprocess.GetCallStackId(hr2, frames, data2);
+    uint32_t id2 = preprocess.GetCallStackId(hr2, frames, data2, callStack);
     EXPECT_GT(id2, 0u);
     EXPECT_NE(id1, id2);
 }
@@ -856,13 +859,13 @@ HWTEST_F(StackPreprocessTest, CallStackHash03, TestSize.Level0)
     auto hr1 = MakeHookRecord(1, 300, 0);
     auto frames = MakeFrames(3333);
     BatchNativeHookData data1;
-    uint32_t id1 = preprocess.GetCallStackId(hr1, frames, data1);
+    uint32_t id1 = preprocess.GetCallStackId(hr1, frames, data1, callStack);
     EXPECT_GT(id1, 0u);
 
     // same frames but tagB
     auto hr2 = MakeHookRecord(1, 300, 1);
     BatchNativeHookData data2;
-    uint32_t id2 = preprocess.GetCallStackId(hr2, frames, data2);
+    uint32_t id2 = preprocess.GetCallStackId(hr2, frames, data2, callStack);
     EXPECT_GT(id2, 0u);
     EXPECT_EQ(id1, id2);
 }
@@ -885,7 +888,7 @@ HWTEST_F(StackPreprocessTest, CallStackHash04, TestSize.Level0)
     auto hookRecord = MakeHookRecord(0, 0, 0);
     auto frames = MakeFrames(4444);
     BatchNativeHookData data;
-    uint32_t id1 = preprocess.GetCallStackId(hookRecord, frames, data);
+    uint32_t id1 = preprocess.GetCallStackId(hookRecord, frames, data, callStack);
     EXPECT_GT(id1, 0u);
 
     std::vector<uint64_t> lookupStack {static_cast<uint64_t>(frames[0].callFrameId_)};
@@ -909,7 +912,7 @@ HWTEST_F(StackPreprocessTest, CallStackHash05, TestSize.Level0)
     auto hookRecord = MakeHookRecord(0, 123, 0);
     auto frames = MakeFrames(5555);
     BatchNativeHookData data;
-    uint32_t id1 = preprocess.GetCallStackId(hookRecord, frames, data);
+    uint32_t id1 = preprocess.GetCallStackId(hookRecord, frames, data, callStack);
     EXPECT_GT(id1, 0u);
 
     std::vector<uint64_t> lookupStack {static_cast<uint64_t>(frames[0].callFrameId_)};
@@ -934,7 +937,7 @@ HWTEST_F(StackPreprocessTest, CallStackHash06, TestSize.Level0)
     auto hookRecord = MakeHookRecord(1, 100, kUnregisteredTagId);
     auto frames = MakeFrames(6666);
     BatchNativeHookData data;
-    uint32_t id1 = preprocess.GetCallStackId(hookRecord, frames, data);
+    uint32_t id1 = preprocess.GetCallStackId(hookRecord, frames, data, callStack);
     EXPECT_GT(id1, 0u);
 
     std::vector<uint64_t> lookupStack {static_cast<uint64_t>(frames[0].callFrameId_)};
@@ -959,7 +962,7 @@ HWTEST_F(StackPreprocessTest, CallStackHash07, TestSize.Level0)
     // so FillCallStack adds nothing after g_callStack.clear().
     std::vector<CallFrame> emptyFrames;
     BatchNativeHookData data;
-    uint32_t id1 = preprocess.GetCallStackId(hookRecord, emptyFrames, data);
+    uint32_t id1 = preprocess.GetCallStackId(hookRecord, emptyFrames, data, callStack);
     EXPECT_GT(id1, 0u);
 
     std::vector<uint64_t> emptyCallStack;
@@ -986,8 +989,8 @@ HWTEST_F(StackPreprocessTest, NonStatisticsAsyncStackIgnoresSizeAndTag, TestSize
     auto secondFrames = MakeFrames(0x1234);
     BatchNativeHookData data;
 
-    uint32_t firstId = preprocess.GetCallStackId(firstRecord, firstFrames, data);
-    uint32_t secondId = preprocess.GetCallStackId(secondRecord, secondFrames, data);
+    uint32_t firstId = preprocess.GetCallStackId(firstRecord, firstFrames, data, callStack);
+    uint32_t secondId = preprocess.GetCallStackId(secondRecord, secondFrames, data, callStack);
 
     EXPECT_EQ(firstId, secondId);
 }
@@ -1009,8 +1012,8 @@ HWTEST_F(StackPreprocessTest, StatisticsSimplifiedSyncStackIgnoresTagId, TestSiz
     auto secondFrames = MakeFrames(0x1234);
     BatchNativeHookData data;
 
-    preprocess.SetAllocStatisticsFrame(firstRecord, firstFrames, data);
-    preprocess.SetAllocStatisticsFrame(secondRecord, secondFrames, data);
+    preprocess.SetAllocStatisticsFrame(firstRecord, firstFrames, data, callStack);
+    preprocess.SetAllocStatisticsFrame(secondRecord, secondFrames, data, callStack);
 
     EXPECT_EQ(preprocess.simplifiedCallStackIndex_.size(), 1u);
 }
@@ -1035,8 +1038,8 @@ HWTEST_F(StackPreprocessTest, StatisticsSimplifiedAsyncStackIgnoresTagId, TestSi
     auto secondFrames = MakeFrames(0x1234);
     BatchNativeHookData data;
 
-    preprocess.SetAllocStatisticsFrame(firstRecord, firstFrames, data);
-    preprocess.SetAllocStatisticsFrame(secondRecord, secondFrames, data);
+    preprocess.SetAllocStatisticsFrame(firstRecord, firstFrames, data, callStack);
+    preprocess.SetAllocStatisticsFrame(secondRecord, secondFrames, data, callStack);
 
     EXPECT_EQ(preprocess.simplifiedAsyncCallStackIndex_.size(), 1u);
 }
@@ -1062,7 +1065,7 @@ HWTEST_F(StackPreprocessTest, AsyncCallStackKeyTest, TestSize.Level0)
     frames.emplace_back(0x1000, 0, true);
     frames.back().callFrameId_ = 0x2345;
     BatchNativeHookData data;
-    preprocess.SetAllocStatisticsFrame(hookRecord, frames, data);
+    preprocess.SetAllocStatisticsFrame(hookRecord, frames, data, callStack);
 
     ASSERT_TRUE(preprocess.callStackIndex_.empty());
     ASSERT_EQ(preprocess.asyncCallStackIndex_.size(), 1u);
@@ -1096,7 +1099,7 @@ HWTEST_F(StackPreprocessTest, AsyncStatisticsLookupTest, TestSize.Level0)
     frames.emplace_back(0x1000, 0, true);
     frames.back().callFrameId_ = 0x2345;
     BatchNativeHookData data;
-    preprocess.SetAllocStatisticsFrame(hookRecord, frames, data);
+    preprocess.SetAllocStatisticsFrame(hookRecord, frames, data, callStack);
 
     ASSERT_EQ(preprocess.recordStatisticsMap_.size(), 1u);
     uint32_t stackId = preprocess.recordStatisticsMap_.begin()->first;
@@ -1120,7 +1123,7 @@ HWTEST_F(StackPreprocessTest, GetCallStackIdOfflineWritesIpStackMap, TestSize.Le
     auto frames = MakeFrames(0x1234);
     frames[0].ip_ = 0xABCDEF;
     BatchNativeHookData data;
-    uint32_t stackId = preprocess.GetCallStackId(hookRecord, frames, data);
+    uint32_t stackId = preprocess.GetCallStackId(hookRecord, frames, data, callStack);
 
     ASSERT_GT(stackId, 0u);
     ASSERT_EQ(data.events_size(), 1);
@@ -1146,7 +1149,7 @@ HWTEST_F(StackPreprocessTest, GetCallStackIdOfflineEmptyDwarfStackStartsAtFirstF
     auto frames = MakeFrames(0x2222);
     frames[0].ip_ = 0x123456;
     BatchNativeHookData data;
-    uint32_t stackId = preprocess.GetCallStackId(hookRecord, frames, data);
+    uint32_t stackId = preprocess.GetCallStackId(hookRecord, frames, data, callStack);
 
     ASSERT_GT(stackId, 0u);
     ASSERT_EQ(data.events_size(), 1);
@@ -1166,7 +1169,7 @@ HWTEST_F(StackPreprocessTest, GetCallStackIdSkipsFreeWhenReportDisabled, TestSiz
     auto frames = MakeFrames(0x1111);
     BatchNativeHookData data;
 
-    uint32_t stackId = preprocess.GetCallStackId(hookRecord, frames, data);
+    uint32_t stackId = preprocess.GetCallStackId(hookRecord, frames, data, callStack);
 
     EXPECT_EQ(stackId, 0u);
     EXPECT_EQ(data.events_size(), 0);
@@ -1183,7 +1186,7 @@ HWTEST_F(StackPreprocessTest, GetCallStackIdSkipsMunmapWhenReportDisabled, TestS
     auto frames = MakeFrames(0x2222);
     BatchNativeHookData data;
 
-    uint32_t stackId = preprocess.GetCallStackId(hookRecord, frames, data);
+    uint32_t stackId = preprocess.GetCallStackId(hookRecord, frames, data, callStack);
 
     EXPECT_EQ(stackId, 0u);
     EXPECT_EQ(data.events_size(), 0);
@@ -1208,7 +1211,7 @@ HWTEST_F(StackPreprocessTest, SetAllocStatisticsFrameAddsNapiFrame, TestSize.Lev
     hookRecord->GetRawStack()->stackContext->mallocSize = 64;
     auto frames = MakeFrames(0x3333);
     BatchNativeHookData data;
-    preprocess.SetAllocStatisticsFrame(hookRecord, frames, data);
+    preprocess.SetAllocStatisticsFrame(hookRecord, frames, data, callStack);
 
     // Note: symbolName_ is string_view pointing to a local variable (tagName) in
     // SetAllocStatisticsFrame. We cannot reliably verify the string content after
@@ -1245,7 +1248,7 @@ HWTEST_F(StackPreprocessTest, SetAllocStatisticsFrameOfflineAddsMaskedNapiFrame,
     auto frames = MakeFrames(0x4444);
     frames[0].ip_ = 0x654321;
     BatchNativeHookData data;
-    preprocess.SetAllocStatisticsFrame(hookRecord, frames, data);
+    preprocess.SetAllocStatisticsFrame(hookRecord, frames, data, callStack);
 
     ASSERT_EQ(data.events_size(), 4);
     EXPECT_TRUE(data.events(0).has_symbol_name());
@@ -1281,7 +1284,7 @@ HWTEST_F(StackPreprocessTest, TryProcessCachedAsyncStatisticsWithoutFileModeTest
     frames.emplace_back(0x1000, 0, true);
     frames.back().callFrameId_ = 0x2345;
     BatchNativeHookData data;
-    preprocess.SetAllocStatisticsFrame(firstRecord, frames, data);
+    preprocess.SetAllocStatisticsFrame(firstRecord, frames, data, callStack);
 
     ASSERT_EQ(preprocess.recordStatisticsMap_.size(), 1u);
     uint32_t stackId = preprocess.recordStatisticsMap_.begin()->first;
@@ -4534,7 +4537,7 @@ HWTEST_F(StackPreprocessTest, GetCallStackIdUsesNapiSyntheticFrame, TestSize.Lev
         auto frames = MakeFrames(offlineSymbolization ? 0x9020 : 0x901F);
         BatchNativeHookData data;
 
-        uint32_t stackId = preprocess.GetCallStackId(hookRecord, frames, data);
+        uint32_t stackId = preprocess.GetCallStackId(hookRecord, frames, data, callStack);
 
         EXPECT_NE(stackId, 0u);
         EXPECT_EQ(preprocess.callStackIndex_.size(), 1u);
@@ -4794,7 +4797,7 @@ HWTEST_F(StackPreprocessTest, GetCallStackIdProtoEncoderHandlesNapiAndSuppressed
     RandomWriteCtx ctx = MakeEncoderWriteCtx();
     ProtoEncoder::BatchNativeHookData data(&ctx);
 
-    uint32_t stackId = preprocess.GetCallStackId(hookRecord, frames, data);
+    uint32_t stackId = preprocess.GetCallStackId(hookRecord, frames, data, callStack);
     EXPECT_NE(stackId, 0u);
     EXPECT_GT(data.Finish(), 0);
 
@@ -4804,8 +4807,8 @@ HWTEST_F(StackPreprocessTest, GetCallStackIdProtoEncoderHandlesNapiAndSuppressed
     StackPreprocess suppress(nullptr, suppressConfig, 0);
     RandomWriteCtx suppressCtx = MakeEncoderWriteCtx();
     ProtoEncoder::BatchNativeHookData suppressData(&suppressCtx);
-    EXPECT_EQ(suppress.GetCallStackId(MakeFileRecord(FREE_MSG, 0xC100), frames, suppressData), 0u);
-    EXPECT_EQ(suppress.GetCallStackId(MakeFileRecord(MUNMAP_MSG, 0xC200), frames, suppressData), 0u);
+    EXPECT_EQ(suppress.GetCallStackId(MakeFileRecord(FREE_MSG, 0xC100), frames, suppressData, callStack), 0u);
+    EXPECT_EQ(suppress.GetCallStackId(MakeFileRecord(MUNMAP_MSG, 0xC200), frames, suppressData, callStack), 0u);
     EXPECT_EQ(suppressData.Finish(), 0);
 }
 

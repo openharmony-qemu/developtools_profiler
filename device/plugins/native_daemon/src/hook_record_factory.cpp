@@ -327,13 +327,13 @@ void HookRecordFactory::InitRawStack(RawStackPtr rawStack, const int8_t sharedMe
 {
     if (storeData) {
         uint32_t originDataSize = GetOriginStackDataSize(sharedMemData, size);
-        rawStack->baseStackData = std::make_unique<uint8_t[]>(originDataSize);
-        if (memcpy_s(rawStack->baseStackData.get(), originDataSize, sharedMemData, originDataSize) != EOK) {
+        rawStack->baseStackData.resize(originDataSize);
+        if (memcpy_s(rawStack->baseStackData.data(), originDataSize, sharedMemData, originDataSize) != EOK) {
             PROFILER_LOG_ERROR(LOG_CORE, "HookRecordFactory memcpy_s raw data failed!");
             return;
         }
-        rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(rawStack->baseStackData.get());
-        rawStack->data = rawStack->baseStackData.get() + sizeof(BaseStackRawData);
+        rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(rawStack->baseStackData.data());
+        rawStack->data = rawStack->baseStackData.data() + sizeof(BaseStackRawData);
     } else {
         rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(const_cast<int8_t*>(sharedMemData));
         rawStack->data = reinterpret_cast<uint8_t*>(const_cast<int8_t*>(sharedMemData)) + sizeof(BaseStackRawData);
@@ -429,7 +429,7 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
         size_t rawRealSize = sizeof(BaseStackRawData) + MAX_REG_SIZE * sizeof(char);
         rawStack->stackSize = size - rawRealSize;
         if (rawStack->stackSize > 0) {
-            rawStack->stackData = rawStack->baseStackData.get() + rawRealSize;
+            rawStack->stackData = rawStack->baseStackData.data() + rawRealSize;
         }
     }
     return CreateStackRecord(type, rawStack);

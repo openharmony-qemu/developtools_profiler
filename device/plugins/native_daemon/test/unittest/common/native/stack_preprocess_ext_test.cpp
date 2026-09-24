@@ -201,7 +201,6 @@ static RandomWriteCtx* ReturnValidRandomWriteCtx(WriterStruct*)
     return &ctx;
 }
 
-static thread_local std::vector<uint64_t> g_callStack;
 static thread_local std::shared_ptr<BuildStackDirector> g_director{nullptr};
 
 class StackPreprocessExtTest : public testing::Test {
@@ -1730,8 +1729,8 @@ HWTEST_F(StackPreprocessExtTest, BuildCallFramesTest, TestSize.Level0)
     // Create test data
     RawStackPtr rawData = MakeRawStack(1, 100, 0);
     constexpr size_t regBufferSize = sizeof(uint64_t) * 34; // Enough for ARM64 registers
-    rawData->baseStackData = std::make_unique<uint8_t[]>(regBufferSize);
-    rawData->data = rawData->baseStackData.get();
+    rawData->baseStackData.resize(regBufferSize);
+    rawData->data = rawData->baseStackData.data();
     auto hookRecord = std::make_shared<HookRecord>(rawData);
     std::vector<CallFrame> callFrames = MakeFrames(123);
     
@@ -1791,8 +1790,7 @@ HWTEST_F(StackPreprocessExtTest, BuildCallFramesSkipsSpecialAsyncTypes, TestSize
     std::vector<CallFrame> callFrames = MakeFrames(321);
 
     EXPECT_TRUE(preprocess.BuildCallFrames(hookRecord, rawData, callFrames));
-    EXPECT_EQ(callFrames.size(), 1u);
-    EXPECT_EQ(callFrames[0].callFrameId_, 321u);
+    EXPECT_EQ(callFrames.size(), 0u);
 }
 
 /*

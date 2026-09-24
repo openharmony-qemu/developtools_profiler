@@ -211,7 +211,9 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
     std::shared_ptr<DfxMap> prevMap = nullptr;
     for (auto memMapItem : memMaps) {
         if (virtualruntime_->IsArktsMap(memMapItem)) {
-            virtualruntime_->arktsMapTree_[memMapItem->begin] = memMapItem;
+            virtualruntime_->arktsMapTree_[memMapItem->begin] = {
+                memMapItem, virtualruntime_->GetOrCreateFilePathId(memMapItem->name)};
+            virtualruntime_->arktsMapCache_.clear();
         }
         if (update) {
             if (virtualruntime_->IsSymbolExist(memMapItem->name)) {

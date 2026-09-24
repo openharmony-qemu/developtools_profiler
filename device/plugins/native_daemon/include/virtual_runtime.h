@@ -66,7 +66,9 @@ public:
     }
 
     void GetSymbol(DfxSymbol &symbol, CallFrame& callFrame, pid_t pid, pid_t tid,
-        const perf_callchain_context &context = PERF_CONTEXT_MAX);
+        const perf_callchain_context &context = PERF_CONTEXT_MAX,
+        std::shared_ptr<DfxMap> knownMap = nullptr, uint32_t knownFilePathId = 0,
+        bool cacheChecked = false);
 
     VirtualThread &GetThread(pid_t pid, pid_t tid);
     const std::map<pid_t, VirtualThread> &GetThreads() const
@@ -208,30 +210,23 @@ public:
 
 private:
     struct SymbolCacheKey : public std::pair<uint64_t, uint32_t> {
-        uint64_t& ip = first;
-        uint32_t& filePathId = second;
         explicit SymbolCacheKey() = default;
-        virtual ~SymbolCacheKey() = default;
-        SymbolCacheKey(const SymbolCacheKey &) = default;
-        SymbolCacheKey& operator=(const SymbolCacheKey& sym)
-        {
-            ip = sym.ip;
-            filePathId = sym.filePathId;
-            return *this;
-        }
-        SymbolCacheKey(const std::pair<uint64_t, uint32_t>& arg) : pair(arg), ip(first), filePathId(second) {}
-        SymbolCacheKey(uint64_t ip, uint32_t filePathId) : pair(ip, filePathId), ip(first), filePathId(second) {}
+        SymbolCacheKey(const std::pair<uint64_t, uint32_t>& arg) : pair(arg) {}
+        SymbolCacheKey(uint64_t ip, uint32_t filePathId) : pair(ip, filePathId) {}
     };
 
     // boost library recommendation algorithm to reduce hash collisions.
     struct HashPair {
+        // 0x9e3779b9 is the golden ratio fractional part used by boost hash_combine.
+        static constexpr size_t MAGIC_NUMBER = 0x9e3779b9;
+        static constexpr size_t LEFT_SHIFT_BITS = 6;  // bit displacement in boost hash_combine
+        static constexpr size_t RIGHT_SHIFT_BITS = 2; // bit displacement in boost hash_combine
         size_t operator() (const SymbolCacheKey& key) const
         {
             std::hash<uint64_t> hasher;
             size_t seed = 0;
-            // 6 and 2 is the number of displacements
-            seed ^= hasher(key.ip) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= hasher(key.filePathId) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= hasher(key.first) + MAGIC_NUMBER + (seed << LEFT_SHIFT_BITS) + (seed >> RIGHT_SHIFT_BITS);
+            seed ^= hasher(key.second) + MAGIC_NUMBER + (seed << LEFT_SHIFT_BITS) + (seed >> RIGHT_SHIFT_BITS);
             return seed;
         }
     };
@@ -249,15 +244,15 @@ private:
     std::unordered_map<std::string, uint32_t> functionMap_;
     std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles_;
     std::unordered_map<SymbolCacheKey, DfxSymbol, HashPair> userSymbolCache_;
-    std::unordered_map<uint64_t, uint32_t> jsFilePathCache_;
 
-    bool GetSymbolCache(uint64_t ip, std::shared_ptr<MemMaps> curMaps, DfxSymbol &symbol, const VirtualThread &thread);
+    bool GetSymbolCache(uint64_t ip, uint32_t filePathId, DfxSymbol &symbol);
     void UpdateSymbolCache(uint64_t ip, DfxSymbol &symbol, HashList<uint64_t, DfxSymbol> &cache);
     uint32_t GetOrCreateFilePathId(const std::string& filePath);
     void QueueOfflineMap(uint64_t soBegin);
 
     // find symbols function name
     void MakeCallFrame(const DfxSymbol &symbol, CallFrame &callFrame);
+    void FillFpUnwindJsSymbol(CallFrame& callFrame, DfxSymbol &symbol);
 
     std::string ReadThreadName(pid_t tid);
 
@@ -266,6 +261,8 @@ private:
     const DfxSymbol GetKernelSymbol(uint64_t ip, const std::vector<std::shared_ptr<DfxMap>> &maps,
                                  const VirtualThread &thread);
     const DfxSymbol GetUserSymbol(uint64_t ip, std::shared_ptr<MemMaps> curMaps, uint32_t itemIndex,
+        const VirtualThread &thread);
+    const DfxSymbol GetUserSymbol(uint64_t ip, std::shared_ptr<DfxMap> map, uint32_t filePathId,
         const VirtualThread &thread);
 
     std::vector<std::string> symbolsPaths_;
@@ -277,7 +274,13 @@ private:
     const NativeHookConfig hookConfig_;
     uint32_t memMapFilePathId_ = 0;
     std::map<uint64_t, std::shared_ptr<MemMaps>> mapsCache_; // key is memMap soBegin, value is MemMaps
-    std::map<uint64_t, std::shared_ptr<DfxMap>> arktsMapTree_;
+    struct ArktsMapEntry {
+        std::shared_ptr<DfxMap> map;
+        uint32_t filePathId = 0;
+    };
+    std::map<uint64_t, ArktsMapEntry> arktsMapTree_;
+    mutable std::unordered_map<uint64_t, ArktsMapEntry> arktsMapCache_;
+    ArktsMapEntry FindArktsMapEntryByAddr(uint64_t ip) const;
     std::vector<uint64_t> offlineMapAddr_; // element is memMap soBegin
     std::unordered_set<uint64_t> offlineMapAddrSet_;
     std::unordered_map<std::string, uint32_t> nativeFilePathIdMap_;

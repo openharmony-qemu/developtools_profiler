@@ -208,8 +208,8 @@ protected:
     RawStackPtr MakeRawStack(uint16_t type, uint16_t tagId = 0, uint64_t jsChainId = 0)
     {
         auto rawStack = std::make_shared<RawStack>();
-        rawStack->baseStackData = std::make_unique<uint8_t[]>(sizeof(BaseStackRawData));
-        auto* baseData = reinterpret_cast<BaseStackRawData*>(rawStack->baseStackData.get());
+        rawStack->baseStackData.resize(sizeof(BaseStackRawData));
+        auto* baseData = reinterpret_cast<BaseStackRawData*>(rawStack->baseStackData.data());
         *baseData = {};
         baseData->type = type;
         baseData->pid = TEST_PID;

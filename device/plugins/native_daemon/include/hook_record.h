@@ -32,7 +32,7 @@ const std::string PR_SET_VMA_PREFIX = "Anonymous:";
 using NativeHookProto = std::variant<NativeHookData*, OHOS::Developtools::Profiler::ProtoEncoder::NativeHookData*>;
 
 struct RawStack {
-    std::unique_ptr<uint8_t[]> baseStackData = nullptr; // save the shared memory data
+    std::vector<uint8_t> baseStackData; // save the shared memory data
     BaseStackRawData* stackContext = nullptr; // points to the foundation type data
     union {
         uint8_t* stackData; //cannot initialize multiple members of union
@@ -45,7 +45,6 @@ struct RawStack {
     bool reduceStackFlag = false;
     void Reset()
     {
-        baseStackData = nullptr;
         stackContext = nullptr;
         data = nullptr;
         stackData = nullptr;

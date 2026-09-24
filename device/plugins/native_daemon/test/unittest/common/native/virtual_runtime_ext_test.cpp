@@ -121,7 +121,7 @@ HWTEST_F(VirtualRuntimeExtTest, ClearMaps, TestSize.Level0)
     // Add some test data
     auto mapItem = std::make_shared<DfxMap>(0x1000, 0x2000, 0, PROT_READ, "test.so");
     runtime_->processMaps_.push_back(mapItem);
-    runtime_->arktsMapTree_[0x1000] = mapItem;
+    runtime_->arktsMapTree_[0x1000] = {mapItem, 0};
     runtime_->adltFound_["test.so"] = true;
     runtime_->adltBaseMap_["test.so"] = 0x1000;
 
@@ -308,7 +308,8 @@ HWTEST_F(VirtualRuntimeExtTest, FindArktsMapByAddr, TestSize.Level0)
 
     // Add test map
     auto mapItem = std::make_shared<DfxMap>(0x1000, 0x2000, 0, PROT_READ, "stub.an");
-    runtime_->arktsMapTree_[0x1000] = mapItem;
+    runtime_->arktsMapTree_[0x1000] = {mapItem, 0};
+    runtime_->arktsMapCache_.clear();
 
     // Test with address in range
     EXPECT_NE(runtime_->FindArktsMapByAddr(0x1500), nullptr);
@@ -1235,8 +1236,8 @@ HWTEST_F(VirtualRuntimeExtTest, GetSymbolReportsCompressedUserSymbolMapsOnce, Te
 HWTEST_F(VirtualRuntimeExtTest, FindArktsMapByAddrHandlesBeforeBeginAndNullMap, TestSize.Level0)
 {
     auto map = std::make_shared<DfxMap>(0x2000, 0x3000, 0, PROT_EXEC, "entry.abc");
-    runtime_->arktsMapTree_[map->begin] = map;
-    runtime_->arktsMapTree_[0x4000] = nullptr;
+    runtime_->arktsMapTree_[map->begin] = {map, 0};
+    runtime_->arktsMapTree_[0x4000] = {nullptr, 0};
 
     EXPECT_EQ(runtime_->FindArktsMapByAddr(0x1000), nullptr);
     EXPECT_EQ(runtime_->FindArktsMapByAddr(0x4001), nullptr);
@@ -1245,7 +1246,7 @@ HWTEST_F(VirtualRuntimeExtTest, FindArktsMapByAddrHandlesBeforeBeginAndNullMap, 
 HWTEST_F(VirtualRuntimeExtTest, SymbolizeFrameRejectsMapWithoutName, TestSize.Level0)
 {
     auto map = std::make_shared<DfxMap>(0x1000, 0x2000, 0, PROT_EXEC, "");
-    runtime_->arktsMapTree_[map->begin] = map;
+    runtime_->arktsMapTree_[map->begin] = {map, 0};
     CallFrame callFrame(0x1008);
 
     EXPECT_FALSE(runtime_->SymbolizeFrame(callFrame, 1, 2));
@@ -1254,9 +1255,9 @@ HWTEST_F(VirtualRuntimeExtTest, SymbolizeFrameRejectsMapWithoutName, TestSize.Le
 HWTEST_F(VirtualRuntimeExtTest, SymbolizeFrameUsesJsSymbolCache, TestSize.Level0)
 {
     auto map = std::make_shared<DfxMap>(0x3000, 0x4000, 0, PROT_EXEC, "entry/src/main.ets");
-    runtime_->arktsMapTree_[map->begin] = map;
     std::string_view moduleName = map->name;
     uint32_t filePathId = runtime_->FillArkTsFilePath(moduleName);
+    runtime_->arktsMapTree_[map->begin] = {map, filePathId};
     DfxSymbol cachedSymbol(0x3008, "onClick");
     cachedSymbol.module_ = map->name;
     cachedSymbol.symbolName_ = "onClick";
@@ -1270,15 +1271,13 @@ HWTEST_F(VirtualRuntimeExtTest, SymbolizeFrameUsesJsSymbolCache, TestSize.Level0
     EXPECT_EQ(callFrame.filePath_, map->name);
     EXPECT_EQ(callFrame.symbolName_, "onClick");
     EXPECT_EQ(callFrame.callFrameId_, cachedSymbol.symbolId_);
-    EXPECT_EQ(runtime_->jsFilePathCache_[callFrame.ip_], filePathId);
 }
 
 HWTEST_F(VirtualRuntimeExtTest, SymbolizeFrameUsesCachedFilePathId, TestSize.Level0)
 {
     auto map = std::make_shared<DfxMap>(0x5000, 0x6000, 0, PROT_EXEC, "entry/src/cached.ets");
-    runtime_->arktsMapTree_[map->begin] = map;
     constexpr uint32_t filePathId = 31;
-    runtime_->jsFilePathCache_[0x5008] = filePathId;
+    runtime_->arktsMapTree_[map->begin] = {map, filePathId};
     DfxSymbol cachedSymbol(0x5008, "cachedClick");
     cachedSymbol.module_ = map->name;
     cachedSymbol.symbolName_ = "cachedClick";
@@ -1691,6 +1690,181 @@ HWTEST_F(VirtualRuntimeExtTest, GetUserSymbolUsesAbcSymbolLookup, TestSize.Level
     EXPECT_TRUE(symbol.IsValid());
     EXPECT_EQ(symbol.symbolName_, "abc_func");
     EXPECT_EQ(symbol.filePathId_, filePathId);
+}
+
+/*
+ * @tc.name: FindArktsMapByAddrPopulatesPageCacheOnMiss
+ * @tc.desc: verify arkts page cache is filled on first lookup (cache miss branch).
+ * @tc.type: FUNC
+ */
+HWTEST_F(VirtualRuntimeExtTest, FindArktsMapByAddrPopulatesPageCacheOnMiss, TestSize.Level0)
+{
+    constexpr uint32_t filePathId = 7;
+    auto map = std::make_shared<DfxMap>(0x3000, 0x4000, 0, PROT_EXEC, "entry.abc");
+    runtime_->arktsMapTree_[map->begin] = {map, filePathId};
+    ASSERT_TRUE(runtime_->arktsMapCache_.empty());
+
+    auto found = runtime_->FindArktsMapByAddr(0x3008);
+
+    EXPECT_EQ(found, map);
+    ASSERT_EQ(runtime_->arktsMapCache_.size(), 1u);
+    auto cached = runtime_->arktsMapCache_[0x3];
+    EXPECT_EQ(cached.map, map);
+    EXPECT_EQ(cached.filePathId, filePathId);
+}
+
+/*
+ * @tc.name: FindArktsMapByAddrServesPositiveCacheOnRepeatedCall
+ * @tc.desc: verify repeated lookups in the same page hit the cache without re-running upper_bound.
+ * @tc.type: FUNC
+ */
+HWTEST_F(VirtualRuntimeExtTest, FindArktsMapByAddrServesPositiveCacheOnRepeatedCall, TestSize.Level0)
+{
+    constexpr uint32_t filePathId = 9;
+    auto map = std::make_shared<DfxMap>(0x5000, 0x6000, 0, PROT_EXEC, "entry.abc");
+    runtime_->arktsMapTree_[map->begin] = {map, filePathId};
+
+    auto first = runtime_->FindArktsMapByAddr(0x5010);
+    auto second = runtime_->FindArktsMapByAddr(0x5080);
+
+    EXPECT_EQ(first, map);
+    EXPECT_EQ(second, map);
+    EXPECT_EQ(runtime_->arktsMapCache_.size(), 1u);
+    EXPECT_EQ(runtime_->arktsMapCache_[0x5].map, map);
+    EXPECT_EQ(runtime_->arktsMapCache_[0x5].filePathId, filePathId);
+}
+
+/*
+ * @tc.name: FindArktsMapByAddrCachesNegativeResultForPageWithoutMap
+ * @tc.desc: verify a page with no arkts map is cached as negative and reused on the next lookup.
+ * @tc.type: FUNC
+ */
+HWTEST_F(VirtualRuntimeExtTest, FindArktsMapByAddrCachesNegativeResultForPageWithoutMap, TestSize.Level0)
+{
+    auto map = std::make_shared<DfxMap>(0x7000, 0x8000, 0, PROT_EXEC, "entry.abc");
+    runtime_->arktsMapTree_[map->begin] = {map, 0};
+
+    EXPECT_EQ(runtime_->FindArktsMapByAddr(0x9000), nullptr);
+    ASSERT_EQ(runtime_->arktsMapCache_.size(), 1u);
+    EXPECT_EQ(runtime_->arktsMapCache_[0x9].map, nullptr);
+
+    EXPECT_EQ(runtime_->FindArktsMapByAddr(0x9abc), nullptr);
+    EXPECT_EQ(runtime_->arktsMapCache_.size(), 1u);
+    EXPECT_EQ(runtime_->arktsMapCache_[0x9].map, nullptr);
+}
+
+/*
+ * @tc.name: FindArktsMapByAddrReturnsNullptrWhenIpBeforeFirstMap
+ * @tc.desc: verify upper_bound == begin branch caches a negative result.
+ * @tc.type: FUNC
+ */
+HWTEST_F(VirtualRuntimeExtTest, FindArktsMapByAddrReturnsNullptrWhenIpBeforeFirstMap, TestSize.Level0)
+{
+    auto map = std::make_shared<DfxMap>(0xB000, 0xC000, 0, PROT_EXEC, "entry.abc");
+    runtime_->arktsMapTree_[map->begin] = {map, 3};
+
+    EXPECT_EQ(runtime_->FindArktsMapByAddr(0xA000), nullptr);
+    ASSERT_EQ(runtime_->arktsMapCache_.size(), 1u);
+    EXPECT_EQ(runtime_->arktsMapCache_[0xA].map, nullptr);
+}
+
+/*
+ * @tc.name: FindArktsMapByAddrReturnsNullptrWhenTreeEmpty
+ * @tc.desc: verify the empty-tree branch still caches a negative result.
+ * @tc.type: FUNC
+ */
+HWTEST_F(VirtualRuntimeExtTest, FindArktsMapByAddrReturnsNullptrWhenTreeEmpty, TestSize.Level0)
+{
+    EXPECT_TRUE(runtime_->arktsMapTree_.empty());
+
+    EXPECT_EQ(runtime_->FindArktsMapByAddr(0x1234), nullptr);
+
+    ASSERT_EQ(runtime_->arktsMapCache_.size(), 1u);
+    EXPECT_EQ(runtime_->arktsMapCache_[0x1].map, nullptr);
+}
+
+/*
+ * @tc.name: ClearMapsClearsArktsMapPageCache
+ * @tc.desc: verify ClearMaps drops the arkts page cache together with the map tree.
+ * @tc.type: FUNC
+ */
+HWTEST_F(VirtualRuntimeExtTest, ClearMapsClearsArktsMapPageCache, TestSize.Level0)
+{
+    auto map = std::make_shared<DfxMap>(0xD000, 0xE000, 0, PROT_EXEC, "entry.abc");
+    runtime_->arktsMapTree_[map->begin] = {map, 5};
+    runtime_->FindArktsMapByAddr(0xD010);
+    ASSERT_EQ(runtime_->arktsMapCache_.size(), 1u);
+
+    runtime_->ClearMaps();
+
+    EXPECT_TRUE(runtime_->arktsMapCache_.empty());
+    EXPECT_TRUE(runtime_->arktsMapTree_.empty());
+}
+
+/*
+ * @tc.name: SymbolizeFrameCachesResolvedSymbolAndShortCircuits
+ * @tc.desc: verify a miss resolves via GetSymbol(knownMap) and a subsequent frame short-circuits the cache.
+ * @tc.type: FUNC
+ */
+HWTEST_F(VirtualRuntimeExtTest, SymbolizeFrameCachesResolvedSymbolAndShortCircuits, TestSize.Level0)
+{
+    constexpr uint64_t mapBegin = 0x24000;
+    constexpr uint64_t ip = mapBegin + 0x80;
+    constexpr uint32_t filePathId = 42;
+    const std::string filePath = "entry/module.abc";
+    auto map = std::make_shared<DfxMap>(mapBegin, mapBegin + 0x1000, 0, PROT_EXEC, filePath);
+    runtime_->arktsMapTree_[map->begin] = {map, filePathId};
+
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(SYMBOL_HAP_FILE, filePath, getpid());
+    ASSERT_NE(symbolsFile, nullptr);
+    symbolsFile->filePath_ = filePath;
+    symbolsFile->SetBoolValue(true);
+    DfxSymbol cached(ip, 0x20, "abc_func", filePath);
+    cached.symbolName_ = "abc_func";
+    symbolsFile->symbolsMap_.emplace(ip, cached);
+    runtime_->symbolsFiles_[filePath] = std::move(symbolsFile);
+    runtime_->UpdateThread(1, 2, "abc_thread");
+
+    auto cacheKey = std::pair<uint64_t, uint32_t>(ip, filePathId);
+    ASSERT_EQ(runtime_->userSymbolCache_.find(cacheKey), runtime_->userSymbolCache_.end());
+
+    CallFrame first(ip);
+    EXPECT_TRUE(runtime_->SymbolizeFrame(first, 1, 2));
+    EXPECT_TRUE(first.isJsFrame_);
+    EXPECT_EQ(first.symbolName_, "abc_func");
+    EXPECT_NE(runtime_->userSymbolCache_.find(cacheKey), runtime_->userSymbolCache_.end());
+
+    CallFrame second(ip);
+    EXPECT_TRUE(runtime_->SymbolizeFrame(second, 1, 2));
+    EXPECT_TRUE(second.isJsFrame_);
+    EXPECT_EQ(second.symbolName_, "abc_func");
+}
+
+/*
+ * @tc.name: GetSymbolUsesKnownMapFilePathIdForCacheLookup
+ * @tc.desc: verify GetSymbol uses knownFilePathId and skips FindMap when knownMap is provided.
+ * @tc.type: FUNC
+ */
+HWTEST_F(VirtualRuntimeExtTest, GetSymbolUsesKnownMapFilePathIdForCacheLookup, TestSize.Level0)
+{
+    constexpr uint64_t ip = 0x32080;
+    constexpr uint32_t filePathId = 77;
+    auto map = std::make_shared<DfxMap>(0x32000, 0x33000, 0, PROT_EXEC, "entry/known.abc");
+    runtime_->arktsMapTree_[map->begin] = {map, filePathId};
+
+    DfxSymbol cached(ip, "known_func");
+    cached.symbolName_ = "known_func";
+    cached.filePathId_ = filePathId;
+    cached.symbolId_ = 9;
+    runtime_->userSymbolCache_[VirtualRuntime::SymbolCacheKey(ip, filePathId)] = cached;
+
+    DfxSymbol symbol;
+    CallFrame callFrame(ip);
+    runtime_->GetSymbol(symbol, callFrame, 1, 2, PERF_CONTEXT_MAX, map, filePathId, false);
+
+    EXPECT_EQ(symbol.symbolName_, "known_func");
+    EXPECT_EQ(symbol.symbolId_, cached.symbolId_);
+    EXPECT_EQ(callFrame.needReport_, 0u);
 }
 }
 }
