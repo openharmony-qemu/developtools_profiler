@@ -47,5 +47,4 @@ ohos_shared_library("cj_hidebug_ffi") {
 
   part_name = "hiprofiler"
   subsystem_name = "developtools"
-  version_script = "cj_hidebug_ffi.map"
 }
