@@ -2610,6 +2610,16 @@ int HookManager::CreateFileCacheFd()
         close(fd);
         return -1;
     }
+    // pre-allocate physical blocks before fd handoff: fallocate must not run inside the hooked
+    // app, whose seccomp filter rejects it (SIGSYS); same direct-call style as trace_file_writer
+    if (fallocate(fd, 0, 0, static_cast<off_t>(MMAP_FILE_SIZE)) != 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "CreateFileCacheFd fallocate failed errno=%d, fallback ftruncate", errno);
+        if (ftruncate(fd, static_cast<off_t>(MMAP_FILE_SIZE)) != 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "CreateFileCacheFd ftruncate failed errno=%d", errno);
+            close(fd);
+            return -1;
+        }
+    }
     return fd;
 }
 

@@ -18,6 +18,7 @@
 #include <fstream>
 #include <sstream>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include "hook_socket_client.h"
 #include "parameters.h"
@@ -317,6 +318,11 @@ HWTEST_F(HookManagerExtTest, CreateFileCacheFd, TestSize.Level0)
     hookManager_->fileCacheDir_ = "/data/local/tmp/";
     int fd = hookManager_->CreateFileCacheFd();
     ASSERT_GE(fd, 0);
+
+    // daemon pre-allocates the cache file (fallocate, ftruncate fallback) before fd handoff
+    struct stat st = {};
+    ASSERT_EQ(fstat(fd, &st), 0);
+    EXPECT_EQ(static_cast<uint64_t>(st.st_size), MMAP_FILE_SIZE);
 
     const char* content = "cache-fd";
     ASSERT_GT(write(fd, content, strlen(content)), 0);
