@@ -24,6 +24,7 @@
 #include <sys/time.h>
 #include <sys/select.h>
 #include <unistd.h>
+#include <fdsan.h>
 #include "securec.h"
 #include "logging.h"
 
@@ -64,7 +65,7 @@ void FileMonitor::Finalize()
             inotify_rm_watch(inotifyFd_, wd_);
             wd_ = -1;
         }
-        close(inotifyFd_);
+        fdsan_close_with_tag(inotifyFd_, PROFILER_SUBSYSTEM);
         inotifyFd_ = -1;
     }
 }
@@ -93,10 +94,11 @@ bool FileMonitor::Init()
     CHECK_NOTNULL(sem_, false, "create sem fail");
     inotifyFd_ = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
     CHECK_TRUE(inotifyFd_ >= 0, false, "init inotify fail, errno:%s", strerror(errno));
+    fdsan_exchange_owner_tag(inotifyFd_, 0, PROFILER_SUBSYSTEM);
     wd_ = inotify_add_watch(inotifyFd_, realPath, IN_CLOSE_WRITE);
     if (wd_ < 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "add watch fail, errno: %s", strerror(errno));
-        close(inotifyFd_);
+        fdsan_close_with_tag(inotifyFd_, PROFILER_SUBSYSTEM);
         inotifyFd_ = -1;
         return false;
     }

@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
+#include <fdsan.h>
 #include "logging.h"
 #include "securec.h"
 #include "service_base.h"
@@ -84,7 +85,7 @@ SocketContext::~SocketContext()
     socketHandle_ = socketTemp;
     PROFILER_LOG_INFO(LOG_CORE, "~SocketContext recvThread join success");
     if (socketHandle_ >= 0) {
-        int ret = close(socketHandle_);
+        int ret = fdsan_close_with_tag(socketHandle_, PROFILER_SUBSYSTEM);
         if (ret < 0) {
             const int bufSize = 256;
             char buf[bufSize] = { 0 };

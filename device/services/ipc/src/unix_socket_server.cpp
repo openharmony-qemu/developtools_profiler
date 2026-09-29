@@ -23,6 +23,7 @@
 #include <linux/un.h>
 
 #include "init_socket.h"
+#include <fdsan.h>
 #include "logging.h"
 #include "securec.h"
 
@@ -42,14 +43,20 @@ UnixSocketServer::UnixSocketServer()
 
 UnixSocketServer::~UnixSocketServer()
 {
+    int socketTemp = socketHandle_;
     socketHandle_ = -1;
 
     if (acceptThread_.joinable()) {
         acceptThread_.join();
     }
+    socketHandle_ = socketTemp;
+    if (socketHandle_ >= 0) {
+        fdsan_close_with_tag(socketHandle_, PROFILER_SUBSYSTEM);
+        socketHandle_ = -1;
+    }
     PROFILER_LOG_DEBUG(LOG_CORE, "acceptThread finish");
     if (epfd_ != -1) {
-        close(epfd_);
+        fdsan_close_with_tag(epfd_, PROFILER_SUBSYSTEM);
         epfd_ = -1;
     }
     std::unique_lock<std::mutex> lock(mtx_);
@@ -95,6 +102,7 @@ void UnixSocketServer::UnixSocketAccept(void (*callback)(int))
     pthread_setname_np(pthread_self(), "UnixSocketAccept");
     CHECK_TRUE(socketHandle_ != -1, NO_RETVAL, "Unix Socket Accept socketHandle_ == -1");
     epfd_ = epoll_create(1);
+    fdsan_exchange_owner_tag(epfd_, 0, PROFILER_SUBSYSTEM);
     struct epoll_event evt;
     evt.data.fd = socketHandle_;
     evt.events = EPOLLIN | EPOLLHUP;
@@ -116,6 +124,7 @@ void UnixSocketServer::UnixSocketAccept(void (*callback)(int))
             if (events[i].events & EPOLLIN) {
                 int clientSocket = accept(socketHandle_, nullptr, nullptr);
                 CHECK_TRUE(clientSocket != -1, NO_RETVAL, "Accept Failed");
+                fdsan_exchange_owner_tag(clientSocket, 0, PROFILER_SUBSYSTEM);
                 PROFILER_LOG_INFO(LOG_CORE, "Accept A Client %d", clientSocket);
 
                 struct epoll_event clientEvt;
@@ -161,8 +170,9 @@ bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p,
     CHECK_TRUE(socketHandle_ == -1, false, "StartServer FAIL socketHandle_ != -1");
     int sock = GetControlSocket(addrname.c_str());
     CHECK_TRUE(sock != -1, false, "StartServer FAIL GetControlSocket return : %d", sock);
+    fdsan_exchange_owner_tag(sock, 0, PROFILER_SUBSYSTEM);
     if (listen(sock, UNIX_SOCKET_LISTEN_COUNT) == -1) {
-        close(sock);
+        fdsan_close_with_tag(sock, PROFILER_SUBSYSTEM);
         unlink(addrname.c_str());
         PROFILER_LOG_ERROR(LOG_CORE, "StartServer FAIL listen ERR : %d", errno);
         return false;
@@ -170,7 +180,7 @@ bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p,
     socketHandle_ = sock;
     acceptThread_ = std::thread([this, callback] { this->UnixSocketAccept(callback); });
     if (acceptThread_.get_id() == std::thread::id()) {
-        close(socketHandle_);
+        fdsan_close_with_tag(socketHandle_, PROFILER_SUBSYSTEM);
         unlink(addrname.c_str());
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
