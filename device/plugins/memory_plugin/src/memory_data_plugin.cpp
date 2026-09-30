@@ -539,7 +539,9 @@ std::vector<int> MemoryDataPlugin::OpenProcPidFiles(int32_t pid)
             strerror_r(errno, buf, bufSize);
             PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, fileName, errno, buf);
         }
-        if (fd != -1) fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
+        if (fd != -1) {
+            fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
+        }
         profds.emplace(profds.begin() + i, fd);
     }
     return profds;
