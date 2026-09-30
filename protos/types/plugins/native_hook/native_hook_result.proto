@@ -167,6 +167,8 @@ enum TraceType {
     VMA_ARKWEB = 15;
     DART_HEAP = 16;
     ARKTS_STATIC_HEAP = 17;
+    CHROMIUM_HEAP = 18;
+    VMA_CHROMIUM = 19;
 };
 
 message TraceAllocEvent {
@@ -237,6 +239,8 @@ message RecordStatisticsEvent {
         VMA_ARKWEB = 19;
         DART_HEAP = 20;
         ARKTS_STATIC_HEAP = 21;
+        CHROMIUM_HEAP = 22;
+        VMA_CHROMIUM = 23;
     };
     MemoryType type = 3;
     uint64 apply_count = 4;

@@ -395,7 +395,41 @@ HWTEST_F(NativeHookTest, NormalHookRestraceTest012, TestSize.Level0)
     EXPECT_TRUE(ohos_malloc_hook_on_end());
     sleep(WAIT_THREAD_TIME);
 }
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook restrace with CHROMIUM heap.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookRestraceTest013, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_restrace(RES_CHROMIUM_HEAP, mem, 1, TAG_RES_CHROMIUM_HEAP, true);
+    ohos_malloc_hook_restrace(RES_CHROMIUM_HEAP, mem, 1, TAG_RES_CHROMIUM_HEAP, false);
+    delete[] mem;
 
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook restrace with VMA CHROMIUM.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookRestraceTest014, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_restrace(RES_VMA_CHROMIUM, mem, 1, TAG_RES_VMA_CHROMIUM, true);
+    ohos_malloc_hook_restrace(RES_VMA_CHROMIUM, mem, 1, TAG_RES_VMA_CHROMIUM, false);
+    delete[] mem;
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
 /**
  * @tc.name: ResTraceMoveTest
  * @tc.desc: Test memory move.

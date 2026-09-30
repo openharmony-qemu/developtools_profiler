@@ -121,6 +121,8 @@ static TagMapping g_tagMappings[] = {
     {TAG_RES_VMA_ARKWEB, RecordStatisticsEvent::VMA_ARKWEB, false},
     {TAG_RES_DART_HEAP, RecordStatisticsEvent::DART_HEAP, false},
     {TAG_RES_RN_HERMES_HEAP, RecordStatisticsEvent::RN_HERMES_HEAP, false},
+    {TAG_RES_CHROMIUM_HEAP, RecordStatisticsEvent::CHROMIUM_HEAP, false},
+    {TAG_RES_VMA_CHROMIUM, RecordStatisticsEvent::VMA_CHROMIUM, false},
 };
 
 bool NeedBuildIdForPath(const CallFrame& callFrame)
@@ -316,6 +318,8 @@ void StackPreprocess::InitializeGpuData()
     SaveMemTag(VMA_ARKWEB_INDEX + 1, TAG_RES_VMA_ARKWEB);
     SaveMemTag(DART_HEAP_INDEX + 1, TAG_RES_DART_HEAP);
     SaveMemTag(RN_HERMES_HEAP_INDEX + 1, TAG_RES_RN_HERMES_HEAP);
+    SaveMemTag(CHROMIUM_HEAP_INDEX + 1, TAG_RES_CHROMIUM_HEAP);
+    SaveMemTag(VMA_CHROMIUM_INDEX + 1, TAG_RES_VMA_CHROMIUM);
 }
 
 void StackPreprocess::FinishTraceFile()

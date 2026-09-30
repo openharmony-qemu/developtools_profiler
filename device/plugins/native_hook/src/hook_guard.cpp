@@ -160,7 +160,9 @@ uint16_t GetPredefinedTagId(unsigned long long mask)
         {RES_ARK_LOCAL_HANDLE, static_cast<uint16_t>(ARK_LOCAL_HANDLE_INDEX + 1)},
         {RES_VMA_ARKWEB, static_cast<uint16_t>(VMA_ARKWEB_INDEX + 1)},
         {RES_DART_HEAP, static_cast<uint16_t>(DART_HEAP_INDEX + 1)},
-        {RES_RN_HERMES_HEAP, static_cast<uint16_t>(RN_HERMES_HEAP_INDEX + 1)}};
+        {RES_RN_HERMES_HEAP, static_cast<uint16_t>(RN_HERMES_HEAP_INDEX + 1)},
+        {RES_CHROMIUM_HEAP, static_cast<uint16_t>(CHROMIUM_HEAP_INDEX + 1)},
+        {RES_VMA_CHROMIUM, static_cast<uint16_t>(VMA_CHROMIUM_INDEX + 1)}};
     auto it = g_maskTagMap.find(mask);
     return it != g_maskTagMap.end() ? it->second : 0;
 }

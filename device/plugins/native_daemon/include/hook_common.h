@@ -61,7 +61,7 @@ const size_t FILTER_STACK_DEPTH = 2;
 const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
 const size_t GPU_TYPE_COUNT = 5;
 const uint32_t TAG_ID_PENDING = UINT32_MAX;  // Special marker for dynamic tagId generation
-const size_t RESTRACE_TYPE_COUNT = 24;
+const size_t RESTRACE_TYPE_COUNT = 26;
 const size_t GPU_RANGE_COUNT = 2;
 const size_t GPU_VK_INDEX = 0;
 const size_t GPU_GLES_IMAGE_INDEX = 1;
@@ -88,6 +88,8 @@ const size_t ARK_LOCAL_HANDLE_INDEX = 21;
 const size_t VMA_ARKWEB_INDEX = 22;
 const size_t DART_HEAP_INDEX = 23;
 const size_t ARKTS_STATIC_HEAP_MASK_INDEX = 24;
+const size_t CHROMIUM_HEAP_INDEX = 25;
+const size_t VMA_CHROMIUM_INDEX = 26;
 // dlopen function minimum stack depth
 const int32_t DLOPEN_MIN_UNWIND_DEPTH = 5;
 // default max js stack depth
