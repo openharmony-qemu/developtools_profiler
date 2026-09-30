@@ -1877,7 +1877,6 @@ bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& 
         } else {
             RecordHeadStatus headStatus = GetRecordHead(buffer, offset, isCrashFile, totalSize);
             if (headStatus == RECORD_HEAD_INVALID) {
-                DumpInvalidRecordHead(buffer, totalAvail, offset, readfileSize);
                 return false;
             }
             if (headStatus == RECORD_HEAD_END) {
@@ -1929,7 +1928,6 @@ bool HookManager::RefreshValidLiveDataFromBuffer(uint8_t* buffer, uint32_t total
         } else {
             RecordHeadStatus headStatus = GetRecordHead(buffer, offset, isCrashFile, totalSize);
             if (headStatus == RECORD_HEAD_INVALID) {
-                DumpInvalidRecordHead(buffer, totalAvail, offset, fileSize);
                 return false;
             }
             if (headStatus == RECORD_HEAD_END) {

@@ -31,7 +31,6 @@ RecordHeadStatus GetRecordHead(const uint8_t* buffer, uint32_t offset, bool isCr
 // returns true and sets totalSize when a valid record head is found, false when retries exhausted
 bool GetRecordHeadWithRetry(const uint8_t* buffer, uint32_t totalAvail, uint32_t& offset,
                             uint32_t& totalSize, bool isCrashFile);
-void DumpInvalidRecordHead(const uint8_t* buffer, uint32_t totalAvail, uint32_t offset, uint64_t readfileSize);
 uint32_t GetCacheFileReadSize(CacheFileReadContext& ctx);
 bool HandleOversizeRecord(CacheFileReadContext& ctx);
 
