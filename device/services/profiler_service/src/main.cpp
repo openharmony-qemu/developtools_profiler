@@ -44,6 +44,6 @@ int main(int argc, char* argv[])
         PROFILER_LOG_INFO(LOG_CORE, "ProfilerService start SUCCESS!");
         service->WaitServiceDone();
     }
-    close(lockFileFd);
+    fdsan_close_with_tag(lockFileFd, PROFILER_SUBSYSTEM);
     return 0;
 }

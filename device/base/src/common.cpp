@@ -110,21 +110,22 @@ bool IsProcessRunning(int& lockFileFd)
         PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, fileName.c_str(), errno, buf);
         return false;
     }
+    fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
     int flags = fcntl(fd, F_GETFD);
     if (flags == -1) {
-        close(fd);
+        fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
         PROFILER_LOG_ERROR(LOG_CORE, "%s: get fd flags failed!", __func__);
         return false;
     }
     unsigned int flagsValue = static_cast<unsigned int>(flags) | FD_CLOEXEC;
     if (fcntl(fd, F_SETFD, flagsValue) == -1) {
-        close(fd);
+        fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
         PROFILER_LOG_ERROR(LOG_CORE, "%s: set fd_cloexec failed!", __func__);
         return false;
     }
     if (flock(fd, LOCK_EX | LOCK_NB) == -1) {
         // 进程正在运行，加锁失败
-        close(fd);
+        fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
         printf("%s is running, please don't start it again.\n", processName.c_str());
         PROFILER_LOG_ERROR(LOG_CORE, "%s is running, please don't start it again.", processName.c_str());
         return true;
@@ -203,9 +204,12 @@ bool IsProcessExist(const std::string& processName, int& pid)
 
 static void CloseStdio()
 {
-    close(STDIN_FILENO);
-    close(STDOUT_FILENO);
-    close(STDERR_FILENO);
+    fdsan_exchange_owner_tag(STDIN_FILENO, 0, PROFILER_SUBSYSTEM);
+    fdsan_exchange_owner_tag(STDOUT_FILENO, 0, PROFILER_SUBSYSTEM);
+    fdsan_exchange_owner_tag(STDERR_FILENO, 0, PROFILER_SUBSYSTEM);
+    fdsan_close_with_tag(STDIN_FILENO, PROFILER_SUBSYSTEM);
+    fdsan_close_with_tag(STDOUT_FILENO, PROFILER_SUBSYSTEM);
+    fdsan_close_with_tag(STDERR_FILENO, PROFILER_SUBSYSTEM);
 }
 
 int StartProcess(const std::string& processBin, std::vector<char*>& argv)
@@ -337,7 +341,10 @@ bool GetDeveloperMode()
 
 inline int CustomFdClose(int& fd)
 {
-    int ret = close(fd);
+    if (fd >= 0) {
+        fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
+    }
+    int ret = fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
     if (ret == 0) {
         fd = -1;
     }
@@ -1180,6 +1187,7 @@ static bool CopyFileWithRetry(uint32_t srcFd, const std::string& destPath, int m
     if (dest < 0) {
         return false;
     }
+    fdsan_exchange_owner_tag(dest, 0, PROFILER_SUBSYSTEM);
 
     bool ret = false;
     do {
@@ -1196,7 +1204,7 @@ static bool CopyFileWithRetry(uint32_t srcFd, const std::string& destPath, int m
         ofs.close();
     } while (maxRetries-- > 0);
 
-    close(dest);
+    fdsan_close_with_tag(dest, PROFILER_SUBSYSTEM);
 
     return ret;
 }
@@ -1222,11 +1230,12 @@ bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPat
         PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, srcPath.c_str(), errno, buf);
         return false;
     }
+    fdsan_exchange_owner_tag(srcFd, 0, PROFILER_SUBSYSTEM);
     bool result = COMMON::CopyFileFast(srcFd, destPath);
     if (!result) {
         PROFILER_LOG_ERROR(LOG_CORE, "CopyFileFast fail");
     }
-    close(srcFd);
+    fdsan_close_with_tag(srcFd, PROFILER_SUBSYSTEM);
     return result;
 }
 
@@ -1240,11 +1249,12 @@ bool CopyFileToFdFastFromPath(const std::string& srcPath, int destFd)
         PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, srcPath.c_str(), errno, buf);
         return false;
     }
+    fdsan_exchange_owner_tag(srcFd, 0, PROFILER_SUBSYSTEM);
     bool result = CopyFdContentWithRetry(srcFd, destFd, 3);
     if (!result) {
         PROFILER_LOG_ERROR(LOG_CORE, "CopyFileToFdFastFromPath fail");
     }
-    close(srcFd);
+    fdsan_close_with_tag(srcFd, PROFILER_SUBSYSTEM);
     return result;
 }
 
@@ -1390,7 +1400,8 @@ bool CreateFile(const std::string& filePath)
     if (fd == -1) {
         return false;
     }
-    close(fd);
+    fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
+    fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
     return true;
 }
 

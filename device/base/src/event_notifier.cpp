@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <sys/eventfd.h>
 #include <unistd.h>
+#include "common.h"
 #include "logging.h"
 
 #ifndef EFD_SEMAPHORE
@@ -46,6 +47,7 @@ EventNotifier::EventNotifier(unsigned int initValue, unsigned int mask) : fd_(-1
     }
     fd_ = eventfd(initValue, flags_);
     CHECK_TRUE(fd_ >= 0, NO_RETVAL, "create eventfd FAILED, %d", errno);
+    fdsan_exchange_owner_tag(fd_, 0, PROFILER_SUBSYSTEM);
     PROFILER_LOG_DEBUG(LOG_CORE, "EventNotifier create eventfd %d done!", fd_);
 }
 
@@ -53,13 +55,14 @@ EventNotifier::EventNotifier(int fd) : fd_(fd), flags_(0)
 {
     int flags = fcntl(fd_, F_GETFL);
     CHECK_TRUE(flags >= 0, NO_RETVAL, "get flags of fd %d FAILED, %d", fd, errno);
+    fdsan_exchange_owner_tag(fd_, 0, PROFILER_SUBSYSTEM);
     PROFILER_LOG_DEBUG(LOG_CORE, "EventNotifier bind eventfd %d done!", fd_);
 }
 
 EventNotifier::~EventNotifier()
 {
     PROFILER_LOG_DEBUG(LOG_CORE, "EventNotifier close eventfd %d", fd_);
-    close(fd_);
+    fdsan_close_with_tag(fd_, PROFILER_SUBSYSTEM);
 }
 
 int EventNotifier::GetFd() const

@@ -22,6 +22,10 @@
 #include <vector>
 #include <charconv>
 
+namespace {
+constexpr uint64_t FD_TAG_PAGEMAP = 0xD002D0C;  // 与 logging.h PROFILER_SUBSYSTEM 保持一致
+}
+
 using namespace std;
 
 constexpr uint64_t PFN_MASK = ((1ULL << 55) - 1);
@@ -168,13 +172,14 @@ int main(int argc, char* argv[])
         perror("Error opening file");
         return -1;
     }
+    fdsan_exchange_owner_tag(pagemapFd, 0, FD_TAG_PAGEMAP);
     cout << "Address Range\t" << "Permissions\t" << "PFN\t" << "Path" << endl;
     string line;
     while (getline(maps_file, line)) {
         MapInfo mapping;
         bool ret = ParseMapsLine(line, mapping);
         if (ret != 0) {
-            close(pagemapFd);
+            fdsan_close_with_tag(pagemapFd, FD_TAG_PAGEMAP);
             return ret;
         }
         for (uint64_t tmpAddr = mapping.startAddr; tmpAddr < mapping.endAddr; tmpAddr += PAGE_SIZE) {
@@ -192,6 +197,6 @@ int main(int argc, char* argv[])
         }
     }
     maps_file.close();
-    close(pagemapFd);
+    fdsan_close_with_tag(pagemapFd, FD_TAG_PAGEMAP);
     return 0;
 }
