@@ -263,20 +263,21 @@ bool HookSocketClient::HandleSimplifiedNmdDumpRequest(SocketContext &context)
         PROFILER_LOG_ERROR(LOG_CORE, "HandleSimplifiedNmdDumpRequest fail, recv fd err");
         return false;
     }
+    fdsan_exchange_owner_tag(nmdRecvFd, 0, PROFILER_SUBSYSTEM);
     void *nmdBuf = malloc(MEMCHECK_DETAILINFO_MAXSIZE);
     if (nmdBuf == nullptr) {
-        close(nmdRecvFd);
+        fdsan_close_with_tag(nmdRecvFd, PROFILER_SUBSYSTEM);
         return false;
     }
     struct OptArg opt = {0, reinterpret_cast<char *>(nmdBuf) };
     malloc_stats_print(NmdWriteStat, &opt, "s");
     if (!WriteDataToFd(nmdRecvFd, reinterpret_cast<const uint8_t *>(opt.buf), strlen(opt.buf), false)) {
         PROFILER_LOG_ERROR(LOG_CORE, "HandleSimplifiedNmdDumpRequest: failed to write data");
-        close(nmdRecvFd);
+        fdsan_close_with_tag(nmdRecvFd, PROFILER_SUBSYSTEM);
         free(nmdBuf);
         return false;
     }
-    close(nmdRecvFd);
+    fdsan_close_with_tag(nmdRecvFd, PROFILER_SUBSYSTEM);
     free(nmdBuf);
     if (unixSocketClient_ == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "unixSocketClient_ is NULL");
