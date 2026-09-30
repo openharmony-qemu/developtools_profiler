@@ -165,10 +165,12 @@ bool EpollEventPoller::Init()
 
     int epollFd = epoll_create1(EPOLL_CLOEXEC);
     CHECK_TRUE(epollFd >= 0, false, "epoll_create failed, %d!", errno);
+    fdsan_exchange_owner_tag(epollFd, 0, PROFILER_SUBSYSTEM);
     fileDescriptors_.push_back(epollFd);
 
     int eventFd = eventfd(0, O_CLOEXEC | O_NONBLOCK);
-    CHECK_TRUE(eventFd >= 0, false, "create event fd failed, %d", errno);
+    CHECK_TRUE(eventFd >= 0, false, "create event fd failed, %d!", errno);
+    fdsan_exchange_owner_tag(eventFd, 0, PROFILER_SUBSYSTEM);
     fileDescriptors_.push_back(eventFd);
 
     auto eventFdCtx = std::make_shared<EventContext>();
@@ -206,7 +208,7 @@ bool EpollEventPoller::Finalize()
     }
 
     for (int fd : fileDescriptors_) {
-        close(fd);
+        fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
     }
     fileDescriptors_.clear();
     context_.clear();

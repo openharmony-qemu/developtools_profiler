@@ -38,6 +38,7 @@ PluginWatcher::PluginWatcher(const PluginManagerPtr& pluginManager)
     if (inotifyFd_ < 0) {
         PROFILER_LOG_INFO(LOG_CORE, "%s:inotify_init1 failed! inotifyFd_ : %d", __func__, inotifyFd_);
     } else {
+        fdsan_exchange_owner_tag(inotifyFd_, 0, PROFILER_SUBSYSTEM);
         monitorThread_ = std::thread([this] { this->Monitor(); });
     }
 }
@@ -50,7 +51,7 @@ PluginWatcher::~PluginWatcher()
     }
 
     if (inotifyFd_ != -1) {
-        close(inotifyFd_);
+        fdsan_close_with_tag(inotifyFd_, PROFILER_SUBSYSTEM);
     }
     monitorThread_.join();
 }

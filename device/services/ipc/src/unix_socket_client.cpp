@@ -37,6 +37,7 @@ bool UnixSocketClient::Connect(const std::string addrname, ServiceBase& serviceB
 
     int sock = socket(AF_UNIX, SOCK_STREAM, 0);
     CHECK_TRUE(sock != -1, false, "Unix Socket Create FAIL");
+    fdsan_exchange_owner_tag(sock, 0, PROFILER_SUBSYSTEM);
 
     struct sockaddr_un addr;
     if (memset_s(&addr, sizeof(struct sockaddr_un), 0, sizeof(struct sockaddr_un)) != EOK) {
@@ -47,8 +48,11 @@ bool UnixSocketClient::Connect(const std::string addrname, ServiceBase& serviceB
         PROFILER_LOG_ERROR(LOG_CORE, "strncpy_s error!");
     }
 
-    CHECK_TRUE(connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_un)) != -1, close(sock) != 0,
-        "Unix Socket Connect FAIL");
+    if (connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_un)) == -1) {
+        fdsan_close_with_tag(sock, PROFILER_SUBSYSTEM);
+        PROFILER_LOG_ERROR(LOG_CORE, "Unix Socket Connect FAIL");
+        return false;
+    }
 
     serviceBase_ = &serviceBase;
     struct RawPointToService rrs;
@@ -57,11 +61,18 @@ bool UnixSocketClient::Connect(const std::string addrname, ServiceBase& serviceB
         PROFILER_LOG_ERROR(LOG_CORE, "strncpy_s error!");
     }
     rrs.serviceName_[serviceBase_->serviceName_.size()] = 0;
-    CHECK_TRUE(
-        SendRaw(RAW_PROTOCOL_POINTTO_SERVICE, reinterpret_cast<int8_t*>(&rrs), sizeof(struct RawPointToService), sock),
-        close(sock) != 0, "Unix Socket SendRaw FAIL");
+    if (!SendRaw(
+        RAW_PROTOCOL_POINTTO_SERVICE, reinterpret_cast<int8_t*>(&rrs), sizeof(struct RawPointToService), sock)) {
+        fdsan_close_with_tag(sock, PROFILER_SUBSYSTEM);
+        PROFILER_LOG_ERROR(LOG_CORE, "Unix Socket SendRaw FAIL");
+        return false;
+    }
     socketHandle_ = sock;
-    CHECK_TRUE(CreateRecvThread(callback), close(sock) != 0, "Unix Socket Create Recv Thread FAIL");
-
+    if (!CreateRecvThread(callback)) {
+        fdsan_close_with_tag(sock, PROFILER_SUBSYSTEM);
+        socketHandle_ = -1;
+        PROFILER_LOG_ERROR(LOG_CORE, "Unix Socket Create Recv Thread FAIL");
+        return false;
+    }
     return true;
 }

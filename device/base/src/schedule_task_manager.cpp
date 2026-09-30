@@ -54,10 +54,10 @@ void ScheduleTaskManager::Shutdown()
     }
     std::unique_lock<std::mutex> lock(mtx_);
     for (const auto& [timerFd, func] : tasks_) {
-        close(timerFd);
+        fdsan_close_with_tag(timerFd, PROFILER_SUBSYSTEM);
     }
-    close(epollFd_);
-    close(stopFd_);
+    fdsan_close_with_tag(epollFd_, PROFILER_SUBSYSTEM);
+    fdsan_close_with_tag(stopFd_, PROFILER_SUBSYSTEM);
 }
 
 int32_t ScheduleTaskManager::ScheduleTask(const std::function<void(void)>& callback, const uint64_t interval, bool once)
@@ -67,6 +67,7 @@ int32_t ScheduleTaskManager::ScheduleTask(const std::function<void(void)>& callb
         PROFILER_LOG_ERROR(LOG_CORE, "ScheduleTaskManager timerfd create failed");
         return -1;
     }
+    fdsan_exchange_owner_tag(timerFd, 0, PROFILER_SUBSYSTEM);
 
     std::function<void(void)> func;
     struct itimerspec time;
@@ -114,7 +115,7 @@ bool ScheduleTaskManager::DeleteTask(const int32_t timerFd)
     if (auto iter = tasks_.find(timerFd); iter != tasks_.end()) {
         tasks_.erase(timerFd);
         epoll_ctl(epollFd_, EPOLL_CTL_DEL, timerFd, NULL);
-        close(timerFd);
+        fdsan_close_with_tag(timerFd, PROFILER_SUBSYSTEM);
         return true;
     }
     return false;
@@ -180,7 +181,9 @@ void ScheduleTaskManager::HandleSingleTask(int32_t fd, std::function<void(void)>
 void ScheduleTaskManager::StartThread()
 {
     epollFd_ = epoll_create(0);
+    fdsan_exchange_owner_tag(epollFd_, 0, PROFILER_SUBSYSTEM);
     stopFd_ = eventfd(0, EFD_NONBLOCK); // Specifically designed for stopping epoll_wait.
+    fdsan_exchange_owner_tag(stopFd_, 0, PROFILER_SUBSYSTEM);
     struct epoll_event evt;
     evt.data.fd = stopFd_;
     evt.events = EPOLLIN;
