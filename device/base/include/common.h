@@ -89,6 +89,7 @@ bool GetRomSpaceInfo(const std::string& path, uint64_t& totalBytes, uint64_t& fr
 bool CopyFileFast(uint32_t srcFd, const std::string& destPath);
 bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPath);
 bool CopyFileToFdFastFromPath(const std::string& srcPath, int destFd);
+bool NormalizeAndCheckSrcPath(const std::string& srcPath, std::string& normalizedPath);
 bool CleanOldenFiles(const std::string& path);
 bool CleanCmdOldenTraceFiles(const std::string& path);
 bool CreateFile(const std::string& filePath);
