@@ -204,12 +204,9 @@ bool IsProcessExist(const std::string& processName, int& pid)
 
 static void CloseStdio()
 {
-    fdsan_exchange_owner_tag(STDIN_FILENO, 0, PROFILER_SUBSYSTEM);
-    fdsan_exchange_owner_tag(STDOUT_FILENO, 0, PROFILER_SUBSYSTEM);
-    fdsan_exchange_owner_tag(STDERR_FILENO, 0, PROFILER_SUBSYSTEM);
-    fdsan_close_with_tag(STDIN_FILENO, PROFILER_SUBSYSTEM);
-    fdsan_close_with_tag(STDOUT_FILENO, PROFILER_SUBSYSTEM);
-    fdsan_close_with_tag(STDERR_FILENO, PROFILER_SUBSYSTEM);
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
 }
 
 int StartProcess(const std::string& processBin, std::vector<char*>& argv)
@@ -341,9 +338,6 @@ bool GetDeveloperMode()
 
 inline int CustomFdClose(int& fd)
 {
-    if (fd >= 0) {
-        fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
-    }
     int ret = fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
     if (ret == 0) {
         fd = -1;
@@ -410,6 +404,8 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
         return nullptr;
     }
     CHECK_TRUE(pipe(fds) == 0, nullptr, "Pipe open failed!");
+    fdsan_exchange_owner_tag(fds[READ], 0, PROFILER_SUBSYSTEM);
+    fdsan_exchange_owner_tag(fds[WRITE], 0, PROFILER_SUBSYSTEM);
     pid_t pid = fork();
     if (pid == -1) {
         perror("fork");
@@ -423,11 +419,15 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
         }
         if (strncmp(type, "r", strlen(type)) == 0) {
             CHECK_TRUE(CustomFdClose(fds[READ]) == 0, nullptr, "CustomFdClose failed!");
+            fdsan_exchange_owner_tag(fds[WRITE], PROFILER_SUBSYSTEM, 0);
             dup2(fds[WRITE], STDOUT_FILENO); // Redirect stdout to pipe
+            fdsan_exchange_owner_tag(fds[WRITE], 0, PROFILER_SUBSYSTEM);
             CHECK_TRUE(CustomFdClose(fds[WRITE]) == 0, nullptr, "CustomFdClose failed!");
         } else {
             CHECK_TRUE(CustomFdClose(fds[WRITE]) == 0, nullptr, "CustomFdClose failed!");
+            fdsan_exchange_owner_tag(fds[READ], PROFILER_SUBSYSTEM, 0);
             dup2(fds[READ], STDIN_FILENO); // Redirect stdin to pipe
+            fdsan_exchange_owner_tag(fds[READ], 0, PROFILER_SUBSYSTEM);
             CHECK_TRUE(CustomFdClose(fds[READ]) == 0, nullptr, "CustomFdClose failed!");
         }
         setpgid(pid, pid);
@@ -452,8 +452,10 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
     childPid = pid;
     if (strncmp(type, "r", strlen(type)) == 0) {
         PROFILER_LOG_DEBUG(LOG_CORE, "END %s fds[READ]: success!", __func__);
+        fdsan_exchange_owner_tag(fds[READ], PROFILER_SUBSYSTEM, 0);
         return fdopen(fds[READ], "r");
     }
+    fdsan_exchange_owner_tag(fds[WRITE], PROFILER_SUBSYSTEM, 0);
     return fdopen(fds[WRITE], "w");
 }
 
