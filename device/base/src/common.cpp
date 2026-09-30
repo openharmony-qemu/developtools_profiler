@@ -419,15 +419,11 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
         }
         if (strncmp(type, "r", strlen(type)) == 0) {
             CHECK_TRUE(CustomFdClose(fds[READ]) == 0, nullptr, "CustomFdClose failed!");
-            fdsan_exchange_owner_tag(fds[WRITE], PROFILER_SUBSYSTEM, 0);
             dup2(fds[WRITE], STDOUT_FILENO); // Redirect stdout to pipe
-            fdsan_exchange_owner_tag(fds[WRITE], 0, PROFILER_SUBSYSTEM);
             CHECK_TRUE(CustomFdClose(fds[WRITE]) == 0, nullptr, "CustomFdClose failed!");
         } else {
             CHECK_TRUE(CustomFdClose(fds[WRITE]) == 0, nullptr, "CustomFdClose failed!");
-            fdsan_exchange_owner_tag(fds[READ], PROFILER_SUBSYSTEM, 0);
             dup2(fds[READ], STDIN_FILENO); // Redirect stdin to pipe
-            fdsan_exchange_owner_tag(fds[READ], 0, PROFILER_SUBSYSTEM);
             CHECK_TRUE(CustomFdClose(fds[READ]) == 0, nullptr, "CustomFdClose failed!");
         }
         setpgid(pid, pid);
