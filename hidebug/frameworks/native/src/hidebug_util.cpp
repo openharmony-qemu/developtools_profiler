@@ -158,13 +158,15 @@ bool CreateFile(const std::string &path)
     if (access(path.c_str(), F_OK) == 0) {
         return access(path.c_str(), W_OK) == 0;
     }
-    const mode_t defaultMode = S_IRUSR | S_IWUSR | S_IRGRP; // -rw-r-----
-    int fd = creat(path.c_str(), defaultMode);
-    if (fd == -1) {
+    FILE* file = fopen(path.c_str(), "w");
+    if (file == nullptr) {
         HILOG_ERROR(LOG_CORE, "file create failed, errno = %{public}d", errno);
         return false;
     }
-    close(fd);
+    if (fclose(file) != 0) {
+        HILOG_ERROR(LOG_CORE, "file close failed, errno = %{public}d", errno);
+        return false;
+    }
     return true;
 }
 
