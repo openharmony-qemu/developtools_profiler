@@ -24,7 +24,6 @@
 #include <sys/eventfd.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
-#include <fdsan.h>
 
 namespace {
 constexpr int32_t TIME_BASE = 1000; // Time progression rate.

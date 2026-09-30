@@ -24,7 +24,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <climits>
-#include <fdsan.h>
 
 FTRACE_NS_BEGIN
 FtraceDataReader::FtraceDataReader(const std::string& path) : path_(path), readFd_(-1)

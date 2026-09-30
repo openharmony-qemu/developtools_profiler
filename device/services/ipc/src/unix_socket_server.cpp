@@ -23,7 +23,6 @@
 #include <linux/un.h>
 
 #include "init_socket.h"
-#include <fdsan.h>
 #include "logging.h"
 #include "securec.h"
 

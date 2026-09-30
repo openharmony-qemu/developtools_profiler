@@ -23,7 +23,6 @@
 #include <sys/types.h>
 #include <cstdio>
 #include <cstring>
-#include <fdsan.h>
 #include <future>
 #include "logging.h"
 

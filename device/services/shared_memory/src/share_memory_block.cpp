@@ -21,7 +21,6 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 #include "ashmem.h"
-#include <fdsan.h>
 #include "logging.h"
 #include "securec.h"
 

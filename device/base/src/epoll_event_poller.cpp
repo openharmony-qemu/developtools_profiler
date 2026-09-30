@@ -24,7 +24,6 @@
 #include <sys/eventfd.h>
 #include <unistd.h>
 
-#include <fdsan.h>
 #include "logging.h"
 
 EpollEventPoller::EpollEventPoller(int timeOut) : timeOut_(timeOut), epollFd_(INVALID_FD), eventFd_(INVALID_FD) {}

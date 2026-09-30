@@ -23,7 +23,6 @@
 #include <sys/inotify.h>
 #include <unistd.h>
 
-#include <fdsan.h>
 #include "logging.h"
 #include "plugin_manager.h"
 #include "securec.h"

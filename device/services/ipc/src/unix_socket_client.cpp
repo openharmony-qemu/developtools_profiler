@@ -18,7 +18,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <linux/un.h>
-#include <fdsan.h>
 #include "logging.h"
 #include "securec.h"
 #include "service_base.h"

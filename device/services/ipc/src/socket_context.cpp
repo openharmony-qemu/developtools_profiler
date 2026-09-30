@@ -20,7 +20,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
-#include <fdsan.h>
 #include "logging.h"
 #include "securec.h"
 #include "service_base.h"
