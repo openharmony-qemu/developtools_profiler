@@ -135,6 +135,7 @@ void UnixSocketServer::UnixSocketAccept(void (*callback)(int))
                 if (socketClients_.find(clientSocket) == socketClients_.end()) {
                     PROFILER_LOG_DEBUG(LOG_CORE, "new socketClients_ socketClients_.size() = %zu",
                                        socketClients_.size());
+                    fdsan_exchange_owner_tag(clientSocket, PROFILER_SUBSYSTEM, 0);
                     socketClients_[clientSocket] = std::make_shared<ClientConnection>(clientSocket, *serviceEntry_);
                 } else {
                     PROFILER_LOG_ERROR(LOG_CORE, "Client %d exist", clientSocket);

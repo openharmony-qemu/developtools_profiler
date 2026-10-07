@@ -63,7 +63,6 @@ ShareMemoryBlock::ShareMemoryBlock()
 bool ShareMemoryBlock::CreateBlockWithFd(std::string name, uint32_t size, int fd)
 {
     CHECK_TRUE(fd >= 0, false, "CreateBlock FAIL SYS_memfd_create");
-    fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
 
     auto ptr = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (ptr == MAP_FAILED) {
@@ -74,6 +73,7 @@ bool ShareMemoryBlock::CreateBlockWithFd(std::string name, uint32_t size, int fd
         return false;
     }
 
+    fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
     fileDescriptor_ = fd;
     memoryPoint_ = ptr;
     memorySize_ = size;

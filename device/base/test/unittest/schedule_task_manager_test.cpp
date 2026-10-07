@@ -137,6 +137,8 @@ HWTEST_F(ScheduleTaskManagerTest, HandleEpollEventsStop, TestSize.Level1)
     ScheduleTaskManager manager;
     manager.stopFd_ = readFd;
     manager.epollFd_ = epollFd;
+    fdsan_exchange_owner_tag(manager.stopFd_, 0, PROFILER_SUBSYSTEM);
+    fdsan_exchange_owner_tag(manager.epollFd_, 0, PROFILER_SUBSYSTEM);
 
     std::thread t([writeFd]() {
         usleep(10000); // 等待10ms

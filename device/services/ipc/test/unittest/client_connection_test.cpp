@@ -14,7 +14,7 @@
  */
 
 #include <gtest/gtest.h>
-
+#include <sys/socket.h>
 #include "client_connection.h"
 #include "service_entry.h"
 
@@ -39,11 +39,14 @@ HWTEST_F(ClientConnectionTest, RawProtocolProc, TestSize.Level1)
 {
     std::string serviceName="test_service_name";
     ServiceEntry serviceEntry;
-    std::unique_ptr<ClientConnection> clientConnection = std::make_unique<ClientConnection>(0, serviceEntry);
+    int fds[2] = {-1, -1};
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+    std::unique_ptr<ClientConnection> clientConnection = std::make_unique<ClientConnection>(fds[0], serviceEntry);
     ASSERT_EQ(clientConnection->RawProtocolProc(RAW_PROTOCOL_POINTTO_SERVICE,
         (const int8_t *)serviceName.c_str(), sizeof(struct RawPointToService)), 1);
     ASSERT_EQ(clientConnection->RawProtocolProc(0,
         (const int8_t *)serviceName.c_str(), sizeof(struct RawPointToService)), -1);
     clientConnection.reset(nullptr);
+    close(fds[1]);
 }
 } // namespace

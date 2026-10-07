@@ -32,6 +32,7 @@ public:
     void SetSocketHandle(int fd)
     {
         socketHandle_ = fd;
+        fdsan_exchange_owner_tag(socketHandle_, 0, PROFILER_SUBSYSTEM);
     }
 };
 
@@ -332,7 +333,6 @@ HWTEST_F(HookServiceExceptionTest, SaveSocketFdAndCloseHandleBoundaryStates, Tes
     hookService_->CloseSocketFd(testPid);
     EXPECT_FALSE(hookService_->HasSocketFd(testPid));
     close(sockets[1]);
-    close(sockets[0]);
 }
 
 /*
@@ -445,7 +445,6 @@ HWTEST_F(HookServiceExceptionTest, HandleControlCommandWithValidContext, TestSiz
     EXPECT_FALSE(hookService_->HandleControlCommand(serviceContext, STOP_HOOK_CMD));
     EXPECT_TRUE(hookService_->HandleControlCommand(serviceContext, MEM_LEAK_DONE_CMD));
 
-    close(sockets[0]);
     close(sockets[1]);
 }
 
@@ -479,9 +478,7 @@ HWTEST_F(HookServiceExceptionTest, CheckConnectionPermissionHandlesStateAndCrede
     hookConfig.set_startup_mode(false);
     hookManager_->SetHookConfig(hookConfig);
     hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
-    socketContext.SetSocketHandle(sockets[0]);
     EXPECT_FALSE(hookService_->CheckConnectionPermission(socketContext, getpid()));
-    close(sockets[0]);
     close(sockets[1]);
 }
 
@@ -503,7 +500,6 @@ HWTEST_F(HookServiceExceptionTest, CheckConnectionPermissionAcceptsMatchingPeerC
     TestSocketContext socketContext;
     socketContext.SetSocketHandle(sockets[0]);
     EXPECT_TRUE(hookService_->CheckConnectionPermission(socketContext, getpid()));
-    close(sockets[0]);
     close(sockets[1]);
 }
 
@@ -562,8 +558,6 @@ HWTEST_F(HookServiceExceptionTest, SendInitialFileCacheFdsSendsAllDescriptors, T
         CloseFd(fd);
     }
     EXPECT_FALSE(ctx->cacheFileStopRequested);
-    CloseFd(sockets[0]);
-    CloseFd(sockets[1]);
 }
 
 HWTEST_F(HookServiceExceptionTest, ReceiveCacheFileReadyQueuesAndReplenishesFd, TestSize.Level0)
@@ -597,7 +591,5 @@ HWTEST_F(HookServiceExceptionTest, ReceiveCacheFileReadyQueuesAndReplenishesFd, 
     EXPECT_EQ(createdMsg.fileIndex, 1);
     EXPECT_EQ(ctx->GetFdQueueSize(), 1u);
     CloseFd(replenishFd);
-    CloseFd(sockets[0]);
-    CloseFd(sockets[1]);
 }
 } // namespace OHOS::Developtools::NativeDaemon

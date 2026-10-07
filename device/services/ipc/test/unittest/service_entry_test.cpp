@@ -121,7 +121,6 @@ HWTEST_F(ServiceEntryTest, GetClientConnectionFoundFd, TestSize.Level1)
     auto result = entry.GetClientConnection(fds[0]);
     EXPECT_EQ(result, conn);
     entry.unixSocketServer_->socketClients_.clear();
-    close(fds[0]);
     close(fds[1]);
 }
 } // namespace
