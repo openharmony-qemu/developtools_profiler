@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <sys/syscall.h>
+#include <sys/eventfd.h>
 
 #include "command_poller.h"
 #include "init_param.h"
@@ -449,7 +450,8 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerManagerTest001, TestSize.Level1)
 
     EXPECT_TRUE(networkProfilerMgr->CreatePluginSession(configVec));
     EXPECT_FALSE(networkProfilerMgr->StartPluginSession(pluginIds, configVec, result));
-    EXPECT_TRUE(networkProfilerMgr->CreateWriter("name", 0, 0, 0));
+    int eventFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    EXPECT_TRUE(networkProfilerMgr->CreateWriter("name", 0, 0, eventFd));
     EXPECT_TRUE(networkProfilerMgr->ResetWriter(0));
     EXPECT_TRUE(networkProfilerMgr->StopPluginSession(pluginIds));
     EXPECT_TRUE(networkProfilerMgr->DestroyPluginSession(pluginIds));
@@ -563,7 +565,8 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerHandleTest002, TestSize.Level1)
     networkProfilerMgr->SetConfig(config);
     EXPECT_TRUE(networkProfilerMgr->CheckConfig());
     EXPECT_FALSE(networkProfilerMgr->StartNetworkProfiler());
-    EXPECT_TRUE(networkProfilerMgr->CreateWriter("name", 0, 0, 0, false));
+    int eventFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    EXPECT_TRUE(networkProfilerMgr->CreateWriter("name", 0, 0, eventFd, false));
     auto handle = std::make_shared<NetworkProfilerHandle>(BUFFER_SIZE, true);
     const int8_t data[] = {1, 2, 3};
     handle->SerializeData(data, FILE_SIZE);
@@ -591,7 +594,8 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerHandleTest003, TestSize.Level1)
     networkProfilerMgr->SetConfig(config);
     EXPECT_TRUE(networkProfilerMgr->CheckConfig());
     EXPECT_FALSE(networkProfilerMgr->StartNetworkProfiler());
-    EXPECT_TRUE(networkProfilerMgr->CreateWriter("name", 0, 0, 0, true));
+    int eventFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    EXPECT_TRUE(networkProfilerMgr->CreateWriter("name", 0, 0, eventFd, true));
 
     auto handle = std::make_shared<NetworkProfilerHandle>(BUFFER_SIZE, true);
     const int8_t data[] = {};
@@ -723,7 +727,8 @@ HWTEST_F(NetworkProfilerTest, HandleNetworkProfilerContextTest, TestSize.Level1)
     EXPECT_EQ(ctx2->smbName, "network_profiler_smb_1");
 
     string processName = "test";
-    EXPECT_TRUE(networkProfilerMgr->CreateWriter("name", 0, 0, 0, false));
+    int eventFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    EXPECT_TRUE(networkProfilerMgr->CreateWriter("name", 0, 0, eventFd, false));
     auto ctx3 = std::make_shared<NetworkProfilerManager::NetworkProfilerCtx>(processName);
     EXPECT_TRUE(networkProfilerMgr->HandleNetworkProfilerContext(ctx3));
     EXPECT_EQ(ctx3->smbName, "network_profiler_smb_test");
