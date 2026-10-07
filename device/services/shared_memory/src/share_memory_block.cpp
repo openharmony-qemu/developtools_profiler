@@ -72,7 +72,6 @@ bool ShareMemoryBlock::CreateBlockWithFd(std::string name, uint32_t size, int fd
         PROFILER_LOG_ERROR(LOG_CORE, "CreateBlockWithFd mmap ERR : %s", buf);
         return false;
     }
-
     fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
     fileDescriptor_ = fd;
     memoryPoint_ = ptr;
