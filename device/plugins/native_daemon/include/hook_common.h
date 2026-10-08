@@ -102,7 +102,6 @@ constexpr uint32_t MIN_FILE_CACHE_MEMORY_SIZE = 16;
 constexpr uint32_t MAX_FILE_CACHE_MEMORY_SIZE = 32;
 constexpr uint32_t DEFAULT_FILE_CACHE_MEMORY_SIZE = 32;
 constexpr uint32_t MB_TO_BYTES = 1024 * 1024;
-constexpr uint64_t FD_TAG = 0xD002D0C;
 }
 }
 }

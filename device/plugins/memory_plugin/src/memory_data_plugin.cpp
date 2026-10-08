@@ -68,17 +68,17 @@ MemoryDataPlugin::~MemoryDataPlugin()
     PROFILER_LOG_INFO(LOG_CORE, "%s:~MemoryDataPlugin!", __func__);
 
     if (meminfoFd_ > 0) {
-        close(meminfoFd_);
+        fdsan_close_with_tag(meminfoFd_, PROFILER_SUBSYSTEM);
         meminfoFd_ = -1;
     }
     if (vmstatFd_ > 0) {
-        close(vmstatFd_);
+        fdsan_close_with_tag(vmstatFd_, PROFILER_SUBSYSTEM);
         vmstatFd_ = -1;
     }
     for (auto it = pidFds_.begin(); it != pidFds_.end(); it++) {
         for (int i = FILE_STATUS; i <= FILE_SMAPS; i++) {
             if (it->second[i] != -1) {
-                close(it->second[i]);
+                fdsan_close_with_tag(it->second[i], PROFILER_SUBSYSTEM);
             }
         }
     }
@@ -132,6 +132,7 @@ int MemoryDataPlugin::InitMemVmemFd()
             PROFILER_LOG_ERROR(LOG_CORE, "%s:open failed, fileName, errno(%d:%s)", __func__, errno, buf);
             return RET_FAIL;
         }
+        fdsan_exchange_owner_tag(meminfoFd_, 0, PROFILER_SUBSYSTEM);
     }
 
     if (protoConfig_.report_sysmem_vmem_info()) {
@@ -154,6 +155,7 @@ int MemoryDataPlugin::InitMemVmemFd()
             PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(/proc/vmstat), errno(%d:%s)", __func__, errno, buf);
             return RET_FAIL;
         }
+        fdsan_exchange_owner_tag(vmstatFd_, 0, PROFILER_SUBSYSTEM);
     }
 
     return RET_SUCC;
@@ -428,17 +430,17 @@ int MemoryDataPlugin::Report(uint8_t* data, uint32_t dataSize)
 int MemoryDataPlugin::Stop()
 {
     if (meminfoFd_ > 0) {
-        close(meminfoFd_);
+        fdsan_close_with_tag(meminfoFd_, PROFILER_SUBSYSTEM);
         meminfoFd_ = -1;
     }
     if (vmstatFd_ > 0) {
-        close(vmstatFd_);
+        fdsan_close_with_tag(vmstatFd_, PROFILER_SUBSYSTEM);
         vmstatFd_ = -1;
     }
     for (auto it = pidFds_.begin(); it != pidFds_.end(); it++) {
         for (int i = FILE_STATUS; i <= FILE_SMAPS; i++) {
             if (it->second[i] != -1) {
-                close(it->second[i]);
+                fdsan_close_with_tag(it->second[i], PROFILER_SUBSYSTEM);
                 it->second[i] = -1;
             }
         }
@@ -536,6 +538,9 @@ std::vector<int> MemoryDataPlugin::OpenProcPidFiles(int32_t pid)
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);
             PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, fileName, errno, buf);
+        }
+        if (fd != -1) {
+            fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
         }
         profds.emplace(profds.begin() + i, fd);
     }

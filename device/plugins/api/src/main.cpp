@@ -102,7 +102,9 @@ int main(int argc, char* argv[])
     if (flock(lockFileFd, LOCK_UN) == -1) {
         PROFILER_LOG_INFO(LOG_CORE, "release lockfile failed!");
     }
-    close(lockFileFd);
+    if (lockFileFd > 0) {
+        fdsan_close_with_tag(lockFileFd, PROFILER_SUBSYSTEM);
+    }
     pluginManager->StopAllPluginSession();
     return 0;
 }

@@ -16,6 +16,7 @@
 #include "native_memory_profiler_sa_stub.h"
 
 #include "string_ex.h"
+#include "hook_common.h"
 #include "logging.h"
 #include <sys/stat.h>
 #include <unistd.h>
@@ -130,10 +131,13 @@ int32_t NativeMemoryProfilerSaStub::StubDumpFile(MessageParcel &data, MessagePar
         PROFILER_LOG_ERROR(LOG_CORE, "StubDumpFile read fd fail");
         return RET_ERR;
     }
+    fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
     int32_t ret = DumpData(static_cast<uint32_t>(fd), config);
     if (ret != RET_OK) {
         PROFILER_LOG_ERROR(LOG_CORE, "DumpData fail, ret = %d", ret);
-        close(fd);
+        fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
+    } else {
+        fdsan_exchange_owner_tag(fd, PROFILER_SUBSYSTEM, 0);
     }
     return ret;
 }
@@ -157,16 +161,19 @@ int32_t NativeMemoryProfilerSaStub::StubDumpFileAsync(MessageParcel &data, Messa
         PROFILER_LOG_ERROR(LOG_CORE, "StubDumpFileAsync read fd fail");
         return RET_ERR;
     }
+    fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (!callback) {
         PROFILER_LOG_ERROR(LOG_CORE, "remote callback is NULL");
-        close(fd);
+        fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
         return RET_ERR;
     }
     int32_t ret = DumpDataAsync(fd, config, callback);
     if (ret != RET_OK) {
         PROFILER_LOG_ERROR(LOG_CORE, "DumpDataAsync fail, ret = %d", ret);
-        close(fd);
+        fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
+    } else {
+        fdsan_exchange_owner_tag(fd, PROFILER_SUBSYSTEM, 0);
     }
     return ret;
 }

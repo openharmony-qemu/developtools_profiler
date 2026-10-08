@@ -167,11 +167,17 @@ void HookSocketClient::HandleFileCacheMode(SocketContext &context)
     });
     for (uint16_t fileIndex = 0; fileIndex < FILE_CACHE_FD_COUNT; ++fileIndex) {
         int cacheFd = context.ReceiveFileDiscriptor();
+        if (cacheFd >= 0) {
+            fdsan_exchange_owner_tag(cacheFd, 0, PROFILER_SUBSYSTEM);
+        }
         if (!stackWriter->AddFileCacheDescriptor(fileIndex, cacheFd)) {
             if (cacheFd >= 0) {
-                close(cacheFd);
+                fdsan_close_with_tag(cacheFd, PROFILER_SUBSYSTEM);
             }
             return;
+        }
+        if (cacheFd >= 0) {
+            fdsan_exchange_owner_tag(cacheFd, PROFILER_SUBSYSTEM, 0);
         }
     }
     stackWriterList_.push_back(stackWriter);
@@ -187,17 +193,23 @@ bool HookSocketClient::HandleFileCacheMsg(SocketContext &context, const HookCach
         return false;
     }
     int cacheFd = context.ReceiveFileDiscriptor();
+    if (cacheFd >= 0) {
+        fdsan_exchange_owner_tag(cacheFd, 0, PROFILER_SUBSYSTEM);
+    }
     if (stopRequested_.load()) {
         if (cacheFd >= 0) {
-            close(cacheFd);
+            fdsan_close_with_tag(cacheFd, PROFILER_SUBSYSTEM);
         }
         return true;
     }
     if (!stackWriterList_[0]->AddFileCacheDescriptor(cacheFileMsg.fileIndex, cacheFd)) {
         if (cacheFd >= 0) {
-            close(cacheFd);
+            fdsan_close_with_tag(cacheFd, PROFILER_SUBSYSTEM);
         }
         return false;
+    }
+    if (cacheFd >= 0) {
+        fdsan_exchange_owner_tag(cacheFd, PROFILER_SUBSYSTEM, 0);
     }
     return true;
 }
@@ -251,20 +263,21 @@ bool HookSocketClient::HandleSimplifiedNmdDumpRequest(SocketContext &context)
         PROFILER_LOG_ERROR(LOG_CORE, "HandleSimplifiedNmdDumpRequest fail, recv fd err");
         return false;
     }
+    fdsan_exchange_owner_tag(nmdRecvFd, 0, PROFILER_SUBSYSTEM);
     void *nmdBuf = malloc(MEMCHECK_DETAILINFO_MAXSIZE);
     if (nmdBuf == nullptr) {
-        close(nmdRecvFd);
+        fdsan_close_with_tag(nmdRecvFd, PROFILER_SUBSYSTEM);
         return false;
     }
     struct OptArg opt = {0, reinterpret_cast<char *>(nmdBuf) };
     malloc_stats_print(NmdWriteStat, &opt, "s");
     if (!WriteDataToFd(nmdRecvFd, reinterpret_cast<const uint8_t *>(opt.buf), strlen(opt.buf), false)) {
         PROFILER_LOG_ERROR(LOG_CORE, "HandleSimplifiedNmdDumpRequest: failed to write data");
-        close(nmdRecvFd);
+        fdsan_close_with_tag(nmdRecvFd, PROFILER_SUBSYSTEM);
         free(nmdBuf);
         return false;
     }
-    close(nmdRecvFd);
+    fdsan_close_with_tag(nmdRecvFd, PROFILER_SUBSYSTEM);
     free(nmdBuf);
     if (unixSocketClient_ == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "unixSocketClient_ is NULL");
@@ -383,6 +396,9 @@ void HookSocketClient::ReceiveMemLeakFd(SocketContext &context)
         return;
     }
     memLeakRecvFd_ = context.ReceiveFileDiscriptor();
+    if (memLeakRecvFd_ >= 0) {
+        fdsan_exchange_owner_tag(memLeakRecvFd_, 0, PROFILER_SUBSYSTEM);
+    }
     PROFILER_LOG_INFO(LOG_CORE, "ReceiveMemLeakFd fd=%d", memLeakRecvFd_);
 }
 
@@ -513,7 +529,7 @@ bool HookSocketClient::WriteMemLeakInfo(const std::string& data)
         }
         if (written <= 0) {
             PROFILER_LOG_ERROR(LOG_CORE, "WriteMemLeakInfo write failed, errno=%d", errno);
-            close(memLeakRecvFd_);
+            fdsan_close_with_tag(memLeakRecvFd_, PROFILER_SUBSYSTEM);
             memLeakRecvFd_ = -1;
             return false;
         }
@@ -523,7 +539,7 @@ bool HookSocketClient::WriteMemLeakInfo(const std::string& data)
     if (fsync(memLeakRecvFd_) != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "WriteMemLeakInfo fsync failed, errno=%d", errno);
     }
-    close(memLeakRecvFd_);
+    fdsan_close_with_tag(memLeakRecvFd_, PROFILER_SUBSYSTEM);
     memLeakRecvFd_ = -1;
     return true;
 }
