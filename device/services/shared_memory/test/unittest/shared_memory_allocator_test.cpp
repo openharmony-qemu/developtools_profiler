@@ -218,6 +218,16 @@ HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote002, TestSize.Level1)
     int check = ftruncate(fd, PAGE_SIZE);
     EXPECT_GE(check, 0);
 
+    int fdDup1 = syscall(SYS_memfd_create, "test", 0);
+    EXPECT_GE(fdDup1, 0);
+    int checkDup1 = ftruncate(fdDup1, PAGE_SIZE);
+    EXPECT_GE(checkDup1, 0);
+
+    int fdDup2 = syscall(SYS_memfd_create, "testname1", 0);
+    EXPECT_GE(fdDup2, 0);
+    int checkDup2 = ftruncate(fdDup2, PAGE_SIZE);
+    EXPECT_GE(checkDup2, 0);
+
     int fd2 = syscall(SYS_memfd_create, "testnameremote", 0);
     EXPECT_GE(fd2, 0);
     int check2 = ftruncate(fd2, PAGE_SIZE);
@@ -227,9 +237,9 @@ HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote002, TestSize.Level1)
         PAGE_SIZE, fd) != nullptr); // Successfully created a memory block of size 4k.
     // Successfully created a memory block with a size of 4k, different names, and the same file descriptor.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("test",
-        PAGE_SIZE, fd) != nullptr);
+        PAGE_SIZE, fdDup1) != nullptr);
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testname1",
-        currentMaxShareMemorySize, fd) != nullptr); // Successfully created the largest memory block.
+        currentMaxShareMemorySize, fdDup2) != nullptr); // Successfully created the largest memory block.
     // Create a memory block of size 4k with the same name but different file descriptors, and return null.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote",
         PAGE_SIZE, fd2) == nullptr);

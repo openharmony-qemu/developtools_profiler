@@ -19,6 +19,7 @@
 #include <vector>
 #include "service_entry.h"
 #include "socket_context.h"
+#include "logging.h"
 
 using namespace testing::ext;
 
@@ -28,6 +29,7 @@ public:
     void SetSocketHandle(int fd)
     {
         socketHandle_ = fd;
+        fdsan_exchange_owner_tag(socketHandle_, 0, PROFILER_SUBSYSTEM);
     }
 };
 

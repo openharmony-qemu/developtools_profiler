@@ -210,8 +210,6 @@ HWTEST_F(PluginManagerTest, PluginStreamMode, TestSize.Level1)
     EXPECT_TRUE(pluginManage->StopPluginSession(pluginIdsVector));
     EXPECT_TRUE(pluginManage->DestroyPluginSession(pluginIdsVector));
     munmap(g_smbAddr, SMB_SIZE);
-    close(smbFd);
-    close(eventFd);
 }
 
 /**
@@ -397,7 +395,5 @@ HWTEST_F(PluginManagerTest, PullResult, TestSize.Level1)
     EXPECT_TRUE(pluginManage->StopPluginSession(pluginIdsVector));
     EXPECT_TRUE(pluginManage->DestroyPluginSession(pluginIdsVector));
     munmap(g_smbAddr, SMB_SIZE);
-    close(smbFd);
-    close(eventFd);
 }
 } // namespace

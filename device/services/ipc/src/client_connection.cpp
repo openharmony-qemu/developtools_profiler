@@ -25,6 +25,7 @@ ClientConnection::ClientConnection(int sfd, ServiceEntry& serviceEntry)
 {
     serviceBase_ = nullptr;
     socketHandle_ = sfd;
+    fdsan_exchange_owner_tag(socketHandle_, 0, PROFILER_SUBSYSTEM);
     clientState_ = CLIENT_STAT_WORKING;
     lastProcMS_ = GetTimeMS();
     serviceEntry_ = &serviceEntry;

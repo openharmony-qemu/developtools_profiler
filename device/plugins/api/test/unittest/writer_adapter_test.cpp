@@ -111,7 +111,6 @@ HWTEST_F(WriterAdapterTest, StartReportFuncTest, TestSize.Level1)
     EXPECT_NE(ctx, nullptr);
     WriterAdapter::FinishReportFunc(reinterpret_cast<WriterStruct*>(&writerAdapter), 32);
     munmap(g_smbAddr, SMB1_SIZE);
-    close(smbFd);
 }
 
 } // namespace
