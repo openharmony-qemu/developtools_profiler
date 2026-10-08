@@ -262,14 +262,14 @@ int main(int argc, char* argv[])
         if (argc == 2 && strcmp(argv[1], "sa") == 0) { // 2: argc size
             if (lockFileFd > 0) {
                 flock(lockFileFd, LOCK_UN);
-                fdsan_close_with_tag(lockFileFd, PROFILER_SUBSYSTEM);
+                fdsan_close_with_tag(lockFileFd, PROFILER_FD_TAG);
             }
             return 0;
         } else {
             if (!COMMON::GetDeveloperMode()) {
                 if (lockFileFd > 0) {
                     flock(lockFileFd, LOCK_UN);
-                    fdsan_close_with_tag(lockFileFd, PROFILER_SUBSYSTEM);
+                    fdsan_close_with_tag(lockFileFd, PROFILER_FD_TAG);
                 }
                 return 0;
             }
@@ -277,7 +277,7 @@ int main(int argc, char* argv[])
                 printf("memory profiler only support in beta version\n");
                 if (lockFileFd > 0) {
                     flock(lockFileFd, LOCK_UN);
-                    fdsan_close_with_tag(lockFileFd, PROFILER_SUBSYSTEM);
+                    fdsan_close_with_tag(lockFileFd, PROFILER_FD_TAG);
                 }
                 return 0;
             }
@@ -313,7 +313,7 @@ int main(int argc, char* argv[])
                 printf("%s\n", help.c_str());
                 if (lockFileFd > 0) {
                     flock(lockFileFd, LOCK_UN);
-                    fdsan_close_with_tag(lockFileFd, PROFILER_SUBSYSTEM);
+                    fdsan_close_with_tag(lockFileFd, PROFILER_FD_TAG);
                 }
                 return 0;
             }
@@ -322,20 +322,20 @@ int main(int argc, char* argv[])
         if (!COMMON::GetDeveloperMode()) {
             if (lockFileFd > 0) {
                 flock(lockFileFd, LOCK_UN);
-                fdsan_close_with_tag(lockFileFd, PROFILER_SUBSYSTEM);
+                fdsan_close_with_tag(lockFileFd, PROFILER_FD_TAG);
             }
             return 0;
         }
         int ret = OHOS::Developtools::NativeDaemon::RunDaemonServiceLoop();
         if (lockFileFd > 0) {
             flock(lockFileFd, LOCK_UN);
-            fdsan_close_with_tag(lockFileFd, PROFILER_SUBSYSTEM);
+            fdsan_close_with_tag(lockFileFd, PROFILER_FD_TAG);
         }
         return ret;
     }
     if (lockFileFd > 0) {
         flock(lockFileFd, LOCK_UN);
-        fdsan_close_with_tag(lockFileFd, PROFILER_SUBSYSTEM);
+        fdsan_close_with_tag(lockFileFd, PROFILER_FD_TAG);
     }
     return 0;
 }

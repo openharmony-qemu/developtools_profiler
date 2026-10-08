@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
         service->WaitServiceDone();
     }
     if (lockFileFd > 0) {
-        fdsan_close_with_tag(lockFileFd, PROFILER_SUBSYSTEM);
+        fdsan_close_with_tag(lockFileFd, PROFILER_FD_TAG);
     }
     return 0;
 }

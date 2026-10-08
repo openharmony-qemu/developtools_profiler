@@ -72,7 +72,7 @@ bool ShareMemoryBlock::CreateBlockWithFd(std::string name, uint32_t size, int fd
         PROFILER_LOG_ERROR(LOG_CORE, "CreateBlockWithFd mmap ERR : %s", buf);
         return false;
     }
-    fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
+    fdsan_exchange_owner_tag(fd, 0, PROFILER_FD_TAG);
     fileDescriptor_ = fd;
     memoryPoint_ = ptr;
     memorySize_ = size;
@@ -104,11 +104,11 @@ bool ShareMemoryBlock::CreateBlock(std::string name, uint32_t size)
 
     int fd = OHOS::AshmemCreate(name.c_str(), size);
     CHECK_TRUE(fd >= 0, false, "OHOS::AshmemCreate fail.");
-    fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
+    fdsan_exchange_owner_tag(fd, 0, PROFILER_FD_TAG);
 
     int check = OHOS::AshmemSetProt(fd, PROT_READ | PROT_WRITE);
     if (check < 0) {
-        fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
+        fdsan_close_with_tag(fd, PROFILER_FD_TAG);
         const int bufSize = 256;
         char buf[bufSize] = {0};
         strerror_r(errno, buf, bufSize);
@@ -118,7 +118,7 @@ bool ShareMemoryBlock::CreateBlock(std::string name, uint32_t size)
 
     auto ptr = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (ptr == MAP_FAILED) {
-        fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
+        fdsan_close_with_tag(fd, PROFILER_FD_TAG);
         const int bufSize = 256;
         char buf[bufSize] = {0};
         strerror_r(errno, buf, bufSize);
@@ -178,7 +178,7 @@ bool ShareMemoryBlock::ReleaseBlock()
     }
     g_timeCount = 0;
     if (fileDescriptor_ >= 0) {
-        fdsan_close_with_tag(fileDescriptor_, PROFILER_SUBSYSTEM);
+        fdsan_close_with_tag(fileDescriptor_, PROFILER_FD_TAG);
         fileDescriptor_ = -1;
     }
     return true;

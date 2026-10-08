@@ -35,12 +35,12 @@ FtraceDataReader::FtraceDataReader(const std::string& path) : path_(path), readF
     }
     readFd_ = open(realPath, O_CLOEXEC | O_NONBLOCK);
     CHECK_TRUE(readFd_ >= 0, NO_RETVAL, "open %s failed, %d", realPath, errno);
-    fdsan_exchange_owner_tag(readFd_, 0, PROFILER_SUBSYSTEM);
+    fdsan_exchange_owner_tag(readFd_, 0, PROFILER_FD_TAG);
 }
 
 FtraceDataReader::~FtraceDataReader()
 {
-    CHECK_TRUE(fdsan_close_with_tag(readFd_, PROFILER_SUBSYSTEM) == 0, NO_RETVAL,
+    CHECK_TRUE(fdsan_close_with_tag(readFd_, PROFILER_FD_TAG) == 0, NO_RETVAL,
         "close %s failed, %d", path_.c_str(), errno);
 }
 
