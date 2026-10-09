@@ -43,7 +43,7 @@ std::map<std::string, std::string> visualEffectDisPatchData {
     {"upAvg", "0"},
     {"upCnt", "0"},
     {"upMax", "0"},
-}
+};
 int32_t GameScheduleEventCallbackImpl::OnGameScheduleEvent(int32_t type, std::map<std::string, std::string> &params)
 {
     int32_t captureFileFailed = 2;
@@ -65,7 +65,7 @@ std::map<std::string, std::string> VisualEffectDisPatch::ItemData()
         emptyCount_++;
         return {};
     }
-    size_t expected = static_cast(size_t)(emptyCount_ + 1);
+    size_t expected = static_cast<size_t>(emptyCount_ + 1);
     size_t fillCount = expected - listSize;
     for (size_t i = 0; i < fillCount; i++) {
         schedulData_.push_back(visualEffectDisPatchData);
@@ -90,7 +90,7 @@ std::vector<std::map<std::string, std::string>> &VisualEffectDisPatch::GetVisual
     return schedulDataList_;
 }
 
-std::vector<std::map<std::string, std::string>> &VisualEffectDisPatch::GetScheduleData()
+std::vector<std::map<std::string, std::string>> VisualEffectDisPatch::GetScheduleData()
 {
     std::lock_guard<std::mutex> lock(scheduleMtx_);
     return std::move(schedulData_);
