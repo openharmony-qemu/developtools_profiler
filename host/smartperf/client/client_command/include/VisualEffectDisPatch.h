@@ -19,6 +19,8 @@
 #include "../interface/GameScheduleEventCallBack.h"
 #include "sp_profiler.h"
 #include <string>
+#include <vector>
+#include <mutex>
 
 namespace OHOS {
 namespace SmartPerf {
@@ -40,19 +42,23 @@ class VisualEffectDisPatch : public SpProfiler {
     int UnregisterGameEvent();
     void StartExecutionOnce(bool isPause) override;
     void FinishtExecutionOnce(bool isPause) override;
-    std::map<std::string, std::string> &GetVisualEffectDisPatchItemData();
+    std::vector<std::map<std::string, std::string>> &GetVisualEffectDisPatchItemData();
     void SetVisualEffectDisPatchType(int32_t type);
     void SetCollectNum();
     void SetSpeciFlag();
     void SetCatchTraceFlag();
     bool GetSpeciFlag();
     bool GetCatchTraceFlag();
+    std::vector<std::map<std::string, std::string>> GetScheduleData();
+    void PushScheduleData(int32_t type, const std::map<std::string, std::string> &params);
     private:
     VisualEffectDisPatch() {};
     VisualEffectDisPatch(const VisualEffectDisPatch &) = delete;
     VisualEffectDisPatch &operator=(const VisualEffectDisPatch &) = delete;
-    std::map<std::string, std::string> visualEffectDisPatchParams;
-    std::map<std::string, std::string> visualEffectDisPatchItemData;
+    std::vector<std::map<std::string, std::string>> schedulDataList_;
+    std::vector<std::map<std::string, std::string>> schedulData_;
+    int32_t emptyCount_ = 0;
+    std::mutex scheduleMtx_;
     int32_t type_ = 1;
     const std::string visualEffectDisPatchParamPid = "pid";
     const std::string visualEffectDisPatchParamType = "dispatchType";

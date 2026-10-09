@@ -47,6 +47,7 @@
 #include "include/sdk_data_recv.h"
 #include "include/jitters.h"
 #include "include/shader.h"
+#include "include/VisualEffectDisPatch.h"
 
 namespace {
 OHOS::SmartPerf::TaskManager* g_mgr = nullptr;
@@ -409,6 +410,7 @@ void TaskManager::MainLoop()
 void TaskManager::WriteToCSV()
 {
     std::unique_lock<std::mutex> lock(mtx_);
+    SetScheduleData();
     if (datas_.empty() || !saveFlag_) {
         LOGD("datas is empty or saveFlag: %d", saveFlag_);
         return;
@@ -444,6 +446,23 @@ void TaskManager::WriteToCSV()
 
     if (!running_) {
         std::map<uint32_t, std::map<std::string, std::string>>().swap(datas_);
+    }
+}
+
+void TaskManager::SetScheduleData()
+{
+    auto scheduleData = OHOS::SmartPerf::VisualEffectDisPatch::GetInstance().GetScheduleData();
+    if (!scheduleData.empty()) {
+        size_t idx = 0;
+        for (auto & [_, v] : datas_) {
+            if (idx >= scheduleData.size()) {
+                break;
+            }
+            if (!scheduleData[idx].empty()) {
+                v.insert(scheduleData[idx].begin(), scheduleData[idx].end());
+            }
+            idx++;
+        }
     }
 }
 
