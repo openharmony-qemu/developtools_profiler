@@ -636,7 +636,6 @@ bool StackPreprocess::ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvai
         } else {
             RecordHeadStatus headStatus = GetRecordHead(buffer, ctx.offset, isCrashFile, totalSize);
             if (headStatus == RECORD_HEAD_INVALID) {
-                DumpInvalidRecordHead(buffer, totalAvail, ctx.offset, ctx.readfileSize);
                 return false;
             }
             if (headStatus == RECORD_HEAD_END) {

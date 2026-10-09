@@ -15,21 +15,10 @@
 
 #include "cache_file_reader.h"
 
-#include <cstddef>
-#include <cstdio>
 #include "logging.h"
 #include "securec.h"
 
 using namespace OHOS::Developtools::NativeDaemon;
-
-namespace {
-constexpr uint32_t RECORD_HEAD_DUMP_BACKWARD = 16;
-constexpr uint32_t RECORD_HEAD_DUMP_FORWARD = 16;
-constexpr uint32_t RECORD_HEAD_DUMP_TEXT_SIZE = (RECORD_HEAD_DUMP_BACKWARD + RECORD_HEAD_DUMP_FORWARD) * 3 + 1;
-constexpr uint32_t RECORD_HEAD_PEEK_SIZE = 64;
-// each byte prints at most 2 hex digits plus one space
-constexpr size_t HEX_TEXT_STEP_SIZE = 3;
-}
 
 RecordHeadStatus GetRecordHead(const uint8_t* buffer, uint32_t offset, bool isCrashFile,
                                uint32_t& totalSize)
@@ -88,49 +77,6 @@ bool GetRecordHeadWithRetry(const uint8_t* buffer, uint32_t totalAvail, uint32_t
     // make the loop memmove the zero region forward and reparse it forever
     offset = entryOffset;
     return false;
-}
-
-void DumpInvalidRecordHead(const uint8_t* buffer, uint32_t totalAvail, uint32_t offset, uint64_t readfileSize)
-{
-    if (buffer == nullptr || offset > totalAvail) {
-        PROFILER_LOG_ERROR(LOG_CORE, "DumpInvalidRecordHead invalid params, offset=%u totalAvail=%u",
-            offset, totalAvail);
-        return;
-    }
-    uint32_t begin = offset > RECORD_HEAD_DUMP_BACKWARD ? offset - RECORD_HEAD_DUMP_BACKWARD : 0;
-    uint32_t end = totalAvail - offset > RECORD_HEAD_DUMP_FORWARD ? offset + RECORD_HEAD_DUMP_FORWARD : totalAvail;
-    char hexText[RECORD_HEAD_DUMP_TEXT_SIZE] = {0};
-    size_t pos = 0;
-    for (uint32_t i = begin; i < end && pos + HEX_TEXT_STEP_SIZE < sizeof(hexText); ++i) {
-        int written = snprintf_s(hexText + pos, sizeof(hexText) - pos, sizeof(hexText) - pos - 1,
-            "%02x ", buffer[i]);
-        if (written <= 0) {
-            break;
-        }
-        pos += static_cast<size_t>(written);
-    }
-    PROFILER_LOG_ERROR(LOG_CORE, "DumpInvalidRecordHead fileOffset=%llu(readSize=%llu bufOffset=%u) hex[%u-%u]=[%s]",
-        static_cast<unsigned long long>(DATA_SIZE_HEADER_LEN + readfileSize + offset),
-        static_cast<unsigned long long>(readfileSize), offset, begin, end, hexText);
-    if (offset + sizeof(uint32_t) + RECORD_HEAD_PEEK_SIZE > totalAvail) {
-        return;
-    }
-    uint8_t peekBuf[RECORD_HEAD_PEEK_SIZE] = {0};
-    if (memcpy_s(peekBuf, sizeof(peekBuf), buffer + offset + sizeof(uint32_t),
-        sizeof(peekBuf)) != EOK) {
-        return;
-    }
-    uint32_t peekPid = 0;
-    uint32_t peekTid = 0;
-    uint16_t peekType = 0;
-    errno_t retPid = memcpy_s(&peekPid, sizeof(peekPid), peekBuf + offsetof(BaseStackRawData, pid), sizeof(peekPid));
-    errno_t retTid = memcpy_s(&peekTid, sizeof(peekTid), peekBuf + offsetof(BaseStackRawData, tid), sizeof(peekTid));
-    errno_t retType = memcpy_s(&peekType, sizeof(peekType), peekBuf + offsetof(BaseStackRawData, type),
-        sizeof(peekType));
-    if (retPid == EOK && retTid == EOK && retType == EOK) {
-        PROFILER_LOG_ERROR(LOG_CORE, "DumpInvalidRecordHead nextHeadGuess type=%u pid=%u tid=%u",
-            static_cast<uint32_t>(peekType), peekPid, peekTid);
-    }
 }
 
 uint32_t GetCacheFileReadSize(CacheFileReadContext& ctx)
