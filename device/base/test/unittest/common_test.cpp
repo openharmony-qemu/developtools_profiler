@@ -21,6 +21,7 @@
 #include <malloc.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <climits>
 
 namespace {
 using namespace testing::ext;
@@ -532,6 +533,64 @@ HWTEST_F(CommonTest, CopyFileToFdFastFromPathSymlink, TestSize.Level1)
     close(destFd);
 
     std::string cmd = "rm -f " + realName + " " + linkName + " " + destName;
+    system(cmd.c_str());
+}
+
+/**
+ * @tc.name: CommonTest
+ * @tc.desc: CopyFileFastFromPath with normalized src path validation.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, CopyFileFastFromPathInvalidSrc, TestSize.Level1)
+{
+    std::string srcName = "/data/local/tmp/fast_src.txt";
+    std::string fileContent = "Hello world, CopyFileFastFromPath";
+    EXPECT_TRUE(WriteFile(srcName, fileContent));
+
+    std::string destName = "/data/local/tmp/fast_dest.txt";
+    EXPECT_TRUE(COMMON::CopyFileFastFromPath(srcName, destName));
+
+    EXPECT_FALSE(COMMON::CopyFileFastFromPath("relative/fast_src.txt", destName));
+    EXPECT_FALSE(COMMON::CopyFileFastFromPath("/data/local/tmp/sub/../../fast_src.txt", destName));
+    EXPECT_FALSE(COMMON::CopyFileFastFromPath("/data/local/tmp/", destName));
+    EXPECT_FALSE(COMMON::CopyFileFastFromPath("", destName));
+
+    std::string cmd = "rm -f " + srcName + " " + destName;
+    system(cmd.c_str());
+}
+
+/**
+ * @tc.name: CommonTest
+ * @tc.desc: NormalizeAndCheckSrcPath path validation and normalization.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, NormalizeAndCheckSrcPath, TestSize.Level1)
+{
+    std::string srcName = "/data/local/tmp/normalize_src.txt";
+    std::string fileContent = "Hello world, NormalizeAndCheckSrcPath";
+    EXPECT_TRUE(WriteFile(srcName, fileContent));
+
+    std::string normalized;
+    EXPECT_TRUE(NormalizeAndCheckSrcPath(srcName, normalized));
+    EXPECT_EQ(normalized, srcName);
+
+    EXPECT_FALSE(NormalizeAndCheckSrcPath("", normalized));
+    EXPECT_EQ(normalized, "");
+
+    EXPECT_FALSE(NormalizeAndCheckSrcPath("relative/path.txt", normalized));
+
+    EXPECT_FALSE(NormalizeAndCheckSrcPath("/data/local/tmp/sub/../../normalize_src.txt", normalized));
+    EXPECT_FALSE(NormalizeAndCheckSrcPath("/data/local/tmp/..", normalized));
+    EXPECT_FALSE(NormalizeAndCheckSrcPath("/data/local/tmp/.", normalized));
+
+    EXPECT_FALSE(NormalizeAndCheckSrcPath("/data/local/tmp/", normalized));
+
+    EXPECT_FALSE(NormalizeAndCheckSrcPath("/nonexistent_dir_xyz/normalize_src.txt", normalized));
+
+    std::string longPath = "/data/local/tmp/" + std::string(PATH_MAX, 'a');
+    EXPECT_FALSE(NormalizeAndCheckSrcPath(longPath, normalized));
+
+    std::string cmd = "rm -f " + srcName;
     system(cmd.c_str());
 }
 

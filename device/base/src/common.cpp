@@ -1220,7 +1220,12 @@ bool CopyFileFast(uint32_t srcFd, const std::string& destPath)
 
 bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPath)
 {
-    int srcFd = open(srcPath.c_str(), O_RDONLY | O_NOFOLLOW);
+    std::string normalizedPath;
+    if (!NormalizeAndCheckSrcPath(srcPath, normalizedPath)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:invalid src path: %s", __func__, srcPath.c_str());
+        return false;
+    }
+    int srcFd = open(normalizedPath.c_str(), O_RDONLY | O_NOFOLLOW);
     if (srcFd < 0) {
         const int bufSize = 256;
         char buf[bufSize] = {0};
@@ -1237,9 +1242,53 @@ bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPat
     return result;
 }
 
+bool NormalizeAndCheckSrcPath(const std::string& srcPath, std::string& normalizedPath)
+{
+    normalizedPath.clear();
+    if (srcPath.empty() || srcPath[0] != '/' || srcPath.size() >= PATH_MAX) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:src path empty, not absolute, or too long: %s", __func__, srcPath.c_str());
+        return false;
+    }
+    const size_t pos = srcPath.rfind('/');
+    const std::string fileName = srcPath.substr(pos + 1);
+    if (fileName.empty() || fileName == "." || fileName == "..") {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:src file name invalid: %s", __func__, srcPath.c_str());
+        return false;
+    }
+    size_t start = 0;
+    while (start < srcPath.size()) {
+        size_t end = srcPath.find('/', start);
+        if (end == std::string::npos) {
+            end = srcPath.size();
+        }
+        if (srcPath.compare(start, end - start, "..") == 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "%s:src path contains traversal: %s", __func__, srcPath.c_str());
+            return false;
+        }
+        start = end + 1;
+    }
+    const std::string pathDir = (pos == 0) ? "/" : srcPath.substr(0, pos);
+    char realDir[PATH_MAX] = {0};
+    if (realpath(pathDir.c_str(), realDir) == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:realpath fail: %s, errno=%d", __func__, pathDir.c_str(), errno);
+        return false;
+    }
+    normalizedPath = std::string(realDir) + "/" + fileName;
+    if (normalizedPath.size() >= PATH_MAX) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:normalized path too long: %s", __func__, normalizedPath.c_str());
+        return false;
+    }
+    return true;
+}
+
 bool CopyFileToFdFastFromPath(const std::string& srcPath, int destFd)
 {
-    int srcFd = open(srcPath.c_str(), O_RDONLY | O_NOFOLLOW);
+    std::string normalizedPath;
+    if (!NormalizeAndCheckSrcPath(srcPath, normalizedPath)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:invalid src path: %s", __func__, srcPath.c_str());
+        return false;
+    }
+    int srcFd = open(normalizedPath.c_str(), O_RDONLY | O_NOFOLLOW);
     if (srcFd < 0) {
         const int bufSize = 256;
         char buf[bufSize] = {0};
