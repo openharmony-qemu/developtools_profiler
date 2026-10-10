@@ -83,6 +83,7 @@ std::map<std::string, std::string> FPS::GetFpsAndJitters(FpsInfo &fpsInfoResult,
     }
     if (!isStartStop) {
         result["fpsJitters"] = jitterStr;
+        result["onePercentLowFrame"] = std::to_string(CalculateOnePercentLowFrame(fpsInfoResult.jitters));
     }
     LOGD("result.fps: %s, result.curTime: %s, result.jitters: %s",
         std::to_string(fpsInfoResult.fps).c_str(),
@@ -147,6 +148,37 @@ void FPS::CalcFatalCaton(std::vector<long long>& jitters)
             }
         }
     }
+}
+
+double FPS::CalculateOnePercentLowFrame(const std::vector<long long>& jitters)
+{
+    // 最差1%低帧统计相关常量
+    constexpr size_t PERCENT_BASE = 100;
+    constexpr double MS_TO_US = 1000.0;
+    constexpr double SEC_TO_US = 1000000.0;
+    if (jitters.empty()) {
+        LOGE("Jitters is empty");
+        return 0;
+    }
+    std::vector<long long> sorted = jitters;
+    std::sort(sorted.begin(), sorted.end(), std::greater<long long>());
+    size_t count = (jitters.size() + PERCENT_BASE - 1) / PERCENT_BASE; //ceil(size / 100)
+    if (count < 1) {
+        count = 1;
+    }
+    if (count > sorted.size()) {
+        count = sorted.size();
+    }
+    long long sum = 0;
+    for (size_t i = 0; i < count; i++) {
+        sum += sorted[i];
+    }
+    if (sum == 0) {
+        return 0;
+    }
+    double average = static_cast<double>(sum) / static_cast<double>(count);
+    double onePercentLowFrame = MS_TO_US / (average / SEC_TO_US);
+    return onePercentLowFrame;
 }
 
 void FPS::GetGameScenStatus()
