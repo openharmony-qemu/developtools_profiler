@@ -1790,7 +1790,8 @@ HWTEST_F(StackPreprocessExtTest, BuildCallFramesSkipsSpecialAsyncTypes, TestSize
     std::vector<CallFrame> callFrames = MakeFrames(321);
 
     EXPECT_TRUE(preprocess.BuildCallFrames(hookRecord, rawData, callFrames));
-    EXPECT_EQ(callFrames.size(), 0u);
+    EXPECT_EQ(callFrames.size(), 1u);
+    EXPECT_EQ(callFrames[0].callFrameId_, 321u);
 }
 
 /*
