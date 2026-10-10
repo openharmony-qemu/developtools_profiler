@@ -50,6 +50,7 @@ public:
     void Resume();
     void CollectData(std::map<uint32_t, std::map<std::string, std::string>>& datas);
     void WriteToCSV();
+    void SetScheduleData();
     void Wait();
     void RegisterThreadLocal(ThreadLocal* local);
     void EnableIPCCallback();

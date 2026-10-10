@@ -26,13 +26,28 @@
 
 namespace OHOS {
 namespace SmartPerf {
+std::map<std::string, std::string> visualEffectDisPatchData {
+    {"downAvg", "0"},
+    {"downCnt", "0"},
+    {"downMax", "0"},
+    {"drawAvg", "0"},
+    {"drawCnt", "0"},
+    {"drawMax", "0"},
+    {"maxCollectNum", "0"},
+    {"moveAvg", "0"},
+    {"moveCnt", "0"},
+    {"moveMax", "0"},
+    {"presentAvg", "0"},
+    {"presentCnt", "0"},
+    {"presentMax", "0"},
+    {"upAvg", "0"},
+    {"upCnt", "0"},
+    {"upMax", "0"},
+};
 int32_t GameScheduleEventCallbackImpl::OnGameScheduleEvent(int32_t type, std::map<std::string, std::string> &params)
 {
     int32_t captureFileFailed = 2;
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(type);
-    for (auto &item : params) {
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData()[item.first] = item.second;
-    }
+    VisualEffectDisPatch::GetInstance().PushScheduleData(type, params);
     if (VisualEffectDisPatch::GetInstance().GetSpeciFlag()) {
         return 1;
     } else if (VisualEffectDisPatch::GetInstance().GetCatchTraceFlag()) {
@@ -44,17 +59,42 @@ int32_t GameScheduleEventCallbackImpl::OnGameScheduleEvent(int32_t type, std::ma
 std::map<std::string, std::string> VisualEffectDisPatch::ItemData()
 {
     SetCollectNum();
-    LOGD("VisualEffectDisPatch:ItemData map size(%u)", visualEffectDisPatchItemData.size());
-    std::map<std::string, std::string> dataMap = visualEffectDisPatchItemData;
-    visualEffectDisPatchItemData = {};
-    return dataMap;
+    std::lock_guard<std::mutex> lock(scheduleMtx_);
+    size_t listSize = schedulDataList_.size();
+    if (listSize == 0) {
+        emptyCount_++;
+        return {};
+    }
+    size_t expected = static_cast<size_t>(emptyCount_ + 1);
+    size_t fillCount = expected - listSize;
+    for (size_t i = 0; i < fillCount; i++) {
+        schedulData_.push_back(visualEffectDisPatchData);
+    }
+    for (const auto& item : schedulDataList_) {
+        schedulData_.push_back(item);
+    }
+    schedulDataList_.clear();
+    emptyCount_ = 0;
+    return {};
 }
 
-std::map<std::string, std::string> &VisualEffectDisPatch::GetVisualEffectDisPatchItemData()
+void VisualEffectDisPatch::PushScheduleData(int32_t type, const std::map<std::string, std::string> &params)
 {
-    return visualEffectDisPatchItemData;
+    SetVisualEffectDisPatchType(type);
+    std::lock_guard<std::mutex> lock(scheduleMtx_);
+    schedulDataList_.push_back(params);
 }
 
+std::vector<std::map<std::string, std::string>> &VisualEffectDisPatch::GetVisualEffectDisPatchItemData()
+{
+    return schedulDataList_;
+}
+
+std::vector<std::map<std::string, std::string>> VisualEffectDisPatch::GetScheduleData()
+{
+    std::lock_guard<std::mutex> lock(scheduleMtx_);
+    return std::move(schedulData_);
+}
 void VisualEffectDisPatch::SetVisualEffectDisPatchType(int32_t type)
 {
     if (type == captureFileFlag_ || type == 0) {
@@ -66,15 +106,28 @@ void VisualEffectDisPatch::SetVisualEffectDisPatchType(int32_t type)
 void VisualEffectDisPatch::SetCollectNum()
 {
     if (type_ == captureFileFlag_) {
-        int collectNum = SPUtilesTye::StringToSometype<int>(visualEffectDisPatchItemData["maxCollectNum"]);
+        std::string maxCollectNumStr = "0";
+        std::lock_guard<std::mutex> lock(scheduleMtx_);
+        if (!schedulDataList_.empty()) {
+            const auto &last = schedulDataList_.back();
+            auto it = last.find("maxCollectNum");
+            if (it != last.end()) {
+                maxCollectNumStr = it->second;
+            }
+        }
+        int collectNum = SPUtilesTye::StringToSometype<int>(maxCollectNumStr);
         if (collectNum < 1 || collectNum > static_cast<int>(maxFileFlag_)) {
             collectNum = 1;
         }
         std::string sendMessage = "haveSchedule::" + std::to_string(collectNum);
-        ipcCallback_(sendMessage);
+        if (ipcCallback_) {
+            ipcCallback_(sendMessage);
+        }
         type_ = -1;
     } else if (type_ == 0) {
-        ipcCallback_("haveSchedule");
+        if (ipcCallback_) {
+            ipcCallback_("haveSchedule");
+        }
         type_ = -1;
     }
 }
