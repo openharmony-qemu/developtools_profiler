@@ -184,7 +184,7 @@ void SPTask::SetProfilerPid()
     SpProfilerFactory::SetProfilerPidByPkg(processId, processIds);
 }
 
-ErrCode SPTask::StartTask(std::function<void(const std::string&)> msgTask)
+ErrCode SPTask::StartTask(std::function<void(const std::string&)> msgTask, bool record)
 {
     LOGD("Task starting...");
     RAM &ram = RAM::GetInstance();
@@ -214,7 +214,8 @@ ErrCode SPTask::StartTask(std::function<void(const std::string&)> msgTask)
         taskMgr_->SetIPCCallback(msgTask);
         taskMgr_->EnableIPCCallback();
         taskMgr_->SetNextTime(nextTime);
-        taskMgr_->Start(false);
+        //先开启记录再启动采集
+        taskMgr_->Start(record);
         taskMgr_->Wait();
     });
     EnablePrint();
@@ -412,13 +413,13 @@ ErrCode SPTask::StartRecord()
     battaryStart = GetCurrentBattary();
     startTime = SPUtils::GetCurTime();
     WLOGI("StartRecord initiated: Battery %d, Start time %lld.", battaryStart, startTime);
+    if (taskMgr_ != nullptr) {
+        taskMgr_->SetRecordState(true);
+    }
     while (startTime > nextTime) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     SetStartFlag();
-    if (taskMgr_ != nullptr) {
-        taskMgr_->SetRecordState(true);
-    }
     return ErrCode::OK;
 }
 

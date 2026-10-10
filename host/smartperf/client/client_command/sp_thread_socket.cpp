@@ -200,7 +200,7 @@ void SpThreadSocket::StartRecv(SpServerSocket &spSocket)
     auto lambdaTask = [](const std::string &data) {
         std::cout << data << std::endl;
     };
-    ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
+    ErrCode code = SPTask::GetInstance().StartTask(lambdaTask, true);
     if (code == ErrCode::OK) {
         spSocket.Send("start::True");
         flagRunning = true;
