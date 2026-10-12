@@ -71,6 +71,7 @@ public:
     bool DrainPendingShmemData(const std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock);
     bool IsDataSourceTerminated() const;
     void SetPid(int32_t pid);
+    void RefreshDmaFdSizeCache();
     void InitStatisticsTime();
     void UpdateStatisticsTime();
     void SetStopTakeData();
@@ -246,7 +247,7 @@ private:
     bool ProcessEndMsg();
     bool ProcessStacklessMunmap(std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);
     bool ProcessRegularStackData(std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);
-    bool ResolveDmaSize(HookRecordPtr& hookRecord, DmaFdSizeMap& dmaFdSizeMap, uint32_t& dmaFdSizePid);
+    bool ResolveDmaSize(HookRecordPtr& hookRecord);
     bool IsDmaUsingRecord(const HookRecordPtr& hookRecord) const;
     bool ParseDmaInfoLine(const std::string& line, uint32_t targetPid, DmaFdSizeMap& dmaFdSizeMap) const;
     DmaFdSizeMap LoadDmaFdSizeMap(uint32_t pid) const;
@@ -383,6 +384,10 @@ private:
     bool discardDestroyedTraces_ = false;
     const std::unordered_map<void*, struct timespec>* validLiveDataPtr_ = nullptr;
     const std::unordered_map<void*, struct timespec>* orphanFreeWhitelistPtr_ = nullptr;
+    DmaFdSizeMap dmaFdSizeMap_;
+    uint32_t dmaFdSizePid_ = 0;
+    std::atomic_bool dmaFdSizeCacheDirty_{true};
+    std::mutex dmaFdSizeMapMtx_;
 };
 }
 

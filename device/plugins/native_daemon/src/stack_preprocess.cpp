@@ -802,9 +802,7 @@ bool StackPreprocess::ProcessRawData(const int8_t data[], uint32_t size,
         factory_->SaveHookRecord(std::move(hookRecord));
         return ProcessAddressData(reinterpret_cast<const int8_t*>(&addr));
     }
-    DmaFdSizeMap dmaFdSizeMap;
-    uint32_t dmaFdSizePid = 0;
-    if (!ResolveDmaSize(hookRecord, dmaFdSizeMap, dmaFdSizePid)) {
+    if (!ResolveDmaSize(hookRecord)) {
         factory_->SaveHookRecord(std::move(hookRecord));
         return true;
     }
@@ -1000,24 +998,45 @@ StackPreprocess::DmaFdSizeMap StackPreprocess::LoadDmaFdSizeMap(uint32_t pid) co
     return dmaFdSizeMap;
 }
 
-bool StackPreprocess::ResolveDmaSize(HookRecordPtr& hookRecord, DmaFdSizeMap& dmaFdSizeMap,
-                                     uint32_t& dmaFdSizePid)
+void StackPreprocess::RefreshDmaFdSizeCache()
+{
+    dmaFdSizeCacheDirty_.store(true);
+}
+
+bool StackPreprocess::ResolveDmaSize(HookRecordPtr& hookRecord)
 {
     if (!IsDmaUsingRecord(hookRecord)) {
         return true;
     }
     auto rawData = hookRecord->GetRawStack();
     uint32_t pid = rawData->stackContext->pid;
-    if (dmaFdSizePid != pid) {
-        dmaFdSizeMap = LoadDmaFdSizeMap(pid);
-        dmaFdSizePid = pid;
-    }
     uint32_t fd = GetDmaFd(reinterpret_cast<uint64_t>(rawData->stackContext->addr));
-    auto iter = dmaFdSizeMap.find(fd);
-    if (iter == dmaFdSizeMap.end() || !PassesSizeFilter(iter->second)) {
+    size_t resolvedSize = 0;
+    bool found = false;
+    {
+        bool loaded = false;
+        std::lock_guard<std::mutex> guard(dmaFdSizeMapMtx_);
+        if (dmaFdSizeCacheDirty_.load() || dmaFdSizePid_ != pid) {
+            dmaFdSizeMap_ = LoadDmaFdSizeMap(pid);
+            dmaFdSizePid_ = pid;
+            dmaFdSizeCacheDirty_.store(false);
+            loaded = true;
+        }
+        auto iter = dmaFdSizeMap_.find(fd);
+        if (iter == dmaFdSizeMap_.end() && !loaded) {
+            dmaFdSizeMap_ = LoadDmaFdSizeMap(pid);
+            dmaFdSizePid_ = pid;
+            iter = dmaFdSizeMap_.find(fd);
+        }
+        if (iter != dmaFdSizeMap_.end()) {
+            resolvedSize = iter->second;
+            found = true;
+        }
+    }
+    if (!found || !PassesSizeFilter(resolvedSize)) {
         return false;
     }
-    rawData->stackContext->mallocSize = iter->second;
+    rawData->stackContext->mallocSize = resolvedSize;
     return true;
 }
 
@@ -1265,10 +1284,8 @@ bool StackPreprocess::ProcessBatchData()
         return false;
     }
 
-    DmaFdSizeMap dmaFdSizeMap;
-    uint32_t dmaFdSizePid = 0;
     for (unsigned int i = 0; i < MAX_BATCH_CNT; i++) {
-        if (!ResolveDmaSize(batchRawStack[i], dmaFdSizeMap, dmaFdSizePid)) {
+        if (!ResolveDmaSize(batchRawStack[i])) {
             continue;
         }
         if (!ProcessSingleRecord(batchRawStack[i])) {

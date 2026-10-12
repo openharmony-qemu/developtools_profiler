@@ -686,6 +686,9 @@ void HookManager::HandleReadyCacheFile(const std::shared_ptr<HookManagerCtx>& ct
     }
     int frontFd = ctx->GetFdQueueFront();
     ctx->cacheFileParsing = true;
+    if (ctx->stackPreprocess != nullptr) {
+        ctx->stackPreprocess->RefreshDmaFdSizeCache();
+    }
     if (shouldSkipGlobalFreed_) {
         validLiveData_.clear();
         orphanFreeWhitelist_.clear();
