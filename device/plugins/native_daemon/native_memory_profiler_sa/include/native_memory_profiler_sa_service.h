@@ -129,6 +129,7 @@ private:
     static void NotifyProfilingResult(const std::shared_ptr<TaskConfig>& config, int32_t errorCode,
         const std::string& filePath);
     static std::string CollectApm(std::shared_ptr<TaskConfig>& config);
+    static int32_t CopyCompositeHeapFile(std::shared_ptr<TaskConfig>& config);
     static int32_t CopyApiCollectorFile(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath);
     static int32_t ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath);
     int32_t PreCheckPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);

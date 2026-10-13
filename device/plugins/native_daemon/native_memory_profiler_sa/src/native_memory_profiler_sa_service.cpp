@@ -1805,7 +1805,23 @@ int32_t NativeMemoryProfilerSaService::CopyApiCollectorFile(uint32_t pid, std::s
     return RET_OK;
 }
 
-int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config,
+static int32_t NativeMemoryProfilerSaService::CopyCompositeHeapFile(std::shared_ptr<TaskConfig>& config)
+{
+    std::string compositeFilepath = CollectApm(config);
+    if (compositeFilepath.empty()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Collect composite heap fail");
+        return RET_ERR;
+    }
+    if (!COMMON::CopyFileToFdFastFromPath(compositeFilepath, config->compositeHeapFd)) {
+        (void)unlink(compositeFilepath.c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "Copy composite file into bundle fd failed");
+        return RET_ERR;
+    }
+    (void)unlink(compositeFilepath.c_str());
+    return RET_OK;
+}
+
+int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig>& config,
     std::string& resultPath)
 {
     int32_t ret = RET_OK;
@@ -1823,17 +1839,8 @@ int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::sha
         if (config->startType == START_TYPE_API) {
             ret = CopyApiCollectorFile(pid, config, resultPath);
         } else if (config->compositeHeapEnable && config->compositeHeapFd > 0) {
-            std::string compositeFilepath = CollectApm(config);
-            if (compositeFilepath.empty()) {
-                PROFILER_LOG_ERROR(LOG_CORE, "Collect composite heap fail");
-                return RET_ERR;
-            }
-            if (!COMMON::CopyFileToFdFastFromPath(compositeFilepath, config->compositeHeapFd)) {
-                (void)unlink(compositeFilepath.c_str());
-                PROFILER_LOG_ERROR(LOG_CORE, "Copy composite file into bundle fd failed");
-                return RET_ERR;
-            }
-            (void)unlink(compositeFilepath.c_str());
+            ret = CopyCompositeHeapFile(config);
+            close(config->compositeHeapFd);
         }
         g_pidCtx.erase(config->pid);
         g_pidInfo.erase(static_cast<pid_t>(pid));
