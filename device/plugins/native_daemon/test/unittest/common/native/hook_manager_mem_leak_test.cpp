@@ -544,7 +544,10 @@ HWTEST_F(HookManagerMemLeakTest, CloseResource_WithMemLeakFd, TestSize.Level0)
     hookManager_->SetMemLeakFd(testFd);
 
     hookManager_->CloseResource();
-    EXPECT_EQ(hookManager_->memLeakFd_, -1);
+    // memLeakFd_ is not closed or reset by HookManager; owned by config->fd
+    // and closed by ReleaseForStopHook, same as saFd_
+    EXPECT_EQ(hookManager_->memLeakFd_, testFd);
+    close(testFd);
 }
 
 /*

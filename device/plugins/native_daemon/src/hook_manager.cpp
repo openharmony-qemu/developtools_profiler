@@ -2238,17 +2238,11 @@ void HookManager::CloseResource()
         fclose(fpHookData_);
         fpHookData_ = nullptr;
     }
-    if (gwpFd_ > 0) {
-        gwpFd_ = 0;
-    }
     CloseMemLeakTempFile();
 }
 
 bool HookManager::CloseMemLeakTempFile()
 {
-    if (memLeakFd_ >= 0) {
-        memLeakFd_ = -1;
-    }
     if (tempMemLeakFd_ < 0) {
         return true;
     }
