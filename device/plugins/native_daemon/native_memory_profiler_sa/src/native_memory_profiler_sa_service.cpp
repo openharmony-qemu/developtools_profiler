@@ -1821,7 +1821,7 @@ int32_t NativeMemoryProfilerSaService::CopyCompositeHeapFile(std::shared_ptr<Tas
     return RET_OK;
 }
 
-int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig>& config,
+int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config,
     std::string& resultPath)
 {
     int32_t ret = RET_OK;
