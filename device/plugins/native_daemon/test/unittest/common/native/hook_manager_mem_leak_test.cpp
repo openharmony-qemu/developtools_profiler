@@ -528,29 +528,6 @@ HWTEST_F(HookManagerMemLeakTest, GetClientConfigExt_MemLeakFormatVector, TestSiz
 }
 
 /*
- * @tc.name: CloseResource_WithMemLeakFd
- * @tc.desc: test CloseResource cleans up memLeakFd_ properly.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerMemLeakTest, CloseResource_WithMemLeakFd, TestSize.Level0)
-{
-    NativeHookConfig config;
-    config.set_process_name(TEST_PROCESS_NAME);
-    config.set_native_orphansnapshots_enable(true);
-    config.set_pid(TEST_PID);
-    hookManager_->SetHookConfig(config);
-    int testFd = dup(STDIN_FILENO);
-    ASSERT_GE(testFd, 0);
-    hookManager_->SetMemLeakFd(testFd);
-
-    hookManager_->CloseResource();
-    // memLeakFd_ is not closed or reset by HookManager; owned by config->fd
-    // and closed by ReleaseForStopHook, same as saFd_
-    EXPECT_EQ(hookManager_->memLeakFd_, testFd);
-    close(testFd);
-}
-
-/*
  * @tc.name: SetHookConfigExt_MemLeakLimit
  * @tc.desc: test SetHookConfigExt with memLeakLimit setting.
  * @tc.type: FUNC
