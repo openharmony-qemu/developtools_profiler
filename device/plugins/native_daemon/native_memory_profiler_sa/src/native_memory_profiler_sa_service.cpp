@@ -1805,7 +1805,7 @@ int32_t NativeMemoryProfilerSaService::CopyApiCollectorFile(uint32_t pid, std::s
     return RET_OK;
 }
 
-static int32_t NativeMemoryProfilerSaService::CopyCompositeHeapFile(std::shared_ptr<TaskConfig>& config)
+int32_t NativeMemoryProfilerSaService::CopyCompositeHeapFile(std::shared_ptr<TaskConfig>& config)
 {
     std::string compositeFilepath = CollectApm(config);
     if (compositeFilepath.empty()) {
