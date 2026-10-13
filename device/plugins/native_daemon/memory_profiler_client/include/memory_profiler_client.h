@@ -54,6 +54,7 @@ public:
      * OH_RES_TYPE_GLOBAL_HANDLE = 4
      * OH_RES_TYPE_DMA = 5
      * OH_RES_TYPE_ASHMEM = 6
+     * OH_RES_TYPE_COMPOSITE_HEAP = 7
      * @param config: The memory API profiler configuration.
      * @param profilingCallback: The callback to be invoked when profiling result is ready, can be nullptr.
      * @return: RES_PROF_SUCCESS on success, specific error code on failure.
