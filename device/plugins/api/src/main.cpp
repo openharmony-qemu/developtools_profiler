@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
         PROFILER_LOG_INFO(LOG_CORE, "release lockfile failed!");
     }
     if (lockFileFd > 0) {
-        fdsan_close_with_tag(lockFileFd, PROFILER_SUBSYSTEM);
+        fdsan_close_with_tag(lockFileFd, PROFILER_FD_TAG);
     }
     pluginManager->StopAllPluginSession();
     return 0;

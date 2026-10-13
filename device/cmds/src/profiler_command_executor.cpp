@@ -143,21 +143,21 @@ void ProfilerCommandExecutor::ChildProcessCapture(const ProfilerCommandArgs& arg
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
     if (setsid() < 0) {
-        fdsan_close_with_tag(g_pipefd[PIPE_READ_END], PROFILER_SUBSYSTEM);
-        fdsan_close_with_tag(g_pipefd[PIPE_WRITE_END], PROFILER_SUBSYSTEM);
+        fdsan_close_with_tag(g_pipefd[PIPE_READ_END], PROFILER_FD_TAG);
+        fdsan_close_with_tag(g_pipefd[PIPE_WRITE_END], PROFILER_FD_TAG);
         PROFILER_LOG_ERROR(LOG_CORE, "setsid error");
         return;
     }
     
-    fdsan_close_with_tag(g_pipefd[PIPE_READ_END], PROFILER_SUBSYSTEM);
+    fdsan_close_with_tag(g_pipefd[PIPE_READ_END], PROFILER_FD_TAG);
     uint32_t sigFlag = 1;
     int retVal = TEMP_FAILURE_RETRY(write(g_pipefd[PIPE_WRITE_END], &sigFlag, sizeof(sigFlag)));
     if (retVal <= 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "write signal flag failed");
-        fdsan_close_with_tag(g_pipefd[PIPE_WRITE_END], PROFILER_SUBSYSTEM);
+        fdsan_close_with_tag(g_pipefd[PIPE_WRITE_END], PROFILER_FD_TAG);
         return;
     }
-    fdsan_close_with_tag(g_pipefd[PIPE_WRITE_END], PROFILER_SUBSYSTEM);
+    fdsan_close_with_tag(g_pipefd[PIPE_WRITE_END], PROFILER_FD_TAG);
     
     if (ProfilerSessionManager::GetInstance().Capture(config, args.traceKeepSecond, args.outputFile)) {
         printf("DONE\n");
@@ -174,17 +174,17 @@ void ProfilerCommandExecutor::ExecuteProfilerCapture(const ProfilerCommandArgs& 
             printf("pipe error\n");
             return;
         }
-        fdsan_exchange_owner_tag(g_pipefd[PIPE_READ_END], 0, PROFILER_SUBSYSTEM);
-        fdsan_exchange_owner_tag(g_pipefd[PIPE_WRITE_END], 0, PROFILER_SUBSYSTEM);
+        fdsan_exchange_owner_tag(g_pipefd[PIPE_READ_END], 0, PROFILER_FD_TAG);
+        fdsan_exchange_owner_tag(g_pipefd[PIPE_WRITE_END], 0, PROFILER_FD_TAG);
         pid_t childPid = fork();
         if (childPid == 0) {
             ChildProcessCapture(args, config);
         } else if (childPid > 0) {
-            fdsan_close_with_tag(g_pipefd[PIPE_WRITE_END], PROFILER_SUBSYSTEM);
+            fdsan_close_with_tag(g_pipefd[PIPE_WRITE_END], PROFILER_FD_TAG);
             uint32_t exitFlag = 0;
             ssize_t retVal = TEMP_FAILURE_RETRY(read(g_pipefd[PIPE_READ_END], &exitFlag, sizeof(exitFlag)));
             if (retVal == -1 && errno == EAGAIN) {
-                fdsan_close_with_tag(g_pipefd[PIPE_READ_END], PROFILER_SUBSYSTEM);
+                fdsan_close_with_tag(g_pipefd[PIPE_READ_END], PROFILER_FD_TAG);
                 return;
             }
             if (static_cast<size_t>(retVal) != sizeof(exitFlag)) {
@@ -195,7 +195,7 @@ void ProfilerCommandExecutor::ExecuteProfilerCapture(const ProfilerCommandArgs& 
                 PROFILER_LOG_INFO(LOG_CORE, "Running in nonblock mode: tracing %s s....\n",
                                   args.traceKeepSecond.c_str());
             }
-            fdsan_close_with_tag(g_pipefd[PIPE_READ_END], PROFILER_SUBSYSTEM);
+            fdsan_close_with_tag(g_pipefd[PIPE_READ_END], PROFILER_FD_TAG);
         }
     } else {
         // Blocking mode

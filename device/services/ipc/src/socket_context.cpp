@@ -84,7 +84,7 @@ SocketContext::~SocketContext()
     socketHandle_ = socketTemp;
     PROFILER_LOG_INFO(LOG_CORE, "~SocketContext recvThread join success");
     if (socketHandle_ >= 0) {
-        int ret = fdsan_close_with_tag(socketHandle_, PROFILER_SUBSYSTEM);
+        int ret = fdsan_close_with_tag(socketHandle_, PROFILER_FD_TAG);
         if (ret < 0) {
             const int bufSize = 256;
             char buf[bufSize] = { 0 };

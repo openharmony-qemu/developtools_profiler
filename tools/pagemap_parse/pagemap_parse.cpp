@@ -23,7 +23,7 @@
 #include <charconv>
 
 namespace {
-constexpr uint64_t FD_TAG_PAGEMAP = 0xD002D0C;  // 与 logging.h PROFILER_SUBSYSTEM 保持一致
+constexpr uint64_t FD_TAG_PAGEMAP = (0xD002D0CULL << 32) | 0x01;  // 与 logging.h PROFILER_FD_TAG 编码一致
 }
 
 using namespace std;

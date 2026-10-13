@@ -110,22 +110,22 @@ bool IsProcessRunning(int& lockFileFd)
         PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, fileName.c_str(), errno, buf);
         return false;
     }
-    fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
+    fdsan_exchange_owner_tag(fd, 0, PROFILER_FD_TAG);
     int flags = fcntl(fd, F_GETFD);
     if (flags == -1) {
-        fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
+        fdsan_close_with_tag(fd, PROFILER_FD_TAG);
         PROFILER_LOG_ERROR(LOG_CORE, "%s: get fd flags failed!", __func__);
         return false;
     }
     unsigned int flagsValue = static_cast<unsigned int>(flags) | FD_CLOEXEC;
     if (fcntl(fd, F_SETFD, flagsValue) == -1) {
-        fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
+        fdsan_close_with_tag(fd, PROFILER_FD_TAG);
         PROFILER_LOG_ERROR(LOG_CORE, "%s: set fd_cloexec failed!", __func__);
         return false;
     }
     if (flock(fd, LOCK_EX | LOCK_NB) == -1) {
         // 进程正在运行，加锁失败
-        fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
+        fdsan_close_with_tag(fd, PROFILER_FD_TAG);
         printf("%s is running, please don't start it again.\n", processName.c_str());
         PROFILER_LOG_ERROR(LOG_CORE, "%s is running, please don't start it again.", processName.c_str());
         return true;
@@ -336,9 +336,9 @@ bool GetDeveloperMode()
     return developerMode;
 }
 
-inline int CustomFdClose(int& fd)
+inline int CustomFdClose(int& fd, uint64_t tag)
 {
-    int ret = fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
+    int ret = fdsan_close_with_tag(fd, tag);
     if (ret == 0) {
         fd = -1;
     }
@@ -404,8 +404,8 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
         return nullptr;
     }
     CHECK_TRUE(pipe(fds) == 0, nullptr, "Pipe open failed!");
-    fdsan_exchange_owner_tag(fds[READ], 0, PROFILER_SUBSYSTEM);
-    fdsan_exchange_owner_tag(fds[WRITE], 0, PROFILER_SUBSYSTEM);
+    fdsan_exchange_owner_tag(fds[READ], 0, PROFILER_FD_TAG);
+    fdsan_exchange_owner_tag(fds[WRITE], 0, PROFILER_FD_TAG);
     pid_t pid = fork();
     if (pid == -1) {
         perror("fork");
@@ -418,13 +418,13 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
             argv[i] = const_cast<char*>(command[i].data());
         }
         if (strncmp(type, "r", strlen(type)) == 0) {
-            CHECK_TRUE(CustomFdClose(fds[READ]) == 0, nullptr, "CustomFdClose failed!");
+            CHECK_TRUE(CustomFdClose(fds[READ], PROFILER_FD_TAG) == 0, nullptr, "CustomFdClose failed!");
             dup2(fds[WRITE], STDOUT_FILENO); // Redirect stdout to pipe
-            CHECK_TRUE(CustomFdClose(fds[WRITE]) == 0, nullptr, "CustomFdClose failed!");
+            CHECK_TRUE(CustomFdClose(fds[WRITE], PROFILER_FD_TAG) == 0, nullptr, "CustomFdClose failed!");
         } else {
-            CHECK_TRUE(CustomFdClose(fds[WRITE]) == 0, nullptr, "CustomFdClose failed!");
+            CHECK_TRUE(CustomFdClose(fds[WRITE], PROFILER_FD_TAG) == 0, nullptr, "CustomFdClose failed!");
             dup2(fds[READ], STDIN_FILENO); // Redirect stdin to pipe
-            CHECK_TRUE(CustomFdClose(fds[READ]) == 0, nullptr, "CustomFdClose failed!");
+            CHECK_TRUE(CustomFdClose(fds[READ], PROFILER_FD_TAG) == 0, nullptr, "CustomFdClose failed!");
         }
         setpgid(pid, pid);
         // exe path = argv[0]; exe name = argv[1]
@@ -436,22 +436,22 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
     if (!needUnblock) {
         if (strncmp(type, "r", strlen(type)) == 0) {
             // Close the WRITE end of the pipe since parent's fd is read-only
-            CHECK_TRUE(CustomFdClose(fds[WRITE]) == 0, nullptr, "%s %d CustomFdClose failed! errno(%s)\n",
-                __func__, __LINE__, strerror(errno));
+            CHECK_TRUE(CustomFdClose(fds[WRITE], PROFILER_FD_TAG) == 0, nullptr,
+                "%s %d CustomFdClose failed! errno(%s)\n", __func__, __LINE__, strerror(errno));
         } else {
             // Close the READ end of the pipe since parent's fd is write-only
-            CHECK_TRUE(CustomFdClose(fds[READ]) == 0, nullptr, "%s %d CustomFdClose failed! errno(%s)\n",
-                __func__, __LINE__, strerror(errno));
+            CHECK_TRUE(CustomFdClose(fds[READ], PROFILER_FD_TAG) == 0, nullptr,
+                "%s %d CustomFdClose failed! errno(%s)\n", __func__, __LINE__, strerror(errno));
         }
     }
     // Make sure the parent pipe reads and writes exist;CustomPUnblock will use.
     childPid = pid;
     if (strncmp(type, "r", strlen(type)) == 0) {
         PROFILER_LOG_DEBUG(LOG_CORE, "END %s fds[READ]: success!", __func__);
-        fdsan_exchange_owner_tag(fds[READ], PROFILER_SUBSYSTEM, 0);
+        fdsan_exchange_owner_tag(fds[READ], PROFILER_FD_TAG, 0);
         return fdopen(fds[READ], "r");
     }
-    fdsan_exchange_owner_tag(fds[WRITE], PROFILER_SUBSYSTEM, 0);
+    fdsan_exchange_owner_tag(fds[WRITE], PROFILER_FD_TAG, 0);
     return fdopen(fds[WRITE], "w");
 }
 
@@ -514,14 +514,14 @@ int CustomPclose(FILE* fp, int fds[], volatile pid_t& childPid, bool needUnblock
     if (needUnblock) {
         if (fileno(fp) == fds[READ]) {
             fds[READ] = -1;
-            if (CustomFdClose(fds[WRITE]) != 0) {
+            if (CustomFdClose(fds[WRITE], PROFILER_FD_TAG) != 0) {
                 PROFILER_LOG_ERROR(LOG_CORE, "CustomFdClose failed!");
                 CHECK_TRUE(CustomFdFclose(&fp) == 0, -1, "CustomFdFclose failed!");
                 return -1;
             }
         } else if (fileno(fp) == fds[WRITE]) {
             fds[WRITE] = -1;
-            if (CustomFdClose(fds[READ]) != 0) {
+            if (CustomFdClose(fds[READ], PROFILER_FD_TAG) != 0) {
                 PROFILER_LOG_ERROR(LOG_CORE, "CustomFdClose failed!");
                 CHECK_TRUE(CustomFdFclose(&fp) == 0, -1, "CustomFdFclose failed!");
                 return -1;
@@ -1185,7 +1185,7 @@ static bool CopyFileWithRetry(uint32_t srcFd, const std::string& destPath, int m
     if (dest < 0) {
         return false;
     }
-    fdsan_exchange_owner_tag(dest, 0, PROFILER_SUBSYSTEM);
+    fdsan_exchange_owner_tag(dest, 0, PROFILER_FD_TAG);
 
     bool ret = false;
     do {
@@ -1202,7 +1202,7 @@ static bool CopyFileWithRetry(uint32_t srcFd, const std::string& destPath, int m
         ofs.close();
     } while (maxRetries-- > 0);
 
-    fdsan_close_with_tag(dest, PROFILER_SUBSYSTEM);
+    fdsan_close_with_tag(dest, PROFILER_FD_TAG);
 
     return ret;
 }
@@ -1233,12 +1233,12 @@ bool CopyFileFastFromPath(const std::string& srcPath, const std::string& destPat
         PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, srcPath.c_str(), errno, buf);
         return false;
     }
-    fdsan_exchange_owner_tag(srcFd, 0, PROFILER_SUBSYSTEM);
+    fdsan_exchange_owner_tag(srcFd, 0, PROFILER_FD_TAG);
     bool result = COMMON::CopyFileFast(srcFd, destPath);
     if (!result) {
         PROFILER_LOG_ERROR(LOG_CORE, "CopyFileFast fail");
     }
-    fdsan_close_with_tag(srcFd, PROFILER_SUBSYSTEM);
+    fdsan_close_with_tag(srcFd, PROFILER_FD_TAG);
     return result;
 }
 
@@ -1296,12 +1296,12 @@ bool CopyFileToFdFastFromPath(const std::string& srcPath, int destFd)
         PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno(%d:%s)", __func__, srcPath.c_str(), errno, buf);
         return false;
     }
-    fdsan_exchange_owner_tag(srcFd, 0, PROFILER_SUBSYSTEM);
+    fdsan_exchange_owner_tag(srcFd, 0, PROFILER_FD_TAG);
     bool result = CopyFdContentWithRetry(srcFd, destFd, 3);
     if (!result) {
         PROFILER_LOG_ERROR(LOG_CORE, "CopyFileToFdFastFromPath fail");
     }
-    fdsan_close_with_tag(srcFd, PROFILER_SUBSYSTEM);
+    fdsan_close_with_tag(srcFd, PROFILER_FD_TAG);
     return result;
 }
 
@@ -1447,8 +1447,7 @@ bool CreateFile(const std::string& filePath)
     if (fd == -1) {
         return false;
     }
-    fdsan_exchange_owner_tag(fd, 0, PROFILER_SUBSYSTEM);
-    fdsan_close_with_tag(fd, PROFILER_SUBSYSTEM);
+    close(fd);
     return true;
 }
 

@@ -29,7 +29,7 @@ public:
     void SetSocketHandle(int fd)
     {
         socketHandle_ = fd;
-        fdsan_exchange_owner_tag(socketHandle_, 0, PROFILER_SUBSYSTEM);
+        fdsan_exchange_owner_tag(socketHandle_, 0, PROFILER_FD_TAG);
     }
 };
 

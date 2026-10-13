@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <functional>
+#include <cstdint>
 
 
 namespace COMMON {
@@ -34,7 +35,7 @@ int KillProcess(int pid);
 bool CheckSubscribeVersion(const std::string& version);
 bool IsProcessExistByPid(int& pidval);
 void PrintMallinfoLog(const std::string& mallInfoPrefix, const struct mallinfo2& mi);
-inline int CustomFdClose(int& fd);
+inline int CustomFdClose(int& fd, uint64_t tag);
 inline int CustomFdFclose(FILE** fp);
 FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int fds[],
                   volatile pid_t& childPid, bool needUnblock = false);

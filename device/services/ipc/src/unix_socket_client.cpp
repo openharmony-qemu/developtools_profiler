@@ -37,7 +37,7 @@ bool UnixSocketClient::Connect(const std::string addrname, ServiceBase& serviceB
 
     int sock = socket(AF_UNIX, SOCK_STREAM, 0);
     CHECK_TRUE(sock != -1, false, "Unix Socket Create FAIL");
-    fdsan_exchange_owner_tag(sock, 0, PROFILER_SUBSYSTEM);
+    fdsan_exchange_owner_tag(sock, 0, PROFILER_FD_TAG);
 
     struct sockaddr_un addr;
     if (memset_s(&addr, sizeof(struct sockaddr_un), 0, sizeof(struct sockaddr_un)) != EOK) {
@@ -49,7 +49,7 @@ bool UnixSocketClient::Connect(const std::string addrname, ServiceBase& serviceB
     }
 
     if (connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_un)) == -1) {
-        fdsan_close_with_tag(sock, PROFILER_SUBSYSTEM);
+        fdsan_close_with_tag(sock, PROFILER_FD_TAG);
         PROFILER_LOG_ERROR(LOG_CORE, "Unix Socket Connect FAIL");
         return false;
     }
@@ -63,13 +63,13 @@ bool UnixSocketClient::Connect(const std::string addrname, ServiceBase& serviceB
     rrs.serviceName_[serviceBase_->serviceName_.size()] = 0;
     if (!SendRaw(
         RAW_PROTOCOL_POINTTO_SERVICE, reinterpret_cast<int8_t*>(&rrs), sizeof(struct RawPointToService), sock)) {
-        fdsan_close_with_tag(sock, PROFILER_SUBSYSTEM);
+        fdsan_close_with_tag(sock, PROFILER_FD_TAG);
         PROFILER_LOG_ERROR(LOG_CORE, "Unix Socket SendRaw FAIL");
         return false;
     }
     socketHandle_ = sock;
     if (!CreateRecvThread(callback)) {
-        fdsan_close_with_tag(sock, PROFILER_SUBSYSTEM);
+        fdsan_close_with_tag(sock, PROFILER_FD_TAG);
         socketHandle_ = -1;
         PROFILER_LOG_ERROR(LOG_CORE, "Unix Socket Create Recv Thread FAIL");
         return false;
