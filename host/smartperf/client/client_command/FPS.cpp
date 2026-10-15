@@ -153,16 +153,16 @@ void FPS::CalcFatalCaton(std::vector<long long>& jitters)
 double FPS::CalculateOnePercentLowFrame(const std::vector<long long>& jitters)
 {
     // 最差1%低帧统计相关常量
-    constexpr size_t PERCENT_BASE = 100;
-    constexpr double MS_TO_US = 1000.0;
-    constexpr double SEC_TO_US = 1000000.0;
+    constexpr size_t percentBase = 100;
+    constexpr double msToUs = 1000.0;
+    constexpr double secToUs = 1000000.0;
     if (jitters.empty()) {
         LOGE("Jitters is empty");
         return 0;
     }
     std::vector<long long> sorted = jitters;
     std::sort(sorted.begin(), sorted.end(), std::greater<long long>());
-    size_t count = (jitters.size() + PERCENT_BASE - 1) / PERCENT_BASE; //ceil(size / 100)
+    size_t count = (jitters.size() + percentBase - 1) / percentBase; //ceil(size / 100)
     if (count < 1) {
         count = 1;
     }
@@ -177,7 +177,7 @@ double FPS::CalculateOnePercentLowFrame(const std::vector<long long>& jitters)
         return 0;
     }
     double average = static_cast<double>(sum) / static_cast<double>(count);
-    double onePercentLowFrame = MS_TO_US / (average / SEC_TO_US);
+    double onePercentLowFrame = msToUs / (average / secToUs);
     return onePercentLowFrame;
 }
 
