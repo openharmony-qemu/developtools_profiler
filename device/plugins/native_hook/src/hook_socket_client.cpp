@@ -333,6 +333,7 @@ void HookSocketClient::HandleSharedMemoryMode(SocketContext &context)
 void HookSocketClient::HandleCommonConfig()
 {
     nmdType_ = config_->nmdType;
+    config_->maxStackDepth = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     g_disableHook = false;
     largestSize_ = config_->largestSize;
     secondLargestSize_ = config_->secondLargestSize;
@@ -356,9 +357,6 @@ void HookSocketClient::LogReceivedConfig()
             config_->gpuRange.gpuGlesBuffer[i], config_->gpuRange.gpuClImage[i],
             config_->gpuRange.gpuClBuffer[i]);
     }
-    config_->maxStackDepth = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
-    std::string configStr = config_->ToString();
-    (void)configStr;
 }
 
 void HookSocketClient::PrepareWriters(SocketContext &context)
