@@ -15,7 +15,6 @@
 
 #include "cache_file_writer.h"
 
-#include <cerrno>
 #include <chrono>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -23,7 +22,6 @@
 #include <thread>
 #include <unistd.h>
 #include <utility>
-#include "logging.h"
 #include "securec.h"
 
 namespace {
@@ -94,8 +92,6 @@ bool CacheFileWriter::PrepareRecordWrite(uint32_t totalSize, size_t incomingSize
         return false;
     }
     if (totalSize == 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "CacheFileWriter zero totalSize before write, totalSize=%u tid=%ld",
-            totalSize, syscall(SYS_gettid));
         return false;
     }
     return true;
@@ -105,8 +101,6 @@ bool CacheFileWriter::PrepareRecordWrite(uint32_t totalSize, size_t incomingSize
 bool CacheFileWriter::FinishRecordWrite(bool ok, uint32_t originalOffset, size_t incomingSize)
 {
     if (!ok) {
-        PROFILER_LOG_WARN(LOG_CORE, "CacheFileWriter rollback, originalOffset=%u incoming=%zu tid=%ld",
-            originalOffset, incomingSize, syscall(SYS_gettid));
         writeOffset_ = originalOffset;
         return false;
     }
@@ -210,7 +204,6 @@ bool CacheFileWriter::MapFileToMemory(int fd)
     }
     int fdFlags = fcntl(fd, F_GETFL);
     if (fdFlags < 0 || (static_cast<unsigned int>(fdFlags) & O_ACCMODE) != O_RDWR) {
-        PROFILER_LOG_ERROR(LOG_CORE, "MapFileToMemory fd not O_RDWR, fd=%d errno=%d", fd, errno);
         return false;
     }
     // bypass libc mmap via syscall: plain mmap goes through musl malloc dispatch and gets
@@ -224,18 +217,14 @@ bool CacheFileWriter::MapFileToMemory(int fd)
         PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
 #endif
     if (addr == reinterpret_cast<void*>(-1)) {  // syscall returns -1 on error, same as MAP_FAILED
-        PROFILER_LOG_ERROR(LOG_CORE, "MapFileToMemory mmap failed, fd=%d errno=%d", fd, errno);
         return false;
     }
     mmapAddr_ = static_cast<uint8_t*>(addr);
     mmapSize_ = MMAP_FILE_SIZE;
     writeOffset_ = DATA_SIZE_HEADER_LEN;
     fileRecordCount_ = 0;
-    PROFILER_LOG_INFO(LOG_CORE, "CacheFileWriter mmap done, addr=%p size=%u fd=%d tid=%ld",
-        static_cast<void*>(mmapAddr_), mmapSize_, fd, syscall(SYS_gettid));
     uint32_t dataSize = 0;
     if (memcpy_s(mmapAddr_, mmapSize_, &dataSize, DATA_SIZE_HEADER_LEN) != EOK) {
-        PROFILER_LOG_ERROR(LOG_CORE, "MapFileToMemory init data size header failed");
         UnmapMemory();
         return false;
     }
@@ -245,12 +234,8 @@ bool CacheFileWriter::MapFileToMemory(int fd)
 void CacheFileWriter::UnmapMemory()
 {
     if (mmapAddr_ != nullptr && mmapSize_ > 0) {
-        void* addr = static_cast<void*>(mmapAddr_);
-        uint32_t size = mmapSize_;
         // bypass libc munmap via syscall to avoid hook_munmap capture, same as mmap above
         syscall(SYS_munmap, mmapAddr_, mmapSize_);
-        PROFILER_LOG_INFO(LOG_CORE, "CacheFileWriter munmap done, addr=%p size=%u tid=%ld",
-            addr, size, syscall(SYS_gettid));
     }
     mmapAddr_ = nullptr;
     mmapSize_ = 0;
@@ -263,9 +248,7 @@ void CacheFileWriter::UpdateDataSizeHeader()
         return;
     }
     uint32_t dataSize = writeOffset_ - DATA_SIZE_HEADER_LEN;
-    if (memcpy_s(mmapAddr_, DATA_SIZE_HEADER_LEN, &dataSize, DATA_SIZE_HEADER_LEN) != EOK) {
-        PROFILER_LOG_ERROR(LOG_CORE, "UpdateDataSizeHeader memcpy_s failed");
-    }
+    (void)memcpy_s(mmapAddr_, DATA_SIZE_HEADER_LEN, &dataSize, DATA_SIZE_HEADER_LEN);
 }
 
 bool CacheFileWriter::WriteToMemoryCache(const void* data, size_t size)
@@ -294,13 +277,7 @@ bool CacheFileWriter::FlushEndedCacheFile()
         return NotifyStopEvent();
     }
     UpdateDataSizeHeader();
-    PROFILER_LOG_INFO(LOG_CORE,
-        "CacheFileWriter flush ended file, datasize=%u writeOffset=%u recordCount=%u fd=%d tid=%ld",
-        static_cast<uint32_t>(writeOffset_ - DATA_SIZE_HEADER_LEN),
-        writeOffset_,
-        fileRecordCount_, currentFileFd_, syscall(SYS_gettid));
     if (msync(mmapAddr_, mmapSize_, MS_SYNC) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "FlushEndedCacheFile msync failed, errno=%d", errno);
         return false;
     }
     UnmapMemory();
@@ -374,13 +351,7 @@ bool CacheFileWriter::FlushMemoryCacheToFile()
         return FlushEndedCacheFile();
     }
     UpdateDataSizeHeader();
-    PROFILER_LOG_INFO(LOG_CORE,
-        "CacheFileWriter flush file, datasize=%u writeOffset=%u recordCount=%u fd=%d tid=%ld",
-        static_cast<uint32_t>(writeOffset_ - DATA_SIZE_HEADER_LEN),
-        writeOffset_,
-        fileRecordCount_, currentFileFd_, syscall(SYS_gettid));
     if (msync(mmapAddr_, mmapSize_, MS_SYNC) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "FlushMemoryCacheToFile msync failed, errno=%d", errno);
         return false;
     }
     UnmapMemory();
@@ -397,7 +368,6 @@ bool CacheFileWriter::Flush()
         return true;
     }
     if (msync(mmapAddr_, mmapSize_, MS_SYNC) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Flush msync failed, errno=%d", errno);
         return false;
     }
     return true;
