@@ -69,7 +69,7 @@ public:
         return instance;
     }
     ErrCode InitTask(const std::string &recvStr);
-    ErrCode StartTask(std::function<void(const std::string&)> msgTask);
+    ErrCode StartTask(std::function<void(const std::string&)> msgTask, bool record = false);
     ErrCode StopTask();
     bool CheckTcpParam(const std::string& str, std::string &errorInfo);
     void CreatPath(const std::string& path);

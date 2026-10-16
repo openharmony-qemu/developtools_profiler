@@ -108,6 +108,8 @@ std::map<std::string, std::string> RAM::ItemData()
             procRamInfomation = procRamInfoLast;
         } else {
             procRamInfomation = ProcMemNaInfo();
+            std::map<std::string, std::string> childNaInfo = ChildProcMemNaInfo();
+            procRamInfomation.insert(childNaInfo.begin(), childNaInfo.end());
         }
         result.merge(procRamInfomation);
     } else if (!packageName.empty() && processId.empty()) {
@@ -117,6 +119,8 @@ std::map<std::string, std::string> RAM::ItemData()
         pid = sp.GetPidByPkg(packageName, &processIds);
         SetProcessId(pid);
         result.merge(RAM::ProcMemNaInfo());
+        std::map<std::string, std::string> childNaInfo = ChildProcMemNaInfo();
+        result.merge(childNaInfo);
     }
     LOGI("RAM:ItemData map size(%u)", result.size());
     return result;
@@ -241,7 +245,11 @@ std::map<std::string, std::string> RAM::CollectRam(const std::string& ramPid, si
 
     if (!SPUtils::IsValidPid(ramPid)) {
         LOGE("RAM::CollectRam invalid ramPid");
-        return emptyprocRamInfo;
+        if (index == 0) {
+            return ProcMemNaInfo();
+        } else {
+            return ChildProcMemNaInfo();
+        }
     }
     std::string cmdResult;
     std::vector<std::string> cmd = {"hidumper", "--mem", ramPid};
@@ -344,7 +352,7 @@ std::map<std::string, std::string> RAM::ParsePssValues(std::istringstream &iss, 
     while (std::getline(iss, line)) {
         if (line.find("No such process") != std::string::npos) {
             processId.clear();
-            return pssRamInfo;
+            break;
         }
         if (line[0] == '-') {
             continue;
