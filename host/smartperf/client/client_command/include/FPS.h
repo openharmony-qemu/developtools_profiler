@@ -109,6 +109,7 @@ public:
     bool hapNeedCatonInfo = false;
     int catonNum = 0;
     void CalcFatalCaton(std::vector<long long>& jitters);
+    double CalculateOnePercentLowFrame(const std::vector<long long>& jitters);
     void GetGameScenStatus();
     FpsInfo GetFpsInfoByDump(const std::string& name);
     FpsInfo GetFpsInfoByRs(const std::string& name);
