@@ -51,6 +51,25 @@ udp.bind(IPv4BindAddr, (err) => {
   });
 });
 
+function safeSendUdp(data, delay, logMsg, errMsg, onSuccess) {
+  setTimeout(() => {
+    try {
+      udp.send({
+        address: UdpSendAddress,
+        data: data,
+      });
+      if (logMsg) {
+        console.log(workTag + logMsg);
+      }
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (err) {
+      console.log(workTag + errMsg + JSON.stringify(err));
+    }
+  }, delay);
+}
+
 parentPort.onmessage = function (e) {
   try {
     let socketCollectItems = e.data;
@@ -60,117 +79,78 @@ parentPort.onmessage = function (e) {
 
     if (socketCollectItems.testConnection) {
       for (let i = 0; i < 5; i++) {
-        setTimeout(() => {
-          try {
-            udp.send({
-              address: UdpSendAddress,
-              data: 'set_pkgName::com.ohos.smartperf',
-            });
-            console.log(workTag + 'Worker socket test connection send');
-          } catch (err) {
-            console.log(workTag + 'Worker socket test connection send error: ' + JSON.stringify(err));
-          }
-        }, i * 10);
+        safeSendUdp(
+          'set_pkgName::com.ohos.smartperf',
+          i * 10,
+          'Worker socket test connection send',
+          'Worker socket test connection send error: '
+        );
       }
     }
 
     if (socketCollectItems.setDuBaiDb) {
-      setTimeout(() => {
-        try {
-          udp.send({
-            address: UdpSendAddress,
-            data: 'set_dubai_db',
-          });
-          console.log(workTag + 'Worker socket set_dubai_db send');
-        } catch (err) {
-          console.log(workTag + 'Worker socket set_dubai_db send error: ' + JSON.stringify(err));
-        }
-      }, 0);
+      safeSendUdp(
+        'set_dubai_db',
+        0,
+        'Worker socket set_dubai_db send',
+        'Worker socket set_dubai_db send error: '
+      );
     }
 
     if (flagPackageNum < 2) {
       if (socketCollectItems.pkg !== undefined) {
-        setTimeout(() => {
-          try {
-            udp.send({
-              address: UdpSendAddress,
-              data: messageSetPkg,
-            });
-            flagPackageNum++;
-          } catch (err) {
-            console.log(workTag + 'Worker socket send pkg error: ' + JSON.stringify(err));
-          }
-        }, 0);
+        safeSendUdp(
+          messageSetPkg,
+          0,
+          '',
+          'Worker socket send pkg error: ',
+          () => { flagPackageNum++; }
+        );
       }
     }
     if (socketCollectItems.fps) {
       let messageFps = 'get_fps_and_jitters';
-      setTimeout(() => {
-        try {
-          udp.send({
-            address: UdpSendAddress,
-            data: messageFps,
-          });
-          console.log(workTag + 'sub worker messageFps :' + messageFps);
-        } catch (err) {
-          console.log(workTag + 'sub worker messageFps send error: ' + JSON.stringify(err));
-        }
-      }, 0);
+      safeSendUdp(
+        messageFps,
+        0,
+        'sub worker messageFps :' + messageFps,
+        'sub worker messageFps send error: '
+      );
     }
     if (socketCollectItems.ram) {
       let messageRam = 'get_ram_info::' + socketCollectItems.pkg;
-      setTimeout(() => {
-        try {
-          udp.send({
-            address: UdpSendAddress,
-            data: messageRam,
-          });
-          console.log(workTag + 'sub worker messageRam :' + messageRam);
-        } catch (err) {
-          console.log(workTag + 'sub worker messageRam send error: ' + JSON.stringify(err));
-        }
-      }, 0);
+      safeSendUdp(
+        messageRam,
+        0,
+        'sub worker messageRam :' + messageRam,
+        'sub worker messageRam send error: '
+      );
     }
     if (socketCollectItems.screenCapture) {
-      setTimeout(() => {
-        try {
-          udp.send({
-            address: UdpSendAddress,
-            data: 'get_capture',
-          });
-          console.log(workTag + 'sub worker screen_capture :' + 'get_capture');
-        } catch (err) {
-          console.log(workTag + 'sub worker screen_capture send error: ' + JSON.stringify(err));
-        }
-      }, 0);
+      safeSendUdp(
+        'get_capture',
+        0,
+        'sub worker screen_capture :get_capture',
+        'sub worker screen_capture send error: '
+      );
     }
     if (socketCollectItems.catch_trace_start) {
       let messageTrace = 'catch_trace_start';
-      setTimeout(() => {
-        try {
-          udp.send({
-            address: UdpSendAddress,
-            data: messageTrace,
-          });
-          console.log(workTag + 'sub worker catch_trace_start :' + 'catch_trace_start');
-        } catch (err) {
-          console.log(workTag + 'sub worker catch_trace_start send error: ' + JSON.stringify(err));
-        }
-      }, 0);
+      safeSendUdp(
+        messageTrace,
+        0,
+        'sub worker catch_trace_start :catch_trace_start',
+        'sub worker catch_trace_start send error: '
+      );
     }
     if (socketCollectItems.catch_trace_end) {
       let messageTrace = 'catch_trace_end';
-      setTimeout(() => {
-        try {
-          udp.send({
-            address: UdpSendAddress,
-            data: messageTrace,
-          });
-          console.log(workTag + 'sub worker catch_trace_end :' + 'catch_trace_end');
-        } catch (err) {
-          console.log(workTag + 'sub worker catch_trace_end send error: ' + JSON.stringify(err));
-        }
-      }, 0);
+      safeSendUdp(
+        messageTrace,
+        0,
+        'sub worker catch_trace_end :catch_trace_end',
+        'sub worker catch_trace_end send error: '
+      );
     }
   } catch (err) {
     console.log(workTag + 'sub worker onmessage error: ' + JSON.stringify(err));

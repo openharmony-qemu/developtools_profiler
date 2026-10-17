@@ -22,23 +22,26 @@ import worker from '@ohos.worker';
 let MainWorker = null;
 let abilityWindowStage;
 
+function handleWorkerMessage(result): void {
+  try {
+    WorkerHandler.socketHandler(result);
+  } catch (e) {
+    console.log('cm-MainAbility-WorkerHandler error: ' + JSON.stringify(e));
+  }
+}
+
+function handleWorkerError(error): void {
+  console.log('cm-MainAbility-Worker error: ' + JSON.stringify(error));
+}
+
 function initWorker() {
   try {
     if (!MainWorker) {
       MainWorker = new worker.Worker('entry/ets/workers/worker.js');
       globalThis.MainWorker = MainWorker;
 
-      MainWorker.onmessage = function (result): void {
-        try {
-          WorkerHandler.socketHandler(result);
-        } catch (e) {
-          console.log('cm-MainAbility-WorkerHandler error: ' + JSON.stringify(e));
-        }
-      };
-
-      MainWorker.onerror = function (error): void {
-        console.log('cm-MainAbility-Worker error: ' + JSON.stringify(error));
-      };
+      MainWorker.onmessage = handleWorkerMessage;
+      MainWorker.onerror = handleWorkerError;
 
       console.log('cm-MainAbility-Worker initialized');
     }
