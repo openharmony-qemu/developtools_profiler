@@ -14,77 +14,112 @@
  */
 
 import Ability from '@ohos.app.ability.UIAbility';
-import { initDb } from '../common/database/LocalRepository';
-import { FloatWindowFun } from '../common/ui/floatwindow/FloatWindowFun';
 import { NetWork } from '../common/profiler/item/NetWork';
-import BundleManager from '../common/utils/BundleMangerUtils';
 import display from '@ohos.display'; // 导入模块
 import WorkerHandler from '../common/profiler/WorkerHandler';
 import worker from '@ohos.worker';
 
-let MainWorker = new worker.Worker('entry/ets/workers/worker.js');
-globalThis.MainWorker = MainWorker;
-
-MainWorker.onmessage = function (result): void {
-  WorkerHandler.socketHandler(result);
-};
-
+let MainWorker = null;
 let abilityWindowStage;
+
+function initWorker() {
+  try {
+    if (!MainWorker) {
+      MainWorker = new worker.Worker('entry/ets/workers/worker.js');
+      globalThis.MainWorker = MainWorker;
+
+      MainWorker.onmessage = function (result): void {
+        try {
+          WorkerHandler.socketHandler(result);
+        } catch (e) {
+          console.log('cm-MainAbility-WorkerHandler error: ' + JSON.stringify(e));
+        }
+      };
+
+      MainWorker.onerror = function (error): void {
+        console.log('cm-MainAbility-Worker error: ' + JSON.stringify(error));
+      };
+
+      console.log('cm-MainAbility-Worker initialized');
+    }
+  } catch (e) {
+    console.log('cm-MainAbility-initWorker error: ' + JSON.stringify(e));
+  }
+}
 export default class MainAbility extends Ability {
   onCreate(): void {
     console.log('cm-MainAbility-onCreate');
     globalThis.showFloatingWindow = false;
-    BundleManager.getAppList().then((appList) => {
-      globalThis.appList = appList;
-    });
+    globalThis.coefficient = 1;
+    globalThis.screenWith = 1080;
+    initWorker();
   }
   onDestroy(): void {
+    try {
+      if (MainWorker) {
+        MainWorker.terminate();
+        MainWorker = null;
+        globalThis.MainWorker = null;
+      }
+    } catch (e) {
+      console.log('cm-MainAbility-onDestroy error: ' + JSON.stringify(e));
+    }
     console.log('cm-MainAbility-onDestroy');
-    MainWorker.terminate();
   }
   onWindowStageCreate(windowStage): void {
+    console.log('cm-MainAbility-onWindowStageCreate');
     globalThis.abilityContext = this.context;
     abilityWindowStage = windowStage;
     abilityWindowStage.setUIContent(this.context, 'pages/LoginPage', null);
     globalThis.useDaemon = false;
-    display.getDefaultDisplay().then(
-      (disp) => {
-        globalThis.screenWith = disp.width;
-        if (globalThis.screenWith > 1400) {
-          globalThis.coefficient = 1;
+
+    setTimeout(() => {
+      display.getDefaultDisplay().then(
+        (disp) => {
+          globalThis.screenWith = disp.width;
+          if (globalThis.screenWith > 1400) {
+            globalThis.coefficient = 1;
+            console.log(
+              'globalThis.screenWith :coefficient-- ' + globalThis.coefficient
+            );
+          } else if (
+            globalThis.screenWith > 800 &&
+            globalThis.screenWith < 1400
+          ) {
+            globalThis.coefficient = 1.8;
+            console.log(
+              'globalThis.screenWith :coefficient-- ' + globalThis.coefficient
+            );
+          } else {
+            globalThis.coefficient = 1;
+            console.log(
+              'globalThis.screenWith :coefficient-- ' + globalThis.coefficient
+            );
+          }
+          console.log('globalThis.screenWith : ' + globalThis.screenWith);
+        },
+        (err) => {
           console.log(
-            'globalThis.screenWith :coefficient-- ' + globalThis.coefficient
-          );
-        } else if (
-          globalThis.screenWith > 800 &&
-          globalThis.screenWith < 1400
-        ) {
-          globalThis.coefficient = 1.8;
-          console.log(
-            'globalThis.screenWith :coefficient-- ' + globalThis.coefficient
-          );
-        } else {
-          globalThis.coefficient = 1;
-          console.log(
-            'globalThis.screenWith :coefficient-- ' + globalThis.coefficient
+            'display.getDefaultDisplay failed, error : ' + JSON.stringify(err)
           );
         }
-        console.log('globalThis.screenWith : ' + globalThis.screenWith);
-      },
-      (err) => {
-        console.log(
-          'display.getDefaultDisplay failed, error : ' + JSON.stringify(err)
-        );
-      }
-    );
+      );
+    }, 100);
   }
   onWindowStageDestroy(): void {}
   onForeground(): void {
+    setTimeout(() => {
+      try {
+        if (MainWorker && globalThis.MainWorker) {
+          MainWorker.postMessage({ testConnection: true });
+        } else {
+          console.log('cm-MainAbility-onForeground Worker not initialized');
+        }
+      } catch (e) {
+        console.log('cm-MainAbility-onForeground error: ' + JSON.stringify(e));
+      }
+    }, 50);
     console.log('cm-MainAbility-onForeground');
-    initDb();
-    FloatWindowFun.initAllFun();
-    //NetWork.getInstance().init()
-    MainWorker.postMessage({ testConnection: true });
   }
   onBackground(): void {}
 }

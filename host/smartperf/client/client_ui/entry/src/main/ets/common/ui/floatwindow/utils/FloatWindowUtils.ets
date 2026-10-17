@@ -25,153 +25,87 @@ export let windowHeight: number = 1600;
 
 export function initFloatWindow() {
   console.log('cm-floatWindowUtils-initFloatWindow1');
-  createFloatWindow('sp_currentNow');
-  createFloatWindow('sp_shellBackTemp');
-  createFloatWindow('sp_ddrFrequency');
-  createFloatWindow('sp_gpuFrequency');
-  createFloatWindow('sp_cpu0Frequency');
-  createFloatWindow('sp_cpu1Frequency');
-  createFloatWindow('sp_cpu2Frequency');
-  createFloatWindow('sp_RAM');
-  createFloatWindow('sp_FPS');
+
+  const windows = [
+    'sp_currentNow',
+    'sp_shellBackTemp',
+    'sp_ddrFrequency',
+    'sp_gpuFrequency',
+    'sp_cpu0Frequency',
+    'sp_cpu1Frequency',
+    'sp_cpu2Frequency',
+    'sp_RAM',
+    'sp_FPS'
+  ];
+
+  for (let i = 0; i < windows.length; i++) {
+    setTimeout(() => {
+      createFloatWindow(windows[i]);
+    }, i * 50);
+  }
+
   console.log('cm-floatWindowUtils-initFloatWindow2');
 }
-export function createFloatWindow(floatName: string) {
+export async function createFloatWindow(floatName: string) {
   //5.5SP2  2106 改成 8
   console.log('cm-floatWindowUtils-createFloatWindow1');
-  wm.create(globalThis.abilityContext, floatName, wm.WindowType.TYPE_FLOAT).then((floatWin) => {
+  try {
+    const floatWin = await wm.create(globalThis.abilityContext, floatName, wm.WindowType.TYPE_FLOAT);
     console.log('cm-floatWindowUtils-createFloatWindow2');
-    floatWin.moveTo(lineChartWindowOffsetX, lineChartWindowOffsetY).then(() => {
-      floatWin.resetSize(360 * globalThis.coefficient, 270 * globalThis.coefficient).then(() => {
-        floatWin.getProperties().then((property) => {
-          property.isTransparent = false;
-        });
-        console.log('cm-floatWindowUtils-createFloatWindow3');
-        if (floatName == 'sp_currentNow') {
-          floatWin.loadContent('pages/CurrentNowLineChartPage').then(() => {
-            floatWin.setBackgroundColor('#B3000000').then(() => {
-              //透明
-              console.log('xhq win setTransparent end.');
-              floatWin.setBackgroundColor('#59020000').then(() => {
-                //背景颜色
-              });
-            });
-            floatWin.show().then(() => {
-              floatWin.hide();
-            });
-          });
-        } else if (floatName == 'sp_shellBackTemp') {
-          floatWin.loadContent('pages/ShellBackTempLineChartPage').then(() => {
-            floatWin.setBackgroundColor('#B3000000').then(() => {
-              //透明
-              console.log('xhq win setTransparent end.');
-              floatWin.setBackgroundColor('#59020000').then(() => {
-                //背景颜色
-              });
-            });
-            floatWin.show().then(() => {
-              floatWin.hide();
-            });
-          });
-        } else if (floatName == 'sp_ddrFrequency') {
-          floatWin.loadContent('pages/DDRLineChartPage').then(() => {
-            floatWin.setBackgroundColor('#B3000000').then(() => {
-              //透明
-              console.log('xhq win setTransparent end.');
-              floatWin.setBackgroundColor('#59020000').then(() => {
-                //背景颜色
-              });
-            });
-            floatWin.show().then(() => {
-              floatWin.hide();
-            });
-          });
-        } else if (floatName == 'sp_gpuFrequency') {
-          console.log('cm-floatWindowUtils-sp_gpuFrequency1');
-          floatWin.loadContent('pages/GPULineChartPage').then(() => {
-            console.log('cm-floatWindowUtils-sp_gpuFrequency2');
-            floatWin.setBackgroundColor('#B3000000').then(() => {
-              //透明
-              console.log('xhq win setTransparent end.');
-              floatWin.setBackgroundColor('#59020000').then(() => {
-                //背景颜色
-              });
-            });
-            floatWin.show().then(() => {
-              console.log('cm-floatWindowUtils-sp_gpuFrequency-hide1');
-              floatWin.hide();
-              console.log('cm-floatWindowUtils-sp_gpuFrequency-hide2');
-            });
-          });
-        } else if (floatName == 'sp_cpu0Frequency') {
-          floatWin.loadContent('pages/CPU0LineChartPage').then(() => {
-            floatWin.setBackgroundColor('#B3000000').then(() => {
-              //透明
-              console.log('xhq win setTransparent end.');
-              floatWin.setBackgroundColor('#59020000').then(() => {
-                //背景颜色
-              });
-            });
-            floatWin.show().then(() => {
-              floatWin.hide();
-            });
-          });
-        } else if (floatName == 'sp_cpu1Frequency') {
-          floatWin.loadContent('pages/CPU1LineChartPage').then(() => {
-            floatWin.setBackgroundColor('#B3000000').then(() => {
-              //透明
-              console.log('xhq win setTransparent end.');
-              floatWin.setBackgroundColor('#59020000').then(() => {
-                //背景颜色
-              });
-            });
-            floatWin.show().then(() => {
-              floatWin.hide();
-            });
-          });
-        } else if (floatName == 'sp_cpu2Frequency') {
-          floatWin.loadContent('pages/CPU2LineChartPage').then(() => {
-            floatWin.setBackgroundColor('#B3000000').then(() => {
-              //透明
-              console.log('xhq win setTransparent end.');
-              floatWin.setBackgroundColor('#59020000').then(() => {
-                //背景颜色
-              });
-            });
-            floatWin.show().then(() => {
-              floatWin.hide();
-            });
-          });
-        } else if (floatName == 'sp_RAM') {
-          floatWin.loadContent('pages/RAMLineChartPage').then(() => {
-            floatWin.setBackgroundColor('#B3000000').then(() => {
-              //透明
-              console.log('xhq win setTransparent end.');
-              floatWin.setBackgroundColor('#59020000').then(() => {
-                //背景颜色
-              });
-            });
-            floatWin.show().then(() => {
-              floatWin.hide();
-            });
-          });
-        } else if (floatName == 'sp_FPS') {
-          floatWin.loadContent('pages/FpsLineChartPage').then(() => {
-            floatWin.setBackgroundColor('#B3000000').then(() => {
-              //透明
-              console.log('xhq win setTransparent end.');
-              floatWin.setBackgroundColor('#59020000').then(() => {
-                //背景颜色
-              });
-            });
-            floatWin.show().then(() => {
-              floatWin.hide();
-            });
-          });
-        }
-      });
-    });
-  });
+
+    await floatWin.moveTo(lineChartWindowOffsetX, lineChartWindowOffsetY);
+    await floatWin.resetSize(360 * globalThis.coefficient, 270 * globalThis.coefficient);
+
+    try {
+      const property = await floatWin.getProperties();
+      property.isTransparent = false;
+    } catch (e) {
+      console.log('cm-floatWindowUtils-getProperties error: ' + JSON.stringify(e));
+    }
+
+    console.log('cm-floatWindowUtils-createFloatWindow3');
+
+    let contentPage = '';
+    if (floatName == 'sp_currentNow') {
+      contentPage = 'pages/CurrentNowLineChartPage';
+    } else if (floatName == 'sp_shellBackTemp') {
+      contentPage = 'pages/ShellBackTempLineChartPage';
+    } else if (floatName == 'sp_ddrFrequency') {
+      contentPage = 'pages/DDRLineChartPage';
+    } else if (floatName == 'sp_gpuFrequency') {
+      console.log('cm-floatWindowUtils-sp_gpuFrequency1');
+      contentPage = 'pages/GPULineChartPage';
+    } else if (floatName == 'sp_cpu0Frequency') {
+      contentPage = 'pages/CPU0LineChartPage';
+    } else if (floatName == 'sp_cpu1Frequency') {
+      contentPage = 'pages/CPU1LineChartPage';
+    } else if (floatName == 'sp_cpu2Frequency') {
+      contentPage = 'pages/CPU2LineChartPage';
+    } else if (floatName == 'sp_RAM') {
+      contentPage = 'pages/RAMLineChartPage';
+    } else if (floatName == 'sp_FPS') {
+      contentPage = 'pages/FpsLineChartPage';
+    }
+
+    if (contentPage) {
+      await floatWin.loadContent(contentPage);
+      try {
+        await floatWin.setBackgroundColor('#B3000000');
+        console.log('xhq win setTransparent end.');
+        await floatWin.setBackgroundColor('#59020000');
+      } catch (e) {
+        console.log('cm-floatWindowUtils-setBackgroundColor error: ' + JSON.stringify(e));
+      }
+      await floatWin.show();
+      await floatWin.hide();
+
+      if (floatName == 'sp_gpuFrequency') {
+        console.log('cm-floatWindowUtils-sp_gpuFrequency-hide2');
+      }
+    }
+  } catch (e) {
+    console.log('cm-floatWindowUtils-createFloatWindow error: ' + JSON.stringify(e));
+  }
 }
 export function destoryAllFloatWindow() {
   console.log('cm-floatWindowUtils-destoryAllFloatWindow');

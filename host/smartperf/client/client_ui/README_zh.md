@@ -2,12 +2,12 @@
 ## 简介
 - OpenHarmony性能测试工具 SmartPerf UI版本，可采集CPU、GPU、Temperature、Power、应用RAM、FPS等指标，可使用悬浮窗口控制并实时展示测试数据以及支持本地测试报告图表展示功能。
 
-- 带屏幕的设备且性能较好的设备推荐使用UI版本，性能较差或无屏幕设备请使用[命令行版本](https://gitee.com/openharmony/developtools_profiler/blob/master/host/smartperf/client/client_command/README_zh.md)。
+- 带屏幕的设备且性能较好的设备推荐使用UI版本，性能较差或无屏幕设备请使用[命令行版本](../device_command/README_zh.md)。
 
 ## 代码目录
 
 ```
-/developtools/profiler/host/smartperf/client/client_ui
+/developtools/smartperf_host/smartperf_device/device_ui
 ├── AppScope                                    # SmartPerf的包名、应用名称等配置目录
 ├── entry                                       # SmartPerf主要代码文件
 │   └── src

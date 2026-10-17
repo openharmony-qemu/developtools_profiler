@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import("//build/ohos.gni")
-import("../../../../build/config.gni")
+import("../build/config.gni")
 
 ohos_hap("SmartPerf") {
   hap_profile = "entry/src/main/module.json"
@@ -20,8 +20,8 @@ ohos_hap("SmartPerf") {
     ":smartperf_resources",
   ]
   certificate_profile = "signature/openharmony_smartperf.p7b"
-  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
-  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_SMARTPERF_DEVICE_SUBSYS_NAME}"
+  part_name = "${OHOS_SMARTPERF_DEVICE_PART_NAME}"
   module_install_dir = "app/com.ohos.gameperceptio"
   js_build_mode = "debug"
 }

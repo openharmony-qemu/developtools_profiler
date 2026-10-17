@@ -36,6 +36,8 @@ export default struct PathView {
   }
   public test() : boolean {
     console.log('pathview:' + this.model.width)
+    console.log('paintArry:' + JSON.stringify(this.model.paintArry))
+    console.log('heightlightPaint:' + JSON.stringify(this.model.heightlightPaint))
     return true
   }
 
@@ -111,10 +113,12 @@ export default struct PathView {
     .clip(new Path().commands(this.model.clipPath))
     .position({ x: this.model.positionX, y: this.model.minOffset })
     .onClick((event: ClickEvent)=>{
+      console.log('pathview.ClickEvent')
       this.model.onClick(event);
     })
     .onTouch((event: TouchEvent) => {
       this.model.onTouch(event)
+      console.log('pathview.TouchEvent')
     })
   }
 

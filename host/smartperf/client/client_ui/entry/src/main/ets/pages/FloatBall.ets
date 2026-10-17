@@ -18,11 +18,23 @@ import { ProfilerTask } from '../common/profiler/ProfilerTask';
 import { destoryAllFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils';
 import WorkerHandler from '../common/profiler/WorkerHandler';
 import worker from '@ohos.worker';
-let mainWorker = globalThis.MainWorker
 import { CollectorType } from '../common/profiler/base/ProfilerConstant'
 
-mainWorker.onmessage = function (result) {
-  WorkerHandler.socketHandler(result)
+function getMainWorker() {
+  return globalThis.MainWorker;
+}
+
+function initWorkerHandler() {
+  const mainWorker = getMainWorker();
+  if (mainWorker) {
+    mainWorker.onmessage = function (result) {
+      try {
+        WorkerHandler.socketHandler(result)
+      } catch (e) {
+        console.log('FloatBall-WorkerHandler error: ' + JSON.stringify(e));
+      }
+    }
+  }
 }
 @Entry
 @Component
@@ -41,40 +53,92 @@ struct FloatBall {
   singleClickId = 0 // 单击事件ID
 
   aboutToAppear() {
-    ProfilerTask.getInstance().initModule()
-    ProfilerTask.getInstance().taskInit()
-    console.log('cm-floatBall-CreateTitleWindow1')
-    globalThis.CreateTitleWindow()
-    console.log('cm-floatBall-CreateTitleWindow2')
-    globalThis.task_status = TaskStatus.task_init
-    console.log('cm-floatBall-CreateTitleWindow3')
+    console.log('cm-floatBall-aboutToAppear start')
+    initWorkerHandler()
+
+    setTimeout(() => {
+      try {
+        ProfilerTask.getInstance().initModule()
+        console.log('cm-floatBall-initModule completed')
+      } catch (e) {
+        console.log('cm-floatBall-initModule error: ' + JSON.stringify(e))
+      }
+    }, 50)
+
+    setTimeout(() => {
+      try {
+        ProfilerTask.getInstance().taskInit()
+        console.log('cm-floatBall-taskInit completed')
+      } catch (e) {
+        console.log('cm-floatBall-taskInit error: ' + JSON.stringify(e))
+      }
+    }, 100)
+
+    setTimeout(() => {
+      try {
+        console.log('cm-floatBall-CreateTitleWindow1')
+        globalThis.CreateTitleWindow()
+        console.log('cm-floatBall-CreateTitleWindow2')
+        globalThis.task_status = TaskStatus.task_init
+        console.log('cm-floatBall-CreateTitleWindow3')
+      } catch (e) {
+        console.log('cm-floatBall-CreateTitleWindow error: ' + JSON.stringify(e))
+      }
+    }, 150)
+
+    console.log('cm-floatBall-aboutToAppear end')
   }
 
   initAllCollect() {
     console.log('collectIntervalCollect initAllCollect....');
-    if (globalThis.collectConfigs != -1 && globalThis.collectPkg != -1) {
-      if (globalThis.collectConfigs.screenCapture) {
-        mainWorker.postMessage({'screenCapture':true})
-      }
-      if (globalThis.collectConfigs.trace) {
-        mainWorker.postMessage({'catchTraceStart':true})
-      }
-      globalThis.collectIntervalCollect = setInterval(() => {
-        if (this.playerState == TaskStatus.task_running) {
-          ProfilerTask.getInstance().taskStart()
-          this.timerNum++
+    try {
+      if (globalThis.collectConfigs != -1 && globalThis.collectPkg != -1) {
+        const mainWorker = getMainWorker();
+        if (globalThis.collectConfigs.screenCapture) {
+          setTimeout(() => {
+            try {
+              if (mainWorker) {
+                mainWorker.postMessage({'screenCapture':true})
+              }
+            } catch (e) {
+              console.log('initAllCollect screenCapture error: ' + JSON.stringify(e));
+            }
+          }, 0);
         }
-      }, 1000)
+        if (globalThis.collectConfigs.trace) {
+          setTimeout(() => {
+            try {
+              if (mainWorker) {
+                mainWorker.postMessage({'catchTraceStart':true})
+              }
+            } catch (e) {
+              console.log('initAllCollect catchTraceStart error: ' + JSON.stringify(e));
+            }
+          }, 50);
+        }
+        globalThis.collectIntervalCollect = setInterval(() => {
+          if (this.playerState == TaskStatus.task_running) {
+            ProfilerTask.getInstance().taskStart()
+            this.timerNum++
+          }
+        }, 1000)
 
-      globalThis.collectPowerCollect = setInterval(() => {
-        if (this.playerState == TaskStatus.task_running) {
-          ProfilerTask.getInstance().taskSingleItemStart(CollectorType.TYPE_POWER)
-        }
-      }, 250)
+        globalThis.collectPowerCollect = setInterval(() => {
+          if (this.playerState == TaskStatus.task_running) {
+            try {
+              ProfilerTask.getInstance().taskSingleItemStart(CollectorType.TYPE_POWER)
+            } catch (e) {
+              console.log('initAllCollect power error: ' + JSON.stringify(e));
+            }
+          }
+        }, 250)
+      }
+      globalThis.task_status = TaskStatus.task_running
+      this.playerState = TaskStatus.task_running
+      console.log('collectIntervalCollect initAllCollect finished....');
+    } catch (e) {
+      console.log('initAllCollect error: ' + JSON.stringify(e));
     }
-    globalThis.task_status = TaskStatus.task_running
-    this.playerState = TaskStatus.task_running
-    console.log('collectIntervalCollect initAllCollect finished....');
   }
 
   singleEvent() {
@@ -111,7 +175,14 @@ struct FloatBall {
     }, 5000)
   }
   async dubai_data_to_disk() {
-    mainWorker.postMessage({'setDuBaiDb': true})
+    const mainWorker = getMainWorker();
+    if (mainWorker) {
+      try {
+        mainWorker.postMessage({'setDuBaiDb': true})
+      } catch (e) {
+        console.log('dubai_data_to_disk error: ' + JSON.stringify(e));
+      }
+    }
   }
   destroyAllWindow() {
     console.log('cm-floatBall-destroyAllWindow')
@@ -122,8 +193,15 @@ struct FloatBall {
 
   clearAllInterVal() {
     console.log('cm-floatBall-clearAllInterVal')
+    const mainWorker = getMainWorker();
     if (globalThis.collectConfigs.trace) {
-      mainWorker.postMessage({'catchTraceEnd':true})
+      try {
+        if (mainWorker) {
+          mainWorker.postMessage({'catchTraceEnd':true})
+        }
+      } catch (e) {
+        console.log('clearAllInterVal catchTraceEnd error: ' + JSON.stringify(e));
+      }
     }
     clearInterval(globalThis.collectIntervalCollect)
     clearInterval(globalThis.collectPowerCollect)
