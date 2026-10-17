@@ -101,40 +101,26 @@ export class ProfilerTask {
   }
 
   taskStart() {
-    try {
-      var gpDataArr: GPData[] = [];
-      this.collectItems.forEach((moduleName) => {
-        try {
-          let typeCollect = ProfilerFactory.getProfilerByConfig(moduleName.toString());
-          if (typeCollect != null) {
-            let gpData: GPData = typeCollect.readData();
-            if (typeCollect instanceof CPU) {
-              gpDataArr.push(typeCollect.readCPULoad());
-            }
-            gpDataArr.push(gpData);
-          }
-        } catch (e) {
-          SPLogger.ERROR(ProfilerTask.name, 'taskStart forEach error: ' + JSON.stringify(e));
+    var gpDataArr: GPData[] = [];
+    this.collectItems.forEach((moduleName) => {
+      let typeCollect = ProfilerFactory.getProfilerByConfig(moduleName.toString());
+      if (typeCollect != null) {
+        let gpData: GPData = typeCollect.readData();
+        if (typeCollect instanceof CPU) {
+          gpDataArr.push(typeCollect.readCPULoad());
         }
-      });
-
-      //防止cpuLoad -1
-      if (globalThis.collectIntervalNum > 0) {
-        let tTndex = database.gpArray2Index(gpDataArr);
-        globalThis.tTndexs.push(tTndex);
-        globalThis.tTndex = tTndex;
-        setTimeout(() => {
-          CommonEvent.publish('event', { code: 0, data: JSON.stringify(tTndex) }, (err) => {
-            if (err) {
-              SPLogger.ERROR(ProfilerTask.name, 'CommonEvent.publish error: ' + JSON.stringify(err));
-            }
-          });
-        }, 0);
+        gpDataArr.push(gpData);
       }
-      globalThis.collectIntervalNum++;
-    } catch (e) {
-      SPLogger.ERROR(ProfilerTask.name, 'taskStart error: ' + JSON.stringify(e));
+    });
+
+    //防止cpuLoad -1
+    if (globalThis.collectIntervalNum > 0) {
+      let tTndex = database.gpArray2Index(gpDataArr);
+      globalThis.tTndexs.push(tTndex);
+      globalThis.tTndex = tTndex;
+      CommonEvent.publish('event', { code: 0, data: JSON.stringify(tTndex) }, (err) => {});
     }
+    globalThis.collectIntervalNum++;
   }
 
   taskSingleItemStart(collectorType: CollectorType) {

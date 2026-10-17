@@ -19,9 +19,6 @@ import { OtherSupport, TestMode } from '../../entity/LocalConfigEntity';
 import SPLogger from '../../utils/SPLogger'
 import batteryinfo from '@ohos.batteryInfo';
 import promptAction from '@ohos.promptAction';
-import BundleManager from '../../utils/BundleMangerUtils';
-import { initDb } from '../../database/LocalRepository';
-import { FloatWindowFun } from '../floatwindow/FloatWindowFun';
 
 const TAG = 'Home'
 /*
@@ -40,7 +37,7 @@ export struct Home {
   @State state: string = '电池状态'
 
   aboutToAppear() {
-    console.log(TAG, 'aboutToAppear');
+
     globalThis.collectIntervalPower = setInterval(() => {
       let nowCurrent = batteryinfo.nowCurrent
       let remainingEnergy = batteryinfo.remainingEnergy
@@ -51,19 +48,14 @@ export struct Home {
       nowCurrent.toString() + 'mA     \n瞬时电压：' + voltage.toString() + 'mV       电池温度：' + (temperature / 10).toFixed(1).toString() + '℃'
     }, 1000)
 
-    BundleManager.getAppList().then((appList) => {
-      globalThis.appList = appList;
-    });
 
-    initDb();
-    FloatWindowFun.initAllFun();
   }
 
   build() {
     Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Start, justifyContent: FlexAlign.Start }) {
       Column() {
         Column() {
-          TopComponent({ title: 'HiSmartPerf ' })
+          TopComponent({ title: 'SmartPerf ' })
 
           Text('性能/功耗测试')
             .fontSize('18fp')

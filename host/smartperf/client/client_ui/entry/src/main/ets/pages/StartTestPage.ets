@@ -21,6 +21,7 @@ import { ProfilerTask } from '../common/profiler/ProfilerTask';
 import { CollectorType } from '../common/profiler/base/ProfilerConstant';
 import promptAction from '@ohos.promptAction';
 
+
 const TAG = 'StartTestPage'
 /*
  * 测试配置页
@@ -68,15 +69,17 @@ struct StartTestPage {
      ])
 
     var iterator = supportMap.keys()
-    for (var i = 0; i < supportMap.size; i++) {
-      let key = iterator.next().value
-      let val = supportMap.get(key)?.valueOf()
-      if (val !== null && val !== undefined) {
-        this.collectConfigs.push(
-          new CollectItem(key, val, val)
-        )
+    for (let [key, valObj] of supportMap) {
+      if (key == null || valObj == null) {
+        continue;
       }
+
+      let val = valObj.valueOf();
+      this.collectConfigs.push(
+        new CollectItem(key, val, val)
+      );
     }
+
   }
 
   build() {
