@@ -70,6 +70,10 @@ function safeSendUdp(data, delay, logMsg, errMsg, onSuccess) {
   }, delay);
 }
 
+function incrementFlagPackageNum() {
+  flagPackageNum++;
+}
+
 parentPort.onmessage = function (e) {
   try {
     let socketCollectItems = e.data;
@@ -104,7 +108,7 @@ parentPort.onmessage = function (e) {
           0,
           '',
           'Worker socket send pkg error: ',
-          () => { flagPackageNum++; }
+          incrementFlagPackageNum
         );
       }
     }
