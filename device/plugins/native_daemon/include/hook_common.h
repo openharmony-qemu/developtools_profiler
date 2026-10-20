@@ -372,6 +372,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         arkuiMemTraceEnable = false;
         discardDestroyedTraces = false;
         mmapSpecificAddrOnly = false;
+        anonMmapOnly = false;
     }
 
     std::string ToString()
@@ -391,6 +392,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", arkuiMemTraceEnable: " << arkuiMemTraceEnable
             << ", discardDestroyedTraces: " << discardDestroyedTraces
             << ", mmapSpecificAddrOnly: " << mmapSpecificAddrOnly
+            << ", anonMmapOnly: " << anonMmapOnly
             << ", jsStackReport: "
             << arktsConfig.jsStackReport << ", maxJsStackDepth: "
             << std::to_string(arktsConfig.maxJsStackDepth) << ", filterNapiName: "
@@ -458,6 +460,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     bool arkuiMemTraceEnable = false;
     bool discardDestroyedTraces = false;
     bool mmapSpecificAddrOnly = false;
+    bool anonMmapOnly = false;
 };
 
 struct alignas(8) ClientConfigIpc { // 8 is 8 bit
@@ -507,6 +510,7 @@ struct alignas(8) ClientConfigIpc { // 8 is 8 bit
     bool arkuiMemTraceEnable = false;
     bool discardDestroyedTraces = false;
     bool mmapSpecificAddrOnly = false;
+    bool anonMmapOnly = false;
 };
 
 inline bool CopyClientConfigString(char* dest, size_t destSize, const std::string& src)
@@ -572,6 +576,7 @@ inline void CopyClientConfigExtToIpc(const ClientConfig& config, ClientConfigIpc
     ipc.arkuiMemTraceEnable = config.arkuiMemTraceEnable;
     ipc.discardDestroyedTraces = config.discardDestroyedTraces;
     ipc.mmapSpecificAddrOnly = config.mmapSpecificAddrOnly;
+    ipc.anonMmapOnly = config.anonMmapOnly;
 }
 
 inline void CopyClientConfigTailToIpc(const ClientConfig& config, ClientConfigIpc& ipc)
@@ -659,6 +664,7 @@ inline void CopyClientConfigExtFromIpc(const ClientConfigIpc& ipc, ClientConfig&
     config.arkuiMemTraceEnable = ipc.arkuiMemTraceEnable;
     config.discardDestroyedTraces = ipc.discardDestroyedTraces;
     config.mmapSpecificAddrOnly = ipc.mmapSpecificAddrOnly;
+    config.anonMmapOnly = ipc.anonMmapOnly;
 }
 
 inline void CopyClientConfigTailFromIpc(const ClientConfigIpc& ipc, ClientConfig& config)

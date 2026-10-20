@@ -46,6 +46,7 @@ public:
     uint8_t maxStackDepth_{DEFAULT_STACK_DAPTH};
     bool mallocDisable_{false};
     bool mmapDisable_{false};
+    bool mmapAnonymousOnly_{false};
     bool freeStackData_{false};
     bool munmapStackData_{false};
     uint32_t mallocFreeMatchingInterval_{0};

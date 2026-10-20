@@ -550,8 +550,11 @@ int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint3
     config->statisticsInterval_ = FIVE_MINUTES;
     config->jsStackReport_ = true;
     config->mallocDisable_ = true;
-    config->mmapDisable_ = true;
-    config->memtraceEnable_ = true;
+    config->mmapAnonymousOnly_ = saConfig.mmapAnonymousOnly;
+    if (!saConfig.mmapAnonymousOnly) {
+        config->mmapDisable_ = true;
+        config->memtraceEnable_ = true;
+    }
     config->asyncStackEnable_ = saConfig.asyncStackEnable;
     config->asyncFlag_ = saConfig.asyncFlag;
     config->traceMask_ = saConfig.mask;
