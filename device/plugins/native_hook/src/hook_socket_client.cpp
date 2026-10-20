@@ -801,9 +801,11 @@ bool HookSocketClient::SendEndMsg()
         GetAndSendMemLeakInfo();
     }
     int sharedMemCount = *sharedMemCount_;
-    PROFILER_LOG_INFO(LOG_CORE, "SendEndMsg: send END_MSG, pid %d, sharedMemCount %d, fileCacheMode %d",
-        pid_, sharedMemCount, config_->enableFileCacheMode);
-    for (int smbIndex = 0; smbIndex < sharedMemCount; ++smbIndex) {
+    int listSize = static_cast<int>(stackWriterList_.size());
+    PROFILER_LOG_INFO(LOG_CORE, "SendEndMsg: send END_MSG, pid %d, sharedMemCount %d, fileCacheMode %d, listSize %d",
+        pid_, sharedMemCount, config_->enableFileCacheMode, listSize);
+    int sendCount = (sharedMemCount < listSize) ? sharedMemCount : listSize; // 防止遍历越界
+    for (int smbIndex = 0; smbIndex < sendCount; ++smbIndex) {
         auto& writer = stackWriterList_[smbIndex];
         if (writer) {
             writer->EnterStopFileCacheMode();
