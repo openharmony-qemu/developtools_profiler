@@ -22,6 +22,7 @@
 namespace {
 using namespace OHOS::Developtools::Profiler;
 const std::string GPU_PATH = "/sys/class/devfreq/gpufreq/gpu_scene_aware/utilisation";
+const std::string GPU_PATH_HVGR = "/sys/devices/platform/dc000000.hvgr/gpu_utilisation";
 constexpr uint32_t RET_COUNT = 50;
 constexpr uint32_t SAMPLE_INTERVAL = 10;
 constexpr uint32_t SAMPLE_INTERVAL_COMPATIBLE = 500;
@@ -36,12 +37,11 @@ int GpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
         pid_ = protoConfig_.pid();
     }
 
-    file_.open(GPU_PATH);
     auto args = GetCmdArgs(protoConfig_);
-    if (!file_.is_open()) {
+    if (!OpenGpuFile()) {
         int ret = COMMON::PluginWriteToHisysevent("gpu_plugin", "sh", args, RET_FAIL, "failed");
-        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), hisysevent report gpu_plugin ret: %d",
-            __func__, GPU_PATH.c_str(), ret);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s) and(%s), hisysevent report gpu_plugin ret: %d",
+            __func__, GPU_PATH.c_str(), GPU_PATH_HVGR.c_str(), ret);
         return RET_FAIL;
     }
     CHECK_NOTNULL(resultWriter_, -1, "GPUDataPlugin: Writer is no set!");
@@ -150,6 +150,39 @@ int GpuDataPlugin::Stop()
     return 0;
 }
 
+bool GpuDataPlugin::OpenGpuFile()
+{
+    file_.open(GPU_PATH);
+    if (file_.is_open()) {
+        useHvgrNode_ = false;
+        PROFILER_LOG_INFO(LOG_CORE, "%s:open(%s) success!", __func__, GPU_PATH.c_str());
+        return true;
+    }
+    file_.clear();
+    file_.open(GPU_PATH_HVGR);
+    if (file_.is_open()) {
+        useHvgrNode_ = true;
+        PROFILER_LOG_INFO(LOG_CORE, "%s:open(%s) success!", __func__, GPU_PATH_HVGR.c_str());
+        return true;
+    }
+    return false;
+}
+
+std::string GpuDataPlugin::ExtractValue(const std::string& line)
+{
+    auto pos = line.find(':');
+    if (pos == std::string::npos) {
+        return "";
+    }
+    std::string value = line.substr(pos + 1);
+    auto begin = value.find_first_not_of(" \t");
+    if (begin == std::string::npos) {
+        return "";
+    }
+    auto end = value.find_last_not_of(" \t\r\n");
+    return value.substr(begin, end - begin + 1);
+}
+
 int GpuDataPlugin::ReadFile()
 {
     file_.clear();
@@ -158,6 +191,9 @@ int GpuDataPlugin::ReadFile()
     std::getline(file_, line);
     if (line == "") {
         return RET_FAIL;
+    }
+    if (useHvgrNode_) {
+        line = ExtractValue(line);
     }
     return COMMON::StoiCheck(line) ? stoi(line) : 0;
 }

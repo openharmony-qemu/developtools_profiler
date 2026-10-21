@@ -52,6 +52,8 @@ public:
 
 private:
     int ReadFile();
+    bool OpenGpuFile();
+    static std::string ExtractValue(const std::string& line);
     std::string GetCmdArgs(const GpuConfig& traceConfig);
     template <typename T>
     void WriteGpuDataInfoExt(T& gpuData, std::vector<std::pair<uint64_t, int>>& vectGpuData);
@@ -67,6 +69,7 @@ private:
     std::thread writeThread_;
     std::atomic<bool> running_ = true;
     std::vector<char> buffer_;
+    bool useHvgrNode_ = false;
 };
 
 #endif
