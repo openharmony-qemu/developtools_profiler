@@ -1229,8 +1229,13 @@ int32_t NativeMemoryProfilerSaService::PidAndNameConflict(std::shared_ptr<Native
 // exceeds the per-app limit defined by taskMaxNum_.
 // Also checks the global task limit across all UIDs (globalTaskMaxNum_).
 // Returns RES_PROF_PROCESS_OVERLIMIT if either limit is exceeded.
+// If extendProcesses_ is true, skips task limit checks.
 int32_t NativeMemoryProfilerSaService::CheckTaskLimit(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
+    if (config->extendProcesses_) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "extendProcesses skip task limit, pid: %d", config->pid_);
+        return RET_OK;
+    }
     if (COMMON::CheckApplicationPermission(config->pid_, config->processName_)) {
         PROFILER_LOG_INFO(LOG_CORE, "debug app skip task limit, pid: %d", config->pid_);
         return RET_OK;
@@ -1315,13 +1320,9 @@ int32_t NativeMemoryProfilerSaService::CheckFilePath(uint32_t fd, std::shared_pt
 }
 
 // Entry point for config validation. Orchestrates all checks in order.
-// Returns early on the first failure. If extendProcesses_ is true, skips all checks.
+// Returns early on the first failure.
 int32_t NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd)
 {
-    if (config->extendProcesses_) {
-        return RET_OK;
-    }
-
     int32_t ret = CheckTaskLimit(config);
     if (ret != RET_OK) {
         return ret;
