@@ -2529,8 +2529,10 @@ HWTEST_F(StackPreprocessTest, ResolveDmaSizeUpdatesSizeTest, TestSize.Level0)
 
     StackPreprocess::DmaFdSizeMap dmaFdSizeMap;
     dmaFdSizeMap[testFd] = testDmaSize;
-    uint32_t dmaFdSizePid = testPid;
-    bool result = preprocess.ResolveDmaSize(hookRecord, dmaFdSizeMap, dmaFdSizePid);
+    preprocess.dmaFdSizeMap_ = dmaFdSizeMap;
+    preprocess.dmaFdSizePid_ = testPid;
+    preprocess.dmaFdSizeCacheDirty_.store(false);
+    bool result = preprocess.ResolveDmaSize(hookRecord);
 
     EXPECT_TRUE(result);
     EXPECT_EQ(rawStack->stackContext->mallocSize, testDmaSize);
@@ -2558,8 +2560,10 @@ HWTEST_F(StackPreprocessTest, ResolveDmaSizeRejectsFilteredSizeTest, TestSize.Le
 
     StackPreprocess::DmaFdSizeMap dmaFdSizeMap;
     dmaFdSizeMap[testFd] = 512;
-    uint32_t dmaFdSizePid = testPid;
-    bool result = preprocess.ResolveDmaSize(hookRecord, dmaFdSizeMap, dmaFdSizePid);
+    preprocess.dmaFdSizeMap_ = dmaFdSizeMap;
+    preprocess.dmaFdSizePid_ = testPid;
+    preprocess.dmaFdSizeCacheDirty_.store(false);
+    bool result = preprocess.ResolveDmaSize(hookRecord);
 
     EXPECT_FALSE(result);
     EXPECT_EQ(rawStack->stackContext->mallocSize, 1U);
