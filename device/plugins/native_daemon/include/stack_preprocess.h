@@ -207,8 +207,8 @@ private:
     void IntervalFlushRecordStatistics(const struct timespec& eventTime);
     void IntervalFlushApplyAndReleaseMatchData();
     bool HandleNoStackEvent(HookRecordPtr& hookRecord);
-    bool SetFreeStatisticsData(uint64_t addr);
-    bool SetFreeStatisticsDataLocked(uint64_t addr);
+    bool SetFreeStatisticsData(uint64_t addr, uint16_t releaseType = 0);
+    bool SetFreeStatisticsDataLocked(uint64_t addr, uint16_t releaseType = 0);
     template <typename T>
     void RemoveFreeAddrFromStatisticsLocked(std::unordered_map<uint32_t, T>& statisticsMap,
         uint64_t addr, uint32_t stackId);
@@ -379,7 +379,7 @@ private:
     uint32_t dataFlushSize_ = 0;
     std::shared_ptr<HookRecordFactory> factory_{nullptr};
     std::set<uint64_t> addrSet_;
-    std::unordered_map<uint64_t, AllocAddrInfo> allocAddrMap_;
+    std::unordered_multimap<uint64_t, AllocAddrInfo> allocAddrMap_;
     std::function<void(uint32_t)> serverCommandCallback_;
     std::unordered_set<uint64_t> snapshotAddrs_;
     std::atomic_bool waitingFinalSnapshot_{false};

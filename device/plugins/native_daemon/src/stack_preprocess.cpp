@@ -125,6 +125,20 @@ static TagMapping g_tagMappings[] = {
     {TAG_RES_VMA_CHROMIUM, RecordStatisticsEvent::VMA_CHROMIUM, false},
 };
 
+inline bool IsMatchingAllocType(uint16_t allocType, uint16_t releaseType)
+{
+    switch (releaseType) {
+        case FREE_MSG:
+            return allocType == MALLOC_MSG;
+        case MUNMAP_MSG:
+            return allocType == MMAP_MSG || allocType == MMAP_FILE_PAGE_MSG;
+        case MEMORY_UNUSING_MSG:
+            return allocType == MEMORY_USING_MSG;
+        default:
+            return true;
+    }
+}
+
 bool NeedBuildIdForPath(const CallFrame& callFrame)
 {
     if (callFrame.isJsFrame_) {
@@ -194,14 +208,15 @@ void StackPreprocess::UpdateMoveAddrRecord(
         return;
     }
     auto& record = recordIter->second;
-    record.applySize += (size - allocAddrMap_[addr].mallocSize);
+    record.applySize += (size - addrIter->second.mallocSize);
     if (NeedCollectAddr(record.type)) {
         auto addrPos = std::find(record.addrs.begin(), record.addrs.end(), addr);
         if (addrPos != record.addrs.end()) {
             *addrPos = newAddr;
         }
     }
-    allocAddrMap_[newAddr] = AllocAddrInfo{size, record.callstackId, addrIter->second.ts};
+    allocAddrMap_.emplace(newAddr, AllocAddrInfo{size, record.callstackId, addrIter->second.ts,
+        addrIter->second.allocType});
     allocAddrMap_.erase(addr);
     addrSet_.insert(newAddr);
     addrSet_.erase(addr);
@@ -831,7 +846,8 @@ bool StackPreprocess::ProcessRawData(const int8_t data[], uint32_t size,
     if (hookRecord->GetType() == FREE_MSG_SIMP) {
         uint64_t addr = hookRecord->GetAddr();
         factory_->SaveHookRecord(std::move(hookRecord));
-        return ProcessAddressData(reinterpret_cast<const int8_t*>(&addr));
+        SetFreeStatisticsData(addr, FREE_MSG);
+        return true;
     }
     DmaFdSizeMap dmaFdSizeMap;
     uint32_t dmaFdSizePid = 0;
@@ -1423,7 +1439,7 @@ bool StackPreprocess::HandleSimpleMessages(HookRecordPtr& hookRecord)
     uint16_t type = hookRecord->GetType();
 
     if (type == FREE_MSG_SIMP) {
-        SetFreeStatisticsData(hookRecord->GetAddr());
+        SetFreeStatisticsData(hookRecord->GetAddr(), FREE_MSG);
         return true;
     }
 
@@ -1904,7 +1920,7 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, T& stackData)
             case FREE_MSG:
             case MUNMAP_MSG:
             case MEMORY_UNUSING_MSG: {
-                SetFreeStatisticsData(hookRecord->GetAddr());
+                SetFreeStatisticsData(hookRecord->GetAddr(), hookRecord->GetType());
                 break;
             }
             case MALLOC_MSG:
@@ -2001,7 +2017,7 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
             case FREE_MSG:
             case MUNMAP_MSG:
             case MEMORY_UNUSING_MSG: {
-                SetFreeStatisticsData(hookRecord->GetAddr());
+                SetFreeStatisticsData(hookRecord->GetAddr(), type);
                 break;
             }
             case MALLOC_MSG:
@@ -2105,26 +2121,47 @@ void StackPreprocess::RemoveFreeAddrFromStatisticsLocked(uint64_t addr, uint32_t
     }
 }
 
-bool StackPreprocess::SetFreeStatisticsDataLocked(uint64_t addr)
+bool StackPreprocess::SetFreeStatisticsDataLocked(uint64_t addr, uint16_t releaseType)
 {
-    auto addrIter = allocAddrMap_.find(addr);
-    if (addrIter == allocAddrMap_.end()) {
+    auto range = allocAddrMap_.equal_range(addr);
+    if (range.first == range.second) {
         return false;
     }
-    FindAndUpdateFreeStatisticsLocked(addrIter->second.stackId, addrIter->second.mallocSize);
-    RemoveFreeAddrFromStatisticsLocked(addr, addrIter->second.stackId);
-    allocAddrMap_.erase(addr);
-    auto addrSetIter = addrSet_.find(addr);
-    if (addrSetIter != addrSet_.end()) {
-        addrSet_.erase(addrSetIter);
+    auto next = std::next(range.first);
+    if (next == range.second) {
+        FindAndUpdateFreeStatisticsLocked(range.first->second.stackId, range.first->second.mallocSize);
+        RemoveFreeAddrFromStatisticsLocked(addr, range.first->second.stackId);
+        allocAddrMap_.erase(range.first);
+    } else {
+        bool found = false;
+        auto it = range.first;
+        while (it != range.second) {
+            if (releaseType == 0 || IsMatchingAllocType(it->second.allocType, releaseType)) {
+                FindAndUpdateFreeStatisticsLocked(it->second.stackId, it->second.mallocSize);
+                RemoveFreeAddrFromStatisticsLocked(addr, it->second.stackId);
+                it = allocAddrMap_.erase(it);
+                found = true;
+            } else {
+                ++it;
+            }
+        }
+        if (!found) {
+            return false;
+        }
+    }
+    if (allocAddrMap_.find(addr) == allocAddrMap_.end()) {
+        auto addrSetIter = addrSet_.find(addr);
+        if (addrSetIter != addrSet_.end()) {
+            addrSet_.erase(addrSetIter);
+        }
     }
     return true;
 }
 
-bool StackPreprocess::SetFreeStatisticsData(uint64_t addr)
+bool StackPreprocess::SetFreeStatisticsData(uint64_t addr, uint16_t releaseType)
 {
     spinLock_.Lock();
-    bool result = SetFreeStatisticsDataLocked(addr);
+    bool result = SetFreeStatisticsDataLocked(addr, releaseType);
     spinLock_.Unlock();
     return result;
 }
@@ -2164,8 +2201,9 @@ void StackPreprocess::UpdateAllocStatistics(
         if (NeedCollectAddr(record.type)) {
             record.addrs.push_back(hookRecord->GetAddr());
         }
-        allocAddrMap_[hookRecord->GetAddr()] =
-            AllocAddrInfo{rawStack->stackContext->mallocSize, stackId, rawStack->stackContext->ts};
+        allocAddrMap_.emplace(hookRecord->GetAddr(),
+            AllocAddrInfo{rawStack->stackContext->mallocSize, stackId, rawStack->stackContext->ts,
+                hookRecord->GetType()});
         if (hookRecord->GetType() == MEMORY_USING_MSG) {
             addrSet_.insert(hookRecord->GetAddr());
         }
@@ -2260,8 +2298,9 @@ void StackPreprocess::RegisterAllocAddress(std::unordered_map<uint32_t, T>& stat
     record.applySize = rawStack->stackContext->mallocSize;
     FillRecordFromType(record, hookRecord);
     statisticsMap[stackId] = record;
-    allocAddrMap_[hookRecord->GetAddr()] =
-        AllocAddrInfo{rawStack->stackContext->mallocSize, stackId, rawStack->stackContext->ts};
+    allocAddrMap_.emplace(hookRecord->GetAddr(),
+        AllocAddrInfo{rawStack->stackContext->mallocSize, stackId, rawStack->stackContext->ts,
+            hookRecord->GetType()});
     if (hookRecord->GetType() == MEMORY_USING_MSG) {
         addrSet_.insert(hookRecord->GetAddr());
     }

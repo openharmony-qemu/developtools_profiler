@@ -515,8 +515,8 @@ HWTEST_F(StackPreprocessExtTest, ReconcileWithSnapshotFreesOnlyStaleAddresses, T
     struct timespec ts = {1, 0};
     preprocess.recordStatisticsMap_[1] = RecordStatistic{};
     preprocess.recordStatisticsMap_[1].callstackId = 1;
-    preprocess.allocAddrMap_[0x1000] = AllocAddrInfo{64, 1, ts};
-    preprocess.allocAddrMap_[0x2000] = AllocAddrInfo{128, 1, ts};
+    preprocess.allocAddrMap_.emplace(0x1000, AllocAddrInfo{64, 1, ts, MALLOC_MSG});
+    preprocess.allocAddrMap_.emplace(0x2000, AllocAddrInfo{128, 1, ts, MALLOC_MSG});
     preprocess.addrSet_.insert(0x1000);
     preprocess.addrSet_.insert(0x2000);
 
@@ -541,7 +541,7 @@ HWTEST_F(StackPreprocessExtTest, ReconcileDuplicateMallocHonorsTimestampOrder, T
     struct timespec oldTs = {10, 20};
     preprocess.recordStatisticsMap_[7] = RecordStatistic{};
     preprocess.recordStatisticsMap_[7].callstackId = 7;
-    preprocess.allocAddrMap_[0x3000] = AllocAddrInfo{256, 7, oldTs};
+    preprocess.allocAddrMap_.emplace(0x3000, AllocAddrInfo{256, 7, oldTs, MALLOC_MSG});
     preprocess.addrSet_.insert(0x3000);
 
     struct timespec earlierTs = {10, 10};
@@ -1308,7 +1308,7 @@ HWTEST_F(StackPreprocessExtTest, ProcessRawDataSkipsOlderDuplicateMalloc, TestSi
     RecordStatistic statistic;
     statistic.callstackId = stackId;
     preprocess.recordStatisticsMap_[stackId] = statistic;
-    preprocess.allocAddrMap_[addr] = AllocAddrInfo {64, stackId, {10, 0}};
+    preprocess.allocAddrMap_.emplace(addr, AllocAddrInfo{64, stackId, {10, 0}, MALLOC_MSG});
 
     auto mallocData = MakeRawDataBuffer(MALLOC_MSG, nullptr, 0);
     ASSERT_EQ(mallocData.size(), sizeof(BaseStackRawData));
@@ -1321,8 +1321,9 @@ HWTEST_F(StackPreprocessExtTest, ProcessRawDataSkipsOlderDuplicateMalloc, TestSi
 
     EXPECT_TRUE(preprocess.ProcessRawData(reinterpret_cast<const int8_t*>(mallocData.data()),
         static_cast<uint32_t>(mallocData.size()), rawData, hookRecord));
-    ASSERT_NE(preprocess.allocAddrMap_.find(addr), preprocess.allocAddrMap_.end());
-    EXPECT_EQ(preprocess.allocAddrMap_[addr].ts.tv_sec, 10);
+    auto addrIter = preprocess.allocAddrMap_.find(addr);
+    ASSERT_NE(addrIter, preprocess.allocAddrMap_.end());
+    EXPECT_EQ(addrIter->second.ts.tv_sec, 10);
 }
 
 HWTEST_F(StackPreprocessExtTest, ProcessRawDataDispatchesNmdEndAndJsMessages, TestSize.Level0)
@@ -2139,7 +2140,7 @@ HWTEST_F(StackPreprocessExtTest, StatisticsStateHelpersHandleMissingRecords, Tes
     preprocess.HandleMoveAddr(addr, newAddr, 128);
     EXPECT_TRUE(preprocess.allocAddrMap_.empty());
 
-    preprocess.allocAddrMap_[addr] = AllocAddrInfo {64, stackId, {1, 0}};
+    preprocess.allocAddrMap_.emplace(addr, AllocAddrInfo{64, stackId, {1, 0}, MALLOC_MSG});
     preprocess.addrSet_.insert(addr);
     preprocess.HandleMoveAddr(addr, newAddr, 128);
     EXPECT_EQ(preprocess.allocAddrMap_.count(addr), 1u);
@@ -2272,7 +2273,7 @@ HWTEST_F(StackPreprocessExtTest, HandleSimpleMessagesUpdatesArktsAddressState, T
     RecordStatistic freeStatistic;
     freeStatistic.callstackId = 3;
     preprocess.recordStatisticsMap_[3] = freeStatistic;
-    preprocess.allocAddrMap_[0x1000] = AllocAddrInfo {64, 3, {1, 0}};
+    preprocess.allocAddrMap_.emplace(0x1000, AllocAddrInfo{64, 3, {1, 0}, MALLOC_MSG});
     preprocess.addrSet_.insert(0x1000);
     auto freeRaw = MakeRawStack(1, 1, 0);
     freeRaw->stackContext->type = FREE_ARKTS;
@@ -2287,7 +2288,7 @@ HWTEST_F(StackPreprocessExtTest, HandleSimpleMessagesUpdatesArktsAddressState, T
     RecordStatistic moveStatistic;
     moveStatistic.callstackId = 4;
     preprocess.recordStatisticsMap_[4] = moveStatistic;
-    preprocess.allocAddrMap_[0x3000] = AllocAddrInfo {64, 4, {1, 0}};
+    preprocess.allocAddrMap_.emplace(0x3000, AllocAddrInfo{64, 4, {1, 0}, MALLOC_MSG});
     preprocess.addrSet_.insert(0x3000);
     auto moveRaw = MakeRawStack(1, 2, 0);
     moveRaw->stackContext->type = MALLOC_ARKTS;
