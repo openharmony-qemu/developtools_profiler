@@ -15,6 +15,7 @@
 
 #include "parse_plugin_config.h"
 
+#include "file_path_handler.h"
 #include "cpu_plugin_config_standard.pb.h"
 #include "gpu_plugin_config_standard.pb.h"
 #include "diskio_plugin_config_standard.pb.h"
@@ -32,6 +33,7 @@
 #include "ffrt_profiler_config_standard.pb.h"
 #include "network_profiler_config_standard.pb.h"
 #include "memory_trace.h"
+#include "ipc_skeleton.h"
 
 namespace {
 constexpr int REMAINDER = 2;
@@ -234,6 +236,10 @@ bool ParsePluginConfig::SetSerializeHiebpfConfig(const std::string& pluginName, 
         printf("hiebpf config parse failed!\n");
         return false;
     }
+#if defined(is_sandbox) && is_sandbox
+    // Only hiprofiler_cmd can get the real callingUid; map sandbox outfile before sending to plugins.
+    ConvertHiebpfSandboxPaths(*hiebpfConfigNolite, OHOS::IPCSkeleton::GetCallingUid());
+#endif
     std::vector<uint8_t> config(hiebpfConfigNolite->ByteSizeLong());
     if (hiebpfConfigNolite->SerializeToArray(config.data(), config.size()) <= 0) {
         printf("hiebpf serialize failed!\n");
@@ -377,6 +383,10 @@ bool ParsePluginConfig::SetSerializeHiperfConfig(const std::string& pluginName, 
         printf("hiperf config parse failed!\n");
         return false;
     }
+#if defined(is_sandbox) && is_sandbox
+    // Only hiprofiler_cmd can get the real callingUid; map sandbox outfile before sending to plugins.
+    ConvertHiperfSandboxPaths(*hiperfConfigNolite, OHOS::IPCSkeleton::GetCallingUid());
+#endif
 
     std::vector<uint8_t> configDataVec(hiperfConfigNolite->ByteSizeLong());
     if (hiperfConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
@@ -385,6 +395,30 @@ bool ParsePluginConfig::SetSerializeHiperfConfig(const std::string& pluginName, 
     }
     pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
+}
+
+void ParsePluginConfig::ConvertHiperfSandboxPaths(ForStandard::HiperfPluginConfig& config, int32_t callingUid)
+{
+    // Only /storage/Users/currentUser/ and ~/ are mapped. Empty and /data/local/tmp/ stay unchanged.
+    if (!config.outfile_name().empty()) {
+        config.set_outfile_name(SandboxFilePathHandler::ConvertToPhysicalPath(config.outfile_name(), callingUid));
+    }
+    if (!config.split_outfile_name().empty()) {
+        config.set_split_outfile_name(
+            SandboxFilePathHandler::ConvertToPhysicalPath(config.split_outfile_name(), callingUid));
+    }
+}
+
+void ParsePluginConfig::ConvertHiebpfSandboxPaths(ForStandard::HiebpfConfig& config, int32_t callingUid)
+{
+    // Only /storage/Users/currentUser/ and ~/ are mapped. Empty and /data/local/tmp/ stay unchanged.
+    if (!config.outfile_name().empty()) {
+        config.set_outfile_name(SandboxFilePathHandler::ConvertToPhysicalPath(config.outfile_name(), callingUid));
+    }
+    if (!config.split_outfile_name().empty()) {
+        config.set_split_outfile_name(
+            SandboxFilePathHandler::ConvertToPhysicalPath(config.split_outfile_name(), callingUid));
+    }
 }
 
 uint32_t ParsePluginConfig::GetHiperfPluginDuration()

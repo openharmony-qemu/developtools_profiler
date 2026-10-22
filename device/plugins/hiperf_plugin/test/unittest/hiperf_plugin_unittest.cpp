@@ -204,4 +204,82 @@ HWTEST_F(HiperfPluginUnittest, TestDurationHiperf, TestSize.Level1)
     ASSERT_EQ(HiperfPluginSessionStop(), 0) << "hiperf should return ok";
 }
 
+/**
+ * @tc.name: TestRemoveUsesConfigOutfile
+ * @tc.desc: session start removes the configured outfile instead of hardcoded /data/local/tmp/perf.data
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiperfPluginUnittest, TestRemoveUsesConfigOutfile, TestSize.Level1)
+{
+    const std::string customOutPath = "/data/local/tmp/hiperf_plugin_remove_ut.data";
+    FILE* fp = fopen(customOutPath.c_str(), "wb");
+    ASSERT_NE(fp, nullptr);
+    (void)fclose(fp);
+    ASSERT_EQ(access(customOutPath.c_str(), F_OK), 0);
+
+    HiperfPluginConfig config;
+    config.set_outfile_name(customOutPath);
+    std::vector<uint8_t> buffer(config.ByteSizeLong());
+    ASSERT_TRUE(config.SerializeToArray(buffer.data(), buffer.size()));
+    ASSERT_NE(HiperfPluginSessionStart(buffer.data(), buffer.size()), 0);
+    EXPECT_NE(access(customOutPath.c_str(), F_OK), 0);
+    (void)remove(customOutPath.c_str());
+}
+
+/**
+ * @tc.name: TestRemoveKeepsDefaultOutfile
+ * @tc.desc: session start with a custom outfile does not remove /data/local/tmp/perf.data
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiperfPluginUnittest, TestRemoveKeepsDefaultOutfile, TestSize.Level1)
+{
+    const std::string defaultOutPath = "/data/local/tmp/perf.data";
+    const std::string customOutPath = "/data/local/tmp/hiperf_plugin_keep_default_ut.data";
+    bool createdDefault = false;
+    if (access(defaultOutPath.c_str(), F_OK) != 0) {
+        FILE* defaultFp = fopen(defaultOutPath.c_str(), "wb");
+        ASSERT_NE(defaultFp, nullptr);
+        (void)fclose(defaultFp);
+        createdDefault = true;
+    }
+    FILE* fp = fopen(customOutPath.c_str(), "wb");
+    ASSERT_NE(fp, nullptr);
+    (void)fclose(fp);
+
+    HiperfPluginConfig config;
+    config.set_outfile_name(customOutPath);
+    std::vector<uint8_t> buffer(config.ByteSizeLong());
+    ASSERT_TRUE(config.SerializeToArray(buffer.data(), buffer.size()));
+    ASSERT_NE(HiperfPluginSessionStart(buffer.data(), buffer.size()), 0);
+    EXPECT_EQ(access(defaultOutPath.c_str(), F_OK), 0);
+    EXPECT_NE(access(customOutPath.c_str(), F_OK), 0);
+    (void)remove(customOutPath.c_str());
+    if (createdDefault) {
+        (void)remove(defaultOutPath.c_str());
+    }
+}
+
+/**
+ * @tc.name: TestInvalidConfigKeepsOutfile
+ * @tc.desc: a config that fails to parse does not remove the existing outfile
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiperfPluginUnittest, TestInvalidConfigKeepsOutfile, TestSize.Level1)
+{
+    const std::string defaultOutPath = "/data/local/tmp/perf.data";
+    bool createdDefault = false;
+    if (access(defaultOutPath.c_str(), F_OK) != 0) {
+        FILE* defaultFp = fopen(defaultOutPath.c_str(), "wb");
+        ASSERT_NE(defaultFp, nullptr);
+        (void)fclose(defaultFp);
+        createdDefault = true;
+    }
+    const uint8_t invalidConfig[] = {0x80};
+    ASSERT_NE(HiperfPluginSessionStart(invalidConfig, sizeof(invalidConfig)), 0);
+    EXPECT_EQ(access(defaultOutPath.c_str(), F_OK), 0);
+    if (createdDefault) {
+        (void)remove(defaultOutPath.c_str());
+    }
+}
+
 } // namespace

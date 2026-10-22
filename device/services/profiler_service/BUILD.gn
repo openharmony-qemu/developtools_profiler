@@ -48,6 +48,7 @@ ohos_source_set("profiler_service") {
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_proto",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hiperf_data:hiperf_data_cpp",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/hiebpf_data:hiebpf_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
     "${OHOS_PROFILER_DIR}/device/services/apm:profiler_apm",
   ]

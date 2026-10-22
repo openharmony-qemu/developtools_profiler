@@ -16,11 +16,14 @@
 #ifndef PARSE_PLUGIN_CONFIG_H
 #define PARSE_PLUGIN_CONFIG_H
 
+#include <cstdint>
 #include <map>
 #include <string>
 
 #include "google/protobuf/text_format.h"
 #include "profiler_service.grpc.pb.h"
+#include "hiperf_plugin_config_standard.pb.h"
+#include "hiebpf_plugin_config_standard.pb.h"
 #include "native_hook_config_standard.pb.h"
 
 class ParsePluginConfig {
@@ -59,6 +62,8 @@ public:
 private:
     ParsePluginConfig();
     ~ParsePluginConfig() {}
+    void ConvertHiperfSandboxPaths(ForStandard::HiperfPluginConfig& config, int32_t callingUid);
+    void ConvertHiebpfSandboxPaths(ForStandard::HiebpfConfig& config, int32_t callingUid);
 
     std::map<std::string, std::string> pluginConfigMap;
     google::protobuf::TextFormat::Parser parser_;

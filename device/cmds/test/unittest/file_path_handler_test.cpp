@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include "file_path_handler.h"
 #include "profiler_service.grpc.pb.h"
@@ -24,6 +25,11 @@ const std::string TEST_OUTPUT_FILE("/data/local/tmp/test_output.htrace");
 const std::string TEST_CONFIG_FILE("test_config.txt");
 const std::string TEST_COMPOSITE_OUTPUT_FILE("/data/local/tmp/hiprofiler_data.zip");
 const std::string TEST_COMPOSITE_INVALID_FILE("/data/local/tmp/hiprofiler_data.htrace");
+const std::string TEST_SANDBOX_PATH_ROOT("/storage/Users/currentUser/");
+const std::string TEST_HOME_PATH_PREFIX("~/");
+constexpr int32_t TEST_SANDBOX_CALLING_UID = 20000001;
+constexpr int32_t TEST_NON_SANDBOX_CALLING_UID = 20000000;
+const std::string TEST_PHYSICAL_PATH_ROOT("/storage/media/100/local/files/Docs/");
 }
 
 class FilePathHandlerTest : public ::testing::Test {
@@ -266,4 +272,161 @@ HWTEST_F(FilePathHandlerTest, TestFactoryCreateNonCompositeHandler, Function | M
     bool ret = handler->HandleOutputFilePath("", &sessionConfig);
     EXPECT_TRUE(ret);
     EXPECT_NE(sessionConfig.result_file().substr(sessionConfig.result_file().length() - 4), ".zip");
+}
+
+/**
+ * @tc.name: TestConvertSandboxPathToPhysical
+ * @tc.desc: Convert /storage/Users/currentUser/ outfile to physical Docs path with sandbox uid
+ * @tc.type: FUNC
+ */
+HWTEST_F(FilePathHandlerTest, TestConvertSandboxPathToPhysical, Function | MediumTest | Level1)
+{
+    std::string sandboxPath = TEST_SANDBOX_PATH_ROOT + "perf.data";
+    std::string physicalPath = SandboxFilePathHandler::ConvertToPhysicalPath(sandboxPath, TEST_SANDBOX_CALLING_UID);
+    EXPECT_EQ(physicalPath, TEST_PHYSICAL_PATH_ROOT + "perf.data");
+}
+
+/**
+ * @tc.name: TestConvertSandboxSubdirToPhysical
+ * @tc.desc: Convert sandbox subdirectory outfile to the corresponding physical path
+ * @tc.type: FUNC
+ */
+HWTEST_F(FilePathHandlerTest, TestConvertSandboxSubdirToPhysical, Function | MediumTest | Level1)
+{
+    std::string sandboxPath = TEST_SANDBOX_PATH_ROOT + "hiperf/perf.data";
+    std::string physicalPath = SandboxFilePathHandler::ConvertToPhysicalPath(sandboxPath, TEST_SANDBOX_CALLING_UID);
+    EXPECT_EQ(physicalPath, TEST_PHYSICAL_PATH_ROOT + "hiperf/perf.data");
+}
+
+/**
+ * @tc.name: TestConvertHomePathToPhysical
+ * @tc.desc: Convert ~/ outfile to physical Docs path with sandbox uid
+ * @tc.type: FUNC
+ */
+HWTEST_F(FilePathHandlerTest, TestConvertHomePathToPhysical, Function | MediumTest | Level1)
+{
+    std::string homePath = TEST_HOME_PATH_PREFIX + "perf.data";
+    std::string physicalPath = SandboxFilePathHandler::ConvertToPhysicalPath(homePath, TEST_SANDBOX_CALLING_UID);
+    EXPECT_EQ(physicalPath, TEST_PHYSICAL_PATH_ROOT + "perf.data");
+}
+
+/**
+ * @tc.name: TestConvertSandboxPathNonAppUidUnchanged
+ * @tc.desc: Keep sandbox path unchanged when callingUid is not a sandbox app
+ * @tc.type: FUNC
+ */
+HWTEST_F(FilePathHandlerTest, TestConvertSandboxPathNonAppUidUnchanged, Function | MediumTest | Level1)
+{
+    std::string sandboxPath = TEST_SANDBOX_PATH_ROOT + "perf.data";
+    std::string resultPath = SandboxFilePathHandler::ConvertToPhysicalPath(sandboxPath, TEST_NON_SANDBOX_CALLING_UID);
+    EXPECT_EQ(resultPath, sandboxPath);
+}
+
+/**
+ * @tc.name: TestConvertNormalPathUnchanged
+ * @tc.desc: Keep /data/local/tmp path unchanged even with sandbox uid
+ * @tc.type: FUNC
+ */
+HWTEST_F(FilePathHandlerTest, TestConvertNormalPathUnchanged, Function | MediumTest | Level1)
+{
+    std::string normalPath = TEST_OUTPUT_FILE;
+    std::string resultPath = SandboxFilePathHandler::ConvertToPhysicalPath(normalPath, TEST_SANDBOX_CALLING_UID);
+    EXPECT_EQ(resultPath, normalPath);
+}
+
+/**
+ * @tc.name: TestConvertEmptyPathUnchanged
+ * @tc.desc: Keep empty path unchanged
+ * @tc.type: FUNC
+ */
+HWTEST_F(FilePathHandlerTest, TestConvertEmptyPathUnchanged, Function | MediumTest | Level2)
+{
+    std::string resultPath = SandboxFilePathHandler::ConvertToPhysicalPath("", TEST_SANDBOX_CALLING_UID);
+    EXPECT_EQ(resultPath, "");
+}
+
+/**
+ * @tc.name: TestConvertAlreadyPhysicalPathUnchanged
+ * @tc.desc: Keep already converted physical path unchanged
+ * @tc.type: FUNC
+ */
+HWTEST_F(FilePathHandlerTest, TestConvertAlreadyPhysicalPathUnchanged, Function | MediumTest | Level2)
+{
+    std::string physicalPath = TEST_PHYSICAL_PATH_ROOT + "perf.data";
+    std::string resultPath = SandboxFilePathHandler::ConvertToPhysicalPath(physicalPath, TEST_SANDBOX_CALLING_UID);
+    EXPECT_EQ(resultPath, physicalPath);
+}
+
+/**
+ * @tc.name: TestConvertSandboxPathMapsUserId
+ * @tc.desc: Physical path userId is callingUid / 200000
+ * @tc.type: FUNC
+ */
+HWTEST_F(FilePathHandlerTest, TestConvertSandboxPathMapsUserId, Function | MediumTest | Level1)
+{
+    constexpr int32_t callingUid = 40000001;
+    std::string sandboxPath = TEST_SANDBOX_PATH_ROOT + "perf.data";
+    std::string physicalPath = SandboxFilePathHandler::ConvertToPhysicalPath(sandboxPath, callingUid);
+    EXPECT_EQ(physicalPath, "/storage/media/200/local/files/Docs/perf.data");
+}
+
+/**
+ * @tc.name: TestIsSandboxAppUid
+ * @tc.desc: callingUid greater than 20000000 is treated as a sandbox app
+ * @tc.type: FUNC
+ */
+HWTEST_F(FilePathHandlerTest, TestIsSandboxAppUid, Function | MediumTest | Level1)
+{
+    EXPECT_TRUE(SandboxFilePathHandler::IsSandboxAppUid(TEST_SANDBOX_CALLING_UID));
+    EXPECT_FALSE(SandboxFilePathHandler::IsSandboxAppUid(TEST_NON_SANDBOX_CALLING_UID));
+    EXPECT_FALSE(SandboxFilePathHandler::IsSandboxAppUid(0));
+    EXPECT_FALSE(SandboxFilePathHandler::IsSandboxAppUid(-1));
+}
+
+/**
+ * @tc.name: TestConvertHomePathNonAppUidUnchanged
+ * @tc.desc: Keep ~/ path unchanged when callingUid is not a sandbox app
+ * @tc.type: FUNC
+ */
+HWTEST_F(FilePathHandlerTest, TestConvertHomePathNonAppUidUnchanged, Function | MediumTest | Level1)
+{
+    std::string homePath = TEST_HOME_PATH_PREFIX + "perf.data";
+    std::string resultPath = SandboxFilePathHandler::ConvertToPhysicalPath(homePath, TEST_NON_SANDBOX_CALLING_UID);
+    EXPECT_EQ(resultPath, homePath);
+}
+
+/**
+ * @tc.name: TestConvertTildeWithoutSlashUnchanged
+ * @tc.desc: Keep a path that does not start with ~/ unchanged
+ * @tc.type: FUNC
+ */
+HWTEST_F(FilePathHandlerTest, TestConvertTildeWithoutSlashUnchanged, Function | MediumTest | Level2)
+{
+    std::string tildePath = "~perf.data";
+    std::string resultPath = SandboxFilePathHandler::ConvertToPhysicalPath(tildePath, TEST_SANDBOX_CALLING_UID);
+    EXPECT_EQ(resultPath, tildePath);
+}
+
+/**
+ * @tc.name: TestConvertSandboxPathWithDotDot
+ * @tc.desc: Sandbox path containing .. is rejected by path canonicalization
+ * @tc.type: FUNC
+ */
+HWTEST_F(FilePathHandlerTest, TestConvertSandboxPathWithDotDot, Function | MediumTest | Level2)
+{
+    std::string sandboxPath = TEST_SANDBOX_PATH_ROOT + "../perf.data";
+    std::string resultPath = SandboxFilePathHandler::ConvertToPhysicalPath(sandboxPath, TEST_SANDBOX_CALLING_UID);
+    EXPECT_EQ(resultPath, "");
+}
+
+/**
+ * @tc.name: TestConvertHomeSubdirToPhysical
+ * @tc.desc: Convert ~/ subdirectory outfile to the corresponding physical path
+ * @tc.type: FUNC
+ */
+HWTEST_F(FilePathHandlerTest, TestConvertHomeSubdirToPhysical, Function | MediumTest | Level1)
+{
+    std::string homePath = TEST_HOME_PATH_PREFIX + "hiperf/perf.data";
+    std::string physicalPath = SandboxFilePathHandler::ConvertToPhysicalPath(homePath, TEST_SANDBOX_CALLING_UID);
+    EXPECT_EQ(physicalPath, TEST_PHYSICAL_PATH_ROOT + "hiperf/perf.data");
 }
