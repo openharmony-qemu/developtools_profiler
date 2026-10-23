@@ -58,7 +58,7 @@ namespace OHOS {
             }
             OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "1");
             collectRunring = true;
-            WLOGI("Starting sdkdata collection in new thread");
+            LOGI("Starting sdkdata collection in new thread");
             if (th_.joinable()) {
                 th_.join();
             }
@@ -67,7 +67,7 @@ namespace OHOS {
 
         void SdkDataRecv::FinishtExecutionOnce(bool isPause)
         {
-            WLOGI("Disabling sdk data collection and resetting parameters");
+            LOGI("Disabling sdk data collection and resetting parameters");
             OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "0");
             collectRunring = false;
             if (listenFd != -1) {
@@ -84,20 +84,20 @@ namespace OHOS {
             }
 
             if (sdkVec_.empty()) {
-                WLOGI("SDK data is not enabled or sdkvec is empty");
+                LOGI("SDK data is not enabled or sdkvec is empty");
                 return;
             }
 
             LOGD("SDK data stop");
             char outSdkDataDirChar[PATH_MAX] = {0x00};
             if (realpath(filePath_.c_str(), outSdkDataDirChar) == nullptr) {
-                WLOGE("data dir %s is nullptr", filePath_.c_str());
+                LOGE("data dir %s is nullptr", filePath_.c_str());
                 return;
             }
             const std::string outSdkDataPath = std::string(outSdkDataDirChar) + "/sdk_data.csv";
             std::ofstream outFile(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
             if (!outFile.is_open()) {
-                WLOGE("data %s open failed", outSdkDataPath.c_str());
+                LOGE("data %s open failed", outSdkDataPath.c_str());
                 return;
             }
             std::string title = "source,timestamp,eventName,enable,value\r";
@@ -106,7 +106,7 @@ namespace OHOS {
                 outFile << item << std::endl;
             }
             outFile.close();
-            WLOGI("SDK data written successfully to %s", outSdkDataPath.c_str());
+            LOGI("SDK data written successfully to %s", outSdkDataPath.c_str());
         }
 
         int SdkDataRecv::CreateOhSocketServer(int basePort)

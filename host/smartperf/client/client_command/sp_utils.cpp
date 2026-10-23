@@ -1069,26 +1069,26 @@ void SPUtils::RemoveDirOrFile(const std::string &dirPath)
 {
     char pathChar[PATH_MAX] = {0x00};
     if ((realpath(dirPath.c_str(), pathChar) == nullptr)) {
-        WLOGI("%s is not exist.", dirPath.c_str());
+        LOGI("%s is not exist.", dirPath.c_str());
         return;
     }
     LOGD("%s is exist, remove...", dirPath.c_str());
     struct stat pathStat;
     if (stat(pathChar, &pathStat) != 0) {
-        WLOGE("Failed to stat %s", pathChar);
+        LOGE("Failed to stat %s", pathChar);
         return;
     }
     if (!S_ISDIR(pathStat.st_mode)) {
         if (remove(pathChar) != 0) {
-            WLOGE("Failed to remove file %s", pathChar);
+            LOGE("Failed to remove file %s", pathChar);
         } else {
-            WLOGI("File %s removed successfully!", pathChar);
+            LOGI("File %s removed successfully!", pathChar);
         }
         return;
     }
     DIR *dir = opendir(pathChar);
     if (dir == nullptr) {
-        WLOGE("Failed to open dir %s", pathChar);
+        LOGE("Failed to open dir %s", pathChar);
         return;
     }
     struct dirent *entry = nullptr;
@@ -1101,7 +1101,7 @@ void SPUtils::RemoveDirOrFile(const std::string &dirPath)
     }
     closedir(dir);
     if (rmdir(pathChar) != 0) {
-        WLOGE("Failed to remove dir %s", pathChar);
+        LOGE("Failed to remove dir %s", pathChar);
     }
 }
 
@@ -1150,7 +1150,7 @@ void SPUtils::TarFiles(const std::string& tarStr)
     std::string tarCommand = CMD_COMMAND_MAP.at(CmdCommand::TAR) + tarStr;
     std::string cmdResult;
     if (!SPUtils::LoadCmd(tarCommand, cmdResult)) {
-        WLOGE("Failed to tar log files");
+        LOGE("Failed to tar log files");
     }
 }
 

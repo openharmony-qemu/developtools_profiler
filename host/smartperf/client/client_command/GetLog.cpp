@@ -29,7 +29,7 @@ void GetLog::GetHilogInMemory(std::vector<std::filesystem::path> &fileList)
     std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::GET_HILOG) + hilogTmp;
     std::string cmdResult;
     if (!SPUtils::LoadCmd(cmd, cmdResult)) {
-        WLOGE("Failed to GetHilogCommand files: %s", hilogTmp.c_str());
+        LOGE("Failed to GetHilogCommand files: %s", hilogTmp.c_str());
     }
     if (std::filesystem::exists(hilogTmp)) {
         currentLogSize += std::filesystem::file_size(hilogTmp);
@@ -55,7 +55,7 @@ void GetLog::GenerateDaemonLogFile()
     SPUtils::CreateDir(daemonLogFileDir);                    // Create daemonLog directory
     std::string originPath;
     if (std::filesystem::current_path().string().empty()) {
-        WLOGE("Failed to get current working directory");
+        LOGE("Failed to get current working directory");
         return;
     }
     originPath = std::filesystem::current_path().string();
@@ -82,11 +82,11 @@ void GetLog::GenerateDaemonLogFile()
         std::filesystem::copy_file(file, destPath,
             std::filesystem::copy_options::overwrite_existing, ec);
         if (ec) {
-            WLOGE("Failed to copy file %s: %s", file.filename().string().c_str(), ec.message().c_str());
+            LOGE("Failed to copy file %s: %s", file.filename().string().c_str(), ec.message().c_str());
         }
     }
     std::filesystem::current_path(originPath.c_str());
-    WLOGI("Created tar archive of daemonLog files successfully");
+    LOGI("Created tar archive of daemonLog files successfully");
 }
 
 std::time_t to_time_t(const std::filesystem::file_time_type &ftime)
@@ -103,10 +103,10 @@ void GetLog::GetHilogInData(std::vector<std::filesystem::path> &otherFiles,
 
     try {
         if (std::filesystem::exists(dirPath)) {
-            WLOGI("Success read hilog dir");
+            LOGI("Success read hilog dir");
         }
     } catch (const std::filesystem::filesystem_error &e) {
-        WLOGE("GetHilogFiles error: %s", e.what());
+        LOGE("GetHilogFiles error: %s", e.what());
         return;
     }
 
@@ -130,13 +130,13 @@ void GetLog::GetHilogInData(std::vector<std::filesystem::path> &otherFiles,
         auto fileTimeT = to_time_t(fileTime);
         auto nowT = to_time_t(std::filesystem::file_time_type::clock::now());
         if (std::localtime(&fileTimeT) == nullptr || std::localtime(&nowT) == nullptr) {
-            WLOGE("Get local time is null");
+            LOGE("Get local time is null");
             return;
         }
         std::tm* fileTm = std::localtime(&fileTimeT);
         std::tm* nowTm = std::localtime(&nowT);
         if (fileTm == nullptr || nowTm == nullptr) {
-            WLOGE("Get local time ptr is null");
+            LOGE("Get local time ptr is null");
             return;
         }
 
@@ -157,14 +157,14 @@ void GetLog::GenerateHilogFile()
     SPUtils::CreateDir(hilogFileDir);
     std::string originPath;
     if (std::filesystem::current_path().string().empty()) {
-        WLOGE("Failed to get current working directory");
+        LOGE("Failed to get current working directory");
         return;
     }
     originPath = std::filesystem::current_path().string();
     GetHilogInMemory(filesLog);
     GetHilogInData(filesOther, filesLog);
     if (filesLog.empty() && filesOther.empty()) {
-        WLOGE("Failed to get hilog files");
+        LOGE("Failed to get hilog files");
         return;
     }
     std::sort(filesLog.begin(), filesLog.end(), [](const auto& a, const auto& b) {
@@ -181,7 +181,7 @@ void GetLog::GenerateHilogFile()
         std::error_code ec;
         std::filesystem::copy_file(file, destPath, std::filesystem::copy_options::overwrite_existing, ec);
         if (ec) {
-            WLOGE("Failed to copy file %s: %s", file.filename().string().c_str(), ec.message().c_str());
+            LOGE("Failed to copy file %s: %s", file.filename().string().c_str(), ec.message().c_str());
         }
     }
     for (const auto& file : filesLog) {
@@ -194,11 +194,11 @@ void GetLog::GenerateHilogFile()
         std::error_code ec;
         std::filesystem::copy_file(file, destPath, std::filesystem::copy_options::overwrite_existing, ec);
         if (ec) {
-            WLOGE("Failed to copy file %s: %s", file.filename().string().c_str(), ec.message().c_str());
+            LOGE("Failed to copy file %s: %s", file.filename().string().c_str(), ec.message().c_str());
         }
     }
     std::filesystem::current_path(originPath.c_str());
-    WLOGI("Created tar archive of hilog files successfully");
+    LOGI("Created tar archive of hilog files successfully");
 }
 
 void GetLog::TarLogFile()
@@ -208,7 +208,7 @@ void GetLog::TarLogFile()
 
     std::string originPath;
     if (std::filesystem::current_path().string().empty()) {
-        WLOGE("Failed to get current working directory");
+        LOGE("Failed to get current working directory");
         return;
     }
     originPath = std::filesystem::current_path().string();
@@ -218,7 +218,7 @@ void GetLog::TarLogFile()
 
     // Check if directories exist
     if (!std::filesystem::exists("daemonLog")) {
-        WLOGE("One or both directories do not exist");
+        LOGE("One or both directories do not exist");
         std::filesystem::current_path(originPath.c_str());
         return;
     }
@@ -229,7 +229,7 @@ void GetLog::TarLogFile()
 
     // Restore original working directory
     std::filesystem::current_path(originPath.c_str());
-    WLOGI("Created tar archive of log files successfully");
+    LOGI("Created tar archive of log files successfully");
 }
 
 std::map<std::string, std::string> GetLog::ItemData()

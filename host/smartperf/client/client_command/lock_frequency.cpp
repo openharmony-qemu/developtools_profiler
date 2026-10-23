@@ -34,14 +34,14 @@ namespace SmartPerf {
         ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
         void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::TEST_PLUGIN);
         if (!handle) {
-            WLOGE("open TestServerPlugin so file error.");
+            LOGE("open TestServerPlugin so file error.");
             return;
         }
 
         typedef int32_t (*GetLockFreq)();
         GetLockFreq testServerPlugin = (GetLockFreq)dlsym(handle, lockFunction.c_str());
         if (!testServerPlugin) {
-            WLOGE("Error loading symbol");
+            LOGE("Error loading symbol");
             return;
         }
         while (isCollecting) {
@@ -59,7 +59,7 @@ namespace SmartPerf {
         }
         SetIsCollecting(true);
         th_ = std::thread([this]() {
-            WLOGI("Starting lock frequency locking thread");
+            LOGI("Starting lock frequency locking thread");
             LockingThread();
         });
     }
@@ -83,13 +83,13 @@ namespace SmartPerf {
         ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
         void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::PERF_GENIUS_PLUGIN);
         if (!handle) {
-            WLOGE("Get service plugin handler failed.");
+            LOGE("Get service plugin handler failed.");
             return;
         }
 
         reportFunc_ = reinterpret_cast<ReportDataFunc>(dlsym(handle, "PerfCmdHandle"));
         if (!reportFunc_) {
-            WLOGE("PerfCmdHandle Error loading symbol");
+            LOGE("PerfCmdHandle Error loading symbol");
             return;
         }
 
@@ -102,7 +102,7 @@ namespace SmartPerf {
 
         int ret = reportFunc_(resId, value, endTime, "");
         if (ret < 0) {
-            WLOGE("reportFunc_ failed, ret: %d", ret);
+            LOGE("reportFunc_ failed, ret: %d", ret);
         }
     }
 }
