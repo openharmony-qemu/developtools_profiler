@@ -393,8 +393,13 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", mmapSpecificAddrOnly: " << mmapSpecificAddrOnly
             << ", jsStackReport: "
             << arktsConfig.jsStackReport << ", maxJsStackDepth: "
-            << std::to_string(arktsConfig.maxJsStackDepth) << ", filterNapiName: "
-            << arktsConfig.filterNapiName << ", jsFpunwind: " << arktsConfig.jsFpunwind
+            << std::to_string(arktsConfig.maxJsStackDepth) << ", filterNapiName: ";
+        size_t napiLen = 0;
+        while (napiLen < sizeof(arktsConfig.filterNapiName) && arktsConfig.filterNapiName[napiLen] != '\0') {
+            ++napiLen;
+        }
+        ss << std::string(arktsConfig.filterNapiName, napiLen)
+            << ", jsFpunwind: " << arktsConfig.jsFpunwind
             << ", largestSize: " << largestSize  << ", secondLargestSize: " << secondLargestSize
             << ", maxGrowthSize: " << maxGrowthSize << ", offline:" << offlineSymbolization
             << ", filterLibListSize: " << filterLibList.size()

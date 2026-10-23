@@ -642,6 +642,7 @@ void HookManager::GetClientConfigExt(ClientConfig& clientConfig)
     // -1 is save '\0'
     int ret = memcpy_s(clientConfig.arktsConfig.filterNapiName, sizeof(clientConfig.arktsConfig.filterNapiName) - 1,
                        hookConfig_.filter_napi_name().c_str(), hookConfig_.filter_napi_name().size());
+    clientConfig.arktsConfig.filterNapiName[sizeof(clientConfig.arktsConfig.filterNapiName) - 1] = '\0';
     if (ret != EOK) {
         PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s filter_napi_name fail");
     }
