@@ -90,6 +90,9 @@
         "//developtools/profiler/hiebpf:hiebpf_tool",
         "//developtools/profiler/timestamps:timestamps_tool",
         "//developtools/profiler/tools/pagemap_parse:pagemap_tool",
+        "//developtools/profiler/host/smartperf/client/client_command:SP_daemon",
+        "//developtools/profiler/host/smartperf/client/:SmartPerf",
+        "//developtools/profiler/host/smartperf/client/client_command:smartperf_daemon",
         "//developtools/profiler/host/smartperf/client/client_command/etc:spdaemon.para",
         "//developtools/profiler/host/smartperf/client/client_command/etc:spdaemon.para.dac"
       ],
@@ -195,6 +198,17 @@
             ]
           },
           "name": "//developtools/profiler/hidebug/interfaces/innerkits/native/hidebug_dump:hidebug_dump"
+        },
+        {
+          "header": {
+            "header_base": "//developtools/profiler/host/smartperf/client/client_command/interface",
+            "header_files": [
+              "GameServicePlugin.h",
+              "GameEventCallback.h",
+              "GpuCounterCallback.h"
+            ]
+          },
+          "name": "//developtools/profiler/host/smartperf/client/client_command/:smartperf_daemon"
         }
       ],
       "test": [
@@ -203,7 +217,8 @@
         "//developtools/profiler/interfaces/kits/test:unittest",
         "//developtools/profiler/hidebug/test/unittest:unittest",
         "//developtools/profiler/hidebug/test/fuzztest:fuzztest",
-        "//developtools/profiler/proto_encoder/test:unittest"
+        "//developtools/profiler/proto_encoder/test:unittest",
+        "//developtools/profiler/host/smartperf/client/client_command/test:unittest"
       ]
     }
   }
