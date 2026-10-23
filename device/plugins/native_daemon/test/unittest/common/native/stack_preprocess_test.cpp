@@ -206,7 +206,7 @@ static void SeedStatistic(StackPreprocess& preprocess, uint64_t addr, uint32_t s
     RecordStatistic statistic;
     statistic.callstackId = stackId;
     preprocess.recordStatisticsMap_[stackId] = statistic;
-    preprocess.allocAddrMap_[addr] = AllocAddrInfo {64, stackId, {1, 0}};
+    preprocess.allocAddrMap_.emplace(addr, AllocAddrInfo{64, stackId, {1, 0}, MALLOC_MSG});
     preprocess.addrSet_.insert(addr);
 }
 
@@ -1328,7 +1328,7 @@ HWTEST_F(StackPreprocessTest, ReconcileDuplicateMallocHandlesOlderAndNewerEvents
     RecordStatistic record;
     record.callstackId = stackId;
     preprocess.recordStatisticsMap_[stackId] = record;
-    preprocess.allocAddrMap_[addr] = AllocAddrInfo {64, stackId, {2, 0}};
+    preprocess.allocAddrMap_.emplace(addr, AllocAddrInfo{64, stackId, {2, 0}, MALLOC_MSG});
 
     EXPECT_FALSE(preprocess.ReconcileDuplicateMalloc(addr, {1, 0}));
     EXPECT_EQ(preprocess.allocAddrMap_.count(addr), 1u);
@@ -4061,8 +4061,8 @@ HWTEST_F(StackPreprocessTest, ReconcileWithSnapshotFreesOnlyStaleAllocations, Te
     RecordStatistic statistic;
     statistic.callstackId = stackId;
     preprocess.recordStatisticsMap_[stackId] = statistic;
-    preprocess.allocAddrMap_[liveAddr] = AllocAddrInfo {64, stackId, {1, 0}};
-    preprocess.allocAddrMap_[staleAddr] = AllocAddrInfo {96, stackId, {1, 0}};
+    preprocess.allocAddrMap_.emplace(liveAddr, AllocAddrInfo{64, stackId, {1, 0}, MALLOC_MSG});
+    preprocess.allocAddrMap_.emplace(staleAddr, AllocAddrInfo{96, stackId, {1, 0}, MALLOC_MSG});
     preprocess.addrSet_.insert(liveAddr);
     preprocess.addrSet_.insert(staleAddr);
 

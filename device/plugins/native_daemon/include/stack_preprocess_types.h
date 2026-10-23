@@ -63,6 +63,7 @@ struct AllocAddrInfo {
     uint64_t mallocSize;
     size_t stackId;
     struct timespec ts;
+    uint16_t allocType;
 };
 
 struct CallStackKey {
