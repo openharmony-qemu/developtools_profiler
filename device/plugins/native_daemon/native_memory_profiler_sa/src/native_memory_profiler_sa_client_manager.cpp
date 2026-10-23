@@ -574,7 +574,6 @@ int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint3
         g_profilerAsyncReqMgr.DeleteRequest(config->pid_);
         return RET_ERR;
     }
-
     int32_t result = InvokeWithProxy([fd, &config, &callbackObject](NativeMemoryProfilerSaProxy& proxy) {
         return proxy.DumpDataAsync(fd, config, callbackObject);
     });

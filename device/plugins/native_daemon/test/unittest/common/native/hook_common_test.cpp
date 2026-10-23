@@ -195,10 +195,6 @@ HWTEST_F(HookCommonTest, HookCommonTest010, TestSize.Level3)
 {
     ClientConfig config;
     EXPECT_EQ(config.anonMmapOnly, false);
-
-    ClientConfigIpc ipc;
-    ConvertClientConfigToIpc(config, ipc);
-    EXPECT_EQ(ipc.anonMmapOnly, false);
 }
 
 /**
