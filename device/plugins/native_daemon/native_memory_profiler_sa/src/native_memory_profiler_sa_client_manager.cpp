@@ -532,19 +532,10 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
     });
 }
 
-int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint32_t duration, MemSaConfig& saConfig,
-    ProfilingDumpCallback callback)
+static std::shared_ptr<NativeMemoryProfilerSaConfig> BuildMemSaConfig(pid_t pid, uint32_t duration,
+    const MemSaConfig& saConfig)
 {
-    CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
-    CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid pid with MemSaConfig");
-    CHECK_TRUE(callback, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid callback with MemSaConfig");
-    if ((saConfig.mask & RES_COMPOSITE_HEAP) && !(saConfig.mask & RES_ARK_GLOBAL_HANDLE)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "invalid mask, enable composite heap must enable global handle too");
-        return RET_ERR;
-    }
-    CHECK_TRUE(g_profilerAsyncReqMgr.TryAddRequest(static_cast<int32_t>(pid), duration, callback, fd, ""), RET_ERR,
-        "NativeMemoryProfilerSaClientManager: Started already with MemSaConfig for pid:%d", pid);
-    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
     config->pid_ = static_cast<int32_t>(pid);
     config->duration_ = duration;
     config->statisticsInterval_ = FIVE_MINUTES;
@@ -559,8 +550,8 @@ int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint3
     config->asyncFlag_ = saConfig.asyncFlag;
     config->traceMask_ = saConfig.mask;
     config->shareMemorySize_ = CALL_STACK_SMS;
-    std::vector<std::vector<uint64_t>> gpuRange;
     if (!saConfig.hookSizes.empty()) {
+        std::vector<std::vector<uint64_t>> gpuRange;
         gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_VK]));
         gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_GLES_IMAGE]));
         gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_GLES_BUFFER]));
@@ -568,6 +559,22 @@ int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint3
         gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_CL_BUFFER]));
         std::swap(config->gpuRange_, gpuRange);
     }
+    return config;
+}
+
+int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint32_t duration, MemSaConfig& saConfig,
+    ProfilingDumpCallback callback)
+{
+    CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
+    CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid pid with MemSaConfig");
+    CHECK_TRUE(callback, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid callback with MemSaConfig");
+    if ((saConfig.mask & RES_COMPOSITE_HEAP) && !(saConfig.mask & RES_ARK_GLOBAL_HANDLE)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "invalid mask, enable composite heap must enable global handle too");
+        return RET_ERR;
+    }
+    CHECK_TRUE(g_profilerAsyncReqMgr.TryAddRequest(static_cast<int32_t>(pid), duration, callback, fd, ""), RET_ERR,
+        "NativeMemoryProfilerSaClientManager: Started already with MemSaConfig for pid:%d", pid);
+    auto config = BuildMemSaConfig(pid, duration, saConfig);
     sptr<IRemoteObject> callbackObject = GetProfilingResultCallbackObject();
     if (callbackObject == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "get callback object FAIL");
