@@ -533,7 +533,7 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
 }
 
 static std::shared_ptr<NativeMemoryProfilerSaConfig> BuildMemSaConfig(pid_t pid, uint32_t duration,
-    const MemSaConfig& saConfig)
+    MemSaConfig& saConfig)
 {
     auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
     config->pid_ = static_cast<int32_t>(pid);
