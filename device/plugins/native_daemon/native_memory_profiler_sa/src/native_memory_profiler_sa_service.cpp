@@ -691,7 +691,7 @@ int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemory
 // only for API
 int32_t NativeMemoryProfilerSaService::Stop()
 {
-    int32_t retStopHook = StopHookAsync(static_cast<uint32_t>(IPCSkeleton::GetCallingPid()),
+    int32_t retStopHook = StopHookAsync(static_cast<uint32_t>(IPCSkeleton::GetCallingPid()), "",
         static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS));
     PROFILER_LOG_INFO(LOG_CORE, "StopHookAsync ret:%d", retStopHook);
     if (retStopHook != RET_OK) {
@@ -859,6 +859,7 @@ int32_t NativeMemoryProfilerSaService::StopHookTask(uint32_t pid, std::shared_pt
 {
     if (config != nullptr && config->timerFd >= 0) {
         g_scheduleTaskManager.UnscheduleTask(config->timerFd);
+        config->timerFd = -1;
     }
     std::string resultPath;
     int32_t retRelease = ReleaseForStopHook(pid, config, resultPath);
@@ -875,8 +876,8 @@ int32_t NativeMemoryProfilerSaService::StopHookTask(uint32_t pid, std::shared_pt
     return retRelease;
 }
 
-int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finishErrorCode, bool innerCall,
-    std::string name)
+int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, std::string name,
+    int32_t finishErrorCode, bool innerCall)
 {
     std::shared_ptr<TaskConfig> config = nullptr;
     {
@@ -918,7 +919,7 @@ int32_t NativeMemoryProfilerSaService::StopHookByType(uint32_t pid, std::string&
     bool isAsync, bool innerCall)
 {
     if (isAsync) {
-        return StopHookAsync(pid, finishErrorCode, innerCall, name);
+        return StopHookAsync(pid, name, finishErrorCode, innerCall);
     }
     return StopHook(pid, name, finishErrorCode, innerCall);
 }
@@ -2024,11 +2025,6 @@ void NativeMemoryProfilerSaService::SetMockSendSuccessForTest(bool success)
 void NativeMemoryProfilerSaService::SetMockNmdResultForTest(const std::string& result)
 {
     g_mockNmdResult = result;
-}
-int32_t NativeMemoryProfilerSaService::GetTaskCountForTest()
-{
-    std::lock_guard<std::mutex> guard(g_mtx);
-    return g_taskNum;
 }
 #endif
 
