@@ -1397,3 +1397,39 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartPrintOtherSimplifiedNmdIn
     cmd = "setenforce 1";
     system(cmd.c_str());
 }
+
+/**
+ * @tc.name: StartMemSaConfigAsyncMmapAnonymousOnly
+ * @tc.desc: StartAsync with mmapAnonymousOnly=true and empty hookSizes (covers BuildMemSaConfig false branches).
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigAsyncMmapAnonymousOnly, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    MemSaConfig config;
+    config.mask = RES_GPU_MASK;
+    config.asyncStackEnable = true;
+    config.asyncFlag = 5;
+    config.mmapAnonymousOnly = true;  // hookSizes empty: covers BuildMemSaConfig !mmapAnonymousOnly false + !hookSizes.empty() false
+
+    SemaphorePtr sem = GetSemaphoreFactory().Create(0);
+    ASSERT_NE(sem, nullptr);
+    auto callback = [&sem](int32_t errCode) { sem->Post(); };
+    int fd = open(TEST_HTRACE_FD_FILE_PATH.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    int pid = 0;
+    if (!COMMON::IsProcessExist(TEST_APP_NAME, pid)) {
+        COMMON::IsProcessExist(TEST_NATIVE_NAME, pid);
+    }
+    ASSERT_TRUE(pid > 0);
+
+    std::string cmd = "setenforce 0";
+    system(cmd.c_str());
+
+    ASSERT_EQ(NativeMemoryProfilerSaClientManager::StartAsync(fd, pid, 5, config, callback), RET_OK);
+    EXPECT_TRUE(sem->TimedWait(60));
+    close(fd);
+    unlink(TEST_HTRACE_FD_FILE_PATH.c_str());
+    cmd = "setenforce 1";
+    system(cmd.c_str());
+}
