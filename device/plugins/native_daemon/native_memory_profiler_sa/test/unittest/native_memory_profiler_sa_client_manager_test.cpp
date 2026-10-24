@@ -1410,7 +1410,7 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemSaConfigAsyncMmapAnony
     config.mask = RES_GPU_MASK;
     config.asyncStackEnable = true;
     config.asyncFlag = 5;
-    config.mmapAnonymousOnly = true;  // hookSizes empty: covers BuildMemSaConfig !mmapAnonymousOnly false + !hookSizes.empty() false
+    config.mmapAnonymousOnly = true;
 
     SemaphorePtr sem = GetSemaphoreFactory().Create(0);
     ASSERT_NE(sem, nullptr);
