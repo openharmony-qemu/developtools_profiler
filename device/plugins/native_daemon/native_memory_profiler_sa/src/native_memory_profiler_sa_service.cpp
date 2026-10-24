@@ -73,9 +73,6 @@ static std::unordered_map<pid_t, int> g_pidFds;
 static std::mutex g_pidFdMtx;
 static std::unordered_map<pid_t, std::pair<uid_t, gid_t>> g_pidInfo;
 static std::vector<std::vector<uint64_t>> g_gpuRange {GPU_TYPE_COUNT, std::vector<uint64_t>(GPU_RANGE_COUNT * 2, 0)};
-static std::unordered_map<int32_t, int32_t> g_timerFdInfo;
-static std::mutex g_timerFdMtx;
-//2: double
 static std::mutex g_nmdMtx;
 static std::unordered_set<uint32_t> g_stoppingPids;
 static std::mutex g_stoppingPidsMtx;
@@ -860,14 +857,8 @@ int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, 
 int32_t NativeMemoryProfilerSaService::StopHookTask(uint32_t pid, std::shared_ptr<TaskConfig> config,
     int32_t finishErrorCode)
 {
-    {
-        std::lock_guard<std::mutex> guard(g_timerFdMtx);
-        auto fdTimerIter = g_timerFdInfo.find(static_cast<int32_t>(pid));
-        if (fdTimerIter != g_timerFdInfo.end()) {
-            // delete schedule task.
-            g_scheduleTaskManager.UnscheduleTask(fdTimerIter->second);
-            g_timerFdInfo.erase(fdTimerIter);
-        }
+    if (config != nullptr && config->timerFd >= 0) {
+        g_scheduleTaskManager.UnscheduleTask(config->timerFd);
     }
     std::string resultPath;
     int32_t retRelease = ReleaseForStopHook(pid, config, resultPath);
@@ -884,13 +875,19 @@ int32_t NativeMemoryProfilerSaService::StopHookTask(uint32_t pid, std::shared_pt
     return retRelease;
 }
 
-int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finishErrorCode, bool innerCall)
+int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finishErrorCode, bool innerCall,
+    std::string name)
 {
     std::shared_ptr<TaskConfig> config = nullptr;
-    if (pid > 0) {
+    {
         std::lock_guard<std::mutex> guard(g_mtx);
-        if (auto taskIter = g_pidCtx.find(pid); taskIter != g_pidCtx.end()) {
+        if (pid > 0) {
+            if (auto taskIter = g_pidCtx.find(pid); taskIter != g_pidCtx.end()) {
+                config = taskIter->second;
+            }
+        } else if (auto taskIter = g_nameAndFilePathCtx.find(name); taskIter != g_nameAndFilePathCtx.end()) {
             config = taskIter->second;
+            pid = static_cast<uint32_t>(config->hookMgr->GetPid());
         }
     }
     if (config == nullptr) {
@@ -921,7 +918,7 @@ int32_t NativeMemoryProfilerSaService::StopHookByType(uint32_t pid, std::string&
     bool isAsync, bool innerCall)
 {
     if (isAsync) {
-        return StopHookAsync(pid, finishErrorCode, innerCall);
+        return StopHookAsync(pid, finishErrorCode, innerCall, name);
     }
     return StopHook(pid, name, finishErrorCode, innerCall);
 }
@@ -1086,10 +1083,6 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_FAIL,
             "start schedule task failed");
         return RET_ERR;
-    }
-    {
-        std::lock_guard<std::mutex> guard(g_timerFdMtx);
-        g_timerFdInfo[config->pid_] = timerFd;
     }
 
     std::shared_ptr<TaskConfig> configCtx = std::make_shared<TaskConfig>(hook, config->pid_, config->processName_,
@@ -1980,7 +1973,6 @@ void NativeMemoryProfilerSaService::ResetTaskContextsForTest()
     g_hasStartupMode = false;
     g_taskNum = 0;
     g_nmdPidType.clear();
-    g_timerFdInfo.clear();
 }
 
 void NativeMemoryProfilerSaService::InjectPidInfoForTest(pid_t pid, uid_t uid, gid_t gid)
@@ -2032,6 +2024,11 @@ void NativeMemoryProfilerSaService::SetMockSendSuccessForTest(bool success)
 void NativeMemoryProfilerSaService::SetMockNmdResultForTest(const std::string& result)
 {
     g_mockNmdResult = result;
+}
+int32_t NativeMemoryProfilerSaService::GetTaskCountForTest()
+{
+    std::lock_guard<std::mutex> guard(g_mtx);
+    return g_taskNum;
 }
 #endif
 

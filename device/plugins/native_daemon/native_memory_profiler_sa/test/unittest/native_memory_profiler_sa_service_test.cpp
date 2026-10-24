@@ -2333,3 +2333,138 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, PrintSimplifiedNmdInHookFailsWhenSta
     EXPECT_EQ(NativeMemoryProfilerSaService::PrintSimplifiedNmdInHook(config, reply), RET_ERR);
     NativeMemoryProfilerSaService::ResetTaskContextsForTest();
 }
+
+/**
+ * @tc.name: NameModeManualStopDeregistersTask
+ * @tc.desc: Manual Stop by process name deregisters a name-mode (pid==0) task, exercising the
+ *           StopHookTask timer-cancellation path that now uses config->timerFd directly (fix A).
+ *           g_scheduleTaskManager is a file-static with no query accessor, so direct timer-fd
+ *           removal is asserted indirectly via full deregistration: task count returns to
+ *           baseline and a re-Stop reports NOT_STARTED.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, NameModeManualStopDeregistersTask, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = "name_mode_manual_stop";
+    config->filePath_ = MakeTracePath("name_mode_manual_stop");
+    config->startType_ = TEST_START_TYPE_HIVIEW;
+    config->duration_ = TEST_DURATION; // long enough that the timer does not fire during the test
+    ASSERT_EQ(service->Start(config), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaService::GetTaskCountForTest(), 1);
+
+    // Manual stop by name before the duration timer fires (runs StopHookTask inline).
+    EXPECT_EQ(NativeMemoryProfilerSaService::StopHook(0, config->processName_,
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), true), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaService::GetTaskCountForTest(), 0);
+
+    // Task fully released: a re-Stop must report not-started (no second auto-stop callback effect).
+    EXPECT_EQ(NativeMemoryProfilerSaService::StopHook(0, config->processName_,
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), true),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED));
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: AsyncNameModeStopHookByTypeStopsSession
+ * @tc.desc: StopHookByType with isAsync=true on a name-mode (pid==0) task must resolve the config
+ *           by process name and stop the session (fix B). Before fix B, StopHookAsync(0) could not
+ *           resolve config and returned RES_PROF_NOT_STARTED without stopping. This test drives the
+ *           exact call the duration-timer auto-stop callback makes and asserts RET_OK plus full
+ *           deregistration (async stop runs on a detached thread, so the count drop is polled).
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, AsyncNameModeStopHookByTypeStopsSession, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    NativeMemoryProfilerSaService::EndStopHook(0); // clear any stale stopping guard for pid 0
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+    auto config = MakeSaConfig();
+    ASSERT_NE(config, nullptr);
+    config->pid_ = 0;
+    config->processName_ = "async_name_mode_auto_stop";
+    config->filePath_ = MakeTracePath("async_name_mode_auto_stop");
+    config->startType_ = TEST_START_TYPE_HIVIEW;
+    config->duration_ = TEST_DURATION; // timer will not fire; we drive the stop callback directly
+    ASSERT_EQ(service->Start(config), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaService::GetTaskCountForTest(), 1);
+
+    // Simulate the duration-timer auto-stop dispatch for an async (callback) name-mode task.
+    // Fix B discriminator: returns RET_OK (resolves by name). Before fix B: RES_PROF_NOT_STARTED.
+    EXPECT_EQ(NativeMemoryProfilerSaService::StopHookByType(0, config->processName_,
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION), true, true), RET_OK);
+
+    // The async stop executes on a detached thread; poll until the session is released.
+    bool stopped = false;
+    for (int i = 0; i < 300; ++i) { // up to ~3s
+        if (NativeMemoryProfilerSaService::GetTaskCountForTest() == 0) {
+            stopped = true;
+            break;
+        }
+        usleep(10000); // 10ms
+    }
+    EXPECT_TRUE(stopped);
+    NativeMemoryProfilerSaService::EndStopHook(0); // defensive: ensure the pid-0 stopping guard is cleared
+
+    // Session fully released: a re-Stop must report not-started.
+    EXPECT_EQ(NativeMemoryProfilerSaService::StopHook(0, config->processName_,
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), true),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED));
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}
+
+/**
+ * @tc.name: TwoIndependentNameTasksStopIndependently
+ * @tc.desc: Two name-mode (pid==0) tasks with different process names start and stop independently.
+ *           Guards against the historical g_timerFdInfo[0] overwrite / cross-task interference:
+ *           stopping one task must not affect the other, and the task count returns to baseline.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, TwoIndependentNameTasksStopIndependently, TestSize.Level2)
+{
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    ASSERT_NE(service, nullptr);
+
+    auto configA = MakeSaConfig();
+    ASSERT_NE(configA, nullptr);
+    configA->pid_ = 0;
+    configA->processName_ = "two_name_tasks_A";
+    configA->filePath_ = MakeTracePath("two_name_tasks_A");
+    configA->startType_ = TEST_START_TYPE_HIVIEW;
+    configA->duration_ = TEST_DURATION;
+    ASSERT_EQ(service->Start(configA), RET_OK);
+
+    auto configB = MakeSaConfig();
+    ASSERT_NE(configB, nullptr);
+    configB->pid_ = 0;
+    configB->processName_ = "two_name_tasks_B";
+    configB->filePath_ = MakeTracePath("two_name_tasks_B");
+    configB->startType_ = TEST_START_TYPE_HIVIEW;
+    configB->duration_ = TEST_DURATION;
+    ASSERT_EQ(service->Start(configB), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaService::GetTaskCountForTest(), 2);
+
+    // Stop task A; task B must remain registered.
+    EXPECT_EQ(NativeMemoryProfilerSaService::StopHook(0, configA->processName_,
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), true), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaService::GetTaskCountForTest(), 1);
+    EXPECT_EQ(NativeMemoryProfilerSaService::StopHook(0, configA->processName_,
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), true),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED));
+
+    // Stop task B independently; count returns to baseline.
+    EXPECT_EQ(NativeMemoryProfilerSaService::StopHook(0, configB->processName_,
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), true), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaService::GetTaskCountForTest(), 0);
+    EXPECT_EQ(NativeMemoryProfilerSaService::StopHook(0, configB->processName_,
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), true),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED));
+    NativeMemoryProfilerSaService::ResetTaskContextsForTest();
+}

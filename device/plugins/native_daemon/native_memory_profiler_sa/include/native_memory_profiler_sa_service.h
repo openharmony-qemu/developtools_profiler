@@ -97,7 +97,8 @@ private:
     int32_t StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd, MessageParcel &reply);
     static int32_t StopHook(uint32_t pid, std::string name = "",
         int32_t finishErrorCode = static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR), bool innerCall = false);
-    static int32_t StopHookAsync(uint32_t pid, int32_t finishErrorCode, bool innerCall = false);
+    static int32_t StopHookAsync(uint32_t pid, int32_t finishErrorCode, bool innerCall = false,
+        std::string name = "");
     static int32_t StopHookTask(uint32_t pid, std::shared_ptr<TaskConfig> config, int32_t finishErrorCode);
     static int32_t StopHookByType(uint32_t pid, std::string& name, int32_t finishErrorCode, bool isAsync,
         bool innerCall = false);
@@ -158,6 +159,7 @@ private:
     static void SetMockSystemResourceForTest(bool memFail, bool cpuFail, bool romFail);
     static void SetMockSendSuccessForTest(bool success);
     static void SetMockNmdResultForTest(const std::string& result);
+    static int32_t GetTaskCountForTest();
 #endif
 
 private:
