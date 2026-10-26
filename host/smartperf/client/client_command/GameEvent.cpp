@@ -61,30 +61,30 @@ void GameEvent::FinishtExecutionOnce(bool isPause)
 int GameEvent::RegisterGameEvent()
 {
     if (isRegister) {
-        WLOGI("GameEvent::RegisterGameEvent, already register");
+        LOGI("GameEvent::RegisterGameEvent, already register");
         return 0;
     }
-    WLOGI("GameEvent::RegisterGameEvent");
+    LOGI("GameEvent::RegisterGameEvent");
     std::unique_ptr<GameEventCallback> gameEventCallback = std::make_unique<GameEventCallbackImpl>();
     ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
     void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::GAME_PLUGIN);
     if (!handle) {
-        WLOGE("Get service plugin handler failed.");
+        LOGE("Get service plugin handler failed.");
         return -1;
     }
     typedef GameServicePlugin *(*GetServicePlugin)();
     GetServicePlugin servicePlugin = (GetServicePlugin)dlsym(handle, createPlugin.c_str());
     if (!servicePlugin) {
-        WLOGE("GameServicePlugin Error loading symbol");
+        LOGE("GameServicePlugin Error loading symbol");
         return -1;
     }
 
     int ret = servicePlugin()->RegisterGameEventListener(std::move(gameEventCallback));
     if (ret == 0) {
         isRegister = true;
-        WLOGI("GameEvent::ItemData, RegisterGameEventListener success");
+        LOGI("GameEvent::ItemData, RegisterGameEventListener success");
     } else {
-        WLOGE("GameEvent::ItemData, RegisterGameEventListener failed");
+        LOGE("GameEvent::ItemData, RegisterGameEventListener failed");
     }
     return ret;
 }
@@ -94,26 +94,26 @@ int GameEvent::UnregisterGameEvent()
     if (!isRegister) {
         return 0;
     }
-    WLOGI("GameEvent::UnregisterGameEvent");
+    LOGI("GameEvent::UnregisterGameEvent");
     ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
     void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::GAME_PLUGIN);
     if (!handle) {
-        WLOGE("Get service plugin handler failed.");
+        LOGE("Get service plugin handler failed.");
         return -1;
     }
     typedef GameServicePlugin *(*GetServicePlugin)();
     GetServicePlugin servicePlugin = (GetServicePlugin)dlsym(handle, createPlugin.c_str());
     if (!servicePlugin) {
-        WLOGE("GameServicePlugin Error loading symbol");
+        LOGE("GameServicePlugin Error loading symbol");
         return -1;
     }
 
     int ret = servicePlugin()->UnregisterGameEventListener();
     if (ret == 0) {
         isRegister = false;
-        WLOGI("GameEvent::ItemData, UnregisterGameEventListener success");
+        LOGI("GameEvent::ItemData, UnregisterGameEventListener success");
     } else {
-        WLOGE("GameEvent::ItemData, UnregisterGameEventListener failed");
+        LOGE("GameEvent::ItemData, UnregisterGameEventListener failed");
     }
     return ret;
 }

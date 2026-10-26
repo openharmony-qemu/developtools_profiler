@@ -438,7 +438,7 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
         s >> nodeId;
         LOGD("FPS::GetFpsInfoByRs nodeId: (%lld)", nodeId);
         std::string fpsInfoResult = OHOS::Rosen::RSInterfaces::GetInstance().GetRefreshInfoToSP(nodeId);
-        LOGD("FPS fpsInfoResult GetRefreshInfoToSP: %s", fpsInfoResult.c_str());
+        LOGD("FPS fpsInfoResult GetRefreshInfoToSP: %.2000s", fpsInfoResult.c_str());
         GetCurTimeStamps(fpsInfoResult, true);
         // when GetRefreshInfo data is empty, get GetRefreshInfoToSP to calc jitters.
         if (fpsInfo.currDumpTimeStamps.empty()) {
@@ -462,7 +462,7 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
         pid_t pid = std::atoi(processId.c_str());
         LOGD("FPS::GetFpsInfoByRs pid: (%d)", pid);
         std::string fpsInfoResult = OHOS::Rosen::RSInterfaces::GetInstance().GetRefreshInfo(pid);
-        LOGD("FPS fpsInfoResult GetRefreshInfo: %s", fpsInfoResult.c_str());
+        LOGD("FPS fpsInfoResult GetRefreshInfo: %.2000s", fpsInfoResult.c_str());
         GetCurTimeStamps(fpsInfoResult, false);
         CalcJitters(fpsInfo.currDumpTimeStamps);
     }

@@ -65,10 +65,13 @@ std::map<std::string, std::string> VisualEffectDisPatch::ItemData()
         emptyCount_++;
         return {};
     }
-    size_t expected = static_cast<size_t>(emptyCount_ + 1);
-    size_t fillCount = expected - listSize;
-    for (size_t i = 0; i < fillCount; i++) {
-        schedulData_.push_back(visualEffectDisPatchData);
+    if (listSize > static_cast<size_t>(emptyCount_ + 1)) {
+        emptyCount_ = 0;
+    } else {
+        size_t fillCount = static_cast<size_t>(emptyCount_ + 1) - listSize;
+        for (size_t i = 0; i < fillCount; i++) {
+            schedulData_.push_back(visualEffectDisPatchData);
+        }
     }
     for (const auto& item : schedulDataList_) {
         schedulData_.push_back(item);
@@ -151,31 +154,31 @@ void VisualEffectDisPatch::FinishtExecutionOnce(bool isPause)
 int VisualEffectDisPatch::RegisterGameScheduleEvent()
 {
     if (isRegister) {
-        WLOGI("VisualEffectDisPatch::RegisterGameScheduleEvent, already register");
+        LOGI("VisualEffectDisPatch::RegisterGameScheduleEvent, already register");
         return 0;
     }
-    WLOGI("VisualEffectDisPatch::RegisterGameScheduleEvent");
+    LOGI("VisualEffectDisPatch::RegisterGameScheduleEvent");
     std::unique_ptr<GameScheduleEventCallback> visualEffectDisPatchCallback =
         std::make_unique<GameScheduleEventCallbackImpl>();
     ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
     void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::SCHEDULE_PLUGIN);
     if (!handle) {
-        WLOGE("Get service plugin handler failed.");
+        LOGE("Get service plugin handler failed.");
         return -1;
     }
     typedef GameSchedulePlugin *(*GetSchedulePlugin)();
     GetSchedulePlugin servicePlugin = (GetSchedulePlugin)dlsym(handle, createPlugin.c_str());
     if (!servicePlugin) {
-        WLOGE("GameServicePlugin Error loading symbol");
+        LOGE("GameServicePlugin Error loading symbol");
         return -1;
     }
 
     int32_t ret = servicePlugin()->RegisterGameScheduleEvent(std::move(visualEffectDisPatchCallback));
     if (ret == 0) {
         isRegister = true;
-        WLOGI("VisualEffectDisPatch::RegisterGameScheduleEvent success");
+        LOGI("VisualEffectDisPatch::RegisterGameScheduleEvent success");
     } else {
-        WLOGE("VisualEffectDisPatch::RegisterGameScheduleEvent failed");
+        LOGE("VisualEffectDisPatch::RegisterGameScheduleEvent failed");
     }
     return ret;
 }
@@ -185,26 +188,26 @@ int VisualEffectDisPatch::UnregisterGameEvent()
     if (!isRegister) {
         return 0;
     }
-    WLOGI("VisualEffectDisPatch::UnregisterGameEvent");
+    LOGI("VisualEffectDisPatch::UnregisterGameEvent");
     ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
     void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::SCHEDULE_PLUGIN);
     if (!handle) {
-        WLOGE("Get service plugin handler failed.");
+        LOGE("Get service plugin handler failed.");
         return -1;
     }
     typedef GameSchedulePlugin *(*GetSchedulePlugin)();
     GetSchedulePlugin servicePlugin = (GetSchedulePlugin)dlsym(handle, createPlugin.c_str());
     if (!servicePlugin) {
-        WLOGE("GameServicePlugin Error loading symbol");
+        LOGE("GameServicePlugin Error loading symbol");
         return -1;
     }
 
     int32_t ret = servicePlugin()->UnregisterGameEvent();
     if (ret == 0) {
         isRegister = false;
-        WLOGI("VisualEffectDisPatch::UnregisterGameEvent success");
+        LOGI("VisualEffectDisPatch::UnregisterGameEvent success");
     } else {
-        WLOGE("VisualEffectDisPatch::UnregisterGameEvent failed");
+        LOGE("VisualEffectDisPatch::UnregisterGameEvent failed");
     }
     return ret;
 }

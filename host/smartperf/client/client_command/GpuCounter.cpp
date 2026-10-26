@@ -61,7 +61,7 @@ namespace OHOS {
         void GpuCounter::StartCollect(GcCollectType type)
         {
             if (frequency == 0) {
-                WLOGE("GpuCounter frequency is not set");
+                LOGE("GpuCounter frequency is not set");
                 return;
             }
             std::unique_ptr<GpuCounterCallback> gpuCounterCallback = std::make_unique<GpuCounterCallbackImpl>();
@@ -72,14 +72,14 @@ namespace OHOS {
             ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
             void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::GAME_PLUGIN);
             if (!handle) {
-                WLOGE("Get service plugin handler failed.");
+                LOGE("Get service plugin handler failed.");
                 return;
             }
 
             typedef GameServicePlugin *(*GetServicePlugin)();
             GetServicePlugin servicePlugin = (GetServicePlugin)dlsym(handle, createPlugin.c_str());
             if (!servicePlugin) {
-                WLOGE("GameServicePlugin Error loading symbol");
+                LOGE("GameServicePlugin Error loading symbol");
                 return;
             }
 
@@ -92,15 +92,15 @@ namespace OHOS {
                 if (ret == 0) {
                     gcStatus = GC_RUNNING;
                 } else {
-                    WLOGE("GpuCounter call gameService error, ret = %d", ret);
+                    LOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
             } else if (type == GC_RESTART && gcStatus == GC_RUNNING) {
                 int ret = servicePlugin()->StartGetGpuPerfInfo(duration, frequency, std::move(gpuCounterCallback));
                 if (ret != 0) {
-                    WLOGE("GpuCounter call gameService error, ret = %d", ret);
+                    LOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
             } else {
-                WLOGE("GpuCounter state error, type: %d, state: %d", type, gcStatus);
+                LOGE("GpuCounter state error, type: %d, state: %d", type, gcStatus);
             }
         }
 
@@ -114,14 +114,14 @@ namespace OHOS {
             savePathDirectory_ = path;
             char gpuCounterDataDirChar[PATH_MAX] = {0x00};
             if (realpath(path.c_str(), gpuCounterDataDirChar) == nullptr) {
-                WLOGE("data dir %s is nullptr", path.c_str());
+                LOGE("data dir %s is nullptr", path.c_str());
                 return;
             }
             std::string gpuCounterDataPath = std::string(gpuCounterDataDirChar) + "/gpu_counter.csv";
             std::ofstream outFile;
             outFile.open(gpuCounterDataPath.c_str(), std::ios::out | std::ios::trunc);
             if (!outFile.is_open()) {
-                WLOGE("open GpuCounter data file failed. %s", gpuCounterDataPath.c_str());
+                LOGE("open GpuCounter data file failed. %s", gpuCounterDataPath.c_str());
                 return;
             }
             static const std::string title = "startTime,"
@@ -181,14 +181,14 @@ namespace OHOS {
             ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
             void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::GAME_PLUGIN);
             if (!handle) {
-                WLOGE("Get service plugin handler failed.");
+                LOGE("Get service plugin handler failed.");
                 return;
             }
 
             typedef GameServicePlugin *(*GetServicePlugin)();
             GetServicePlugin servicePlugin = (GetServicePlugin)dlsym(handle, createPlugin.c_str());
             if (!servicePlugin) {
-                WLOGE("GameServicePlugin Error loading symbol");
+                LOGE("GameServicePlugin Error loading symbol");
                 return;
             }
 

@@ -26,7 +26,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> AISchedule::ItemData()
 {
     if (processId.empty()) {
-        WLOGE("AISchedule need processId.");
+        LOGE("AISchedule need processId.");
         return std::map<std::string, std::string>();
     }
     aiScheduleParams[aiScheduleParamPid] = processId;
@@ -35,14 +35,14 @@ std::map<std::string, std::string> AISchedule::ItemData()
 
     void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::GAME_PLUGIN);
     if (handle == nullptr) {
-        WLOGE("Get service plugin handler failed.");
+        LOGE("Get service plugin handler failed.");
         return std::map<std::string, std::string>();
     }
 
     typedef GameServicePlugin *(*GetServicePlugin)();
     GetServicePlugin servicePlugin = (GetServicePlugin)dlsym(handle, createPlugin.c_str());
     if (!servicePlugin) {
-        WLOGE("GameServicePlugin Error loading symbol");
+        LOGE("GameServicePlugin Error loading symbol");
         return std::map<std::string, std::string>();
     }
     return servicePlugin()->GetSystemFunctionStatus(aiScheduleParams);

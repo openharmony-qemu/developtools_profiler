@@ -177,13 +177,13 @@ namespace OHOS {
         void GpuCounterCallbackImpl::GetRealTime(GpuPerfInfo *newData)
         {
             if (newData == nullptr) {
-                WLOGE("GetRealTime newData is nullptr");
+                LOGE("GetRealTime newData is nullptr");
                 return;
             }
 
             JoinSocketData(newData);
             if ((realtimeGpuPerfInfoData.duration == 0) || (newData->duration == 0)) {
-                WLOGE("Invalid duration found: realtime = %d, newData = %d",
+                LOGE("Invalid duration found: realtime = %d, newData = %d",
                     realtimeGpuPerfInfoData.duration, newData->duration);
                 return;
             }
@@ -196,7 +196,7 @@ namespace OHOS {
         {
             std::ostringstream oss;
             if (itemData == nullptr) {
-                WLOGE("GpuCounter get itemData is nullptr");
+                LOGE("GpuCounter get itemData is nullptr");
                 return "";
             }
             oss << itemData->startTime << ","
@@ -220,7 +220,7 @@ namespace OHOS {
         int GpuCounterCallbackImpl::OnGpuData(std::vector<GpuPerfInfo> &gpuPerfInfos)
         {
             if (gpuPerfInfos.empty()) {
-                WLOGE("Receive gpuPerfInfos is empty!");
+                LOGE("Receive gpuPerfInfos is empty!");
                 return -1;
             }
 
@@ -231,20 +231,20 @@ namespace OHOS {
                 gpuCounter.push_back(gpuPerfInfo);
                 unsigned int gpuCounterSize = gpuCounter.size();
                 if (gpuCounterSize <= gpuCounterBackSize) {
-                    WLOGE("gpuCounter data len error!");
+                    LOGE("gpuCounter data len error!");
                     return -1;
                 }
                 GpuPerfInfo *newData = &gpuCounter[gpuCounterSize - 1];
                 GpuPerfInfo *backData = &gpuCounter[gpuCounterSize - 2];
                 if (newData == nullptr || backData == nullptr) {
-                    WLOGE("gpuCounter data pointer is null!");
+                    LOGE("gpuCounter data pointer is null!");
                     return -1;
                 }
                 long long durationTime = newData->startTime - backData->startTime;
 
                 // 如果两次数据间隔过短，则舍弃新数据
                 if (durationTime < collectInterval) {
-                    WLOGE("Start time(%lld, %lld) make duration time(%lld) too short",
+                    LOGE("Start time(%lld, %lld) make duration time(%lld) too short",
                         newData->startTime, backData->startTime, durationTime);
                     gpuCounter.pop_back();
                     continue;
