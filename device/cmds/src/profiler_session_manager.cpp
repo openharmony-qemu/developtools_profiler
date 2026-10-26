@@ -441,7 +441,7 @@ uint32_t ProfilerSessionManager::CaptureLongRunning(const std::string& config,
     if (!StartSession(profilerStub, sessionId)) {
         keepSessionRunning_ = false;
         keepSessionCv_.notify_one();
-        if (keepSessionThread_->joinable()) {
+        if (keepSessionThread_ && keepSessionThread_->joinable()) {
             keepSessionThread_->join();
         }
         DestroySession(profilerStub, sessionId);
