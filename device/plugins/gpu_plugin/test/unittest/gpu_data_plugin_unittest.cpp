@@ -273,4 +273,51 @@ HWTEST_F(GpuDataPluginTest, TestReadFileAbnormal, TestSize.Level1)
 #endif
 }
 
+/**
+ * @tc.name: gpu plugin
+ * @tc.desc: test hvgr node parse, line format is "Gpu utilisation:43"
+ * @tc.type: FUNC
+ */
+HWTEST_F(GpuDataPluginTest, TestReadFileHvgrNode, TestSize.Level1)
+{
+#if defined(__LP64__)
+    GpuDataPlugin gpuPlugin;
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    gpuPlugin.SetWriter(&writer);
+    gpuPlugin.running_ = true;
+    gpuPlugin.resultWriter_->isProtobufSerialize = true;
+    gpuPlugin.useHvgrNode_ = true;
+    std::string hvgrPath = GetFullPath(DEFAULT_TEST_PATH) + "/gpustat4.txt";
+    gpuPlugin.file_.open(hvgrPath);
+    EXPECT_TRUE(gpuPlugin.file_.is_open());
+    EXPECT_EQ(gpuPlugin.ReadFile(), 43);
+    gpuPlugin.file_.close();
+    EXPECT_EQ(GpuDataPlugin::ExtractValue("Gpu utilisation: 42 "), "42");
+    EXPECT_EQ(GpuDataPlugin::ExtractValue("Gpu utilisation 42"), "");
+    EXPECT_EQ(GpuDataPlugin::ExtractValue("Gpu utilisation:"), "");
+#endif
+}
+
+/**
+ * @tc.name: gpu plugin
+ * @tc.desc: test hvgr node parse abnormal, no digit after colon
+ * @tc.type: FUNC
+ */
+HWTEST_F(GpuDataPluginTest, TestReadFileHvgrAbnormal, TestSize.Level1)
+{
+#if defined(__LP64__)
+    GpuDataPlugin gpuPlugin;
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    gpuPlugin.SetWriter(&writer);
+    gpuPlugin.running_ = true;
+    gpuPlugin.resultWriter_->isProtobufSerialize = true;
+    gpuPlugin.useHvgrNode_ = true;
+    std::string hvgrPath = GetFullPath(DEFAULT_TEST_PATH) + "/gpustat5.txt";
+    gpuPlugin.file_.open(hvgrPath);
+    EXPECT_TRUE(gpuPlugin.file_.is_open());
+    EXPECT_EQ(gpuPlugin.ReadFile(), 0);
+    gpuPlugin.file_.close();
+#endif
+}
+
 } // namespace
