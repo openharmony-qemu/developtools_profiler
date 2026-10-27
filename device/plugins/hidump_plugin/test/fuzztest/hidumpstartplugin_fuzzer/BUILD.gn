@@ -32,7 +32,8 @@ ohos_fuzztest("HidumpStartPluginFuzzTest") {
   ]
   external_deps = [
     "bounds_checking_function:libsec_shared",
-    "openssl:libcrypto_shared",
+    "openhitls:openhitls_bsl",
+    "openhitls:openhitls_crypto",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [

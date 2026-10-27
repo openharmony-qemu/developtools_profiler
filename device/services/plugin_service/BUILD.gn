@@ -43,7 +43,8 @@ ohos_source_set("hiprofiler_plugin_service") {
     external_deps = [
       "bounds_checking_function:libsec_shared",
       "c_utils:utils",
-      "openssl:libcrypto_shared",
+      "openhitls:openhitls_bsl",
+      "openhitls:openhitls_crypto",
       "protobuf:protobuf_lite",
     ]
   }

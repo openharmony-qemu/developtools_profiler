@@ -22,25 +22,37 @@
 #include "common.h"
 #include "command_poller.h"
 #include "common_types.pbencoder.h"
+#include "crypt_algid.h"
+#include "crypt_eal_md.h"
+#include "crypt_errno.h"
 #include "logging.h"
-#include "openssl/sha.h"
 #include "plugin_service_types.pb.h"
 
 namespace {
 using namespace OHOS::Developtools::Profiler;
 constexpr int FILE_READ_CHUNK_SIZE = 4096;
+constexpr uint32_t SHA256_DIGEST_LEN = 32;
 constexpr char HEX_CHARS[] = "0123456789abcdef";
 #define HHB(v) (((v) & 0xF0) >> 4)
 #define LHB(v)  ((v) & 0x0F)
 
 std::string ComputeFileSha256(const std::string& path)
 {
-    uint8_t out[SHA256_DIGEST_LENGTH];
+    uint8_t out[SHA256_DIGEST_LEN];
     uint8_t buffer[FILE_READ_CHUNK_SIZE];
     char realPath[PATH_MAX + 1] = {0};
 
-    SHA256_CTX sha;
-    SHA256_Init(&sha);
+    // OpenHiTLS EAL allocates the digest context: pair every NewCtx with FreeCtx via RAII
+    std::unique_ptr<CRYPT_EAL_MdCtx, decltype(&CRYPT_EAL_MdFreeCtx)> sha(
+        CRYPT_EAL_MdNewCtx(CRYPT_MD_SHA256), CRYPT_EAL_MdFreeCtx);
+    if (sha == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:MdNewCtx failed", __func__);
+        return "";
+    }
+    if (CRYPT_EAL_MdInit(sha.get()) != CRYPT_SUCCESS) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:MdInit failed", __func__);
+        return "";
+    }
 
     size_t nbytes = 0;
     if ((path.length() >= PATH_MAX) || (realpath(path.c_str(), realPath) == nullptr)) {
@@ -53,13 +65,22 @@ std::string ComputeFileSha256(const std::string& path)
         return "";
     }
     while ((nbytes = fread(buffer, 1, sizeof(buffer), fptr.get())) > 0) {
-        SHA256_Update(&sha, buffer, nbytes);
+        if (CRYPT_EAL_MdUpdate(sha.get(), buffer, static_cast<uint32_t>(nbytes)) != CRYPT_SUCCESS) {
+            PROFILER_LOG_ERROR(LOG_CORE, "%s:MdUpdate failed", __func__);
+            return "";
+        }
     }
-    SHA256_Final(out, &sha);
+    // in/out len: capacity must be declared on entry (see EAL FinalParamIsValid)
+    uint32_t outLen = SHA256_DIGEST_LEN;
+    int retval = CRYPT_EAL_MdFinal(sha.get(), out, &outLen);
+    if (retval != CRYPT_SUCCESS || outLen != SHA256_DIGEST_LEN) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:MdFinal failed, ret=%d outLen=%u", __func__, retval, outLen);
+        return "";
+    }
 
     std::string result;
-    result.reserve(SHA256_DIGEST_LENGTH + SHA256_DIGEST_LENGTH);
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+    result.reserve(SHA256_DIGEST_LEN + SHA256_DIGEST_LEN);
+    for (uint32_t i = 0; i < SHA256_DIGEST_LEN; i++) {
         result.push_back(HEX_CHARS[HHB(out[i])]);
         result.push_back(HEX_CHARS[LHB(out[i])]);
     }

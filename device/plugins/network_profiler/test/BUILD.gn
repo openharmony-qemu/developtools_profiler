@@ -52,7 +52,8 @@ ohos_unittest("networkprofiler_ut") {
   external_deps += [
     "bounds_checking_function:libsec_shared",
     "init:libbegetutil",
-    "openssl:libcrypto_shared",
+    "openhitls:openhitls_bsl",
+    "openhitls:openhitls_crypto",
   ]
 
   defines = []

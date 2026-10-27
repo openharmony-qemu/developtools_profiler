@@ -344,9 +344,10 @@ bool TraceFileWriter::IsSplitFile(uint32_t size)
         PROFILER_LOG_INFO(LOG_CORE, "need to split the file(%s), data size:%d, size: %d, splitFileMaxSize_:%d",
             path_.c_str(), dataSize_, size, splitFileMaxSize_);
 
-        // update old file header
+        // update old file header; a failed digest means the old split file would carry
+        // an invalid sha256 — abort the split rather than produce a corrupted archive
         SetDurationTime();
-        Finish();
+        CHECK_TRUE(Finish(), false, "IsSplitFile: Finish old file failed, digest error!");
         if (stream_.is_open()) {
             stream_.close();
         }
@@ -389,7 +390,7 @@ bool TraceFileWriter::Finish()
 {
     CHECK_TRUE(fd_ != 0, false, "Finish(), nmd-only mode no need to use TraceFileWriter");
     // update header info
-    helper_.Update(header_);
+    CHECK_TRUE(helper_.Update(header_), false, "Finish() helper_.Update failed, digest computation error!");
     SetTimeStamp(); // add timestamp in header
 
     if (fd_ != -1) {
@@ -428,7 +429,7 @@ bool TraceFileWriter::UpdateSaFileHeader()
     CHECK_TRUE(fd_ != 0, false, "Finish(), nmd-only mode no need to use TraceFileWriter");
     SetDurationTime();
     // update header info
-    helper_.Update(header_);
+    CHECK_TRUE(helper_.Update(header_), false, "UpdateSaFileHeader() helper_.Update failed, digest computation error!");
     SetTimeStamp(); // add timestamp in header
     // get position of file pointer
     int offsetCur = lseek(fd_, 0, SEEK_CUR);

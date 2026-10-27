@@ -45,7 +45,8 @@ ohos_fuzztest("ProfilerStartSessionFuzzTest") {
     "grpc:gpr",
     "grpc:grpc",
     "grpc:grpcxx",
-    "openssl:libcrypto_shared",
+    "openhitls:openhitls_bsl",
+    "openhitls:openhitls_crypto",
     "protobuf:protobuf_lite",
   ]
 }

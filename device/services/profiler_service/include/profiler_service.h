@@ -148,6 +148,9 @@ private:
 
     std::string ResolveStandaloneMergePath(const std::string& filePath) const;
 
+    bool OpenStandaloneMergeStreams(const std::string& resultFile, const std::string& outputFile,
+        std::ifstream& fsFile, std::ofstream& fsTarget, int& posFile) const;
+
     bool TryAbstractNativeHookConfig(const std::vector<ProfilerPluginConfig>& pluginConfigs,
         std::shared_ptr<NativeHookConfig>& nativeHookConfig);
     bool NativeHookConfigHasCompositeTag(const std::shared_ptr<NativeHookConfig>& nativeHookConfig);

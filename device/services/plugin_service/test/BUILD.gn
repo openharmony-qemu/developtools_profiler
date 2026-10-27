@@ -43,7 +43,8 @@ ohos_unittest("plugin_service_ut") {
     "c_utils:utils",
     "googletest:gtest",
     "grpc:gpr",
-    "openssl:libcrypto_shared",
+    "openhitls:openhitls_bsl",
+    "openhitls:openhitls_crypto",
     "protobuf:protobuf_lite",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

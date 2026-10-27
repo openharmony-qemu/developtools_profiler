@@ -66,7 +66,7 @@
         "window_manager",
         "image_framework",
         "ffrt",
-        "openssl",
+        "openhitls",
         "zlib",
         "grpc",
         "abseil-cpp",

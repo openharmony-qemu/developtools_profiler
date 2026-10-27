@@ -16,13 +16,21 @@
 
 #include <climits>
 #include <cstring>
-#include <openssl/sha.h>
+#include "crypt_errno.h"
 #include <securec.h>
 #include "logging.h"
 
-TraceFileHelper::TraceFileHelper() : shaCtx_(std::make_shared<SHA256_CTX>())
+TraceFileHelper::TraceFileHelper()
+    : shaCtx_(CRYPT_EAL_MdNewCtx(CRYPT_MD_SHA256), CRYPT_EAL_MdFreeCtx)
 {
-    SHA256_Init(shaCtx_.get());
+    if (shaCtx_ == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "TraceFileHelper MdNewCtx failed");
+        return;
+    }
+    if (CRYPT_EAL_MdInit(shaCtx_.get()) != CRYPT_SUCCESS) {
+        PROFILER_LOG_ERROR(LOG_CORE, "TraceFileHelper MdInit failed, release ctx");
+        shaCtx_.reset(); // release via MdFreeCtx deleter; null marks the ctx unusable
+    }
 }
 
 TraceFileHelper::~TraceFileHelper()
@@ -31,23 +39,37 @@ TraceFileHelper::~TraceFileHelper()
 
 bool TraceFileHelper::AddSegment(const uint8_t data[], uint32_t size)
 {
+    CHECK_TRUE(shaCtx_ != nullptr, false, "shaCtx_ is null, digest ctx unavailable");
     if (size > std::numeric_limits<decltype(header_.data_.length)>::max() - header_.data_.length - sizeof(size)) {
         return false;
     }
     header_.data_.segments += 1;
     header_.data_.length += size;
     if (data != nullptr) {
-        int retval = SHA256_Update(shaCtx_.get(), data, size);
-        CHECK_TRUE(retval, false, "[%u] SHA256_Update FAILED, s:%u, d:%p!", header_.data_.segments, size, data);
+        int retval = CRYPT_EAL_MdUpdate(shaCtx_.get(), data, size);
+        CHECK_TRUE(retval == CRYPT_SUCCESS, false, "[%u] SHA256_Update FAILED, s:%u, d:%p!",
+            header_.data_.segments, size, data);
     }
     return true;
 }
 
 bool TraceFileHelper::Finish()
 {
-    int retval = 0;
-    retval = SHA256_Final(header_.data_.sha256, shaCtx_.get());
-    CHECK_TRUE(retval, false, "[%u] SHA256_Final FAILED!", header_.data_.segments);
+    CHECK_TRUE(shaCtx_ != nullptr, false,
+        "shaCtx_ is null, digest ctx unavailable (MdNewCtx/MdInit failed at construction)!");
+    // CRYPT_EAL_MdFinal is one-shot (sets state=FINAL, subsequent MdUpdate/MdFinal both return
+    // CRYPT_EAL_ERR_STATE); OpenSSL SHA256_Final was repeatable. UpdateSaFileHeader() calls Finish()
+    // periodically during data write, so finalize a snapshot copy and keep the working ctx updatable.
+    std::unique_ptr<CRYPT_EAL_MdCtx, decltype(&CRYPT_EAL_MdFreeCtx)> snapCtx(
+        CRYPT_EAL_MdDupCtx(shaCtx_.get()), CRYPT_EAL_MdFreeCtx);
+    CHECK_TRUE(snapCtx != nullptr, false, "MdDupCtx failed, cannot snapshot digest ctx!");
+    // *len is in/out: the callee validates *len >= digest size, so it must carry the buffer
+    // capacity on entry (SHA256_SIZE), not 0; OpenSSL SHA256_Final has no such parameter
+    uint32_t digestLen = TraceFileHeader::SHA256_SIZE;
+    int retval = CRYPT_EAL_MdFinal(snapCtx.get(), header_.data_.sha256, &digestLen);
+    CHECK_TRUE(retval == CRYPT_SUCCESS, false, "[%u] SHA256_FINAL FAILED, ret=%d!", header_.data_.segments, retval);
+    CHECK_TRUE(digestLen == TraceFileHeader::SHA256_SIZE, false, "[%u] SHA256_FINAL digest len %u invalid!",
+        header_.data_.segments, digestLen);
     return true;
 }
 
