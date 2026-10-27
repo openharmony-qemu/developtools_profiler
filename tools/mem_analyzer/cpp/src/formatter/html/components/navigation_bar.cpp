@@ -332,7 +332,7 @@ std::string NavBarDocContent()
 }
 
 // 构建帮助中心导航栏内容
-std::string nav_bar_help_center_content()
+std::string NavBarHelpCenterContent()
 {
     std::string content = R"HTML(
 <div class="help-container">
@@ -373,7 +373,7 @@ std::string nav_bar_help_center_content()
 }
 
 // 设置切换导航栏函数
-std::string nav_bar_switch_nav_func()
+std::string NavBarSwitchNavFunc()
 {
     return R"HTML(
     window.switchNav = function(navId, el)

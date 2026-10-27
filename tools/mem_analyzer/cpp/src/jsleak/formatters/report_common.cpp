@@ -163,7 +163,7 @@ window.toggleDetail = (prefix, i) => {
 )JS";
 }
 
-std::string report_common_sub_tab_css()
+std::string ReportCommonSubTabCss()
 {
     return R"CSS(
 /* 二级页签（详情列表 / 引用链总览图）+ 冰柱图画布容器：单快照与多快照报告共用。 */
@@ -180,7 +180,7 @@ std::string report_common_sub_tab_css()
 )CSS";
 }
 
-std::string report_common_sub_tab_js()
+std::string ReportCommonSubTabJs()
 {
     return R"JS(
 // 二级页签（详情列表 / 引用链总览图）+ 引用链树表交互：单快照与多快照报告共用。
@@ -398,7 +398,7 @@ std::string report_common_sub_tab_js()
 )JS";
 }
 
-std::string report_common_chart_init_js()
+std::string ReportCommonChartInitJs()
 {
     return R"JS(
 // 引用链总览图：把 window.ICICLE_CHARTS_DATA 交给共享图表模块渲染。
