@@ -26,6 +26,9 @@ struct ClkDisableData {
 __attribute__((noinline)) void ParseClkDisableData(ClkDisableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -33,6 +36,9 @@ template <typename FtraceEventType>
 void ParseClkDisable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClkDisableData eventData {};
     ParseClkDisableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_disable_format();
@@ -50,6 +56,9 @@ struct ClkDisableCompleteData {
 __attribute__((noinline)) void ParseClkDisableCompleteData(ClkDisableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -57,6 +66,9 @@ template <typename FtraceEventType>
 void ParseClkDisableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClkDisableCompleteData eventData {};
     ParseClkDisableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_disable_complete_format();
@@ -74,6 +86,9 @@ struct ClkEnableData {
 __attribute__((noinline)) void ParseClkEnableData(ClkEnableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -81,6 +96,9 @@ template <typename FtraceEventType>
 void ParseClkEnable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClkEnableData eventData {};
     ParseClkEnableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_enable_format();
@@ -98,6 +116,9 @@ struct ClkEnableCompleteData {
 __attribute__((noinline)) void ParseClkEnableCompleteData(ClkEnableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -105,6 +126,9 @@ template <typename FtraceEventType>
 void ParseClkEnableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClkEnableCompleteData eventData {};
     ParseClkEnableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_enable_complete_format();
@@ -122,6 +146,9 @@ struct ClkPrepareData {
 __attribute__((noinline)) void ParseClkPrepareData(ClkPrepareData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -129,6 +156,9 @@ template <typename FtraceEventType>
 void ParseClkPrepare(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClkPrepareData eventData {};
     ParseClkPrepareData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_prepare_format();
@@ -146,6 +176,9 @@ struct ClkPrepareCompleteData {
 __attribute__((noinline)) void ParseClkPrepareCompleteData(ClkPrepareCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -153,6 +186,9 @@ template <typename FtraceEventType>
 void ParseClkPrepareComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClkPrepareCompleteData eventData {};
     ParseClkPrepareCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_prepare_complete_format();
@@ -171,6 +207,9 @@ struct ClkSetParentData {
 __attribute__((noinline)) void ParseClkSetParentData(ClkSetParentData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pname = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -179,6 +218,9 @@ template <typename FtraceEventType>
 void ParseClkSetParent(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClkSetParentData eventData {};
     ParseClkSetParentData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_parent_format();
@@ -198,6 +240,9 @@ struct ClkSetParentCompleteData {
 __attribute__((noinline)) void ParseClkSetParentCompleteData(ClkSetParentCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pname = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -206,6 +251,9 @@ template <typename FtraceEventType>
 void ParseClkSetParentComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClkSetParentCompleteData eventData {};
     ParseClkSetParentCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_parent_complete_format();
@@ -225,6 +273,9 @@ struct ClkSetPhaseData {
 __attribute__((noinline)) void ParseClkSetPhaseData(ClkSetPhaseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.phase = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -233,6 +284,9 @@ template <typename FtraceEventType>
 void ParseClkSetPhase(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClkSetPhaseData eventData {};
     ParseClkSetPhaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_phase_format();
@@ -252,6 +306,9 @@ struct ClkSetPhaseCompleteData {
 __attribute__((noinline)) void ParseClkSetPhaseCompleteData(ClkSetPhaseCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.phase = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -260,6 +317,9 @@ template <typename FtraceEventType>
 void ParseClkSetPhaseComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClkSetPhaseCompleteData eventData {};
     ParseClkSetPhaseCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_phase_complete_format();
@@ -279,6 +339,9 @@ struct ClkSetRateData {
 __attribute__((noinline)) void ParseClkSetRateData(ClkSetRateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.rate = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -287,6 +350,9 @@ template <typename FtraceEventType>
 void ParseClkSetRate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClkSetRateData eventData {};
     ParseClkSetRateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_rate_format();
@@ -306,6 +372,9 @@ struct ClkSetRateCompleteData {
 __attribute__((noinline)) void ParseClkSetRateCompleteData(ClkSetRateCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.rate = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -314,6 +383,9 @@ template <typename FtraceEventType>
 void ParseClkSetRateComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClkSetRateCompleteData eventData {};
     ParseClkSetRateCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_rate_complete_format();
@@ -332,6 +404,9 @@ struct ClkUnprepareData {
 __attribute__((noinline)) void ParseClkUnprepareData(ClkUnprepareData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -339,6 +414,9 @@ template <typename FtraceEventType>
 void ParseClkUnprepare(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClkUnprepareData eventData {};
     ParseClkUnprepareData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_unprepare_format();
@@ -356,6 +434,9 @@ struct ClkUnprepareCompleteData {
 __attribute__((noinline)) void ParseClkUnprepareCompleteData(ClkUnprepareCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -363,6 +444,9 @@ template <typename FtraceEventType>
 void ParseClkUnprepareComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClkUnprepareCompleteData eventData {};
     ParseClkUnprepareCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_unprepare_complete_format();

@@ -28,6 +28,9 @@ struct RpcBindStatusData {
 __attribute__((noinline)) void ParseRpcBindStatusData(RpcBindStatusData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.task_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.client_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -37,6 +40,9 @@ template <typename FtraceEventType>
 void ParseRpcBindStatus(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RpcBindStatusData eventData {};
     ParseRpcBindStatusData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_bind_status_format();
@@ -58,6 +64,9 @@ struct RpcCallStatusData {
 __attribute__((noinline)) void ParseRpcCallStatusData(RpcCallStatusData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.task_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.client_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -67,6 +76,9 @@ template <typename FtraceEventType>
 void ParseRpcCallStatus(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RpcCallStatusData eventData {};
     ParseRpcCallStatusData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_call_status_format();
@@ -88,6 +100,9 @@ struct RpcConnectStatusData {
 __attribute__((noinline)) void ParseRpcConnectStatusData(RpcConnectStatusData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.task_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.client_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -97,6 +112,9 @@ template <typename FtraceEventType>
 void ParseRpcConnectStatus(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RpcConnectStatusData eventData {};
     ParseRpcConnectStatusData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_connect_status_format();
@@ -120,6 +138,9 @@ struct RpcSocketCloseData {
 __attribute__((noinline)) void ParseRpcSocketCloseData(RpcSocketCloseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.socket_state = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.sock_state = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -131,6 +152,9 @@ template <typename FtraceEventType>
 void ParseRpcSocketClose(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RpcSocketCloseData eventData {};
     ParseRpcSocketCloseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_socket_close_format();
@@ -157,6 +181,9 @@ struct RpcSocketConnectData {
 __attribute__((noinline)) void ParseRpcSocketConnectData(RpcSocketConnectData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.error = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.socket_state = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -169,6 +196,9 @@ template <typename FtraceEventType>
 void ParseRpcSocketConnect(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RpcSocketConnectData eventData {};
     ParseRpcSocketConnectData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_socket_connect_format();
@@ -196,6 +226,9 @@ struct RpcSocketErrorData {
 __attribute__((noinline)) void ParseRpcSocketErrorData(RpcSocketErrorData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.error = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.socket_state = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -208,6 +241,9 @@ template <typename FtraceEventType>
 void ParseRpcSocketError(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RpcSocketErrorData eventData {};
     ParseRpcSocketErrorData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_socket_error_format();
@@ -235,6 +271,9 @@ struct RpcSocketResetConnectionData {
 __attribute__((noinline)) void ParseRpcSocketResetConnectionData(RpcSocketResetConnectionData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.error = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.socket_state = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -247,6 +286,9 @@ template <typename FtraceEventType>
 void ParseRpcSocketResetConnection(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RpcSocketResetConnectionData eventData {};
     ParseRpcSocketResetConnectionData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_socket_reset_connection_format();
@@ -273,6 +315,9 @@ struct RpcSocketShutdownData {
 __attribute__((noinline)) void ParseRpcSocketShutdownData(RpcSocketShutdownData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.socket_state = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.sock_state = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -284,6 +329,9 @@ template <typename FtraceEventType>
 void ParseRpcSocketShutdown(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RpcSocketShutdownData eventData {};
     ParseRpcSocketShutdownData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_socket_shutdown_format();
@@ -309,6 +357,9 @@ struct RpcSocketStateChangeData {
 __attribute__((noinline)) void ParseRpcSocketStateChangeData(RpcSocketStateChangeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.socket_state = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.sock_state = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -320,6 +371,9 @@ template <typename FtraceEventType>
 void ParseRpcSocketStateChange(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RpcSocketStateChangeData eventData {};
     ParseRpcSocketStateChangeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_socket_state_change_format();
@@ -346,6 +400,9 @@ struct RpcTaskBeginData {
 __attribute__((noinline)) void ParseRpcTaskBeginData(RpcTaskBeginData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.task_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.client_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -358,6 +415,9 @@ template <typename FtraceEventType>
 void ParseRpcTaskBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RpcTaskBeginData eventData {};
     ParseRpcTaskBeginData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_task_begin_format();
@@ -385,6 +445,9 @@ struct RpcTaskCompleteData {
 __attribute__((noinline)) void ParseRpcTaskCompleteData(RpcTaskCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.task_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.client_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -397,6 +460,9 @@ template <typename FtraceEventType>
 void ParseRpcTaskComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RpcTaskCompleteData eventData {};
     ParseRpcTaskCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_task_complete_format();
@@ -424,6 +490,9 @@ struct RpcTaskRunActionData {
 __attribute__((noinline)) void ParseRpcTaskRunActionData(RpcTaskRunActionData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.task_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.client_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -436,6 +505,9 @@ template <typename FtraceEventType>
 void ParseRpcTaskRunAction(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RpcTaskRunActionData eventData {};
     ParseRpcTaskRunActionData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_task_run_action_format();
@@ -464,6 +536,9 @@ struct RpcTaskSleepData {
 __attribute__((noinline)) void ParseRpcTaskSleepData(RpcTaskSleepData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.task_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.client_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -477,6 +552,9 @@ template <typename FtraceEventType>
 void ParseRpcTaskSleep(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RpcTaskSleepData eventData {};
     ParseRpcTaskSleepData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_task_sleep_format();
@@ -506,6 +584,9 @@ struct RpcTaskWakeupData {
 __attribute__((noinline)) void ParseRpcTaskWakeupData(RpcTaskWakeupData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.task_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.client_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -519,6 +600,9 @@ template <typename FtraceEventType>
 void ParseRpcTaskWakeup(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RpcTaskWakeupData eventData {};
     ParseRpcTaskWakeupData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_task_wakeup_format();
@@ -545,6 +629,9 @@ struct SvcHandleXprtData {
 __attribute__((noinline)) void ParseSvcHandleXprtData(SvcHandleXprtData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.xprt = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -555,6 +642,9 @@ template <typename FtraceEventType>
 void ParseSvcHandleXprt(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SvcHandleXprtData eventData {};
     ParseSvcHandleXprtData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_svc_handle_xprt_format();
@@ -579,6 +669,9 @@ struct SvcProcessData {
 __attribute__((noinline)) void ParseSvcProcessData(SvcProcessData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.xid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.vers = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -590,6 +683,9 @@ template <typename FtraceEventType>
 void ParseSvcProcess(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SvcProcessData eventData {};
     ParseSvcProcessData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_svc_process_format();
@@ -614,6 +710,9 @@ struct SvcRecvData {
 __attribute__((noinline)) void ParseSvcRecvData(SvcRecvData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.xid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -624,6 +723,9 @@ template <typename FtraceEventType>
 void ParseSvcRecv(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SvcRecvData eventData {};
     ParseSvcRecvData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_svc_recv_format();
@@ -647,6 +749,9 @@ struct SvcSendData {
 __attribute__((noinline)) void ParseSvcSendData(SvcSendData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.xid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.status = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -657,6 +762,9 @@ template <typename FtraceEventType>
 void ParseSvcSend(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SvcSendData eventData {};
     ParseSvcSendData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_svc_send_format();
@@ -677,6 +785,9 @@ struct SvcWakeUpData {
 __attribute__((noinline)) void ParseSvcWakeUpData(SvcWakeUpData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -684,6 +795,9 @@ template <typename FtraceEventType>
 void ParseSvcWakeUp(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SvcWakeUpData eventData {};
     ParseSvcWakeUpData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_svc_wake_up_format();
@@ -704,6 +818,9 @@ struct SvcXprtDequeueData {
 __attribute__((noinline)) void ParseSvcXprtDequeueData(SvcXprtDequeueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.xprt = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -714,6 +831,9 @@ template <typename FtraceEventType>
 void ParseSvcXprtDequeue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SvcXprtDequeueData eventData {};
     ParseSvcXprtDequeueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_svc_xprt_dequeue_format();
@@ -737,6 +857,9 @@ struct SvcXprtDoEnqueueData {
 __attribute__((noinline)) void ParseSvcXprtDoEnqueueData(SvcXprtDoEnqueueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.xprt = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -747,6 +870,9 @@ template <typename FtraceEventType>
 void ParseSvcXprtDoEnqueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SvcXprtDoEnqueueData eventData {};
     ParseSvcXprtDoEnqueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_svc_xprt_do_enqueue_format();
@@ -770,6 +896,9 @@ struct XprtCompleteRqstData {
 __attribute__((noinline)) void ParseXprtCompleteRqstData(XprtCompleteRqstData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.xid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.status = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -780,6 +909,9 @@ template <typename FtraceEventType>
 void ParseXprtCompleteRqst(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     XprtCompleteRqstData eventData {};
     ParseXprtCompleteRqstData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_xprt_complete_rqst_format();
@@ -803,6 +935,9 @@ struct XprtLookupRqstData {
 __attribute__((noinline)) void ParseXprtLookupRqstData(XprtLookupRqstData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.xid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.status = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -813,6 +948,9 @@ template <typename FtraceEventType>
 void ParseXprtLookupRqst(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     XprtLookupRqstData eventData {};
     ParseXprtLookupRqstData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_xprt_lookup_rqst_format();
@@ -836,6 +974,9 @@ struct XprtTransmitData {
 __attribute__((noinline)) void ParseXprtTransmitData(XprtTransmitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.xid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.status = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -846,6 +987,9 @@ template <typename FtraceEventType>
 void ParseXprtTransmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     XprtTransmitData eventData {};
     ParseXprtTransmitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_xprt_transmit_format();
@@ -869,6 +1013,9 @@ struct XsTcpDataReadyData {
 __attribute__((noinline)) void ParseXsTcpDataReadyData(XsTcpDataReadyData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.err = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.total = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -879,6 +1026,9 @@ template <typename FtraceEventType>
 void ParseXsTcpDataReady(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     XsTcpDataReadyData eventData {};
     ParseXsTcpDataReadyData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_xs_tcp_data_ready_format();
@@ -905,6 +1055,9 @@ struct XsTcpDataRecvData {
 __attribute__((noinline)) void ParseXsTcpDataRecvData(XsTcpDataRecvData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.addr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.port = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -918,6 +1071,9 @@ template <typename FtraceEventType>
 void ParseXsTcpDataRecv(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     XsTcpDataRecvData eventData {};
     ParseXsTcpDataRecvData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_xs_tcp_data_recv_format();

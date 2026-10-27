@@ -26,6 +26,9 @@ struct RcuUtilizationData {
 __attribute__((noinline)) void ParseRcuUtilizationData(RcuUtilizationData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.s = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -33,6 +36,9 @@ template <typename FtraceEventType>
 void ParseRcuUtilization(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RcuUtilizationData eventData {};
     ParseRcuUtilizationData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rcu_utilization_format();

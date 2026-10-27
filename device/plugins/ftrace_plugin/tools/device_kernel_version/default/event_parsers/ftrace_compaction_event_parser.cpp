@@ -30,6 +30,9 @@ struct MmCompactionBeginData {
 __attribute__((noinline)) void ParseMmCompactionBeginData(MmCompactionBeginData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.zone_start = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.migrate_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -41,6 +44,9 @@ template <typename FtraceEventType>
 void ParseMmCompactionBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmCompactionBeginData eventData {};
     ParseMmCompactionBeginData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_begin_format();
@@ -67,6 +73,9 @@ struct MmCompactionDeferCompactionData {
 __attribute__((noinline)) void ParseMmCompactionDeferCompactionData(MmCompactionDeferCompactionData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.idx = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -79,6 +88,9 @@ template <typename FtraceEventType>
 void ParseMmCompactionDeferCompaction(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmCompactionDeferCompactionData eventData {};
     ParseMmCompactionDeferCompactionData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_defer_compaction_format();
@@ -106,6 +118,9 @@ struct MmCompactionDeferResetData {
 __attribute__((noinline)) void ParseMmCompactionDeferResetData(MmCompactionDeferResetData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.idx = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -118,6 +133,9 @@ template <typename FtraceEventType>
 void ParseMmCompactionDeferReset(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmCompactionDeferResetData eventData {};
     ParseMmCompactionDeferResetData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_defer_reset_format();
@@ -145,6 +163,9 @@ struct MmCompactionDeferredData {
 __attribute__((noinline)) void ParseMmCompactionDeferredData(MmCompactionDeferredData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.idx = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -157,6 +178,9 @@ template <typename FtraceEventType>
 void ParseMmCompactionDeferred(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmCompactionDeferredData eventData {};
     ParseMmCompactionDeferredData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_deferred_format();
@@ -184,6 +208,9 @@ struct MmCompactionEndData {
 __attribute__((noinline)) void ParseMmCompactionEndData(MmCompactionEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.zone_start = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.migrate_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -196,6 +223,9 @@ template <typename FtraceEventType>
 void ParseMmCompactionEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmCompactionEndData eventData {};
     ParseMmCompactionEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_end_format();
@@ -221,6 +251,9 @@ struct MmCompactionFinishedData {
 __attribute__((noinline)) void ParseMmCompactionFinishedData(MmCompactionFinishedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.idx = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -231,6 +264,9 @@ template <typename FtraceEventType>
 void ParseMmCompactionFinished(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmCompactionFinishedData eventData {};
     ParseMmCompactionFinishedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_finished_format();
@@ -254,6 +290,9 @@ struct MmCompactionIsolateFreepagesData {
 __attribute__((noinline)) void ParseMmCompactionIsolateFreepagesData(MmCompactionIsolateFreepagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.start_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.end_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -264,6 +303,9 @@ template <typename FtraceEventType>
 void ParseMmCompactionIsolateFreepages(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmCompactionIsolateFreepagesData eventData {};
     ParseMmCompactionIsolateFreepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_isolate_freepages_format();
@@ -287,6 +329,9 @@ struct MmCompactionIsolateMigratepagesData {
 __attribute__((noinline)) void ParseMmCompactionIsolateMigratepagesData(MmCompactionIsolateMigratepagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.start_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.end_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -297,6 +342,9 @@ template <typename FtraceEventType>
 void ParseMmCompactionIsolateMigratepages(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmCompactionIsolateMigratepagesData eventData {};
     ParseMmCompactionIsolateMigratepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_isolate_migratepages_format();
@@ -318,6 +366,9 @@ struct MmCompactionMigratepagesData {
 __attribute__((noinline)) void ParseMmCompactionMigratepagesData(MmCompactionMigratepagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.nr_migrated = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nr_failed = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -326,6 +377,9 @@ template <typename FtraceEventType>
 void ParseMmCompactionMigratepages(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmCompactionMigratepagesData eventData {};
     ParseMmCompactionMigratepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_migratepages_format();
@@ -347,6 +401,9 @@ struct MmCompactionSuitableData {
 __attribute__((noinline)) void ParseMmCompactionSuitableData(MmCompactionSuitableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.idx = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -357,6 +414,9 @@ template <typename FtraceEventType>
 void ParseMmCompactionSuitable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmCompactionSuitableData eventData {};
     ParseMmCompactionSuitableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_suitable_format();
@@ -379,6 +439,9 @@ struct MmCompactionTryToCompactPagesData {
 __attribute__((noinline)) void ParseMmCompactionTryToCompactPagesData(MmCompactionTryToCompactPagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.gfp_mask = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -388,6 +451,9 @@ template <typename FtraceEventType>
 void ParseMmCompactionTryToCompactPages(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmCompactionTryToCompactPagesData eventData {};
     ParseMmCompactionTryToCompactPagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_try_to_compact_pages_format();

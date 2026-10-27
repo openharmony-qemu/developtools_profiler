@@ -27,6 +27,9 @@ struct SchedKthreadStopData {
 __attribute__((noinline)) void ParseSchedKthreadStopData(SchedKthreadStopData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -35,6 +38,9 @@ template <typename FtraceEventType>
 void ParseSchedKthreadStop(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedKthreadStopData eventData {};
     ParseSchedKthreadStopData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_kthread_stop_format();
@@ -53,6 +59,9 @@ struct SchedKthreadStopRetData {
 __attribute__((noinline)) void ParseSchedKthreadStopRetData(SchedKthreadStopRetData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -60,6 +69,9 @@ template <typename FtraceEventType>
 void ParseSchedKthreadStopRet(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedKthreadStopRetData eventData {};
     ParseSchedKthreadStopRetData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_kthread_stop_ret_format();
@@ -81,6 +93,9 @@ struct SchedMigrateTaskData {
 __attribute__((noinline)) void ParseSchedMigrateTaskData(SchedMigrateTaskData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -92,6 +107,9 @@ template <typename FtraceEventType>
 void ParseSchedMigrateTask(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedMigrateTaskData eventData {};
     ParseSchedMigrateTaskData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_migrate_task_format();
@@ -119,6 +137,9 @@ struct SchedMoveNumaData {
 __attribute__((noinline)) void ParseSchedMoveNumaData(SchedMoveNumaData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.tgid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -132,6 +153,9 @@ template <typename FtraceEventType>
 void ParseSchedMoveNuma(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedMoveNumaData eventData {};
     ParseSchedMoveNumaData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_move_numa_format();
@@ -158,6 +182,9 @@ struct SchedPiSetprioData {
 __attribute__((noinline)) void ParseSchedPiSetprioData(SchedPiSetprioData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -168,6 +195,9 @@ template <typename FtraceEventType>
 void ParseSchedPiSetprio(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedPiSetprioData eventData {};
     ParseSchedPiSetprioData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_pi_setprio_format();
@@ -190,6 +220,9 @@ struct SchedProcessExecData {
 __attribute__((noinline)) void ParseSchedProcessExecData(SchedProcessExecData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.filename = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -199,6 +232,9 @@ template <typename FtraceEventType>
 void ParseSchedProcessExec(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedProcessExecData eventData {};
     ParseSchedProcessExecData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_process_exec_format();
@@ -220,6 +256,9 @@ struct SchedProcessExitData {
 __attribute__((noinline)) void ParseSchedProcessExitData(SchedProcessExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -229,6 +268,9 @@ template <typename FtraceEventType>
 void ParseSchedProcessExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedProcessExitData eventData {};
     ParseSchedProcessExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_process_exit_format();
@@ -251,6 +293,9 @@ struct SchedProcessForkData {
 __attribute__((noinline)) void ParseSchedProcessForkData(SchedProcessForkData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.parent_comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.parent_pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -261,6 +306,9 @@ template <typename FtraceEventType>
 void ParseSchedProcessFork(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedProcessForkData eventData {};
     ParseSchedProcessForkData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_process_fork_format();
@@ -283,6 +331,9 @@ struct SchedProcessFreeData {
 __attribute__((noinline)) void ParseSchedProcessFreeData(SchedProcessFreeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -292,6 +343,9 @@ template <typename FtraceEventType>
 void ParseSchedProcessFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedProcessFreeData eventData {};
     ParseSchedProcessFreeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_process_free_format();
@@ -313,6 +367,9 @@ struct SchedProcessWaitData {
 __attribute__((noinline)) void ParseSchedProcessWaitData(SchedProcessWaitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -322,6 +379,9 @@ template <typename FtraceEventType>
 void ParseSchedProcessWait(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedProcessWaitData eventData {};
     ParseSchedProcessWaitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_process_wait_format();
@@ -343,6 +403,9 @@ struct SchedStatBlockedData {
 __attribute__((noinline)) void ParseSchedStatBlockedData(SchedStatBlockedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -352,6 +415,9 @@ template <typename FtraceEventType>
 void ParseSchedStatBlocked(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedStatBlockedData eventData {};
     ParseSchedStatBlockedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_stat_blocked_format();
@@ -373,6 +439,9 @@ struct SchedStatIowaitData {
 __attribute__((noinline)) void ParseSchedStatIowaitData(SchedStatIowaitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -382,6 +451,9 @@ template <typename FtraceEventType>
 void ParseSchedStatIowait(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedStatIowaitData eventData {};
     ParseSchedStatIowaitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_stat_iowait_format();
@@ -405,6 +477,9 @@ struct SchedStatRuntimeData {
 __attribute__((noinline)) void ParseSchedStatRuntimeData(SchedStatRuntimeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -418,6 +493,9 @@ template <typename FtraceEventType>
 void ParseSchedStatRuntime(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedStatRuntimeData eventData {};
     ParseSchedStatRuntimeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_stat_runtime_format();
@@ -442,6 +520,9 @@ struct SchedStatSleepData {
 __attribute__((noinline)) void ParseSchedStatSleepData(SchedStatSleepData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -451,6 +532,9 @@ template <typename FtraceEventType>
 void ParseSchedStatSleep(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedStatSleepData eventData {};
     ParseSchedStatSleepData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_stat_sleep_format();
@@ -472,6 +556,9 @@ struct SchedStatWaitData {
 __attribute__((noinline)) void ParseSchedStatWaitData(SchedStatWaitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -481,6 +568,9 @@ template <typename FtraceEventType>
 void ParseSchedStatWait(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedStatWaitData eventData {};
     ParseSchedStatWaitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_stat_wait_format();
@@ -509,6 +599,9 @@ struct SchedStickNumaData {
 __attribute__((noinline)) void ParseSchedStickNumaData(SchedStickNumaData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.src_pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.src_tgid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -525,6 +618,9 @@ template <typename FtraceEventType>
 void ParseSchedStickNuma(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedStickNumaData eventData {};
     ParseSchedStickNumaData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_stick_numa_format();
@@ -560,6 +656,9 @@ struct SchedSwapNumaData {
 __attribute__((noinline)) void ParseSchedSwapNumaData(SchedSwapNumaData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.src_pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.src_tgid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -576,6 +675,9 @@ template <typename FtraceEventType>
 void ParseSchedSwapNuma(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedSwapNumaData eventData {};
     ParseSchedSwapNumaData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_swap_numa_format();
@@ -608,6 +710,9 @@ struct SchedSwitchData {
 __attribute__((noinline)) void ParseSchedSwitchData(SchedSwitchData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.prev_comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.prev_pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -621,6 +726,9 @@ template <typename FtraceEventType>
 void ParseSchedSwitch(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedSwitchData eventData {};
     ParseSchedSwitchData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_switch_format();
@@ -646,6 +754,9 @@ struct SchedWaitTaskData {
 __attribute__((noinline)) void ParseSchedWaitTaskData(SchedWaitTaskData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -655,6 +766,9 @@ template <typename FtraceEventType>
 void ParseSchedWaitTask(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedWaitTaskData eventData {};
     ParseSchedWaitTaskData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_wait_task_format();
@@ -674,6 +788,9 @@ struct SchedWakeIdleWithoutIpiData {
 __attribute__((noinline)) void ParseSchedWakeIdleWithoutIpiData(SchedWakeIdleWithoutIpiData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.cpu = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -681,6 +798,9 @@ template <typename FtraceEventType>
 void ParseSchedWakeIdleWithoutIpi(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedWakeIdleWithoutIpiData eventData {};
     ParseSchedWakeIdleWithoutIpiData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_wake_idle_without_ipi_format();
@@ -701,6 +821,9 @@ struct SchedWakeupData {
 __attribute__((noinline)) void ParseSchedWakeupData(SchedWakeupData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -711,6 +834,9 @@ template <typename FtraceEventType>
 void ParseSchedWakeup(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedWakeupData eventData {};
     ParseSchedWakeupData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_wakeup_format();
@@ -734,6 +860,9 @@ struct SchedWakeupNewData {
 __attribute__((noinline)) void ParseSchedWakeupNewData(SchedWakeupNewData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -744,6 +873,9 @@ template <typename FtraceEventType>
 void ParseSchedWakeupNew(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedWakeupNewData eventData {};
     ParseSchedWakeupNewData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_wakeup_new_format();
@@ -767,6 +899,9 @@ struct SchedWakingData {
 __attribute__((noinline)) void ParseSchedWakingData(SchedWakingData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -777,6 +912,9 @@ template <typename FtraceEventType>
 void ParseSchedWaking(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SchedWakingData eventData {};
     ParseSchedWakingData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_waking_format();

@@ -28,6 +28,9 @@ struct GpuMemTotalData {
 __attribute__((noinline)) void ParseGpuMemTotalData(GpuMemTotalData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.gpu_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -37,6 +40,9 @@ template <typename FtraceEventType>
 void ParseGpuMemTotal(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     GpuMemTotalData eventData {};
     ParseGpuMemTotalData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_gpu_mem_total_format();

@@ -27,6 +27,9 @@ struct SysEnterData {
 __attribute__((noinline)) void ParseSysEnterData(SysEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int index = 0;
     eventData.id = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, index++, data, size);
     eventData.args = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, index++, data, size);
@@ -35,6 +38,9 @@ template <typename FtraceEventType>
 void ParseSysEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SysEnterData eventData {};
     ParseSysEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sys_enter_format();
@@ -56,6 +62,9 @@ struct SysExitData {
 __attribute__((noinline)) void ParseSysExitData(SysExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.id = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ret = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -64,6 +73,9 @@ template <typename FtraceEventType>
 void ParseSysExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SysExitData eventData {};
     ParseSysExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sys_exit_format();

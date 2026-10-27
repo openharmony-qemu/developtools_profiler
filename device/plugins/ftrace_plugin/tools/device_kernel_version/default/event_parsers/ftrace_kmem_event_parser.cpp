@@ -27,6 +27,9 @@ struct KfreeData {
 __attribute__((noinline)) void ParseKfreeData(KfreeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -35,6 +38,9 @@ template <typename FtraceEventType>
 void ParseKfree(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     KfreeData eventData {};
     ParseKfreeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_kfree_format();
@@ -57,6 +63,9 @@ struct KmallocData {
 __attribute__((noinline)) void ParseKmallocData(KmallocData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -68,6 +77,9 @@ template <typename FtraceEventType>
 void ParseKmalloc(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     KmallocData eventData {};
     ParseKmallocData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_kmalloc_format();
@@ -94,6 +106,9 @@ struct KmallocNodeData {
 __attribute__((noinline)) void ParseKmallocNodeData(KmallocNodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -106,6 +121,9 @@ template <typename FtraceEventType>
 void ParseKmallocNode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     KmallocNodeData eventData {};
     ParseKmallocNodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_kmalloc_node_format();
@@ -132,6 +150,9 @@ struct KmemCacheAllocData {
 __attribute__((noinline)) void ParseKmemCacheAllocData(KmemCacheAllocData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -143,6 +164,9 @@ template <typename FtraceEventType>
 void ParseKmemCacheAlloc(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     KmemCacheAllocData eventData {};
     ParseKmemCacheAllocData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_kmem_cache_alloc_format();
@@ -169,6 +193,9 @@ struct KmemCacheAllocNodeData {
 __attribute__((noinline)) void ParseKmemCacheAllocNodeData(KmemCacheAllocNodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -181,6 +208,9 @@ template <typename FtraceEventType>
 void ParseKmemCacheAllocNode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     KmemCacheAllocNodeData eventData {};
     ParseKmemCacheAllocNodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_kmem_cache_alloc_node_format();
@@ -204,6 +234,9 @@ struct KmemCacheFreeData {
 __attribute__((noinline)) void ParseKmemCacheFreeData(KmemCacheFreeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -212,6 +245,9 @@ template <typename FtraceEventType>
 void ParseKmemCacheFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     KmemCacheFreeData eventData {};
     ParseKmemCacheFreeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_kmem_cache_free_format();
@@ -233,6 +269,9 @@ struct MmPageAllocData {
 __attribute__((noinline)) void ParseMmPageAllocData(MmPageAllocData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.order = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -243,6 +282,9 @@ template <typename FtraceEventType>
 void ParseMmPageAlloc(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmPageAllocData eventData {};
     ParseMmPageAllocData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_page_alloc_format();
@@ -268,6 +310,9 @@ struct MmPageAllocExtfragData {
 __attribute__((noinline)) void ParseMmPageAllocExtfragData(MmPageAllocExtfragData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.alloc_order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -280,6 +325,9 @@ template <typename FtraceEventType>
 void ParseMmPageAllocExtfrag(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmPageAllocExtfragData eventData {};
     ParseMmPageAllocExtfragData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_page_alloc_extfrag_format();
@@ -304,6 +352,9 @@ struct MmPageAllocZoneLockedData {
 __attribute__((noinline)) void ParseMmPageAllocZoneLockedData(MmPageAllocZoneLockedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.order = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -313,6 +364,9 @@ template <typename FtraceEventType>
 void ParseMmPageAllocZoneLocked(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmPageAllocZoneLockedData eventData {};
     ParseMmPageAllocZoneLockedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_page_alloc_zone_locked_format();
@@ -333,6 +387,9 @@ struct MmPageFreeData {
 __attribute__((noinline)) void ParseMmPageFreeData(MmPageFreeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.order = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -341,6 +398,9 @@ template <typename FtraceEventType>
 void ParseMmPageFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmPageFreeData eventData {};
     ParseMmPageFreeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_page_free_format();
@@ -359,6 +419,9 @@ struct MmPageFreeBatchedData {
 __attribute__((noinline)) void ParseMmPageFreeBatchedData(MmPageFreeBatchedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -366,6 +429,9 @@ template <typename FtraceEventType>
 void ParseMmPageFreeBatched(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmPageFreeBatchedData eventData {};
     ParseMmPageFreeBatchedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_page_free_batched_format();
@@ -385,6 +451,9 @@ struct MmPagePcpuDrainData {
 __attribute__((noinline)) void ParseMmPagePcpuDrainData(MmPagePcpuDrainData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.order = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -394,6 +463,9 @@ template <typename FtraceEventType>
 void ParseMmPagePcpuDrain(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmPagePcpuDrainData eventData {};
     ParseMmPagePcpuDrainData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_page_pcpu_drain_format();
@@ -416,6 +488,9 @@ struct RssStatData {
 __attribute__((noinline)) void ParseRssStatData(RssStatData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.mm_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.curr = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -426,6 +501,9 @@ template <typename FtraceEventType>
 void ParseRssStat(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RssStatData eventData {};
     ParseRssStatData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rss_stat_format();

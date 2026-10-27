@@ -30,6 +30,9 @@ struct I2cReadData {
 __attribute__((noinline)) void ParseI2cReadData(I2cReadData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.adapter_nr = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.msg_nr = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -41,6 +44,9 @@ template <typename FtraceEventType>
 void ParseI2cRead(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     I2cReadData eventData {};
     ParseI2cReadData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_i2c_read_format();
@@ -67,6 +73,9 @@ struct I2cReplyData {
 __attribute__((noinline)) void ParseI2cReplyData(I2cReplyData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.adapter_nr = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.msg_nr = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -79,6 +88,9 @@ template <typename FtraceEventType>
 void ParseI2cReply(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     I2cReplyData eventData {};
     ParseI2cReplyData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_i2c_reply_format();
@@ -103,6 +115,9 @@ struct I2cResultData {
 __attribute__((noinline)) void ParseI2cResultData(I2cResultData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.adapter_nr = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.nr_msgs = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -112,6 +127,9 @@ template <typename FtraceEventType>
 void ParseI2cResult(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     I2cResultData eventData {};
     ParseI2cResultData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_i2c_result_format();
@@ -136,6 +154,9 @@ struct I2cWriteData {
 __attribute__((noinline)) void ParseI2cWriteData(I2cWriteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.adapter_nr = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.msg_nr = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -148,6 +169,9 @@ template <typename FtraceEventType>
 void ParseI2cWrite(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     I2cWriteData eventData {};
     ParseI2cWriteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_i2c_write_format();

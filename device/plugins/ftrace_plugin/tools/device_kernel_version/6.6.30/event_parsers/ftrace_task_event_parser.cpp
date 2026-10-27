@@ -29,6 +29,9 @@ struct TaskNewtaskData {
 __attribute__((noinline)) void ParseTaskNewtaskData(TaskNewtaskData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -39,6 +42,9 @@ template <typename FtraceEventType>
 void ParseTaskNewtask(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     TaskNewtaskData eventData {};
     ParseTaskNewtaskData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_task_newtask_format();
@@ -62,6 +68,9 @@ struct TaskRenameData {
 __attribute__((noinline)) void ParseTaskRenameData(TaskRenameData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.oldcomm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -72,6 +81,9 @@ template <typename FtraceEventType>
 void ParseTaskRename(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     TaskRenameData eventData {};
     ParseTaskRenameData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_task_rename_format();

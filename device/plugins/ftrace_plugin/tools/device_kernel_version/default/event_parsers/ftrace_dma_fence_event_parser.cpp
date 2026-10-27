@@ -29,6 +29,9 @@ struct DmaFenceDestroyData {
 __attribute__((noinline)) void ParseDmaFenceDestroyData(DmaFenceDestroyData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -39,6 +42,9 @@ template <typename FtraceEventType>
 void ParseDmaFenceDestroy(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     DmaFenceDestroyData eventData {};
     ParseDmaFenceDestroyData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_destroy_format();
@@ -62,6 +68,9 @@ struct DmaFenceEmitData {
 __attribute__((noinline)) void ParseDmaFenceEmitData(DmaFenceEmitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -72,6 +81,9 @@ template <typename FtraceEventType>
 void ParseDmaFenceEmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     DmaFenceEmitData eventData {};
     ParseDmaFenceEmitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_emit_format();
@@ -95,6 +107,9 @@ struct DmaFenceEnableSignalData {
 __attribute__((noinline)) void ParseDmaFenceEnableSignalData(DmaFenceEnableSignalData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -105,6 +120,9 @@ template <typename FtraceEventType>
 void ParseDmaFenceEnableSignal(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     DmaFenceEnableSignalData eventData {};
     ParseDmaFenceEnableSignalData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_enable_signal_format();
@@ -128,6 +146,9 @@ struct DmaFenceInitData {
 __attribute__((noinline)) void ParseDmaFenceInitData(DmaFenceInitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -138,6 +159,9 @@ template <typename FtraceEventType>
 void ParseDmaFenceInit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     DmaFenceInitData eventData {};
     ParseDmaFenceInitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_init_format();
@@ -161,6 +185,9 @@ struct DmaFenceSignaledData {
 __attribute__((noinline)) void ParseDmaFenceSignaledData(DmaFenceSignaledData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -171,6 +198,9 @@ template <typename FtraceEventType>
 void ParseDmaFenceSignaled(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     DmaFenceSignaledData eventData {};
     ParseDmaFenceSignaledData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_signaled_format();
@@ -194,6 +224,9 @@ struct DmaFenceWaitEndData {
 __attribute__((noinline)) void ParseDmaFenceWaitEndData(DmaFenceWaitEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -204,6 +237,9 @@ template <typename FtraceEventType>
 void ParseDmaFenceWaitEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     DmaFenceWaitEndData eventData {};
     ParseDmaFenceWaitEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_wait_end_format();
@@ -227,6 +263,9 @@ struct DmaFenceWaitStartData {
 __attribute__((noinline)) void ParseDmaFenceWaitStartData(DmaFenceWaitStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -237,6 +276,9 @@ template <typename FtraceEventType>
 void ParseDmaFenceWaitStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     DmaFenceWaitStartData eventData {};
     ParseDmaFenceWaitStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_wait_start_format();

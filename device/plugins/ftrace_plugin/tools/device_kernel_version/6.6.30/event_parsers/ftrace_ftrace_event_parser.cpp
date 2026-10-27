@@ -27,6 +27,9 @@ struct BputsData {
 __attribute__((noinline)) void ParseBputsData(BputsData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.ip = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.str = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -35,6 +38,9 @@ template <typename FtraceEventType>
 void ParseBputs(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BputsData eventData {};
     ParseBputsData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_bputs_format();
@@ -57,6 +63,9 @@ struct BranchData {
 __attribute__((noinline)) void ParseBranchData(BranchData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.line = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.func = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -68,6 +77,9 @@ template <typename FtraceEventType>
 void ParseBranch(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BranchData eventData {};
     ParseBranchData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_branch_format();
@@ -95,6 +107,9 @@ struct ContextSwitchData {
 __attribute__((noinline)) void ParseContextSwitchData(ContextSwitchData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.prev_pid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.next_pid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -108,6 +123,9 @@ template <typename FtraceEventType>
 void ParseContextSwitch(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ContextSwitchData eventData {};
     ParseContextSwitchData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_context_switch_format();
@@ -132,6 +150,9 @@ struct FuncgraphEntryData {
 __attribute__((noinline)) void ParseFuncgraphEntryData(FuncgraphEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.func = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.depth = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -140,6 +161,9 @@ template <typename FtraceEventType>
 void ParseFuncgraphEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     FuncgraphEntryData eventData {};
     ParseFuncgraphEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_funcgraph_entry_format();
@@ -162,6 +186,9 @@ struct FuncgraphExitData {
 __attribute__((noinline)) void ParseFuncgraphExitData(FuncgraphExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.func = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.depth = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -173,6 +200,9 @@ template <typename FtraceEventType>
 void ParseFuncgraphExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     FuncgraphExitData eventData {};
     ParseFuncgraphExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_funcgraph_exit_format();
@@ -195,6 +225,9 @@ struct FunctionData {
 __attribute__((noinline)) void ParseFunctionData(FunctionData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.ip = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.parent_ip = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -203,6 +236,9 @@ template <typename FtraceEventType>
 void ParseFunction(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     FunctionData eventData {};
     ParseFunctionData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_function_format();
@@ -222,6 +258,9 @@ struct KernelStackData {
 __attribute__((noinline)) void ParseKernelStackData(KernelStackData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.size = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.caller = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, i++, data, size);
@@ -230,6 +269,9 @@ template <typename FtraceEventType>
 void ParseKernelStack(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     KernelStackData eventData {};
     ParseKernelStackData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_kernel_stack_format();
@@ -254,6 +296,9 @@ struct MmiotraceMapData {
 __attribute__((noinline)) void ParseMmiotraceMapData(MmiotraceMapData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.phys = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.virt = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -265,6 +310,9 @@ template <typename FtraceEventType>
 void ParseMmiotraceMap(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmiotraceMapData eventData {};
     ParseMmiotraceMapData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mmiotrace_map_format();
@@ -291,6 +339,9 @@ struct MmiotraceRwData {
 __attribute__((noinline)) void ParseMmiotraceRwData(MmiotraceRwData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.phys = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.value = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -303,6 +354,9 @@ template <typename FtraceEventType>
 void ParseMmiotraceRw(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmiotraceRwData eventData {};
     ParseMmiotraceRwData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mmiotrace_rw_format();
@@ -326,6 +380,9 @@ struct PrintData {
 __attribute__((noinline)) void ParsePrintData(PrintData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.ip = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.buf = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -334,6 +391,9 @@ template <typename FtraceEventType>
 void ParsePrint(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     PrintData eventData {};
     ParsePrintData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_print_format();
@@ -353,6 +413,9 @@ struct UserStackData {
 __attribute__((noinline)) void ParseUserStackData(UserStackData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.tgid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.caller = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, i++, data, size);
@@ -361,6 +424,9 @@ template <typename FtraceEventType>
 void ParseUserStack(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     UserStackData eventData {};
     ParseUserStackData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_user_stack_format();
@@ -387,6 +453,9 @@ struct WakeupData {
 __attribute__((noinline)) void ParseWakeupData(WakeupData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.prev_pid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.next_pid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -400,6 +469,9 @@ template <typename FtraceEventType>
 void ParseWakeup(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WakeupData eventData {};
     ParseWakeupData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_wakeup_format();

@@ -44,6 +44,9 @@ struct NapiGroFragsEntryData {
 __attribute__((noinline)) void ParseNapiGroFragsEntryData(NapiGroFragsEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.napi_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -69,6 +72,9 @@ template <typename FtraceEventType>
 void ParseNapiGroFragsEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     NapiGroFragsEntryData eventData {};
     ParseNapiGroFragsEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_napi_gro_frags_entry_format();
@@ -122,6 +128,9 @@ struct NapiGroReceiveEntryData {
 __attribute__((noinline)) void ParseNapiGroReceiveEntryData(NapiGroReceiveEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.napi_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -147,6 +156,9 @@ template <typename FtraceEventType>
 void ParseNapiGroReceiveEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     NapiGroReceiveEntryData eventData {};
     ParseNapiGroReceiveEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_napi_gro_receive_entry_format();
@@ -184,6 +196,9 @@ struct NetDevQueueData {
 __attribute__((noinline)) void ParseNetDevQueueData(NetDevQueueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.skbaddr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -193,6 +208,9 @@ template <typename FtraceEventType>
 void ParseNetDevQueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     NetDevQueueData eventData {};
     ParseNetDevQueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_net_dev_queue_format();
@@ -228,6 +246,9 @@ struct NetDevStartXmitData {
 __attribute__((noinline)) void ParseNetDevStartXmitData(NetDevStartXmitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.queue_mapping = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -251,6 +272,9 @@ template <typename FtraceEventType>
 void ParseNetDevStartXmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     NetDevStartXmitData eventData {};
     ParseNetDevStartXmitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_net_dev_start_xmit_format();
@@ -287,6 +311,9 @@ struct NetDevXmitData {
 __attribute__((noinline)) void ParseNetDevXmitData(NetDevXmitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.skbaddr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -297,6 +324,9 @@ template <typename FtraceEventType>
 void ParseNetDevXmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     NetDevXmitData eventData {};
     ParseNetDevXmitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_net_dev_xmit_format();
@@ -319,6 +349,9 @@ struct NetifReceiveSkbData {
 __attribute__((noinline)) void ParseNetifReceiveSkbData(NetifReceiveSkbData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.skbaddr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -328,6 +361,9 @@ template <typename FtraceEventType>
 void ParseNetifReceiveSkb(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     NetifReceiveSkbData eventData {};
     ParseNetifReceiveSkbData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_netif_receive_skb_format();
@@ -365,6 +401,9 @@ struct NetifReceiveSkbEntryData {
 __attribute__((noinline)) void ParseNetifReceiveSkbEntryData(NetifReceiveSkbEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.napi_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -390,6 +429,9 @@ template <typename FtraceEventType>
 void ParseNetifReceiveSkbEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     NetifReceiveSkbEntryData eventData {};
     ParseNetifReceiveSkbEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_netif_receive_skb_entry_format();
@@ -427,6 +469,9 @@ struct NetifRxData {
 __attribute__((noinline)) void ParseNetifRxData(NetifRxData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.skbaddr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -436,6 +481,9 @@ template <typename FtraceEventType>
 void ParseNetifRx(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     NetifRxData eventData {};
     ParseNetifRxData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_netif_rx_format();
@@ -473,6 +521,9 @@ struct NetifRxEntryData {
 __attribute__((noinline)) void ParseNetifRxEntryData(NetifRxEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.napi_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -498,6 +549,9 @@ template <typename FtraceEventType>
 void ParseNetifRxEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     NetifRxEntryData eventData {};
     ParseNetifRxEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_netif_rx_entry_format();
@@ -551,6 +605,9 @@ struct NetifRxNiEntryData {
 __attribute__((noinline)) void ParseNetifRxNiEntryData(NetifRxNiEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.napi_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -576,6 +633,9 @@ template <typename FtraceEventType>
 void ParseNetifRxNiEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     NetifRxNiEntryData eventData {};
     ParseNetifRxNiEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_netif_rx_ni_entry_format();

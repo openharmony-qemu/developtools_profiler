@@ -26,6 +26,9 @@ struct HrtimerCancelData {
 __attribute__((noinline)) void ParseHrtimerCancelData(HrtimerCancelData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -33,6 +36,9 @@ template <typename FtraceEventType>
 void ParseHrtimerCancel(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     HrtimerCancelData eventData {};
     ParseHrtimerCancelData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_cancel_format();
@@ -52,6 +58,9 @@ struct HrtimerExpireEntryData {
 __attribute__((noinline)) void ParseHrtimerExpireEntryData(HrtimerExpireEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.now = FtraceFieldParser::ParseIntField<int64_t>(format.fields, i++, data, size);
@@ -61,6 +70,9 @@ template <typename FtraceEventType>
 void ParseHrtimerExpireEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     HrtimerExpireEntryData eventData {};
     ParseHrtimerExpireEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_expire_entry_format();
@@ -80,6 +92,9 @@ struct HrtimerExpireExitData {
 __attribute__((noinline)) void ParseHrtimerExpireExitData(HrtimerExpireExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -87,6 +102,9 @@ template <typename FtraceEventType>
 void ParseHrtimerExpireExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     HrtimerExpireExitData eventData {};
     ParseHrtimerExpireExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_expire_exit_format();
@@ -106,6 +124,9 @@ struct HrtimerInitData {
 __attribute__((noinline)) void ParseHrtimerInitData(HrtimerInitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.clockid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -115,6 +136,9 @@ template <typename FtraceEventType>
 void ParseHrtimerInit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     HrtimerInitData eventData {};
     ParseHrtimerInitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_init_format();
@@ -138,6 +162,9 @@ struct HrtimerStartData {
 __attribute__((noinline)) void ParseHrtimerStartData(HrtimerStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.function = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -149,6 +176,9 @@ template <typename FtraceEventType>
 void ParseHrtimerStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     HrtimerStartData eventData {};
     ParseHrtimerStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_start_format();
@@ -172,6 +202,9 @@ struct ItimerExpireData {
 __attribute__((noinline)) void ParseItimerExpireData(ItimerExpireData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.which = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -181,6 +214,9 @@ template <typename FtraceEventType>
 void ParseItimerExpire(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ItimerExpireData eventData {};
     ParseItimerExpireData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_itimer_expire_format();
@@ -205,6 +241,9 @@ struct ItimerStateData {
 __attribute__((noinline)) void ParseItimerStateData(ItimerStateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.which = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.expires = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -217,6 +256,9 @@ template <typename FtraceEventType>
 void ParseItimerState(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ItimerStateData eventData {};
     ParseItimerStateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_itimer_state_format();
@@ -239,6 +281,9 @@ struct TimerCancelData {
 __attribute__((noinline)) void ParseTimerCancelData(TimerCancelData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -246,6 +291,9 @@ template <typename FtraceEventType>
 void ParseTimerCancel(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     TimerCancelData eventData {};
     ParseTimerCancelData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_cancel_format();
@@ -265,6 +313,9 @@ struct TimerExpireEntryData {
 __attribute__((noinline)) void ParseTimerExpireEntryData(TimerExpireEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.now = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -274,6 +325,9 @@ template <typename FtraceEventType>
 void ParseTimerExpireEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     TimerExpireEntryData eventData {};
     ParseTimerExpireEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_expire_entry_format();
@@ -293,6 +347,9 @@ struct TimerExpireExitData {
 __attribute__((noinline)) void ParseTimerExpireExitData(TimerExpireExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -300,6 +357,9 @@ template <typename FtraceEventType>
 void ParseTimerExpireExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     TimerExpireExitData eventData {};
     ParseTimerExpireExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_expire_exit_format();
@@ -317,6 +377,9 @@ struct TimerInitData {
 __attribute__((noinline)) void ParseTimerInitData(TimerInitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -324,6 +387,9 @@ template <typename FtraceEventType>
 void ParseTimerInit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     TimerInitData eventData {};
     ParseTimerInitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_init_format();
@@ -345,6 +411,9 @@ struct TimerStartData {
 __attribute__((noinline)) void ParseTimerStartData(TimerStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.function = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -356,6 +425,9 @@ template <typename FtraceEventType>
 void ParseTimerStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     TimerStartData eventData {};
     ParseTimerStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_start_format();

@@ -26,6 +26,9 @@ struct RegulatorBypassDisableData {
 __attribute__((noinline)) void ParseRegulatorBypassDisableData(RegulatorBypassDisableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -33,6 +36,9 @@ template <typename FtraceEventType>
 void ParseRegulatorBypassDisable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RegulatorBypassDisableData eventData {};
     ParseRegulatorBypassDisableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_bypass_disable_format();
@@ -50,6 +56,9 @@ struct RegulatorBypassDisableCompleteData {
 __attribute__((noinline)) void ParseRegulatorBypassDisableCompleteData(RegulatorBypassDisableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -57,6 +66,9 @@ template <typename FtraceEventType>
 void ParseRegulatorBypassDisableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RegulatorBypassDisableCompleteData eventData {};
     ParseRegulatorBypassDisableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_bypass_disable_complete_format();
@@ -74,6 +86,9 @@ struct RegulatorBypassEnableData {
 __attribute__((noinline)) void ParseRegulatorBypassEnableData(RegulatorBypassEnableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -81,6 +96,9 @@ template <typename FtraceEventType>
 void ParseRegulatorBypassEnable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RegulatorBypassEnableData eventData {};
     ParseRegulatorBypassEnableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_bypass_enable_format();
@@ -98,6 +116,9 @@ struct RegulatorBypassEnableCompleteData {
 __attribute__((noinline)) void ParseRegulatorBypassEnableCompleteData(RegulatorBypassEnableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -105,6 +126,9 @@ template <typename FtraceEventType>
 void ParseRegulatorBypassEnableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RegulatorBypassEnableCompleteData eventData {};
     ParseRegulatorBypassEnableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_bypass_enable_complete_format();
@@ -122,6 +146,9 @@ struct RegulatorDisableData {
 __attribute__((noinline)) void ParseRegulatorDisableData(RegulatorDisableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -129,6 +156,9 @@ template <typename FtraceEventType>
 void ParseRegulatorDisable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RegulatorDisableData eventData {};
     ParseRegulatorDisableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_disable_format();
@@ -146,6 +176,9 @@ struct RegulatorDisableCompleteData {
 __attribute__((noinline)) void ParseRegulatorDisableCompleteData(RegulatorDisableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -153,6 +186,9 @@ template <typename FtraceEventType>
 void ParseRegulatorDisableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RegulatorDisableCompleteData eventData {};
     ParseRegulatorDisableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_disable_complete_format();
@@ -170,6 +206,9 @@ struct RegulatorEnableData {
 __attribute__((noinline)) void ParseRegulatorEnableData(RegulatorEnableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -177,6 +216,9 @@ template <typename FtraceEventType>
 void ParseRegulatorEnable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RegulatorEnableData eventData {};
     ParseRegulatorEnableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_enable_format();
@@ -194,6 +236,9 @@ struct RegulatorEnableCompleteData {
 __attribute__((noinline)) void ParseRegulatorEnableCompleteData(RegulatorEnableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -201,6 +246,9 @@ template <typename FtraceEventType>
 void ParseRegulatorEnableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RegulatorEnableCompleteData eventData {};
     ParseRegulatorEnableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_enable_complete_format();
@@ -218,6 +266,9 @@ struct RegulatorEnableDelayData {
 __attribute__((noinline)) void ParseRegulatorEnableDelayData(RegulatorEnableDelayData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -225,6 +276,9 @@ template <typename FtraceEventType>
 void ParseRegulatorEnableDelay(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RegulatorEnableDelayData eventData {};
     ParseRegulatorEnableDelayData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_enable_delay_format();
@@ -244,6 +298,9 @@ struct RegulatorSetVoltageData {
 __attribute__((noinline)) void ParseRegulatorSetVoltageData(RegulatorSetVoltageData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.min = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -253,6 +310,9 @@ template <typename FtraceEventType>
 void ParseRegulatorSetVoltage(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RegulatorSetVoltageData eventData {};
     ParseRegulatorSetVoltageData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_set_voltage_format();
@@ -273,6 +333,9 @@ struct RegulatorSetVoltageCompleteData {
 __attribute__((noinline)) void ParseRegulatorSetVoltageCompleteData(RegulatorSetVoltageCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.val = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -281,6 +344,9 @@ template <typename FtraceEventType>
 void ParseRegulatorSetVoltageComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     RegulatorSetVoltageCompleteData eventData {};
     ParseRegulatorSetVoltageCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_set_voltage_complete_format();

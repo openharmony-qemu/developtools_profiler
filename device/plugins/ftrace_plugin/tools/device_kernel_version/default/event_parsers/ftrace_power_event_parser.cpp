@@ -28,6 +28,9 @@ struct ClockDisableData {
 __attribute__((noinline)) void ParseClockDisableData(ClockDisableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -37,6 +40,9 @@ template <typename FtraceEventType>
 void ParseClockDisable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClockDisableData eventData {};
     ParseClockDisableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clock_disable_format();
@@ -58,6 +64,9 @@ struct ClockEnableData {
 __attribute__((noinline)) void ParseClockEnableData(ClockEnableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -67,6 +76,9 @@ template <typename FtraceEventType>
 void ParseClockEnable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClockEnableData eventData {};
     ParseClockEnableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clock_enable_format();
@@ -88,6 +100,9 @@ struct ClockSetRateData {
 __attribute__((noinline)) void ParseClockSetRateData(ClockSetRateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -97,6 +112,9 @@ template <typename FtraceEventType>
 void ParseClockSetRate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     ClockSetRateData eventData {};
     ParseClockSetRateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clock_set_rate_format();
@@ -117,6 +135,9 @@ struct CpuFrequencyData {
 __attribute__((noinline)) void ParseCpuFrequencyData(CpuFrequencyData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.state = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.cpu_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -125,6 +146,9 @@ template <typename FtraceEventType>
 void ParseCpuFrequency(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CpuFrequencyData eventData {};
     ParseCpuFrequencyData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cpu_frequency_format();
@@ -145,6 +169,9 @@ struct CpuFrequencyLimitsData {
 __attribute__((noinline)) void ParseCpuFrequencyLimitsData(CpuFrequencyLimitsData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.min_freq = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.max_freq = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -154,6 +181,9 @@ template <typename FtraceEventType>
 void ParseCpuFrequencyLimits(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CpuFrequencyLimitsData eventData {};
     ParseCpuFrequencyLimitsData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cpu_frequency_limits_format();
@@ -174,6 +204,9 @@ struct CpuIdleData {
 __attribute__((noinline)) void ParseCpuIdleData(CpuIdleData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.state = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.cpu_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -182,6 +215,9 @@ template <typename FtraceEventType>
 void ParseCpuIdle(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CpuIdleData eventData {};
     ParseCpuIdleData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cpu_idle_format();
@@ -202,6 +238,9 @@ struct DevPmQosAddRequestData {
 __attribute__((noinline)) void ParseDevPmQosAddRequestData(DevPmQosAddRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.type = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -211,6 +250,9 @@ template <typename FtraceEventType>
 void ParseDevPmQosAddRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     DevPmQosAddRequestData eventData {};
     ParseDevPmQosAddRequestData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dev_pm_qos_add_request_format();
@@ -232,6 +274,9 @@ struct DevPmQosRemoveRequestData {
 __attribute__((noinline)) void ParseDevPmQosRemoveRequestData(DevPmQosRemoveRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.type = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -241,6 +286,9 @@ template <typename FtraceEventType>
 void ParseDevPmQosRemoveRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     DevPmQosRemoveRequestData eventData {};
     ParseDevPmQosRemoveRequestData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dev_pm_qos_remove_request_format();
@@ -262,6 +310,9 @@ struct DevPmQosUpdateRequestData {
 __attribute__((noinline)) void ParseDevPmQosUpdateRequestData(DevPmQosUpdateRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.type = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -271,6 +322,9 @@ template <typename FtraceEventType>
 void ParseDevPmQosUpdateRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     DevPmQosUpdateRequestData eventData {};
     ParseDevPmQosUpdateRequestData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dev_pm_qos_update_request_format();
@@ -292,6 +346,9 @@ struct DevicePmCallbackEndData {
 __attribute__((noinline)) void ParseDevicePmCallbackEndData(DevicePmCallbackEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.device = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -301,6 +358,9 @@ template <typename FtraceEventType>
 void ParseDevicePmCallbackEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     DevicePmCallbackEndData eventData {};
     ParseDevicePmCallbackEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_device_pm_callback_end_format();
@@ -324,6 +384,9 @@ struct DevicePmCallbackStartData {
 __attribute__((noinline)) void ParseDevicePmCallbackStartData(DevicePmCallbackStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.device = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -335,6 +398,9 @@ template <typename FtraceEventType>
 void ParseDevicePmCallbackStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     DevicePmCallbackStartData eventData {};
     ParseDevicePmCallbackStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_device_pm_callback_start_format();
@@ -357,6 +423,9 @@ struct PmQosAddRequestData {
 __attribute__((noinline)) void ParsePmQosAddRequestData(PmQosAddRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pm_qos_class = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -365,6 +434,9 @@ template <typename FtraceEventType>
 void ParsePmQosAddRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     PmQosAddRequestData eventData {};
     ParsePmQosAddRequestData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_pm_qos_add_request_format();
@@ -384,6 +456,9 @@ struct PmQosRemoveRequestData {
 __attribute__((noinline)) void ParsePmQosRemoveRequestData(PmQosRemoveRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pm_qos_class = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -392,6 +467,9 @@ template <typename FtraceEventType>
 void ParsePmQosRemoveRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     PmQosRemoveRequestData eventData {};
     ParsePmQosRemoveRequestData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_pm_qos_remove_request_format();
@@ -412,6 +490,9 @@ struct PmQosUpdateFlagsData {
 __attribute__((noinline)) void ParsePmQosUpdateFlagsData(PmQosUpdateFlagsData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.action = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.prev_value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -421,6 +502,9 @@ template <typename FtraceEventType>
 void ParsePmQosUpdateFlags(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     PmQosUpdateFlagsData eventData {};
     ParsePmQosUpdateFlagsData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_pm_qos_update_flags_format();
@@ -441,6 +525,9 @@ struct PmQosUpdateRequestData {
 __attribute__((noinline)) void ParsePmQosUpdateRequestData(PmQosUpdateRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pm_qos_class = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -449,6 +536,9 @@ template <typename FtraceEventType>
 void ParsePmQosUpdateRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     PmQosUpdateRequestData eventData {};
     ParsePmQosUpdateRequestData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_pm_qos_update_request_format();
@@ -469,6 +559,9 @@ struct PmQosUpdateRequestTimeoutData {
 __attribute__((noinline)) void ParsePmQosUpdateRequestTimeoutData(PmQosUpdateRequestTimeoutData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pm_qos_class = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -478,6 +571,9 @@ template <typename FtraceEventType>
 void ParsePmQosUpdateRequestTimeout(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     PmQosUpdateRequestTimeoutData eventData {};
     ParsePmQosUpdateRequestTimeoutData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_pm_qos_update_request_timeout_format();
@@ -499,6 +595,9 @@ struct PmQosUpdateTargetData {
 __attribute__((noinline)) void ParsePmQosUpdateTargetData(PmQosUpdateTargetData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.action = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.prev_value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -508,6 +607,9 @@ template <typename FtraceEventType>
 void ParsePmQosUpdateTarget(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     PmQosUpdateTargetData eventData {};
     ParsePmQosUpdateTargetData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_pm_qos_update_target_format();
@@ -529,6 +631,9 @@ struct PowerDomainTargetData {
 __attribute__((noinline)) void ParsePowerDomainTargetData(PowerDomainTargetData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -538,6 +643,9 @@ template <typename FtraceEventType>
 void ParsePowerDomainTarget(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     PowerDomainTargetData eventData {};
     ParsePowerDomainTargetData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_power_domain_target_format();
@@ -565,6 +673,9 @@ struct PstateSampleData {
 __attribute__((noinline)) void ParsePstateSampleData(PstateSampleData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.core_busy = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.scaled_busy = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -580,6 +691,9 @@ template <typename FtraceEventType>
 void ParsePstateSample(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     PstateSampleData eventData {};
     ParsePstateSampleData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_pstate_sample_format();
@@ -607,6 +721,9 @@ struct SuspendResumeData {
 __attribute__((noinline)) void ParseSuspendResumeData(SuspendResumeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.action = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.val = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -616,6 +733,9 @@ template <typename FtraceEventType>
 void ParseSuspendResume(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SuspendResumeData eventData {};
     ParseSuspendResumeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_suspend_resume_format();
@@ -636,6 +756,9 @@ struct WakeupSourceActivateData {
 __attribute__((noinline)) void ParseWakeupSourceActivateData(WakeupSourceActivateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -644,6 +767,9 @@ template <typename FtraceEventType>
 void ParseWakeupSourceActivate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WakeupSourceActivateData eventData {};
     ParseWakeupSourceActivateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_wakeup_source_activate_format();
@@ -663,6 +789,9 @@ struct WakeupSourceDeactivateData {
 __attribute__((noinline)) void ParseWakeupSourceDeactivateData(WakeupSourceDeactivateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -671,6 +800,9 @@ template <typename FtraceEventType>
 void ParseWakeupSourceDeactivate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WakeupSourceDeactivateData eventData {};
     ParseWakeupSourceDeactivateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_wakeup_source_deactivate_format();

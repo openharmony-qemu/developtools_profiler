@@ -27,6 +27,9 @@ struct BinderAllocLruEndData {
 __attribute__((noinline)) void ParseBinderAllocLruEndData(BinderAllocLruEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -35,6 +38,9 @@ template <typename FtraceEventType>
 void ParseBinderAllocLruEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderAllocLruEndData eventData {};
     ParseBinderAllocLruEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_alloc_lru_end_format();
@@ -54,6 +60,9 @@ struct BinderAllocLruStartData {
 __attribute__((noinline)) void ParseBinderAllocLruStartData(BinderAllocLruStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -62,6 +71,9 @@ template <typename FtraceEventType>
 void ParseBinderAllocLruStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderAllocLruStartData eventData {};
     ParseBinderAllocLruStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_alloc_lru_start_format();
@@ -81,6 +93,9 @@ struct BinderAllocPageEndData {
 __attribute__((noinline)) void ParseBinderAllocPageEndData(BinderAllocPageEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -89,6 +104,9 @@ template <typename FtraceEventType>
 void ParseBinderAllocPageEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderAllocPageEndData eventData {};
     ParseBinderAllocPageEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_alloc_page_end_format();
@@ -108,6 +126,9 @@ struct BinderAllocPageStartData {
 __attribute__((noinline)) void ParseBinderAllocPageStartData(BinderAllocPageStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -116,6 +137,9 @@ template <typename FtraceEventType>
 void ParseBinderAllocPageStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderAllocPageStartData eventData {};
     ParseBinderAllocPageStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_alloc_page_start_format();
@@ -134,6 +158,9 @@ struct BinderCommandData {
 __attribute__((noinline)) void ParseBinderCommandData(BinderCommandData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.cmd = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
@@ -141,6 +168,9 @@ template <typename FtraceEventType>
 void ParseBinderCommand(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderCommandData eventData {};
     ParseBinderCommandData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_command_format();
@@ -159,6 +189,9 @@ struct BinderFreeLruEndData {
 __attribute__((noinline)) void ParseBinderFreeLruEndData(BinderFreeLruEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -167,6 +200,9 @@ template <typename FtraceEventType>
 void ParseBinderFreeLruEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderFreeLruEndData eventData {};
     ParseBinderFreeLruEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_free_lru_end_format();
@@ -186,6 +222,9 @@ struct BinderFreeLruStartData {
 __attribute__((noinline)) void ParseBinderFreeLruStartData(BinderFreeLruStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -194,6 +233,9 @@ template <typename FtraceEventType>
 void ParseBinderFreeLruStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderFreeLruStartData eventData {};
     ParseBinderFreeLruStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_free_lru_start_format();
@@ -213,6 +255,9 @@ struct BinderIoctlData {
 __attribute__((noinline)) void ParseBinderIoctlData(BinderIoctlData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.cmd = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.arg = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -221,6 +266,9 @@ template <typename FtraceEventType>
 void ParseBinderIoctl(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderIoctlData eventData {};
     ParseBinderIoctlData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_ioctl_format();
@@ -239,6 +287,9 @@ struct BinderIoctlDoneData {
 __attribute__((noinline)) void ParseBinderIoctlDoneData(BinderIoctlDoneData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -246,6 +297,9 @@ template <typename FtraceEventType>
 void ParseBinderIoctlDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderIoctlDoneData eventData {};
     ParseBinderIoctlDoneData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_ioctl_done_format();
@@ -263,6 +317,9 @@ struct BinderLockData {
 __attribute__((noinline)) void ParseBinderLockData(BinderLockData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.tag = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -270,6 +327,9 @@ template <typename FtraceEventType>
 void ParseBinderLock(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderLockData eventData {};
     ParseBinderLockData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_lock_format();
@@ -287,6 +347,9 @@ struct BinderLockedData {
 __attribute__((noinline)) void ParseBinderLockedData(BinderLockedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.tag = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -294,6 +357,9 @@ template <typename FtraceEventType>
 void ParseBinderLocked(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderLockedData eventData {};
     ParseBinderLockedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_locked_format();
@@ -311,6 +377,9 @@ struct BinderReadDoneData {
 __attribute__((noinline)) void ParseBinderReadDoneData(BinderReadDoneData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -318,6 +387,9 @@ template <typename FtraceEventType>
 void ParseBinderReadDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderReadDoneData eventData {};
     ParseBinderReadDoneData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_read_done_format();
@@ -335,6 +407,9 @@ struct BinderReturnData {
 __attribute__((noinline)) void ParseBinderReturnData(BinderReturnData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.cmd = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
@@ -342,6 +417,9 @@ template <typename FtraceEventType>
 void ParseBinderReturn(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderReturnData eventData {};
     ParseBinderReturnData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_return_format();
@@ -365,6 +443,9 @@ struct BinderTransactionData {
 __attribute__((noinline)) void ParseBinderTransactionData(BinderTransactionData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.target_node = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -378,6 +459,9 @@ template <typename FtraceEventType>
 void ParseBinderTransaction(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderTransactionData eventData {};
     ParseBinderTransactionData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_format();
@@ -404,6 +488,9 @@ struct BinderTransactionAllocBufData {
 __attribute__((noinline)) void ParseBinderTransactionAllocBufData(BinderTransactionAllocBufData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.data_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -414,6 +501,9 @@ template <typename FtraceEventType>
 void ParseBinderTransactionAllocBuf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderTransactionAllocBufData eventData {};
     ParseBinderTransactionAllocBufData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_alloc_buf_format();
@@ -437,6 +527,9 @@ struct BinderTransactionBufferReleaseData {
 __attribute__((noinline)) void ParseBinderTransactionBufferReleaseData(BinderTransactionBufferReleaseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.data_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -447,6 +540,9 @@ template <typename FtraceEventType>
 void ParseBinderTransactionBufferRelease(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderTransactionBufferReleaseData eventData {};
     ParseBinderTransactionBufferReleaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_buffer_release_format();
@@ -470,6 +566,9 @@ struct BinderTransactionFailedBufferReleaseData {
 __attribute__((noinline)) void ParseBinderTransactionFailedBufferReleaseData(BinderTransactionFailedBufferReleaseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.data_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -480,6 +579,9 @@ template <typename FtraceEventType>
 void ParseBinderTransactionFailedBufferRelease(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderTransactionFailedBufferReleaseData eventData {};
     ParseBinderTransactionFailedBufferReleaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_failed_buffer_release_format();
@@ -504,6 +606,9 @@ struct BinderTransactionNodeToRefData {
 __attribute__((noinline)) void ParseBinderTransactionNodeToRefData(BinderTransactionNodeToRefData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.node_debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -515,6 +620,9 @@ template <typename FtraceEventType>
 void ParseBinderTransactionNodeToRef(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderTransactionNodeToRefData eventData {};
     ParseBinderTransactionNodeToRefData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_node_to_ref_format();
@@ -536,6 +644,9 @@ struct BinderTransactionReceivedData {
 __attribute__((noinline)) void ParseBinderTransactionReceivedData(BinderTransactionReceivedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -543,6 +654,9 @@ template <typename FtraceEventType>
 void ParseBinderTransactionReceived(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderTransactionReceivedData eventData {};
     ParseBinderTransactionReceivedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_received_format();
@@ -564,6 +678,9 @@ struct BinderTransactionRefToNodeData {
 __attribute__((noinline)) void ParseBinderTransactionRefToNodeData(BinderTransactionRefToNodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.ref_debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -575,6 +692,9 @@ template <typename FtraceEventType>
 void ParseBinderTransactionRefToNode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderTransactionRefToNodeData eventData {};
     ParseBinderTransactionRefToNodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_ref_to_node_format();
@@ -601,6 +721,9 @@ struct BinderTransactionRefToRefData {
 __attribute__((noinline)) void ParseBinderTransactionRefToRefData(BinderTransactionRefToRefData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.node_debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -613,6 +736,9 @@ template <typename FtraceEventType>
 void ParseBinderTransactionRefToRef(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderTransactionRefToRefData eventData {};
     ParseBinderTransactionRefToRefData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_ref_to_ref_format();
@@ -635,6 +761,9 @@ struct BinderUnlockData {
 __attribute__((noinline)) void ParseBinderUnlockData(BinderUnlockData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.tag = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -642,6 +771,9 @@ template <typename FtraceEventType>
 void ParseBinderUnlock(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderUnlockData eventData {};
     ParseBinderUnlockData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_unlock_format();
@@ -660,6 +792,9 @@ struct BinderUnmapKernelEndData {
 __attribute__((noinline)) void ParseBinderUnmapKernelEndData(BinderUnmapKernelEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -668,6 +803,9 @@ template <typename FtraceEventType>
 void ParseBinderUnmapKernelEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderUnmapKernelEndData eventData {};
     ParseBinderUnmapKernelEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_unmap_kernel_end_format();
@@ -687,6 +825,9 @@ struct BinderUnmapKernelStartData {
 __attribute__((noinline)) void ParseBinderUnmapKernelStartData(BinderUnmapKernelStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -695,6 +836,9 @@ template <typename FtraceEventType>
 void ParseBinderUnmapKernelStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderUnmapKernelStartData eventData {};
     ParseBinderUnmapKernelStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_unmap_kernel_start_format();
@@ -714,6 +858,9 @@ struct BinderUnmapUserEndData {
 __attribute__((noinline)) void ParseBinderUnmapUserEndData(BinderUnmapUserEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -722,6 +869,9 @@ template <typename FtraceEventType>
 void ParseBinderUnmapUserEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderUnmapUserEndData eventData {};
     ParseBinderUnmapUserEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_unmap_user_end_format();
@@ -741,6 +891,9 @@ struct BinderUnmapUserStartData {
 __attribute__((noinline)) void ParseBinderUnmapUserStartData(BinderUnmapUserStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -749,6 +902,9 @@ template <typename FtraceEventType>
 void ParseBinderUnmapUserStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderUnmapUserStartData eventData {};
     ParseBinderUnmapUserStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_unmap_user_start_format();
@@ -770,6 +926,9 @@ struct BinderUpdatePageRangeData {
 __attribute__((noinline)) void ParseBinderUpdatePageRangeData(BinderUpdatePageRangeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.allocate = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -780,6 +939,9 @@ template <typename FtraceEventType>
 void ParseBinderUpdatePageRange(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderUpdatePageRangeData eventData {};
     ParseBinderUpdatePageRangeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_update_page_range_format();
@@ -802,6 +964,9 @@ struct BinderWaitForWorkData {
 __attribute__((noinline)) void ParseBinderWaitForWorkData(BinderWaitForWorkData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.proc_work = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.transaction_stack = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -811,6 +976,9 @@ template <typename FtraceEventType>
 void ParseBinderWaitForWork(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderWaitForWorkData eventData {};
     ParseBinderWaitForWorkData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_wait_for_work_format();
@@ -830,6 +998,9 @@ struct BinderWriteDoneData {
 __attribute__((noinline)) void ParseBinderWriteDoneData(BinderWriteDoneData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -837,6 +1008,9 @@ template <typename FtraceEventType>
 void ParseBinderWriteDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BinderWriteDoneData eventData {};
     ParseBinderWriteDoneData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_write_done_format();

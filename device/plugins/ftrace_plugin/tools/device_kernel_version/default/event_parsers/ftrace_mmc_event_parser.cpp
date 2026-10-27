@@ -48,6 +48,9 @@ struct MmcRequestDoneData {
 __attribute__((noinline)) void ParseMmcRequestDoneData(MmcRequestDoneData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.cmd_opcode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.cmd_err = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -77,6 +80,9 @@ template <typename FtraceEventType>
 void ParseMmcRequestDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmcRequestDoneData eventData {};
     ParseMmcRequestDoneData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mmc_request_done_format();
@@ -140,6 +146,9 @@ struct MmcRequestStartData {
 __attribute__((noinline)) void ParseMmcRequestStartData(MmcRequestStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.cmd_opcode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.cmd_arg = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -171,6 +180,9 @@ template <typename FtraceEventType>
 void ParseMmcRequestStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmcRequestStartData eventData {};
     ParseMmcRequestStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mmc_request_start_format();

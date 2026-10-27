@@ -43,6 +43,9 @@ struct V4l2DqbufData {
 __attribute__((noinline)) void ParseV4l2DqbufData(V4l2DqbufData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.minor = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.index = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -67,6 +70,9 @@ template <typename FtraceEventType>
 void ParseV4l2Dqbuf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     V4l2DqbufData eventData {};
     ParseV4l2DqbufData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_v4l2_dqbuf_format();
@@ -118,6 +124,9 @@ struct V4l2QbufData {
 __attribute__((noinline)) void ParseV4l2QbufData(V4l2QbufData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.minor = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.index = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -142,6 +151,9 @@ template <typename FtraceEventType>
 void ParseV4l2Qbuf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     V4l2QbufData eventData {};
     ParseV4l2QbufData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_v4l2_qbuf_format();
@@ -190,6 +202,9 @@ struct Vb2V4l2BufDoneData {
 __attribute__((noinline)) void ParseVb2V4l2BufDoneData(Vb2V4l2BufDoneData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.minor = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -211,6 +226,9 @@ template <typename FtraceEventType>
 void ParseVb2V4l2BufDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     Vb2V4l2BufDoneData eventData {};
     ParseVb2V4l2BufDoneData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_vb2_v4l2_buf_done_format();
@@ -256,6 +274,9 @@ struct Vb2V4l2BufQueueData {
 __attribute__((noinline)) void ParseVb2V4l2BufQueueData(Vb2V4l2BufQueueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.minor = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -277,6 +298,9 @@ template <typename FtraceEventType>
 void ParseVb2V4l2BufQueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     Vb2V4l2BufQueueData eventData {};
     ParseVb2V4l2BufQueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_vb2_v4l2_buf_queue_format();
@@ -322,6 +346,9 @@ struct Vb2V4l2DqbufData {
 __attribute__((noinline)) void ParseVb2V4l2DqbufData(Vb2V4l2DqbufData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.minor = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -343,6 +370,9 @@ template <typename FtraceEventType>
 void ParseVb2V4l2Dqbuf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     Vb2V4l2DqbufData eventData {};
     ParseVb2V4l2DqbufData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_vb2_v4l2_dqbuf_format();
@@ -388,6 +418,9 @@ struct Vb2V4l2QbufData {
 __attribute__((noinline)) void ParseVb2V4l2QbufData(Vb2V4l2QbufData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.minor = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -409,6 +442,9 @@ template <typename FtraceEventType>
 void ParseVb2V4l2Qbuf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     Vb2V4l2QbufData eventData {};
     ParseVb2V4l2QbufData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_vb2_v4l2_qbuf_format();

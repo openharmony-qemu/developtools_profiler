@@ -26,6 +26,9 @@ struct IpiEntryData {
 __attribute__((noinline)) void ParseIpiEntryData(IpiEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.reason = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -33,6 +36,9 @@ template <typename FtraceEventType>
 void ParseIpiEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     IpiEntryData eventData {};
     ParseIpiEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ipi_entry_format();
@@ -50,6 +56,9 @@ struct IpiExitData {
 __attribute__((noinline)) void ParseIpiExitData(IpiExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.reason = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -57,6 +66,9 @@ template <typename FtraceEventType>
 void ParseIpiExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     IpiExitData eventData {};
     ParseIpiExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ipi_exit_format();
@@ -75,6 +87,9 @@ struct IpiRaiseData {
 __attribute__((noinline)) void ParseIpiRaiseData(IpiRaiseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.target_cpus = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.reason = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -83,6 +98,9 @@ template <typename FtraceEventType>
 void ParseIpiRaise(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     IpiRaiseData eventData {};
     ParseIpiRaiseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ipi_raise_format();

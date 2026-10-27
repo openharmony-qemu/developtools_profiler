@@ -40,6 +40,9 @@ struct BalanceDirtyPagesData {
 __attribute__((noinline)) void ParseBalanceDirtyPagesData(BalanceDirtyPagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.bdi = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.limit = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -61,6 +64,9 @@ template <typename FtraceEventType>
 void ParseBalanceDirtyPages(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BalanceDirtyPagesData eventData {};
     ParseBalanceDirtyPagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_balance_dirty_pages_format();
@@ -99,6 +105,9 @@ struct BdiDirtyRatelimitData {
 __attribute__((noinline)) void ParseBdiDirtyRatelimitData(BdiDirtyRatelimitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.bdi = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.write_bw = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -113,6 +122,9 @@ template <typename FtraceEventType>
 void ParseBdiDirtyRatelimit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BdiDirtyRatelimitData eventData {};
     ParseBdiDirtyRatelimitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_bdi_dirty_ratelimit_format();
@@ -144,6 +156,9 @@ struct GlobalDirtyStateData {
 __attribute__((noinline)) void ParseGlobalDirtyStateData(GlobalDirtyStateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.nr_dirty = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nr_writeback = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -158,6 +173,9 @@ template <typename FtraceEventType>
 void ParseGlobalDirtyState(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     GlobalDirtyStateData eventData {};
     ParseGlobalDirtyStateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_global_dirty_state_format();
@@ -192,6 +210,9 @@ struct WbcWritepageData {
 __attribute__((noinline)) void ParseWbcWritepageData(WbcWritepageData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.nr_to_write = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -209,6 +230,9 @@ template <typename FtraceEventType>
 void ParseWbcWritepage(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WbcWritepageData eventData {};
     ParseWbcWritepageData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_wbc_writepage_format();
@@ -236,6 +260,9 @@ struct WritebackBdiRegisterData {
 __attribute__((noinline)) void ParseWritebackBdiRegisterData(WritebackBdiRegisterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -243,6 +270,9 @@ template <typename FtraceEventType>
 void ParseWritebackBdiRegister(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackBdiRegisterData eventData {};
     ParseWritebackBdiRegisterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_bdi_register_format();
@@ -261,6 +291,9 @@ struct WritebackCongestionWaitData {
 __attribute__((noinline)) void ParseWritebackCongestionWaitData(WritebackCongestionWaitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.usec_timeout = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.usec_delayed = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -269,6 +302,9 @@ template <typename FtraceEventType>
 void ParseWritebackCongestionWait(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackCongestionWaitData eventData {};
     ParseWritebackCongestionWaitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_congestion_wait_format();
@@ -290,6 +326,9 @@ struct WritebackDirtyInodeData {
 __attribute__((noinline)) void ParseWritebackDirtyInodeData(WritebackDirtyInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -300,6 +339,9 @@ template <typename FtraceEventType>
 void ParseWritebackDirtyInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackDirtyInodeData eventData {};
     ParseWritebackDirtyInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_dirty_inode_format();
@@ -324,6 +366,9 @@ struct WritebackDirtyInodeEnqueueData {
 __attribute__((noinline)) void ParseWritebackDirtyInodeEnqueueData(WritebackDirtyInodeEnqueueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -335,6 +380,9 @@ template <typename FtraceEventType>
 void ParseWritebackDirtyInodeEnqueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackDirtyInodeEnqueueData eventData {};
     ParseWritebackDirtyInodeEnqueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_dirty_inode_enqueue_format();
@@ -359,6 +407,9 @@ struct WritebackDirtyInodeStartData {
 __attribute__((noinline)) void ParseWritebackDirtyInodeStartData(WritebackDirtyInodeStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -369,6 +420,9 @@ template <typename FtraceEventType>
 void ParseWritebackDirtyInodeStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackDirtyInodeStartData eventData {};
     ParseWritebackDirtyInodeStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_dirty_inode_start_format();
@@ -391,6 +445,9 @@ struct WritebackDirtyPageData {
 __attribute__((noinline)) void ParseWritebackDirtyPageData(WritebackDirtyPageData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -400,6 +457,9 @@ template <typename FtraceEventType>
 void ParseWritebackDirtyPage(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackDirtyPageData eventData {};
     ParseWritebackDirtyPageData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_dirty_page_format();
@@ -427,6 +487,9 @@ struct WritebackExecData {
 __attribute__((noinline)) void ParseWritebackExecData(WritebackExecData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -442,6 +505,9 @@ template <typename FtraceEventType>
 void ParseWritebackExec(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackExecData eventData {};
     ParseWritebackExecData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_exec_format();
@@ -471,6 +537,9 @@ struct WritebackLazytimeData {
 __attribute__((noinline)) void ParseWritebackLazytimeData(WritebackLazytimeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -482,6 +551,9 @@ template <typename FtraceEventType>
 void ParseWritebackLazytime(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackLazytimeData eventData {};
     ParseWritebackLazytimeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_lazytime_format();
@@ -507,6 +579,9 @@ struct WritebackLazytimeIputData {
 __attribute__((noinline)) void ParseWritebackLazytimeIputData(WritebackLazytimeIputData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -518,6 +593,9 @@ template <typename FtraceEventType>
 void ParseWritebackLazytimeIput(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackLazytimeIputData eventData {};
     ParseWritebackLazytimeIputData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_lazytime_iput_format();
@@ -542,6 +620,9 @@ struct WritebackMarkInodeDirtyData {
 __attribute__((noinline)) void ParseWritebackMarkInodeDirtyData(WritebackMarkInodeDirtyData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -552,6 +633,9 @@ template <typename FtraceEventType>
 void ParseWritebackMarkInodeDirty(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackMarkInodeDirtyData eventData {};
     ParseWritebackMarkInodeDirtyData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_mark_inode_dirty_format();
@@ -572,6 +656,9 @@ struct WritebackPagesWrittenData {
 __attribute__((noinline)) void ParseWritebackPagesWrittenData(WritebackPagesWrittenData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -579,6 +666,9 @@ template <typename FtraceEventType>
 void ParseWritebackPagesWritten(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackPagesWrittenData eventData {};
     ParseWritebackPagesWrittenData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_pages_written_format();
@@ -604,6 +694,9 @@ struct WritebackQueueData {
 __attribute__((noinline)) void ParseWritebackQueueData(WritebackQueueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -619,6 +712,9 @@ template <typename FtraceEventType>
 void ParseWritebackQueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackQueueData eventData {};
     ParseWritebackQueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_queue_format();
@@ -649,6 +745,9 @@ struct WritebackQueueIoData {
 __attribute__((noinline)) void ParseWritebackQueueIoData(WritebackQueueIoData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.older = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -661,6 +760,9 @@ template <typename FtraceEventType>
 void ParseWritebackQueueIo(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackQueueIoData eventData {};
     ParseWritebackQueueIoData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_queue_io_format();
@@ -687,6 +789,9 @@ struct WritebackSbInodesRequeueData {
 __attribute__((noinline)) void ParseWritebackSbInodesRequeueData(WritebackSbInodesRequeueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -698,6 +803,9 @@ template <typename FtraceEventType>
 void ParseWritebackSbInodesRequeue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackSbInodesRequeueData eventData {};
     ParseWritebackSbInodesRequeueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_sb_inodes_requeue_format();
@@ -726,6 +834,9 @@ struct WritebackSingleInodeData {
 __attribute__((noinline)) void ParseWritebackSingleInodeData(WritebackSingleInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -740,6 +851,9 @@ template <typename FtraceEventType>
 void ParseWritebackSingleInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackSingleInodeData eventData {};
     ParseWritebackSingleInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_single_inode_format();
@@ -771,6 +885,9 @@ struct WritebackSingleInodeStartData {
 __attribute__((noinline)) void ParseWritebackSingleInodeStartData(WritebackSingleInodeStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -785,6 +902,9 @@ template <typename FtraceEventType>
 void ParseWritebackSingleInodeStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackSingleInodeStartData eventData {};
     ParseWritebackSingleInodeStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_single_inode_start_format();
@@ -817,6 +937,9 @@ struct WritebackStartData {
 __attribute__((noinline)) void ParseWritebackStartData(WritebackStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -832,6 +955,9 @@ template <typename FtraceEventType>
 void ParseWritebackStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackStartData eventData {};
     ParseWritebackStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_start_format();
@@ -865,6 +991,9 @@ struct WritebackWaitData {
 __attribute__((noinline)) void ParseWritebackWaitData(WritebackWaitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -880,6 +1009,9 @@ template <typename FtraceEventType>
 void ParseWritebackWait(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackWaitData eventData {};
     ParseWritebackWaitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_wait_format();
@@ -906,6 +1038,9 @@ struct WritebackWaitIffCongestedData {
 __attribute__((noinline)) void ParseWritebackWaitIffCongestedData(WritebackWaitIffCongestedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.usec_timeout = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.usec_delayed = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -914,6 +1049,9 @@ template <typename FtraceEventType>
 void ParseWritebackWaitIffCongested(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackWaitIffCongestedData eventData {};
     ParseWritebackWaitIffCongestedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_wait_iff_congested_format();
@@ -933,6 +1071,9 @@ struct WritebackWakeBackgroundData {
 __attribute__((noinline)) void ParseWritebackWakeBackgroundData(WritebackWakeBackgroundData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -941,6 +1082,9 @@ template <typename FtraceEventType>
 void ParseWritebackWakeBackground(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackWakeBackgroundData eventData {};
     ParseWritebackWakeBackgroundData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_wake_background_format();
@@ -962,6 +1106,9 @@ struct WritebackWriteInodeData {
 __attribute__((noinline)) void ParseWritebackWriteInodeData(WritebackWriteInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -972,6 +1119,9 @@ template <typename FtraceEventType>
 void ParseWritebackWriteInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackWriteInodeData eventData {};
     ParseWritebackWriteInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_write_inode_format();
@@ -995,6 +1145,9 @@ struct WritebackWriteInodeStartData {
 __attribute__((noinline)) void ParseWritebackWriteInodeStartData(WritebackWriteInodeStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1005,6 +1158,9 @@ template <typename FtraceEventType>
 void ParseWritebackWriteInodeStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackWriteInodeStartData eventData {};
     ParseWritebackWriteInodeStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_write_inode_start_format();
@@ -1033,6 +1189,9 @@ struct WritebackWrittenData {
 __attribute__((noinline)) void ParseWritebackWrittenData(WritebackWrittenData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1048,6 +1207,9 @@ template <typename FtraceEventType>
 void ParseWritebackWritten(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WritebackWrittenData eventData {};
     ParseWritebackWrittenData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_written_format();

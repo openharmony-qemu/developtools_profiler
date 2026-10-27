@@ -164,7 +164,7 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
             f.write("};\n")
             f.write("__attribute__((noinline)) void Parse{}({}, {}\n".format(data_type, data_type + "& eventData",
                                                                               Common.parse_function_args))
-            f.write("{\n    int i = 0;\n")
+            f.write("{\n    if (data == nullptr || size == 0 || format.fields.empty()) {\n        return;\n    }\n    int i = 0;\n")
             for i in range(len(event.remain_fields)):
                 self.generate_parse_field_lines(event, f, i)
             f.write("}\n")
@@ -202,6 +202,9 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
         f.write("template <typename FtraceEventType>\n")
         f.write("void {}(FtraceEventType& ftraceEvent, {}\n".format(function_name, Common.parse_function_args))
         f.write("{\n")
+        f.write("    if (data == nullptr || size == 0) {\n")
+        f.write("        return;\n")
+        f.write("    }\n")
         f.write("    {} eventData {{}};\n".format(data_type))
         f.write("    Parse{}(eventData, data, size, format);\n".format(data_type))
         f.write("    auto msg = ftraceEvent.mutable_{}_format();\n".format(str.lower(event.name)))

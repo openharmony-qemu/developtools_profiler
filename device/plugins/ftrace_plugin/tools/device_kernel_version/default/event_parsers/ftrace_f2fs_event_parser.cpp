@@ -33,6 +33,9 @@ struct F2fsSyncFileEnterData {
 __attribute__((noinline)) void ParseF2fsSyncFileEnterData(F2fsSyncFileEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -47,6 +50,9 @@ template <typename FtraceEventType>
 void ParseF2fsSyncFileEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     F2fsSyncFileEnterData eventData {};
     ParseF2fsSyncFileEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_f2fs_sync_file_enter_format();
@@ -75,6 +81,9 @@ struct F2fsSyncFileExitData {
 __attribute__((noinline)) void ParseF2fsSyncFileExitData(F2fsSyncFileExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -86,6 +95,9 @@ template <typename FtraceEventType>
 void ParseF2fsSyncFileExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     F2fsSyncFileExitData eventData {};
     ParseF2fsSyncFileExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_f2fs_sync_file_exit_format();
@@ -111,6 +123,9 @@ struct F2fsWriteBeginData {
 __attribute__((noinline)) void ParseF2fsWriteBeginData(F2fsWriteBeginData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -122,6 +137,9 @@ template <typename FtraceEventType>
 void ParseF2fsWriteBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     F2fsWriteBeginData eventData {};
     ParseF2fsWriteBeginData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_f2fs_write_begin_format();
@@ -147,6 +165,9 @@ struct F2fsWriteEndData {
 __attribute__((noinline)) void ParseF2fsWriteEndData(F2fsWriteEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -158,6 +179,9 @@ template <typename FtraceEventType>
 void ParseF2fsWriteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     F2fsWriteEndData eventData {};
     ParseF2fsWriteEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_f2fs_write_end_format();

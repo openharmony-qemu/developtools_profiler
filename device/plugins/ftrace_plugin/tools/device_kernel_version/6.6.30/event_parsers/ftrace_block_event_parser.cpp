@@ -30,6 +30,9 @@ struct BlockBioBackmergeData {
 __attribute__((noinline)) void ParseBlockBioBackmergeData(BlockBioBackmergeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -41,6 +44,9 @@ template <typename FtraceEventType>
 void ParseBlockBioBackmerge(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockBioBackmergeData eventData {};
     ParseBlockBioBackmergeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_backmerge_format();
@@ -66,6 +72,9 @@ struct BlockBioBounceData {
 __attribute__((noinline)) void ParseBlockBioBounceData(BlockBioBounceData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -77,6 +86,9 @@ template <typename FtraceEventType>
 void ParseBlockBioBounce(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockBioBounceData eventData {};
     ParseBlockBioBounceData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_bounce_format();
@@ -102,6 +114,9 @@ struct BlockBioCompleteData {
 __attribute__((noinline)) void ParseBlockBioCompleteData(BlockBioCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -113,6 +128,9 @@ template <typename FtraceEventType>
 void ParseBlockBioComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockBioCompleteData eventData {};
     ParseBlockBioCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_complete_format();
@@ -138,6 +156,9 @@ struct BlockBioFrontmergeData {
 __attribute__((noinline)) void ParseBlockBioFrontmergeData(BlockBioFrontmergeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -149,6 +170,9 @@ template <typename FtraceEventType>
 void ParseBlockBioFrontmerge(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockBioFrontmergeData eventData {};
     ParseBlockBioFrontmergeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_frontmerge_format();
@@ -174,6 +198,9 @@ struct BlockBioQueueData {
 __attribute__((noinline)) void ParseBlockBioQueueData(BlockBioQueueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -185,6 +212,9 @@ template <typename FtraceEventType>
 void ParseBlockBioQueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockBioQueueData eventData {};
     ParseBlockBioQueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_queue_format();
@@ -211,6 +241,9 @@ struct BlockBioRemapData {
 __attribute__((noinline)) void ParseBlockBioRemapData(BlockBioRemapData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -223,6 +256,9 @@ template <typename FtraceEventType>
 void ParseBlockBioRemap(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockBioRemapData eventData {};
     ParseBlockBioRemapData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_remap_format();
@@ -247,6 +283,9 @@ struct BlockDirtyBufferData {
 __attribute__((noinline)) void ParseBlockDirtyBufferData(BlockDirtyBufferData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -256,6 +295,9 @@ template <typename FtraceEventType>
 void ParseBlockDirtyBuffer(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockDirtyBufferData eventData {};
     ParseBlockDirtyBufferData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_dirty_buffer_format();
@@ -279,6 +321,9 @@ struct BlockGetrqData {
 __attribute__((noinline)) void ParseBlockGetrqData(BlockGetrqData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -290,6 +335,9 @@ template <typename FtraceEventType>
 void ParseBlockGetrq(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockGetrqData eventData {};
     ParseBlockGetrqData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_getrq_format();
@@ -311,6 +359,9 @@ struct BlockPlugData {
 __attribute__((noinline)) void ParseBlockPlugData(BlockPlugData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -318,6 +369,9 @@ template <typename FtraceEventType>
 void ParseBlockPlug(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockPlugData eventData {};
     ParseBlockPlugData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_plug_format();
@@ -340,6 +394,9 @@ struct BlockRqCompleteData {
 __attribute__((noinline)) void ParseBlockRqCompleteData(BlockRqCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -352,6 +409,9 @@ template <typename FtraceEventType>
 void ParseBlockRqComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockRqCompleteData eventData {};
     ParseBlockRqCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_complete_format();
@@ -380,6 +440,9 @@ struct BlockRqInsertData {
 __attribute__((noinline)) void ParseBlockRqInsertData(BlockRqInsertData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -393,6 +456,9 @@ template <typename FtraceEventType>
 void ParseBlockRqInsert(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockRqInsertData eventData {};
     ParseBlockRqInsertData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_insert_format();
@@ -422,6 +488,9 @@ struct BlockRqIssueData {
 __attribute__((noinline)) void ParseBlockRqIssueData(BlockRqIssueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -435,6 +504,9 @@ template <typename FtraceEventType>
 void ParseBlockRqIssue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockRqIssueData eventData {};
     ParseBlockRqIssueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_issue_format();
@@ -464,6 +536,9 @@ struct BlockRqRemapData {
 __attribute__((noinline)) void ParseBlockRqRemapData(BlockRqRemapData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -477,6 +552,9 @@ template <typename FtraceEventType>
 void ParseBlockRqRemap(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockRqRemapData eventData {};
     ParseBlockRqRemapData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_remap_format();
@@ -504,6 +582,9 @@ struct BlockRqRequeueData {
 __attribute__((noinline)) void ParseBlockRqRequeueData(BlockRqRequeueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -515,6 +596,9 @@ template <typename FtraceEventType>
 void ParseBlockRqRequeue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockRqRequeueData eventData {};
     ParseBlockRqRequeueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_requeue_format();
@@ -540,6 +624,9 @@ struct BlockSplitData {
 __attribute__((noinline)) void ParseBlockSplitData(BlockSplitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -551,6 +638,9 @@ template <typename FtraceEventType>
 void ParseBlockSplit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockSplitData eventData {};
     ParseBlockSplitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_split_format();
@@ -574,6 +664,9 @@ struct BlockTouchBufferData {
 __attribute__((noinline)) void ParseBlockTouchBufferData(BlockTouchBufferData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -583,6 +676,9 @@ template <typename FtraceEventType>
 void ParseBlockTouchBuffer(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockTouchBufferData eventData {};
     ParseBlockTouchBufferData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_touch_buffer_format();
@@ -603,6 +699,9 @@ struct BlockUnplugData {
 __attribute__((noinline)) void ParseBlockUnplugData(BlockUnplugData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.nr_rq = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -611,6 +710,9 @@ template <typename FtraceEventType>
 void ParseBlockUnplug(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BlockUnplugData eventData {};
     ParseBlockUnplugData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_unplug_format();

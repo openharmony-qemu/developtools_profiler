@@ -31,6 +31,9 @@ struct CgroupAttachTaskData {
 __attribute__((noinline)) void ParseCgroupAttachTaskData(CgroupAttachTaskData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dst_root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.dst_level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -43,6 +46,9 @@ template <typename FtraceEventType>
 void ParseCgroupAttachTask(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CgroupAttachTaskData eventData {};
     ParseCgroupAttachTaskData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_attach_task_format();
@@ -67,6 +73,9 @@ struct CgroupDestroyRootData {
 __attribute__((noinline)) void ParseCgroupDestroyRootData(CgroupDestroyRootData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.ss_mask = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -76,6 +85,9 @@ template <typename FtraceEventType>
 void ParseCgroupDestroyRoot(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CgroupDestroyRootData eventData {};
     ParseCgroupDestroyRootData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_destroy_root_format();
@@ -98,6 +110,9 @@ struct CgroupFreezeData {
 __attribute__((noinline)) void ParseCgroupFreezeData(CgroupFreezeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -108,6 +123,9 @@ template <typename FtraceEventType>
 void ParseCgroupFreeze(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CgroupFreezeData eventData {};
     ParseCgroupFreezeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_freeze_format();
@@ -131,6 +149,9 @@ struct CgroupMkdirData {
 __attribute__((noinline)) void ParseCgroupMkdirData(CgroupMkdirData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -141,6 +162,9 @@ template <typename FtraceEventType>
 void ParseCgroupMkdir(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CgroupMkdirData eventData {};
     ParseCgroupMkdirData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_mkdir_format();
@@ -165,6 +189,9 @@ struct CgroupNotifyFrozenData {
 __attribute__((noinline)) void ParseCgroupNotifyFrozenData(CgroupNotifyFrozenData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -176,6 +203,9 @@ template <typename FtraceEventType>
 void ParseCgroupNotifyFrozen(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CgroupNotifyFrozenData eventData {};
     ParseCgroupNotifyFrozenData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_notify_frozen_format();
@@ -201,6 +231,9 @@ struct CgroupNotifyPopulatedData {
 __attribute__((noinline)) void ParseCgroupNotifyPopulatedData(CgroupNotifyPopulatedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -212,6 +245,9 @@ template <typename FtraceEventType>
 void ParseCgroupNotifyPopulated(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CgroupNotifyPopulatedData eventData {};
     ParseCgroupNotifyPopulatedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_notify_populated_format();
@@ -236,6 +272,9 @@ struct CgroupReleaseData {
 __attribute__((noinline)) void ParseCgroupReleaseData(CgroupReleaseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -246,6 +285,9 @@ template <typename FtraceEventType>
 void ParseCgroupRelease(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CgroupReleaseData eventData {};
     ParseCgroupReleaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_release_format();
@@ -268,6 +310,9 @@ struct CgroupRemountData {
 __attribute__((noinline)) void ParseCgroupRemountData(CgroupRemountData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.ss_mask = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -277,6 +322,9 @@ template <typename FtraceEventType>
 void ParseCgroupRemount(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CgroupRemountData eventData {};
     ParseCgroupRemountData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_remount_format();
@@ -299,6 +347,9 @@ struct CgroupRenameData {
 __attribute__((noinline)) void ParseCgroupRenameData(CgroupRenameData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -309,6 +360,9 @@ template <typename FtraceEventType>
 void ParseCgroupRename(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CgroupRenameData eventData {};
     ParseCgroupRenameData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_rename_format();
@@ -332,6 +386,9 @@ struct CgroupRmdirData {
 __attribute__((noinline)) void ParseCgroupRmdirData(CgroupRmdirData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -342,6 +399,9 @@ template <typename FtraceEventType>
 void ParseCgroupRmdir(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CgroupRmdirData eventData {};
     ParseCgroupRmdirData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_rmdir_format();
@@ -364,6 +424,9 @@ struct CgroupSetupRootData {
 __attribute__((noinline)) void ParseCgroupSetupRootData(CgroupSetupRootData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.ss_mask = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -373,6 +436,9 @@ template <typename FtraceEventType>
 void ParseCgroupSetupRoot(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CgroupSetupRootData eventData {};
     ParseCgroupSetupRootData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_setup_root_format();
@@ -397,6 +463,9 @@ struct CgroupTransferTasksData {
 __attribute__((noinline)) void ParseCgroupTransferTasksData(CgroupTransferTasksData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dst_root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.dst_level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -409,6 +478,9 @@ template <typename FtraceEventType>
 void ParseCgroupTransferTasks(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CgroupTransferTasksData eventData {};
     ParseCgroupTransferTasksData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_transfer_tasks_format();
@@ -434,6 +506,9 @@ struct CgroupUnfreezeData {
 __attribute__((noinline)) void ParseCgroupUnfreezeData(CgroupUnfreezeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -444,6 +519,9 @@ template <typename FtraceEventType>
 void ParseCgroupUnfreeze(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CgroupUnfreezeData eventData {};
     ParseCgroupUnfreezeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_unfreeze_format();

@@ -26,6 +26,9 @@ struct WorkqueueActivateWorkData {
 __attribute__((noinline)) void ParseWorkqueueActivateWorkData(WorkqueueActivateWorkData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.work = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -33,6 +36,9 @@ template <typename FtraceEventType>
 void ParseWorkqueueActivateWork(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WorkqueueActivateWorkData eventData {};
     ParseWorkqueueActivateWorkData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_workqueue_activate_work_format();
@@ -51,6 +57,9 @@ struct WorkqueueExecuteEndData {
 __attribute__((noinline)) void ParseWorkqueueExecuteEndData(WorkqueueExecuteEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.work = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.function = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -59,6 +68,9 @@ template <typename FtraceEventType>
 void ParseWorkqueueExecuteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WorkqueueExecuteEndData eventData {};
     ParseWorkqueueExecuteEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_workqueue_execute_end_format();
@@ -78,6 +90,9 @@ struct WorkqueueExecuteStartData {
 __attribute__((noinline)) void ParseWorkqueueExecuteStartData(WorkqueueExecuteStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.work = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.function = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -86,6 +101,9 @@ template <typename FtraceEventType>
 void ParseWorkqueueExecuteStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WorkqueueExecuteStartData eventData {};
     ParseWorkqueueExecuteStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_workqueue_execute_start_format();
@@ -108,6 +126,9 @@ struct WorkqueueQueueWorkData {
 __attribute__((noinline)) void ParseWorkqueueQueueWorkData(WorkqueueQueueWorkData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.work = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.function = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -119,6 +140,9 @@ template <typename FtraceEventType>
 void ParseWorkqueueQueueWork(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     WorkqueueQueueWorkData eventData {};
     ParseWorkqueueQueueWorkData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_workqueue_queue_work_format();

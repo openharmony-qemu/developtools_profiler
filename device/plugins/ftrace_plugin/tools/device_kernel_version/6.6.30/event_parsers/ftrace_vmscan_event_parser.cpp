@@ -32,6 +32,9 @@ struct MmShrinkSlabEndData {
 __attribute__((noinline)) void ParseMmShrinkSlabEndData(MmShrinkSlabEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.shr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -45,6 +48,9 @@ template <typename FtraceEventType>
 void ParseMmShrinkSlabEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmShrinkSlabEndData eventData {};
     ParseMmShrinkSlabEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_shrink_slab_end_format();
@@ -76,6 +82,9 @@ struct MmShrinkSlabStartData {
 __attribute__((noinline)) void ParseMmShrinkSlabStartData(MmShrinkSlabStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.shr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.shrink = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -91,6 +100,9 @@ template <typename FtraceEventType>
 void ParseMmShrinkSlabStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmShrinkSlabStartData eventData {};
     ParseMmShrinkSlabStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_shrink_slab_start_format();
@@ -117,6 +129,9 @@ struct MmVmscanDirectReclaimBeginData {
 __attribute__((noinline)) void ParseMmVmscanDirectReclaimBeginData(MmVmscanDirectReclaimBeginData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.gfp_flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -125,6 +140,9 @@ template <typename FtraceEventType>
 void ParseMmVmscanDirectReclaimBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmVmscanDirectReclaimBeginData eventData {};
     ParseMmVmscanDirectReclaimBeginData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_direct_reclaim_begin_format();
@@ -143,6 +161,9 @@ struct MmVmscanDirectReclaimEndData {
 __attribute__((noinline)) void ParseMmVmscanDirectReclaimEndData(MmVmscanDirectReclaimEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.nr_reclaimed = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -150,6 +171,9 @@ template <typename FtraceEventType>
 void ParseMmVmscanDirectReclaimEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmVmscanDirectReclaimEndData eventData {};
     ParseMmVmscanDirectReclaimEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_direct_reclaim_end_format();
@@ -167,6 +191,9 @@ struct MmVmscanKswapdSleepData {
 __attribute__((noinline)) void ParseMmVmscanKswapdSleepData(MmVmscanKswapdSleepData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -174,6 +201,9 @@ template <typename FtraceEventType>
 void ParseMmVmscanKswapdSleep(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmVmscanKswapdSleepData eventData {};
     ParseMmVmscanKswapdSleepData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_kswapd_sleep_format();
@@ -193,6 +223,9 @@ struct MmVmscanKswapdWakeData {
 __attribute__((noinline)) void ParseMmVmscanKswapdWakeData(MmVmscanKswapdWakeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.zid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -202,6 +235,9 @@ template <typename FtraceEventType>
 void ParseMmVmscanKswapdWake(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmVmscanKswapdWakeData eventData {};
     ParseMmVmscanKswapdWakeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_kswapd_wake_format();
@@ -228,6 +264,9 @@ struct MmVmscanLruIsolateData {
 __attribute__((noinline)) void ParseMmVmscanLruIsolateData(MmVmscanLruIsolateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.highest_zoneidx = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -242,6 +281,9 @@ template <typename FtraceEventType>
 void ParseMmVmscanLruIsolate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmVmscanLruIsolateData eventData {};
     ParseMmVmscanLruIsolateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_lru_isolate_format();
@@ -278,6 +320,9 @@ struct MmVmscanLruShrinkInactiveData {
 __attribute__((noinline)) void ParseMmVmscanLruShrinkInactiveData(MmVmscanLruShrinkInactiveData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.nr_scanned = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -297,6 +342,9 @@ template <typename FtraceEventType>
 void ParseMmVmscanLruShrinkInactive(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmVmscanLruShrinkInactiveData eventData {};
     ParseMmVmscanLruShrinkInactiveData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_lru_shrink_inactive_format();
@@ -329,6 +377,9 @@ struct MmVmscanWakeupKswapdData {
 __attribute__((noinline)) void ParseMmVmscanWakeupKswapdData(MmVmscanWakeupKswapdData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.zid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -339,6 +390,9 @@ template <typename FtraceEventType>
 void ParseMmVmscanWakeupKswapd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmVmscanWakeupKswapdData eventData {};
     ParseMmVmscanWakeupKswapdData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_wakeup_kswapd_format();

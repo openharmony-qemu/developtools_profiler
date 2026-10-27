@@ -30,6 +30,9 @@ struct SignalDeliverData {
 __attribute__((noinline)) void ParseSignalDeliverData(SignalDeliverData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.sig = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.error_code = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -41,6 +44,9 @@ template <typename FtraceEventType>
 void ParseSignalDeliver(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SignalDeliverData eventData {};
     ParseSignalDeliverData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_signal_deliver_format();
@@ -68,6 +74,9 @@ struct SignalGenerateData {
 __attribute__((noinline)) void ParseSignalGenerateData(SignalGenerateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.sig = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.error_code = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -81,6 +90,9 @@ template <typename FtraceEventType>
 void ParseSignalGenerate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SignalGenerateData eventData {};
     ParseSignalGenerateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_signal_generate_format();

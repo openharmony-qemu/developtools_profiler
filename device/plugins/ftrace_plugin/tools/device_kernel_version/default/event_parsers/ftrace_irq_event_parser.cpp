@@ -27,6 +27,9 @@ struct IrqHandlerEntryData {
 __attribute__((noinline)) void ParseIrqHandlerEntryData(IrqHandlerEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.irq = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -35,6 +38,9 @@ template <typename FtraceEventType>
 void ParseIrqHandlerEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     IrqHandlerEntryData eventData {};
     ParseIrqHandlerEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_irq_handler_entry_format();
@@ -54,6 +60,9 @@ struct IrqHandlerExitData {
 __attribute__((noinline)) void ParseIrqHandlerExitData(IrqHandlerExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.irq = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -62,6 +71,9 @@ template <typename FtraceEventType>
 void ParseIrqHandlerExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     IrqHandlerExitData eventData {};
     ParseIrqHandlerExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_irq_handler_exit_format();
@@ -80,6 +92,9 @@ struct SoftirqEntryData {
 __attribute__((noinline)) void ParseSoftirqEntryData(SoftirqEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.vec = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
@@ -87,6 +102,9 @@ template <typename FtraceEventType>
 void ParseSoftirqEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SoftirqEntryData eventData {};
     ParseSoftirqEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_softirq_entry_format();
@@ -104,6 +122,9 @@ struct SoftirqExitData {
 __attribute__((noinline)) void ParseSoftirqExitData(SoftirqExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.vec = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
@@ -111,6 +132,9 @@ template <typename FtraceEventType>
 void ParseSoftirqExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SoftirqExitData eventData {};
     ParseSoftirqExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_softirq_exit_format();
@@ -128,6 +152,9 @@ struct SoftirqRaiseData {
 __attribute__((noinline)) void ParseSoftirqRaiseData(SoftirqRaiseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.vec = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
@@ -135,6 +162,9 @@ template <typename FtraceEventType>
 void ParseSoftirqRaise(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     SoftirqRaiseData eventData {};
     ParseSoftirqRaiseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_softirq_raise_format();

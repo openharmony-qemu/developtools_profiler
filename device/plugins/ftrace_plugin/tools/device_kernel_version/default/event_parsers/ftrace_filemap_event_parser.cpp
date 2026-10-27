@@ -30,6 +30,9 @@ struct FileCheckAndAdvanceWbErrData {
 __attribute__((noinline)) void ParseFileCheckAndAdvanceWbErrData(FileCheckAndAdvanceWbErrData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.file = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -41,6 +44,9 @@ template <typename FtraceEventType>
 void ParseFileCheckAndAdvanceWbErr(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     FileCheckAndAdvanceWbErrData eventData {};
     ParseFileCheckAndAdvanceWbErrData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_file_check_and_advance_wb_err_format();
@@ -64,6 +70,9 @@ struct FilemapSetWbErrData {
 __attribute__((noinline)) void ParseFilemapSetWbErrData(FilemapSetWbErrData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.s_dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -73,6 +82,9 @@ template <typename FtraceEventType>
 void ParseFilemapSetWbErr(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     FilemapSetWbErrData eventData {};
     ParseFilemapSetWbErrData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_filemap_set_wb_err_format();
@@ -95,6 +107,9 @@ struct MmFilemapAddToPageCacheData {
 __attribute__((noinline)) void ParseMmFilemapAddToPageCacheData(MmFilemapAddToPageCacheData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -105,6 +120,9 @@ template <typename FtraceEventType>
 void ParseMmFilemapAddToPageCache(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmFilemapAddToPageCacheData eventData {};
     ParseMmFilemapAddToPageCacheData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_filemap_add_to_page_cache_format();
@@ -128,6 +146,9 @@ struct MmFilemapDeleteFromPageCacheData {
 __attribute__((noinline)) void ParseMmFilemapDeleteFromPageCacheData(MmFilemapDeleteFromPageCacheData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -138,6 +159,9 @@ template <typename FtraceEventType>
 void ParseMmFilemapDeleteFromPageCache(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     MmFilemapDeleteFromPageCacheData eventData {};
     ParseMmFilemapDeleteFromPageCacheData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_filemap_delete_from_page_cache_format();

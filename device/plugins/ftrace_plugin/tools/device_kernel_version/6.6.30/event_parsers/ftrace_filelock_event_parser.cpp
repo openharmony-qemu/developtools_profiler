@@ -34,6 +34,9 @@ struct BreakLeaseBlockData {
 __attribute__((noinline)) void ParseBreakLeaseBlockData(BreakLeaseBlockData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.fl = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -49,6 +52,9 @@ template <typename FtraceEventType>
 void ParseBreakLeaseBlock(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BreakLeaseBlockData eventData {};
     ParseBreakLeaseBlockData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_break_lease_block_format();
@@ -82,6 +88,9 @@ struct BreakLeaseNoblockData {
 __attribute__((noinline)) void ParseBreakLeaseNoblockData(BreakLeaseNoblockData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.fl = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -97,6 +106,9 @@ template <typename FtraceEventType>
 void ParseBreakLeaseNoblock(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BreakLeaseNoblockData eventData {};
     ParseBreakLeaseNoblockData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_break_lease_noblock_format();
@@ -130,6 +142,9 @@ struct BreakLeaseUnblockData {
 __attribute__((noinline)) void ParseBreakLeaseUnblockData(BreakLeaseUnblockData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.fl = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -145,6 +160,9 @@ template <typename FtraceEventType>
 void ParseBreakLeaseUnblock(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     BreakLeaseUnblockData eventData {};
     ParseBreakLeaseUnblockData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_break_lease_unblock_format();
@@ -177,6 +195,9 @@ struct GenericAddLeaseData {
 __attribute__((noinline)) void ParseGenericAddLeaseData(GenericAddLeaseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.wcount = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -191,6 +212,9 @@ template <typename FtraceEventType>
 void ParseGenericAddLease(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     GenericAddLeaseData eventData {};
     ParseGenericAddLeaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_generic_add_lease_format();
@@ -223,6 +247,9 @@ struct GenericDeleteLeaseData {
 __attribute__((noinline)) void ParseGenericDeleteLeaseData(GenericDeleteLeaseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.fl = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -238,6 +265,9 @@ template <typename FtraceEventType>
 void ParseGenericDeleteLease(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     GenericDeleteLeaseData eventData {};
     ParseGenericDeleteLeaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_generic_delete_lease_format();
@@ -271,6 +301,9 @@ struct TimeOutLeasesData {
 __attribute__((noinline)) void ParseTimeOutLeasesData(TimeOutLeasesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.fl = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -286,6 +319,9 @@ template <typename FtraceEventType>
 void ParseTimeOutLeases(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     TimeOutLeasesData eventData {};
     ParseTimeOutLeasesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_time_out_leases_format();

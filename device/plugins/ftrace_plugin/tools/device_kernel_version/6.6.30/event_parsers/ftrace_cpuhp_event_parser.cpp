@@ -29,6 +29,9 @@ struct CpuhpEnterData {
 __attribute__((noinline)) void ParseCpuhpEnterData(CpuhpEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.cpu = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.target = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -39,6 +42,9 @@ template <typename FtraceEventType>
 void ParseCpuhpEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CpuhpEnterData eventData {};
     ParseCpuhpEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cpuhp_enter_format();
@@ -62,6 +68,9 @@ struct CpuhpExitData {
 __attribute__((noinline)) void ParseCpuhpExitData(CpuhpExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.cpu = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.state = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -72,6 +81,9 @@ template <typename FtraceEventType>
 void ParseCpuhpExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CpuhpExitData eventData {};
     ParseCpuhpExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cpuhp_exit_format();
@@ -95,6 +107,9 @@ struct CpuhpMultiEnterData {
 __attribute__((noinline)) void ParseCpuhpMultiEnterData(CpuhpMultiEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.cpu = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.target = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -105,6 +120,9 @@ template <typename FtraceEventType>
 void ParseCpuhpMultiEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     CpuhpMultiEnterData eventData {};
     ParseCpuhpMultiEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cpuhp_multi_enter_format();

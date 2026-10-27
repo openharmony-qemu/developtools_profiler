@@ -31,6 +31,9 @@ struct HmfsReadEnterData {
 __attribute__((noinline)) void ParseHmfsReadEnterData(HmfsReadEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -43,6 +46,9 @@ template <typename FtraceEventType>
 void ParseHmfsReadEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     HmfsReadEnterData eventData {};
     ParseHmfsReadEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hmfs_read_enter_format();
@@ -69,6 +75,9 @@ struct HmfsReadExitData {
 __attribute__((noinline)) void ParseHmfsReadExitData(HmfsReadExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -80,6 +89,9 @@ template <typename FtraceEventType>
 void ParseHmfsReadExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     HmfsReadExitData eventData {};
     ParseHmfsReadExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hmfs_read_exit_format();
@@ -106,6 +118,9 @@ struct HmfsWriteEnterData {
 __attribute__((noinline)) void ParseHmfsWriteEnterData(HmfsWriteEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -118,6 +133,9 @@ template <typename FtraceEventType>
 void ParseHmfsWriteEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     HmfsWriteEnterData eventData {};
     ParseHmfsWriteEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hmfs_write_enter_format();
@@ -144,6 +162,9 @@ struct HmfsWriteExitData {
 __attribute__((noinline)) void ParseHmfsWriteExitData(HmfsWriteExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
+    if (data == nullptr || size == 0 || format.fields.empty()) {
+        return;
+    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -155,6 +176,9 @@ template <typename FtraceEventType>
 void ParseHmfsWriteExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
     HmfsWriteExitData eventData {};
     ParseHmfsWriteExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hmfs_write_exit_format();
