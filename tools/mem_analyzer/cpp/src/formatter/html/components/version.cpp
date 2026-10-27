@@ -1,0 +1,26 @@
+#include "formatter/html/components/version.hpp"
+
+#include "utils/version.hpp"
+
+namespace mem_analyzer {
+
+std::string version_format() {
+    return R"CSS(
+.footer { margin: 30px 20px 20px; }
+.footer-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 16px 24px; }
+.footer-label { color: #888; font-size: 14px; margin-bottom: 10px; }
+.footer-links { display: flex; flex-direction: column; gap: 8px; }
+.footer-links a { color: #1a73e8; text-decoration: none; font-size: 14px; transition: color 0.2s; }
+.footer-links a:hover { color: #4285f4; text-decoration: underline; }
+.footer-version { color: #888; font-size: 13px; text-align: right; margin-top: 12px; }
+)CSS";
+}
+
+std::string version_content() {
+    const std::string version = get_version();
+    return "<div class=\"footer\">\n"
+           "  <div class=\"footer-version\">工具版本：v" + version + "</div>\n"
+           "</div>";
+}
+
+} // namespace mem_analyzer

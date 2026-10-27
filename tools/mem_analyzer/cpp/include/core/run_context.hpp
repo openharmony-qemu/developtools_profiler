@@ -1,0 +1,78 @@
+#pragma once
+#include <cstdint>
+#include <string>
+#include <unordered_set>
+
+#include "config.hpp"
+
+namespace mem_analyzer {
+
+// ── 通用（管道层）────────────────────────────────────────────────
+struct OutputOptions {
+    std::string out_dir = defaults::OUTPUT_DIR;  // 输出根目录（process_file 会再嵌一层 source stem）
+    std::string format;                          // 空 = 用该解析器的默认格式
+    bool parse_only = false;
+    bool auto_open = false;
+};
+
+// ── 解析期需要的外部资源 ────────────────────────────────────────
+struct ResourceOptions {
+    std::string so_dir;          // -S/--so-dir：native 符号表目录
+    std::string sourcemap_dir;   // --sourcemap：源码映射
+    std::string name_cache_dir;  // --namecache：nameCache
+};
+
+// ── 各域的算法参数 ──────────────────────────────────────────────
+struct HtraceOptions {
+    Scope scope = defaults::SCOPE;
+    int top_n = defaults::TRACE_TOP_N;
+    std::string category = defaults::HTRACE_TYPE;
+    // -l: Native Leaks 不可达内存泄漏文件地址集合（TraceCommand 读 leak 文件后填入；空 = 非 -l 模式）
+    std::unordered_set<uint64_t> leak_addrs;
+};
+
+struct TshandleOptions {
+    int top_n = defaults::TSHANDLE_TOP_N;
+};
+
+/// 快照对比运行参数（jsleak 域的对比模式）。baseline_file 非空 = 对比模式：
+/// req.file_path 为目标快照 B，本字段为 -b/--baseline 指定的基线快照 A。
+struct SnapshotCompareOptions {
+    std::string baseline_file;
+};
+
+struct SnapshotOptions {
+    std::string mode = defaults::JSLEAK_MODE;
+    std::string leak_list_file;
+    int top_n = defaults::JSLEAK_TOP_N;
+    SnapshotCompareOptions compare;
+};
+
+/**
+ * 一次运行的显式参数集合，构造后只读 —— 替代原先的 Config 单例。
+ *
+ * 纪律（P4 之后会进一步收紧）：
+ *   1. RunContext 只出现在管道层（process_file / AnalysisModule::run）；
+ *   2. 域算法只接收自己那**一个**子结构（HtraceOptions / TshandleOptions /
+ *      SnapshotOptions），永远不接收整个 RunContext；
+ *   3. 解析期资源（so_dir / sourcemap / namecache）属于「运行环境」，
+ *      被多个域的解析器共用，因此放在上下文里而非某个域内。
+ */
+struct RunContext {
+    OutputOptions output;
+    ResourceOptions resources;
+    std::string command_line;  // 写入输出 meta.command
+
+    HtraceOptions htrace;
+    TshandleOptions tshandle;
+    SnapshotOptions snapshot;
+};
+
+/// 兜底默认上下文：仅用于 ctx 未被设置的异常路径，避免空指针解引用。
+/// 默认值与 Config 的历史默认保持一致。
+inline const RunContext& default_run_context() {
+    static const RunContext ctx{};
+    return ctx;
+}
+
+} // namespace mem_analyzer

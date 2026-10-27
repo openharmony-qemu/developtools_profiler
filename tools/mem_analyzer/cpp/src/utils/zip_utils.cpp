@@ -1,0 +1,152 @@
+#include "utils/zip_utils.hpp"
+
+#include "utils/file_utils.hpp"
+
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <vector>
+
+#include "unzip.h"
+
+#if defined(_WIN32)
+#include "iowin32.h"
+#endif
+
+namespace fs = std::filesystem;
+
+namespace mem_analyzer {
+namespace zip_utils {
+
+namespace {
+
+/// 校验 zip 条目名是否安全（防 zip-slip）：拒绝绝对路径、盘符、`..` 组件。
+bool is_safe_entry(const std::string& name) {
+    if (name.empty()) return false;
+    if (name.front() == '/' || name.front() == '\\') return false;
+    if (name.size() >= 2 && name[1] == ':') return false;  // Windows 盘符（如 "C:"）
+    std::string normalized = name;
+    for (auto& c : normalized) {
+        if (c == '\\') c = '/';
+    }
+    const fs::path p = path_from_utf8(normalized);
+    for (const auto& part : p) {
+        if (part == "..") return false;
+    }
+    return true;
+}
+
+/// 条目名以 '/' 或 '\' 结尾即视为目录条目。
+bool is_dir_entry(const std::string& name) {
+    return !name.empty() && (name.back() == '/' || name.back() == '\\');
+}
+
+/// zip 炸弹防护：累计解压字节数上限（4 GiB）。合法 tshandle 数据远小于此，
+/// 恶意/损坏 zip 声明超大 uncompressed_size 时中止。
+constexpr uint64_t kMaxTotalUncompressedBytes = 4ULL * 1024 * 1024 * 1024;
+
+} // namespace
+
+bool extract_zip(const std::string& zip_path, const std::string& dest_dir,
+                 std::string& error) {
+    unzFile uf = nullptr;
+#if defined(_WIN32)
+    // Windows：宽字符文件函数 + UTF-8→wstring，正确处理中文路径。
+    const fs::path zip_p = path_from_utf8(zip_path);
+    zlib_filefunc64_def ff;
+    fill_win32_filefunc64W(&ff);
+    uf = unzOpen2_64(zip_p.c_str(), &ff);
+#else
+    uf = unzOpen64(zip_path.c_str());
+#endif
+    if (!uf) {
+        error = "Failed to open ZIP file: " + zip_path;
+        return false;
+    }
+
+    if (unzGoToFirstFile(uf) != UNZ_OK) {
+        unzClose(uf);
+        return true;  // 空 zip：无条目可解压，视为成功
+    }
+
+    uint64_t total_written = 0;  // 累计解压字节数（zip 炸弹防护）
+
+    do {
+        unz_file_info64 fi;
+        if (unzGetCurrentFileInfo64(uf, &fi, nullptr, 0, nullptr, 0, nullptr, 0) != UNZ_OK) {
+            continue;
+        }
+        std::vector<char> name_buf(static_cast<size_t>(fi.size_filename) + 1, '\0');
+        if (unzGetCurrentFileInfo64(uf, &fi, name_buf.data(),
+                                    static_cast<uLong>(name_buf.size()),
+                                    nullptr, 0, nullptr, 0) != UNZ_OK) {
+            continue;
+        }
+        const std::string entry_name(name_buf.data(), static_cast<size_t>(fi.size_filename));
+
+        if (!is_safe_entry(entry_name)) {
+            unzClose(uf);
+            error = "Unsafe entry path in ZIP: " + entry_name;
+            return false;
+        }
+
+        const fs::path out_path = path_from_utf8(dest_dir) / path_from_utf8(entry_name);
+
+        if (is_dir_entry(entry_name)) {
+            std::error_code ec;
+            fs::create_directories(out_path, ec);
+            continue;
+        }
+
+        std::error_code ec;
+        fs::create_directories(out_path.parent_path(), ec);
+
+        if (fi.uncompressed_size > kMaxTotalUncompressedBytes - total_written) {
+            unzClose(uf);
+            error = "ZIP entry exceeds decompressed size limit: " + entry_name;
+            return false;
+        }
+
+        if (unzOpenCurrentFile(uf) != UNZ_OK) {
+            unzClose(uf);
+            error = "Failed to open entry in ZIP: " + entry_name;
+            return false;
+        }
+
+        std::ofstream out(out_path, std::ios::binary);
+        if (!out) {
+            unzCloseCurrentFile(uf);
+            unzClose(uf);
+            error = "Failed to create output file: " + entry_name;
+            return false;
+        }
+
+        std::vector<char> buf(64 * 1024);
+        int n = 0;
+        while ((n = unzReadCurrentFile(uf, buf.data(), static_cast<unsigned>(buf.size()))) > 0) {
+            out.write(buf.data(), n);
+            total_written += static_cast<uint64_t>(n);
+            if (total_written > kMaxTotalUncompressedBytes) {
+                out.close();
+                unzCloseCurrentFile(uf);
+                unzClose(uf);
+                error = "ZIP decompressed size exceeds limit: " + entry_name;
+                return false;
+            }
+        }
+        out.close();
+        unzCloseCurrentFile(uf);
+
+        if (n < 0) {
+            unzClose(uf);
+            error = "Failed to decompress entry: " + entry_name;
+            return false;
+        }
+    } while (unzGoToNextFile(uf) == UNZ_OK);
+
+    unzClose(uf);
+    return true;
+}
+
+} // namespace zip_utils
+} // namespace mem_analyzer

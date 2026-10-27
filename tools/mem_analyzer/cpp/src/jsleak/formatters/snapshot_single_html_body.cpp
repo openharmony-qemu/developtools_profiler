@@ -1,0 +1,526 @@
+#include "jsleak/formatters/snapshot_single_html_body.hpp"
+#include "jsleak/formatters/icicle_tree.hpp"
+#include "jsleak/formatters/tree_table.hpp"
+#include "formatter/html/html_analysis_common.hpp"
+#include "utils/file_utils.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <sstream>
+
+namespace mem_analyzer {
+using html_analysis::escapeHtml;
+using html_analysis::formatBytes;
+using html_analysis::formatSizeText;
+
+namespace {
+
+std::string buildChainPathHtml(const json& chainFrames) {
+    // chain 现为帧名数组（根 -> 目标），相邻帧间插入箭头 span。
+    if (!chainFrames.is_array()) return "";
+
+    std::string result;
+    bool first = true;
+    for (const auto& frame : chainFrames) {
+        if (!frame.is_string()) continue;
+        if (!first) result += "<span class=\"chain-arrow\">-&gt;</span>";
+        first = false;
+        result += escapeHtml(frame.get<std::string>());
+    }
+    return result;
+}
+
+namespace {
+
+// 引用链的链尾帧名（chain 为帧名数组，根 -> 目标），用作总览图的搜索词。
+std::string last_chain_frame_name(const json& chainFrames) {
+    if (!chainFrames.is_array() || chainFrames.empty()) return std::string();
+    for (auto it = chainFrames.end(); it != chainFrames.begin();) {
+        --it;
+        if (it->is_string()) return it->get<std::string>();
+    }
+    return std::string();
+}
+
+// 详情列表「总览图」列的查看入口：点击后切到该 tab 的「引用链总览图」并自动搜索 keyword；
+// keyword 为空串时不带搜索词，直接展示完整总览图（绑定了 native 内存的 ArkTS 对象用此方式）。
+// keyword 走 data- 属性而不是内联 JS 字符串，避免对象名里的引号破坏 onclick 表达式。
+std::string build_overview_cell(const std::string& chartSubTabId, const std::string& keyword) {
+    return "<td><a class=\"detail-link\" data-chart-subtab=\"" + escapeHtml(chartSubTabId) +
+           "\" data-keyword=\"" + escapeHtml(keyword) +
+           "\" onclick=\"showInOverview(this); return false;\">查看</a></td>";
+}
+
+// 引用链前缀树节点：把大量重复前缀（a、a -> b、a -> b -> c）合并成一棵树，
+// 供冰柱图按层级渲染。
+//
+// 数值口径与报告表格行保持一致：
+//   own_size/own_count —— 以该节点结尾的那条引用链的值（即表格中该链那一行的
+//                        「总大小 / 节点数」）。retained size 本身已包含其子树，
+//                        因此不能把子分支再累加进来，否则会重复计算（此前会把
+//                        244.22MB 的节点显示成 2.99G）。
+//   size/count        —— 展示值：该节点若本身是引用链（表格有一行）就取自身值；
+//                        纯前缀节点（如 GC Roots、SyntheticRoot）没有对应表格行，
+//                        取各子分支之和。
+
+struct SubTabItem {
+    std::string id;
+    std::string label;
+    std::string body;
+    bool active = false;
+};
+
+std::string build_sub_tabs(const std::vector<SubTabItem>& items) {
+    std::string html;
+    html += "<div class=\"sub-tab-bar\">";
+    std::string contents;
+    for (const auto& item : items) {
+        html += "<span class=\"sub-tab-item" + std::string(item.active ? " active" : "") +
+                "\" data-subtab=\"" + escapeHtml(item.id) + "\" onclick=\"switchSubTab('" +
+                escapeHtml(item.id) + "')\">" + escapeHtml(item.label) + "</span>";
+        contents += "<div class=\"sub-tab-content" + std::string(item.active ? " active" : "") +
+                    "\" id=\"" + escapeHtml(item.id) + "\" data-subtab=\"" + escapeHtml(item.id) + "\">";
+        contents += item.body;
+        contents += "</div>";
+    }
+    html += "</div>";
+    return html + contents;
+}
+
+} // namespace
+namespace {
+
+
+} // namespace
+
+// 统一到 report_common 的 id 约定（<prefix>Header_<idx>/<prefix>Body_<idx>/<prefix>Detail_<idx>），
+// 空前缀映射为 "main"（单快照只有一个列表时 prefix 为空）。
+std::string norm_prefix(const std::string& prefix) {
+    return prefix.empty() ? "main" : prefix;
+}
+
+// ========== 构建节点 ID 显示 ==========
+
+std::string buildNodeIdsHtml(const json& nodeIdsJson,
+                                                             const std::string& containerId) {
+    if (!nodeIdsJson.is_array() || nodeIdsJson.empty()) {
+        return "<div class=\"chain-node-ids\" id=\"" + containerId +
+               "\" data-all-ids=\"\">节点ID: 无</div>";
+    }
+
+    std::vector<std::string> ids;
+    ids.reserve(nodeIdsJson.size());
+    for (const auto& id : nodeIdsJson) {
+        ids.push_back(std::to_string(id.get<int64_t>()));
+    }
+
+    std::string allIds;
+    for (size_t i = 0; i < ids.size(); ++i) {
+        if (i > 0) allIds += ",";
+        allIds += ids[i];
+    }
+
+    std::string html;
+    html += "<div class=\"chain-node-ids\" id=\"" + containerId +
+            "\" data-label=\"节点ID\" data-all-ids=\"" + allIds + "\">节点ID: ";
+
+    size_t show = std::min(ids.size(), (size_t)10);
+    for (size_t i = 0; i < show; ++i) {
+        html += "<span class=\"node-id-tag\">" + ids[i] + "</span>";
+    }
+    if (ids.size() > 10) {
+        html += "<span class=\"node-id-tag expand-btn\" id=\"expandBtn_" +
+                containerId + "\" onclick=\"expandNodeIds('" + containerId +
+                "')\">展开</span>";
+    }
+    html += "</div>";
+    return html;
+}
+
+std::string buildHashValuesHtml(const json &hashValuesJson,
+                                                               const std::string &containerId) {
+    if (!hashValuesJson.is_array() || hashValuesJson.empty()) {
+        return "<div class=\"chain-node-ids\" id=\"" + containerId + 
+               "\" data-all-hashes=\"\">hash值: 无</div>";
+    }
+
+    std::vector<std::string> hashes;
+    hashes.reserve(hashValuesJson.size());
+    for (const auto &h : hashValuesJson) {
+        hashes.push_back(std::to_string(h.get<uint32_t>()));
+    }
+
+    std::string allHashes;
+    for (size_t i = 0; i < hashes.size(); ++i) {
+        if (i > 0) { allHashes += ","; }
+        allHashes += hashes[i];
+    }
+
+    std::string html;
+    html += "<div class=\"chain-node-ids\" id=\"" + containerId + 
+            "\" data-all-hashes=\"" + allHashes + "\">hash值: ";
+    
+    size_t show = std::min(hashes.size(), (size_t)10);
+    for (size_t i = 0; i < show; ++i) {
+        html += "<span class=\"node-id-tag\">" + hashes[i] + "</span>";
+    }
+    if (hashes.size() > 10) {
+        html += "<span class=\"node-id-tag expand-btn\" id=\"expandBtn_" + 
+                containerId + "\" onclick=\"expandHashValues('" + containerId + 
+                "')\">展开</span>";
+    }
+    html += "</div>";
+    return html;
+}
+
+// ========== 表格行 ==========
+
+std::string buildPropertyTagTableRow(const std::string& objName,
+                                                             const json& objData,
+                                                             int idx,
+                                                             const std::string& prefix,
+                                                             const std::string& chartSubTabId) {
+    int64_t retainedSize = objData.value("totalRetainedSize", 0);
+    int nodeCount = objData.value("totalNodeCount", 0);
+    std::string propertyName = objData.value("propertyName", "");
+    if (propertyName.empty()) { propertyName = "NA"; }
+    std::string displayType = objData.value("displayType", "");
+    if (displayType.empty()) { displayType = "NA"; }
+
+    std::string hashValue = "NA";
+    if (objData.contains("hashValues") && objData["hashValues"].is_array()) {
+        auto &hashArr = objData["hashValues"];
+        if (hashArr.size() == 1) {
+            hashValue = std::to_string(hashArr[0].get<uint32_t>());
+        } else if (hashArr.size() > 1) {
+            hashValue = std::to_string(hashArr[0].get<uint32_t>()) + ", ......";
+        }
+    }
+
+    std::string row;
+    row += "<tr>";
+    row += "<td><a onclick=\"markSelectedRow(this); showDetail('" + norm_prefix(prefix) + "', " +
+           std::to_string(idx) + "); return false;\" class=\"detail-link\">详情</a></td>";
+    // 「总览图」列以对象名称作为总览图里的搜索词
+    row += build_overview_cell(chartSubTabId, objName);
+    row += "<td class=\"top-size-val\">" + formatBytes(retainedSize) + "</td>";
+    row += "<td class=\"top-size-val\">" + std::to_string(nodeCount) + "</td>";
+    row += "<td class=\"top-size-val\">" + escapeHtml(hashValue) + "</td>";
+    row += "<td class=\"top-func\">" + escapeHtml(propertyName) + "</td>";
+    row += "<td class=\"top-func\">" + escapeHtml(displayType) + "</td>";
+    row += "<td class=\"top-func\"><b>" + escapeHtml(objName) + "</b></td>";
+    row += "</tr>\n";
+    return row;
+}
+
+std::string buildTopChainTableRow(const json& chainData,
+                                                                 int idx,
+                                                                 const std::string& prefix,
+                                                                 const std::string& chartSubTabId,
+                                                                 bool searchOnOverview) {
+    int64_t retainedSize = chainData.value("totalRetainedSize", 0);
+    int nodeCount = chainData.contains("nodeIds") ? (int)chainData["nodeIds"].size() : 0;
+    std::string chainPath = buildChainPathHtml(chainData["chain"]);
+
+    std::string row;
+    row += "<tr>";
+    row += "<td><a onclick=\"markSelectedRow(this); showDetail('" + norm_prefix(prefix) + "', " +
+           std::to_string(idx) + "); return false;\" class=\"detail-link\">详情</a></td>";
+    // 「总览图」列以引用链链尾的帧名作为搜索词；
+    // searchOnOverview 为 false 时不带搜索词（空串），点击后直接展示完整总览图
+    row += build_overview_cell(chartSubTabId,
+                               searchOnOverview ? last_chain_frame_name(chainData["chain"])
+                                                : std::string());
+    row += "<td class=\"top-size-val\">" + formatBytes(retainedSize) + "</td>";
+    row += "<td class=\"top-size-val\">" + std::to_string(nodeCount) + "</td>";
+    row += "<td class=\"top-func\"><b>" + chainPath + "</b></td>";
+    row += "<td></td>";
+    row += "</tr>\n";
+    return row;
+}
+
+// ========== 详情条目（头部 + 主体） ==========
+
+std::string buildPropertyTagEntryHtml(const std::string& objName,
+                                                              const json& objData,
+                                                              int idx,
+                                                              const std::string& prefix) {
+    int64_t retainedSize = objData.value("totalRetainedSize", 0);
+    int nodeCount = objData.value("totalNodeCount", 0);
+
+    auto makeId = [&](const std::string& type) {
+        return norm_prefix(prefix) + type + "_" + std::to_string(idx);
+    };
+    std::string headerId = makeId("Header");
+    std::string bodyId   = makeId("Body");
+
+    std::string html;
+    html += "<div class=\"top-item\" id=\"" + makeId("Detail") + "\">";
+    html += "<div class=\"top-item-header expanded\" id=\"" + headerId +
+            "\" onclick=\"toggleDetail('" + norm_prefix(prefix) + "', " + std::to_string(idx) + ")\">";
+    html += "<span class=\"arrow\">&#9654;</span>";
+    html += "<span class=\"header-rank\">泄漏对象" + std::to_string(idx + 1) +
+            "：</span><span class=\"header-func\">" + escapeHtml(objName) + "</span>";
+    html += "<div class=\"header-stats\">总大小 " + formatBytes(retainedSize) +
+            "，节点数" + std::to_string(nodeCount) + "</div>";
+    html += "</div>";
+    html += "<div class=\"top-item-body expanded leak-detail-body\" id=\"" + bodyId + "\">";
+    html += "<div class=\"call-chains-section\">";
+
+    bool hasChain = false;
+    if (objData.contains("referenceChains")) {
+        // referenceChains 为数组，每项含 chain/nodeIds/totalRetainedSize
+        const auto& refChains = objData["referenceChains"];
+        std::vector<json> sortedChains;
+        if (refChains.is_array()) {
+            sortedChains.reserve(refChains.size());
+            for (const auto& item : refChains) sortedChains.push_back(item);
+        }
+        std::sort(sortedChains.begin(), sortedChains.end(),
+                    [](const auto &a, const auto &b) {
+                        int64_t sizeA = a.value("totalRetainedSize", 0);
+                        int64_t sizeB = b.value("totalRetainedSize", 0);
+                        return sizeA > sizeB;
+                    });
+        int chainIdx = 0;
+        bool multipleChains = sortedChains.size() > 1;
+        for (const auto &chainData : sortedChains) {
+            std::string chainPath = buildChainPathHtml(chainData["chain"]);
+            int64_t chainSize = chainData.value("totalRetainedSize", 0);
+            if (!chainPath.empty()) {
+                std::string chainLabel = multipleChains ? ("引用链" + std::to_string(chainIdx + 1)) : "引用链";
+                html += "<div class=\"call-chain-line\">" + chainLabel + ": " + chainPath + "</div>";
+                hasChain = true;
+            }
+            html += "<div class=\"chain-detail-section\">";
+            std::string containerId = "nodeIdsContainer" +
+                (prefix.empty() ? "_" : ("_" + prefix + "_")) +
+                std::to_string(idx) + "_" + std::to_string(chainIdx);
+            html += buildNodeIdsHtml(chainData["nodeIds"], containerId);
+            if (multipleChains) {
+                html += "<div class=\"chain-node-size\">大小: " + formatBytes(chainSize) + "</div>";
+            }
+            html += "</div>";
+            chainIdx++;
+        }
+    }
+    if (!hasChain) {
+        html += "<div class=\"call-chain-line\" style=\"color:#a0a0b0;\">无引用链数据</div>";
+    }
+
+    if (objData.contains("hashValues") && objData["hashValues"].is_array() && !objData["hashValues"].empty()) {
+        std::string hashContainerId = "hashValuesContainer" + 
+            (prefix.empty() ? "_" : ("_" + prefix + "_")) + 
+            std::to_string(idx);
+        html += buildHashValuesHtml(objData["hashValues"], hashContainerId);
+    }
+
+    html += "</div></div></div>";
+    return html;
+}
+
+std::string buildTopChainEntryHtml(const json& chainData,
+                                                                  int idx,
+                                                                  const std::string& prefix) {
+    int64_t retainedSize = chainData.value("totalRetainedSize", 0);
+    int nodeCount = chainData.contains("nodeIds") ? (int)chainData["nodeIds"].size() : 0;
+
+    auto makeId = [&](const std::string& type) {
+        return norm_prefix(prefix) + type + "_" + std::to_string(idx);
+    };
+    std::string headerId = makeId("Header");
+    std::string bodyId   = makeId("Body");
+
+    std::string chainPath = buildChainPathHtml(chainData["chain"]);
+
+    std::string html;
+    html += "<div class=\"top-item\" id=\"" + makeId("Detail") + "\">";
+    html += "<div class=\"top-item-header expanded\" id=\"" + headerId +
+            "\" onclick=\"toggleDetail('" + norm_prefix(prefix) + "', " + std::to_string(idx) + ")\">";
+    html += "<span class=\"arrow\">&#9654;</span>";
+    html += "<span class=\"header-rank\">TOP" + std::to_string(idx + 1) +
+            "引用链：</span><span class=\"header-func\">" + chainPath + "</span>";
+    html += "<div class=\"header-stats\">总大小 " + formatBytes(retainedSize) +
+            "，节点数" + std::to_string(nodeCount) + "</div>";
+    html += "</div>";
+    html += "<div class=\"top-item-body expanded\" id=\"" + bodyId + "\">";
+    html += "<div class=\"call-chains-section\">";
+
+    if (!chainPath.empty()) {
+        html += "<div class=\"call-chain-line\">引用链: " + chainPath + "</div>";
+    }
+
+    std::string containerId = "nodeIdsContainer" +
+        (prefix.empty() ? "_" : ("_" + prefix + "_")) +
+        std::to_string(idx);
+    if (chainData.contains("nodeIds")) {
+        html += buildNodeIdsHtml(chainData["nodeIds"], containerId);
+    } else {
+        html += "<div class=\"chain-node-ids\">节点ID: 无</div>";
+    }
+
+    html += "</div></div></div>";
+    return html;
+}
+
+// ========== 构建完整 Tab 内容 ==========
+
+std::string buildPropertyTagTabHtml(const json& propertyTagObjects,
+                                                                    const std::string& prefix,
+                                                                    const std::string& tabId,
+                                                                    bool active,
+                                                                    json& icicleCharts) {
+    std::string tableRows;
+    std::string detailSections;
+    std::string emptyMsg;
+
+    if (propertyTagObjects.empty()) {
+        emptyMsg = "<div class=\"empty-msg\">无泄漏对象</div>";
+        tableRows = "<tr><td colspan=\"8\" style=\"text-align:center;color:#888;\">无数据</td></tr>";
+    } else {
+        std::vector<std::pair<std::string, json>> sortedItems;
+        sortedItems.reserve(propertyTagObjects.size());
+        for (auto it = propertyTagObjects.begin(); it != propertyTagObjects.end(); ++it) {
+            sortedItems.emplace_back(it.key(), it.value());
+        }
+        std::sort(sortedItems.begin(), sortedItems.end(),
+                  [](const auto& a, const auto& b) {
+                      int64_t sizeA = a.second.value("totalRetainedSize", 0);
+                      int64_t sizeB = b.second.value("totalRetainedSize", 0);
+                      return sizeA > sizeB;
+                  });
+
+        int idx = 0;
+        for (const auto& item : sortedItems) {
+            tableRows += buildPropertyTagTableRow(item.first, item.second, idx, prefix,
+                                                  "subtabChart_" + tabId);
+            detailSections += buildPropertyTagEntryHtml(item.first, item.second, idx, prefix);
+            ++idx;
+        }
+    }
+
+    // 汇总所有泄漏对象的引用链，按前缀合并成一张冰柱图
+    json mergedChains = json::array();
+    for (auto it = propertyTagObjects.begin(); it != propertyTagObjects.end(); ++it) {
+        const auto& obj = it.value();
+        if (obj.contains("referenceChains") && obj["referenceChains"].is_array()) {
+            for (const auto& chainItem : obj["referenceChains"]) {
+                mergedChains.push_back(chainItem);
+            }
+        }
+    }
+    std::string icicleHtml;
+    if (!mergedChains.empty()) {
+        const std::string canvasId = "icicleCanvas_" + tabId;
+        json tree = build_ref_chain_icicle_tree(mergedChains, "GC Roots");
+        if (tree["c"].is_array() && !tree["c"].empty()) {
+            // 树表要在 move 之前生成（与图表共用同一棵树）
+            const std::string treeTableHtml = tree_table_html(tree, canvasId);
+            icicleCharts.push_back({{"id", canvasId}, {"tree", std::move(tree)}});
+            icicleHtml = build_icicle_chart_body(canvasId, treeTableHtml);
+        }
+    }
+    const std::string chartBody =
+        icicleHtml.empty() ? "<div class=\"empty-msg\">无引用链数据</div>" : icicleHtml;
+
+    std::string detailList;
+    detailList += "<table class=\"top-table\" id=\"table" + escapeHtml(tabId) + "\">";
+    // 表头行替换为带 ? 图标的版本 ==========
+    detailList += "<tr><th>详情</th><th>总览图</th><th>总大小</th><th>节点数</th>"
+                  "<th>hash值<span class=\"help-icon\" data-tooltip=\"JSLeakWatcher工具检测泄漏生成的泄漏对象hash值\">?</span></th>"
+                  "<th>属性名称<span class=\"help-icon\" data-tooltip=\"ArkUI组件生命周期结束后，其对象上特定名称的属性会被置为TRUE，用来标记此状态。属性名和组件类型的对应关系为：\nisDeleting_对应Component类组件；_isDisposed对应NodeContainer和XComponent类组件；isDestroyed对应Ability和Window类组件。\">?</span></th>"
+                  "<th>类型<span class=\"help-icon\" data-tooltip=\"检测到的有属性标签的组件或者对象类型。\n如果值为Others，说明该对象非泄漏标签方案命中的组件或者对象，可能是开发者自行添加的属性。\">?</span></th>"
+                  "<th>对象名称</th></tr>";
+    detailList += tableRows;
+    detailList += "</table>";
+    detailList += emptyMsg;
+    detailList += detailSections;
+
+    std::string content;
+    content += "<div class=\"tab-content\" id=\"" + escapeHtml(tabId) +
+               "\" data-tab=\"" + escapeHtml(tabId) + "\" style=\"display:" +
+               (active ? "block" : "none") + ";\">";
+    content += build_sub_tabs({{"subtabDetail_" + tabId, "详情列表", detailList, true},
+                               {"subtabChart_" + tabId, "引用链总览图", chartBody, false}});
+    content += "</div>";
+    return content;
+}
+
+std::string buildTopChainTabHtml(const json& topRefChains,
+                                                                const std::string& prefix,
+                                                                const std::string& tabId,
+                                                                bool active,
+                                                                json& icicleCharts,
+                                                                bool searchOnOverview) {
+    std::string tableRows;
+    std::string detailSections;
+    std::string emptyMsg;
+
+    if (topRefChains.empty()) {
+        emptyMsg = "<div class=\"empty-msg\">无top引用链信息</div>";
+        tableRows = "<tr><td colspan=\"6\" style=\"text-align:center;color:#888;\">无数据</td></tr>";
+    } else {
+        // topRefChains 为数组，每项含 chain/nodeIds/totalRetainedSize
+        int idx = 0;
+        for (const auto& item : topRefChains) {
+            tableRows += buildTopChainTableRow(item, idx, prefix,
+                                               "subtabChart_" + tabId, searchOnOverview);
+            detailSections += buildTopChainEntryHtml(item, idx, prefix);
+            ++idx;
+        }
+    }
+
+    // 所有引用链按前缀合并成一张冰柱图
+    std::string icicleHtml;
+    if (topRefChains.is_array() && !topRefChains.empty()) {
+        const std::string canvasId = "icicleCanvas_" + tabId;
+        json tree = build_ref_chain_icicle_tree(topRefChains, "GC Roots");
+        if (tree["c"].is_array() && !tree["c"].empty()) {
+            // 树表要在 move 之前生成（与图表共用同一棵树）
+            const std::string treeTableHtml = tree_table_html(tree, canvasId);
+            icicleCharts.push_back({{"id", canvasId}, {"tree", std::move(tree)}});
+            icicleHtml = build_icicle_chart_body(canvasId, treeTableHtml);
+        }
+    }
+    const std::string chartBody =
+        icicleHtml.empty() ? "<div class=\"empty-msg\">无引用链数据</div>" : icicleHtml;
+
+    std::string detailList;
+    detailList += "<table class=\"top-table\" id=\"table" + escapeHtml(tabId) + "\">";
+    detailList += "<tr><th>详情</th><th>总览图</th><th>总大小</th><th>节点数</th><th>引用链名称</th><th></th></tr>";
+    detailList += tableRows;
+    detailList += "</table>";
+    detailList += emptyMsg;
+    detailList += detailSections;
+
+    std::string content;
+    content += "<div class=\"tab-content\" id=\"" + escapeHtml(tabId) +
+               "\" data-tab=\"" + escapeHtml(tabId) + "\" style=\"display:" +
+               (active ? "block" : "none") + ";\">";
+    content += build_sub_tabs({{"subtabDetail_" + tabId, "详情列表", detailList, true},
+                               {"subtabChart_" + tabId, "引用链总览图", chartBody, false}});
+    content += "</div>";
+    return content;
+}
+
+// ========== 主生成函数 ==========
+
+
+} // namespace
+
+// 公开接口：从匿名空间导出
+std::string build_chain_path_html(const json& cf) { return buildChainPathHtml(cf); }
+
+std::string build_property_tag_tab_html(const json& objs, const std::string& prefix,
+                                        const std::string& tab_id, bool active,
+                                        json& icicle_charts) {
+    return buildPropertyTagTabHtml(objs, prefix, tab_id, active, icicle_charts);
+}
+
+std::string build_top_chain_tab_html(const json& chains, const std::string& prefix,
+                                     const std::string& tab_id, bool active,
+                                     json& icicle_charts, bool search_on_overview) {
+    return buildTopChainTabHtml(chains, prefix, tab_id, active, icicle_charts, search_on_overview);
+}
+
+} // namespace mem_analyzer
