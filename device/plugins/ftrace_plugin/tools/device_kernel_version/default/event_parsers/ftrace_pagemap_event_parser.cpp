@@ -27,9 +27,6 @@ struct MmLruActivateData {
 __attribute__((noinline)) void ParseMmLruActivateData(MmLruActivateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.page = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -39,6 +36,7 @@ void ParseMmLruActivate(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmLruActivateData eventData {};
@@ -62,9 +60,6 @@ struct MmLruInsertionData {
 __attribute__((noinline)) void ParseMmLruInsertionData(MmLruInsertionData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.page = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -76,6 +71,7 @@ void ParseMmLruInsertion(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmLruInsertionData eventData {};

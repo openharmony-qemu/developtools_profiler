@@ -26,9 +26,6 @@ struct ClkDisableData {
 __attribute__((noinline)) void ParseClkDisableData(ClkDisableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -37,6 +34,7 @@ void ParseClkDisable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClkDisableData eventData {};
@@ -56,9 +54,6 @@ struct ClkDisableCompleteData {
 __attribute__((noinline)) void ParseClkDisableCompleteData(ClkDisableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -67,6 +62,7 @@ void ParseClkDisableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClkDisableCompleteData eventData {};
@@ -86,9 +82,6 @@ struct ClkEnableData {
 __attribute__((noinline)) void ParseClkEnableData(ClkEnableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -97,6 +90,7 @@ void ParseClkEnable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClkEnableData eventData {};
@@ -116,9 +110,6 @@ struct ClkEnableCompleteData {
 __attribute__((noinline)) void ParseClkEnableCompleteData(ClkEnableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -127,6 +118,7 @@ void ParseClkEnableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClkEnableCompleteData eventData {};
@@ -146,9 +138,6 @@ struct ClkPrepareData {
 __attribute__((noinline)) void ParseClkPrepareData(ClkPrepareData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -157,6 +146,7 @@ void ParseClkPrepare(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClkPrepareData eventData {};
@@ -176,9 +166,6 @@ struct ClkPrepareCompleteData {
 __attribute__((noinline)) void ParseClkPrepareCompleteData(ClkPrepareCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -187,6 +174,7 @@ void ParseClkPrepareComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClkPrepareCompleteData eventData {};
@@ -207,9 +195,6 @@ struct ClkSetParentData {
 __attribute__((noinline)) void ParseClkSetParentData(ClkSetParentData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pname = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -219,6 +204,7 @@ void ParseClkSetParent(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClkSetParentData eventData {};
@@ -240,9 +226,6 @@ struct ClkSetParentCompleteData {
 __attribute__((noinline)) void ParseClkSetParentCompleteData(ClkSetParentCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pname = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -252,6 +235,7 @@ void ParseClkSetParentComplete(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClkSetParentCompleteData eventData {};
@@ -273,9 +257,6 @@ struct ClkSetPhaseData {
 __attribute__((noinline)) void ParseClkSetPhaseData(ClkSetPhaseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.phase = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -285,6 +266,7 @@ void ParseClkSetPhase(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClkSetPhaseData eventData {};
@@ -306,9 +288,6 @@ struct ClkSetPhaseCompleteData {
 __attribute__((noinline)) void ParseClkSetPhaseCompleteData(ClkSetPhaseCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.phase = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -318,6 +297,7 @@ void ParseClkSetPhaseComplete(FtraceEventType& ftraceEvent, uint8_t data[], size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClkSetPhaseCompleteData eventData {};
@@ -339,9 +319,6 @@ struct ClkSetRateData {
 __attribute__((noinline)) void ParseClkSetRateData(ClkSetRateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.rate = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -351,6 +328,7 @@ void ParseClkSetRate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClkSetRateData eventData {};
@@ -372,9 +350,6 @@ struct ClkSetRateCompleteData {
 __attribute__((noinline)) void ParseClkSetRateCompleteData(ClkSetRateCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.rate = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -384,6 +359,7 @@ void ParseClkSetRateComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClkSetRateCompleteData eventData {};
@@ -404,9 +380,6 @@ struct ClkUnprepareData {
 __attribute__((noinline)) void ParseClkUnprepareData(ClkUnprepareData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -415,6 +388,7 @@ void ParseClkUnprepare(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClkUnprepareData eventData {};
@@ -434,9 +408,6 @@ struct ClkUnprepareCompleteData {
 __attribute__((noinline)) void ParseClkUnprepareCompleteData(ClkUnprepareCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -445,6 +416,7 @@ void ParseClkUnprepareComplete(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClkUnprepareCompleteData eventData {};

@@ -33,9 +33,6 @@ struct F2fsSyncFileEnterData {
 __attribute__((noinline)) void ParseF2fsSyncFileEnterData(F2fsSyncFileEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -51,6 +48,7 @@ void ParseF2fsSyncFileEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     F2fsSyncFileEnterData eventData {};
@@ -81,9 +79,6 @@ struct F2fsSyncFileExitData {
 __attribute__((noinline)) void ParseF2fsSyncFileExitData(F2fsSyncFileExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -96,6 +91,7 @@ void ParseF2fsSyncFileExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     F2fsSyncFileExitData eventData {};
@@ -123,9 +119,6 @@ struct F2fsWriteBeginData {
 __attribute__((noinline)) void ParseF2fsWriteBeginData(F2fsWriteBeginData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -138,6 +131,7 @@ void ParseF2fsWriteBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     F2fsWriteBeginData eventData {};
@@ -165,9 +159,6 @@ struct F2fsWriteEndData {
 __attribute__((noinline)) void ParseF2fsWriteEndData(F2fsWriteEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -180,6 +171,7 @@ void ParseF2fsWriteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     F2fsWriteEndData eventData {};

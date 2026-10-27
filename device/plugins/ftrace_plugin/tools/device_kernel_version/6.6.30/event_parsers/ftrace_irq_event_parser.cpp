@@ -27,9 +27,6 @@ struct IrqHandlerEntryData {
 __attribute__((noinline)) void ParseIrqHandlerEntryData(IrqHandlerEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.irq = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -39,6 +36,7 @@ void ParseIrqHandlerEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     IrqHandlerEntryData eventData {};
@@ -60,9 +58,6 @@ struct IrqHandlerExitData {
 __attribute__((noinline)) void ParseIrqHandlerExitData(IrqHandlerExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.irq = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -72,6 +67,7 @@ void ParseIrqHandlerExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     IrqHandlerExitData eventData {};
@@ -92,9 +88,6 @@ struct SoftirqEntryData {
 __attribute__((noinline)) void ParseSoftirqEntryData(SoftirqEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.vec = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
@@ -103,6 +96,7 @@ void ParseSoftirqEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SoftirqEntryData eventData {};
@@ -122,9 +116,6 @@ struct SoftirqExitData {
 __attribute__((noinline)) void ParseSoftirqExitData(SoftirqExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.vec = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
@@ -133,6 +124,7 @@ void ParseSoftirqExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SoftirqExitData eventData {};
@@ -152,9 +144,6 @@ struct SoftirqRaiseData {
 __attribute__((noinline)) void ParseSoftirqRaiseData(SoftirqRaiseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.vec = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
@@ -163,6 +152,7 @@ void ParseSoftirqRaise(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SoftirqRaiseData eventData {};

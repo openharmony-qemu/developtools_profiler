@@ -67,11 +67,7 @@ class Common:
         "# limitations under the License.\n".format(this_file)
     )
 
-    parse_function_args = "{}, {}, {})".format(
-        "uint8_t data[]",
-        "size_t size",
-        "const EventFormat& format",
-    )
+    parse_function_args = "uint8_t data[], size_t size,\n                               const EventFormat& format)"
     parse_register_macro = "REGISTER_FTRACE_EVENT_PARSE_FUNCTION"
     parse_register_encoder_macro = "REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION"
 
@@ -164,7 +160,7 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
             f.write("};\n")
             f.write("__attribute__((noinline)) void Parse{}({}, {}\n".format(data_type, data_type + "& eventData",
                                                                               Common.parse_function_args))
-            f.write("{\n    if (data == nullptr || size == 0 || format.fields.empty()) {\n        return;\n    }\n    int i = 0;\n")
+            f.write("{\n    int i = 0;\n")
             for i in range(len(event.remain_fields)):
                 self.generate_parse_field_lines(event, f, i)
             f.write("}\n")
@@ -203,6 +199,7 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
         f.write("void {}(FtraceEventType& ftraceEvent, {}\n".format(function_name, Common.parse_function_args))
         f.write("{\n")
         f.write("    if (data == nullptr || size == 0) {\n")
+        f.write("        PROFILER_LOG_WARN(LOG_CORE, \"%s: invalid input data or size\", __func__);\n")
         f.write("        return;\n")
         f.write("    }\n")
         f.write("    {} eventData {{}};\n".format(data_type))
@@ -211,17 +208,6 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
         f.write("    if (msg == nullptr) {\n")
         f.write("        return;\n")
         f.write("    }\n")
-        for i in range(len(event.remain_fields)):
-            self.generate_write_field_lines(event, f, i)
-        f.write("}\n")
-
-    def generate_parse_wrapper(self, event, f, data_type, event_type, suffix):
-        function_name = "Parse{}{}".format(to_camel_case(event.name), suffix)
-        f.write("void {}({}& ftraceEvent, {}\n".format(function_name, event_type, Common.parse_function_args))
-        f.write("{\n")
-        f.write("    {} eventData {{}};\n".format(data_type))
-        f.write("    Parse{}(eventData, data, size, format);\n".format(data_type))
-        f.write("    auto msg = ftraceEvent.mutable_{}_format();\n".format(str.lower(event.name)))
         for i in range(len(event.remain_fields)):
             self.generate_write_field_lines(event, f, i)
         f.write("}\n")

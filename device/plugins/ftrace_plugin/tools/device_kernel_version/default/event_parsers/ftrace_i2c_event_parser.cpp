@@ -30,9 +30,6 @@ struct I2cReadData {
 __attribute__((noinline)) void ParseI2cReadData(I2cReadData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.adapter_nr = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.msg_nr = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -45,6 +42,7 @@ void ParseI2cRead(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     I2cReadData eventData {};
@@ -73,9 +71,6 @@ struct I2cReplyData {
 __attribute__((noinline)) void ParseI2cReplyData(I2cReplyData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.adapter_nr = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.msg_nr = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -89,6 +84,7 @@ void ParseI2cReply(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     I2cReplyData eventData {};
@@ -115,9 +111,6 @@ struct I2cResultData {
 __attribute__((noinline)) void ParseI2cResultData(I2cResultData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.adapter_nr = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.nr_msgs = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -128,6 +121,7 @@ void ParseI2cResult(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     I2cResultData eventData {};
@@ -154,9 +148,6 @@ struct I2cWriteData {
 __attribute__((noinline)) void ParseI2cWriteData(I2cWriteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.adapter_nr = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.msg_nr = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -170,6 +161,7 @@ void ParseI2cWrite(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     I2cWriteData eventData {};

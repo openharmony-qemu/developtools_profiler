@@ -31,9 +31,6 @@ struct HmfsReadEnterData {
 __attribute__((noinline)) void ParseHmfsReadEnterData(HmfsReadEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -47,6 +44,7 @@ void ParseHmfsReadEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     HmfsReadEnterData eventData {};
@@ -75,9 +73,6 @@ struct HmfsReadExitData {
 __attribute__((noinline)) void ParseHmfsReadExitData(HmfsReadExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -90,6 +85,7 @@ void ParseHmfsReadExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     HmfsReadExitData eventData {};
@@ -118,9 +114,6 @@ struct HmfsWriteEnterData {
 __attribute__((noinline)) void ParseHmfsWriteEnterData(HmfsWriteEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -134,6 +127,7 @@ void ParseHmfsWriteEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     HmfsWriteEnterData eventData {};
@@ -162,9 +156,6 @@ struct HmfsWriteExitData {
 __attribute__((noinline)) void ParseHmfsWriteExitData(HmfsWriteExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -177,6 +168,7 @@ void ParseHmfsWriteExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     HmfsWriteExitData eventData {};

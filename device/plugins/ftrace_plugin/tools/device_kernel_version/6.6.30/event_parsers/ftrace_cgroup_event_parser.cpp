@@ -31,9 +31,6 @@ struct CgroupAttachTaskData {
 __attribute__((noinline)) void ParseCgroupAttachTaskData(CgroupAttachTaskData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dst_root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.dst_level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -47,6 +44,7 @@ void ParseCgroupAttachTask(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CgroupAttachTaskData eventData {};
@@ -73,9 +71,6 @@ struct CgroupDestroyRootData {
 __attribute__((noinline)) void ParseCgroupDestroyRootData(CgroupDestroyRootData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.ss_mask = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -86,6 +81,7 @@ void ParseCgroupDestroyRoot(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CgroupDestroyRootData eventData {};
@@ -110,9 +106,6 @@ struct CgroupFreezeData {
 __attribute__((noinline)) void ParseCgroupFreezeData(CgroupFreezeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -124,6 +117,7 @@ void ParseCgroupFreeze(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CgroupFreezeData eventData {};
@@ -149,9 +143,6 @@ struct CgroupMkdirData {
 __attribute__((noinline)) void ParseCgroupMkdirData(CgroupMkdirData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -163,6 +154,7 @@ void ParseCgroupMkdir(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CgroupMkdirData eventData {};
@@ -189,9 +181,6 @@ struct CgroupNotifyFrozenData {
 __attribute__((noinline)) void ParseCgroupNotifyFrozenData(CgroupNotifyFrozenData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -204,6 +193,7 @@ void ParseCgroupNotifyFrozen(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CgroupNotifyFrozenData eventData {};
@@ -231,9 +221,6 @@ struct CgroupNotifyPopulatedData {
 __attribute__((noinline)) void ParseCgroupNotifyPopulatedData(CgroupNotifyPopulatedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -246,6 +233,7 @@ void ParseCgroupNotifyPopulated(FtraceEventType& ftraceEvent, uint8_t data[], si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CgroupNotifyPopulatedData eventData {};
@@ -272,9 +260,6 @@ struct CgroupReleaseData {
 __attribute__((noinline)) void ParseCgroupReleaseData(CgroupReleaseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -286,6 +271,7 @@ void ParseCgroupRelease(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CgroupReleaseData eventData {};
@@ -310,9 +296,6 @@ struct CgroupRemountData {
 __attribute__((noinline)) void ParseCgroupRemountData(CgroupRemountData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.ss_mask = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -323,6 +306,7 @@ void ParseCgroupRemount(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CgroupRemountData eventData {};
@@ -347,9 +331,6 @@ struct CgroupRenameData {
 __attribute__((noinline)) void ParseCgroupRenameData(CgroupRenameData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -361,6 +342,7 @@ void ParseCgroupRename(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CgroupRenameData eventData {};
@@ -386,9 +368,6 @@ struct CgroupRmdirData {
 __attribute__((noinline)) void ParseCgroupRmdirData(CgroupRmdirData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -400,6 +379,7 @@ void ParseCgroupRmdir(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CgroupRmdirData eventData {};
@@ -424,9 +404,6 @@ struct CgroupSetupRootData {
 __attribute__((noinline)) void ParseCgroupSetupRootData(CgroupSetupRootData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.ss_mask = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -437,6 +414,7 @@ void ParseCgroupSetupRoot(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CgroupSetupRootData eventData {};
@@ -463,9 +441,6 @@ struct CgroupTransferTasksData {
 __attribute__((noinline)) void ParseCgroupTransferTasksData(CgroupTransferTasksData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dst_root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.dst_level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -479,6 +454,7 @@ void ParseCgroupTransferTasks(FtraceEventType& ftraceEvent, uint8_t data[], size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CgroupTransferTasksData eventData {};
@@ -506,9 +482,6 @@ struct CgroupUnfreezeData {
 __attribute__((noinline)) void ParseCgroupUnfreezeData(CgroupUnfreezeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.level = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -520,6 +493,7 @@ void ParseCgroupUnfreeze(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CgroupUnfreezeData eventData {};

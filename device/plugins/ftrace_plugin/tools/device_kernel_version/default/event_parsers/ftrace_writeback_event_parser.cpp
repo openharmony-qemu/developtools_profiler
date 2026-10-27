@@ -40,9 +40,6 @@ struct BalanceDirtyPagesData {
 __attribute__((noinline)) void ParseBalanceDirtyPagesData(BalanceDirtyPagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.bdi = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.limit = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -65,6 +62,7 @@ void ParseBalanceDirtyPages(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BalanceDirtyPagesData eventData {};
@@ -105,9 +103,6 @@ struct BdiDirtyRatelimitData {
 __attribute__((noinline)) void ParseBdiDirtyRatelimitData(BdiDirtyRatelimitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.bdi = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.write_bw = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -123,6 +118,7 @@ void ParseBdiDirtyRatelimit(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BdiDirtyRatelimitData eventData {};
@@ -156,9 +152,6 @@ struct GlobalDirtyStateData {
 __attribute__((noinline)) void ParseGlobalDirtyStateData(GlobalDirtyStateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.nr_dirty = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nr_writeback = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -174,6 +167,7 @@ void ParseGlobalDirtyState(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     GlobalDirtyStateData eventData {};
@@ -210,9 +204,6 @@ struct WbcWritepageData {
 __attribute__((noinline)) void ParseWbcWritepageData(WbcWritepageData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.nr_to_write = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -231,6 +222,7 @@ void ParseWbcWritepage(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WbcWritepageData eventData {};
@@ -260,9 +252,6 @@ struct WritebackBdiRegisterData {
 __attribute__((noinline)) void ParseWritebackBdiRegisterData(WritebackBdiRegisterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -271,6 +260,7 @@ void ParseWritebackBdiRegister(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackBdiRegisterData eventData {};
@@ -291,9 +281,6 @@ struct WritebackCongestionWaitData {
 __attribute__((noinline)) void ParseWritebackCongestionWaitData(WritebackCongestionWaitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.usec_timeout = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.usec_delayed = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -303,6 +290,7 @@ void ParseWritebackCongestionWait(FtraceEventType& ftraceEvent, uint8_t data[], 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackCongestionWaitData eventData {};
@@ -326,9 +314,6 @@ struct WritebackDirtyInodeData {
 __attribute__((noinline)) void ParseWritebackDirtyInodeData(WritebackDirtyInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -340,6 +325,7 @@ void ParseWritebackDirtyInode(FtraceEventType& ftraceEvent, uint8_t data[], size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackDirtyInodeData eventData {};
@@ -366,9 +352,6 @@ struct WritebackDirtyInodeEnqueueData {
 __attribute__((noinline)) void ParseWritebackDirtyInodeEnqueueData(WritebackDirtyInodeEnqueueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -381,6 +364,7 @@ void ParseWritebackDirtyInodeEnqueue(FtraceEventType& ftraceEvent, uint8_t data[
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackDirtyInodeEnqueueData eventData {};
@@ -407,9 +391,6 @@ struct WritebackDirtyInodeStartData {
 __attribute__((noinline)) void ParseWritebackDirtyInodeStartData(WritebackDirtyInodeStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -421,6 +402,7 @@ void ParseWritebackDirtyInodeStart(FtraceEventType& ftraceEvent, uint8_t data[],
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackDirtyInodeStartData eventData {};
@@ -445,9 +427,6 @@ struct WritebackDirtyPageData {
 __attribute__((noinline)) void ParseWritebackDirtyPageData(WritebackDirtyPageData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -458,6 +437,7 @@ void ParseWritebackDirtyPage(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackDirtyPageData eventData {};
@@ -487,9 +467,6 @@ struct WritebackExecData {
 __attribute__((noinline)) void ParseWritebackExecData(WritebackExecData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -506,6 +483,7 @@ void ParseWritebackExec(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackExecData eventData {};
@@ -537,9 +515,6 @@ struct WritebackLazytimeData {
 __attribute__((noinline)) void ParseWritebackLazytimeData(WritebackLazytimeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -552,6 +527,7 @@ void ParseWritebackLazytime(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackLazytimeData eventData {};
@@ -579,9 +555,6 @@ struct WritebackLazytimeIputData {
 __attribute__((noinline)) void ParseWritebackLazytimeIputData(WritebackLazytimeIputData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -594,6 +567,7 @@ void ParseWritebackLazytimeIput(FtraceEventType& ftraceEvent, uint8_t data[], si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackLazytimeIputData eventData {};
@@ -620,9 +594,6 @@ struct WritebackMarkInodeDirtyData {
 __attribute__((noinline)) void ParseWritebackMarkInodeDirtyData(WritebackMarkInodeDirtyData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -634,6 +605,7 @@ void ParseWritebackMarkInodeDirty(FtraceEventType& ftraceEvent, uint8_t data[], 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackMarkInodeDirtyData eventData {};
@@ -656,9 +628,6 @@ struct WritebackPagesWrittenData {
 __attribute__((noinline)) void ParseWritebackPagesWrittenData(WritebackPagesWrittenData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -667,6 +636,7 @@ void ParseWritebackPagesWritten(FtraceEventType& ftraceEvent, uint8_t data[], si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackPagesWrittenData eventData {};
@@ -694,9 +664,6 @@ struct WritebackQueueData {
 __attribute__((noinline)) void ParseWritebackQueueData(WritebackQueueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -713,6 +680,7 @@ void ParseWritebackQueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackQueueData eventData {};
@@ -745,9 +713,6 @@ struct WritebackQueueIoData {
 __attribute__((noinline)) void ParseWritebackQueueIoData(WritebackQueueIoData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.older = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -761,6 +726,7 @@ void ParseWritebackQueueIo(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackQueueIoData eventData {};
@@ -789,9 +755,6 @@ struct WritebackSbInodesRequeueData {
 __attribute__((noinline)) void ParseWritebackSbInodesRequeueData(WritebackSbInodesRequeueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -804,6 +767,7 @@ void ParseWritebackSbInodesRequeue(FtraceEventType& ftraceEvent, uint8_t data[],
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackSbInodesRequeueData eventData {};
@@ -834,9 +798,6 @@ struct WritebackSingleInodeData {
 __attribute__((noinline)) void ParseWritebackSingleInodeData(WritebackSingleInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -852,6 +813,7 @@ void ParseWritebackSingleInode(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackSingleInodeData eventData {};
@@ -885,9 +847,6 @@ struct WritebackSingleInodeStartData {
 __attribute__((noinline)) void ParseWritebackSingleInodeStartData(WritebackSingleInodeStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -903,6 +862,7 @@ void ParseWritebackSingleInodeStart(FtraceEventType& ftraceEvent, uint8_t data[]
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackSingleInodeStartData eventData {};
@@ -937,9 +897,6 @@ struct WritebackStartData {
 __attribute__((noinline)) void ParseWritebackStartData(WritebackStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -956,6 +913,7 @@ void ParseWritebackStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackStartData eventData {};
@@ -991,9 +949,6 @@ struct WritebackWaitData {
 __attribute__((noinline)) void ParseWritebackWaitData(WritebackWaitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1010,6 +965,7 @@ void ParseWritebackWait(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackWaitData eventData {};
@@ -1038,9 +994,6 @@ struct WritebackWaitIffCongestedData {
 __attribute__((noinline)) void ParseWritebackWaitIffCongestedData(WritebackWaitIffCongestedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.usec_timeout = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.usec_delayed = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -1050,6 +1003,7 @@ void ParseWritebackWaitIffCongested(FtraceEventType& ftraceEvent, uint8_t data[]
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackWaitIffCongestedData eventData {};
@@ -1071,9 +1025,6 @@ struct WritebackWakeBackgroundData {
 __attribute__((noinline)) void ParseWritebackWakeBackgroundData(WritebackWakeBackgroundData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -1083,6 +1034,7 @@ void ParseWritebackWakeBackground(FtraceEventType& ftraceEvent, uint8_t data[], 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackWakeBackgroundData eventData {};
@@ -1106,9 +1058,6 @@ struct WritebackWriteInodeData {
 __attribute__((noinline)) void ParseWritebackWriteInodeData(WritebackWriteInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1120,6 +1069,7 @@ void ParseWritebackWriteInode(FtraceEventType& ftraceEvent, uint8_t data[], size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackWriteInodeData eventData {};
@@ -1145,9 +1095,6 @@ struct WritebackWriteInodeStartData {
 __attribute__((noinline)) void ParseWritebackWriteInodeStartData(WritebackWriteInodeStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1159,6 +1106,7 @@ void ParseWritebackWriteInodeStart(FtraceEventType& ftraceEvent, uint8_t data[],
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackWriteInodeStartData eventData {};
@@ -1189,9 +1137,6 @@ struct WritebackWrittenData {
 __attribute__((noinline)) void ParseWritebackWrittenData(WritebackWrittenData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.nr_pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1208,6 +1153,7 @@ void ParseWritebackWritten(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WritebackWrittenData eventData {};

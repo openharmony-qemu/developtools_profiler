@@ -27,9 +27,6 @@ struct BputsData {
 __attribute__((noinline)) void ParseBputsData(BputsData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.ip = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.str = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -39,6 +36,7 @@ void ParseBputs(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BputsData eventData {};
@@ -63,9 +61,6 @@ struct BranchData {
 __attribute__((noinline)) void ParseBranchData(BranchData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.line = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.func = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -78,6 +73,7 @@ void ParseBranch(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BranchData eventData {};
@@ -107,9 +103,6 @@ struct ContextSwitchData {
 __attribute__((noinline)) void ParseContextSwitchData(ContextSwitchData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.prev_pid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.next_pid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -124,6 +117,7 @@ void ParseContextSwitch(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ContextSwitchData eventData {};
@@ -150,9 +144,6 @@ struct FuncgraphEntryData {
 __attribute__((noinline)) void ParseFuncgraphEntryData(FuncgraphEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.func = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.depth = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -162,6 +153,7 @@ void ParseFuncgraphEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     FuncgraphEntryData eventData {};
@@ -186,9 +178,6 @@ struct FuncgraphExitData {
 __attribute__((noinline)) void ParseFuncgraphExitData(FuncgraphExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.func = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.depth = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -201,6 +190,7 @@ void ParseFuncgraphExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     FuncgraphExitData eventData {};
@@ -225,9 +215,6 @@ struct FunctionData {
 __attribute__((noinline)) void ParseFunctionData(FunctionData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.ip = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.parent_ip = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -237,6 +224,7 @@ void ParseFunction(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     FunctionData eventData {};
@@ -258,9 +246,6 @@ struct KernelStackData {
 __attribute__((noinline)) void ParseKernelStackData(KernelStackData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.size = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.caller = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, i++, data, size);
@@ -270,6 +255,7 @@ void ParseKernelStack(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     KernelStackData eventData {};
@@ -296,9 +282,6 @@ struct MmiotraceMapData {
 __attribute__((noinline)) void ParseMmiotraceMapData(MmiotraceMapData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.phys = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.virt = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -311,6 +294,7 @@ void ParseMmiotraceMap(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmiotraceMapData eventData {};
@@ -339,9 +323,6 @@ struct MmiotraceRwData {
 __attribute__((noinline)) void ParseMmiotraceRwData(MmiotraceRwData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.phys = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.value = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -355,6 +336,7 @@ void ParseMmiotraceRw(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmiotraceRwData eventData {};
@@ -380,9 +362,6 @@ struct PrintData {
 __attribute__((noinline)) void ParsePrintData(PrintData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.ip = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.buf = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -392,6 +371,7 @@ void ParsePrint(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     PrintData eventData {};
@@ -413,9 +393,6 @@ struct UserStackData {
 __attribute__((noinline)) void ParseUserStackData(UserStackData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.tgid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.caller = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, i++, data, size);
@@ -425,6 +402,7 @@ void ParseUserStack(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     UserStackData eventData {};
@@ -453,9 +431,6 @@ struct WakeupData {
 __attribute__((noinline)) void ParseWakeupData(WakeupData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.prev_pid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.next_pid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -470,6 +445,7 @@ void ParseWakeup(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WakeupData eventData {};

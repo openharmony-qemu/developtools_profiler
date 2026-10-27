@@ -28,9 +28,6 @@ struct Ext4AllocDaBlocksData {
 __attribute__((noinline)) void ParseExt4AllocDaBlocksData(Ext4AllocDaBlocksData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -41,6 +38,7 @@ void ParseExt4AllocDaBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4AllocDaBlocksData eventData {};
@@ -72,9 +70,6 @@ struct Ext4AllocateBlocksData {
 __attribute__((noinline)) void ParseExt4AllocateBlocksData(Ext4AllocateBlocksData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -93,6 +88,7 @@ void ParseExt4AllocateBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4AllocateBlocksData eventData {};
@@ -125,9 +121,6 @@ struct Ext4AllocateInodeData {
 __attribute__((noinline)) void ParseExt4AllocateInodeData(Ext4AllocateInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -139,6 +132,7 @@ void ParseExt4AllocateInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4AllocateInodeData eventData {};
@@ -163,9 +157,6 @@ struct Ext4BeginOrderedTruncateData {
 __attribute__((noinline)) void ParseExt4BeginOrderedTruncateData(Ext4BeginOrderedTruncateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -176,6 +167,7 @@ void ParseExt4BeginOrderedTruncate(FtraceEventType& ftraceEvent, uint8_t data[],
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4BeginOrderedTruncateData eventData {};
@@ -200,9 +192,6 @@ struct Ext4CollapseRangeData {
 __attribute__((noinline)) void ParseExt4CollapseRangeData(Ext4CollapseRangeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -214,6 +203,7 @@ void ParseExt4CollapseRange(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4CollapseRangeData eventData {};
@@ -241,9 +231,6 @@ struct Ext4DaReleaseSpaceData {
 __attribute__((noinline)) void ParseExt4DaReleaseSpaceData(Ext4DaReleaseSpaceData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -257,6 +244,7 @@ void ParseExt4DaReleaseSpace(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4DaReleaseSpaceData eventData {};
@@ -285,9 +273,6 @@ struct Ext4DaReserveSpaceData {
 __attribute__((noinline)) void ParseExt4DaReserveSpaceData(Ext4DaReserveSpaceData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -300,6 +285,7 @@ void ParseExt4DaReserveSpace(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4DaReserveSpaceData eventData {};
@@ -329,9 +315,6 @@ struct Ext4DaUpdateReserveSpaceData {
 __attribute__((noinline)) void ParseExt4DaUpdateReserveSpaceData(Ext4DaUpdateReserveSpaceData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -346,6 +329,7 @@ void ParseExt4DaUpdateReserveSpace(FtraceEventType& ftraceEvent, uint8_t data[],
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4DaUpdateReserveSpaceData eventData {};
@@ -374,9 +358,6 @@ struct Ext4DaWriteBeginData {
 __attribute__((noinline)) void ParseExt4DaWriteBeginData(Ext4DaWriteBeginData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -388,6 +369,7 @@ void ParseExt4DaWriteBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4DaWriteBeginData eventData {};
@@ -414,9 +396,6 @@ struct Ext4DaWriteEndData {
 __attribute__((noinline)) void ParseExt4DaWriteEndData(Ext4DaWriteEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -429,6 +408,7 @@ void ParseExt4DaWriteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4DaWriteEndData eventData {};
@@ -456,9 +436,6 @@ struct Ext4DaWritePagesData {
 __attribute__((noinline)) void ParseExt4DaWritePagesData(Ext4DaWritePagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -471,6 +448,7 @@ void ParseExt4DaWritePages(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4DaWritePagesData eventData {};
@@ -498,9 +476,6 @@ struct Ext4DaWritePagesExtentData {
 __attribute__((noinline)) void ParseExt4DaWritePagesExtentData(Ext4DaWritePagesExtentData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -513,6 +488,7 @@ void ParseExt4DaWritePagesExtent(FtraceEventType& ftraceEvent, uint8_t data[], s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4DaWritePagesExtentData eventData {};
@@ -538,9 +514,6 @@ struct Ext4DiscardBlocksData {
 __attribute__((noinline)) void ParseExt4DiscardBlocksData(Ext4DiscardBlocksData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.blk = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -551,6 +524,7 @@ void ParseExt4DiscardBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4DiscardBlocksData eventData {};
@@ -575,9 +549,6 @@ struct Ext4DiscardPreallocationsData {
 __attribute__((noinline)) void ParseExt4DiscardPreallocationsData(Ext4DiscardPreallocationsData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -589,6 +560,7 @@ void ParseExt4DiscardPreallocations(FtraceEventType& ftraceEvent, uint8_t data[]
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4DiscardPreallocationsData eventData {};
@@ -613,9 +585,6 @@ struct Ext4DropInodeData {
 __attribute__((noinline)) void ParseExt4DropInodeData(Ext4DropInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -626,6 +595,7 @@ void ParseExt4DropInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4DropInodeData eventData {};
@@ -652,9 +622,6 @@ struct Ext4EsCacheExtentData {
 __attribute__((noinline)) void ParseExt4EsCacheExtentData(Ext4EsCacheExtentData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -668,6 +635,7 @@ void ParseExt4EsCacheExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4EsCacheExtentData eventData {};
@@ -697,9 +665,6 @@ struct Ext4EsInsertExtentData {
 __attribute__((noinline)) void ParseExt4EsInsertExtentData(Ext4EsInsertExtentData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -713,6 +678,7 @@ void ParseExt4EsInsertExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4EsInsertExtentData eventData {};
@@ -739,9 +705,6 @@ struct Ext4EsLookupExtentEnterData {
 __attribute__((noinline)) void ParseExt4EsLookupExtentEnterData(Ext4EsLookupExtentEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -752,6 +715,7 @@ void ParseExt4EsLookupExtentEnter(FtraceEventType& ftraceEvent, uint8_t data[], 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4EsLookupExtentEnterData eventData {};
@@ -779,9 +743,6 @@ struct Ext4EsLookupExtentExitData {
 __attribute__((noinline)) void ParseExt4EsLookupExtentExitData(Ext4EsLookupExtentExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -796,6 +757,7 @@ void ParseExt4EsLookupExtentExit(FtraceEventType& ftraceEvent, uint8_t data[], s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4EsLookupExtentExitData eventData {};
@@ -824,9 +786,6 @@ struct Ext4EsRemoveExtentData {
 __attribute__((noinline)) void ParseExt4EsRemoveExtentData(Ext4EsRemoveExtentData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -838,6 +797,7 @@ void ParseExt4EsRemoveExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4EsRemoveExtentData eventData {};
@@ -864,9 +824,6 @@ struct Ext4EsShrinkData {
 __attribute__((noinline)) void ParseExt4EsShrinkData(Ext4EsShrinkData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nr_shrunk = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -879,6 +836,7 @@ void ParseExt4EsShrink(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4EsShrinkData eventData {};
@@ -904,9 +862,6 @@ struct Ext4EsShrinkCountData {
 __attribute__((noinline)) void ParseExt4EsShrinkCountData(Ext4EsShrinkCountData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nr_to_scan = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -917,6 +872,7 @@ void ParseExt4EsShrinkCount(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4EsShrinkCountData eventData {};
@@ -940,9 +896,6 @@ struct Ext4EsShrinkScanEnterData {
 __attribute__((noinline)) void ParseExt4EsShrinkScanEnterData(Ext4EsShrinkScanEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nr_to_scan = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -953,6 +906,7 @@ void ParseExt4EsShrinkScanEnter(FtraceEventType& ftraceEvent, uint8_t data[], si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4EsShrinkScanEnterData eventData {};
@@ -976,9 +930,6 @@ struct Ext4EsShrinkScanExitData {
 __attribute__((noinline)) void ParseExt4EsShrinkScanExitData(Ext4EsShrinkScanExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nr_shrunk = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -989,6 +940,7 @@ void ParseExt4EsShrinkScanExit(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4EsShrinkScanExitData eventData {};
@@ -1012,9 +964,6 @@ struct Ext4EvictInodeData {
 __attribute__((noinline)) void ParseExt4EvictInodeData(Ext4EvictInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1025,6 +974,7 @@ void ParseExt4EvictInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4EvictInodeData eventData {};
@@ -1052,9 +1002,6 @@ struct Ext4ExtConvertToInitializedEnterData {
 __attribute__((noinline)) void ParseExt4ExtConvertToInitializedEnterData(Ext4ExtConvertToInitializedEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1069,6 +1016,7 @@ void ParseExt4ExtConvertToInitializedEnter(FtraceEventType& ftraceEvent, uint8_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4ExtConvertToInitializedEnterData eventData {};
@@ -1103,9 +1051,6 @@ struct Ext4ExtConvertToInitializedFastpathData {
 __attribute__((noinline)) void ParseExt4ExtConvertToInitializedFastpathData(Ext4ExtConvertToInitializedFastpathData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1123,6 +1068,7 @@ void ParseExt4ExtConvertToInitializedFastpath(FtraceEventType& ftraceEvent, uint
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4ExtConvertToInitializedFastpathData eventData {};
@@ -1158,9 +1104,6 @@ struct Ext4ExtHandleUnwrittenExtentsData {
 __attribute__((noinline)) void ParseExt4ExtHandleUnwrittenExtentsData(Ext4ExtHandleUnwrittenExtentsData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1176,6 +1119,7 @@ void ParseExt4ExtHandleUnwrittenExtents(FtraceEventType& ftraceEvent, uint8_t da
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4ExtHandleUnwrittenExtentsData eventData {};
@@ -1205,9 +1149,6 @@ struct Ext4ExtLoadExtentData {
 __attribute__((noinline)) void ParseExt4ExtLoadExtentData(Ext4ExtLoadExtentData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1219,6 +1160,7 @@ void ParseExt4ExtLoadExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4ExtLoadExtentData eventData {};
@@ -1245,9 +1187,6 @@ struct Ext4ExtMapBlocksEnterData {
 __attribute__((noinline)) void ParseExt4ExtMapBlocksEnterData(Ext4ExtMapBlocksEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1260,6 +1199,7 @@ void ParseExt4ExtMapBlocksEnter(FtraceEventType& ftraceEvent, uint8_t data[], si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4ExtMapBlocksEnterData eventData {};
@@ -1290,9 +1230,6 @@ struct Ext4ExtMapBlocksExitData {
 __attribute__((noinline)) void ParseExt4ExtMapBlocksExitData(Ext4ExtMapBlocksExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1308,6 +1245,7 @@ void ParseExt4ExtMapBlocksExit(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4ExtMapBlocksExitData eventData {};
@@ -1338,9 +1276,6 @@ struct Ext4ExtRemoveSpaceData {
 __attribute__((noinline)) void ParseExt4ExtRemoveSpaceData(Ext4ExtRemoveSpaceData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1353,6 +1288,7 @@ void ParseExt4ExtRemoveSpace(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4ExtRemoveSpaceData eventData {};
@@ -1384,9 +1320,6 @@ struct Ext4ExtRemoveSpaceDoneData {
 __attribute__((noinline)) void ParseExt4ExtRemoveSpaceDoneData(Ext4ExtRemoveSpaceDoneData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1403,6 +1336,7 @@ void ParseExt4ExtRemoveSpaceDone(FtraceEventType& ftraceEvent, uint8_t data[], s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4ExtRemoveSpaceDoneData eventData {};
@@ -1432,9 +1366,6 @@ struct Ext4ExtRmIdxData {
 __attribute__((noinline)) void ParseExt4ExtRmIdxData(Ext4ExtRmIdxData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1445,6 +1376,7 @@ void ParseExt4ExtRmIdx(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4ExtRmIdxData eventData {};
@@ -1474,9 +1406,6 @@ struct Ext4ExtRmLeafData {
 __attribute__((noinline)) void ParseExt4ExtRmLeafData(Ext4ExtRmLeafData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1493,6 +1422,7 @@ void ParseExt4ExtRmLeaf(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4ExtRmLeafData eventData {};
@@ -1524,9 +1454,6 @@ struct Ext4ExtShowExtentData {
 __attribute__((noinline)) void ParseExt4ExtShowExtentData(Ext4ExtShowExtentData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1539,6 +1466,7 @@ void ParseExt4ExtShowExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4ExtShowExtentData eventData {};
@@ -1566,9 +1494,6 @@ struct Ext4FallocateEnterData {
 __attribute__((noinline)) void ParseExt4FallocateEnterData(Ext4FallocateEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1581,6 +1506,7 @@ void ParseExt4FallocateEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4FallocateEnterData eventData {};
@@ -1608,9 +1534,6 @@ struct Ext4FallocateExitData {
 __attribute__((noinline)) void ParseExt4FallocateExitData(Ext4FallocateExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1623,6 +1546,7 @@ void ParseExt4FallocateExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4FallocateExitData eventData {};
@@ -1650,9 +1574,6 @@ struct Ext4ForgetData {
 __attribute__((noinline)) void ParseExt4ForgetData(Ext4ForgetData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1665,6 +1586,7 @@ void ParseExt4Forget(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4ForgetData eventData {};
@@ -1693,9 +1615,6 @@ struct Ext4FreeBlocksData {
 __attribute__((noinline)) void ParseExt4FreeBlocksData(Ext4FreeBlocksData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1709,6 +1628,7 @@ void ParseExt4FreeBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4FreeBlocksData eventData {};
@@ -1738,9 +1658,6 @@ struct Ext4FreeInodeData {
 __attribute__((noinline)) void ParseExt4FreeInodeData(Ext4FreeInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1754,6 +1671,7 @@ void ParseExt4FreeInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4FreeInodeData eventData {};
@@ -1783,9 +1701,6 @@ struct Ext4GetImpliedClusterAllocExitData {
 __attribute__((noinline)) void ParseExt4GetImpliedClusterAllocExitData(Ext4GetImpliedClusterAllocExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -1799,6 +1714,7 @@ void ParseExt4GetImpliedClusterAllocExit(FtraceEventType& ftraceEvent, uint8_t d
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4GetImpliedClusterAllocExitData eventData {};
@@ -1827,9 +1743,6 @@ struct Ext4IndMapBlocksEnterData {
 __attribute__((noinline)) void ParseExt4IndMapBlocksEnterData(Ext4IndMapBlocksEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1842,6 +1755,7 @@ void ParseExt4IndMapBlocksEnter(FtraceEventType& ftraceEvent, uint8_t data[], si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4IndMapBlocksEnterData eventData {};
@@ -1872,9 +1786,6 @@ struct Ext4IndMapBlocksExitData {
 __attribute__((noinline)) void ParseExt4IndMapBlocksExitData(Ext4IndMapBlocksExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1890,6 +1801,7 @@ void ParseExt4IndMapBlocksExit(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4IndMapBlocksExitData eventData {};
@@ -1919,9 +1831,6 @@ struct Ext4InsertRangeData {
 __attribute__((noinline)) void ParseExt4InsertRangeData(Ext4InsertRangeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1933,6 +1842,7 @@ void ParseExt4InsertRange(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4InsertRangeData eventData {};
@@ -1957,9 +1867,6 @@ struct Ext4JournalStartReservedData {
 __attribute__((noinline)) void ParseExt4JournalStartReservedData(Ext4JournalStartReservedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ip = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1970,6 +1877,7 @@ void ParseExt4JournalStartReserved(FtraceEventType& ftraceEvent, uint8_t data[],
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4JournalStartReservedData eventData {};
@@ -1995,9 +1903,6 @@ struct Ext4JournalledWriteEndData {
 __attribute__((noinline)) void ParseExt4JournalledWriteEndData(Ext4JournalledWriteEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2010,6 +1915,7 @@ void ParseExt4JournalledWriteEnd(FtraceEventType& ftraceEvent, uint8_t data[], s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4JournalledWriteEndData eventData {};
@@ -2034,9 +1940,6 @@ struct Ext4LoadInodeData {
 __attribute__((noinline)) void ParseExt4LoadInodeData(Ext4LoadInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2046,6 +1949,7 @@ void ParseExt4LoadInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4LoadInodeData eventData {};
@@ -2067,9 +1971,6 @@ struct Ext4LoadInodeBitmapData {
 __attribute__((noinline)) void ParseExt4LoadInodeBitmapData(Ext4LoadInodeBitmapData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.group = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -2079,6 +1980,7 @@ void ParseExt4LoadInodeBitmap(FtraceEventType& ftraceEvent, uint8_t data[], size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4LoadInodeBitmapData eventData {};
@@ -2101,9 +2003,6 @@ struct Ext4MarkInodeDirtyData {
 __attribute__((noinline)) void ParseExt4MarkInodeDirtyData(Ext4MarkInodeDirtyData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2114,6 +2013,7 @@ void ParseExt4MarkInodeDirty(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4MarkInodeDirtyData eventData {};
@@ -2136,9 +2036,6 @@ struct Ext4MbBitmapLoadData {
 __attribute__((noinline)) void ParseExt4MbBitmapLoadData(Ext4MbBitmapLoadData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.group = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -2148,6 +2045,7 @@ void ParseExt4MbBitmapLoad(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4MbBitmapLoadData eventData {};
@@ -2169,9 +2067,6 @@ struct Ext4MbBuddyBitmapLoadData {
 __attribute__((noinline)) void ParseExt4MbBuddyBitmapLoadData(Ext4MbBuddyBitmapLoadData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.group = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -2181,6 +2076,7 @@ void ParseExt4MbBuddyBitmapLoad(FtraceEventType& ftraceEvent, uint8_t data[], si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4MbBuddyBitmapLoadData eventData {};
@@ -2202,9 +2098,6 @@ struct Ext4MbDiscardPreallocationsData {
 __attribute__((noinline)) void ParseExt4MbDiscardPreallocationsData(Ext4MbDiscardPreallocationsData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.needed = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -2214,6 +2107,7 @@ void ParseExt4MbDiscardPreallocations(FtraceEventType& ftraceEvent, uint8_t data
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4MbDiscardPreallocationsData eventData {};
@@ -2238,9 +2132,6 @@ struct Ext4MbNewGroupPaData {
 __attribute__((noinline)) void ParseExt4MbNewGroupPaData(Ext4MbNewGroupPaData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2253,6 +2144,7 @@ void ParseExt4MbNewGroupPa(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4MbNewGroupPaData eventData {};
@@ -2280,9 +2172,6 @@ struct Ext4MbNewInodePaData {
 __attribute__((noinline)) void ParseExt4MbNewInodePaData(Ext4MbNewInodePaData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2295,6 +2184,7 @@ void ParseExt4MbNewInodePa(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4MbNewInodePaData eventData {};
@@ -2320,9 +2210,6 @@ struct Ext4MbReleaseGroupPaData {
 __attribute__((noinline)) void ParseExt4MbReleaseGroupPaData(Ext4MbReleaseGroupPaData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.pa_pstart = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2333,6 +2220,7 @@ void ParseExt4MbReleaseGroupPa(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4MbReleaseGroupPaData eventData {};
@@ -2357,9 +2245,6 @@ struct Ext4MbReleaseInodePaData {
 __attribute__((noinline)) void ParseExt4MbReleaseInodePaData(Ext4MbReleaseInodePaData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2371,6 +2256,7 @@ void ParseExt4MbReleaseInodePa(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4MbReleaseInodePaData eventData {};
@@ -2412,9 +2298,6 @@ struct Ext4MballocAllocData {
 __attribute__((noinline)) void ParseExt4MballocAllocData(Ext4MballocAllocData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2442,6 +2325,7 @@ void ParseExt4MballocAlloc(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4MballocAllocData eventData {};
@@ -2484,9 +2368,6 @@ struct Ext4MballocDiscardData {
 __attribute__((noinline)) void ParseExt4MballocDiscardData(Ext4MballocDiscardData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2499,6 +2380,7 @@ void ParseExt4MballocDiscard(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4MballocDiscardData eventData {};
@@ -2526,9 +2408,6 @@ struct Ext4MballocFreeData {
 __attribute__((noinline)) void ParseExt4MballocFreeData(Ext4MballocFreeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2541,6 +2420,7 @@ void ParseExt4MballocFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4MballocFreeData eventData {};
@@ -2573,9 +2453,6 @@ struct Ext4MballocPreallocData {
 __attribute__((noinline)) void ParseExt4MballocPreallocData(Ext4MballocPreallocData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2593,6 +2470,7 @@ void ParseExt4MballocPrealloc(FtraceEventType& ftraceEvent, uint8_t data[], size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4MballocPreallocData eventData {};
@@ -2626,9 +2504,6 @@ struct Ext4OtherInodeUpdateTimeData {
 __attribute__((noinline)) void ParseExt4OtherInodeUpdateTimeData(Ext4OtherInodeUpdateTimeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2642,6 +2517,7 @@ void ParseExt4OtherInodeUpdateTime(FtraceEventType& ftraceEvent, uint8_t data[],
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4OtherInodeUpdateTimeData eventData {};
@@ -2670,9 +2546,6 @@ struct Ext4PunchHoleData {
 __attribute__((noinline)) void ParseExt4PunchHoleData(Ext4PunchHoleData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2685,6 +2558,7 @@ void ParseExt4PunchHole(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4PunchHoleData eventData {};
@@ -2710,9 +2584,6 @@ struct Ext4ReadBlockBitmapLoadData {
 __attribute__((noinline)) void ParseExt4ReadBlockBitmapLoadData(Ext4ReadBlockBitmapLoadData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.group = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -2723,6 +2594,7 @@ void ParseExt4ReadBlockBitmapLoad(FtraceEventType& ftraceEvent, uint8_t data[], 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4ReadBlockBitmapLoadData eventData {};
@@ -2753,9 +2625,6 @@ struct Ext4RemoveBlocksData {
 __attribute__((noinline)) void ParseExt4RemoveBlocksData(Ext4RemoveBlocksData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2773,6 +2642,7 @@ void ParseExt4RemoveBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4RemoveBlocksData eventData {};
@@ -2810,9 +2680,6 @@ struct Ext4RequestBlocksData {
 __attribute__((noinline)) void ParseExt4RequestBlocksData(Ext4RequestBlocksData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2830,6 +2697,7 @@ void ParseExt4RequestBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4RequestBlocksData eventData {};
@@ -2860,9 +2728,6 @@ struct Ext4RequestInodeData {
 __attribute__((noinline)) void ParseExt4RequestInodeData(Ext4RequestInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.dir = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2873,6 +2738,7 @@ void ParseExt4RequestInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4RequestInodeData eventData {};
@@ -2897,9 +2763,6 @@ struct Ext4SyncFileEnterData {
 __attribute__((noinline)) void ParseExt4SyncFileEnterData(Ext4SyncFileEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2911,6 +2774,7 @@ void ParseExt4SyncFileEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4SyncFileEnterData eventData {};
@@ -2935,9 +2799,6 @@ struct Ext4SyncFileExitData {
 __attribute__((noinline)) void ParseExt4SyncFileExitData(Ext4SyncFileExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2948,6 +2809,7 @@ void ParseExt4SyncFileExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4SyncFileExitData eventData {};
@@ -2970,9 +2832,6 @@ struct Ext4SyncFsData {
 __attribute__((noinline)) void ParseExt4SyncFsData(Ext4SyncFsData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.wait = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -2982,6 +2841,7 @@ void ParseExt4SyncFs(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4SyncFsData eventData {};
@@ -3006,9 +2866,6 @@ struct Ext4TrimAllFreeData {
 __attribute__((noinline)) void ParseExt4TrimAllFreeData(Ext4TrimAllFreeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev_major = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.dev_minor = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -3021,6 +2878,7 @@ void ParseExt4TrimAllFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4TrimAllFreeData eventData {};
@@ -3048,9 +2906,6 @@ struct Ext4TrimExtentData {
 __attribute__((noinline)) void ParseExt4TrimExtentData(Ext4TrimExtentData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev_major = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.dev_minor = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -3063,6 +2918,7 @@ void ParseExt4TrimExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4TrimExtentData eventData {};
@@ -3088,9 +2944,6 @@ struct Ext4TruncateEnterData {
 __attribute__((noinline)) void ParseExt4TruncateEnterData(Ext4TruncateEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -3101,6 +2954,7 @@ void ParseExt4TruncateEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4TruncateEnterData eventData {};
@@ -3124,9 +2978,6 @@ struct Ext4TruncateExitData {
 __attribute__((noinline)) void ParseExt4TruncateExitData(Ext4TruncateExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -3137,6 +2988,7 @@ void ParseExt4TruncateExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4TruncateExitData eventData {};
@@ -3161,9 +3013,6 @@ struct Ext4UnlinkEnterData {
 __attribute__((noinline)) void ParseExt4UnlinkEnterData(Ext4UnlinkEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -3175,6 +3024,7 @@ void ParseExt4UnlinkEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4UnlinkEnterData eventData {};
@@ -3199,9 +3049,6 @@ struct Ext4UnlinkExitData {
 __attribute__((noinline)) void ParseExt4UnlinkExitData(Ext4UnlinkExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -3212,6 +3059,7 @@ void ParseExt4UnlinkExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4UnlinkExitData eventData {};
@@ -3236,9 +3084,6 @@ struct Ext4WriteBeginData {
 __attribute__((noinline)) void ParseExt4WriteBeginData(Ext4WriteBeginData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -3250,6 +3095,7 @@ void ParseExt4WriteBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4WriteBeginData eventData {};
@@ -3276,9 +3122,6 @@ struct Ext4WriteEndData {
 __attribute__((noinline)) void ParseExt4WriteEndData(Ext4WriteEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -3291,6 +3134,7 @@ void ParseExt4WriteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4WriteEndData eventData {};
@@ -3323,9 +3167,6 @@ struct Ext4WritepagesData {
 __attribute__((noinline)) void ParseExt4WritepagesData(Ext4WritepagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -3343,6 +3184,7 @@ void ParseExt4Writepages(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4WritepagesData eventData {};
@@ -3377,9 +3219,6 @@ struct Ext4WritepagesResultData {
 __attribute__((noinline)) void ParseExt4WritepagesResultData(Ext4WritepagesResultData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -3394,6 +3233,7 @@ void ParseExt4WritepagesResult(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4WritepagesResultData eventData {};
@@ -3423,9 +3263,6 @@ struct Ext4ZeroRangeData {
 __attribute__((noinline)) void ParseExt4ZeroRangeData(Ext4ZeroRangeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -3438,6 +3275,7 @@ void ParseExt4ZeroRange(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     Ext4ZeroRangeData eventData {};

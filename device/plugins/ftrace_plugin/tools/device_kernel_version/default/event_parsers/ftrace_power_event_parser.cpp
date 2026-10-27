@@ -28,9 +28,6 @@ struct ClockDisableData {
 __attribute__((noinline)) void ParseClockDisableData(ClockDisableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -41,6 +38,7 @@ void ParseClockDisable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClockDisableData eventData {};
@@ -64,9 +62,6 @@ struct ClockEnableData {
 __attribute__((noinline)) void ParseClockEnableData(ClockEnableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -77,6 +72,7 @@ void ParseClockEnable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClockEnableData eventData {};
@@ -100,9 +96,6 @@ struct ClockSetRateData {
 __attribute__((noinline)) void ParseClockSetRateData(ClockSetRateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -113,6 +106,7 @@ void ParseClockSetRate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ClockSetRateData eventData {};
@@ -135,9 +129,6 @@ struct CpuFrequencyData {
 __attribute__((noinline)) void ParseCpuFrequencyData(CpuFrequencyData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.state = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.cpu_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -147,6 +138,7 @@ void ParseCpuFrequency(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CpuFrequencyData eventData {};
@@ -169,9 +161,6 @@ struct CpuFrequencyLimitsData {
 __attribute__((noinline)) void ParseCpuFrequencyLimitsData(CpuFrequencyLimitsData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.min_freq = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.max_freq = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -182,6 +171,7 @@ void ParseCpuFrequencyLimits(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CpuFrequencyLimitsData eventData {};
@@ -204,9 +194,6 @@ struct CpuIdleData {
 __attribute__((noinline)) void ParseCpuIdleData(CpuIdleData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.state = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.cpu_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -216,6 +203,7 @@ void ParseCpuIdle(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CpuIdleData eventData {};
@@ -238,9 +226,6 @@ struct DevPmQosAddRequestData {
 __attribute__((noinline)) void ParseDevPmQosAddRequestData(DevPmQosAddRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.type = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -251,6 +236,7 @@ void ParseDevPmQosAddRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     DevPmQosAddRequestData eventData {};
@@ -274,9 +260,6 @@ struct DevPmQosRemoveRequestData {
 __attribute__((noinline)) void ParseDevPmQosRemoveRequestData(DevPmQosRemoveRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.type = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -287,6 +270,7 @@ void ParseDevPmQosRemoveRequest(FtraceEventType& ftraceEvent, uint8_t data[], si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     DevPmQosRemoveRequestData eventData {};
@@ -310,9 +294,6 @@ struct DevPmQosUpdateRequestData {
 __attribute__((noinline)) void ParseDevPmQosUpdateRequestData(DevPmQosUpdateRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.type = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -323,6 +304,7 @@ void ParseDevPmQosUpdateRequest(FtraceEventType& ftraceEvent, uint8_t data[], si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     DevPmQosUpdateRequestData eventData {};
@@ -346,9 +328,6 @@ struct DevicePmCallbackEndData {
 __attribute__((noinline)) void ParseDevicePmCallbackEndData(DevicePmCallbackEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.device = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -359,6 +338,7 @@ void ParseDevicePmCallbackEnd(FtraceEventType& ftraceEvent, uint8_t data[], size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     DevicePmCallbackEndData eventData {};
@@ -384,9 +364,6 @@ struct DevicePmCallbackStartData {
 __attribute__((noinline)) void ParseDevicePmCallbackStartData(DevicePmCallbackStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.device = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -399,6 +376,7 @@ void ParseDevicePmCallbackStart(FtraceEventType& ftraceEvent, uint8_t data[], si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     DevicePmCallbackStartData eventData {};
@@ -423,9 +401,6 @@ struct PmQosAddRequestData {
 __attribute__((noinline)) void ParsePmQosAddRequestData(PmQosAddRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pm_qos_class = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -435,6 +410,7 @@ void ParsePmQosAddRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     PmQosAddRequestData eventData {};
@@ -456,9 +432,6 @@ struct PmQosRemoveRequestData {
 __attribute__((noinline)) void ParsePmQosRemoveRequestData(PmQosRemoveRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pm_qos_class = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -468,6 +441,7 @@ void ParsePmQosRemoveRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     PmQosRemoveRequestData eventData {};
@@ -490,9 +464,6 @@ struct PmQosUpdateFlagsData {
 __attribute__((noinline)) void ParsePmQosUpdateFlagsData(PmQosUpdateFlagsData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.action = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.prev_value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -503,6 +474,7 @@ void ParsePmQosUpdateFlags(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     PmQosUpdateFlagsData eventData {};
@@ -525,9 +497,6 @@ struct PmQosUpdateRequestData {
 __attribute__((noinline)) void ParsePmQosUpdateRequestData(PmQosUpdateRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pm_qos_class = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -537,6 +506,7 @@ void ParsePmQosUpdateRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     PmQosUpdateRequestData eventData {};
@@ -559,9 +529,6 @@ struct PmQosUpdateRequestTimeoutData {
 __attribute__((noinline)) void ParsePmQosUpdateRequestTimeoutData(PmQosUpdateRequestTimeoutData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pm_qos_class = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -572,6 +539,7 @@ void ParsePmQosUpdateRequestTimeout(FtraceEventType& ftraceEvent, uint8_t data[]
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     PmQosUpdateRequestTimeoutData eventData {};
@@ -595,9 +563,6 @@ struct PmQosUpdateTargetData {
 __attribute__((noinline)) void ParsePmQosUpdateTargetData(PmQosUpdateTargetData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.action = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.prev_value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -608,6 +573,7 @@ void ParsePmQosUpdateTarget(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     PmQosUpdateTargetData eventData {};
@@ -631,9 +597,6 @@ struct PowerDomainTargetData {
 __attribute__((noinline)) void ParsePowerDomainTargetData(PowerDomainTargetData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -644,6 +607,7 @@ void ParsePowerDomainTarget(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     PowerDomainTargetData eventData {};
@@ -673,9 +637,6 @@ struct PstateSampleData {
 __attribute__((noinline)) void ParsePstateSampleData(PstateSampleData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.core_busy = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.scaled_busy = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -692,6 +653,7 @@ void ParsePstateSample(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     PstateSampleData eventData {};
@@ -721,9 +683,6 @@ struct SuspendResumeData {
 __attribute__((noinline)) void ParseSuspendResumeData(SuspendResumeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.action = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.val = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -734,6 +693,7 @@ void ParseSuspendResume(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SuspendResumeData eventData {};
@@ -756,9 +716,6 @@ struct WakeupSourceActivateData {
 __attribute__((noinline)) void ParseWakeupSourceActivateData(WakeupSourceActivateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -768,6 +725,7 @@ void ParseWakeupSourceActivate(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WakeupSourceActivateData eventData {};
@@ -789,9 +747,6 @@ struct WakeupSourceDeactivateData {
 __attribute__((noinline)) void ParseWakeupSourceDeactivateData(WakeupSourceDeactivateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -801,6 +756,7 @@ void ParseWakeupSourceDeactivate(FtraceEventType& ftraceEvent, uint8_t data[], s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     WakeupSourceDeactivateData eventData {};

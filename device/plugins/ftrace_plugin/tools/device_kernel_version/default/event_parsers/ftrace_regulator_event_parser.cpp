@@ -26,9 +26,6 @@ struct RegulatorBypassDisableData {
 __attribute__((noinline)) void ParseRegulatorBypassDisableData(RegulatorBypassDisableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -37,6 +34,7 @@ void ParseRegulatorBypassDisable(FtraceEventType& ftraceEvent, uint8_t data[], s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     RegulatorBypassDisableData eventData {};
@@ -56,9 +54,6 @@ struct RegulatorBypassDisableCompleteData {
 __attribute__((noinline)) void ParseRegulatorBypassDisableCompleteData(RegulatorBypassDisableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -67,6 +62,7 @@ void ParseRegulatorBypassDisableComplete(FtraceEventType& ftraceEvent, uint8_t d
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     RegulatorBypassDisableCompleteData eventData {};
@@ -86,9 +82,6 @@ struct RegulatorBypassEnableData {
 __attribute__((noinline)) void ParseRegulatorBypassEnableData(RegulatorBypassEnableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -97,6 +90,7 @@ void ParseRegulatorBypassEnable(FtraceEventType& ftraceEvent, uint8_t data[], si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     RegulatorBypassEnableData eventData {};
@@ -116,9 +110,6 @@ struct RegulatorBypassEnableCompleteData {
 __attribute__((noinline)) void ParseRegulatorBypassEnableCompleteData(RegulatorBypassEnableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -127,6 +118,7 @@ void ParseRegulatorBypassEnableComplete(FtraceEventType& ftraceEvent, uint8_t da
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     RegulatorBypassEnableCompleteData eventData {};
@@ -146,9 +138,6 @@ struct RegulatorDisableData {
 __attribute__((noinline)) void ParseRegulatorDisableData(RegulatorDisableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -157,6 +146,7 @@ void ParseRegulatorDisable(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     RegulatorDisableData eventData {};
@@ -176,9 +166,6 @@ struct RegulatorDisableCompleteData {
 __attribute__((noinline)) void ParseRegulatorDisableCompleteData(RegulatorDisableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -187,6 +174,7 @@ void ParseRegulatorDisableComplete(FtraceEventType& ftraceEvent, uint8_t data[],
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     RegulatorDisableCompleteData eventData {};
@@ -206,9 +194,6 @@ struct RegulatorEnableData {
 __attribute__((noinline)) void ParseRegulatorEnableData(RegulatorEnableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -217,6 +202,7 @@ void ParseRegulatorEnable(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     RegulatorEnableData eventData {};
@@ -236,9 +222,6 @@ struct RegulatorEnableCompleteData {
 __attribute__((noinline)) void ParseRegulatorEnableCompleteData(RegulatorEnableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -247,6 +230,7 @@ void ParseRegulatorEnableComplete(FtraceEventType& ftraceEvent, uint8_t data[], 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     RegulatorEnableCompleteData eventData {};
@@ -266,9 +250,6 @@ struct RegulatorEnableDelayData {
 __attribute__((noinline)) void ParseRegulatorEnableDelayData(RegulatorEnableDelayData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -277,6 +258,7 @@ void ParseRegulatorEnableDelay(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     RegulatorEnableDelayData eventData {};
@@ -298,9 +280,6 @@ struct RegulatorSetVoltageData {
 __attribute__((noinline)) void ParseRegulatorSetVoltageData(RegulatorSetVoltageData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.min = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -311,6 +290,7 @@ void ParseRegulatorSetVoltage(FtraceEventType& ftraceEvent, uint8_t data[], size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     RegulatorSetVoltageData eventData {};
@@ -333,9 +313,6 @@ struct RegulatorSetVoltageCompleteData {
 __attribute__((noinline)) void ParseRegulatorSetVoltageCompleteData(RegulatorSetVoltageCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.val = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -345,6 +322,7 @@ void ParseRegulatorSetVoltageComplete(FtraceEventType& ftraceEvent, uint8_t data
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     RegulatorSetVoltageCompleteData eventData {};

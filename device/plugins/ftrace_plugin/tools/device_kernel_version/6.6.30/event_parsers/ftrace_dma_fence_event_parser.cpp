@@ -29,9 +29,6 @@ struct DmaFenceDestroyData {
 __attribute__((noinline)) void ParseDmaFenceDestroyData(DmaFenceDestroyData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -43,6 +40,7 @@ void ParseDmaFenceDestroy(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     DmaFenceDestroyData eventData {};
@@ -68,9 +66,6 @@ struct DmaFenceEmitData {
 __attribute__((noinline)) void ParseDmaFenceEmitData(DmaFenceEmitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -82,6 +77,7 @@ void ParseDmaFenceEmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     DmaFenceEmitData eventData {};
@@ -107,9 +103,6 @@ struct DmaFenceEnableSignalData {
 __attribute__((noinline)) void ParseDmaFenceEnableSignalData(DmaFenceEnableSignalData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -121,6 +114,7 @@ void ParseDmaFenceEnableSignal(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     DmaFenceEnableSignalData eventData {};
@@ -146,9 +140,6 @@ struct DmaFenceInitData {
 __attribute__((noinline)) void ParseDmaFenceInitData(DmaFenceInitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -160,6 +151,7 @@ void ParseDmaFenceInit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     DmaFenceInitData eventData {};
@@ -185,9 +177,6 @@ struct DmaFenceSignaledData {
 __attribute__((noinline)) void ParseDmaFenceSignaledData(DmaFenceSignaledData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -199,6 +188,7 @@ void ParseDmaFenceSignaled(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     DmaFenceSignaledData eventData {};
@@ -224,9 +214,6 @@ struct DmaFenceWaitEndData {
 __attribute__((noinline)) void ParseDmaFenceWaitEndData(DmaFenceWaitEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -238,6 +225,7 @@ void ParseDmaFenceWaitEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     DmaFenceWaitEndData eventData {};
@@ -263,9 +251,6 @@ struct DmaFenceWaitStartData {
 __attribute__((noinline)) void ParseDmaFenceWaitStartData(DmaFenceWaitStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.timeline = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -277,6 +262,7 @@ void ParseDmaFenceWaitStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     DmaFenceWaitStartData eventData {};

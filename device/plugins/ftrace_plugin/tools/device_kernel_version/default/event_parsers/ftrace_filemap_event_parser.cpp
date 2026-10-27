@@ -30,9 +30,6 @@ struct FileCheckAndAdvanceWbErrData {
 __attribute__((noinline)) void ParseFileCheckAndAdvanceWbErrData(FileCheckAndAdvanceWbErrData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.file = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -45,6 +42,7 @@ void ParseFileCheckAndAdvanceWbErr(FtraceEventType& ftraceEvent, uint8_t data[],
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     FileCheckAndAdvanceWbErrData eventData {};
@@ -70,9 +68,6 @@ struct FilemapSetWbErrData {
 __attribute__((noinline)) void ParseFilemapSetWbErrData(FilemapSetWbErrData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.s_dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -83,6 +78,7 @@ void ParseFilemapSetWbErr(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     FilemapSetWbErrData eventData {};
@@ -107,9 +103,6 @@ struct MmFilemapAddToPageCacheData {
 __attribute__((noinline)) void ParseMmFilemapAddToPageCacheData(MmFilemapAddToPageCacheData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -121,6 +114,7 @@ void ParseMmFilemapAddToPageCache(FtraceEventType& ftraceEvent, uint8_t data[], 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmFilemapAddToPageCacheData eventData {};
@@ -146,9 +140,6 @@ struct MmFilemapDeleteFromPageCacheData {
 __attribute__((noinline)) void ParseMmFilemapDeleteFromPageCacheData(MmFilemapDeleteFromPageCacheData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -160,6 +151,7 @@ void ParseMmFilemapDeleteFromPageCache(FtraceEventType& ftraceEvent, uint8_t dat
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmFilemapDeleteFromPageCacheData eventData {};

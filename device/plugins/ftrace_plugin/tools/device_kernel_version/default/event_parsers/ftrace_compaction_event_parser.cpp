@@ -30,9 +30,6 @@ struct MmCompactionBeginData {
 __attribute__((noinline)) void ParseMmCompactionBeginData(MmCompactionBeginData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.zone_start = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.migrate_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -45,6 +42,7 @@ void ParseMmCompactionBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmCompactionBeginData eventData {};
@@ -73,9 +71,6 @@ struct MmCompactionDeferCompactionData {
 __attribute__((noinline)) void ParseMmCompactionDeferCompactionData(MmCompactionDeferCompactionData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.idx = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -89,6 +84,7 @@ void ParseMmCompactionDeferCompaction(FtraceEventType& ftraceEvent, uint8_t data
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmCompactionDeferCompactionData eventData {};
@@ -118,9 +114,6 @@ struct MmCompactionDeferResetData {
 __attribute__((noinline)) void ParseMmCompactionDeferResetData(MmCompactionDeferResetData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.idx = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -134,6 +127,7 @@ void ParseMmCompactionDeferReset(FtraceEventType& ftraceEvent, uint8_t data[], s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmCompactionDeferResetData eventData {};
@@ -163,9 +157,6 @@ struct MmCompactionDeferredData {
 __attribute__((noinline)) void ParseMmCompactionDeferredData(MmCompactionDeferredData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.idx = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -179,6 +170,7 @@ void ParseMmCompactionDeferred(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmCompactionDeferredData eventData {};
@@ -208,9 +200,6 @@ struct MmCompactionEndData {
 __attribute__((noinline)) void ParseMmCompactionEndData(MmCompactionEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.zone_start = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.migrate_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -224,6 +213,7 @@ void ParseMmCompactionEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmCompactionEndData eventData {};
@@ -251,9 +241,6 @@ struct MmCompactionFinishedData {
 __attribute__((noinline)) void ParseMmCompactionFinishedData(MmCompactionFinishedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.idx = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -265,6 +252,7 @@ void ParseMmCompactionFinished(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmCompactionFinishedData eventData {};
@@ -290,9 +278,6 @@ struct MmCompactionIsolateFreepagesData {
 __attribute__((noinline)) void ParseMmCompactionIsolateFreepagesData(MmCompactionIsolateFreepagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.start_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.end_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -304,6 +289,7 @@ void ParseMmCompactionIsolateFreepages(FtraceEventType& ftraceEvent, uint8_t dat
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmCompactionIsolateFreepagesData eventData {};
@@ -329,9 +315,6 @@ struct MmCompactionIsolateMigratepagesData {
 __attribute__((noinline)) void ParseMmCompactionIsolateMigratepagesData(MmCompactionIsolateMigratepagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.start_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.end_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -343,6 +326,7 @@ void ParseMmCompactionIsolateMigratepages(FtraceEventType& ftraceEvent, uint8_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmCompactionIsolateMigratepagesData eventData {};
@@ -366,9 +350,6 @@ struct MmCompactionMigratepagesData {
 __attribute__((noinline)) void ParseMmCompactionMigratepagesData(MmCompactionMigratepagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.nr_migrated = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nr_failed = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -378,6 +359,7 @@ void ParseMmCompactionMigratepages(FtraceEventType& ftraceEvent, uint8_t data[],
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmCompactionMigratepagesData eventData {};
@@ -401,9 +383,6 @@ struct MmCompactionSuitableData {
 __attribute__((noinline)) void ParseMmCompactionSuitableData(MmCompactionSuitableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.idx = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -415,6 +394,7 @@ void ParseMmCompactionSuitable(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmCompactionSuitableData eventData {};
@@ -439,9 +419,6 @@ struct MmCompactionTryToCompactPagesData {
 __attribute__((noinline)) void ParseMmCompactionTryToCompactPagesData(MmCompactionTryToCompactPagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.gfp_mask = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -452,6 +429,7 @@ void ParseMmCompactionTryToCompactPages(FtraceEventType& ftraceEvent, uint8_t da
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmCompactionTryToCompactPagesData eventData {};

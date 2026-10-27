@@ -26,9 +26,6 @@ struct RcuUtilizationData {
 __attribute__((noinline)) void ParseRcuUtilizationData(RcuUtilizationData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.s = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -37,6 +34,7 @@ void ParseRcuUtilization(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     RcuUtilizationData eventData {};

@@ -27,9 +27,6 @@ struct KfreeData {
 __attribute__((noinline)) void ParseKfreeData(KfreeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -39,6 +36,7 @@ void ParseKfree(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     KfreeData eventData {};
@@ -64,9 +62,6 @@ struct KmallocData {
 __attribute__((noinline)) void ParseKmallocData(KmallocData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -80,6 +75,7 @@ void ParseKmalloc(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     KmallocData eventData {};
@@ -110,9 +106,6 @@ struct KmemCacheAllocData {
 __attribute__((noinline)) void ParseKmemCacheAllocData(KmemCacheAllocData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -127,6 +120,7 @@ void ParseKmemCacheAlloc(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     KmemCacheAllocData eventData {};
@@ -154,9 +148,6 @@ struct KmemCacheFreeData {
 __attribute__((noinline)) void ParseKmemCacheFreeData(KmemCacheFreeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -167,6 +158,7 @@ void ParseKmemCacheFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     KmemCacheFreeData eventData {};
@@ -191,9 +183,6 @@ struct MmPageAllocData {
 __attribute__((noinline)) void ParseMmPageAllocData(MmPageAllocData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.order = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -205,6 +194,7 @@ void ParseMmPageAlloc(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmPageAllocData eventData {};
@@ -232,9 +222,6 @@ struct MmPageAllocExtfragData {
 __attribute__((noinline)) void ParseMmPageAllocExtfragData(MmPageAllocExtfragData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.alloc_order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -248,6 +235,7 @@ void ParseMmPageAllocExtfrag(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmPageAllocExtfragData eventData {};
@@ -275,9 +263,6 @@ struct MmPageAllocZoneLockedData {
 __attribute__((noinline)) void ParseMmPageAllocZoneLockedData(MmPageAllocZoneLockedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.order = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -289,6 +274,7 @@ void ParseMmPageAllocZoneLocked(FtraceEventType& ftraceEvent, uint8_t data[], si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmPageAllocZoneLockedData eventData {};
@@ -312,9 +298,6 @@ struct MmPageFreeData {
 __attribute__((noinline)) void ParseMmPageFreeData(MmPageFreeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.order = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -324,6 +307,7 @@ void ParseMmPageFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmPageFreeData eventData {};
@@ -344,9 +328,6 @@ struct MmPageFreeBatchedData {
 __attribute__((noinline)) void ParseMmPageFreeBatchedData(MmPageFreeBatchedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -355,6 +336,7 @@ void ParseMmPageFreeBatched(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmPageFreeBatchedData eventData {};
@@ -376,9 +358,6 @@ struct MmPagePcpuDrainData {
 __attribute__((noinline)) void ParseMmPagePcpuDrainData(MmPagePcpuDrainData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.order = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -389,6 +368,7 @@ void ParseMmPagePcpuDrain(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmPagePcpuDrainData eventData {};
@@ -413,9 +393,6 @@ struct RssStatData {
 __attribute__((noinline)) void ParseRssStatData(RssStatData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.mm_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.curr = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -427,6 +404,7 @@ void ParseRssStat(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     RssStatData eventData {};

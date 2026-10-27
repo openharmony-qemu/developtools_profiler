@@ -48,9 +48,6 @@ struct MmcRequestDoneData {
 __attribute__((noinline)) void ParseMmcRequestDoneData(MmcRequestDoneData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.cmd_opcode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.cmd_err = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -81,6 +78,7 @@ void ParseMmcRequestDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmcRequestDoneData eventData {};
@@ -146,9 +144,6 @@ struct MmcRequestStartData {
 __attribute__((noinline)) void ParseMmcRequestStartData(MmcRequestStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.cmd_opcode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.cmd_arg = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -181,6 +176,7 @@ void ParseMmcRequestStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmcRequestStartData eventData {};

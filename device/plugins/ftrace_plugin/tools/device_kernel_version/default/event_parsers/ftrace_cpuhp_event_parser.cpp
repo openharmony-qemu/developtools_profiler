@@ -29,9 +29,6 @@ struct CpuhpEnterData {
 __attribute__((noinline)) void ParseCpuhpEnterData(CpuhpEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.cpu = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.target = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -43,6 +40,7 @@ void ParseCpuhpEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CpuhpEnterData eventData {};
@@ -68,9 +66,6 @@ struct CpuhpExitData {
 __attribute__((noinline)) void ParseCpuhpExitData(CpuhpExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.cpu = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.state = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -82,6 +77,7 @@ void ParseCpuhpExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CpuhpExitData eventData {};
@@ -107,9 +103,6 @@ struct CpuhpMultiEnterData {
 __attribute__((noinline)) void ParseCpuhpMultiEnterData(CpuhpMultiEnterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.cpu = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.target = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -121,6 +114,7 @@ void ParseCpuhpMultiEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     CpuhpMultiEnterData eventData {};

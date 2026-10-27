@@ -32,9 +32,6 @@ struct MmShrinkSlabEndData {
 __attribute__((noinline)) void ParseMmShrinkSlabEndData(MmShrinkSlabEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.shr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -49,6 +46,7 @@ void ParseMmShrinkSlabEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmShrinkSlabEndData eventData {};
@@ -82,9 +80,6 @@ struct MmShrinkSlabStartData {
 __attribute__((noinline)) void ParseMmShrinkSlabStartData(MmShrinkSlabStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.shr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.shrink = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -101,6 +96,7 @@ void ParseMmShrinkSlabStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmShrinkSlabStartData eventData {};
@@ -131,9 +127,6 @@ struct MmVmscanDirectReclaimBeginData {
 __attribute__((noinline)) void ParseMmVmscanDirectReclaimBeginData(MmVmscanDirectReclaimBeginData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.may_writepage = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -145,6 +138,7 @@ void ParseMmVmscanDirectReclaimBegin(FtraceEventType& ftraceEvent, uint8_t data[
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmVmscanDirectReclaimBeginData eventData {};
@@ -167,9 +161,6 @@ struct MmVmscanDirectReclaimEndData {
 __attribute__((noinline)) void ParseMmVmscanDirectReclaimEndData(MmVmscanDirectReclaimEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.nr_reclaimed = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -178,6 +169,7 @@ void ParseMmVmscanDirectReclaimEnd(FtraceEventType& ftraceEvent, uint8_t data[],
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmVmscanDirectReclaimEndData eventData {};
@@ -197,9 +189,6 @@ struct MmVmscanKswapdSleepData {
 __attribute__((noinline)) void ParseMmVmscanKswapdSleepData(MmVmscanKswapdSleepData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -208,6 +197,7 @@ void ParseMmVmscanKswapdSleep(FtraceEventType& ftraceEvent, uint8_t data[], size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmVmscanKswapdSleepData eventData {};
@@ -229,9 +219,6 @@ struct MmVmscanKswapdWakeData {
 __attribute__((noinline)) void ParseMmVmscanKswapdWakeData(MmVmscanKswapdWakeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.zid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -242,6 +229,7 @@ void ParseMmVmscanKswapdWake(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmVmscanKswapdWakeData eventData {};
@@ -270,9 +258,6 @@ struct MmVmscanLruIsolateData {
 __attribute__((noinline)) void ParseMmVmscanLruIsolateData(MmVmscanLruIsolateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.classzone_idx = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -288,6 +273,7 @@ void ParseMmVmscanLruIsolate(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmVmscanLruIsolateData eventData {};
@@ -325,9 +311,6 @@ struct MmVmscanLruShrinkInactiveData {
 __attribute__((noinline)) void ParseMmVmscanLruShrinkInactiveData(MmVmscanLruShrinkInactiveData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.nr_scanned = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -347,6 +330,7 @@ void ParseMmVmscanLruShrinkInactive(FtraceEventType& ftraceEvent, uint8_t data[]
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmVmscanLruShrinkInactiveData eventData {};
@@ -380,9 +364,6 @@ struct MmVmscanWakeupKswapdData {
 __attribute__((noinline)) void ParseMmVmscanWakeupKswapdData(MmVmscanWakeupKswapdData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.zid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -394,6 +375,7 @@ void ParseMmVmscanWakeupKswapd(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmVmscanWakeupKswapdData eventData {};
@@ -417,9 +399,6 @@ struct MmVmscanWritepageData {
 __attribute__((noinline)) void ParseMmVmscanWritepageData(MmVmscanWritepageData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.reclaim_flags = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -429,6 +408,7 @@ void ParseMmVmscanWritepage(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     MmVmscanWritepageData eventData {};

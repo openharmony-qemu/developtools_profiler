@@ -30,9 +30,6 @@ struct BlockBioBackmergeData {
 __attribute__((noinline)) void ParseBlockBioBackmergeData(BlockBioBackmergeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -45,6 +42,7 @@ void ParseBlockBioBackmerge(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockBioBackmergeData eventData {};
@@ -72,9 +70,6 @@ struct BlockBioBounceData {
 __attribute__((noinline)) void ParseBlockBioBounceData(BlockBioBounceData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -87,6 +82,7 @@ void ParseBlockBioBounce(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockBioBounceData eventData {};
@@ -114,9 +110,6 @@ struct BlockBioCompleteData {
 __attribute__((noinline)) void ParseBlockBioCompleteData(BlockBioCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -129,6 +122,7 @@ void ParseBlockBioComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockBioCompleteData eventData {};
@@ -156,9 +150,6 @@ struct BlockBioFrontmergeData {
 __attribute__((noinline)) void ParseBlockBioFrontmergeData(BlockBioFrontmergeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -171,6 +162,7 @@ void ParseBlockBioFrontmerge(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockBioFrontmergeData eventData {};
@@ -198,9 +190,6 @@ struct BlockBioQueueData {
 __attribute__((noinline)) void ParseBlockBioQueueData(BlockBioQueueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -213,6 +202,7 @@ void ParseBlockBioQueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockBioQueueData eventData {};
@@ -241,9 +231,6 @@ struct BlockBioRemapData {
 __attribute__((noinline)) void ParseBlockBioRemapData(BlockBioRemapData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -257,6 +244,7 @@ void ParseBlockBioRemap(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockBioRemapData eventData {};
@@ -283,9 +271,6 @@ struct BlockDirtyBufferData {
 __attribute__((noinline)) void ParseBlockDirtyBufferData(BlockDirtyBufferData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -296,6 +281,7 @@ void ParseBlockDirtyBuffer(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockDirtyBufferData eventData {};
@@ -321,9 +307,6 @@ struct BlockGetrqData {
 __attribute__((noinline)) void ParseBlockGetrqData(BlockGetrqData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -336,6 +319,7 @@ void ParseBlockGetrq(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockGetrqData eventData {};
@@ -359,9 +343,6 @@ struct BlockPlugData {
 __attribute__((noinline)) void ParseBlockPlugData(BlockPlugData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -370,6 +351,7 @@ void ParseBlockPlug(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockPlugData eventData {};
@@ -394,9 +376,6 @@ struct BlockRqCompleteData {
 __attribute__((noinline)) void ParseBlockRqCompleteData(BlockRqCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -410,6 +389,7 @@ void ParseBlockRqComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockRqCompleteData eventData {};
@@ -440,9 +420,6 @@ struct BlockRqInsertData {
 __attribute__((noinline)) void ParseBlockRqInsertData(BlockRqInsertData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -457,6 +434,7 @@ void ParseBlockRqInsert(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockRqInsertData eventData {};
@@ -488,9 +466,6 @@ struct BlockRqIssueData {
 __attribute__((noinline)) void ParseBlockRqIssueData(BlockRqIssueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -505,6 +480,7 @@ void ParseBlockRqIssue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockRqIssueData eventData {};
@@ -536,9 +512,6 @@ struct BlockRqRemapData {
 __attribute__((noinline)) void ParseBlockRqRemapData(BlockRqRemapData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -553,6 +526,7 @@ void ParseBlockRqRemap(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockRqRemapData eventData {};
@@ -582,9 +556,6 @@ struct BlockRqRequeueData {
 __attribute__((noinline)) void ParseBlockRqRequeueData(BlockRqRequeueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -597,6 +568,7 @@ void ParseBlockRqRequeue(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockRqRequeueData eventData {};
@@ -624,9 +596,6 @@ struct BlockSleeprqData {
 __attribute__((noinline)) void ParseBlockSleeprqData(BlockSleeprqData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -639,6 +608,7 @@ void ParseBlockSleeprq(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockSleeprqData eventData {};
@@ -666,9 +636,6 @@ struct BlockSplitData {
 __attribute__((noinline)) void ParseBlockSplitData(BlockSplitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -681,6 +648,7 @@ void ParseBlockSplit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockSplitData eventData {};
@@ -706,9 +674,6 @@ struct BlockTouchBufferData {
 __attribute__((noinline)) void ParseBlockTouchBufferData(BlockTouchBufferData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sector = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -719,6 +684,7 @@ void ParseBlockTouchBuffer(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockTouchBufferData eventData {};
@@ -741,9 +707,6 @@ struct BlockUnplugData {
 __attribute__((noinline)) void ParseBlockUnplugData(BlockUnplugData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.nr_rq = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -753,6 +716,7 @@ void ParseBlockUnplug(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BlockUnplugData eventData {};

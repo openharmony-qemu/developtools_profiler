@@ -34,9 +34,6 @@ struct BreakLeaseBlockData {
 __attribute__((noinline)) void ParseBreakLeaseBlockData(BreakLeaseBlockData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.fl = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -53,6 +50,7 @@ void ParseBreakLeaseBlock(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BreakLeaseBlockData eventData {};
@@ -88,9 +86,6 @@ struct BreakLeaseNoblockData {
 __attribute__((noinline)) void ParseBreakLeaseNoblockData(BreakLeaseNoblockData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.fl = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -107,6 +102,7 @@ void ParseBreakLeaseNoblock(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BreakLeaseNoblockData eventData {};
@@ -142,9 +138,6 @@ struct BreakLeaseUnblockData {
 __attribute__((noinline)) void ParseBreakLeaseUnblockData(BreakLeaseUnblockData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.fl = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -161,6 +154,7 @@ void ParseBreakLeaseUnblock(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BreakLeaseUnblockData eventData {};
@@ -195,9 +189,6 @@ struct GenericAddLeaseData {
 __attribute__((noinline)) void ParseGenericAddLeaseData(GenericAddLeaseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.wcount = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -213,6 +204,7 @@ void ParseGenericAddLease(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     GenericAddLeaseData eventData {};
@@ -247,9 +239,6 @@ struct GenericDeleteLeaseData {
 __attribute__((noinline)) void ParseGenericDeleteLeaseData(GenericDeleteLeaseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.fl = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -266,6 +255,7 @@ void ParseGenericDeleteLease(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     GenericDeleteLeaseData eventData {};
@@ -301,9 +291,6 @@ struct TimeOutLeasesData {
 __attribute__((noinline)) void ParseTimeOutLeasesData(TimeOutLeasesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.fl = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.i_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -320,6 +307,7 @@ void ParseTimeOutLeases(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     TimeOutLeasesData eventData {};

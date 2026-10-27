@@ -28,9 +28,6 @@ struct GpioDirectionData {
 __attribute__((noinline)) void ParseGpioDirectionData(GpioDirectionData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.gpio = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.in = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -41,6 +38,7 @@ void ParseGpioDirection(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     GpioDirectionData eventData {};
@@ -64,9 +62,6 @@ struct GpioValueData {
 __attribute__((noinline)) void ParseGpioValueData(GpioValueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.gpio = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.get = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -77,6 +72,7 @@ void ParseGpioValue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     GpioValueData eventData {};

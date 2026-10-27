@@ -31,9 +31,6 @@ struct SchedBlockedReasonData {
 __attribute__((noinline)) void ParseSchedBlockedReasonData(SchedBlockedReasonData& eventData, uint8_t data[],
                                              size_t size, const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.caller = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -54,6 +51,7 @@ void ParseSchedBlockedReason(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedBlockedReasonData eventData {};
@@ -79,9 +77,6 @@ struct SchedKthreadStopData {
 __attribute__((noinline)) void ParseSchedKthreadStopData(SchedKthreadStopData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -91,6 +86,7 @@ void ParseSchedKthreadStop(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedKthreadStopData eventData {};
@@ -111,9 +107,6 @@ struct SchedKthreadStopRetData {
 __attribute__((noinline)) void ParseSchedKthreadStopRetData(SchedKthreadStopRetData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -122,6 +115,7 @@ void ParseSchedKthreadStopRet(FtraceEventType& ftraceEvent, uint8_t data[], size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedKthreadStopRetData eventData {};
@@ -145,9 +139,6 @@ struct SchedMigrateTaskData {
 __attribute__((noinline)) void ParseSchedMigrateTaskData(SchedMigrateTaskData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -160,6 +151,7 @@ void ParseSchedMigrateTask(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedMigrateTaskData eventData {};
@@ -189,9 +181,6 @@ struct SchedMoveNumaData {
 __attribute__((noinline)) void ParseSchedMoveNumaData(SchedMoveNumaData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.tgid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -206,6 +195,7 @@ void ParseSchedMoveNuma(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedMoveNumaData eventData {};
@@ -234,9 +224,6 @@ struct SchedPiSetprioData {
 __attribute__((noinline)) void ParseSchedPiSetprioData(SchedPiSetprioData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -248,6 +235,7 @@ void ParseSchedPiSetprio(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedPiSetprioData eventData {};
@@ -272,9 +260,6 @@ struct SchedProcessExecData {
 __attribute__((noinline)) void ParseSchedProcessExecData(SchedProcessExecData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.filename = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -285,6 +270,7 @@ void ParseSchedProcessExec(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedProcessExecData eventData {};
@@ -308,9 +294,6 @@ struct SchedProcessExitData {
 __attribute__((noinline)) void ParseSchedProcessExitData(SchedProcessExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -321,6 +304,7 @@ void ParseSchedProcessExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedProcessExitData eventData {};
@@ -345,9 +329,6 @@ struct SchedProcessForkData {
 __attribute__((noinline)) void ParseSchedProcessForkData(SchedProcessForkData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.parent_comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.parent_pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -359,6 +340,7 @@ void ParseSchedProcessFork(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedProcessForkData eventData {};
@@ -383,9 +365,6 @@ struct SchedProcessFreeData {
 __attribute__((noinline)) void ParseSchedProcessFreeData(SchedProcessFreeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -396,6 +375,7 @@ void ParseSchedProcessFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedProcessFreeData eventData {};
@@ -419,9 +399,6 @@ struct SchedProcessWaitData {
 __attribute__((noinline)) void ParseSchedProcessWaitData(SchedProcessWaitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -432,6 +409,7 @@ void ParseSchedProcessWait(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedProcessWaitData eventData {};
@@ -455,9 +433,6 @@ struct SchedStatBlockedData {
 __attribute__((noinline)) void ParseSchedStatBlockedData(SchedStatBlockedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -468,6 +443,7 @@ void ParseSchedStatBlocked(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedStatBlockedData eventData {};
@@ -491,9 +467,6 @@ struct SchedStatIowaitData {
 __attribute__((noinline)) void ParseSchedStatIowaitData(SchedStatIowaitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -504,6 +477,7 @@ void ParseSchedStatIowait(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedStatIowaitData eventData {};
@@ -528,9 +502,6 @@ struct SchedStatRuntimeData {
 __attribute__((noinline)) void ParseSchedStatRuntimeData(SchedStatRuntimeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -542,6 +513,7 @@ void ParseSchedStatRuntime(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedStatRuntimeData eventData {};
@@ -566,9 +538,6 @@ struct SchedStatSleepData {
 __attribute__((noinline)) void ParseSchedStatSleepData(SchedStatSleepData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -579,6 +548,7 @@ void ParseSchedStatSleep(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedStatSleepData eventData {};
@@ -602,9 +572,6 @@ struct SchedStatWaitData {
 __attribute__((noinline)) void ParseSchedStatWaitData(SchedStatWaitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -615,6 +582,7 @@ void ParseSchedStatWait(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedStatWaitData eventData {};
@@ -642,9 +610,6 @@ struct SchedStickNumaData {
 __attribute__((noinline)) void ParseSchedStickNumaData(SchedStickNumaData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.tgid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -659,6 +624,7 @@ void ParseSchedStickNuma(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedStickNumaData eventData {};
@@ -693,9 +659,6 @@ struct SchedSwapNumaData {
 __attribute__((noinline)) void ParseSchedSwapNumaData(SchedSwapNumaData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.src_pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.src_tgid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -713,6 +676,7 @@ void ParseSchedSwapNuma(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedSwapNumaData eventData {};
@@ -747,9 +711,6 @@ struct SchedSwitchData {
 __attribute__((noinline)) void ParseSchedSwitchData(SchedSwitchData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.prev_comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.prev_pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -767,6 +728,7 @@ void ParseSchedSwitch(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedSwitchData eventData {};
@@ -794,9 +756,6 @@ struct SchedWaitTaskData {
 __attribute__((noinline)) void ParseSchedWaitTaskData(SchedWaitTaskData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -807,6 +766,7 @@ void ParseSchedWaitTask(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedWaitTaskData eventData {};
@@ -828,9 +788,6 @@ struct SchedWakeIdleWithoutIpiData {
 __attribute__((noinline)) void ParseSchedWakeIdleWithoutIpiData(SchedWakeIdleWithoutIpiData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.cpu = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -839,6 +796,7 @@ void ParseSchedWakeIdleWithoutIpi(FtraceEventType& ftraceEvent, uint8_t data[], 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedWakeIdleWithoutIpiData eventData {};
@@ -861,9 +819,6 @@ struct SchedWakeupData {
 __attribute__((noinline)) void ParseSchedWakeupData(SchedWakeupData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -875,6 +830,7 @@ void ParseSchedWakeup(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedWakeupData eventData {};
@@ -900,9 +856,6 @@ struct SchedWakeupNewData {
 __attribute__((noinline)) void ParseSchedWakeupNewData(SchedWakeupNewData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -916,6 +869,7 @@ void ParseSchedWakeupNew(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedWakeupNewData eventData {};
@@ -941,9 +895,6 @@ struct SchedWakingData {
 __attribute__((noinline)) void ParseSchedWakingData(SchedWakingData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -955,6 +906,7 @@ void ParseSchedWaking(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SchedWakingData eventData {};

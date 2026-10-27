@@ -26,9 +26,6 @@ struct HrtimerCancelData {
 __attribute__((noinline)) void ParseHrtimerCancelData(HrtimerCancelData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -37,6 +34,7 @@ void ParseHrtimerCancel(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     HrtimerCancelData eventData {};
@@ -58,9 +56,6 @@ struct HrtimerExpireEntryData {
 __attribute__((noinline)) void ParseHrtimerExpireEntryData(HrtimerExpireEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.now = FtraceFieldParser::ParseIntField<int64_t>(format.fields, i++, data, size);
@@ -71,6 +66,7 @@ void ParseHrtimerExpireEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     HrtimerExpireEntryData eventData {};
@@ -92,9 +88,6 @@ struct HrtimerExpireExitData {
 __attribute__((noinline)) void ParseHrtimerExpireExitData(HrtimerExpireExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -103,6 +96,7 @@ void ParseHrtimerExpireExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     HrtimerExpireExitData eventData {};
@@ -124,9 +118,6 @@ struct HrtimerInitData {
 __attribute__((noinline)) void ParseHrtimerInitData(HrtimerInitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.clockid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -137,6 +128,7 @@ void ParseHrtimerInit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     HrtimerInitData eventData {};
@@ -162,9 +154,6 @@ struct HrtimerStartData {
 __attribute__((noinline)) void ParseHrtimerStartData(HrtimerStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.function = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -177,6 +166,7 @@ void ParseHrtimerStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     HrtimerStartData eventData {};
@@ -202,9 +192,6 @@ struct ItimerExpireData {
 __attribute__((noinline)) void ParseItimerExpireData(ItimerExpireData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.which = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -215,6 +202,7 @@ void ParseItimerExpire(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ItimerExpireData eventData {};
@@ -241,9 +229,6 @@ struct ItimerStateData {
 __attribute__((noinline)) void ParseItimerStateData(ItimerStateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.which = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.expires = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -257,6 +242,7 @@ void ParseItimerState(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     ItimerStateData eventData {};
@@ -281,9 +267,6 @@ struct TimerCancelData {
 __attribute__((noinline)) void ParseTimerCancelData(TimerCancelData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -292,6 +275,7 @@ void ParseTimerCancel(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     TimerCancelData eventData {};
@@ -313,9 +297,6 @@ struct TimerExpireEntryData {
 __attribute__((noinline)) void ParseTimerExpireEntryData(TimerExpireEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.now = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -326,6 +307,7 @@ void ParseTimerExpireEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     TimerExpireEntryData eventData {};
@@ -347,9 +329,6 @@ struct TimerExpireExitData {
 __attribute__((noinline)) void ParseTimerExpireExitData(TimerExpireExitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -358,6 +337,7 @@ void ParseTimerExpireExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     TimerExpireExitData eventData {};
@@ -377,9 +357,6 @@ struct TimerInitData {
 __attribute__((noinline)) void ParseTimerInitData(TimerInitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
@@ -388,6 +365,7 @@ void ParseTimerInit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     TimerInitData eventData {};
@@ -411,9 +389,6 @@ struct TimerStartData {
 __attribute__((noinline)) void ParseTimerStartData(TimerStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.timer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.function = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -426,6 +401,7 @@ void ParseTimerStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     TimerStartData eventData {};

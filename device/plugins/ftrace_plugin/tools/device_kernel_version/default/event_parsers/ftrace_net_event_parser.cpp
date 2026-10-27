@@ -44,9 +44,6 @@ struct NapiGroFragsEntryData {
 __attribute__((noinline)) void ParseNapiGroFragsEntryData(NapiGroFragsEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.napi_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -73,6 +70,7 @@ void ParseNapiGroFragsEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     NapiGroFragsEntryData eventData {};
@@ -128,9 +126,6 @@ struct NapiGroReceiveEntryData {
 __attribute__((noinline)) void ParseNapiGroReceiveEntryData(NapiGroReceiveEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.napi_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -157,6 +152,7 @@ void ParseNapiGroReceiveEntry(FtraceEventType& ftraceEvent, uint8_t data[], size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     NapiGroReceiveEntryData eventData {};
@@ -196,9 +192,6 @@ struct NetDevQueueData {
 __attribute__((noinline)) void ParseNetDevQueueData(NetDevQueueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.skbaddr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -209,6 +202,7 @@ void ParseNetDevQueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     NetDevQueueData eventData {};
@@ -246,9 +240,6 @@ struct NetDevStartXmitData {
 __attribute__((noinline)) void ParseNetDevStartXmitData(NetDevStartXmitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.queue_mapping = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -273,6 +264,7 @@ void ParseNetDevStartXmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     NetDevStartXmitData eventData {};
@@ -311,9 +303,6 @@ struct NetDevXmitData {
 __attribute__((noinline)) void ParseNetDevXmitData(NetDevXmitData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.skbaddr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -325,6 +314,7 @@ void ParseNetDevXmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     NetDevXmitData eventData {};
@@ -349,9 +339,6 @@ struct NetifReceiveSkbData {
 __attribute__((noinline)) void ParseNetifReceiveSkbData(NetifReceiveSkbData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.skbaddr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -362,6 +349,7 @@ void ParseNetifReceiveSkb(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     NetifReceiveSkbData eventData {};
@@ -401,9 +389,6 @@ struct NetifReceiveSkbEntryData {
 __attribute__((noinline)) void ParseNetifReceiveSkbEntryData(NetifReceiveSkbEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.napi_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -430,6 +415,7 @@ void ParseNetifReceiveSkbEntry(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     NetifReceiveSkbEntryData eventData {};
@@ -469,9 +455,6 @@ struct NetifRxData {
 __attribute__((noinline)) void ParseNetifRxData(NetifRxData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.skbaddr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -482,6 +465,7 @@ void ParseNetifRx(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     NetifRxData eventData {};
@@ -521,9 +505,6 @@ struct NetifRxEntryData {
 __attribute__((noinline)) void ParseNetifRxEntryData(NetifRxEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.napi_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -550,6 +531,7 @@ void ParseNetifRxEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     NetifRxEntryData eventData {};
@@ -605,9 +587,6 @@ struct NetifRxNiEntryData {
 __attribute__((noinline)) void ParseNetifRxNiEntryData(NetifRxNiEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.napi_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -634,6 +613,7 @@ void ParseNetifRxNiEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     NetifRxNiEntryData eventData {};

@@ -30,9 +30,6 @@ struct SignalDeliverData {
 __attribute__((noinline)) void ParseSignalDeliverData(SignalDeliverData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.sig = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.error_code = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -45,6 +42,7 @@ void ParseSignalDeliver(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SignalDeliverData eventData {};
@@ -74,9 +72,6 @@ struct SignalGenerateData {
 __attribute__((noinline)) void ParseSignalGenerateData(SignalGenerateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.sig = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.error_code = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -91,6 +86,7 @@ void ParseSignalGenerate(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     SignalGenerateData eventData {};

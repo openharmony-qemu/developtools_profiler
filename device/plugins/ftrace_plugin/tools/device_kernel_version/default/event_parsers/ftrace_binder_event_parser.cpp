@@ -27,9 +27,6 @@ struct BinderAllocLruEndData {
 __attribute__((noinline)) void ParseBinderAllocLruEndData(BinderAllocLruEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -39,6 +36,7 @@ void ParseBinderAllocLruEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderAllocLruEndData eventData {};
@@ -60,9 +58,6 @@ struct BinderAllocLruStartData {
 __attribute__((noinline)) void ParseBinderAllocLruStartData(BinderAllocLruStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -72,6 +67,7 @@ void ParseBinderAllocLruStart(FtraceEventType& ftraceEvent, uint8_t data[], size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderAllocLruStartData eventData {};
@@ -93,9 +89,6 @@ struct BinderAllocPageEndData {
 __attribute__((noinline)) void ParseBinderAllocPageEndData(BinderAllocPageEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -105,6 +98,7 @@ void ParseBinderAllocPageEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderAllocPageEndData eventData {};
@@ -126,9 +120,6 @@ struct BinderAllocPageStartData {
 __attribute__((noinline)) void ParseBinderAllocPageStartData(BinderAllocPageStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -138,6 +129,7 @@ void ParseBinderAllocPageStart(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderAllocPageStartData eventData {};
@@ -158,9 +150,6 @@ struct BinderCommandData {
 __attribute__((noinline)) void ParseBinderCommandData(BinderCommandData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.cmd = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
@@ -169,6 +158,7 @@ void ParseBinderCommand(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderCommandData eventData {};
@@ -189,9 +179,6 @@ struct BinderFreeLruEndData {
 __attribute__((noinline)) void ParseBinderFreeLruEndData(BinderFreeLruEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -201,6 +188,7 @@ void ParseBinderFreeLruEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderFreeLruEndData eventData {};
@@ -222,9 +210,6 @@ struct BinderFreeLruStartData {
 __attribute__((noinline)) void ParseBinderFreeLruStartData(BinderFreeLruStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -234,6 +219,7 @@ void ParseBinderFreeLruStart(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderFreeLruStartData eventData {};
@@ -255,9 +241,6 @@ struct BinderIoctlData {
 __attribute__((noinline)) void ParseBinderIoctlData(BinderIoctlData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.cmd = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.arg = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -267,6 +250,7 @@ void ParseBinderIoctl(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderIoctlData eventData {};
@@ -287,9 +271,6 @@ struct BinderIoctlDoneData {
 __attribute__((noinline)) void ParseBinderIoctlDoneData(BinderIoctlDoneData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -298,6 +279,7 @@ void ParseBinderIoctlDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderIoctlDoneData eventData {};
@@ -317,9 +299,6 @@ struct BinderLockData {
 __attribute__((noinline)) void ParseBinderLockData(BinderLockData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.tag = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -328,6 +307,7 @@ void ParseBinderLock(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderLockData eventData {};
@@ -347,9 +327,6 @@ struct BinderLockedData {
 __attribute__((noinline)) void ParseBinderLockedData(BinderLockedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.tag = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -358,6 +335,7 @@ void ParseBinderLocked(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderLockedData eventData {};
@@ -377,9 +355,6 @@ struct BinderReadDoneData {
 __attribute__((noinline)) void ParseBinderReadDoneData(BinderReadDoneData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -388,6 +363,7 @@ void ParseBinderReadDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderReadDoneData eventData {};
@@ -407,9 +383,6 @@ struct BinderReturnData {
 __attribute__((noinline)) void ParseBinderReturnData(BinderReturnData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.cmd = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
@@ -418,6 +391,7 @@ void ParseBinderReturn(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderReturnData eventData {};
@@ -443,9 +417,6 @@ struct BinderTransactionData {
 __attribute__((noinline)) void ParseBinderTransactionData(BinderTransactionData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.target_node = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -461,6 +432,7 @@ void ParseBinderTransaction(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderTransactionData eventData {};
@@ -489,9 +461,6 @@ struct BinderTransactionAllocBufData {
 __attribute__((noinline)) void ParseBinderTransactionAllocBufData(BinderTransactionAllocBufData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.data_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -503,6 +472,7 @@ void ParseBinderTransactionAllocBuf(FtraceEventType& ftraceEvent, uint8_t data[]
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderTransactionAllocBufData eventData {};
@@ -528,9 +498,6 @@ struct BinderTransactionBufferReleaseData {
 __attribute__((noinline)) void ParseBinderTransactionBufferReleaseData(BinderTransactionBufferReleaseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.data_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -542,6 +509,7 @@ void ParseBinderTransactionBufferRelease(FtraceEventType& ftraceEvent, uint8_t d
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderTransactionBufferReleaseData eventData {};
@@ -567,9 +535,6 @@ struct BinderTransactionFailedBufferReleaseData {
 __attribute__((noinline)) void ParseBinderTransactionFailedBufferReleaseData(BinderTransactionFailedBufferReleaseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.data_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -581,6 +546,7 @@ void ParseBinderTransactionFailedBufferRelease(FtraceEventType& ftraceEvent, uin
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderTransactionFailedBufferReleaseData eventData {};
@@ -605,9 +571,6 @@ struct BinderTransactionFdData {
 __attribute__((noinline)) void ParseBinderTransactionFdData(BinderTransactionFdData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.src_fd = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -618,6 +581,7 @@ void ParseBinderTransactionFd(FtraceEventType& ftraceEvent, uint8_t data[], size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderTransactionFdData eventData {};
@@ -643,9 +607,6 @@ struct BinderTransactionNodeToRefData {
 __attribute__((noinline)) void ParseBinderTransactionNodeToRefData(BinderTransactionNodeToRefData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.node_debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -658,6 +619,7 @@ void ParseBinderTransactionNodeToRef(FtraceEventType& ftraceEvent, uint8_t data[
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderTransactionNodeToRefData eventData {};
@@ -681,9 +643,6 @@ struct BinderTransactionReceivedData {
 __attribute__((noinline)) void ParseBinderTransactionReceivedData(BinderTransactionReceivedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -692,6 +651,7 @@ void ParseBinderTransactionReceived(FtraceEventType& ftraceEvent, uint8_t data[]
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderTransactionReceivedData eventData {};
@@ -715,9 +675,6 @@ struct BinderTransactionRefToNodeData {
 __attribute__((noinline)) void ParseBinderTransactionRefToNodeData(BinderTransactionRefToNodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.ref_debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -730,6 +687,7 @@ void ParseBinderTransactionRefToNode(FtraceEventType& ftraceEvent, uint8_t data[
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderTransactionRefToNodeData eventData {};
@@ -758,9 +716,6 @@ struct BinderTransactionRefToRefData {
 __attribute__((noinline)) void ParseBinderTransactionRefToRefData(BinderTransactionRefToRefData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.node_debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -774,6 +729,7 @@ void ParseBinderTransactionRefToRef(FtraceEventType& ftraceEvent, uint8_t data[]
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderTransactionRefToRefData eventData {};
@@ -798,9 +754,6 @@ struct BinderUnlockData {
 __attribute__((noinline)) void ParseBinderUnlockData(BinderUnlockData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.tag = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
@@ -809,6 +762,7 @@ void ParseBinderUnlock(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderUnlockData eventData {};
@@ -829,9 +783,6 @@ struct BinderUnmapKernelEndData {
 __attribute__((noinline)) void ParseBinderUnmapKernelEndData(BinderUnmapKernelEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -841,6 +792,7 @@ void ParseBinderUnmapKernelEnd(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderUnmapKernelEndData eventData {};
@@ -862,9 +814,6 @@ struct BinderUnmapKernelStartData {
 __attribute__((noinline)) void ParseBinderUnmapKernelStartData(BinderUnmapKernelStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -874,6 +823,7 @@ void ParseBinderUnmapKernelStart(FtraceEventType& ftraceEvent, uint8_t data[], s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderUnmapKernelStartData eventData {};
@@ -895,9 +845,6 @@ struct BinderUnmapUserEndData {
 __attribute__((noinline)) void ParseBinderUnmapUserEndData(BinderUnmapUserEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -907,6 +854,7 @@ void ParseBinderUnmapUserEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderUnmapUserEndData eventData {};
@@ -928,9 +876,6 @@ struct BinderUnmapUserStartData {
 __attribute__((noinline)) void ParseBinderUnmapUserStartData(BinderUnmapUserStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -940,6 +885,7 @@ void ParseBinderUnmapUserStart(FtraceEventType& ftraceEvent, uint8_t data[], siz
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderUnmapUserStartData eventData {};
@@ -963,9 +909,6 @@ struct BinderUpdatePageRangeData {
 __attribute__((noinline)) void ParseBinderUpdatePageRangeData(BinderUpdatePageRangeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.allocate = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -977,6 +920,7 @@ void ParseBinderUpdatePageRange(FtraceEventType& ftraceEvent, uint8_t data[], si
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderUpdatePageRangeData eventData {};
@@ -1001,9 +945,6 @@ struct BinderWaitForWorkData {
 __attribute__((noinline)) void ParseBinderWaitForWorkData(BinderWaitForWorkData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.proc_work = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.transaction_stack = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -1014,6 +955,7 @@ void ParseBinderWaitForWork(FtraceEventType& ftraceEvent, uint8_t data[], size_t
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderWaitForWorkData eventData {};
@@ -1035,9 +977,6 @@ struct BinderWriteDoneData {
 __attribute__((noinline)) void ParseBinderWriteDoneData(BinderWriteDoneData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
-    if (data == nullptr || size == 0 || format.fields.empty()) {
-        return;
-    }
     int i = 0;
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
@@ -1046,6 +985,7 @@ void ParseBinderWriteDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
                                const EventFormat& format)
 {
     if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
         return;
     }
     BinderWriteDoneData eventData {};
