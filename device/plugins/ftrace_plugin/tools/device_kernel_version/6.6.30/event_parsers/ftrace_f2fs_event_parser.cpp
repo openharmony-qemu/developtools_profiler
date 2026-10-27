@@ -50,6 +50,9 @@ void ParseF2fsSyncFileEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     F2fsSyncFileEnterData eventData {};
     ParseF2fsSyncFileEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_f2fs_sync_file_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_pino(eventData.pino);
@@ -86,6 +89,9 @@ void ParseF2fsSyncFileExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     F2fsSyncFileExitData eventData {};
     ParseF2fsSyncFileExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_f2fs_sync_file_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_cp_reason(eventData.cp_reason);
@@ -117,6 +123,9 @@ void ParseF2fsWriteBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     F2fsWriteBeginData eventData {};
     ParseF2fsWriteBeginData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_f2fs_write_begin_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_pos(eventData.pos);
@@ -149,6 +158,9 @@ void ParseF2fsWriteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     F2fsWriteEndData eventData {};
     ParseF2fsWriteEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_f2fs_write_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_pos(eventData.pos);

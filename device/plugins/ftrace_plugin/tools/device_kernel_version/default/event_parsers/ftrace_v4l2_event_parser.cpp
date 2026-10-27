@@ -70,6 +70,9 @@ void ParseV4l2Dqbuf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     V4l2DqbufData eventData {};
     ParseV4l2DqbufData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_v4l2_dqbuf_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_minor(eventData.minor);
     msg->set_index(eventData.index);
     msg->set_type(eventData.type);
@@ -142,6 +145,9 @@ void ParseV4l2Qbuf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     V4l2QbufData eventData {};
     ParseV4l2QbufData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_v4l2_qbuf_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_minor(eventData.minor);
     msg->set_index(eventData.index);
     msg->set_type(eventData.type);
@@ -208,6 +214,9 @@ void ParseVb2V4l2BufDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     Vb2V4l2BufDoneData eventData {};
     ParseVb2V4l2BufDoneData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_vb2_v4l2_buf_done_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_minor(eventData.minor);
     msg->set_flags(eventData.flags);
     msg->set_field(eventData.field);
@@ -271,6 +280,9 @@ void ParseVb2V4l2BufQueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     Vb2V4l2BufQueueData eventData {};
     ParseVb2V4l2BufQueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_vb2_v4l2_buf_queue_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_minor(eventData.minor);
     msg->set_flags(eventData.flags);
     msg->set_field(eventData.field);
@@ -334,6 +346,9 @@ void ParseVb2V4l2Dqbuf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     Vb2V4l2DqbufData eventData {};
     ParseVb2V4l2DqbufData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_vb2_v4l2_dqbuf_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_minor(eventData.minor);
     msg->set_flags(eventData.flags);
     msg->set_field(eventData.field);
@@ -397,6 +412,9 @@ void ParseVb2V4l2Qbuf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     Vb2V4l2QbufData eventData {};
     ParseVb2V4l2QbufData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_vb2_v4l2_qbuf_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_minor(eventData.minor);
     msg->set_flags(eventData.flags);
     msg->set_field(eventData.field);

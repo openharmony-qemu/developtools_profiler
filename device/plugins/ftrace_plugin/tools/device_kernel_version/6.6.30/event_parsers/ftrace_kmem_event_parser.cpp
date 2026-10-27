@@ -38,6 +38,9 @@ void ParseKfree(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     KfreeData eventData {};
     ParseKfreeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_kfree_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_call_site(eventData.call_site);
     msg->set_ptr(eventData.ptr);
 }
@@ -70,6 +73,9 @@ void ParseKmalloc(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     KmallocData eventData {};
     ParseKmallocData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_kmalloc_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_call_site(eventData.call_site);
     msg->set_ptr(eventData.ptr);
     msg->set_bytes_req(eventData.bytes_req);
@@ -108,6 +114,9 @@ void ParseKmemCacheAlloc(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     KmemCacheAllocData eventData {};
     ParseKmemCacheAllocData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_kmem_cache_alloc_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_call_site(eventData.call_site);
     msg->set_ptr(eventData.ptr);
     msg->set_bytes_req(eventData.bytes_req);
@@ -139,6 +148,9 @@ void ParseKmemCacheFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     KmemCacheFreeData eventData {};
     ParseKmemCacheFreeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_kmem_cache_free_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_call_site(eventData.call_site);
     msg->set_ptr(eventData.ptr);
     msg->set_name(eventData.name);
@@ -168,6 +180,9 @@ void ParseMmPageAlloc(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     MmPageAllocData eventData {};
     ParseMmPageAllocData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_page_alloc_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pfn(eventData.pfn);
     msg->set_order(eventData.order);
     msg->set_gfp_flags(eventData.gfp_flags);
@@ -202,6 +217,9 @@ void ParseMmPageAllocExtfrag(FtraceEventType& ftraceEvent, uint8_t data[], size_
     MmPageAllocExtfragData eventData {};
     ParseMmPageAllocExtfragData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_page_alloc_extfrag_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pfn(eventData.pfn);
     msg->set_alloc_order(eventData.alloc_order);
     msg->set_fallback_order(eventData.fallback_order);
@@ -234,6 +252,9 @@ void ParseMmPageAllocZoneLocked(FtraceEventType& ftraceEvent, uint8_t data[], si
     MmPageAllocZoneLockedData eventData {};
     ParseMmPageAllocZoneLockedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_page_alloc_zone_locked_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pfn(eventData.pfn);
     msg->set_order(eventData.order);
     msg->set_migratetype(eventData.migratetype);
@@ -260,6 +281,9 @@ void ParseMmPageFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     MmPageFreeData eventData {};
     ParseMmPageFreeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_page_free_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pfn(eventData.pfn);
     msg->set_order(eventData.order);
 }
@@ -282,6 +306,9 @@ void ParseMmPageFreeBatched(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     MmPageFreeBatchedData eventData {};
     ParseMmPageFreeBatchedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_page_free_batched_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pfn(eventData.pfn);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_page_free_batched, ParseMmPageFreeBatched<FtraceEvent>);
@@ -307,6 +334,9 @@ void ParseMmPagePcpuDrain(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     MmPagePcpuDrainData eventData {};
     ParseMmPagePcpuDrainData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_page_pcpu_drain_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pfn(eventData.pfn);
     msg->set_order(eventData.order);
     msg->set_migratetype(eventData.migratetype);
@@ -336,6 +366,9 @@ void ParseRssStat(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     RssStatData eventData {};
     ParseRssStatData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rss_stat_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_mm_id(eventData.mm_id);
     msg->set_curr(eventData.curr);
     msg->set_member(eventData.member);

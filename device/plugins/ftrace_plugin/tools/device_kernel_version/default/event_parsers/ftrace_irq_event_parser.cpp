@@ -38,6 +38,9 @@ void ParseIrqHandlerEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     IrqHandlerEntryData eventData {};
     ParseIrqHandlerEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_irq_handler_entry_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_irq(eventData.irq);
     msg->set_name(eventData.name);
 }
@@ -62,6 +65,9 @@ void ParseIrqHandlerExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     IrqHandlerExitData eventData {};
     ParseIrqHandlerExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_irq_handler_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_irq(eventData.irq);
     msg->set_ret(eventData.ret);
 }
@@ -84,6 +90,9 @@ void ParseSoftirqEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     SoftirqEntryData eventData {};
     ParseSoftirqEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_softirq_entry_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_vec(eventData.vec);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(softirq_entry, ParseSoftirqEntry<FtraceEvent>);
@@ -105,6 +114,9 @@ void ParseSoftirqExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     SoftirqExitData eventData {};
     ParseSoftirqExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_softirq_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_vec(eventData.vec);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(softirq_exit, ParseSoftirqExit<FtraceEvent>);
@@ -126,6 +138,9 @@ void ParseSoftirqRaise(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     SoftirqRaiseData eventData {};
     ParseSoftirqRaiseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_softirq_raise_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_vec(eventData.vec);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(softirq_raise, ParseSoftirqRaise<FtraceEvent>);

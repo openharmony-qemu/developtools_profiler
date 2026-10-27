@@ -38,6 +38,9 @@ void ParseSysEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     SysEnterData eventData {};
     ParseSysEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sys_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_id(eventData.id);
     for (size_t i = 0; i < eventData.args.size(); i++) {
         msg->add_args(eventData.args[i]);
@@ -64,6 +67,9 @@ void ParseSysExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     SysExitData eventData {};
     ParseSysExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sys_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_id(eventData.id);
     msg->set_ret(eventData.ret);
 }

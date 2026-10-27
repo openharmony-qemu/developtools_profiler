@@ -44,6 +44,9 @@ void ParseSignalDeliver(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     SignalDeliverData eventData {};
     ParseSignalDeliverData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_signal_deliver_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_sig(eventData.sig);
     msg->set_error_code(eventData.error_code);
     msg->set_code(eventData.code);
@@ -81,6 +84,9 @@ void ParseSignalGenerate(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     SignalGenerateData eventData {};
     ParseSignalGenerateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_signal_generate_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_sig(eventData.sig);
     msg->set_error_code(eventData.error_code);
     msg->set_code(eventData.code);

@@ -38,6 +38,9 @@ void ParseMmLruActivate(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     MmLruActivateData eventData {};
     ParseMmLruActivateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_lru_activate_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_folio(eventData.folio);
     msg->set_pfn(eventData.pfn);
 }
@@ -66,6 +69,9 @@ void ParseMmLruInsertion(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     MmLruInsertionData eventData {};
     ParseMmLruInsertionData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_lru_insertion_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_folio(eventData.folio);
     msg->set_pfn(eventData.pfn);
     msg->set_lru(eventData.lru);

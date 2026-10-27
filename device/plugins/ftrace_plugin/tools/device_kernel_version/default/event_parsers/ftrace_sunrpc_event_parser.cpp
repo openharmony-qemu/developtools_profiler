@@ -40,6 +40,9 @@ void ParseRpcBindStatus(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     RpcBindStatusData eventData {};
     ParseRpcBindStatusData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_bind_status_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_task_id(eventData.task_id);
     msg->set_client_id(eventData.client_id);
     msg->set_status(eventData.status);
@@ -67,6 +70,9 @@ void ParseRpcCallStatus(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     RpcCallStatusData eventData {};
     ParseRpcCallStatusData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_call_status_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_task_id(eventData.task_id);
     msg->set_client_id(eventData.client_id);
     msg->set_status(eventData.status);
@@ -94,6 +100,9 @@ void ParseRpcConnectStatus(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     RpcConnectStatusData eventData {};
     ParseRpcConnectStatusData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_connect_status_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_task_id(eventData.task_id);
     msg->set_client_id(eventData.client_id);
     msg->set_status(eventData.status);
@@ -125,6 +134,9 @@ void ParseRpcSocketClose(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     RpcSocketCloseData eventData {};
     ParseRpcSocketCloseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_socket_close_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_socket_state(eventData.socket_state);
     msg->set_sock_state(eventData.sock_state);
     msg->set_ino(eventData.ino);
@@ -160,6 +172,9 @@ void ParseRpcSocketConnect(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     RpcSocketConnectData eventData {};
     ParseRpcSocketConnectData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_socket_connect_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_error(eventData.error);
     msg->set_socket_state(eventData.socket_state);
     msg->set_sock_state(eventData.sock_state);
@@ -196,6 +211,9 @@ void ParseRpcSocketError(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     RpcSocketErrorData eventData {};
     ParseRpcSocketErrorData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_socket_error_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_error(eventData.error);
     msg->set_socket_state(eventData.socket_state);
     msg->set_sock_state(eventData.sock_state);
@@ -232,6 +250,9 @@ void ParseRpcSocketResetConnection(FtraceEventType& ftraceEvent, uint8_t data[],
     RpcSocketResetConnectionData eventData {};
     ParseRpcSocketResetConnectionData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_socket_reset_connection_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_error(eventData.error);
     msg->set_socket_state(eventData.socket_state);
     msg->set_sock_state(eventData.sock_state);
@@ -266,6 +287,9 @@ void ParseRpcSocketShutdown(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     RpcSocketShutdownData eventData {};
     ParseRpcSocketShutdownData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_socket_shutdown_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_socket_state(eventData.socket_state);
     msg->set_sock_state(eventData.sock_state);
     msg->set_ino(eventData.ino);
@@ -299,6 +323,9 @@ void ParseRpcSocketStateChange(FtraceEventType& ftraceEvent, uint8_t data[], siz
     RpcSocketStateChangeData eventData {};
     ParseRpcSocketStateChangeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_socket_state_change_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_socket_state(eventData.socket_state);
     msg->set_sock_state(eventData.sock_state);
     msg->set_ino(eventData.ino);
@@ -334,6 +361,9 @@ void ParseRpcTaskBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     RpcTaskBeginData eventData {};
     ParseRpcTaskBeginData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_task_begin_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_task_id(eventData.task_id);
     msg->set_client_id(eventData.client_id);
     msg->set_action(eventData.action);
@@ -370,6 +400,9 @@ void ParseRpcTaskComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     RpcTaskCompleteData eventData {};
     ParseRpcTaskCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_task_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_task_id(eventData.task_id);
     msg->set_client_id(eventData.client_id);
     msg->set_action(eventData.action);
@@ -406,6 +439,9 @@ void ParseRpcTaskRunAction(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     RpcTaskRunActionData eventData {};
     ParseRpcTaskRunActionData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_task_run_action_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_task_id(eventData.task_id);
     msg->set_client_id(eventData.client_id);
     msg->set_action(eventData.action);
@@ -444,6 +480,9 @@ void ParseRpcTaskSleep(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     RpcTaskSleepData eventData {};
     ParseRpcTaskSleepData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_task_sleep_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_task_id(eventData.task_id);
     msg->set_client_id(eventData.client_id);
     msg->set_timeout(eventData.timeout);
@@ -483,6 +522,9 @@ void ParseRpcTaskWakeup(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     RpcTaskWakeupData eventData {};
     ParseRpcTaskWakeupData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rpc_task_wakeup_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_task_id(eventData.task_id);
     msg->set_client_id(eventData.client_id);
     msg->set_timeout(eventData.timeout);
@@ -516,6 +558,9 @@ void ParseSvcHandleXprt(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     SvcHandleXprtData eventData {};
     ParseSvcHandleXprtData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_svc_handle_xprt_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_xprt(eventData.xprt);
     msg->set_len(eventData.len);
     msg->set_flags(eventData.flags);
@@ -548,6 +593,9 @@ void ParseSvcProcess(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     SvcProcessData eventData {};
     ParseSvcProcessData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_svc_process_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_xid(eventData.xid);
     msg->set_vers(eventData.vers);
     msg->set_proc(eventData.proc);
@@ -579,6 +627,9 @@ void ParseSvcRecv(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     SvcRecvData eventData {};
     ParseSvcRecvData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_svc_recv_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_xid(eventData.xid);
     msg->set_len(eventData.len);
     msg->set_flags(eventData.flags);
@@ -609,6 +660,9 @@ void ParseSvcSend(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     SvcSendData eventData {};
     ParseSvcSendData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_svc_send_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_xid(eventData.xid);
     msg->set_status(eventData.status);
     msg->set_flags(eventData.flags);
@@ -633,6 +687,9 @@ void ParseSvcWakeUp(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     SvcWakeUpData eventData {};
     ParseSvcWakeUpData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_svc_wake_up_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pid(eventData.pid);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_wake_up, ParseSvcWakeUp<FtraceEvent>);
@@ -660,6 +717,9 @@ void ParseSvcXprtDequeue(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     SvcXprtDequeueData eventData {};
     ParseSvcXprtDequeueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_svc_xprt_dequeue_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_xprt(eventData.xprt);
     msg->set_flags(eventData.flags);
     msg->set_wakeup(eventData.wakeup);
@@ -690,6 +750,9 @@ void ParseSvcXprtDoEnqueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     SvcXprtDoEnqueueData eventData {};
     ParseSvcXprtDoEnqueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_svc_xprt_do_enqueue_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_xprt(eventData.xprt);
     msg->set_pid(eventData.pid);
     msg->set_flags(eventData.flags);
@@ -720,6 +783,9 @@ void ParseXprtCompleteRqst(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     XprtCompleteRqstData eventData {};
     ParseXprtCompleteRqstData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_xprt_complete_rqst_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_xid(eventData.xid);
     msg->set_status(eventData.status);
     msg->set_addr(eventData.addr);
@@ -750,6 +816,9 @@ void ParseXprtLookupRqst(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     XprtLookupRqstData eventData {};
     ParseXprtLookupRqstData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_xprt_lookup_rqst_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_xid(eventData.xid);
     msg->set_status(eventData.status);
     msg->set_addr(eventData.addr);
@@ -780,6 +849,9 @@ void ParseXprtTransmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     XprtTransmitData eventData {};
     ParseXprtTransmitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_xprt_transmit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_xid(eventData.xid);
     msg->set_status(eventData.status);
     msg->set_addr(eventData.addr);
@@ -810,6 +882,9 @@ void ParseXsTcpDataReady(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     XsTcpDataReadyData eventData {};
     ParseXsTcpDataReadyData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_xs_tcp_data_ready_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_err(eventData.err);
     msg->set_total(eventData.total);
     msg->set_addr(eventData.addr);
@@ -846,6 +921,9 @@ void ParseXsTcpDataRecv(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     XsTcpDataRecvData eventData {};
     ParseXsTcpDataRecvData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_xs_tcp_data_recv_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_addr(eventData.addr);
     msg->set_port(eventData.port);
     msg->set_xid(eventData.xid);

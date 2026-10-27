@@ -46,6 +46,9 @@ void ParseCgroupAttachTask(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     CgroupAttachTaskData eventData {};
     ParseCgroupAttachTaskData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_attach_task_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dst_root(eventData.dst_root);
     msg->set_dst_level(eventData.dst_level);
     msg->set_dst_id(eventData.dst_id);
@@ -76,6 +79,9 @@ void ParseCgroupDestroyRoot(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     CgroupDestroyRootData eventData {};
     ParseCgroupDestroyRootData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_destroy_root_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_root(eventData.root);
     msg->set_ss_mask(eventData.ss_mask);
     msg->set_name(eventData.name);
@@ -105,6 +111,9 @@ void ParseCgroupFreeze(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     CgroupFreezeData eventData {};
     ParseCgroupFreezeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_freeze_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_root(eventData.root);
     msg->set_level(eventData.level);
     msg->set_id(eventData.id);
@@ -135,6 +144,9 @@ void ParseCgroupMkdir(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     CgroupMkdirData eventData {};
     ParseCgroupMkdirData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_mkdir_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_root(eventData.root);
     msg->set_level(eventData.level);
     msg->set_id(eventData.id);
@@ -167,6 +179,9 @@ void ParseCgroupNotifyFrozen(FtraceEventType& ftraceEvent, uint8_t data[], size_
     CgroupNotifyFrozenData eventData {};
     ParseCgroupNotifyFrozenData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_notify_frozen_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_root(eventData.root);
     msg->set_level(eventData.level);
     msg->set_id(eventData.id);
@@ -200,6 +215,9 @@ void ParseCgroupNotifyPopulated(FtraceEventType& ftraceEvent, uint8_t data[], si
     CgroupNotifyPopulatedData eventData {};
     ParseCgroupNotifyPopulatedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_notify_populated_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_root(eventData.root);
     msg->set_level(eventData.level);
     msg->set_id(eventData.id);
@@ -231,6 +249,9 @@ void ParseCgroupRelease(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     CgroupReleaseData eventData {};
     ParseCgroupReleaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_release_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_root(eventData.root);
     msg->set_level(eventData.level);
     msg->set_id(eventData.id);
@@ -259,6 +280,9 @@ void ParseCgroupRemount(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     CgroupRemountData eventData {};
     ParseCgroupRemountData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_remount_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_root(eventData.root);
     msg->set_ss_mask(eventData.ss_mask);
     msg->set_name(eventData.name);
@@ -288,6 +312,9 @@ void ParseCgroupRename(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     CgroupRenameData eventData {};
     ParseCgroupRenameData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_rename_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_root(eventData.root);
     msg->set_level(eventData.level);
     msg->set_id(eventData.id);
@@ -318,6 +345,9 @@ void ParseCgroupRmdir(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     CgroupRmdirData eventData {};
     ParseCgroupRmdirData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_rmdir_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_root(eventData.root);
     msg->set_level(eventData.level);
     msg->set_id(eventData.id);
@@ -346,6 +376,9 @@ void ParseCgroupSetupRoot(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     CgroupSetupRootData eventData {};
     ParseCgroupSetupRootData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_setup_root_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_root(eventData.root);
     msg->set_ss_mask(eventData.ss_mask);
     msg->set_name(eventData.name);
@@ -379,6 +412,9 @@ void ParseCgroupTransferTasks(FtraceEventType& ftraceEvent, uint8_t data[], size
     CgroupTransferTasksData eventData {};
     ParseCgroupTransferTasksData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_transfer_tasks_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dst_root(eventData.dst_root);
     msg->set_dst_level(eventData.dst_level);
     msg->set_dst_id(eventData.dst_id);
@@ -411,6 +447,9 @@ void ParseCgroupUnfreeze(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     CgroupUnfreezeData eventData {};
     ParseCgroupUnfreezeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cgroup_unfreeze_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_root(eventData.root);
     msg->set_level(eventData.level);
     msg->set_id(eventData.id);

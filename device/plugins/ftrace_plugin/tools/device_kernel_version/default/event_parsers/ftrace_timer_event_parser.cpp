@@ -36,6 +36,9 @@ void ParseHrtimerCancel(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     HrtimerCancelData eventData {};
     ParseHrtimerCancelData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_cancel_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_hrtimer(eventData.hrtimer);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hrtimer_cancel, ParseHrtimerCancel<FtraceEvent>);
@@ -61,6 +64,9 @@ void ParseHrtimerExpireEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_
     HrtimerExpireEntryData eventData {};
     ParseHrtimerExpireEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_expire_entry_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_hrtimer(eventData.hrtimer);
     msg->set_now(eventData.now);
     msg->set_function(eventData.function);
@@ -84,6 +90,9 @@ void ParseHrtimerExpireExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     HrtimerExpireExitData eventData {};
     ParseHrtimerExpireExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_expire_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_hrtimer(eventData.hrtimer);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(hrtimer_expire_exit, ParseHrtimerExpireExit<FtraceEvent>);
@@ -109,6 +118,9 @@ void ParseHrtimerInit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     HrtimerInitData eventData {};
     ParseHrtimerInitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_init_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_hrtimer(eventData.hrtimer);
     msg->set_clockid(eventData.clockid);
     msg->set_mode(eventData.mode);
@@ -140,6 +152,9 @@ void ParseHrtimerStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     HrtimerStartData eventData {};
     ParseHrtimerStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hrtimer_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_hrtimer(eventData.hrtimer);
     msg->set_function(eventData.function);
     msg->set_expires(eventData.expires);
@@ -169,6 +184,9 @@ void ParseItimerExpire(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     ItimerExpireData eventData {};
     ParseItimerExpireData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_itimer_expire_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_which(eventData.which);
     msg->set_pid(eventData.pid);
     msg->set_now(eventData.now);
@@ -202,6 +220,9 @@ void ParseItimerState(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     ItimerStateData eventData {};
     ParseItimerStateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_itimer_state_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_which(eventData.which);
     msg->set_expires(eventData.expires);
     msg->set_value_sec(eventData.value_sec);
@@ -228,6 +249,9 @@ void ParseTimerCancel(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     TimerCancelData eventData {};
     ParseTimerCancelData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_cancel_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_timer(eventData.timer);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(timer_cancel, ParseTimerCancel<FtraceEvent>);
@@ -253,6 +277,9 @@ void ParseTimerExpireEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     TimerExpireEntryData eventData {};
     ParseTimerExpireEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_expire_entry_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_timer(eventData.timer);
     msg->set_now(eventData.now);
     msg->set_function(eventData.function);
@@ -276,6 +303,9 @@ void ParseTimerExpireExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     TimerExpireExitData eventData {};
     ParseTimerExpireExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_expire_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_timer(eventData.timer);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(timer_expire_exit, ParseTimerExpireExit<FtraceEvent>);
@@ -297,6 +327,9 @@ void ParseTimerInit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     TimerInitData eventData {};
     ParseTimerInitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_init_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_timer(eventData.timer);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(timer_init, ParseTimerInit<FtraceEvent>);
@@ -326,6 +359,9 @@ void ParseTimerStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     TimerStartData eventData {};
     ParseTimerStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_timer_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_timer(eventData.timer);
     msg->set_function(eventData.function);
     msg->set_expires(eventData.expires);

@@ -36,6 +36,9 @@ void ParseConsole(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     ConsoleData eventData {};
     ParseConsoleData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_console_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_msg(eventData.msg);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(console, ParseConsole<FtraceEvent>);

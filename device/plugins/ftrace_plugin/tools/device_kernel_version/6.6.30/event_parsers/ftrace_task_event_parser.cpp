@@ -42,6 +42,9 @@ void ParseTaskNewtask(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     TaskNewtaskData eventData {};
     ParseTaskNewtaskData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_task_newtask_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pid(eventData.pid);
     msg->set_comm(eventData.comm);
     msg->set_clone_flags(eventData.clone_flags);
@@ -72,6 +75,9 @@ void ParseTaskRename(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     TaskRenameData eventData {};
     ParseTaskRenameData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_task_rename_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pid(eventData.pid);
     msg->set_oldcomm(eventData.oldcomm);
     msg->set_newcomm(eventData.newcomm);

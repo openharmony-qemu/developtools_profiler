@@ -42,6 +42,9 @@ void ParseDmaFenceDestroy(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     DmaFenceDestroyData eventData {};
     ParseDmaFenceDestroyData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_destroy_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_driver(eventData.driver);
     msg->set_timeline(eventData.timeline);
     msg->set_context(eventData.context);
@@ -72,6 +75,9 @@ void ParseDmaFenceEmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     DmaFenceEmitData eventData {};
     ParseDmaFenceEmitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_emit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_driver(eventData.driver);
     msg->set_timeline(eventData.timeline);
     msg->set_context(eventData.context);
@@ -102,6 +108,9 @@ void ParseDmaFenceEnableSignal(FtraceEventType& ftraceEvent, uint8_t data[], siz
     DmaFenceEnableSignalData eventData {};
     ParseDmaFenceEnableSignalData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_enable_signal_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_driver(eventData.driver);
     msg->set_timeline(eventData.timeline);
     msg->set_context(eventData.context);
@@ -132,6 +141,9 @@ void ParseDmaFenceInit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     DmaFenceInitData eventData {};
     ParseDmaFenceInitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_init_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_driver(eventData.driver);
     msg->set_timeline(eventData.timeline);
     msg->set_context(eventData.context);
@@ -162,6 +174,9 @@ void ParseDmaFenceSignaled(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     DmaFenceSignaledData eventData {};
     ParseDmaFenceSignaledData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_signaled_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_driver(eventData.driver);
     msg->set_timeline(eventData.timeline);
     msg->set_context(eventData.context);
@@ -192,6 +207,9 @@ void ParseDmaFenceWaitEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     DmaFenceWaitEndData eventData {};
     ParseDmaFenceWaitEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_wait_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_driver(eventData.driver);
     msg->set_timeline(eventData.timeline);
     msg->set_context(eventData.context);
@@ -222,6 +240,9 @@ void ParseDmaFenceWaitStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     DmaFenceWaitStartData eventData {};
     ParseDmaFenceWaitStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_wait_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_driver(eventData.driver);
     msg->set_timeline(eventData.timeline);
     msg->set_context(eventData.context);

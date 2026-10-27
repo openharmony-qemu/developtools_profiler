@@ -48,6 +48,9 @@ void ParseMmShrinkSlabEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     MmShrinkSlabEndData eventData {};
     ParseMmShrinkSlabEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_shrink_slab_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_shr(eventData.shr);
     msg->set_nid(eventData.nid);
     msg->set_shrink(eventData.shrink);
@@ -91,6 +94,9 @@ void ParseMmShrinkSlabStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     MmShrinkSlabStartData eventData {};
     ParseMmShrinkSlabStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_shrink_slab_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_shr(eventData.shr);
     msg->set_shrink(eventData.shrink);
     msg->set_nid(eventData.nid);
@@ -126,6 +132,9 @@ void ParseMmVmscanDirectReclaimBegin(FtraceEventType& ftraceEvent, uint8_t data[
     MmVmscanDirectReclaimBeginData eventData {};
     ParseMmVmscanDirectReclaimBeginData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_direct_reclaim_begin_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_order(eventData.order);
     msg->set_may_writepage(eventData.may_writepage);
     msg->set_gfp_flags(eventData.gfp_flags);
@@ -150,6 +159,9 @@ void ParseMmVmscanDirectReclaimEnd(FtraceEventType& ftraceEvent, uint8_t data[],
     MmVmscanDirectReclaimEndData eventData {};
     ParseMmVmscanDirectReclaimEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_direct_reclaim_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_nr_reclaimed(eventData.nr_reclaimed);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_direct_reclaim_end, ParseMmVmscanDirectReclaimEnd<FtraceEvent>);
@@ -171,6 +183,9 @@ void ParseMmVmscanKswapdSleep(FtraceEventType& ftraceEvent, uint8_t data[], size
     MmVmscanKswapdSleepData eventData {};
     ParseMmVmscanKswapdSleepData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_kswapd_sleep_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_nid(eventData.nid);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_kswapd_sleep, ParseMmVmscanKswapdSleep<FtraceEvent>);
@@ -196,6 +211,9 @@ void ParseMmVmscanKswapdWake(FtraceEventType& ftraceEvent, uint8_t data[], size_
     MmVmscanKswapdWakeData eventData {};
     ParseMmVmscanKswapdWakeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_kswapd_wake_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_nid(eventData.nid);
     msg->set_zid(eventData.zid);
     msg->set_order(eventData.order);
@@ -233,6 +251,9 @@ void ParseMmVmscanLruIsolate(FtraceEventType& ftraceEvent, uint8_t data[], size_
     MmVmscanLruIsolateData eventData {};
     ParseMmVmscanLruIsolateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_lru_isolate_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_classzone_idx(eventData.classzone_idx);
     msg->set_order(eventData.order);
     msg->set_nr_requested(eventData.nr_requested);
@@ -283,6 +304,9 @@ void ParseMmVmscanLruShrinkInactive(FtraceEventType& ftraceEvent, uint8_t data[]
     MmVmscanLruShrinkInactiveData eventData {};
     ParseMmVmscanLruShrinkInactiveData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_lru_shrink_inactive_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_nid(eventData.nid);
     msg->set_nr_scanned(eventData.nr_scanned);
     msg->set_nr_reclaimed(eventData.nr_reclaimed);
@@ -321,6 +345,9 @@ void ParseMmVmscanWakeupKswapd(FtraceEventType& ftraceEvent, uint8_t data[], siz
     MmVmscanWakeupKswapdData eventData {};
     ParseMmVmscanWakeupKswapdData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_wakeup_kswapd_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_nid(eventData.nid);
     msg->set_zid(eventData.zid);
     msg->set_order(eventData.order);
@@ -347,6 +374,9 @@ void ParseMmVmscanWritepage(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     MmVmscanWritepageData eventData {};
     ParseMmVmscanWritepageData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_vmscan_writepage_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pfn(eventData.pfn);
     msg->set_reclaim_flags(eventData.reclaim_flags);
 }

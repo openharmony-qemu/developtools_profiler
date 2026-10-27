@@ -36,6 +36,9 @@ void ParseRegulatorBypassDisable(FtraceEventType& ftraceEvent, uint8_t data[], s
     RegulatorBypassDisableData eventData {};
     ParseRegulatorBypassDisableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_bypass_disable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_disable, ParseRegulatorBypassDisable<FtraceEvent>);
@@ -57,6 +60,9 @@ void ParseRegulatorBypassDisableComplete(FtraceEventType& ftraceEvent, uint8_t d
     RegulatorBypassDisableCompleteData eventData {};
     ParseRegulatorBypassDisableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_bypass_disable_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_disable_complete, ParseRegulatorBypassDisableComplete<FtraceEvent>);
@@ -78,6 +84,9 @@ void ParseRegulatorBypassEnable(FtraceEventType& ftraceEvent, uint8_t data[], si
     RegulatorBypassEnableData eventData {};
     ParseRegulatorBypassEnableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_bypass_enable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_enable, ParseRegulatorBypassEnable<FtraceEvent>);
@@ -99,6 +108,9 @@ void ParseRegulatorBypassEnableComplete(FtraceEventType& ftraceEvent, uint8_t da
     RegulatorBypassEnableCompleteData eventData {};
     ParseRegulatorBypassEnableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_bypass_enable_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_enable_complete, ParseRegulatorBypassEnableComplete<FtraceEvent>);
@@ -120,6 +132,9 @@ void ParseRegulatorDisable(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     RegulatorDisableData eventData {};
     ParseRegulatorDisableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_disable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_disable, ParseRegulatorDisable<FtraceEvent>);
@@ -141,6 +156,9 @@ void ParseRegulatorDisableComplete(FtraceEventType& ftraceEvent, uint8_t data[],
     RegulatorDisableCompleteData eventData {};
     ParseRegulatorDisableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_disable_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_disable_complete, ParseRegulatorDisableComplete<FtraceEvent>);
@@ -162,6 +180,9 @@ void ParseRegulatorEnable(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     RegulatorEnableData eventData {};
     ParseRegulatorEnableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_enable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_enable, ParseRegulatorEnable<FtraceEvent>);
@@ -183,6 +204,9 @@ void ParseRegulatorEnableComplete(FtraceEventType& ftraceEvent, uint8_t data[], 
     RegulatorEnableCompleteData eventData {};
     ParseRegulatorEnableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_enable_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_enable_complete, ParseRegulatorEnableComplete<FtraceEvent>);
@@ -204,6 +228,9 @@ void ParseRegulatorEnableDelay(FtraceEventType& ftraceEvent, uint8_t data[], siz
     RegulatorEnableDelayData eventData {};
     ParseRegulatorEnableDelayData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_enable_delay_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_enable_delay, ParseRegulatorEnableDelay<FtraceEvent>);
@@ -229,6 +256,9 @@ void ParseRegulatorSetVoltage(FtraceEventType& ftraceEvent, uint8_t data[], size
     RegulatorSetVoltageData eventData {};
     ParseRegulatorSetVoltageData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_set_voltage_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_min(eventData.min);
     msg->set_max(eventData.max);
@@ -254,6 +284,9 @@ void ParseRegulatorSetVoltageComplete(FtraceEventType& ftraceEvent, uint8_t data
     RegulatorSetVoltageCompleteData eventData {};
     ParseRegulatorSetVoltageCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_set_voltage_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_val(eventData.val);
 }

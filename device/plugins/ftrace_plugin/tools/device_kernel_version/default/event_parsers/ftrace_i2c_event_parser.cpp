@@ -44,6 +44,9 @@ void ParseI2cRead(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     I2cReadData eventData {};
     ParseI2cReadData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_i2c_read_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_adapter_nr(eventData.adapter_nr);
     msg->set_msg_nr(eventData.msg_nr);
     msg->set_addr(eventData.addr);
@@ -79,6 +82,9 @@ void ParseI2cReply(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     I2cReplyData eventData {};
     ParseI2cReplyData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_i2c_reply_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_adapter_nr(eventData.adapter_nr);
     msg->set_msg_nr(eventData.msg_nr);
     msg->set_addr(eventData.addr);
@@ -109,6 +115,9 @@ void ParseI2cResult(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     I2cResultData eventData {};
     ParseI2cResultData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_i2c_result_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_adapter_nr(eventData.adapter_nr);
     msg->set_nr_msgs(eventData.nr_msgs);
     msg->set_ret(eventData.ret);
@@ -142,6 +151,9 @@ void ParseI2cWrite(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     I2cWriteData eventData {};
     ParseI2cWriteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_i2c_write_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_adapter_nr(eventData.adapter_nr);
     msg->set_msg_nr(eventData.msg_nr);
     msg->set_addr(eventData.addr);

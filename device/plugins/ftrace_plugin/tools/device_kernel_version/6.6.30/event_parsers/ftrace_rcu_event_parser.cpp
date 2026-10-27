@@ -36,6 +36,9 @@ void ParseRcuUtilization(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     RcuUtilizationData eventData {};
     ParseRcuUtilizationData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_rcu_utilization_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_s(eventData.s);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rcu_utilization, ParseRcuUtilization<FtraceEvent>);

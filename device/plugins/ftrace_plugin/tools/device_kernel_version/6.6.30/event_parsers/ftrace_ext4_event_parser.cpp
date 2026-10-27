@@ -40,6 +40,9 @@ void ParseExt4AllocDaBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     Ext4AllocDaBlocksData eventData {};
     ParseExt4AllocDaBlocksData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_alloc_da_blocks_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_data_blocks(eventData.data_blocks);
@@ -83,6 +86,9 @@ void ParseExt4AllocateBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_
     Ext4AllocateBlocksData eventData {};
     ParseExt4AllocateBlocksData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_allocate_blocks_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_block(eventData.block);
@@ -120,6 +126,9 @@ void ParseExt4AllocateInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     Ext4AllocateInodeData eventData {};
     ParseExt4AllocateInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_allocate_inode_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_dir(eventData.dir);
@@ -148,6 +157,9 @@ void ParseExt4BeginOrderedTruncate(FtraceEventType& ftraceEvent, uint8_t data[],
     Ext4BeginOrderedTruncateData eventData {};
     ParseExt4BeginOrderedTruncateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_begin_ordered_truncate_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_new_size(eventData.new_size);
@@ -177,6 +189,9 @@ void ParseExt4CollapseRange(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     Ext4CollapseRangeData eventData {};
     ParseExt4CollapseRangeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_collapse_range_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_offset(eventData.offset);
@@ -211,6 +226,9 @@ void ParseExt4DaReleaseSpace(FtraceEventType& ftraceEvent, uint8_t data[], size_
     Ext4DaReleaseSpaceData eventData {};
     ParseExt4DaReleaseSpaceData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_da_release_space_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_i_blocks(eventData.i_blocks);
@@ -245,6 +263,9 @@ void ParseExt4DaReserveSpace(FtraceEventType& ftraceEvent, uint8_t data[], size_
     Ext4DaReserveSpaceData eventData {};
     ParseExt4DaReserveSpaceData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_da_reserve_space_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_i_blocks(eventData.i_blocks);
@@ -282,6 +303,9 @@ void ParseExt4DaUpdateReserveSpace(FtraceEventType& ftraceEvent, uint8_t data[],
     Ext4DaUpdateReserveSpaceData eventData {};
     ParseExt4DaUpdateReserveSpaceData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_da_update_reserve_space_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_i_blocks(eventData.i_blocks);
@@ -315,6 +339,9 @@ void ParseExt4DaWriteBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     Ext4DaWriteBeginData eventData {};
     ParseExt4DaWriteBeginData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_da_write_begin_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_pos(eventData.pos);
@@ -347,6 +374,9 @@ void ParseExt4DaWriteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     Ext4DaWriteEndData eventData {};
     ParseExt4DaWriteEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_da_write_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_pos(eventData.pos);
@@ -380,6 +410,9 @@ void ParseExt4DaWritePages(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     Ext4DaWritePagesData eventData {};
     ParseExt4DaWritePagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_da_write_pages_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_first_page(eventData.first_page);
@@ -413,6 +446,9 @@ void ParseExt4DaWritePagesExtent(FtraceEventType& ftraceEvent, uint8_t data[], s
     Ext4DaWritePagesExtentData eventData {};
     ParseExt4DaWritePagesExtentData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_da_write_pages_extent_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_lblk(eventData.lblk);
@@ -442,6 +478,9 @@ void ParseExt4DiscardBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     Ext4DiscardBlocksData eventData {};
     ParseExt4DiscardBlocksData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_discard_blocks_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_blk(eventData.blk);
     msg->set_count(eventData.count);
@@ -471,6 +510,9 @@ void ParseExt4DiscardPreallocations(FtraceEventType& ftraceEvent, uint8_t data[]
     Ext4DiscardPreallocationsData eventData {};
     ParseExt4DiscardPreallocationsData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_discard_preallocations_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_len(eventData.len);
@@ -499,6 +541,9 @@ void ParseExt4DropInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     Ext4DropInodeData eventData {};
     ParseExt4DropInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_drop_inode_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_drop(eventData.drop);
@@ -532,6 +577,9 @@ void ParseExt4EsCacheExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     Ext4EsCacheExtentData eventData {};
     ParseExt4EsCacheExtentData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_es_cache_extent_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_lblk(eventData.lblk);
@@ -568,6 +616,9 @@ void ParseExt4EsInsertExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_
     Ext4EsInsertExtentData eventData {};
     ParseExt4EsInsertExtentData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_es_insert_extent_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_lblk(eventData.lblk);
@@ -598,6 +649,9 @@ void ParseExt4EsLookupExtentEnter(FtraceEventType& ftraceEvent, uint8_t data[], 
     Ext4EsLookupExtentEnterData eventData {};
     ParseExt4EsLookupExtentEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_es_lookup_extent_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_lblk(eventData.lblk);
@@ -633,6 +687,9 @@ void ParseExt4EsLookupExtentExit(FtraceEventType& ftraceEvent, uint8_t data[], s
     Ext4EsLookupExtentExitData eventData {};
     ParseExt4EsLookupExtentExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_es_lookup_extent_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_lblk(eventData.lblk);
@@ -666,6 +723,9 @@ void ParseExt4EsRemoveExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_
     Ext4EsRemoveExtentData eventData {};
     ParseExt4EsRemoveExtentData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_es_remove_extent_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_lblk(eventData.lblk);
@@ -698,6 +758,9 @@ void ParseExt4EsShrink(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     Ext4EsShrinkData eventData {};
     ParseExt4EsShrinkData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_es_shrink_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_nr_shrunk(eventData.nr_shrunk);
     msg->set_scan_time(eventData.scan_time);
@@ -727,6 +790,9 @@ void ParseExt4EsShrinkCount(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     Ext4EsShrinkCountData eventData {};
     ParseExt4EsShrinkCountData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_es_shrink_count_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_nr_to_scan(eventData.nr_to_scan);
     msg->set_cache_cnt(eventData.cache_cnt);
@@ -754,6 +820,9 @@ void ParseExt4EsShrinkScanEnter(FtraceEventType& ftraceEvent, uint8_t data[], si
     Ext4EsShrinkScanEnterData eventData {};
     ParseExt4EsShrinkScanEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_es_shrink_scan_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_nr_to_scan(eventData.nr_to_scan);
     msg->set_cache_cnt(eventData.cache_cnt);
@@ -781,6 +850,9 @@ void ParseExt4EsShrinkScanExit(FtraceEventType& ftraceEvent, uint8_t data[], siz
     Ext4EsShrinkScanExitData eventData {};
     ParseExt4EsShrinkScanExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_es_shrink_scan_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_nr_shrunk(eventData.nr_shrunk);
     msg->set_cache_cnt(eventData.cache_cnt);
@@ -808,6 +880,9 @@ void ParseExt4EvictInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     Ext4EvictInodeData eventData {};
     ParseExt4EvictInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_evict_inode_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_nlink(eventData.nlink);
@@ -843,6 +918,9 @@ void ParseExt4ExtConvertToInitializedEnter(FtraceEventType& ftraceEvent, uint8_t
     Ext4ExtConvertToInitializedEnterData eventData {};
     ParseExt4ExtConvertToInitializedEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_ext_convert_to_initialized_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_m_lblk(eventData.m_lblk);
@@ -888,6 +966,9 @@ void ParseExt4ExtConvertToInitializedFastpath(FtraceEventType& ftraceEvent, uint
     Ext4ExtConvertToInitializedFastpathData eventData {};
     ParseExt4ExtConvertToInitializedFastpathData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_ext_convert_to_initialized_fastpath_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_m_lblk(eventData.m_lblk);
@@ -932,6 +1013,9 @@ void ParseExt4ExtHandleUnwrittenExtents(FtraceEventType& ftraceEvent, uint8_t da
     Ext4ExtHandleUnwrittenExtentsData eventData {};
     ParseExt4ExtHandleUnwrittenExtentsData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_ext_handle_unwritten_extents_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_flags(eventData.flags);
@@ -966,6 +1050,9 @@ void ParseExt4ExtLoadExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     Ext4ExtLoadExtentData eventData {};
     ParseExt4ExtLoadExtentData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_ext_load_extent_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_pblk(eventData.pblk);
@@ -998,6 +1085,9 @@ void ParseExt4ExtMapBlocksEnter(FtraceEventType& ftraceEvent, uint8_t data[], si
     Ext4ExtMapBlocksEnterData eventData {};
     ParseExt4ExtMapBlocksEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_ext_map_blocks_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_lblk(eventData.lblk);
@@ -1037,6 +1127,9 @@ void ParseExt4ExtMapBlocksExit(FtraceEventType& ftraceEvent, uint8_t data[], siz
     Ext4ExtMapBlocksExitData eventData {};
     ParseExt4ExtMapBlocksExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_ext_map_blocks_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_flags(eventData.flags);
@@ -1073,6 +1166,9 @@ void ParseExt4ExtRemoveSpace(FtraceEventType& ftraceEvent, uint8_t data[], size_
     Ext4ExtRemoveSpaceData eventData {};
     ParseExt4ExtRemoveSpaceData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_ext_remove_space_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_start(eventData.start);
@@ -1114,6 +1210,9 @@ void ParseExt4ExtRemoveSpaceDone(FtraceEventType& ftraceEvent, uint8_t data[], s
     Ext4ExtRemoveSpaceDoneData eventData {};
     ParseExt4ExtRemoveSpaceDoneData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_ext_remove_space_done_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_start(eventData.start);
@@ -1147,6 +1246,9 @@ void ParseExt4ExtRmIdx(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     Ext4ExtRmIdxData eventData {};
     ParseExt4ExtRmIdxData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_ext_rm_idx_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_pblk(eventData.pblk);
@@ -1186,6 +1288,9 @@ void ParseExt4ExtRmLeaf(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     Ext4ExtRmLeafData eventData {};
     ParseExt4ExtRmLeafData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_ext_rm_leaf_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_start(eventData.start);
@@ -1223,6 +1328,9 @@ void ParseExt4ExtShowExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     Ext4ExtShowExtentData eventData {};
     ParseExt4ExtShowExtentData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_ext_show_extent_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_pblk(eventData.pblk);
@@ -1256,6 +1364,9 @@ void ParseExt4FallocateEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_
     Ext4FallocateEnterData eventData {};
     ParseExt4FallocateEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_fallocate_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_offset(eventData.offset);
@@ -1289,6 +1400,9 @@ void ParseExt4FallocateExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     Ext4FallocateExitData eventData {};
     ParseExt4FallocateExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_fallocate_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_pos(eventData.pos);
@@ -1322,6 +1436,9 @@ void ParseExt4Forget(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     Ext4ForgetData eventData {};
     ParseExt4ForgetData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_forget_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_block(eventData.block);
@@ -1357,6 +1474,9 @@ void ParseExt4FreeBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     Ext4FreeBlocksData eventData {};
     ParseExt4FreeBlocksData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_free_blocks_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_block(eventData.block);
@@ -1393,6 +1513,9 @@ void ParseExt4FreeInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     Ext4FreeInodeData eventData {};
     ParseExt4FreeInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_free_inode_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_uid(eventData.uid);
@@ -1429,6 +1552,9 @@ void ParseExt4GetImpliedClusterAllocExit(FtraceEventType& ftraceEvent, uint8_t d
     Ext4GetImpliedClusterAllocExitData eventData {};
     ParseExt4GetImpliedClusterAllocExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_get_implied_cluster_alloc_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_flags(eventData.flags);
     msg->set_lblk(eventData.lblk);
@@ -1463,6 +1589,9 @@ void ParseExt4IndMapBlocksEnter(FtraceEventType& ftraceEvent, uint8_t data[], si
     Ext4IndMapBlocksEnterData eventData {};
     ParseExt4IndMapBlocksEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_ind_map_blocks_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_lblk(eventData.lblk);
@@ -1502,6 +1631,9 @@ void ParseExt4IndMapBlocksExit(FtraceEventType& ftraceEvent, uint8_t data[], siz
     Ext4IndMapBlocksExitData eventData {};
     ParseExt4IndMapBlocksExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_ind_map_blocks_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_flags(eventData.flags);
@@ -1536,6 +1668,9 @@ void ParseExt4InsertRange(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     Ext4InsertRangeData eventData {};
     ParseExt4InsertRangeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_insert_range_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_offset(eventData.offset);
@@ -1564,6 +1699,9 @@ void ParseExt4JournalStartReserved(FtraceEventType& ftraceEvent, uint8_t data[],
     Ext4JournalStartReservedData eventData {};
     ParseExt4JournalStartReservedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_journal_start_reserved_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ip(eventData.ip);
     msg->set_blocks(eventData.blocks);
@@ -1595,6 +1733,9 @@ void ParseExt4JournalledWriteEnd(FtraceEventType& ftraceEvent, uint8_t data[], s
     Ext4JournalledWriteEndData eventData {};
     ParseExt4JournalledWriteEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_journalled_write_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_pos(eventData.pos);
@@ -1622,6 +1763,9 @@ void ParseExt4LoadInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     Ext4LoadInodeData eventData {};
     ParseExt4LoadInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_load_inode_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
 }
@@ -1646,6 +1790,9 @@ void ParseExt4LoadInodeBitmap(FtraceEventType& ftraceEvent, uint8_t data[], size
     Ext4LoadInodeBitmapData eventData {};
     ParseExt4LoadInodeBitmapData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_load_inode_bitmap_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_group(eventData.group);
 }
@@ -1672,6 +1819,9 @@ void ParseExt4MarkInodeDirty(FtraceEventType& ftraceEvent, uint8_t data[], size_
     Ext4MarkInodeDirtyData eventData {};
     ParseExt4MarkInodeDirtyData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_mark_inode_dirty_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_ip(eventData.ip);
@@ -1697,6 +1847,9 @@ void ParseExt4MbBitmapLoad(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     Ext4MbBitmapLoadData eventData {};
     ParseExt4MbBitmapLoadData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_mb_bitmap_load_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_group(eventData.group);
 }
@@ -1721,6 +1874,9 @@ void ParseExt4MbBuddyBitmapLoad(FtraceEventType& ftraceEvent, uint8_t data[], si
     Ext4MbBuddyBitmapLoadData eventData {};
     ParseExt4MbBuddyBitmapLoadData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_mb_buddy_bitmap_load_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_group(eventData.group);
 }
@@ -1745,6 +1901,9 @@ void ParseExt4MbDiscardPreallocations(FtraceEventType& ftraceEvent, uint8_t data
     Ext4MbDiscardPreallocationsData eventData {};
     ParseExt4MbDiscardPreallocationsData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_mb_discard_preallocations_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_needed(eventData.needed);
 }
@@ -1775,6 +1934,9 @@ void ParseExt4MbNewGroupPa(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     Ext4MbNewGroupPaData eventData {};
     ParseExt4MbNewGroupPaData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_mb_new_group_pa_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_pa_pstart(eventData.pa_pstart);
@@ -1808,6 +1970,9 @@ void ParseExt4MbNewInodePa(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     Ext4MbNewInodePaData eventData {};
     ParseExt4MbNewInodePaData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_mb_new_inode_pa_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_pa_pstart(eventData.pa_pstart);
@@ -1837,6 +2002,9 @@ void ParseExt4MbReleaseGroupPa(FtraceEventType& ftraceEvent, uint8_t data[], siz
     Ext4MbReleaseGroupPaData eventData {};
     ParseExt4MbReleaseGroupPaData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_mb_release_group_pa_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_pa_pstart(eventData.pa_pstart);
     msg->set_pa_len(eventData.pa_len);
@@ -1866,6 +2034,9 @@ void ParseExt4MbReleaseInodePa(FtraceEventType& ftraceEvent, uint8_t data[], siz
     Ext4MbReleaseInodePaData eventData {};
     ParseExt4MbReleaseInodePaData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_mb_release_inode_pa_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_block(eventData.block);
@@ -1928,6 +2099,9 @@ void ParseExt4MballocAlloc(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     Ext4MballocAllocData eventData {};
     ParseExt4MballocAllocData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_mballoc_alloc_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_orig_logical(eventData.orig_logical);
@@ -1976,6 +2150,9 @@ void ParseExt4MballocDiscard(FtraceEventType& ftraceEvent, uint8_t data[], size_
     Ext4MballocDiscardData eventData {};
     ParseExt4MballocDiscardData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_mballoc_discard_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_result_start(eventData.result_start);
@@ -2009,6 +2186,9 @@ void ParseExt4MballocFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     Ext4MballocFreeData eventData {};
     ParseExt4MballocFreeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_mballoc_free_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_result_start(eventData.result_start);
@@ -2052,6 +2232,9 @@ void ParseExt4MballocPrealloc(FtraceEventType& ftraceEvent, uint8_t data[], size
     Ext4MballocPreallocData eventData {};
     ParseExt4MballocPreallocData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_mballoc_prealloc_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_orig_logical(eventData.orig_logical);
@@ -2092,6 +2275,9 @@ void ParseExt4OtherInodeUpdateTime(FtraceEventType& ftraceEvent, uint8_t data[],
     Ext4OtherInodeUpdateTimeData eventData {};
     ParseExt4OtherInodeUpdateTimeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_other_inode_update_time_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_orig_ino(eventData.orig_ino);
@@ -2126,6 +2312,9 @@ void ParseExt4PunchHole(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     Ext4PunchHoleData eventData {};
     ParseExt4PunchHoleData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_punch_hole_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_offset(eventData.offset);
@@ -2155,6 +2344,9 @@ void ParseExt4ReadBlockBitmapLoad(FtraceEventType& ftraceEvent, uint8_t data[], 
     Ext4ReadBlockBitmapLoadData eventData {};
     ParseExt4ReadBlockBitmapLoadData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_read_block_bitmap_load_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_group(eventData.group);
     msg->set_prefetch(eventData.prefetch);
@@ -2196,6 +2388,9 @@ void ParseExt4RemoveBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     Ext4RemoveBlocksData eventData {};
     ParseExt4RemoveBlocksData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_remove_blocks_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_from(eventData.from);
@@ -2244,6 +2439,9 @@ void ParseExt4RequestBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     Ext4RequestBlocksData eventData {};
     ParseExt4RequestBlocksData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_request_blocks_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_len(eventData.len);
@@ -2278,6 +2476,9 @@ void ParseExt4RequestInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     Ext4RequestInodeData eventData {};
     ParseExt4RequestInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_request_inode_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_dir(eventData.dir);
     msg->set_mode(eventData.mode);
@@ -2307,6 +2508,9 @@ void ParseExt4SyncFileEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     Ext4SyncFileEnterData eventData {};
     ParseExt4SyncFileEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_sync_file_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_parent(eventData.parent);
@@ -2335,6 +2539,9 @@ void ParseExt4SyncFileExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     Ext4SyncFileExitData eventData {};
     ParseExt4SyncFileExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_sync_file_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_ret(eventData.ret);
@@ -2360,6 +2567,9 @@ void ParseExt4SyncFs(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     Ext4SyncFsData eventData {};
     ParseExt4SyncFsData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_sync_fs_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_wait(eventData.wait);
 }
@@ -2390,6 +2600,9 @@ void ParseExt4TrimAllFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     Ext4TrimAllFreeData eventData {};
     ParseExt4TrimAllFreeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_trim_all_free_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev_major(eventData.dev_major);
     msg->set_dev_minor(eventData.dev_minor);
     msg->set_group(eventData.group);
@@ -2423,6 +2636,9 @@ void ParseExt4TrimExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     Ext4TrimExtentData eventData {};
     ParseExt4TrimExtentData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_trim_extent_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev_major(eventData.dev_major);
     msg->set_dev_minor(eventData.dev_minor);
     msg->set_group(eventData.group);
@@ -2452,6 +2668,9 @@ void ParseExt4TruncateEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     Ext4TruncateEnterData eventData {};
     ParseExt4TruncateEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_truncate_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_blocks(eventData.blocks);
@@ -2479,6 +2698,9 @@ void ParseExt4TruncateExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     Ext4TruncateExitData eventData {};
     ParseExt4TruncateExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_truncate_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_blocks(eventData.blocks);
@@ -2508,6 +2730,9 @@ void ParseExt4UnlinkEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     Ext4UnlinkEnterData eventData {};
     ParseExt4UnlinkEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_unlink_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_parent(eventData.parent);
@@ -2536,6 +2761,9 @@ void ParseExt4UnlinkExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     Ext4UnlinkExitData eventData {};
     ParseExt4UnlinkExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_unlink_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_ret(eventData.ret);
@@ -2565,6 +2793,9 @@ void ParseExt4WriteBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     Ext4WriteBeginData eventData {};
     ParseExt4WriteBeginData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_write_begin_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_pos(eventData.pos);
@@ -2597,6 +2828,9 @@ void ParseExt4WriteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     Ext4WriteEndData eventData {};
     ParseExt4WriteEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_write_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_pos(eventData.pos);
@@ -2640,6 +2874,9 @@ void ParseExt4Writepages(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     Ext4WritepagesData eventData {};
     ParseExt4WritepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_writepages_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_nr_to_write(eventData.nr_to_write);
@@ -2682,6 +2919,9 @@ void ParseExt4WritepagesResult(FtraceEventType& ftraceEvent, uint8_t data[], siz
     Ext4WritepagesResultData eventData {};
     ParseExt4WritepagesResultData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_writepages_result_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_ret(eventData.ret);
@@ -2717,6 +2957,9 @@ void ParseExt4ZeroRange(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     Ext4ZeroRangeData eventData {};
     ParseExt4ZeroRangeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ext4_zero_range_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_offset(eventData.offset);

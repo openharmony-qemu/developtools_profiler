@@ -758,6 +758,15 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
                 'in outfile");\n'.format(event.name)
             )
             f.write("    }\n")
+            f.write("    if (len < 0) {\n")
+            f.write(
+                '      PROFILER_LOG_WARN(LOG_CORE,\n'
+            )
+            f.write(
+                '          "maybe, the contents of print event({}) msg snprintf_s error");\n'.format(event.name)
+            )
+            f.write('      return "";\n')
+            f.write("    }\n")
             f.write("    return std::string(buffer);\n")
             f.write("});\n")  # end of format function
 

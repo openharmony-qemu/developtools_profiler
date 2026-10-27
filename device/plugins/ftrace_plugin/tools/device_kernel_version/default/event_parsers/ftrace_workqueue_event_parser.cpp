@@ -36,6 +36,9 @@ void ParseWorkqueueActivateWork(FtraceEventType& ftraceEvent, uint8_t data[], si
     WorkqueueActivateWorkData eventData {};
     ParseWorkqueueActivateWorkData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_workqueue_activate_work_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_work(eventData.work);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(workqueue_activate_work, ParseWorkqueueActivateWork<FtraceEvent>);
@@ -57,6 +60,9 @@ void ParseWorkqueueExecuteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size
     WorkqueueExecuteEndData eventData {};
     ParseWorkqueueExecuteEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_workqueue_execute_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_work(eventData.work);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(workqueue_execute_end, ParseWorkqueueExecuteEnd<FtraceEvent>);
@@ -80,6 +86,9 @@ void ParseWorkqueueExecuteStart(FtraceEventType& ftraceEvent, uint8_t data[], si
     WorkqueueExecuteStartData eventData {};
     ParseWorkqueueExecuteStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_workqueue_execute_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_work(eventData.work);
     msg->set_function(eventData.function);
 }
@@ -110,6 +119,9 @@ void ParseWorkqueueQueueWork(FtraceEventType& ftraceEvent, uint8_t data[], size_
     WorkqueueQueueWorkData eventData {};
     ParseWorkqueueQueueWorkData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_workqueue_queue_work_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_work(eventData.work);
     msg->set_function(eventData.function);
     msg->set_workqueue(eventData.workqueue);

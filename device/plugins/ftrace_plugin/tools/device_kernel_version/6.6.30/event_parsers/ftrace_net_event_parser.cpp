@@ -72,6 +72,9 @@ void ParseNapiGroFragsEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     NapiGroFragsEntryData eventData {};
     ParseNapiGroFragsEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_napi_gro_frags_entry_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_napi_id(eventData.napi_id);
     msg->set_queue_mapping(eventData.queue_mapping);
@@ -147,6 +150,9 @@ void ParseNapiGroReceiveEntry(FtraceEventType& ftraceEvent, uint8_t data[], size
     NapiGroReceiveEntryData eventData {};
     ParseNapiGroReceiveEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_napi_gro_receive_entry_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_napi_id(eventData.napi_id);
     msg->set_queue_mapping(eventData.queue_mapping);
@@ -190,6 +196,9 @@ void ParseNetDevQueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     NetDevQueueData eventData {};
     ParseNetDevQueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_net_dev_queue_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_skbaddr(eventData.skbaddr);
     msg->set_len(eventData.len);
     msg->set_name(eventData.name);
@@ -245,6 +254,9 @@ void ParseNetDevStartXmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     NetDevStartXmitData eventData {};
     ParseNetDevStartXmitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_net_dev_start_xmit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_queue_mapping(eventData.queue_mapping);
     msg->set_skbaddr(eventData.skbaddr);
@@ -288,6 +300,9 @@ void ParseNetDevXmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     NetDevXmitData eventData {};
     ParseNetDevXmitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_net_dev_xmit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_skbaddr(eventData.skbaddr);
     msg->set_len(eventData.len);
     msg->set_rc(eventData.rc);
@@ -316,6 +331,9 @@ void ParseNetifReceiveSkb(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     NetifReceiveSkbData eventData {};
     ParseNetifReceiveSkbData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_netif_receive_skb_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_skbaddr(eventData.skbaddr);
     msg->set_len(eventData.len);
     msg->set_name(eventData.name);
@@ -375,6 +393,9 @@ void ParseNetifReceiveSkbEntry(FtraceEventType& ftraceEvent, uint8_t data[], siz
     NetifReceiveSkbEntryData eventData {};
     ParseNetifReceiveSkbEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_netif_receive_skb_entry_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_napi_id(eventData.napi_id);
     msg->set_queue_mapping(eventData.queue_mapping);
@@ -418,6 +439,9 @@ void ParseNetifRx(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     NetifRxData eventData {};
     ParseNetifRxData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_netif_rx_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_skbaddr(eventData.skbaddr);
     msg->set_len(eventData.len);
     msg->set_name(eventData.name);
@@ -477,6 +501,9 @@ void ParseNetifRxEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     NetifRxEntryData eventData {};
     ParseNetifRxEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_netif_rx_entry_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_napi_id(eventData.napi_id);
     msg->set_queue_mapping(eventData.queue_mapping);

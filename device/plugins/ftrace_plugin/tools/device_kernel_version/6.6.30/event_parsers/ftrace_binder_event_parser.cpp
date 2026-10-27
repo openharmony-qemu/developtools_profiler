@@ -38,6 +38,9 @@ void ParseBinderAllocLruEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     BinderAllocLruEndData eventData {};
     ParseBinderAllocLruEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_alloc_lru_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
@@ -62,6 +65,9 @@ void ParseBinderAllocLruStart(FtraceEventType& ftraceEvent, uint8_t data[], size
     BinderAllocLruStartData eventData {};
     ParseBinderAllocLruStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_alloc_lru_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
@@ -86,6 +92,9 @@ void ParseBinderAllocPageEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_
     BinderAllocPageEndData eventData {};
     ParseBinderAllocPageEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_alloc_page_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
@@ -110,6 +119,9 @@ void ParseBinderAllocPageStart(FtraceEventType& ftraceEvent, uint8_t data[], siz
     BinderAllocPageStartData eventData {};
     ParseBinderAllocPageStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_alloc_page_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
@@ -132,6 +144,9 @@ void ParseBinderCommand(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     BinderCommandData eventData {};
     ParseBinderCommandData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_command_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_cmd(eventData.cmd);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_command, ParseBinderCommand<FtraceEvent>);
@@ -155,6 +170,9 @@ void ParseBinderFreeLruEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     BinderFreeLruEndData eventData {};
     ParseBinderFreeLruEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_free_lru_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
@@ -179,6 +197,9 @@ void ParseBinderFreeLruStart(FtraceEventType& ftraceEvent, uint8_t data[], size_
     BinderFreeLruStartData eventData {};
     ParseBinderFreeLruStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_free_lru_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
@@ -203,6 +224,9 @@ void ParseBinderIoctl(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     BinderIoctlData eventData {};
     ParseBinderIoctlData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_ioctl_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_cmd(eventData.cmd);
     msg->set_arg(eventData.arg);
 }
@@ -225,6 +249,9 @@ void ParseBinderIoctlDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     BinderIoctlDoneData eventData {};
     ParseBinderIoctlDoneData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_ioctl_done_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_ret(eventData.ret);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_ioctl_done, ParseBinderIoctlDone<FtraceEvent>);
@@ -246,6 +273,9 @@ void ParseBinderLock(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     BinderLockData eventData {};
     ParseBinderLockData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_lock_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_tag(eventData.tag);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_lock, ParseBinderLock<FtraceEvent>);
@@ -267,6 +297,9 @@ void ParseBinderLocked(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     BinderLockedData eventData {};
     ParseBinderLockedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_locked_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_tag(eventData.tag);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_locked, ParseBinderLocked<FtraceEvent>);
@@ -288,6 +321,9 @@ void ParseBinderReadDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     BinderReadDoneData eventData {};
     ParseBinderReadDoneData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_read_done_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_ret(eventData.ret);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_read_done, ParseBinderReadDone<FtraceEvent>);
@@ -309,6 +345,9 @@ void ParseBinderReturn(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     BinderReturnData eventData {};
     ParseBinderReturnData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_return_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_cmd(eventData.cmd);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_return, ParseBinderReturn<FtraceEvent>);
@@ -342,6 +381,9 @@ void ParseBinderTransaction(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     BinderTransactionData eventData {};
     ParseBinderTransactionData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_debug_id(eventData.debug_id);
     msg->set_target_node(eventData.target_node);
     msg->set_to_proc(eventData.to_proc);
@@ -375,6 +417,9 @@ void ParseBinderTransactionAllocBuf(FtraceEventType& ftraceEvent, uint8_t data[]
     BinderTransactionAllocBufData eventData {};
     ParseBinderTransactionAllocBufData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_alloc_buf_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_debug_id(eventData.debug_id);
     msg->set_data_size(eventData.data_size);
     msg->set_offsets_size(eventData.offsets_size);
@@ -405,6 +450,9 @@ void ParseBinderTransactionBufferRelease(FtraceEventType& ftraceEvent, uint8_t d
     BinderTransactionBufferReleaseData eventData {};
     ParseBinderTransactionBufferReleaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_buffer_release_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_debug_id(eventData.debug_id);
     msg->set_data_size(eventData.data_size);
     msg->set_offsets_size(eventData.offsets_size);
@@ -435,6 +483,9 @@ void ParseBinderTransactionFailedBufferRelease(FtraceEventType& ftraceEvent, uin
     BinderTransactionFailedBufferReleaseData eventData {};
     ParseBinderTransactionFailedBufferReleaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_failed_buffer_release_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_debug_id(eventData.debug_id);
     msg->set_data_size(eventData.data_size);
     msg->set_offsets_size(eventData.offsets_size);
@@ -467,6 +518,9 @@ void ParseBinderTransactionNodeToRef(FtraceEventType& ftraceEvent, uint8_t data[
     BinderTransactionNodeToRefData eventData {};
     ParseBinderTransactionNodeToRefData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_node_to_ref_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_debug_id(eventData.debug_id);
     msg->set_node_debug_id(eventData.node_debug_id);
     msg->set_node_ptr(eventData.node_ptr);
@@ -492,6 +546,9 @@ void ParseBinderTransactionReceived(FtraceEventType& ftraceEvent, uint8_t data[]
     BinderTransactionReceivedData eventData {};
     ParseBinderTransactionReceivedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_received_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_debug_id(eventData.debug_id);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_received, ParseBinderTransactionReceived<FtraceEvent>);
@@ -521,6 +578,9 @@ void ParseBinderTransactionRefToNode(FtraceEventType& ftraceEvent, uint8_t data[
     BinderTransactionRefToNodeData eventData {};
     ParseBinderTransactionRefToNodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_ref_to_node_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_debug_id(eventData.debug_id);
     msg->set_ref_debug_id(eventData.ref_debug_id);
     msg->set_ref_desc(eventData.ref_desc);
@@ -556,6 +616,9 @@ void ParseBinderTransactionRefToRef(FtraceEventType& ftraceEvent, uint8_t data[]
     BinderTransactionRefToRefData eventData {};
     ParseBinderTransactionRefToRefData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_transaction_ref_to_ref_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_debug_id(eventData.debug_id);
     msg->set_node_debug_id(eventData.node_debug_id);
     msg->set_src_ref_debug_id(eventData.src_ref_debug_id);
@@ -582,6 +645,9 @@ void ParseBinderUnlock(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     BinderUnlockData eventData {};
     ParseBinderUnlockData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_unlock_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_tag(eventData.tag);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_unlock, ParseBinderUnlock<FtraceEvent>);
@@ -605,6 +671,9 @@ void ParseBinderUnmapKernelEnd(FtraceEventType& ftraceEvent, uint8_t data[], siz
     BinderUnmapKernelEndData eventData {};
     ParseBinderUnmapKernelEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_unmap_kernel_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
@@ -629,6 +698,9 @@ void ParseBinderUnmapKernelStart(FtraceEventType& ftraceEvent, uint8_t data[], s
     BinderUnmapKernelStartData eventData {};
     ParseBinderUnmapKernelStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_unmap_kernel_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
@@ -653,6 +725,9 @@ void ParseBinderUnmapUserEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_
     BinderUnmapUserEndData eventData {};
     ParseBinderUnmapUserEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_unmap_user_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
@@ -677,6 +752,9 @@ void ParseBinderUnmapUserStart(FtraceEventType& ftraceEvent, uint8_t data[], siz
     BinderUnmapUserStartData eventData {};
     ParseBinderUnmapUserStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_unmap_user_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
@@ -705,6 +783,9 @@ void ParseBinderUpdatePageRange(FtraceEventType& ftraceEvent, uint8_t data[], si
     BinderUpdatePageRangeData eventData {};
     ParseBinderUpdatePageRangeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_update_page_range_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_proc(eventData.proc);
     msg->set_allocate(eventData.allocate);
     msg->set_offset(eventData.offset);
@@ -733,6 +814,9 @@ void ParseBinderWaitForWork(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     BinderWaitForWorkData eventData {};
     ParseBinderWaitForWorkData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_wait_for_work_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_proc_work(eventData.proc_work);
     msg->set_transaction_stack(eventData.transaction_stack);
     msg->set_thread_todo(eventData.thread_todo);
@@ -756,6 +840,9 @@ void ParseBinderWriteDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     BinderWriteDoneData eventData {};
     ParseBinderWriteDoneData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_binder_write_done_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_ret(eventData.ret);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_write_done, ParseBinderWriteDone<FtraceEvent>);

@@ -44,6 +44,9 @@ void ParseMmCompactionBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     MmCompactionBeginData eventData {};
     ParseMmCompactionBeginData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_begin_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_zone_start(eventData.zone_start);
     msg->set_migrate_pfn(eventData.migrate_pfn);
     msg->set_free_pfn(eventData.free_pfn);
@@ -79,6 +82,9 @@ void ParseMmCompactionDeferCompaction(FtraceEventType& ftraceEvent, uint8_t data
     MmCompactionDeferCompactionData eventData {};
     ParseMmCompactionDeferCompactionData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_defer_compaction_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_nid(eventData.nid);
     msg->set_idx(eventData.idx);
     msg->set_order(eventData.order);
@@ -115,6 +121,9 @@ void ParseMmCompactionDeferReset(FtraceEventType& ftraceEvent, uint8_t data[], s
     MmCompactionDeferResetData eventData {};
     ParseMmCompactionDeferResetData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_defer_reset_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_nid(eventData.nid);
     msg->set_idx(eventData.idx);
     msg->set_order(eventData.order);
@@ -151,6 +160,9 @@ void ParseMmCompactionDeferred(FtraceEventType& ftraceEvent, uint8_t data[], siz
     MmCompactionDeferredData eventData {};
     ParseMmCompactionDeferredData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_deferred_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_nid(eventData.nid);
     msg->set_idx(eventData.idx);
     msg->set_order(eventData.order);
@@ -187,6 +199,9 @@ void ParseMmCompactionEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     MmCompactionEndData eventData {};
     ParseMmCompactionEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_zone_start(eventData.zone_start);
     msg->set_migrate_pfn(eventData.migrate_pfn);
     msg->set_free_pfn(eventData.free_pfn);
@@ -219,6 +234,9 @@ void ParseMmCompactionFinished(FtraceEventType& ftraceEvent, uint8_t data[], siz
     MmCompactionFinishedData eventData {};
     ParseMmCompactionFinishedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_finished_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_nid(eventData.nid);
     msg->set_idx(eventData.idx);
     msg->set_order(eventData.order);
@@ -249,6 +267,9 @@ void ParseMmCompactionIsolateFreepages(FtraceEventType& ftraceEvent, uint8_t dat
     MmCompactionIsolateFreepagesData eventData {};
     ParseMmCompactionIsolateFreepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_isolate_freepages_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_start_pfn(eventData.start_pfn);
     msg->set_end_pfn(eventData.end_pfn);
     msg->set_nr_scanned(eventData.nr_scanned);
@@ -279,6 +300,9 @@ void ParseMmCompactionIsolateMigratepages(FtraceEventType& ftraceEvent, uint8_t 
     MmCompactionIsolateMigratepagesData eventData {};
     ParseMmCompactionIsolateMigratepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_isolate_migratepages_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_start_pfn(eventData.start_pfn);
     msg->set_end_pfn(eventData.end_pfn);
     msg->set_nr_scanned(eventData.nr_scanned);
@@ -305,6 +329,9 @@ void ParseMmCompactionMigratepages(FtraceEventType& ftraceEvent, uint8_t data[],
     MmCompactionMigratepagesData eventData {};
     ParseMmCompactionMigratepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_migratepages_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_nr_migrated(eventData.nr_migrated);
     msg->set_nr_failed(eventData.nr_failed);
 }
@@ -333,6 +360,9 @@ void ParseMmCompactionSuitable(FtraceEventType& ftraceEvent, uint8_t data[], siz
     MmCompactionSuitableData eventData {};
     ParseMmCompactionSuitableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_suitable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_nid(eventData.nid);
     msg->set_idx(eventData.idx);
     msg->set_order(eventData.order);
@@ -361,6 +391,9 @@ void ParseMmCompactionTryToCompactPages(FtraceEventType& ftraceEvent, uint8_t da
     MmCompactionTryToCompactPagesData eventData {};
     ParseMmCompactionTryToCompactPagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_try_to_compact_pages_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_order(eventData.order);
     msg->set_gfp_mask(eventData.gfp_mask);
     msg->set_prio(eventData.prio);

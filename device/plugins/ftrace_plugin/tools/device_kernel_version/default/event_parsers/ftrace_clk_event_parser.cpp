@@ -36,6 +36,9 @@ void ParseClkDisable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     ClkDisableData eventData {};
     ParseClkDisableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_disable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_disable, ParseClkDisable<FtraceEvent>);
@@ -57,6 +60,9 @@ void ParseClkDisableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_
     ClkDisableCompleteData eventData {};
     ParseClkDisableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_disable_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_disable_complete, ParseClkDisableComplete<FtraceEvent>);
@@ -78,6 +84,9 @@ void ParseClkEnable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     ClkEnableData eventData {};
     ParseClkEnableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_enable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_enable, ParseClkEnable<FtraceEvent>);
@@ -99,6 +108,9 @@ void ParseClkEnableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     ClkEnableCompleteData eventData {};
     ParseClkEnableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_enable_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_enable_complete, ParseClkEnableComplete<FtraceEvent>);
@@ -120,6 +132,9 @@ void ParseClkPrepare(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     ClkPrepareData eventData {};
     ParseClkPrepareData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_prepare_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_prepare, ParseClkPrepare<FtraceEvent>);
@@ -141,6 +156,9 @@ void ParseClkPrepareComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_
     ClkPrepareCompleteData eventData {};
     ParseClkPrepareCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_prepare_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_prepare_complete, ParseClkPrepareComplete<FtraceEvent>);
@@ -164,6 +182,9 @@ void ParseClkSetParent(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     ClkSetParentData eventData {};
     ParseClkSetParentData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_parent_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_pname(eventData.pname);
 }
@@ -188,6 +209,9 @@ void ParseClkSetParentComplete(FtraceEventType& ftraceEvent, uint8_t data[], siz
     ClkSetParentCompleteData eventData {};
     ParseClkSetParentCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_parent_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_pname(eventData.pname);
 }
@@ -212,6 +236,9 @@ void ParseClkSetPhase(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     ClkSetPhaseData eventData {};
     ParseClkSetPhaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_phase_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_phase(eventData.phase);
 }
@@ -236,6 +263,9 @@ void ParseClkSetPhaseComplete(FtraceEventType& ftraceEvent, uint8_t data[], size
     ClkSetPhaseCompleteData eventData {};
     ParseClkSetPhaseCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_phase_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_phase(eventData.phase);
 }
@@ -260,6 +290,9 @@ void ParseClkSetRate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     ClkSetRateData eventData {};
     ParseClkSetRateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_rate_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_rate(eventData.rate);
 }
@@ -284,6 +317,9 @@ void ParseClkSetRateComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_
     ClkSetRateCompleteData eventData {};
     ParseClkSetRateCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_rate_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_rate(eventData.rate);
 }
@@ -306,6 +342,9 @@ void ParseClkUnprepare(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     ClkUnprepareData eventData {};
     ParseClkUnprepareData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_unprepare_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_unprepare, ParseClkUnprepare<FtraceEvent>);
@@ -327,6 +366,9 @@ void ParseClkUnprepareComplete(FtraceEventType& ftraceEvent, uint8_t data[], siz
     ClkUnprepareCompleteData eventData {};
     ParseClkUnprepareCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_unprepare_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_unprepare_complete, ParseClkUnprepareComplete<FtraceEvent>);

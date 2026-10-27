@@ -40,6 +40,9 @@ void ParseOomScoreAdjUpdate(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     OomScoreAdjUpdateData eventData {};
     ParseOomScoreAdjUpdateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_oom_score_adj_update_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pid(eventData.pid);
     msg->set_comm(eventData.comm);
     msg->set_oom_score_adj(eventData.oom_score_adj);

@@ -46,6 +46,9 @@ void ParseHmfsReadEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     HmfsReadEnterData eventData {};
     ParseHmfsReadEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hmfs_read_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_off(eventData.off);
@@ -80,6 +83,9 @@ void ParseHmfsReadExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     HmfsReadExitData eventData {};
     ParseHmfsReadExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hmfs_read_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_off(eventData.off);
@@ -115,6 +121,9 @@ void ParseHmfsWriteEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     HmfsWriteEnterData eventData {};
     ParseHmfsWriteEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hmfs_write_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_off(eventData.off);
@@ -149,6 +158,9 @@ void ParseHmfsWriteExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     HmfsWriteExitData eventData {};
     ParseHmfsWriteExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_hmfs_write_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_off(eventData.off);

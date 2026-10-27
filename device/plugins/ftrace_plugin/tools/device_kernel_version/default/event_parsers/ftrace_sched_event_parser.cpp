@@ -53,6 +53,9 @@ void ParseSchedBlockedReason(FtraceEventType& ftraceEvent, uint8_t data[], size_
     SchedBlockedReasonData eventData {};
     ParseSchedBlockedReasonData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_blocked_reason_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pid(eventData.pid);
     msg->set_caller(eventData.caller);
     msg->set_io_wait(eventData.io_wait);
@@ -81,6 +84,9 @@ void ParseSchedKthreadStop(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     SchedKthreadStopData eventData {};
     ParseSchedKthreadStopData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_kthread_stop_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
 }
@@ -103,6 +109,9 @@ void ParseSchedKthreadStopRet(FtraceEventType& ftraceEvent, uint8_t data[], size
     SchedKthreadStopRetData eventData {};
     ParseSchedKthreadStopRetData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_kthread_stop_ret_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_ret(eventData.ret);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_kthread_stop_ret, ParseSchedKthreadStopRet<FtraceEvent>);
@@ -132,6 +141,9 @@ void ParseSchedMigrateTask(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     SchedMigrateTaskData eventData {};
     ParseSchedMigrateTaskData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_migrate_task_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
     msg->set_prio(eventData.prio);
@@ -169,6 +181,9 @@ void ParseSchedMoveNuma(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     SchedMoveNumaData eventData {};
     ParseSchedMoveNumaData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_move_numa_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pid(eventData.pid);
     msg->set_tgid(eventData.tgid);
     msg->set_ngid(eventData.ngid);
@@ -202,6 +217,9 @@ void ParseSchedPiSetprio(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     SchedPiSetprioData eventData {};
     ParseSchedPiSetprioData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_pi_setprio_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
     msg->set_oldprio(eventData.oldprio);
@@ -230,6 +248,9 @@ void ParseSchedProcessExec(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     SchedProcessExecData eventData {};
     ParseSchedProcessExecData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_process_exec_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_filename(eventData.filename);
     msg->set_pid(eventData.pid);
     msg->set_old_pid(eventData.old_pid);
@@ -257,6 +278,9 @@ void ParseSchedProcessExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     SchedProcessExitData eventData {};
     ParseSchedProcessExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_process_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
     msg->set_prio(eventData.prio);
@@ -286,6 +310,9 @@ void ParseSchedProcessFork(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     SchedProcessForkData eventData {};
     ParseSchedProcessForkData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_process_fork_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_parent_comm(eventData.parent_comm);
     msg->set_parent_pid(eventData.parent_pid);
     msg->set_child_comm(eventData.child_comm);
@@ -314,6 +341,9 @@ void ParseSchedProcessFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     SchedProcessFreeData eventData {};
     ParseSchedProcessFreeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_process_free_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
     msg->set_prio(eventData.prio);
@@ -341,6 +371,9 @@ void ParseSchedProcessWait(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     SchedProcessWaitData eventData {};
     ParseSchedProcessWaitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_process_wait_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
     msg->set_prio(eventData.prio);
@@ -368,6 +401,9 @@ void ParseSchedStatBlocked(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     SchedStatBlockedData eventData {};
     ParseSchedStatBlockedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_stat_blocked_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
     msg->set_delay(eventData.delay);
@@ -395,6 +431,9 @@ void ParseSchedStatIowait(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     SchedStatIowaitData eventData {};
     ParseSchedStatIowaitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_stat_iowait_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
     msg->set_delay(eventData.delay);
@@ -424,6 +463,9 @@ void ParseSchedStatRuntime(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     SchedStatRuntimeData eventData {};
     ParseSchedStatRuntimeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_stat_runtime_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
     msg->set_runtime(eventData.runtime);
@@ -452,6 +494,9 @@ void ParseSchedStatSleep(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     SchedStatSleepData eventData {};
     ParseSchedStatSleepData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_stat_sleep_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
     msg->set_delay(eventData.delay);
@@ -479,6 +524,9 @@ void ParseSchedStatWait(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     SchedStatWaitData eventData {};
     ParseSchedStatWaitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_stat_wait_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
     msg->set_delay(eventData.delay);
@@ -514,6 +562,9 @@ void ParseSchedStickNuma(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     SchedStickNumaData eventData {};
     ParseSchedStickNumaData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_stick_numa_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pid(eventData.pid);
     msg->set_tgid(eventData.tgid);
     msg->set_ngid(eventData.ngid);
@@ -559,6 +610,9 @@ void ParseSchedSwapNuma(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     SchedSwapNumaData eventData {};
     ParseSchedSwapNumaData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_swap_numa_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_src_pid(eventData.src_pid);
     msg->set_src_tgid(eventData.src_tgid);
     msg->set_src_ngid(eventData.src_ngid);
@@ -604,6 +658,9 @@ void ParseSchedSwitch(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     SchedSwitchData eventData {};
     ParseSchedSwitchData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_switch_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_prev_comm(eventData.prev_comm);
     msg->set_prev_pid(eventData.prev_pid);
     msg->set_prev_prio(eventData.prev_prio);
@@ -635,6 +692,9 @@ void ParseSchedWaitTask(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     SchedWaitTaskData eventData {};
     ParseSchedWaitTaskData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_wait_task_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
     msg->set_prio(eventData.prio);
@@ -658,6 +718,9 @@ void ParseSchedWakeIdleWithoutIpi(FtraceEventType& ftraceEvent, uint8_t data[], 
     SchedWakeIdleWithoutIpiData eventData {};
     ParseSchedWakeIdleWithoutIpiData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_wake_idle_without_ipi_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_cpu(eventData.cpu);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_wake_idle_without_ipi, ParseSchedWakeIdleWithoutIpi<FtraceEvent>);
@@ -685,6 +748,9 @@ void ParseSchedWakeup(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     SchedWakeupData eventData {};
     ParseSchedWakeupData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_wakeup_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
     msg->set_prio(eventData.prio);
@@ -717,6 +783,9 @@ void ParseSchedWakeupNew(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     SchedWakeupNewData eventData {};
     ParseSchedWakeupNewData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_wakeup_new_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
     msg->set_prio(eventData.prio);
@@ -747,6 +816,9 @@ void ParseSchedWaking(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     SchedWakingData eventData {};
     ParseSchedWakingData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sched_waking_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
     msg->set_prio(eventData.prio);

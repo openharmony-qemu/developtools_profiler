@@ -44,6 +44,9 @@ void ParseBlockBioBackmerge(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     BlockBioBackmergeData eventData {};
     ParseBlockBioBackmergeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_backmerge_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_nr_sector(eventData.nr_sector);
@@ -77,6 +80,9 @@ void ParseBlockBioBounce(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     BlockBioBounceData eventData {};
     ParseBlockBioBounceData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_bounce_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_nr_sector(eventData.nr_sector);
@@ -110,6 +116,9 @@ void ParseBlockBioComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     BlockBioCompleteData eventData {};
     ParseBlockBioCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_nr_sector(eventData.nr_sector);
@@ -143,6 +152,9 @@ void ParseBlockBioFrontmerge(FtraceEventType& ftraceEvent, uint8_t data[], size_
     BlockBioFrontmergeData eventData {};
     ParseBlockBioFrontmergeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_frontmerge_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_nr_sector(eventData.nr_sector);
@@ -176,6 +188,9 @@ void ParseBlockBioQueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     BlockBioQueueData eventData {};
     ParseBlockBioQueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_queue_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_nr_sector(eventData.nr_sector);
@@ -211,6 +226,9 @@ void ParseBlockBioRemap(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     BlockBioRemapData eventData {};
     ParseBlockBioRemapData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_bio_remap_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_nr_sector(eventData.nr_sector);
@@ -241,6 +259,9 @@ void ParseBlockDirtyBuffer(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     BlockDirtyBufferData eventData {};
     ParseBlockDirtyBufferData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_dirty_buffer_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_size(eventData.size);
@@ -272,6 +293,9 @@ void ParseBlockGetrq(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     BlockGetrqData eventData {};
     ParseBlockGetrqData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_getrq_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_nr_sector(eventData.nr_sector);
@@ -297,6 +321,9 @@ void ParseBlockPlug(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     BlockPlugData eventData {};
     ParseBlockPlugData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_plug_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_comm(eventData.comm);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(block_plug, ParseBlockPlug<FtraceEvent>);
@@ -328,6 +355,9 @@ void ParseBlockRqComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     BlockRqCompleteData eventData {};
     ParseBlockRqCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_nr_sector(eventData.nr_sector);
@@ -366,6 +396,9 @@ void ParseBlockRqInsert(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     BlockRqInsertData eventData {};
     ParseBlockRqInsertData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_insert_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_nr_sector(eventData.nr_sector);
@@ -405,6 +438,9 @@ void ParseBlockRqIssue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     BlockRqIssueData eventData {};
     ParseBlockRqIssueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_issue_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_nr_sector(eventData.nr_sector);
@@ -444,6 +480,9 @@ void ParseBlockRqRemap(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     BlockRqRemapData eventData {};
     ParseBlockRqRemapData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_remap_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_nr_sector(eventData.nr_sector);
@@ -479,6 +518,9 @@ void ParseBlockRqRequeue(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     BlockRqRequeueData eventData {};
     ParseBlockRqRequeueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_rq_requeue_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_nr_sector(eventData.nr_sector);
@@ -512,6 +554,9 @@ void ParseBlockSleeprq(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     BlockSleeprqData eventData {};
     ParseBlockSleeprqData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_sleeprq_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_nr_sector(eventData.nr_sector);
@@ -545,6 +590,9 @@ void ParseBlockSplit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     BlockSplitData eventData {};
     ParseBlockSplitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_split_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_new_sector(eventData.new_sector);
@@ -574,6 +622,9 @@ void ParseBlockTouchBuffer(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     BlockTouchBufferData eventData {};
     ParseBlockTouchBufferData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_touch_buffer_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_sector(eventData.sector);
     msg->set_size(eventData.size);
@@ -599,6 +650,9 @@ void ParseBlockUnplug(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     BlockUnplugData eventData {};
     ParseBlockUnplugData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_block_unplug_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_nr_rq(eventData.nr_rq);
     msg->set_comm(eventData.comm);
 }

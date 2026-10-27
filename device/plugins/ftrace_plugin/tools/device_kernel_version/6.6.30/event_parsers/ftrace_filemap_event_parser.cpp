@@ -44,6 +44,9 @@ void ParseFileCheckAndAdvanceWbErr(FtraceEventType& ftraceEvent, uint8_t data[],
     FileCheckAndAdvanceWbErrData eventData {};
     ParseFileCheckAndAdvanceWbErrData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_file_check_and_advance_wb_err_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_file(eventData.file);
     msg->set_i_ino(eventData.i_ino);
     msg->set_s_dev(eventData.s_dev);
@@ -73,6 +76,9 @@ void ParseFilemapSetWbErr(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     FilemapSetWbErrData eventData {};
     ParseFilemapSetWbErrData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_filemap_set_wb_err_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_i_ino(eventData.i_ino);
     msg->set_s_dev(eventData.s_dev);
     msg->set_errseq(eventData.errseq);
@@ -104,6 +110,9 @@ void ParseMmFilemapAddToPageCache(FtraceEventType& ftraceEvent, uint8_t data[], 
     MmFilemapAddToPageCacheData eventData {};
     ParseMmFilemapAddToPageCacheData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_filemap_add_to_page_cache_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pfn(eventData.pfn);
     msg->set_i_ino(eventData.i_ino);
     msg->set_index(eventData.index);
@@ -137,6 +146,9 @@ void ParseMmFilemapDeleteFromPageCache(FtraceEventType& ftraceEvent, uint8_t dat
     MmFilemapDeleteFromPageCacheData eventData {};
     ParseMmFilemapDeleteFromPageCacheData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_filemap_delete_from_page_cache_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pfn(eventData.pfn);
     msg->set_i_ino(eventData.i_ino);
     msg->set_index(eventData.index);

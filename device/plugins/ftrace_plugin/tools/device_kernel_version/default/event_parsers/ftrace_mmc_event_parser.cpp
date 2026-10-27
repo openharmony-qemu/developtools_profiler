@@ -80,6 +80,9 @@ void ParseMmcRequestDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     MmcRequestDoneData eventData {};
     ParseMmcRequestDoneData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mmc_request_done_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_cmd_opcode(eventData.cmd_opcode);
     msg->set_cmd_err(eventData.cmd_err);
     msg->set_cmd_resp(eventData.cmd_resp);
@@ -171,6 +174,9 @@ void ParseMmcRequestStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     MmcRequestStartData eventData {};
     ParseMmcRequestStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mmc_request_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_cmd_opcode(eventData.cmd_opcode);
     msg->set_cmd_arg(eventData.cmd_arg);
     msg->set_cmd_flags(eventData.cmd_flags);

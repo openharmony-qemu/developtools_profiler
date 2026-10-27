@@ -38,6 +38,9 @@ void ParseBputs(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     BputsData eventData {};
     ParseBputsData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_bputs_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_ip(eventData.ip);
     msg->set_str(eventData.str);
 }
@@ -68,6 +71,9 @@ void ParseBranch(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     BranchData eventData {};
     ParseBranchData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_branch_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_line(eventData.line);
     msg->set_func(eventData.func);
     msg->set_file(eventData.file);
@@ -105,6 +111,9 @@ void ParseContextSwitch(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     ContextSwitchData eventData {};
     ParseContextSwitchData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_context_switch_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_prev_pid(eventData.prev_pid);
     msg->set_next_pid(eventData.next_pid);
     msg->set_next_cpu(eventData.next_cpu);
@@ -134,6 +143,9 @@ void ParseFuncgraphEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     FuncgraphEntryData eventData {};
     ParseFuncgraphEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_funcgraph_entry_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_func(eventData.func);
     msg->set_depth(eventData.depth);
 }
@@ -164,6 +176,9 @@ void ParseFuncgraphExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     FuncgraphExitData eventData {};
     ParseFuncgraphExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_funcgraph_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_func(eventData.func);
     msg->set_calltime(eventData.calltime);
     msg->set_rettime(eventData.rettime);
@@ -191,6 +206,9 @@ void ParseFunction(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     FunctionData eventData {};
     ParseFunctionData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_function_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_ip(eventData.ip);
     msg->set_parent_ip(eventData.parent_ip);
 }
@@ -215,6 +233,9 @@ void ParseKernelStack(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     KernelStackData eventData {};
     ParseKernelStackData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_kernel_stack_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_size(eventData.size);
     for (size_t i = 0; i < eventData.caller.size(); i++) {
         msg->add_caller(eventData.caller[i]);
@@ -247,6 +268,9 @@ void ParseMmiotraceMap(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     MmiotraceMapData eventData {};
     ParseMmiotraceMapData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mmiotrace_map_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_phys(eventData.phys);
     msg->set_virt(eventData.virt);
     msg->set_len(eventData.len);
@@ -282,6 +306,9 @@ void ParseMmiotraceRw(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     MmiotraceRwData eventData {};
     ParseMmiotraceRwData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mmiotrace_rw_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_phys(eventData.phys);
     msg->set_value(eventData.value);
     msg->set_pc(eventData.pc);
@@ -310,6 +337,9 @@ void ParsePrint(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     PrintData eventData {};
     ParsePrintData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_print_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_ip(eventData.ip);
     msg->set_buf(eventData.buf);
 }
@@ -332,6 +362,9 @@ void ParseTracingMarkWrite(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     TracingMarkWriteData eventData {};
     ParseTracingMarkWriteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_print_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_buf(eventData.buf);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(tracing_mark_write, ParseTracingMarkWrite<FtraceEvent>);
@@ -355,6 +388,9 @@ void ParseUserStack(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     UserStackData eventData {};
     ParseUserStackData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_user_stack_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_tgid(eventData.tgid);
     for (size_t i = 0; i < eventData.caller.size(); i++) {
         msg->add_caller(eventData.caller[i]);
@@ -391,6 +427,9 @@ void ParseWakeup(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     WakeupData eventData {};
     ParseWakeupData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_wakeup_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_prev_pid(eventData.prev_pid);
     msg->set_next_pid(eventData.next_pid);
     msg->set_next_cpu(eventData.next_cpu);

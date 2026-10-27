@@ -64,6 +64,9 @@ void ParseBalanceDirtyPages(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     BalanceDirtyPagesData eventData {};
     ParseBalanceDirtyPagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_balance_dirty_pages_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_bdi(eventData.bdi);
     msg->set_limit(eventData.limit);
     msg->set_setpoint(eventData.setpoint);
@@ -113,6 +116,9 @@ void ParseBdiDirtyRatelimit(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     BdiDirtyRatelimitData eventData {};
     ParseBdiDirtyRatelimitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_bdi_dirty_ratelimit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_bdi(eventData.bdi);
     msg->set_write_bw(eventData.write_bw);
     msg->set_avg_write_bw(eventData.avg_write_bw);
@@ -155,6 +161,9 @@ void ParseGlobalDirtyState(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     GlobalDirtyStateData eventData {};
     ParseGlobalDirtyStateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_global_dirty_state_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_nr_dirty(eventData.nr_dirty);
     msg->set_nr_writeback(eventData.nr_writeback);
     msg->set_nr_unstable(eventData.nr_unstable);
@@ -203,6 +212,9 @@ void ParseWbcWritepage(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     WbcWritepageData eventData {};
     ParseWbcWritepageData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_wbc_writepage_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_nr_to_write(eventData.nr_to_write);
     msg->set_pages_skipped(eventData.pages_skipped);
@@ -234,6 +246,9 @@ void ParseWritebackBdiRegister(FtraceEventType& ftraceEvent, uint8_t data[], siz
     WritebackBdiRegisterData eventData {};
     ParseWritebackBdiRegisterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_bdi_register_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_bdi_register, ParseWritebackBdiRegister<FtraceEvent>);
@@ -257,6 +272,9 @@ void ParseWritebackCongestionWait(FtraceEventType& ftraceEvent, uint8_t data[], 
     WritebackCongestionWaitData eventData {};
     ParseWritebackCongestionWaitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_congestion_wait_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_usec_timeout(eventData.usec_timeout);
     msg->set_usec_delayed(eventData.usec_delayed);
 }
@@ -285,6 +303,9 @@ void ParseWritebackDirtyInode(FtraceEventType& ftraceEvent, uint8_t data[], size
     WritebackDirtyInodeData eventData {};
     ParseWritebackDirtyInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_dirty_inode_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
@@ -317,6 +338,9 @@ void ParseWritebackDirtyInodeEnqueue(FtraceEventType& ftraceEvent, uint8_t data[
     WritebackDirtyInodeEnqueueData eventData {};
     ParseWritebackDirtyInodeEnqueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_dirty_inode_enqueue_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
@@ -348,6 +372,9 @@ void ParseWritebackDirtyInodeStart(FtraceEventType& ftraceEvent, uint8_t data[],
     WritebackDirtyInodeStartData eventData {};
     ParseWritebackDirtyInodeStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_dirty_inode_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
@@ -376,6 +403,9 @@ void ParseWritebackDirtyPage(FtraceEventType& ftraceEvent, uint8_t data[], size_
     WritebackDirtyPageData eventData {};
     ParseWritebackDirtyPageData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_dirty_page_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_index(eventData.index);
@@ -415,6 +445,9 @@ void ParseWritebackExec(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     WritebackExecData eventData {};
     ParseWritebackExecData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_exec_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_nr_pages(eventData.nr_pages);
     msg->set_sb_dev(eventData.sb_dev);
@@ -452,6 +485,9 @@ void ParseWritebackLazytime(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     WritebackLazytimeData eventData {};
     ParseWritebackLazytimeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_lazytime_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
@@ -485,6 +521,9 @@ void ParseWritebackLazytimeIput(FtraceEventType& ftraceEvent, uint8_t data[], si
     WritebackLazytimeIputData eventData {};
     ParseWritebackLazytimeIputData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_lazytime_iput_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
@@ -516,6 +555,9 @@ void ParseWritebackMarkInodeDirty(FtraceEventType& ftraceEvent, uint8_t data[], 
     WritebackMarkInodeDirtyData eventData {};
     ParseWritebackMarkInodeDirtyData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_mark_inode_dirty_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
@@ -540,6 +582,9 @@ void ParseWritebackPagesWritten(FtraceEventType& ftraceEvent, uint8_t data[], si
     WritebackPagesWrittenData eventData {};
     ParseWritebackPagesWrittenData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_pages_written_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pages(eventData.pages);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_pages_written, ParseWritebackPagesWritten<FtraceEvent>);
@@ -577,6 +622,9 @@ void ParseWritebackQueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     WritebackQueueData eventData {};
     ParseWritebackQueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_queue_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_nr_pages(eventData.nr_pages);
     msg->set_sb_dev(eventData.sb_dev);
@@ -616,6 +664,9 @@ void ParseWritebackQueueIo(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     WritebackQueueIoData eventData {};
     ParseWritebackQueueIoData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_queue_io_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_older(eventData.older);
     msg->set_age(eventData.age);
@@ -650,6 +701,9 @@ void ParseWritebackSbInodesRequeue(FtraceEventType& ftraceEvent, uint8_t data[],
     WritebackSbInodesRequeueData eventData {};
     ParseWritebackSbInodesRequeueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_sb_inodes_requeue_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
@@ -689,6 +743,9 @@ void ParseWritebackSingleInode(FtraceEventType& ftraceEvent, uint8_t data[], siz
     WritebackSingleInodeData eventData {};
     ParseWritebackSingleInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_single_inode_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
@@ -731,6 +788,9 @@ void ParseWritebackSingleInodeStart(FtraceEventType& ftraceEvent, uint8_t data[]
     WritebackSingleInodeStartData eventData {};
     ParseWritebackSingleInodeStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_single_inode_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
@@ -775,6 +835,9 @@ void ParseWritebackStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t si
     WritebackStartData eventData {};
     ParseWritebackStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_nr_pages(eventData.nr_pages);
     msg->set_sb_dev(eventData.sb_dev);
@@ -820,6 +883,9 @@ void ParseWritebackWait(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     WritebackWaitData eventData {};
     ParseWritebackWaitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_wait_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_nr_pages(eventData.nr_pages);
     msg->set_sb_dev(eventData.sb_dev);
@@ -851,6 +917,9 @@ void ParseWritebackWaitIffCongested(FtraceEventType& ftraceEvent, uint8_t data[]
     WritebackWaitIffCongestedData eventData {};
     ParseWritebackWaitIffCongestedData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_wait_iff_congested_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_usec_timeout(eventData.usec_timeout);
     msg->set_usec_delayed(eventData.usec_delayed);
 }
@@ -875,6 +944,9 @@ void ParseWritebackWakeBackground(FtraceEventType& ftraceEvent, uint8_t data[], 
     WritebackWakeBackgroundData eventData {};
     ParseWritebackWakeBackgroundData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_wake_background_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
@@ -903,6 +975,9 @@ void ParseWritebackWriteInode(FtraceEventType& ftraceEvent, uint8_t data[], size
     WritebackWriteInodeData eventData {};
     ParseWritebackWriteInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_write_inode_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_sync_mode(eventData.sync_mode);
@@ -933,6 +1008,9 @@ void ParseWritebackWriteInodeStart(FtraceEventType& ftraceEvent, uint8_t data[],
     WritebackWriteInodeStartData eventData {};
     ParseWritebackWriteInodeStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_write_inode_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_sync_mode(eventData.sync_mode);
@@ -973,6 +1051,9 @@ void ParseWritebackWritten(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     WritebackWrittenData eventData {};
     ParseWritebackWrittenData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_written_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_nr_pages(eventData.nr_pages);
     msg->set_sb_dev(eventData.sb_dev);

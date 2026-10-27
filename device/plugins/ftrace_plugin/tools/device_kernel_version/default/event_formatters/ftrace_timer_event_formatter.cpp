@@ -162,7 +162,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.itimer_expire_format();
         char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "itimer_expire: which=%d pid=%d now=%" PRIu64 "",
-            msg.which(), static_cast<int>(msg.pid)(), msg.now());
+            msg.which(), static_cast<int>(msg.pid()), msg.now());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(itimer_expire) msg had be cut off in outfile");
         }

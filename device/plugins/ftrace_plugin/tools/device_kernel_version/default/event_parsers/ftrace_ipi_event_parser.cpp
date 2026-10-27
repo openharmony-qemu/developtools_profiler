@@ -36,6 +36,9 @@ void ParseIpiEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     IpiEntryData eventData {};
     ParseIpiEntryData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ipi_entry_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_reason(eventData.reason);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ipi_entry, ParseIpiEntry<FtraceEvent>);
@@ -57,6 +60,9 @@ void ParseIpiExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     IpiExitData eventData {};
     ParseIpiExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ipi_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_reason(eventData.reason);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ipi_exit, ParseIpiExit<FtraceEvent>);
@@ -80,6 +86,9 @@ void ParseIpiRaise(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     IpiRaiseData eventData {};
     ParseIpiRaiseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_ipi_raise_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_target_cpus(eventData.target_cpus);
     msg->set_reason(eventData.reason);
 }

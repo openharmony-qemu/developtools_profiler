@@ -40,6 +40,9 @@ void ParseClockDisable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     ClockDisableData eventData {};
     ParseClockDisableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clock_disable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_state(eventData.state);
     msg->set_cpu_id(eventData.cpu_id);
@@ -67,6 +70,9 @@ void ParseClockEnable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     ClockEnableData eventData {};
     ParseClockEnableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clock_enable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_state(eventData.state);
     msg->set_cpu_id(eventData.cpu_id);
@@ -94,6 +100,9 @@ void ParseClockSetRate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     ClockSetRateData eventData {};
     ParseClockSetRateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clock_set_rate_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_state(eventData.state);
     msg->set_cpu_id(eventData.cpu_id);
@@ -119,6 +128,9 @@ void ParseCpuFrequency(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     CpuFrequencyData eventData {};
     ParseCpuFrequencyData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cpu_frequency_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_state(eventData.state);
     msg->set_cpu_id(eventData.cpu_id);
 }
@@ -145,6 +157,9 @@ void ParseCpuFrequencyLimits(FtraceEventType& ftraceEvent, uint8_t data[], size_
     CpuFrequencyLimitsData eventData {};
     ParseCpuFrequencyLimitsData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cpu_frequency_limits_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_min_freq(eventData.min_freq);
     msg->set_max_freq(eventData.max_freq);
     msg->set_cpu_id(eventData.cpu_id);
@@ -170,6 +185,9 @@ void ParseCpuIdle(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     CpuIdleData eventData {};
     ParseCpuIdleData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cpu_idle_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_state(eventData.state);
     msg->set_cpu_id(eventData.cpu_id);
 }
@@ -196,6 +214,9 @@ void ParseDevPmQosAddRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_
     DevPmQosAddRequestData eventData {};
     ParseDevPmQosAddRequestData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dev_pm_qos_add_request_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_type(eventData.type);
     msg->set_new_value(eventData.new_value);
@@ -223,6 +244,9 @@ void ParseDevPmQosRemoveRequest(FtraceEventType& ftraceEvent, uint8_t data[], si
     DevPmQosRemoveRequestData eventData {};
     ParseDevPmQosRemoveRequestData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dev_pm_qos_remove_request_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_type(eventData.type);
     msg->set_new_value(eventData.new_value);
@@ -250,6 +274,9 @@ void ParseDevPmQosUpdateRequest(FtraceEventType& ftraceEvent, uint8_t data[], si
     DevPmQosUpdateRequestData eventData {};
     ParseDevPmQosUpdateRequestData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dev_pm_qos_update_request_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_type(eventData.type);
     msg->set_new_value(eventData.new_value);
@@ -277,6 +304,9 @@ void ParseDevicePmCallbackEnd(FtraceEventType& ftraceEvent, uint8_t data[], size
     DevicePmCallbackEndData eventData {};
     ParseDevicePmCallbackEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_device_pm_callback_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_device(eventData.device);
     msg->set_driver(eventData.driver);
     msg->set_error(eventData.error);
@@ -308,6 +338,9 @@ void ParseDevicePmCallbackStart(FtraceEventType& ftraceEvent, uint8_t data[], si
     DevicePmCallbackStartData eventData {};
     ParseDevicePmCallbackStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_device_pm_callback_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_device(eventData.device);
     msg->set_driver(eventData.driver);
     msg->set_parent(eventData.parent);
@@ -333,6 +366,9 @@ void ParsePmQosAddRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     PmQosAddRequestData eventData {};
     ParsePmQosAddRequestData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_pm_qos_add_request_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_value(eventData.value);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(pm_qos_add_request, ParsePmQosAddRequest<FtraceEvent>);
@@ -354,6 +390,9 @@ void ParsePmQosRemoveRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_
     PmQosRemoveRequestData eventData {};
     ParsePmQosRemoveRequestData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_pm_qos_remove_request_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_value(eventData.value);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(pm_qos_remove_request, ParsePmQosRemoveRequest<FtraceEvent>);
@@ -379,6 +418,9 @@ void ParsePmQosUpdateFlags(FtraceEventType& ftraceEvent, uint8_t data[], size_t 
     PmQosUpdateFlagsData eventData {};
     ParsePmQosUpdateFlagsData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_pm_qos_update_flags_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_action(eventData.action);
     msg->set_prev_value(eventData.prev_value);
     msg->set_curr_value(eventData.curr_value);
@@ -402,6 +444,9 @@ void ParsePmQosUpdateRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_
     PmQosUpdateRequestData eventData {};
     ParsePmQosUpdateRequestData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_pm_qos_update_request_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_value(eventData.value);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(pm_qos_update_request, ParsePmQosUpdateRequest<FtraceEvent>);
@@ -427,6 +472,9 @@ void ParsePmQosUpdateTarget(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     PmQosUpdateTargetData eventData {};
     ParsePmQosUpdateTargetData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_pm_qos_update_target_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_action(eventData.action);
     msg->set_prev_value(eventData.prev_value);
     msg->set_curr_value(eventData.curr_value);
@@ -454,6 +502,9 @@ void ParsePowerDomainTarget(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     PowerDomainTargetData eventData {};
     ParsePowerDomainTargetData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_power_domain_target_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_state(eventData.state);
     msg->set_cpu_id(eventData.cpu_id);
@@ -493,6 +544,9 @@ void ParsePstateSample(FtraceEventType& ftraceEvent, uint8_t data[], size_t size
     PstateSampleData eventData {};
     ParsePstateSampleData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_pstate_sample_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_core_busy(eventData.core_busy);
     msg->set_scaled_busy(eventData.scaled_busy);
     msg->set_from(eventData.from);
@@ -526,6 +580,9 @@ void ParseSuspendResume(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     SuspendResumeData eventData {};
     ParseSuspendResumeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_suspend_resume_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_action(eventData.action);
     msg->set_val(eventData.val);
     msg->set_start(eventData.start);
@@ -551,6 +608,9 @@ void ParseWakeupSourceActivate(FtraceEventType& ftraceEvent, uint8_t data[], siz
     WakeupSourceActivateData eventData {};
     ParseWakeupSourceActivateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_wakeup_source_activate_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_state(eventData.state);
 }
@@ -575,6 +635,9 @@ void ParseWakeupSourceDeactivate(FtraceEventType& ftraceEvent, uint8_t data[], s
     WakeupSourceDeactivateData eventData {};
     ParseWakeupSourceDeactivateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_wakeup_source_deactivate_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_state(eventData.state);
 }

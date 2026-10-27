@@ -40,6 +40,9 @@ void ParseGpuMemTotal(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     GpuMemTotalData eventData {};
     ParseGpuMemTotalData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_gpu_mem_total_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_gpu_id(eventData.gpu_id);
     msg->set_pid(eventData.pid);
     msg->set_size(eventData.size);

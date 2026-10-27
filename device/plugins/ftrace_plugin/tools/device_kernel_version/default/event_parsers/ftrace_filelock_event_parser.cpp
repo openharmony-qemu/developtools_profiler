@@ -52,6 +52,9 @@ void ParseBreakLeaseBlock(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     BreakLeaseBlockData eventData {};
     ParseBreakLeaseBlockData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_break_lease_block_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_fl(eventData.fl);
     msg->set_i_ino(eventData.i_ino);
     msg->set_s_dev(eventData.s_dev);
@@ -97,6 +100,9 @@ void ParseBreakLeaseNoblock(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     BreakLeaseNoblockData eventData {};
     ParseBreakLeaseNoblockData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_break_lease_noblock_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_fl(eventData.fl);
     msg->set_i_ino(eventData.i_ino);
     msg->set_s_dev(eventData.s_dev);
@@ -142,6 +148,9 @@ void ParseBreakLeaseUnblock(FtraceEventType& ftraceEvent, uint8_t data[], size_t
     BreakLeaseUnblockData eventData {};
     ParseBreakLeaseUnblockData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_break_lease_unblock_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_fl(eventData.fl);
     msg->set_i_ino(eventData.i_ino);
     msg->set_s_dev(eventData.s_dev);
@@ -185,6 +194,9 @@ void ParseGenericAddLease(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     GenericAddLeaseData eventData {};
     ParseGenericAddLeaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_generic_add_lease_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_i_ino(eventData.i_ino);
     msg->set_wcount(eventData.wcount);
     msg->set_dcount(eventData.dcount);
@@ -229,6 +241,9 @@ void ParseGenericDeleteLease(FtraceEventType& ftraceEvent, uint8_t data[], size_
     GenericDeleteLeaseData eventData {};
     ParseGenericDeleteLeaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_generic_delete_lease_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_fl(eventData.fl);
     msg->set_i_ino(eventData.i_ino);
     msg->set_s_dev(eventData.s_dev);
@@ -274,6 +289,9 @@ void ParseTimeOutLeases(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     TimeOutLeasesData eventData {};
     ParseTimeOutLeasesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_time_out_leases_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_fl(eventData.fl);
     msg->set_i_ino(eventData.i_ino);
     msg->set_s_dev(eventData.s_dev);

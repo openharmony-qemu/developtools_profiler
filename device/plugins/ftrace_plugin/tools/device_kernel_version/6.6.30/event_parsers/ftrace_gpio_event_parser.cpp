@@ -40,6 +40,9 @@ void ParseGpioDirection(FtraceEventType& ftraceEvent, uint8_t data[], size_t siz
     GpioDirectionData eventData {};
     ParseGpioDirectionData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_gpio_direction_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_gpio(eventData.gpio);
     msg->set_in(eventData.in);
     msg->set_err(eventData.err);
@@ -67,6 +70,9 @@ void ParseGpioValue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     GpioValueData eventData {};
     ParseGpioValueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_gpio_value_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_gpio(eventData.gpio);
     msg->set_get(eventData.get);
     msg->set_value(eventData.value);

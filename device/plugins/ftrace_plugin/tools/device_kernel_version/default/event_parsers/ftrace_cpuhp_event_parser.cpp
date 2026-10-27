@@ -42,6 +42,9 @@ void ParseCpuhpEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     CpuhpEnterData eventData {};
     ParseCpuhpEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cpuhp_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_cpu(eventData.cpu);
     msg->set_target(eventData.target);
     msg->set_idx(eventData.idx);
@@ -72,6 +75,9 @@ void ParseCpuhpExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
     CpuhpExitData eventData {};
     ParseCpuhpExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cpuhp_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_cpu(eventData.cpu);
     msg->set_state(eventData.state);
     msg->set_idx(eventData.idx);
@@ -102,6 +108,9 @@ void ParseCpuhpMultiEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t s
     CpuhpMultiEnterData eventData {};
     ParseCpuhpMultiEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_cpuhp_multi_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_cpu(eventData.cpu);
     msg->set_target(eventData.target);
     msg->set_idx(eventData.idx);

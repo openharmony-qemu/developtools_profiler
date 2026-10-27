@@ -42,6 +42,9 @@ void ParseMmCompactionIsolateFreepages(FtraceEventType& ftraceEvent, uint8_t dat
     MmCompactionIsolateFreepagesData eventData {};
     ParseMmCompactionIsolateFreepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_isolate_freepages_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_start_pfn(eventData.start_pfn);
     msg->set_end_pfn(eventData.end_pfn);
     msg->set_nr_scanned(eventData.nr_scanned);
@@ -72,6 +75,9 @@ void ParseMmCompactionIsolateMigratepages(FtraceEventType& ftraceEvent, uint8_t 
     MmCompactionIsolateMigratepagesData eventData {};
     ParseMmCompactionIsolateMigratepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_isolate_migratepages_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_start_pfn(eventData.start_pfn);
     msg->set_end_pfn(eventData.end_pfn);
     msg->set_nr_scanned(eventData.nr_scanned);
