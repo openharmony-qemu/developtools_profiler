@@ -58,6 +58,10 @@ public:
     void SetWriter(const std::shared_ptr<Writer>& writer);
     void SetWriter(const WriterStructPtr& writer);
     void SetWriterForFdSa(uint32_t fd);
+    // Bind once before data processing starts; retain the shared mapping until processing ends.
+    bool SetUniqueStackTable(const std::shared_ptr<ShareMemoryBlock>& block);
+    // Call after the context's pollers have stopped and its preprocessing worker has joined.
+    void ReleaseUniqueStackTable();
     void SetFactory(std::shared_ptr<HookRecordFactory> factory);
     void SetServerCommandCallback(std::function<void(uint32_t)> callback);
     bool StartTakeResults();
@@ -304,6 +308,8 @@ private:
     std::mutex cacheFileActivityTimeMtx_;
     struct timespec lastCacheStatisticsTime_ = {0, 0};
     std::shared_ptr<Writer> writer_ = nullptr;
+    std::shared_ptr<ShareMemoryBlock> uniqueTableBlock_;
+    std::unique_ptr<OHOS::HiviewDFX::UniqueStackTable> uniqueStackTable_;
     StackDataRepeaterPtr dataRepeater_ = nullptr;
     std::thread thread_ {};
     std::unique_ptr<uint8_t[]> buffer_;

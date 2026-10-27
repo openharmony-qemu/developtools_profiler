@@ -885,13 +885,13 @@ HWTEST_F(HookManagerMemLeakTest, RefreshValidLiveDataFromFile_DiscardMallocFreed
     ASSERT_TRUE(write(fd, &freeRec, sizeof(BaseStackRawData)) == sizeof(BaseStackRawData));
 
     auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
-    hookManager_->shouldSkipGlobalFreed_ = true;
-    hookManager_->validLiveData_.clear();
+    ctx->shouldSkipGlobalFreed_ = true;
+    ctx->validLiveData_.clear();
     hookManager_->RefreshValidLiveDataFromFile(ctx, fd);
     close(fd);
 
-    EXPECT_EQ(hookManager_->validLiveData_.count(reinterpret_cast<void*>(0x1234)), 0u);
-    EXPECT_TRUE(ShouldSkipRecord(&mallocRec, hookManager_->validLiveData_));
+    EXPECT_EQ(ctx->validLiveData_.count(reinterpret_cast<void*>(0x1234)), 0u);
+    EXPECT_TRUE(ShouldSkipRecord(&mallocRec, ctx->validLiveData_));
 }
 
 /*
@@ -921,13 +921,13 @@ HWTEST_F(HookManagerMemLeakTest, RefreshValidLiveDataFromFile_CrashFileStopsAtZe
     ASSERT_TRUE(write(fd, zeros, sizeof(zeros)) == sizeof(zeros));
 
     auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
-    hookManager_->shouldSkipGlobalFreed_ = true;
-    hookManager_->validLiveData_.clear();
+    ctx->shouldSkipGlobalFreed_ = true;
+    ctx->validLiveData_.clear();
     hookManager_->RefreshValidLiveDataFromFile(ctx, fd);
     close(fd);
 
-    EXPECT_EQ(hookManager_->validLiveData_.count(reinterpret_cast<void*>(crashRecordAddr)), 1u);
-    EXPECT_FALSE(ShouldSkipRecord(&mallocRec, hookManager_->validLiveData_));
+    EXPECT_EQ(ctx->validLiveData_.count(reinterpret_cast<void*>(crashRecordAddr)), 1u);
+    EXPECT_FALSE(ShouldSkipRecord(&mallocRec, ctx->validLiveData_));
 }
 
 /*
@@ -957,11 +957,11 @@ HWTEST_F(HookManagerMemLeakTest, RefreshValidLiveDataFromFile_CrashHeaderWithQue
     auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
     ctx->PushBackFdQueue(fd);
     ctx->PushBackFdQueue(dummyQueuedFd);
-    hookManager_->shouldSkipGlobalFreed_ = true;
-    hookManager_->validLiveData_.clear();
+    ctx->shouldSkipGlobalFreed_ = true;
+    ctx->validLiveData_.clear();
     hookManager_->RefreshValidLiveDataFromFile(ctx, fd);
     close(fd);
 
-    EXPECT_EQ(hookManager_->validLiveData_.count(reinterpret_cast<void*>(crashRecordAddr)), 0u);
+    EXPECT_EQ(ctx->validLiveData_.count(reinterpret_cast<void*>(crashRecordAddr)), 0u);
 }
 } // namespace

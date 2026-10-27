@@ -1531,13 +1531,16 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
             }
         }
         // Send unique_stack_table fd for async stack collection
-        if (clientConfig.asyncStackEnable && iter->second->hookMgr->uniqueTableBlock_ != nullptr) {
-            int uniqueTableFd = iter->second->hookMgr->uniqueTableBlock_->GetfileDescriptor();
+        if (clientConfig.asyncStackEnable) {
+            int uniqueTableFd = iter->second->hookMgr->GetAsyncStackFd(peerConfig, bundleName);
+            if (uniqueTableFd < 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: async stack fd unavailable for pid=%d", peerConfig);
+                CloseSocketFd(static_cast<pid_t>(peerConfig));
+                return false;
+            }
             context.SendFileDescriptor(uniqueTableFd);
             PROFILER_LOG_INFO(LOG_CORE, "ProtocolProc: sent unique_stack_table fd=%d to pid=%d",
                 uniqueTableFd, peerConfig);
-        } else if (clientConfig.asyncStackEnable) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: uniqueTableBlock_ is nullptr for pid=%d", peerConfig);
         }
         if (!SendMemLeakFd(context, *(iter->second->hookMgr), clientConfig)) {
             CloseSocketFd(static_cast<pid_t>(peerConfig));

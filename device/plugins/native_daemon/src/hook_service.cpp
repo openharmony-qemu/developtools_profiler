@@ -228,16 +228,16 @@ bool HookService::SendPeerFds(SocketContext &context, int32_t peerConfig, const 
     return SendSharedMemoryFds(context, peerConfig, procName);
 }
 
-bool HookService::SendAsyncStackFd(SocketContext &context)
+bool HookService::SendAsyncStackFd(SocketContext &context, int32_t pid, const std::string& name)
 {
     if (!clientConfig_.asyncStackEnable) {
         return true;
     }
-    if (hookMgr_->uniqueTableBlock_ == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc uniqueTableBlock_ nullptr");
+    int fd = hookMgr_->GetAsyncStackFd(pid, name);
+    if (fd < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc async stack fd unavailable for pid=%d", pid);
         return false;
     }
-    int fd = hookMgr_->uniqueTableBlock_->GetfileDescriptor();
     context.SendFileDescriptor(fd);
     return true;
 }
@@ -364,7 +364,8 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
             CloseSocketFd(static_cast<pid_t>(peerConfig));
             return false;
         }
-        if (!SendPeerFds(context, peerConfig, procName) || !SendAsyncStackFd(context) || !SendMemLeakFd(context)) {
+        if (!SendPeerFds(context, peerConfig, procName) ||
+            !SendAsyncStackFd(context, peerConfig, procName) || !SendMemLeakFd(context)) {
             sendLock.unlock();
             CloseSocketFd(static_cast<pid_t>(peerConfig));
             return false;

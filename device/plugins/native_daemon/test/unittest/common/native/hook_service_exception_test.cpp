@@ -514,13 +514,13 @@ HWTEST_F(HookServiceExceptionTest, SendOptionalFdsHandleDisabledAndMissingResour
     clientConfig_.asyncStackEnable = false;
     clientConfig_.memLeakFormat = MemLeakFormat::TYPE_DISABLE;
     hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
-    EXPECT_TRUE(hookService_->SendAsyncStackFd(socketContext));
+    EXPECT_TRUE(hookService_->SendAsyncStackFd(socketContext, getpid(), ""));
     EXPECT_TRUE(hookService_->SendMemLeakFd(socketContext));
 
     clientConfig_.asyncStackEnable = true;
     clientConfig_.memLeakFormat = MemLeakFormat::TYPE_SNAPSHOT;
     hookService_ = std::make_shared<HookService>(clientConfig_, hookManager_);
-    EXPECT_FALSE(hookService_->SendAsyncStackFd(socketContext));
+    EXPECT_FALSE(hookService_->SendAsyncStackFd(socketContext, getpid(), ""));
     EXPECT_FALSE(hookService_->SendMemLeakFd(socketContext));
 }
 

@@ -4488,7 +4488,7 @@ HWTEST_F(StackPreprocessTest, GetPcsByStackIdHandlesZeroAndNonZeroIds, TestSize.
     std::vector<uintptr_t> pcs;
 
     EXPECT_TRUE(preprocess.GetPcsByStackId({0}, pcs, "zero stack id"));
-    EXPECT_TRUE(preprocess.GetPcsByStackId({0xFFFFFF}, pcs, "non-zero stack id"));
+    EXPECT_FALSE(preprocess.GetPcsByStackId({0xFFFFFF}, pcs, "unbound stack table"));
 }
 
 HWTEST_F(StackPreprocessTest, FindCallStackIdHandlesAsyncCacheHitAndMiss, TestSize.Level0)
