@@ -29,32 +29,32 @@ namespace mem_analyzer {
 // ── ArkTS class analysis types (shared with arkts_analyzer.hpp) ──
 
 struct NativeRefEntry {
-    HtraceEventType handle_type; // globalhandle or localhandle
-    long long call_stack_id;     // maps to CallStack::id
+    HtraceEventType handleType; // globalhandle or localhandle
+    long long callStackId;     // maps to CallStack::id
     std::vector<std::string> addrs;
 };
 
 struct ArkTsInstance {
     uint32_t id;                 // heapsnapshot node id
-    long long shallow_size;
-    long long retained_size;
-    std::vector<NativeRefEntry> native_ref;
+    long long shallowSize;
+    long long retainedSize;
+    std::vector<NativeRefEntry> nativeRef;
 };
 
 struct ArkTsClass {
     std::string name;
-    long long shallow_size;
-    long long retained_size;
+    long long shallowSize;
+    long long retainedSize;
     std::vector<ArkTsInstance> instances;
 };
 
 struct AnomalyCounts {
     int multi = 0;
-    int no_node = 0;
-    int missing_node = 0;
-    int invalid_addr = 0;
+    int noNode = 0;
+    int missingNode = 0;
+    int invalidAddr = 0;
     int duplicate = 0;
-    int addr_file_invalid = 0;
+    int addrFileInvalid = 0;
 };
 
 // ── Parse result for tshandle pipeline ──
@@ -66,17 +66,19 @@ struct AnomalyCounts {
  */
 struct TshandleParseResult {
     TraceDB db;
-    std::string parsed_at;    // timestamp for report display
+    std::string parsedAt;    // timestamp for report display
     // ArkTS classes (filled when rawheap is available)
-    std::vector<ArkTsClass> arkts_classes;
-    AnomalyCounts anomaly_counts;
-    std::vector<std::string> anomaly_lines;
+    std::vector<ArkTsClass> arktsClasses;
+    AnomalyCounts anomalyCounts;
+    std::vector<std::string> anomalyLines;
 
     // Convenience accessors — tshandle always uses ResolvedCallStackList
-    std::vector<ResolvedCallStack>& call_stacks() {
+    std::vector<ResolvedCallStack>& CallStacks()
+    {
         return std::get<ResolvedCallStackList>(db.stacks).stacks;
     }
-    const std::vector<ResolvedCallStack>& call_stacks() const {
+    const std::vector<ResolvedCallStack>& CallStacks() const
+    {
         return std::get<ResolvedCallStackList>(db.stacks).stacks;
     }
 };
@@ -85,6 +87,6 @@ struct TshandleParseResult {
  * 处理 trace_streamer 生成的 SQLite DB，提取 ARK handle 调用栈。
  * 返回 TraceDB，与 process_htrace_db 一致。
  */
-TraceDB process_tshandle_db(const std::string& db_path);
+TraceDB ProcessTshandleDb(const std::string& dbPath);
 
 } // namespace mem_analyzer

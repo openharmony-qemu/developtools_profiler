@@ -25,32 +25,38 @@ namespace fs = std::filesystem;
 
 namespace mem_analyzer {
 
-bool rawheap_to_heapsnapshot(const std::string& rawheap_path,
-                             const std::string& output_heapsnapshot,
+bool RawheapToHeapsnapshot(const std::string& rawheapPath,
+                             const std::string& outputHeapsnapshot,
                              std::string* error) {
-    const std::string translator = platform::get_rawheap_translator_path();
-    if (translator.empty() || !platform::file_exists(translator)) {
-        if (error) *error = "rawheap_translator not found at: " + translator;
+    const std::string translator = platform::GetRawheapTranslatorPath();
+    if (translator.empty() || !platform::FileExists(translator)) {
+        if (error) {
+            *error = "rawheap_translator not found at: " + translator;
+        }
         return false;
     }
 
     // 输出父目录（幂等；创建失败不阻断——translator 可能自建或目录已存在）。
     std::error_code ec;
-    fs::create_directories(path_from_utf8(output_heapsnapshot).parent_path(), ec);
+    fs::create_directories(PathFromUtf8(outputHeapsnapshot).parent_path(), ec);
 
-    log::logd("[rawheap_translator] ", translator, " ", platform::absolute_path(rawheap_path),
-              " ", platform::absolute_path(output_heapsnapshot));
+    log::Logd("[rawheap_translator] ", translator, " ", platform::AbsolutePath(rawheapPath),
+              " ", platform::AbsolutePath(outputHeapsnapshot));
 
-    const int result = platform::run_process_with_spinner(
+    const int result = platform::RunProcessWithSpinner(
         translator,
-        {platform::absolute_path(rawheap_path), platform::absolute_path(output_heapsnapshot)},
+        {platform::AbsolutePath(rawheapPath), platform::AbsolutePath(outputHeapsnapshot)},
         "Running rawheap_translator");
     if (result != 0) {
-        if (error) *error = "rawheap_translator failed with code: " + std::to_string(result);
+        if (error) {
+            *error = "rawheap_translator failed with code: " + std::to_string(result);
+        }
         return false;
     }
-    if (!platform::file_exists(output_heapsnapshot)) {
-        if (error) *error = "rawheap_translator exited 0 but no output file";
+    if (!platform::FileExists(outputHeapsnapshot)) {
+        if (error) {
+            *error = "rawheap_translator exited 0 but no output file";
+        }
         return false;
     }
     return true;

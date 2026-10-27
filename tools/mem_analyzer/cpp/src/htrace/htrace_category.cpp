@@ -18,7 +18,8 @@
 
 namespace mem_analyzer {
 
-const std::vector<HtraceCategorySpec>& htrace_categories() {
+const std::vector<HtraceCategorySpec>& HtraceCategories()
+{
     // ─────────────────────────────────────────────────────────────────────────
     // 描述符表：全仓唯一一处枚举「有哪些 category、各自长什么样」的地方。
     //
@@ -86,15 +87,21 @@ const std::vector<HtraceCategorySpec>& htrace_categories() {
     return specs;
 }
 
-const HtraceCategorySpec* htrace_find_category(const std::string& name) noexcept {
-    for (const auto& spec : htrace_categories()) {
-        if (spec.name == name) return &spec;
+const HtraceCategorySpec* HtraceFindCategory(const std::string& name) noexcept
+{
+    for (const auto& spec : HtraceCategories()) {
+        if (spec.name == name) {
+            return &spec;
+        }
     }
     return nullptr;
 }
 
-const HtraceCategorySpec& htrace_category(const std::string& name) {
-    if (const auto* spec = htrace_find_category(name)) return *spec;
+const HtraceCategorySpec& HtraceCategory(const std::string& name)
+{
+    if (const auto* spec = HtraceFindCategory(name)) {
+        return *spec;
+    }
     throw std::invalid_argument("unknown htrace category: " + name);
 }
 

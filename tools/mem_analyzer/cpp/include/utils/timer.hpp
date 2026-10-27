@@ -40,38 +40,43 @@ public:
     explicit StageTimer(const std::string& tag) : tag_(tag), start_(clock::now()), last_(start_) {}
 
     /// Print a stage entry marker and start timing for it
-    void stage(const std::string& msg) {
-        log::logi_minor("  [", tag_, "] -- ", msg);
+    void stage(const std::string& msg)
+    {
+        log::LogiMinor("  [", tag_, "] -- ", msg);
         last_ = clock::now();
     }
 
     /// Print elapsed since last tick/stage (or start), and update last_
-    void tick(const std::string& label, const std::string& extra = "") {
+    void tick(const std::string& label, const std::string& extra = "")
+    {
         auto now = clock::now();
         auto elapsed = std::chrono::duration_cast<ms>(now - last_).count();
         if (extra.empty()) {
-            log::logi_minor("    [", tag_, "] ", label, ": ", elapsed, "ms");
+            log::LogiMinor("    [", tag_, "] ", label, ": ", elapsed, "ms");
         } else {
-            log::logi_minor("    [", tag_, "] ", label, ": ", elapsed, "ms (", extra, ")");
+            log::LogiMinor("    [", tag_, "] ", label, ": ", elapsed, "ms (", extra, ")");
         }
         last_ = now;
     }
 
     /// Print total since start, no extra label needed
-    void done() {
+    void done()
+    {
         auto now = clock::now();
         auto elapsed = std::chrono::duration_cast<ms>(now - start_).count();
-        log::logi_minor("    [", tag_, "] done: ", elapsed, "ms");
+        log::LogiMinor("    [", tag_, "] done: ", elapsed, "ms");
         last_ = now;
     }
 
     /// Get elapsed since start (no print)
-    long long elapsed_ms() const {
+    long long ElapsedMs() const
+    {
         return std::chrono::duration_cast<ms>(clock::now() - start_).count();
     }
 
     /// Get elapsed since last tick (no print)
-    long long since_last_ms() const {
+    long long SinceLastMs() const
+    {
         return std::chrono::duration_cast<ms>(clock::now() - last_).count();
     }
 

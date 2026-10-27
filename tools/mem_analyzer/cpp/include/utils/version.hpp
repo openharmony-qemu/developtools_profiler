@@ -17,6 +17,6 @@
 
 namespace mem_analyzer {
 
-std::string get_version();
+std::string GetVersion();
 
 } // namespace mem_analyzer

@@ -27,7 +27,7 @@ namespace mem_analyzer {
 /// @param smap        sourceMap 索引（可为空指针，跳过路径还原）
 /// @param ncache       nameCache 索引（可为空指针，跳过名字还原）
 /// @return 成功写出返回 true；文件不存在、解析失败或写出失败返回 false
-bool deobfuscate_heapsnapshot(const std::string& input_path, const std::string& output_path,
+bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& outputPath,
                               const SourceMapIndex* smap, const NameCacheIndex* ncache);
 
 /// 加载 sourceMap / nameCache 索引并对 heapsnapshot 执行反混淆的公共时序：
@@ -38,8 +38,8 @@ bool deobfuscate_heapsnapshot(const std::string& input_path, const std::string& 
 ///         两个目录均为空时返回 false（调用方应直接降级为原始输入，不报警告）；
 ///         任一目录非空但索引加载为空时打印警告并返回 false（降级为原始输入）；
 ///         反混淆失败时返回 false。
-bool deobfuscate_with_indices(const std::string& input_path, const std::string& output_path,
-                              const std::string& sourcemap_dir,
-                              const std::string& namecache_dir);
+bool DeobfuscateWithIndices(const std::string& inputPath, const std::string& outputPath,
+                              const std::string& sourcemapDir,
+                              const std::string& namecacheDir);
 
 } // namespace mem_analyzer

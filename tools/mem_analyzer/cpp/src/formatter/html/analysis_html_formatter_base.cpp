@@ -17,7 +17,7 @@
 #include "formatter/html/components/chart_module.hpp"
 #include "formatter/html/components/version.hpp"
 
-using namespace mem_analyzer::html_analysis;
+using namespace mem_analyzer::htmlAnalysis;
 
 namespace mem_analyzer {
 
@@ -29,12 +29,15 @@ namespace {
 constexpr size_t kDataJsonPlaceholderLen = sizeof("__DATA_JSON__") - 1;
 }  // namespace
 
-std::string AnalysisHtmlFormatterBase::buildTabBarHTML(const std::vector<TabGroup>& groups) {
+std::string AnalysisHtmlFormatterBase::buildTabBarHTML(const std::vector<TabGroup>& groups)
+{
     std::vector<std::string> tabItems;
     bool firstActiveSet = false;
 
     for (const auto& group : groups) {
-        if (group.symbols.empty()) continue;
+        if (group.symbols.empty()) {
+            continue;
+        }
         std::string cls = firstActiveSet ? "" : " active";
         firstActiveSet = true;
         tabItems.push_back(
@@ -46,7 +49,9 @@ std::string AnalysisHtmlFormatterBase::buildTabBarHTML(const std::vector<TabGrou
     if (!tabItems.empty()) {
         std::string tabBarHTML = "<div class=\"tab-bar\">";
         for (size_t i = 0; i < tabItems.size(); i++) {
-            if (i > 0) tabBarHTML += "\n";
+            if (i > 0) {
+                tabBarHTML += "\n";
+            }
             tabBarHTML += tabItems[i];
         }
         tabBarHTML += "</div>";
@@ -55,13 +60,16 @@ std::string AnalysisHtmlFormatterBase::buildTabBarHTML(const std::vector<TabGrou
     return "<div class=\"empty-msg\">无分析数据</div>";
 }
 
-std::string AnalysisHtmlFormatterBase::buildTabContentHTML(const std::vector<TabGroup>& groups, long long totalSize, bool countMode) {
+std::string AnalysisHtmlFormatterBase::buildTabContentHTML(const std::vector<TabGroup>& groups, long long totalSize, bool countMode)
+{
     std::string result;
     for (const auto& group : groups) {
-        if (group.symbols.empty()) continue;
+        if (group.symbols.empty()) {
+            continue;
+        }
 
-        std::string tableRows = buildTopTableRows(group.symbols, group.startIndex, countMode);
-        std::string detailSections = buildDetailSections(group.symbols, group.startIndex, totalSize, countMode);
+        std::string tableRows = BuildTopTableRows(group.symbols, group.startIndex, countMode);
+        std::string detailSections = BuildDetailSections(group.symbols, group.startIndex, totalSize, countMode);
 
         result += "<div class=\"tab-content\" id=\"" + group.tabId + "\">\n"
             "  <table class=\"top-table\">\n"
@@ -79,23 +87,24 @@ std::string AnalysisHtmlFormatterBase::buildTabContentHTML(const std::vector<Tab
 // 原先各写一遍，新增占位符极易漏改其中一处，这里收敛为唯一入口。
 // 各占位符只出现在模板的固定片段（如 __CHART_MODULE_CSS__ 只在头部、__CHART_MODULE_JS__
 // 只在尾部），对不含该占位符的片段替换是空操作，故可对任意片段统一调用。
-void AnalysisHtmlFormatterBase::applyCommonPlaceholders(std::string& htmlFrag, long long totalSize, bool countMode) {
+void AnalysisHtmlFormatterBase::applyCommonPlaceholders(std::string& htmlFrag, long long totalSize, bool countMode)
+{
     // 共享图表模块（chart_module）
-    htmlFrag = replace_all(htmlFrag, "__CHART_MODULE_CSS__", chart_module_css());
-    htmlFrag = replace_all(htmlFrag, "__CHART_MODULE_JS__", chart_module_js());
+    htmlFrag = ReplaceAll(htmlFrag, "__CHART_MODULE_CSS__", ChartModuleCss());
+    htmlFrag = ReplaceAll(htmlFrag, "__CHART_MODULE_JS__", ChartModuleJs());
     // 全局开关
-    htmlFrag = replace_all(htmlFrag, "__TOTAL_SIZE__", std::to_string(totalSize));
-    htmlFrag = replace_all(htmlFrag, "__UNIT_COUNT_MODE__", countMode ? "true" : "false");
-    htmlFrag = replace_all(htmlFrag, "__AUTO_EXPAND__", "true");
+    htmlFrag = ReplaceAll(htmlFrag, "__TOTAL_SIZE__", std::to_string(totalSize));
+    htmlFrag = ReplaceAll(htmlFrag, "__UNIT_COUNT_MODE__", countMode ? "true" : "false");
+    htmlFrag = ReplaceAll(htmlFrag, "__AUTO_EXPAND__", "true");
     // 导航栏（navigation_bar）
-    htmlFrag = replace_all(htmlFrag, "__NAV_BAR_FORMAT__", nav_bar_format());
-    htmlFrag = replace_all(htmlFrag, "__NAV_BAR_TITLE__", nav_bar_title());
-    htmlFrag = replace_all(htmlFrag, "__NAV_BAR_DOC_CONTENT__", nav_bar_doc_content());
-    htmlFrag = replace_all(htmlFrag, "__NAV_BAR_HELP_CENTER_CONTENT__", nav_bar_help_center_content());
-    htmlFrag = replace_all(htmlFrag, "__NAV_BAR_SWITCH_NAV_FUNC__", nav_bar_switch_nav_func());
+    htmlFrag = ReplaceAll(htmlFrag, "__NAV_BAR_FORMAT__", NavBarFormat());
+    htmlFrag = ReplaceAll(htmlFrag, "__NAV_BAR_TITLE__", NavBarTitle());
+    htmlFrag = ReplaceAll(htmlFrag, "__NAV_BAR_DOC_CONTENT__", NavBarDocContent());
+    htmlFrag = ReplaceAll(htmlFrag, "__NAV_BAR_HELP_CENTER_CONTENT__", NavBarHelpCenterContent());
+    htmlFrag = ReplaceAll(htmlFrag, "__NAV_BAR_SWITCH_NAV_FUNC__", NavBarSwitchNavFunc());
     // 页脚版本
-    htmlFrag = replace_all(htmlFrag, "__VERSION_FORMAT__", setVersionFormat());
-    htmlFrag = replace_all(htmlFrag, "__VERSION_CONTENT__", buildVersionContent());
+    htmlFrag = ReplaceAll(htmlFrag, "__VERSION_FORMAT__", setVersionFormat());
+    htmlFrag = ReplaceAll(htmlFrag, "__VERSION_CONTENT__", buildVersionContent());
 }
 
 // Streaming version: outputs each SymbolDataEntry individually to avoid building full dataJSONArr
@@ -119,11 +128,11 @@ void AnalysisHtmlFormatterBase::fillHTMLTemplateStreamedDirect(
     std::string afterJson = html.substr(jsonPos + kDataJsonPlaceholderLen);
 
     // Replace placeholders in before part
-    beforeJson = replace_all(beforeJson, "__DATA_JSON__", "");
-    beforeJson = replace_all(beforeJson, "__TAB_BAR_HTML__", tabBarHTML);
-    beforeJson = replace_all(beforeJson, "__TAB_CONTENT_HTML__", tabContentHTML);
-    beforeJson = replace_all(beforeJson, "__TITLE__", title);
-    beforeJson = replace_all(beforeJson, "__META_ITEMS_HTML__", metaDataItemsHTML);
+    beforeJson = ReplaceAll(beforeJson, "__DATA_JSON__", "");
+    beforeJson = ReplaceAll(beforeJson, "__TAB_BAR_HTML__", tabBarHTML);
+    beforeJson = ReplaceAll(beforeJson, "__TAB_CONTENT_HTML__", tabContentHTML);
+    beforeJson = ReplaceAll(beforeJson, "__TITLE__", title);
+    beforeJson = ReplaceAll(beforeJson, "__META_ITEMS_HTML__", metaDataItemsHTML);
     applyCommonPlaceholders(beforeJson, totalSize, countMode);
     applyCommonPlaceholders(afterJson, totalSize, countMode);
 
@@ -135,12 +144,14 @@ void AnalysisHtmlFormatterBase::fillHTMLTemplateStreamedDirect(
     for (auto& group : groups) {
         size_t entryIdx = 0;
         for (auto& entry : group.symbols) {
-            if (!firstEntry) out << ",";
+            if (!firstEntry) {
+                out << ",";
+            }
             firstEntry = false;
             if (fillTree) {
                 fillTree(entry, groupIdx, entryIdx);
             }
-            json entryJson = buildSymbolDataEntryJSON(entry);
+            json entryJson = BuildSymbolDataEntryJSON(entry);
             out << entryJson;
             entryIdx++;
         }
@@ -166,10 +177,10 @@ void AnalysisHtmlFormatterBase::fillHTMLTemplateStreamed(
     std::string beforeJson = html.substr(0, jsonPos);
     std::string afterJson = html.substr(jsonPos + kDataJsonPlaceholderLen);
 
-    beforeJson = replace_all(beforeJson, "__TAB_BAR_HTML__", tabBarHTML);
-    beforeJson = replace_all(beforeJson, "__TAB_CONTENT_HTML__", tabContentHTML);
-    beforeJson = replace_all(beforeJson, "__TITLE__", title);
-    beforeJson = replace_all(beforeJson, "__META_ITEMS_HTML__", metaDataItemsHTML);
+    beforeJson = ReplaceAll(beforeJson, "__TAB_BAR_HTML__", tabBarHTML);
+    beforeJson = ReplaceAll(beforeJson, "__TAB_CONTENT_HTML__", tabContentHTML);
+    beforeJson = ReplaceAll(beforeJson, "__TITLE__", title);
+    beforeJson = ReplaceAll(beforeJson, "__META_ITEMS_HTML__", metaDataItemsHTML);
     applyCommonPlaceholders(beforeJson, totalSize, countMode);
     applyCommonPlaceholders(afterJson, totalSize, countMode);
 
@@ -179,13 +190,15 @@ void AnalysisHtmlFormatterBase::fillHTMLTemplateStreamed(
 }
 
 // 设置格式（转发到 version 组件）
-std::string AnalysisHtmlFormatterBase::setVersionFormat() {
-    return version_format();
+std::string AnalysisHtmlFormatterBase::setVersionFormat()
+{
+    return VersionFormat();
 }
 
 // 构建内容（转发到 version 组件）
-std::string AnalysisHtmlFormatterBase::buildVersionContent() {
-    return version_content();
+std::string AnalysisHtmlFormatterBase::buildVersionContent()
+{
+    return VersionContent();
 }
 
 } // namespace mem_analyzer

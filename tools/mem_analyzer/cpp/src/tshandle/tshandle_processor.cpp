@@ -32,44 +32,48 @@
 namespace mem_analyzer {
 
 // ── Helper: split string by delimiter ─────────────────────────────
-static std::vector<std::string> split(const std::string& s, char delim) {
+static std::vector<std::string> split(const std::string& s, char delim)
+{
     std::vector<std::string> parts;
     std::istringstream iss(s);
     std::string token;
     while (std::getline(iss, token, delim)) {
-        if (!token.empty()) parts.push_back(token);
+        if (!token.empty()) {
+            parts.push_back(token);
+        }
     }
     return parts;
 }
 
 // ── Main processor ─────────────────────────────────────────────────
-TraceDB process_tshandle_db(const std::string& db_path) {
-    if (!platform::file_exists(db_path)) {
-        throw std::runtime_error("DB file not found: " + db_path);
+TraceDB ProcessTshandleDb(const std::string& dbPath)
+{
+    if (!platform::FileExists(dbPath)) {
+        throw std::runtime_error("DB file not found: " + dbPath);
     }
 
     sqlite3* db = nullptr;
     {
-        db = platform::open_sqlite3_db(db_path);
+        db = platform::OpenSqlite3Db(dbPath);
     }
 
     try {
         StageTimer timer("TS DB");
         TraceDB result;
         result.stacks = ResolvedCallStackList{};
-        auto& call_stacks = std::get<ResolvedCallStackList>(result.stacks).stacks;
+        auto& CallStacks = std::get<ResolvedCallStackList>(result.stacks).stacks;
         auto& meta = result.meta;
-        bool is_statistics = false;
+        bool isStatistics = false;
 
         // 1. Detect mode + meta（时间/模式/进程名）由 query_trace_meta 统一读取
         timer.stage("Detecting meta");
-        meta = query_trace_meta(db);
-        is_statistics = (meta.mode == "statistic");
+        meta = QueryTraceMeta(db);
+        isStatistics = (meta.mode == "statistic");
         timer.tick("detect_meta", meta.mode);
 
         // 2. Load data_dict for symbol/file resolution
         timer.stage("Loading data_dict");
-        std::unordered_map<int, std::string> data_dict;
+        std::unordered_map<int, std::string> dataDict;
         {
             sqlite3_stmt* stmt = nullptr;
             const char* sql = "SELECT id, data FROM data_dict";
@@ -78,27 +82,29 @@ TraceDB process_tshandle_db(const std::string& db_path) {
                 while (sqlite3_step(stmt) == SQLITE_ROW) {
                     int id = sqlite3_column_int(stmt, 0);
                     auto data = (const char*)sqlite3_column_text(stmt, 1);
-                    if (data) data_dict[id] = platform::sanitize_utf8(data);
+                    if (data) {
+                        dataDict[id] = platform::SanitizeUtf8(data);
+                    }
                 }
             } else {
-                log::loge("Error: prepare data dict failed:sql=", sql, ", err=", sqlite3_errmsg(db));
+                log::Loge("Error: prepare data dict failed:sql=", sql, ", err=", sqlite3_errmsg(db));
             }
         }
-        timer.tick("data_dict", std::to_string(data_dict.size()) + " entries");
+        timer.tick("data_dict", std::to_string(dataDict.size()) + " entries");
 
         // 3. Query call stacks
         timer.stage("Querying call stacks");
         struct ChainGroup {
-            int callchain_id;
+            int callchainId;
             int type;                // 17 or 18
-            std::vector<std::string> existing_addrs;
-            long long existing_size;
+            std::vector<std::string> existingAddrs;
+            long long existingSize;
         };
         std::vector<ChainGroup> groups;
 
-        if (is_statistics) {
+        if (isStatistics) {
             // ── Statistic mode: native_hook_statistic WHERE type IN (17, 18) ──
-            const char* stack_sql =
+            const char* stackSql =
                 "SELECT a.callchain_id, a.type, b.data AS existing_addrs,"
                 "  (a.apply_size - a.release_size) AS existing_size"
                 "  FROM ("
@@ -113,25 +119,25 @@ TraceDB process_tshandle_db(const std::string& db_path) {
                 "  ORDER BY existing_size DESC";
 
             sqlite3_stmt* stmt = nullptr;
-            if (sqlite3_prepare_v2(db, stack_sql, -1, &stmt, nullptr) == SQLITE_OK) {
+            if (sqlite3_prepare_v2(db, stackSql, -1, &stmt, nullptr) == SQLITE_OK) {
                 StmtGuard guard(stmt);
                 while (sqlite3_step(stmt) == SQLITE_ROW) {
                     ChainGroup g;
-                    g.callchain_id = sqlite3_column_int(stmt, 0);
+                    g.callchainId = sqlite3_column_int(stmt, 0);
                     g.type = sqlite3_column_int(stmt, 1);
-                    auto existing_addrs_str = (const char*)sqlite3_column_text(stmt, 2);
-                    if (existing_addrs_str) {
-                        g.existing_addrs = split(existing_addrs_str, ',');
+                    auto existingAddrsStr = (const char*)sqlite3_column_text(stmt, 2);
+                    if (existingAddrsStr) {
+                        g.existingAddrs = split(existingAddrsStr, ',');
                     }
-                    g.existing_size = sqlite3_column_int64(stmt, 3);
+                    g.existingSize = sqlite3_column_int64(stmt, 3);
                     groups.push_back(g);
                 }
             } else {
-                log::loge("Error: prepare stastics failed:sql=", stack_sql, ", err=", sqlite3_errmsg(db));
+                log::Loge("Error: prepare stastics failed:sql=", stackSql, ", err=", sqlite3_errmsg(db));
             }
         } else {
             // ── Detail mode: native_hook with ARK handle events ──
-            const char* stack_sql =
+            const char* stackSql =
                 "SELECT a.callchain_id,"
                 "  CASE a.event_type"
                 "    WHEN 'ARK_GLOBAL_HANDLE_Alloc_Event' THEN 17"
@@ -147,21 +153,21 @@ TraceDB process_tshandle_db(const std::string& db_path) {
                 "  ORDER BY existing_size DESC";
 
             sqlite3_stmt* stmt = nullptr;
-            if (sqlite3_prepare_v2(db, stack_sql, -1, &stmt, nullptr) == SQLITE_OK) {
+            if (sqlite3_prepare_v2(db, stackSql, -1, &stmt, nullptr) == SQLITE_OK) {
                 StmtGuard guard(stmt);
                 while (sqlite3_step(stmt) == SQLITE_ROW) {
                     ChainGroup g;
-                    g.callchain_id = sqlite3_column_int(stmt, 0);
+                    g.callchainId = sqlite3_column_int(stmt, 0);
                     g.type = sqlite3_column_int(stmt, 1);
-                    auto existing_addrs_str = (const char*)sqlite3_column_text(stmt, 2);
-                    if (existing_addrs_str) {
-                        g.existing_addrs = split(existing_addrs_str, ',');
+                    auto existingAddrsStr = (const char*)sqlite3_column_text(stmt, 2);
+                    if (existingAddrsStr) {
+                        g.existingAddrs = split(existingAddrsStr, ',');
                     }
-                    g.existing_size = sqlite3_column_int64(stmt, 3);
+                    g.existingSize = sqlite3_column_int64(stmt, 3);
                     groups.push_back(g);
                 }
             } else {
-                log::loge("Error: prepare detail failed:sql=", stack_sql, ", err=", sqlite3_errmsg(db));
+                log::Loge("Error: prepare detail failed:sql=", stackSql, ", err=", sqlite3_errmsg(db));
             }
         }
 
@@ -172,81 +178,83 @@ TraceDB process_tshandle_db(const std::string& db_path) {
 
         // 4. Query frames (shared reader; chain filter pushed down via subquery)
         timer.stage("Querying frames");
-        std::string chain_select;
-        if (is_statistics) {
-            chain_select =
+        std::string chainSelect;
+        if (isStatistics) {
+            chainSelect =
                 "SELECT callchain_id FROM native_hook_statistic WHERE type IN (17, 18)";
         } else {
-            chain_select =
+            chainSelect =
                 "SELECT callchain_id FROM native_hook "
                 "WHERE event_type = 'ARK_LOCAL_HANDLE_Alloc_Event' "
                 "OR (event_type = 'ARK_GLOBAL_HANDLE_Alloc_Event' AND end_ts IS NULL)";
         }
-        auto frames_by_chain = read_frames(db, chain_select);
+        auto framesByChain = ReadFrames(db, chainSelect);
 
-        if (frames_by_chain.empty()) {
+        if (framesByChain.empty()) {
             throw std::runtime_error("Failed to query frames");
         }
-        timer.tick("frames", std::to_string(frames_by_chain.size()) + " chains");
+        timer.tick("frames", std::to_string(framesByChain.size()) + " chains");
 
         // 5. Build call stack entries
         timer.stage("Building call stack entries");
         for (const auto& g : groups) {
             ResolvedCallStack cs;
-            cs.id = g.callchain_id;
+            cs.id = g.callchainId;
             if (g.type == 17) {
                 cs.type = HtraceEventType::ARK_GLOBAL_HANDLE;
-            } else if (g.type == 18) {
+            } else if (g.type == 18)
+            {
                 cs.type = HtraceEventType::ARK_LOCAL_HANDLE;
             } else {
                 cs.type = HtraceEventType::UNKNOWN;
             }
-            cs.existing_size = g.existing_size;
-            cs.existing_addrs = std::make_shared<std::vector<std::string>>(std::move(g.existing_addrs));
+            cs.existingSize = g.existingSize;
+            cs.existingAddrs = std::make_shared<std::vector<std::string>>(std::move(g.existingAddrs));
 
             // Look up frames for this chain
-            auto it = frames_by_chain.find(g.callchain_id);
-            if (it != frames_by_chain.end()) {
+            auto it = framesByChain.find(g.callchainId);
+            if (it != framesByChain.end()) {
                 for (const auto& fr : it->second) {
                     ResolvedStackFrame tf;
                     tf.depth = fr.depth;
 
-                    auto sym_it = data_dict.find(fr.symbol_id);
-                    tf.symbol = (sym_it != data_dict.end()) ? sym_it->second : "unknown";
+                    auto symIt = dataDict.find(fr.symbolId);
+                    tf.symbol = (symIt != dataDict.end()) ? symIt->second : "unknown";
 
-                    if (fr.file_id_null) {
+                    if (fr.fileIdNull) {
                         tf.lib = "unknown";
                     } else {
-                        auto lib_it = data_dict.find(fr.file_id);
-                        tf.lib = (lib_it != data_dict.end()) ? lib_it->second : "unknown";
+                        auto libIt = dataDict.find(fr.fileId);
+                        tf.lib = (libIt != dataDict.end()) ? libIt->second : "unknown";
                     }
 
-                    if (fr.build_id_null) {
-                        tf.build_id = "";
+                    if (fr.buildIdNull) {
+                        tf.buildId = "";
                     } else {
-                        auto build_it = data_dict.find(fr.build_id);
-                        tf.build_id = (build_it != data_dict.end()) ? build_it->second : "";
+                        auto buildIt = dataDict.find(fr.buildId);
+                        tf.buildId = (buildIt != dataDict.end()) ? buildIt->second : "";
                     }
 
                     // TS: frame.vaddr != null ? `0x${Number(frame.vaddr).toString(16)}` : ''
-                    if (!fr.vaddr_null) {
+                    if (!fr.vaddrNull) {
                         std::stringstream ss;
                         ss << "0x" << std::hex << fr.vaddr;
-                        tf.lib_offset = ss.str();
+                        tf.libOffset = ss.str();
                     }
 
                     cs.frames.push_back(std::move(tf));
                 }
             }
 
-            call_stacks.push_back(std::move(cs));
+            CallStacks.push_back(std::move(cs));
         }
 
         sqlite3_close(db);
-        timer.tick("build_entries", std::to_string(call_stacks.size()) + " stacks");
+        timer.tick("build_entries", std::to_string(CallStacks.size()) + " stacks");
         timer.done();
         return result;
-    } catch (...) {
+    } catch (...)
+    {
         sqlite3_close(db);
         throw;
     }

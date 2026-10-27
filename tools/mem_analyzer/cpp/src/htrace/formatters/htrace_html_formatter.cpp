@@ -31,7 +31,7 @@
 #include <sstream>
 #include <variant>
 
-using namespace mem_analyzer::html_analysis;
+using namespace mem_analyzer::htmlAnalysis;
 
 namespace mem_analyzer {
 namespace {
@@ -41,13 +41,16 @@ namespace {
 // 二级 .sub-tab-content 显隐用内联 style.display（JS 控制，不依赖 CSS 类，避免改共享 HTML_TEMPLATE）。
 
 // FilepageInfo → SymbolDataEntry（info 自包含，flameTree/icicleTree 在 fillTree 懒构建）
-std::vector<SymbolDataEntry> buildFilepageEntries(const HtraceSection& section) {
+std::vector<SymbolDataEntry> buildFilepageEntries(const HtraceSection& section)
+{
     std::vector<SymbolDataEntry> entries;
     entries.reserve(section.rows.size());
     int rank = 1;
     for (const auto& row : section.rows) {
         const auto* fp = std::get_if<FilepageInfo>(&row);
-        if (!fp) continue;
+        if (!fp) {
+            continue;
+        }
         SymbolDataEntry entry;
         entry.info = json{
             {"name", fp->filename},
@@ -66,43 +69,49 @@ std::vector<SymbolDataEntry> buildFilepageEntries(const HtraceSection& section) 
 }
 
 // filepage 文件表格行：详情|大小|次数|占比|文件名
-std::string buildFilepageTableRows(const HtraceSection& section, size_t startIndex, bool countMode) {
+std::string BuildFilepageTableRows(const HtraceSection& section, size_t startIndex, bool countMode)
+{
     std::vector<std::string> rows;
     size_t i = 0;
     for (const auto& row : section.rows) {
         const auto* fp = std::get_if<FilepageInfo>(&row);
-        if (!fp) continue;
+        if (!fp) {
+            continue;
+        }
         size_t idx = startIndex + i;
         std::ostringstream pctSS;
         pctSS << std::fixed << std::setprecision(2) << fp->percentage;
         rows.push_back("<tr>\n"
             "  <td><a onclick=\"showDetail(" + std::to_string(idx) + "); return false;\" class=\"detail-link\">\u8be6\u60c5</a></td>\n"
-            + std::string(countMode ? "" : "  <td class=\"top-size-val\">" + formatSizeText((double)fp->size, false) + "</td>\n")
+            + std::string(countMode ? "" : "  <td class=\"top-size-val\">" + FormatSizeText((double)fp->size, false) + "</td>\n")
             + "  <td class=\"top-count-val\">" + std::to_string(fp->count) + "</td>\n"
             "  <td class=\"top-pct-val\">" + pctSS.str() + "%</td>\n"
-            "  <td class=\"top-func\"><b>" + escapeHtml(fp->filename) + "</b></td>\n"
+            "  <td class=\"top-func\"><b>" + EscapeHtml(fp->filename) + "</b></td>\n"
             "</tr>");
         ++i;
     }
     std::string out;
     for (size_t j = 0; j < rows.size(); j++) {
-        if (j > 0) out += "\n";
+        if (j > 0) {
+            out += "\n";
+        }
         out += rows[j];
     }
     return out;
 }
 
 // filepage 详情：文件名 header + 纯冰柱图（文件为根，无调用链列表）
-std::string buildFilepageDetailSectionContent(const FilepageInfo& fp, size_t idx, bool countMode) {
+std::string BuildFilepageDetailSectionContent(const FilepageInfo& fp, size_t idx, bool countMode)
+{
     std::ostringstream pctSS;
     pctSS << std::fixed << std::setprecision(2) << fp.percentage;
     std::string stats = countMode
         ? ("\u6b21\u6570" + std::to_string(fp.count) + "\uff0c\u5360\u6bd4" + pctSS.str() + "%")
-        : ("\u5927\u5c0f " + formatSizeText((double)fp.size, false) + "\uff0c\u6b21\u6570" + std::to_string(fp.count) + "\uff0c\u5360\u6bd4" + pctSS.str() + "%");
+        : ("\u5927\u5c0f " + FormatSizeText((double)fp.size, false) + "\uff0c\u6b21\u6570" + std::to_string(fp.count) + "\uff0c\u5360\u6bd4" + pctSS.str() + "%");
     return "<div class=\"top-item\" id=\"topItem" + std::to_string(idx) + "\">\n"
         "  <div class=\"top-item-header collapsed\" id=\"topItemHeader" + std::to_string(idx) + "\" onclick=\"toggleDetail(" + std::to_string(idx) + ")\">\n"
         "    <span class=\"arrow\" id=\"topItemArrow" + std::to_string(idx) + "\">&#9654;</span>\n"
-        "    <span class=\"header-rank\">\u6587\u4ef6\uff1a</span><span class=\"header-func\">" + escapeHtml(fp.filename) + "</span>\n"
+        "    <span class=\"header-rank\">\u6587\u4ef6\uff1a</span><span class=\"header-func\">" + EscapeHtml(fp.filename) + "</span>\n"
         "    <div class=\"header-stats\">" + stats + "</div>\n"
         "  </div>\n"
         "  <div class=\"top-item-body\" id=\"topItemBody" + std::to_string(idx) + "\">\n"
@@ -124,24 +133,29 @@ std::string buildFilepageDetailSectionContent(const FilepageInfo& fp, size_t idx
         "</div>";
 }
 
-std::string buildFilepageDetailSections(const HtraceSection& section, size_t startIndex, bool countMode) {
+std::string BuildFilepageDetailSections(const HtraceSection& section, size_t startIndex, bool countMode)
+{
     std::vector<std::string> sections;
     size_t i = 0;
     for (const auto& row : section.rows) {
         const auto* fp = std::get_if<FilepageInfo>(&row);
-        if (!fp) continue;
-        sections.push_back(buildFilepageDetailSectionContent(*fp, startIndex + i, countMode));
+        if (!fp) {
+            continue;
+        }
+        sections.push_back(BuildFilepageDetailSectionContent(*fp, startIndex + i, countMode));
         ++i;
     }
     std::string out;
     for (size_t j = 0; j < sections.size(); j++) {
-        if (j > 0) out += "\n";
+        if (j > 0) {
+            out += "\n";
+        }
         out += sections[j];
     }
     return out;
 }
 
-std::string buildMmapTabContentHTML(const std::vector<TabGroup>& groups,
+std::string BuildMmapTabContentHTML(const std::vector<TabGroup>& groups,
                                     const std::vector<TabGroup>& streamGroups,
                                     const std::vector<const HtraceSection*>& filepageLists,
                                     long long totalSize, bool countMode) {
@@ -151,13 +165,17 @@ std::string buildMmapTabContentHTML(const std::vector<TabGroup>& groups,
         ".sub-tab-item { display: inline-block; padding: 8px 14px 7px; margin-right: 6px; cursor: pointer; font-size: 16px; font-weight: 600; color: #888; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.2s, border-color 0.2s; }\n"
         ".sub-tab-item:hover { color: #e94560; }\n"
         ".sub-tab-item.active { color: #e94560; border-bottom-color: #e94560; }\n";
-    result += help_tooltip_css();
+    result += HelpTooltipCss();
     result += "\n</style>\n";
 
     for (size_t scope = 0; scope < 3; ++scope) {
-        if (scope >= groups.size()) break;
+        if (scope >= groups.size()) {
+            break;
+        }
         const TabGroup& g = groups[scope];
-        if (g.symbols.empty()) continue;  // 一级 tab 无数据则跳过（与 tab bar 一致）
+        if (g.symbols.empty()) {
+            continue;
+        }// 一级 tab 无数据则跳过（与 tab bar 一致）
 
         const TabGroup& anonG = streamGroups[scope];                 // anon 子 tab（scope 对应）
         const TabGroup& filepageG = streamGroups[3 + scope];         // filepage 子 tab（app/system/mixed 对应）
@@ -184,8 +202,8 @@ std::string buildMmapTabContentHTML(const std::vector<TabGroup>& groups,
         if (anonEmpty) {
             result += "    <div class=\"empty-msg\">\u65e0\u76f8\u5173\u6570\u636e</div>\n";
         } else {
-            std::string tableRows = buildTopTableRows(anonG.symbols, anonG.startIndex, countMode);
-            std::string detailSections = buildDetailSections(anonG.symbols, anonG.startIndex, totalSize, countMode);
+            std::string tableRows = BuildTopTableRows(anonG.symbols, anonG.startIndex, countMode);
+            std::string detailSections = BuildDetailSections(anonG.symbols, anonG.startIndex, totalSize, countMode);
             result += "    <table class=\"top-table\">\n"
                 "      <tr><th>\u8be6\u60c5</th>" + std::string(countMode ? "" : "<th>\u5927\u5c0f</th>") + "<th>\u6b21\u6570</th><th>\u5360\u6bd4</th><th>TOP\u51fd\u6570</th><th>\u5b8c\u6574\u8def\u5f84</th></tr>\n"
                 "      " + tableRows + "\n"
@@ -201,8 +219,8 @@ std::string buildMmapTabContentHTML(const std::vector<TabGroup>& groups,
         if (fpEmpty) {
             result += "    <div class=\"empty-msg\">\u65e0\u76f8\u5173\u6570\u636e</div>\n";
         } else {
-            std::string fpRows = buildFilepageTableRows(fps, fpStart, countMode);
-            std::string fpDetails = buildFilepageDetailSections(fps, fpStart, countMode);
+            std::string fpRows = BuildFilepageTableRows(fps, fpStart, countMode);
+            std::string fpDetails = BuildFilepageDetailSections(fps, fpStart, countMode);
             result += "    <table class=\"top-table\">\n"
                 "      <tr><th>\u8be6\u60c5</th>" + std::string(countMode ? "" : "<th>\u5927\u5c0f</th>") + "<th>\u6b21\u6570</th><th>\u5360\u6bd4</th><th>\u6587\u4ef6\u540d</th></tr>\n"
                 "      " + fpRows + "\n"
@@ -227,7 +245,7 @@ std::string buildMmapTabContentHTML(const std::vector<TabGroup>& groups,
         "  if (content) content.style.display = 'block';\n"
         "  MemChart.redrawAll();\n"
         "};\n";
-    result += help_tooltip_js();
+    result += HelpTooltipJs();
     result += "\n</script>\n";
 
     return result;
@@ -240,49 +258,51 @@ struct StreamGroupMeta {
     const HtraceSection* section;
 };
 
-void format_with_stream(std::ostream& out, const HtraceAnalysisOutput& full,
-                        const std::string& file_path, const RunContext& ctx) {
+void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
+                        const std::string& filePath, const RunContext& ctx) {
     StageTimer timer("HTML gen");
 
-    std::string processName = full.process_name;
-    if (processName.empty()) processName = "未知";
+    std::string processName = full.processName;
+    if (processName.empty()) {
+        processName = "未知";
+    }
 
-    long long duration_ns = full.trace_meta.duration_ns;
-    long long start_ms = full.trace_meta.start_time_ms;
-    double duration_seconds = std::round(duration_ns / 1e6) / 1e3;
+    long long durationNs = full.traceMeta.durationNs;
+    long long startMs = full.traceMeta.startTimeMs;
+    double durationSeconds = std::round(durationNs / 1e6) / 1e3;
     std::string duration;
     {
-        std::ostringstream dur_ss;
-        dur_ss << std::fixed << std::setprecision(3) << duration_seconds;
-        duration = dur_ss.str();
+        std::ostringstream durSs;
+        durSs << std::fixed << std::setprecision(3) << durationSeconds;
+        duration = durSs.str();
     }
-    long long totalExistingSize = full.total_leak_size;
+    long long totalExistingSize = full.totalLeakSize;
 
     std::vector<SymbolDataEntry> appSymbolData;
     std::vector<SymbolDataEntry> systemSymbolData;
     std::vector<SymbolDataEntry> mixedSymbolData;
 
     // Build SymbolDataEntry directly from HtraceAnalysisOutput (no JSON round-trip)
-    auto build_entries = [&](const ScopeResult& scope) -> std::vector<SymbolDataEntry> {
+    auto buildEntries = [&](const ScopeResult& scope) -> std::vector<SymbolDataEntry> {
         std::vector<SymbolDataEntry> entries;
-        entries.reserve(scope.symbol_count());
+        entries.reserve(scope.SymbolCount());
         int rank = 1;
         for (const auto& section : scope.sections)
             for (const auto& row : section.rows)
                 if (const auto* ts = std::get_if<TopSymbolInfo>(&row)) {
-                    auto entry = buildSymbolDataEntryFromContextLight(*ts, totalExistingSize, full.data_dict);
+                    auto entry = BuildSymbolDataEntryFromContextLight(*ts, totalExistingSize, full.dataDict);
                     entry.info["rank"] = rank++;
                     entries.push_back(std::move(entry));
                 }
         return entries;
     };
 
-    appSymbolData = build_entries(full.top_symbols.app);
-    systemSymbolData = build_entries(full.top_symbols.system);
-    mixedSymbolData = build_entries(full.top_symbols.mixed);
+    appSymbolData = buildEntries(full.topSymbols.app);
+    systemSymbolData = buildEntries(full.topSymbols.system);
+    mixedSymbolData = buildEntries(full.topSymbols.mixed);
 
-    const HtraceCategorySpec& categorySpec = htrace_category(ctx.htrace.category);
-    const bool multipart = categorySpec.is_multipart();
+    const HtraceCategorySpec& categorySpec = HtraceCategory(ctx.htrace.category);
+    const bool multipart = categorySpec.IsMultipart();
 
     // Build TabGroups（一级 tab：合并视图，用于 tab bar 的"是否有数据"判断）
     std::vector<TabGroup> groups;
@@ -297,21 +317,21 @@ void format_with_stream(std::ostream& out, const HtraceAnalysisOutput& full,
     std::vector<StreamGroupMeta> streamMeta;
     std::vector<const HtraceSection*> filepageLists;  // [3] = app/system/mixed 的 filepage 轨（sections[1]）
     if (multipart) {
-        auto anonApp = build_entries(full.top_symbols.app);
-        auto anonSystem = build_entries(full.top_symbols.system);
-        auto anonMixed = build_entries(full.top_symbols.mixed);
+        auto anonApp = buildEntries(full.topSymbols.app);
+        auto anonSystem = buildEntries(full.topSymbols.system);
+        auto anonMixed = buildEntries(full.topSymbols.mixed);
 
         // filepage 轨：三个 scope 的 sections[1]（analyzer 已按 app/system/mixed 预处理，mixed 已合并排序）
-        const HtraceSection* appFp = &full.top_symbols.app.sections[1];
-        const HtraceSection* systemFp = &full.top_symbols.system.sections[1];
-        const HtraceSection* mixedFp = &full.top_symbols.mixed.sections[1];
+        const HtraceSection* appFp = &full.topSymbols.app.sections[1];
+        const HtraceSection* systemFp = &full.topSymbols.system.sections[1];
+        const HtraceSection* mixedFp = &full.topSymbols.mixed.sections[1];
 
         auto appFilepageEntries = buildFilepageEntries(*appFp);
         auto systemFilepageEntries = buildFilepageEntries(*systemFp);
         auto mixedFilepageEntries = buildFilepageEntries(*mixedFp);
 
         // 子 tab 标签单一来源：analyzer 已把 tracks[].label 写进 section.label
-        const std::string& anonLabel = full.top_symbols.app.sections[0].label;
+        const std::string& anonLabel = full.topSymbols.app.sections[0].label;
         const std::string& filepageLabel = appFp->label;
 
         size_t o = 0;
@@ -330,9 +350,9 @@ void format_with_stream(std::ostream& out, const HtraceAnalysisOutput& full,
         filepageLists.push_back(systemFp);
         filepageLists.push_back(mixedFp);
 
-        streamMeta.push_back({TrackRender::Symbol,   &full.top_symbols.app.sections[0]});
-        streamMeta.push_back({TrackRender::Symbol,   &full.top_symbols.system.sections[0]});
-        streamMeta.push_back({TrackRender::Symbol,   &full.top_symbols.mixed.sections[0]});
+        streamMeta.push_back({TrackRender::Symbol,   &full.topSymbols.app.sections[0]});
+        streamMeta.push_back({TrackRender::Symbol,   &full.topSymbols.system.sections[0]});
+        streamMeta.push_back({TrackRender::Symbol,   &full.topSymbols.mixed.sections[0]});
         streamMeta.push_back({TrackRender::Filepage, appFp});
         streamMeta.push_back({TrackRender::Filepage, systemFp});
         streamMeta.push_back({TrackRender::Filepage, mixedFp});
@@ -359,19 +379,19 @@ void format_with_stream(std::ostream& out, const HtraceAnalysisOutput& full,
         }
     } else {
         // 单轨：流式组 = groups 本身（3 个 scope，各一条 Symbol 轨）
-        streamMeta.push_back({TrackRender::Symbol, &full.top_symbols.app.sections[0]});
-        streamMeta.push_back({TrackRender::Symbol, &full.top_symbols.system.sections[0]});
-        streamMeta.push_back({TrackRender::Symbol, &full.top_symbols.mixed.sections[0]});
+        streamMeta.push_back({TrackRender::Symbol, &full.topSymbols.app.sections[0]});
+        streamMeta.push_back({TrackRender::Symbol, &full.topSymbols.system.sections[0]});
+        streamMeta.push_back({TrackRender::Symbol, &full.topSymbols.mixed.sections[0]});
     }
 
     // Build htrace-specific meta items
-    std::string formattedDuration = formatDuration(duration);
-    std::string escapedSourceFile = escapeHtml(platform::basename(file_path));
+    std::string formattedDuration = FormatDuration(duration);
+    std::string escapedSourceFile = EscapeHtml(platform::basename(filePath));
 
     // Generate timestamp from trace_range
     std::string timestamp;
-    if (start_ms > 0) {
-        time_t t = static_cast<time_t>(start_ms / 1000);
+    if (startMs > 0) {
+        time_t t = static_cast<time_t>(startMs / 1000);
         char buf[64];
         struct tm tm_info;
 #if defined(_WIN32)
@@ -385,27 +405,31 @@ void format_with_stream(std::ostream& out, const HtraceAnalysisOutput& full,
     std::string formattedTimestamp = timestamp;
     {
         size_t tpos = formattedTimestamp.find('T');
-        if (tpos != std::string::npos) formattedTimestamp[tpos] = ' ';
+        if (tpos != std::string::npos) {
+            formattedTimestamp[tpos] = ' ';
+        }
         std::regex dot_re("\\.\\d+");
         formattedTimestamp = std::regex_replace(formattedTimestamp, dot_re, "");
         std::regex tz_re("[+-]\\d{2}:\\d{2}$");
         formattedTimestamp = std::regex_replace(formattedTimestamp, tz_re, "");
     }
-    std::string escapedTimestamp = escapeHtml(formattedTimestamp);
-    std::string escapedProcessName = escapeHtml(processName);
+    std::string escapedTimestamp = EscapeHtml(formattedTimestamp);
+    std::string escapedProcessName = EscapeHtml(processName);
 
     // Resource type display: htrace-<type>（描述符表单一来源，-l 泄漏报告固定 htrace-leaks）
-    std::string typeDisplay = categorySpec.html_type_class;
-    if (!ctx.htrace.leak_addrs.empty()) typeDisplay = "htrace-leaks";
+    std::string typeDisplay = categorySpec.htmlTypeClass;
+    if (!ctx.htrace.leakAddrs.empty()) {
+        typeDisplay = "htrace-leaks";
+    }
     // fd/thread 的大小语义是个数（计数），不以字节格式化
-    bool countMode = categorySpec.count_mode;
+    bool countMode = categorySpec.countMode;
 
     std::string metaDataItemsHTML = "<div class=\"meta-card\">\n"
         "  <div class=\"meta-grid\">\n"
         "    <div class=\"meta-item\"><span class=\"meta-label\"><b>日志名：</b></span><span class=\"meta-value\">" + escapedSourceFile + "</span></div>\n"
         "    <div class=\"meta-item\"><span class=\"meta-label\"><b>类型：</b></span><span class=\"meta-value\">" + typeDisplay + "</span></div>\n"
         "    <div class=\"meta-item\"><span class=\"meta-label\"><b>时间：</b></span><span class=\"meta-value\">" + escapedTimestamp + "</span></div>\n"
-        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>" + (countMode ? "\u603b\u4e2a\u6570\uff1a" : "\u603b\u5185\u5b58\uff1a") + "</b></span><span class=\"meta-value\">" + (countMode ? std::to_string(totalExistingSize) : formatBytes((double)totalExistingSize)) + "</span></div>\n"
+        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>" + (countMode ? "\u603b\u4e2a\u6570\uff1a" : "\u603b\u5185\u5b58\uff1a") + "</b></span><span class=\"meta-value\">" + (countMode ? std::to_string(totalExistingSize) : FormatBytes((double)totalExistingSize)) + "</span></div>\n"
         "    <div class=\"meta-item\"><span class=\"meta-label\"><b>Trace时长：</b></span><span class=\"meta-value\">" + formattedDuration + "</span></div>\n"
         "    <div class=\"meta-item\"><span class=\"meta-label\"><b>进程：</b></span><span class=\"meta-value\">" + escapedProcessName + "</span></div>\n"
         "  </div>\n"
@@ -417,7 +441,7 @@ void format_with_stream(std::ostream& out, const HtraceAnalysisOutput& full,
     // flameTree/icicleTree after streaming, reducing peak memory
     std::string tabBarHTML = AnalysisHtmlFormatterBase::buildTabBarHTML(groups);
     std::string tabContentHTML = multipart
-        ? buildMmapTabContentHTML(groups, streamGroups, filepageLists, totalExistingSize, countMode)
+        ? BuildMmapTabContentHTML(groups, streamGroups, filepageLists, totalExistingSize, countMode)
         : AnalysisHtmlFormatterBase::buildTabContentHTML(groups, totalExistingSize, countMode);
 
     // 延迟构建回调：在流式写入时按需构建flameTree/icicleTree
@@ -429,28 +453,30 @@ void format_with_stream(std::ostream& out, const HtraceAnalysisOutput& full,
             // 文件轨：文件名为根冰柱图（无调用链列表）
             const auto& fp = std::get<FilepageInfo>(meta.section->rows[entryIdx]);
             StringTable st;
-            std::vector<int> ids(fp.call_stacks.size());
-            for (size_t k = 0; k < ids.size(); ++k) ids[k] = static_cast<int>(k);
-            FlameNode merged = build_merged_icicle(fp.call_stacks, ids, full.data_dict);
-            entry.icicleTree = buildIcicleTreeJsonFromFlameNode(merged, fp.filename, "", "", full.data_dict, st);
+            std::vector<int> ids(fp.CallStacks.size());
+            for (size_t k = 0; k < ids.size(); ++k) {
+                ids[k] = static_cast<int>(k);
+            }
+            FlameNode merged = BuildMergedIcicle(fp.CallStacks, ids, full.dataDict);
+            entry.icicleTree = BuildIcicleTreeJsonFromFlameNode(merged, fp.filename, "", "", full.dataDict, st);
             entry.names = st.toArray();
             return;
         }
         // 符号轨
-        const auto& sym_rows = meta.section->rows;
-        if (entryIdx < sym_rows.size()) {
-            const auto& ts = std::get<TopSymbolInfo>(sym_rows[entryIdx]);
+        const auto& symRows = meta.section->rows;
+        if (entryIdx < symRows.size()) {
+            const auto& ts = std::get<TopSymbolInfo>(symRows[entryIdx]);
             std::string lib = ts.libs.empty() ? "" : ts.libs[0];
             StringTable st;
             // other: 复用下游调用链(icicle)格式，用 build_merged_flame 的树序列化，根"Others"在顶；
             // 非 other 保持上游 flame + 下游 icicle 双 panel
-            bool is_other = (ts.symbol == OTHER_SYMBOL);
-            if (is_other) {
-                entry.icicleTree = buildIcicleTreeJsonFromFlameNode(
-                    ts.icicle_graph, OTHER_SYMBOL, lib, std::string(), full.data_dict, st);
+            bool isOther = (ts.symbol == OTHER_SYMBOL);
+            if (isOther) {
+                entry.icicleTree = BuildIcicleTreeJsonFromFlameNode(
+                    ts.icicleGraph, OTHER_SYMBOL, lib, std::string(), full.dataDict, st);
             } else {
-                entry.flameTree = buildFlameTreeJsonFromFlameNode(ts.flame_graph, ts.symbol, lib, ts.lib_offset, full.data_dict, st);
-                entry.icicleTree = buildIcicleTreeJsonFromFlameNode(ts.icicle_graph, ts.symbol, lib, ts.lib_offset, full.data_dict, st);
+                entry.flameTree = BuildFlameTreeJsonFromFlameNode(ts.flameGraph, ts.symbol, lib, ts.libOffset, full.dataDict, st);
+                entry.icicleTree = BuildIcicleTreeJsonFromFlameNode(ts.icicleGraph, ts.symbol, lib, ts.libOffset, full.dataDict, st);
             }
             entry.names = st.toArray();
         }
@@ -465,28 +491,30 @@ void format_with_stream(std::ostream& out, const HtraceAnalysisOutput& full,
 
 } // namespace
 
-std::string htrace_write_analysis_html(const HtraceAnalysisOutput& full,
-                                       const std::string& file_path, const RunContext& ctx,
-                                       const std::string& out_dir) {
+std::string HtraceWriteAnalysisHtml(const HtraceAnalysisOutput& full,
+                                       const std::string& filePath, const RunContext& ctx,
+                                       const std::string& outDir) {
     StageTimer timer("HTML write");
 
-    auto base = platform::stem(file_path);
-    if (base.empty()) base = "output";
-    auto out_path = platform::join_path(out_dir, base + ".html");
-    platform::create_directories(out_dir);
+    auto base = platform::stem(filePath);
+    if (base.empty()) {
+        base = "output";
+    }
+    auto outPath = platform::JoinPath(outDir, base + ".html");
+    platform::CreateDirectories(outDir);
 
-    auto ofs = open_ofstream(out_path);
+    auto ofs = OpenOfstream(outPath);
     if (!ofs) {
-        log::loge("Error: Cannot write to ", out_path);
+        log::Loge("Error: Cannot write to ", outPath);
         return {};
     }
 
-    format_with_stream(ofs, full, file_path, ctx);
+    FormatWithStream(ofs, full, filePath, ctx);
 
     ofs.close();
     timer.tick("total");
-    log::logok("Output written to: ", out_path);
-    return out_path;
+    log::Logok("Output written to: ", outPath);
+    return outPath;
 }
 
 } // namespace mem_analyzer

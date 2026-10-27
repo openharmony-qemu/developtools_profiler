@@ -46,8 +46,11 @@ namespace {
 
 // Program token of a command line: everything up to the first space. Empty when the
 // program itself is quoted — then we leave the line to the shell fallback below.
-std::string program_token(const std::string& cmd) {
-    if (cmd.empty() || cmd.front() == '"') return {};
+std::string ProgramToken(const std::string& cmd)
+{
+    if (cmd.empty() || cmd.front() == '"') {
+        return {};
+    }
     const size_t sp = cmd.find(' ');
     return cmd.substr(0, sp == std::string::npos ? cmd.size() : sp);
 }
@@ -58,26 +61,37 @@ std::string program_token(const std::string& cmd) {
 // earlier on PATH and a real `.exe` further down, a naive direct spawn would silently run
 // a DIFFERENT program than the shell — and than the one the user means. Pure filesystem
 // lookups, so it cannot recurse into capture_command(). Empty when nothing matches.
-std::string resolve_program(const std::string& prog) {
-    if (prog.empty()) return {};
-    const char* path_env = std::getenv("PATH");
-    if (path_env == nullptr) return {};
+std::string ResolveProgram(const std::string& prog)
+{
+    if (prog.empty()) {
+        return {};
+    }
+    const char* pathEnv = std::getenv("PATH");
+    if (pathEnv == nullptr) {
+        return {};
+    }
 
     std::vector<std::string> exts;
-    if (const char* ext_env = std::getenv("PATHEXT"); ext_env != nullptr) {
-        const std::string all(ext_env);
+    if (const char* extEnv = std::getenv("PATHEXT"); extEnv != nullptr) {
+        const std::string all(extEnv);
         size_t b = 0;
         while (b <= all.size()) {
             const size_t e = all.find(';', b);
             const std::string one = all.substr(b, e == std::string::npos ? std::string::npos : e - b);
-            if (!one.empty()) exts.push_back(one);
-            if (e == std::string::npos) break;
+            if (!one.empty()) {
+                exts.push_back(one);
+            }
+            if (e == std::string::npos) {
+                break;
+            }
             b = e + 1;
         }
     }
-    if (exts.empty()) exts = {".COM", ".EXE", ".BAT", ".CMD"};
+    if (exts.empty()) {
+        exts = {".COM", ".EXE", ".BAT", ".CMD"};
+    }
 
-    const std::string dirs(path_env);
+    const std::string dirs(pathEnv);
     size_t b = 0;
     while (b <= dirs.size()) {
         const size_t e = dirs.find(';', b);
@@ -86,32 +100,43 @@ std::string resolve_program(const std::string& prog) {
         if (dir.size() >= 2 && dir.front() == '"' && dir.back() == '"') {
             dir = dir.substr(1, dir.size() - 2);
         }
-        if (dir.empty()) continue;
+        if (dir.empty()) {
+            continue;
+        }
         std::string base = dir;
-        if (base.back() != '\\' && base.back() != '/') base += '\\';
+        if (base.back() != '\\' && base.back() != '/') {
+            base += '\\';
+        }
         base += prog;
         for (const auto& ext : exts) {
             const std::string cand = base + ext;
             std::error_code ec;
-            if (fs::is_regular_file(path_from_utf8(cand), ec) && !ec) return cand;
+            if (fs::is_regular_file(PathFromUtf8(cand), ec) && !ec) {
+                return cand;
+            }
         }
     }
     return {};
 }
 
 // A `.bat` / `.cmd` shim can only be started by cmd.exe.
-bool is_script_shim(const std::string& path) {
-    auto ends_with_ci = [&path](const char* suffix) {
+bool IsScriptShim(const std::string& path)
+{
+    auto endsWithCi = [&path](const char* suffix) {
         const size_t n = std::strlen(suffix);
-        if (path.size() < n) return false;
+        if (path.size() < n) {
+            return false;
+        }
         for (size_t i = 0; i < n; ++i) {
             const unsigned char a = static_cast<unsigned char>(path[path.size() - n + i]);
             const unsigned char c = static_cast<unsigned char>(suffix[i]);
-            if (std::tolower(a) != std::tolower(c)) return false;
+            if (std::tolower(a) != std::tolower(c)) {
+                return false;
+            }
         }
         return true;
     };
-    return ends_with_ci(".bat") || ends_with_ci(".cmd");
+    return endsWithCi(".bat") || endsWithCi(".cmd");
 }
 
 } // namespace
@@ -120,9 +145,12 @@ bool is_script_shim(const std::string& path) {
 #if !defined(_WIN32)
 // Common fork + pipe + execl("/bin/sh","-c",cmd): stdout+stderr merged into pipe.
 // Used by capture_command, run_command_streaming, and spawn_hdc_worker.
-SpawnedProc spawn_piped(const std::string& cmd) {
+SpawnedProc SpawnPiped(const std::string& cmd)
+{
     int fds[2];
-    if (pipe(fds) != 0) return {};
+    if (pipe(fds) != 0) {
+        return {};
+    }
     pid_t pid = fork();
     if (pid < 0) {
         close(fds[0]); close(fds[1]);
@@ -140,26 +168,29 @@ SpawnedProc spawn_piped(const std::string& cmd) {
 }
 #endif
 
-CapturedCmd capture_command(const std::string& cmd, long long timeout_ms) {
+CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
+{
     CapturedCmd cap;
 #if defined(_WIN32)
     // Create an inheritable pipe for the child's stdout.
     SECURITY_ATTRIBUTES sa{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
-    HANDLE h_read = nullptr, h_write = nullptr;
-    if (!CreatePipe(&h_read, &h_write, &sa, 0)) return cap;
-    if (!SetHandleInformation(h_write, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
-        CloseHandle(h_read);
-        CloseHandle(h_write);
+    HANDLE hRead = nullptr, hWrite = nullptr;
+    if (!CreatePipe(&hRead, &hWrite, &sa, 0)) {
+        return cap;
+    }
+    if (!SetHandleInformation(hWrite, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
+        CloseHandle(hRead);
+        CloseHandle(hWrite);
         return cap;
     }
 
     STARTUPINFOW si{ sizeof(STARTUPINFOW) };
     si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdOutput = h_write;
+    si.hStdOutput = hWrite;
     // Route stderr into the same pipe so shell/diagnostic messages cannot
     // leak onto the user's terminal (callers no longer rely on 2>&1 to
     // suppress them).
-    si.hStdError = h_write;
+    si.hStdError = hWrite;
     si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
     PROCESS_INFORMATION pi{};
     // Run a real executable DIRECTLY, without a shell. `cmd.exe /c` re-tokenizes the line
@@ -182,36 +213,40 @@ CapturedCmd capture_command(const std::string& cmd, long long timeout_ms) {
     if (direct.size() >= 5 && direct.compare(direct.size() - 5, 5, " 2>&1") == 0) {
         direct.resize(direct.size() - 5);
     }
-    const std::string tok = program_token(direct);
-    const std::string prog = resolve_program(tok);
-    std::string resolved_line;
-    if (!prog.empty() && !is_script_shim(prog)) {
-        resolved_line = prog + direct.substr(tok.size());
+    const std::string tok = ProgramToken(direct);
+    const std::string prog = ResolveProgram(tok);
+    std::string resolvedLine;
+    if (!prog.empty() && !IsScriptShim(prog)) {
+        resolvedLine = prog + direct.substr(tok.size());
     }
 
     bool started = false;
-    if (!resolved_line.empty()) {
-        std::wstring wresolved = widen_path(resolved_line);
+    if (!resolvedLine.empty()) {
+        std::wstring wresolved = WidenPath(resolvedLine);
         started = CreateProcessW(nullptr, wresolved.data(), nullptr,
                                  nullptr, TRUE, 0, nullptr, nullptr, &si, &pi) != 0;
     }
     if (!started) {
-        CloseHandle(h_read);
-        CloseHandle(h_write);
+        CloseHandle(hRead);
+        CloseHandle(hWrite);
         return cap;
     }
-    CloseHandle(h_write);
+    CloseHandle(hWrite);
     cap.spawned = true;
 
     std::string output;
-    auto drain_available = [&]() {
+    auto drainAvailable = [&]() {
         for (;;) {
             DWORD avail = 0;
-            if (!PeekNamedPipe(h_read, nullptr, 0, nullptr, &avail, nullptr)) break;
-            if (avail == 0) break;
+            if (!PeekNamedPipe(hRead, nullptr, 0, nullptr, &avail, nullptr)) {
+                break;
+            }
+            if (avail == 0) {
+                break;
+            }
             char buf[4096];
             DWORD n = 0;
-            if (!ReadFile(h_read, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
+            if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
                           &n, nullptr) || n == 0) {
                 break;
             }
@@ -219,60 +254,66 @@ CapturedCmd capture_command(const std::string& cmd, long long timeout_ms) {
         }
     };
 
-    if (timeout_ms <= 0) {
+    if (timeoutMs <= 0) {
         // Unbounded: drain until EOF, then wait for the process.
         for (;;) {
             DWORD avail = 0;
-            if (!PeekNamedPipe(h_read, nullptr, 0, nullptr, &avail, nullptr)) break;
+            if (!PeekNamedPipe(hRead, nullptr, 0, nullptr, &avail, nullptr)) {
+                break;
+            }
             if (avail == 0) {
-                if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) break;
+                if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) {
+                    break;
+                }
                 Sleep(10);
                 continue;
             }
             char buf[4096];
             DWORD n = 0;
-            if (!ReadFile(h_read, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
+            if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
                           &n, nullptr) || n == 0) {
                 break;
             }
             output.append(buf, n);
         }
-        CloseHandle(h_read);
+        CloseHandle(hRead);
         WaitForSingleObject(pi.hProcess, INFINITE);
         DWORD code = 0;
         GetExitCodeProcess(pi.hProcess, &code);
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
         cap.output = std::move(output);
-        cap.exit_code = static_cast<int>(code);
+        cap.exitCode = static_cast<int>(code);
         return cap;
     }
 
     // Bounded read.
     const auto deadline = std::chrono::steady_clock::now() +
-                          std::chrono::milliseconds(timeout_ms);
-    bool timed_out = false;
+                          std::chrono::milliseconds(timeoutMs);
+    bool timedOut = false;
     for (;;) {
-        drain_available();
-        if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) break;
+        drainAvailable();
+        if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) {
+            break;
+        }
         if (std::chrono::steady_clock::now() >= deadline) {
-            timed_out = true;
+            timedOut = true;
             break;
         }
         Sleep(20);
     }
-    drain_available();
-    CloseHandle(h_read);
+    drainAvailable();
+    CloseHandle(hRead);
 
-    if (timed_out) {
-        cap.timed_out = true;
+    if (timedOut) {
+        cap.timedOut = true;
         TerminateProcess(pi.hProcess, 1);
         WaitForSingleObject(pi.hProcess, INFINITE);
-        cap.exit_code = -1;
+        cap.exitCode = -1;
     } else {
         DWORD code = 0;
         GetExitCodeProcess(pi.hProcess, &code);
-        cap.exit_code = static_cast<int>(code);
+        cap.exitCode = static_cast<int>(code);
     }
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
@@ -281,49 +322,53 @@ CapturedCmd capture_command(const std::string& cmd, long long timeout_ms) {
 #else
     // POSIX: spawn via fork+pipe+execl (shared helper); bounded read can
     // terminate the child on timeout (unlike pclose which blocks).
-    auto sp = spawn_piped(cmd);
-    if (!sp.ok()) return cap;
+    auto sp = SpawnPiped(cmd);
+    if (!sp.ok()) {
+        return cap;
+    }
     cap.spawned = true;
 
     std::string output;
     char buf[4096];
-    if (timeout_ms <= 0) {
+    if (timeoutMs <= 0) {
         ssize_t n = 0;
-        while ((n = read(sp.read_fd, buf, sizeof(buf))) > 0) {
+        while ((n = read(sp.ReadFd, buf, sizeof(buf))) > 0) {
             output.append(buf, static_cast<size_t>(n));
         }
-        close(sp.read_fd);
+        close(sp.ReadFd);
         int st = 0;
         waitpid(sp.pid, &st, 0);
         cap.output = std::move(output);
-        cap.exit_code = WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+        cap.exitCode = WIFEXITED(st) ? WEXITSTATUS(st) : -1;
         return cap;
     }
 
     // Bounded read: poll for readability until EOF or the deadline passes.
     const auto deadline = std::chrono::steady_clock::now() +
-                          std::chrono::milliseconds(timeout_ms);
-    bool timed_out = false;
+                          std::chrono::milliseconds(timeoutMs);
+    bool timedOut = false;
     for (;;) {
         const auto now = std::chrono::steady_clock::now();
         if (now >= deadline) {
-            timed_out = true;
+            timedOut = true;
             break;
         }
-        const long long remain_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        const long long remainMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             deadline - now).count();
-        struct pollfd pfd{ sp.read_fd, POLLIN, 0 };
-        const int pr = poll(&pfd, 1, static_cast<int>(remain_ms));
+        struct pollfd pfd{ sp.ReadFd, POLLIN, 0 };
+        const int pr = poll(&pfd, 1, static_cast<int>(remainMs));
         if (pr == 0) {
-            timed_out = true;
+            timedOut = true;
             break;
         }
         if (pr < 0) {
-            if (errno == EINTR) continue;
+            if (errno == EINTR) {
+                continue;
+            }
             break;
         }
         if (pfd.revents & (POLLIN | POLLHUP)) {
-            const ssize_t n = read(sp.read_fd, buf, sizeof(buf));
+            const ssize_t n = read(sp.ReadFd, buf, sizeof(buf));
             if (n > 0) {
                 output.append(buf, static_cast<size_t>(n));
             } else {
@@ -333,75 +378,93 @@ CapturedCmd capture_command(const std::string& cmd, long long timeout_ms) {
             break;
         }
     }
-    close(sp.read_fd);
+    close(sp.ReadFd);
 
-    if (timed_out) {
-        cap.timed_out = true;
+    if (timedOut) {
+        cap.timedOut = true;
         // Give the child a brief chance to exit, then force-kill it.
         kill(sp.pid, SIGTERM);
         int st = 0;
         for (int i = 0; i < 20; ++i) {
-            if (waitpid(sp.pid, &st, WNOHANG) == sp.pid) break;
+            if (waitpid(sp.pid, &st, WNOHANG) == sp.pid) {
+                break;
+            }
             usleep(100000);
         }
         if (waitpid(sp.pid, &st, WNOHANG) != sp.pid) {
             kill(sp.pid, SIGKILL);
             waitpid(sp.pid, &st, 0);
         }
-        cap.exit_code = -1;
+        cap.exitCode = -1;
     } else {
         int st = 0;
         waitpid(sp.pid, &st, 0);
-        cap.exit_code = WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+        cap.exitCode = WIFEXITED(st) ? WEXITSTATUS(st) : -1;
     }
     cap.output = std::move(output);
     return cap;
 #endif
 }
 
-std::string shell_quote(const std::string& s) {
+std::string ShellQuote(const std::string& s)
+{
     std::string out;
     out.reserve(s.size() + 16);
 #if defined(_WIN32)
     out += '"';
     for (char c : s) {
-        if (c == '"') out += "\\\"";
-        else out += c;
+        if (c == '"') {
+            out += "\\\"";
+        }
+        else {
+            out += c;
+        }
     }
     out += '"';
 #else
     out += '\'';
     for (char c : s) {
-        if (c == '\'') out += "'\\''";
-        else out += c;
+        if (c == '\'') {
+            out += "'\\''";
+        }
+        else {
+            out += c;
+        }
     }
     out += '\'';
 #endif
     return out;
 }
 
-std::string shell_quote_device(const std::string& s) {
+std::string ShellQuoteDevice(const std::string& s)
+{
     std::string out;
     out.reserve(s.size() + 16);
     out += '\'';
     for (char c : s) {
-        if (c == '\'') out += "'\\''";
-        else out += c;
+        if (c == '\'') {
+            out += "'\\''";
+        }
+        else {
+            out += c;
+        }
     }
     out += '\'';
     return out;
 }
 
-CapturedCmd find_in_path(const std::string& name) {
+CapturedCmd FindInPath(const std::string& name)
+{
 #if defined(_WIN32)
-    return capture_command("where " + shell_quote(name) + " 2>&1");
+    return CaptureCommand("where " + ShellQuote(name) + " 2>&1");
 #else
-    return capture_command("command -v " + shell_quote(name) + " 2>&1");
+    return CaptureCommand("command -v " + ShellQuote(name) + " 2>&1");
 #endif
 }
 
-std::string get_executable_dir() {
-    return platform::get_executable_dir();
+std::string GetExecutableDir()
+{
+    return platform::GetExecutableDir();
 }
 
 } // namespace proc

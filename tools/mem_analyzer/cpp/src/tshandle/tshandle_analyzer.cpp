@@ -27,9 +27,10 @@
 namespace mem_analyzer {
 namespace {
 
-bool call_stack_is_app(const ResolvedCallStack& stack) {
+bool CallStackIsApp(const ResolvedCallStack& stack)
+{
     for (const auto& frame : stack.frames) {
-        if (HtraceConfigMgr::instance().is_app_symbol(frame.lib, true)) {
+        if (HtraceConfigMgr::instance().IsAppSymbol(frame.lib, true)) {
             return true;
         }
     }
@@ -40,260 +41,269 @@ bool call_stack_is_app(const ResolvedCallStack& stack) {
 /// object.existing_size = 该对象这些调用链分摊到的 retained size（链 size 之和），
 /// total_size 为各对象 size 之和，percentage 相对该 total_size 计算。
 /// 对同一对象，应用作用域链 size + 系统作用域链 size = 该对象全部链 size 之和（拆分前后守恒）。
-TshandleTypeSection build_section_with_stacks(
-    HtraceEventType handle_type,
-    const std::vector<ArkTsClass>& arkts_classes,
-    const std::unordered_map<long long, const ResolvedCallStack*>& stacks_by_id,
-    const std::unordered_set<long long>& valid_stack_ids,
-    int top_n)
+TshandleTypeSection buildSectionWithStacks(
+    HtraceEventType handleType,
+    const std::vector<ArkTsClass>& arktsClasses,
+    const std::unordered_map<long long, const ResolvedCallStack*>& stacksById,
+    const std::unordered_set<long long>& validStackIds,
+    int topN)
 {
     TshandleTypeSection section;
-    for (long long id : valid_stack_ids) {
-        const auto it = stacks_by_id.find(id);
-        if (it != stacks_by_id.end()) {
-            section.has_data = true;
-            section.total_call_stack_existing_size += it->second->related_size;
+    for (long long id : validStackIds) {
+        const auto it = stacksById.find(id);
+        if (it != stacksById.end()) {
+            section.hasData = true;
+            section.totalCallStackExistingSize += it->second->relatedSize;
         }
     }
 
     std::vector<TshandleTopObject> objects;
-    for (const auto& cls : arkts_classes) {
+    for (const auto& cls : arktsClasses) {
         if (cls.name.empty()) {
             continue;
         }
         TshandleTopObject object;
-        object.object_name = cls.name;
-        object.type = handle_type;
-        std::vector<long long> call_stack_refs;
-        std::unordered_set<long long> seen_call_stack_ids;
-        std::unordered_map<long long, double> chain_size_by_call_stack;
-        std::unordered_map<long long, long long> chain_count_by_call_stack;
+        object.objectName = cls.name;
+        object.type = handleType;
+        std::vector<long long> callStackRefs;
+        std::unordered_set<long long> seenCallStackIds;
+        std::unordered_map<long long, double> chainSizeByCallStack;
+        std::unordered_map<long long, long long> chainCountByCallStack;
 
         for (const auto& instance : cls.instances) {
-            int total_addrs = 0;
-            for (const auto& ref : instance.native_ref) {
-                if (ref.handle_type == handle_type) {
-                    total_addrs += static_cast<int>(ref.addrs.size());
+            int totalAddrs = 0;
+            for (const auto& ref : instance.nativeRef) {
+                if (ref.handleType == handleType) {
+                    totalAddrs += static_cast<int>(ref.addrs.size());
                 }
             }
-            if (total_addrs == 0) {
+            if (totalAddrs == 0) {
                 continue;
             }
-            bool instance_has_ref = false;
-            for (const auto& ref : instance.native_ref) {
-                if (ref.handle_type != handle_type||
-                    ref.call_stack_id == 0 ||
-                    valid_stack_ids.find(ref.call_stack_id) == valid_stack_ids.end()) {
+            bool instanceHasRef = false;
+            for (const auto& ref : instance.nativeRef) {
+                if (ref.handleType != handleType||
+                    ref.callStackId == 0 ||
+                    validStackIds.find(ref.callStackId) == validStackIds.end())
+                    {
                     continue;
                 }
-                long long id = ref.call_stack_id;
-                instance_has_ref = true;
-                if (seen_call_stack_ids.insert(id).second) {
-                    call_stack_refs.push_back(id);
+                long long id = ref.callStackId;
+                instanceHasRef = true;
+                if (seenCallStackIds.insert(id).second) {
+                    callStackRefs.push_back(id);
                 }
-                if (instance.retained_size > 0) {
-                    chain_size_by_call_stack[id] +=
-                        (static_cast<double>(instance.retained_size) * ref.addrs.size() / total_addrs);
+                if (instance.retainedSize > 0) {
+                    chainSizeByCallStack[id] +=
+                        (static_cast<double>(instance.retainedSize) * ref.addrs.size() / totalAddrs);
                 }
-                chain_count_by_call_stack[id] += static_cast<long long>(ref.addrs.size());
+                chainCountByCallStack[id] += static_cast<long long>(ref.addrs.size());
             }
-            if (instance_has_ref) {
+            if (instanceHasRef) {
                 ++object.count;
             }
         }
 
-        double object_scope_size = 0.0;
-        for (const auto& [id, sz] : chain_size_by_call_stack) {
-            object_scope_size += sz;
+        double objectScopeSize = 0.0;
+        for (const auto& [id, sz] : chainSizeByCallStack) {
+            objectScopeSize += sz;
         }
 
-        std::stable_sort(call_stack_refs.begin(), call_stack_refs.end());
-        for (const auto& id : call_stack_refs) {
-            const auto stack_it = stacks_by_id.find(id);
-            if (stack_it == stacks_by_id.end()) {
+        std::stable_sort(callStackRefs.begin(), callStackRefs.end());
+        for (const auto& id : callStackRefs) {
+            const auto stackIt = stacksById.find(id);
+            if (stackIt == stacksById.end()) {
                 continue;
             }
-            const ResolvedCallStack* stack = stack_it->second;
-            if (stack->type != handle_type || stack->frames.empty()) {
+            const ResolvedCallStack* stack = stackIt->second;
+            if (stack->type != handleType || stack->frames.empty()) {
                 continue;
             }
-            const auto cs_it = chain_size_by_call_stack.find(id);
-            const double cs_size = (cs_it != chain_size_by_call_stack.end()) ? cs_it->second : 0.0;
-            const auto count_it = chain_count_by_call_stack.find(id);
-            const long long cs_count = (count_it != chain_count_by_call_stack.end()) ? count_it->second : 0LL;
-            if (cs_size <= 0.0 && cs_count == 0) {
+            const auto csIt = chainSizeByCallStack.find(id);
+            const double csSize = (csIt != chainSizeByCallStack.end()) ? csIt->second : 0.0;
+            const auto countIt = chainCountByCallStack.find(id);
+            const long long csCount = (countIt != chainCountByCallStack.end()) ? countIt->second : 0LL;
+            if (csSize <= 0.0 && csCount == 0) {
                 continue;
             }
-            object.call_chains.push_back({stack->id, stack->frames, cs_size, cs_count, 0.0});
+            object.callChains.push_back({stack->id, stack->frames, csSize, csCount, 0.0});
         }
-        if (object.call_chains.empty()) {
+        if (object.callChains.empty()) {
             continue;
         }
-        object.existing_size = object_scope_size;
+        object.existingSize = objectScopeSize;
         objects.push_back(std::move(object));
     }
 
-    section.total_objects = static_cast<long long>(objects.size());
-    std::stable_sort(objects.begin(), objects.end(), [](const auto& left, const auto& right) {
-        return left.existing_size > right.existing_size;
+    section.totalObjects = static_cast<long long>(objects.size());
+    std::stable_sort(objects.begin(), objects.end(), [](const auto& left, const auto& right)
+    {
+        return left.existingSize > right.existingSize;
     });
 
-    double total_size = 0.0;
+    double totalSize = 0.0;
     for (const auto& object : objects) {
-        total_size += object.existing_size;
-        section.total_count += object.count;
+        totalSize += object.existingSize;
+        section.totalCount += object.count;
     }
-    section.total_size = total_size;
+    section.totalSize = totalSize;
 
-    if (top_n > 0 && objects.size() > static_cast<std::size_t>(top_n)) {
-        objects.resize(static_cast<std::size_t>(top_n));
+    if (topN > 0 && objects.size() > static_cast<std::size_t>(topN)) {
+        objects.resize(static_cast<std::size_t>(topN));
     }
 
     for (std::size_t index = 0; index < objects.size(); ++index) {
         auto& object = objects[index];
         object.rank = static_cast<int>(index + 1);
-        std::stable_sort(object.call_chains.begin(), object.call_chains.end(),
+        std::stable_sort(object.callChains.begin(), object.callChains.end(),
             [](const auto& left, const auto& right) {
-                return left.existing_size > right.existing_size;
+                return left.existingSize > right.existingSize;
             });
     }
-    section.top_objects = std::move(objects);
+    section.topObjects = std::move(objects);
     return section;
 }
 
-void compute_section_percentages(TshandleTypeSection& section, double denominator) {
-    for (auto& object : section.top_objects) {
-        object.percentage = (denominator > 0.0) ? (object.existing_size / denominator * 100.0) : 0.0;
-        for (auto& chain : object.call_chains) {
-            chain.percentage = (denominator > 0.0) ? (chain.existing_size / denominator * 100.0) : 0.0;
+void ComputeSectionPercentages(TshandleTypeSection& section, double denominator)
+{
+    for (auto& object : section.topObjects) {
+        object.percentage = (denominator > 0.0) ? (object.existingSize / denominator * 100.0) : 0.0;
+        for (auto& chain : object.callChains) {
+            chain.percentage = (denominator > 0.0) ? (chain.existingSize / denominator * 100.0) : 0.0;
         }
     }
 }
 
-json frame_to_json(const ResolvedStackFrame& frame) {
-    return {{"depth", frame.depth}, {"symbol", frame.symbol}, {"buildId", frame.build_id},
-            {"lib", frame.lib}, {"libOffset", frame.lib_offset}};
+json FrameToJson(const ResolvedStackFrame& frame)
+{
+    return {{"depth", frame.depth}, {"symbol", frame.symbol}, {"buildId", frame.buildId},
+            {"lib", frame.lib}, {"libOffset", frame.libOffset}};
 }
 
 } // namespace
 
-json TshandleCallChain::to_json() const {
-    json frame_json = json::array();
+json TshandleCallChain::ToJson() const
+{
+    json frameJson = json::array();
     for (const auto& frame : frames) {
-        frame_json.push_back(frame_to_json(frame));
+        frameJson.push_back(FrameToJson(frame));
     }
-    return {{"callStackId", call_stack_id},
-            {"existingSize", existing_size},
+    return {{"callStackId", callStackId},
+            {"existingSize", existingSize},
             {"count", count},
             {"percentage", percentage},
-            {"frames", frame_json}};
+            {"frames", frameJson}};
 }
 
-json TshandleTopObject::to_json() const {
-    json chain_json = json::array();
-    for (const auto& chain : call_chains) {
-        chain_json.push_back(chain.to_json());
+json TshandleTopObject::ToJson() const
+{
+    json ChainJson = json::array();
+    for (const auto& chain : callChains) {
+        ChainJson.push_back(chain.ToJson());
     }
     return {{"rank", rank},
-            {"objectName", object_name},
-            {"existingSize", existing_size},
+            {"objectName", objectName},
+            {"existingSize", existingSize},
             {"count", count},
             {"percentage", percentage},
-            {"type", htrace_event_type_name(type)},
-            {"callChains", chain_json}};
+            {"type", HtraceEventTypeName(type)},
+            {"callChains", ChainJson}};
 }
 
-json TshandleTypeSection::to_json() const {
-    json object_json = json::array();
-    for (const auto& object : top_objects) {
-        object_json.push_back(object.to_json());
+json TshandleTypeSection::ToJson() const
+{
+    json objectJson = json::array();
+    for (const auto& object : topObjects) {
+        objectJson.push_back(object.ToJson());
     }
-    return {{"hasData", has_data},
-            {"totalObjects", total_objects},
-            {"totalSize", total_size},
-            {"totalCount", total_count},
-            {"totalCallStackExistingSize", total_call_stack_existing_size},
-            {"topObjects", object_json}};
+    return {{"hasData", hasData},
+            {"totalObjects", totalObjects},
+            {"totalSize", totalSize},
+            {"totalCount", totalCount},
+            {"totalCallStackExistingSize", totalCallStackExistingSize},
+            {"topObjects", objectJson}};
 }
 
-json TshandleAnalysisOutput::to_json() const {
+json TshandleAnalysisOutput::ToJson() const
+{
     return {
-        {"global", {{"app", global.app.to_json()}, {"sys", global.sys.to_json()}}},
-        {"local", local.to_json()}
+        {"global", {{"app", global.app.ToJson()}, {"sys", global.sys.ToJson()}}},
+        {"local", local.ToJson()}
     };
 }
 
-TshandleAnalysisOutput analyze_tshandle_data(
-    const std::vector<ResolvedCallStack>& call_stacks,
-    const std::vector<ArkTsClass>& arkts_classes,
-    int top_n)
+TshandleAnalysisOutput AnalyzeTshandleData(
+    const std::vector<ResolvedCallStack>& CallStacks,
+    const std::vector<ArkTsClass>& arktsClasses,
+    int topN)
 {
     auto& cfg = HtraceConfigMgr::instance();
-    if (!cfg.is_loaded()) {
+    if (!cfg.IsLoaded()) {
         std::string err;
-        cfg.load_default(err);
+        cfg.LoadDefault(err);
     }
 
-    std::unordered_map<long long, const ResolvedCallStack*> stacks_by_id;
-    for (const auto& stack : call_stacks) {
+    std::unordered_map<long long, const ResolvedCallStack*> stacksById;
+    for (const auto& stack : CallStacks) {
         if (stack.id != 0) {
-            stacks_by_id[stack.id] = &stack;
+            stacksById[stack.id] = &stack;
         }
     }
 
     TshandleAnalysisOutput output;
 
     // GlobalHandle：按调用链符号作用域拆分为应用 / 系统两个 section。
-    std::unordered_set<long long> global_app_ids;
-    std::unordered_set<long long> global_sys_ids;
-    for (const auto& [id, stack] : stacks_by_id) {
+    std::unordered_set<long long> globalAppIds;
+    std::unordered_set<long long> globalSysIds;
+    for (const auto& [id, stack] : stacksById) {
         if (stack->type != HtraceEventType::ARK_GLOBAL_HANDLE || stack->frames.empty()) {
             continue;
         }
-        if (call_stack_is_app(*stack)) {
-            global_app_ids.insert(id);
+        if (CallStackIsApp(*stack)) {
+            globalAppIds.insert(id);
         } else {
-            global_sys_ids.insert(id);
+            globalSysIds.insert(id);
         }
     }
-    output.global.app = build_section_with_stacks(
-        HtraceEventType::ARK_GLOBAL_HANDLE, arkts_classes, stacks_by_id, global_app_ids, top_n);
-    output.global.sys = build_section_with_stacks(
-        HtraceEventType::ARK_GLOBAL_HANDLE, arkts_classes, stacks_by_id, global_sys_ids, top_n);
-    const double global_total = output.global.app.total_size + output.global.sys.total_size;
-    compute_section_percentages(output.global.app, global_total);
-    compute_section_percentages(output.global.sys, global_total);
+    output.global.app = buildSectionWithStacks(
+        HtraceEventType::ARK_GLOBAL_HANDLE, arktsClasses, stacksById, globalAppIds, topN);
+    output.global.sys = buildSectionWithStacks(
+        HtraceEventType::ARK_GLOBAL_HANDLE, arktsClasses, stacksById, globalSysIds, topN);
+    const double globalTotal = output.global.app.totalSize + output.global.sys.totalSize;
+    ComputeSectionPercentages(output.global.app, globalTotal);
+    ComputeSectionPercentages(output.global.sys, globalTotal);
 
     // LocalHandle：不拆分，所有调用链合成单个 section。
-    std::unordered_set<long long> local_ids;
-    for (const auto& [id, stack] : stacks_by_id) {
+    std::unordered_set<long long> localIds;
+    for (const auto& [id, stack] : stacksById) {
         if (stack->type == HtraceEventType::ARK_LOCAL_HANDLE && !stack->frames.empty()) {
-            local_ids.insert(id);
+            localIds.insert(id);
         }
     }
-    output.local = build_section_with_stacks(
-        HtraceEventType::ARK_LOCAL_HANDLE, arkts_classes, stacks_by_id, local_ids, top_n);
-    compute_section_percentages(output.local, output.local.total_size);
+    output.local = buildSectionWithStacks(
+        HtraceEventType::ARK_LOCAL_HANDLE, arktsClasses, stacksById, localIds, topN);
+    ComputeSectionPercentages(output.local, output.local.totalSize);
 
     return output;
 }
 
-TshandleAnalysisOutput tshandle_analyze(TshandleParseResult& parse_result, const RunContext& ctx) {
-    auto analysis = analyze_tshandle_data(parse_result.call_stacks(), parse_result.arkts_classes,
-                                          ctx.tshandle.top_n);
+TshandleAnalysisOutput TshandleAnalyze(TshandleParseResult& parseResult, const RunContext& ctx)
+{
+    auto analysis = AnalyzeTshandleData(parseResult.CallStacks(), parseResult.arktsClasses,
+                                          ctx.tshandle.topN);
 
     // Carry parse-level data needed by formatters
-    analysis.trace_meta = std::move(parse_result.db.meta);
-    analysis.parsed_at = std::move(parse_result.parsed_at);
-    analysis.call_stacks = std::move(parse_result.call_stacks());
-    analysis.arkts_classes = std::move(parse_result.arkts_classes);
+    analysis.traceMeta = std::move(parseResult.db.meta);
+    analysis.parsedAt = std::move(parseResult.parsedAt);
+    analysis.CallStacks = std::move(parseResult.CallStacks());
+    analysis.arktsClasses = std::move(parseResult.arktsClasses);
 
-    log::logok("  Analysis completed. Global(app): ", analysis.global.app.total_objects, " objects, ",
-              analysis.global.app.total_count, " instances | Global(sys): ",
-              analysis.global.sys.total_objects, " objects, ",
-              analysis.global.sys.total_count, " instances | Local: ",
-              analysis.local.total_objects, " objects, ",
-              analysis.local.total_count, " instances.");
+    log::Logok("  Analysis completed. Global(app): ", analysis.global.app.totalObjects, " objects, ",
+              analysis.global.app.totalCount, " instances | Global(sys): ",
+              analysis.global.sys.totalObjects, " objects, ",
+              analysis.global.sys.totalCount, " instances | Local: ",
+              analysis.local.totalObjects, " objects, ",
+              analysis.local.totalCount, " instances.");
 
     return analysis;
 }

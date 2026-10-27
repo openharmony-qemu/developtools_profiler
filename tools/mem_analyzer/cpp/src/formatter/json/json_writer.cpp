@@ -25,17 +25,19 @@
 
 namespace mem_analyzer {
 
-void write_json_to_file(const std::string& file_path, const json& data) {
-    auto ofs = open_ofstream(file_path);
+void WriteJsonToFile(const std::string& filePath, const json& data)
+{
+    auto ofs = OpenOfstream(filePath);
     if (!ofs) {
-        log::loge("Error: Cannot write to ", file_path);
+        log::Loge("Error: Cannot write to ", filePath);
         return;
     }
     ofs << data.dump(4) << std::endl;
     ofs.close();
 }
 
-std::string format_readable_timestamp(long long ms) {
+std::string FormatReadableTimestamp(long long ms)
+{
     auto tp = std::chrono::system_clock::time_point{std::chrono::milliseconds(ms)};
     auto t = std::chrono::system_clock::to_time_t(tp);
     std::tm tm;

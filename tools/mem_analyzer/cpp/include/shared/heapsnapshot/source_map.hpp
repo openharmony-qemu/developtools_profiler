@@ -23,9 +23,9 @@ namespace mem_analyzer {
 struct SourceMapEntry {
     std::string file;                // 编译产物文件（source map "file" 字段）
     std::vector<std::string> sources;  // 真实源码路径列表（source map "sources" 字段，可多文件）
-    std::string source_path;         // 便捷字段：sources[0]（单文件场景常用；多文件请用 sources[source_index]）
-    std::string entry_package_info;  // "entry-package-info" 字段
-    std::string package_info;        // "package-info" 字段
+    std::string sourcePath;         // 便捷字段：sources[0]（单文件场景常用；多文件请用 sources[source_index]）
+    std::string entryPackageInfo;  // "entry-package-info" 字段
+    std::string packageInfo;        // "package-info" 字段
     std::string mappings;            // source map v3 "mappings" 原始串（用于行号还原）
 };
 
@@ -42,7 +42,7 @@ public:
     /// 读取目录内 "sourceMaps.map" 及所有 "*.map" 文件合并索引
     /// （递归扫描子目录，兼容多模块产物）。
     /// 找不到文件或解析失败返回 false（由调用方决定告警策略）。
-    bool load_from_dir(const std::string& dir);
+    bool LoadFromDir(const std::string& dir);
 
     /// 按混淆 key 精确查找，命中返回指向条目的指针（零拷贝），未命中返回 nullptr。
     const SourceMapEntry* lookup(const std::string& key) const;
@@ -51,14 +51,14 @@ public:
     /// heapsnapshot 中形如 "[bundle/]module@version/src/main/ets/xxx.ts[#func...]"
     /// 的字符串：内部将混淆 key 拆解为 "module|package|version|rel_path" 后
     /// 以 (module, version, rel_path) 匹配。命中返回指向条目的指针，未命中返回 nullptr。
-    const SourceMapEntry* lookup_by_module(const std::string& module, const std::string& version,
-                                           const std::string& rel_path) const;
+    const SourceMapEntry* LookupByModule(const std::string& module, const std::string& version,
+                                           const std::string& relPath) const;
 
     /// 索引是否为空（未加载到任何条目）。
     bool empty() const;
 
     /// Base64 VLQ 解码 source map v3 "mappings" 字段（无缓存，供独立解码场景使用）。
-    static DecodedMappings decode_vlq_mappings(const std::string& mappings);
+    static DecodedMappings DecodeVlqMappings(const std::string& mappings);
 
     /// 将编译产物行号直接映射为源码行号（均为 1-based，对应官方
     /// "异常堆栈解析原理"中 sourceMap 的映射方式）：取目标行（含）之前
@@ -67,7 +67,7 @@ public:
     /// 注意：该函数与 resolve_original_position 同为 sourceMap 直接映射，
     /// 区别仅在本函数只做行级映射（无列级细分）。内部按 mappings 内容缓存
     /// 解码结果，重复映射同一 mappings 时避免重复解码。
-    bool resolve_original_line(const std::string& mappings, int generated_line, int& original_line) const;
+    bool ResolveOriginalLine(const std::string& mappings, int generatedLine, int& originalLine) const;
 
     /// 将编译产物行列号精确映射为源码行列号（均为 1-based，对应官方
     /// "异常堆栈解析原理"中 sourceMap 的列级映射）：
@@ -76,19 +76,19 @@ public:
     /// 目标行无覆盖段时，向前回退到最近一个有映射的行取其最末 segment。
     /// 命中返回 true 并填充 original_line/original_column；若 out_source_index
     /// 非空且命中段含 sourceIndex，同时填充其指向 sources 数组的索引。
-    bool resolve_original_position(const std::string& mappings, int generated_line,
-                                   int generated_column, int& original_line,
-                                   int& original_column, int* out_source_index = nullptr) const;
+    bool ResolveOriginalPosition(const std::string& mappings, int generatedLine,
+                                   int generatedColumn, int& originalLine,
+                                   int& originalColumn, int* outSourceIndex = nullptr) const;
 
 private:
     /// 返回 mappings 的解码结果（内部缓存，引用在缓存存续期间稳定）。
-    const DecodedMappings& get_decoded_mappings(const std::string& mappings) const;
+    const DecodedMappings& GetDecodedMappings(const std::string& mappings) const;
 
     std::unordered_map<std::string, SourceMapEntry> index_;
     // 二级索引：module|version|rel_path → 条目，供 lookup_by_module 快速查找。
-    std::unordered_map<std::string, const SourceMapEntry*> module_index_;
+    std::unordered_map<std::string, const SourceMapEntry*> moduleIndex;
     // mappings 解码缓存：mappings 原始串 → 解码结果，避免反复解码同一份映射。
-    mutable std::unordered_map<std::string, DecodedMappings> decoded_cache_;
+    mutable std::unordered_map<std::string, DecodedMappings> decodedCache;
 };
 
 } // namespace mem_analyzer

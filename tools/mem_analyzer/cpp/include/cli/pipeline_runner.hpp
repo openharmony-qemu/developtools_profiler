@@ -28,6 +28,6 @@ namespace mem_analyzer {
 /// `base_ctx` 为运行级参数，本函数不修改它。
 /// 单文件通用管道：选模块 → 派生 RunContext → module.run → 按需自动打开。
 /// 返回 false = 处理失败（路径超限 / 模块返回空产物），调用方应传导为非零退出码。
-bool process_file(const std::string& file_path, AnalysisModule& module, const RunContext& base_ctx);
+bool ProcessFile(const std::string& filePath, AnalysisModule& module, const RunContext& baseCtx);
 
 } // namespace mem_analyzer

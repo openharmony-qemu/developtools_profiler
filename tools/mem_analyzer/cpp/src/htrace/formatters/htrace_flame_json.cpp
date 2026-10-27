@@ -22,107 +22,111 @@
 #include <cmath>
 #include <vector>
 
-using namespace mem_analyzer::html_analysis;
+using namespace mem_analyzer::htmlAnalysis;
 
 namespace mem_analyzer {
 
 // ===== Build flame/icicle tree JSON directly from FlameNode (skip intermediate JSON) =====
 
 // Internal: recursive helper for non-root nodes (reads symbol info from FlameNode)
-static json buildFlameTreeNodeFromFlameNode(const FlameNode& node, const std::unordered_map<int, std::string>& data_dict, StringTable& st) {
-    std::string sym = resolve_str(node.symbol_id, data_dict);
-    std::string lib = node.file_id_null ? "unknown" : resolve_str(node.file_id, data_dict);
-    std::string libOffset = resolve_offset_str(node.vaddr, node.vaddr_null);
+static json BuildFlameTreeNodeFromFlameNode(const FlameNode& node, const std::unordered_map<int, std::string>& dataDict, StringTable& st)
+{
+    std::string sym = ResolveStr(node.symbolId, dataDict);
+    std::string lib = node.fileIdNull ? "unknown" : ResolveStr(node.fileId, dataDict);
+    std::string libOffset = ResolveOffsetStr(node.vaddr, node.vaddrNull);
 
     json j;
-    j["n"] = st.intern(formatFuncName(sym, lib, libOffset));
-    j["t"] = node.leak_size;
+    j["n"] = st.intern(FormatFuncName(sym, lib, libOffset));
+    j["t"] = node.leakSize;
     j["d"] = node.depth;
-    j["cnt"] = node.existing_count;
-    j["ts"] = HtraceConfigMgr::instance().is_ts_symbol(lib, node.vaddr_null);
+    j["cnt"] = node.existingCount;
+    j["ts"] = HtraceConfigMgr::instance().IsTsSymbol(lib, node.vaddrNull);
 
     long long childrenTotal = 0;
     json childrenArr = json::array();
     for (const auto& child : node.children) {
-        json childJson = buildFlameTreeNodeFromFlameNode(child, data_dict, st);
+        json childJson = BuildFlameTreeNodeFromFlameNode(child, dataDict, st);
         childrenTotal += childJson["t"].get<long long>();
         childrenArr.push_back(std::move(childJson));
     }
 
-    long long selfSize = node.leak_size - childrenTotal;
+    long long selfSize = node.leakSize - childrenTotal;
     j["v"] = selfSize < 0 ? (long long)0 : selfSize;
     j["c"] = std::move(childrenArr);
     return j;
 }
 
-json buildFlameTreeJsonFromFlameNode(const FlameNode& node, const std::string& rootName, const std::string& rootLib, const std::string& rootLibOffset, const std::unordered_map<int, std::string>& data_dict, StringTable& st) {
+json BuildFlameTreeJsonFromFlameNode(const FlameNode& node, const std::string& rootName, const std::string& rootLib, const std::string& rootLibOffset, const std::unordered_map<int, std::string>& dataDict, StringTable& st)
+{
     // 根节点使用TopSymbolInfo的符号信息（FlameNode根节点是合成节点，symbol_id/file_id为空）
     json j;
-    j["n"] = st.intern(formatFuncName(rootName, rootLib, rootLibOffset));
-    j["t"] = node.leak_size;
+    j["n"] = st.intern(FormatFuncName(rootName, rootLib, rootLibOffset));
+    j["t"] = node.leakSize;
     j["d"] = 0;
-    j["cnt"] = node.existing_count;
-    j["ts"] = HtraceConfigMgr::instance().is_ts_symbol(rootLib, rootLibOffset.empty());
+    j["cnt"] = node.existingCount;
+    j["ts"] = HtraceConfigMgr::instance().IsTsSymbol(rootLib, rootLibOffset.empty());
 
     long long childrenTotal = 0;
     json childrenArr = json::array();
     for (const auto& child : node.children) {
-        json childJson = buildFlameTreeNodeFromFlameNode(child, data_dict, st);
+        json childJson = BuildFlameTreeNodeFromFlameNode(child, dataDict, st);
         childrenTotal += childJson["t"].get<long long>();
         childrenArr.push_back(std::move(childJson));
     }
 
-    long long selfSize = node.leak_size - childrenTotal;
+    long long selfSize = node.leakSize - childrenTotal;
     j["v"] = selfSize < 0 ? (long long)0 : selfSize;
     j["c"] = std::move(childrenArr);
     return j;
 }
 
 // Internal: recursive helper for icicle non-root nodes
-static json buildIcicleTreeNodeFromFlameNode(const FlameNode& node, const std::unordered_map<int, std::string>& data_dict, StringTable& st) {
-    std::string sym = resolve_str(node.symbol_id, data_dict);
-    std::string lib = node.file_id_null ? "unknown" : resolve_str(node.file_id, data_dict);
-    std::string libOffset = resolve_offset_str(node.vaddr, node.vaddr_null);
+static json BuildIcicleTreeNodeFromFlameNode(const FlameNode& node, const std::unordered_map<int, std::string>& dataDict, StringTable& st)
+{
+    std::string sym = ResolveStr(node.symbolId, dataDict);
+    std::string lib = node.fileIdNull ? "unknown" : ResolveStr(node.fileId, dataDict);
+    std::string libOffset = ResolveOffsetStr(node.vaddr, node.vaddrNull);
 
     json j;
-    j["n"] = st.intern(formatFuncName(sym, lib, libOffset));
-    j["t"] = node.leak_size;
+    j["n"] = st.intern(FormatFuncName(sym, lib, libOffset));
+    j["t"] = node.leakSize;
     j["d"] = node.depth;
-    j["cnt"] = node.existing_count;
-    j["ts"] = HtraceConfigMgr::instance().is_ts_symbol(lib, node.vaddr_null);
+    j["cnt"] = node.existingCount;
+    j["ts"] = HtraceConfigMgr::instance().IsTsSymbol(lib, node.vaddrNull);
 
     long long childrenTotal = 0;
     json childrenArr = json::array();
     for (const auto& child : node.children) {
-        json childJson = buildIcicleTreeNodeFromFlameNode(child, data_dict, st);
+        json childJson = BuildIcicleTreeNodeFromFlameNode(child, dataDict, st);
         childrenTotal += childJson["t"].get<long long>();
         childrenArr.push_back(std::move(childJson));
     }
 
-    long long selfSize = node.leak_size - childrenTotal;
+    long long selfSize = node.leakSize - childrenTotal;
     j["v"] = selfSize < 0 ? (long long)0 : selfSize;
     j["c"] = std::move(childrenArr);
     return j;
 }
 
-json buildIcicleTreeJsonFromFlameNode(const FlameNode& node, const std::string& rootName, const std::string& rootLib, const std::string& rootLibOffset, const std::unordered_map<int, std::string>& data_dict, StringTable& st) {
+json BuildIcicleTreeJsonFromFlameNode(const FlameNode& node, const std::string& rootName, const std::string& rootLib, const std::string& rootLibOffset, const std::unordered_map<int, std::string>& dataDict, StringTable& st)
+{
     // 根节点使用TopSymbolInfo的符号信息
     json j;
-    j["n"] = st.intern(formatFuncName(rootName, rootLib, rootLibOffset));
-    j["t"] = node.leak_size;
+    j["n"] = st.intern(FormatFuncName(rootName, rootLib, rootLibOffset));
+    j["t"] = node.leakSize;
     j["d"] = 0;
-    j["cnt"] = node.existing_count;
-    j["ts"] = HtraceConfigMgr::instance().is_ts_symbol(rootLib, rootLibOffset.empty());
+    j["cnt"] = node.existingCount;
+    j["ts"] = HtraceConfigMgr::instance().IsTsSymbol(rootLib, rootLibOffset.empty());
 
     long long childrenTotal = 0;
     json childrenArr = json::array();
     for (const auto& child : node.children) {
-        json childJson = buildIcicleTreeNodeFromFlameNode(child, data_dict, st);
+        json childJson = BuildIcicleTreeNodeFromFlameNode(child, dataDict, st);
         childrenTotal += childJson["t"].get<long long>();
         childrenArr.push_back(std::move(childJson));
     }
 
-    long long selfSize = node.leak_size - childrenTotal;
+    long long selfSize = node.leakSize - childrenTotal;
     j["v"] = selfSize < 0 ? (long long)0 : selfSize;
     j["c"] = std::move(childrenArr);
     return j;
@@ -130,24 +134,26 @@ json buildIcicleTreeJsonFromFlameNode(const FlameNode& node, const std::string& 
 
 // Build call chains directly from FlameNode (matching TS collectSelfNodes logic)
 // Flame graph uses "callers" (upward), so we traverse children in the flame tree
-static void collectSelfNodesFromFlameNode(
+static void CollectSelfNodesFromFlameNode(
     const FlameNode& node,
-    const std::unordered_map<int, std::string>& data_dict,
+    const std::unordered_map<int, std::string>& dataDict,
     std::vector<CallChainFrame> ancestorsPath,
     std::vector<std::pair<double, std::vector<CallChainFrame>>>& results)
 {
     // Compute self size: total - sum of children totals
     long long childrenTotal = 0;
     for (const auto& child : node.children) {
-        childrenTotal += child.leak_size;
+        childrenTotal += child.leakSize;
     }
-    long long selfSize = node.leak_size - childrenTotal;
-    if (selfSize < 0) selfSize = 0;
+    long long selfSize = node.leakSize - childrenTotal;
+    if (selfSize < 0) {
+        selfSize = 0;
+    }
 
     CallChainFrame frame;
-    frame.name = resolve_str(node.symbol_id, data_dict);
-    frame.lib = node.file_id_null ? "unknown" : resolve_str(node.file_id, data_dict);
-    frame.libOffset = resolve_offset_str(node.vaddr, node.vaddr_null);
+    frame.name = ResolveStr(node.symbolId, dataDict);
+    frame.lib = node.fileIdNull ? "unknown" : ResolveStr(node.fileId, dataDict);
+    frame.libOffset = ResolveOffsetStr(node.vaddr, node.vaddrNull);
 
     std::vector<CallChainFrame> pathToRoot;
     pathToRoot.push_back(frame);
@@ -158,32 +164,32 @@ static void collectSelfNodesFromFlameNode(
     }
 
     for (const auto& child : node.children) {
-        collectSelfNodesFromFlameNode(child, data_dict, pathToRoot, results);
+        CollectSelfNodesFromFlameNode(child, dataDict, pathToRoot, results);
     }
 }
 
 static std::vector<CallChainResult> buildCallChainsFromFlameNode(
-    const FlameNode& flame_root,
+    const FlameNode& flameRoot,
     const TopSymbolInfo& ts,
-    const std::unordered_map<int, std::string>& data_dict)
+    const std::unordered_map<int, std::string>& dataDict)
 {
     std::vector<std::pair<double, std::vector<CallChainFrame>>> candidates;
 
     CallChainFrame rootFrame;
     rootFrame.name = ts.symbol;
     rootFrame.lib = ts.libs.empty() ? "" : ts.libs[0];
-    rootFrame.libOffset = ts.lib_offset;
+    rootFrame.libOffset = ts.libOffset;
     std::vector<CallChainFrame> initialPath;
     initialPath.push_back(rootFrame);
 
-    for (const auto& child : flame_root.children) {
-        collectSelfNodesFromFlameNode(child, data_dict, initialPath, candidates);
+    for (const auto& child : flameRoot.children) {
+        CollectSelfNodesFromFlameNode(child, dataDict, initialPath, candidates);
     }
 
     // Fallback: if no call chains from flame graph (callers), try icicle graph (callees)
     if (candidates.empty()) {
-        for (const auto& child : ts.icicle_graph.children) {
-            collectSelfNodesFromFlameNode(child, data_dict, initialPath, candidates);
+        for (const auto& child : ts.icicleGraph.children) {
+            CollectSelfNodesFromFlameNode(child, dataDict, initialPath, candidates);
         }
         // Reverse frames for icicle fallback: display from innermost callee to root
         for (auto& cand : candidates) {
@@ -210,28 +216,29 @@ static std::vector<CallChainResult> buildCallChainsFromFlameNode(
 
 // 轻量版本：仅构建info+callChains，跳过flameTree/icicleTree
 // 用于延迟构建模式，flameTree/icicleTree在流式写入时按需构建，大幅降低峰值内存
-SymbolDataEntry buildSymbolDataEntryFromContextLight(const TopSymbolInfo& ts, long long total_existing_size, const std::unordered_map<int, std::string>& data_dict) {
+SymbolDataEntry BuildSymbolDataEntryFromContextLight(const TopSymbolInfo& ts, long long totalExistingSize, const std::unordered_map<int, std::string>& dataDict)
+{
     SymbolDataEntry entry;
 
-    double percentage = total_existing_size > 0
-        ? std::round((double)ts.total_leak_size / (double)total_existing_size * 10000.0) / 100.0
+    double percentage = totalExistingSize > 0
+        ? std::round((double)ts.totalLeakSize / (double)totalExistingSize * 10000.0) / 100.0
         : 0.0;
     std::string lib = ts.libs.empty() ? "" : ts.libs[0];
     entry.info = json{
         {"name", ts.symbol},
         {"lib", lib},
-        {"libOffset", ts.lib_offset},
-        {"existingSize", ts.total_leak_size},
-        {"existingCount", ts.total_existing_count},
+        {"libOffset", ts.libOffset},
+        {"existingSize", ts.totalLeakSize},
+        {"existingCount", ts.totalExistingCount},
         {"percentage", percentage},
         {"type", ts.type},
-        {"isApp", ts.is_app}
+        {"isApp", ts.isApp}
     };
 
     // rank is set by the caller (index in the group + 1)
 
     // 仅构建callChains（tabContentHTML需要），不构建flameTree/icicleTree
-    entry.callChains = buildCallChainsFromFlameNode(ts.flame_graph, ts, data_dict);
+    entry.callChains = buildCallChainsFromFlameNode(ts.flameGraph, ts, dataDict);
     return entry;
 }
 

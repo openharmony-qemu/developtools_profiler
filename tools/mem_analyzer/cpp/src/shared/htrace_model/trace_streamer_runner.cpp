@@ -22,31 +22,35 @@
 
 namespace mem_analyzer {
 
-bool run_trace_streamer(const std::string& htrace_path,
-                        const std::string& db_path,
-                        const std::string& so_dir,
+bool RunTraceStreamer(const std::string& htracePath,
+                        const std::string& dbPath,
+                        const std::string& soDir,
                         std::string* error) {
-    const std::string streamer = platform::get_trace_streamer_path();
-    if (streamer.empty() || !platform::file_exists(streamer)) {
-        if (error) *error = "trace_streamer not found at: " + streamer;
+    const std::string streamer = platform::GetTraceStreamerPath();
+    if (streamer.empty() || !platform::FileExists(streamer)) {
+        if (error) {
+            *error = "trace_streamer not found at: " + streamer;
+        }
         return false;
     }
 
     std::vector<std::string> args = {"-e",
-                                     platform::absolute_path(db_path),
-                                     platform::absolute_path(htrace_path)};
-    if (!so_dir.empty()) {
+                                     platform::AbsolutePath(dbPath),
+                                     platform::AbsolutePath(htracePath)};
+    if (!soDir.empty()) {
         args.push_back("--So_dir");
-        args.push_back(platform::absolute_path(so_dir));
+        args.push_back(platform::AbsolutePath(soDir));
     }
 
-    log::logd("[trace_streamer] ", streamer, " ", platform::absolute_path(db_path), " ",
-              platform::absolute_path(htrace_path),
-              (so_dir.empty() ? std::string() : " --So_dir " + platform::absolute_path(so_dir)));
+    log::Logd("[trace_streamer] ", streamer, " ", platform::AbsolutePath(dbPath), " ",
+              platform::AbsolutePath(htracePath),
+              (soDir.empty() ? std::string() : " --So_dir " + platform::AbsolutePath(soDir)));
 
-    const int result = platform::run_process_with_spinner(streamer, args, "Running trace_streamer");
+    const int result = platform::RunProcessWithSpinner(streamer, args, "Running trace_streamer");
     if (result != 0) {
-        if (error) *error = "trace_streamer conversion failed with code: " + std::to_string(result);
+        if (error) {
+            *error = "trace_streamer conversion failed with code: " + std::to_string(result);
+        }
         return false;
     }
     return true;

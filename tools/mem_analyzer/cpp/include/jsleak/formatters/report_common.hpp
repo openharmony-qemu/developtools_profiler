@@ -23,22 +23,22 @@ namespace mem_analyzer {
 
 // jsleak 报告基础 CSS：reset / body / 标题 / meta 卡片 / 表格 / 详情条目 /
 // 引用链 / 节点 ID 标签 / 空态提示。各 formatter 注入后可追加自己的专属样式。
-std::string report_common_css();
+std::string ReportCommonCss();
 
 // jsleak 报告基础 JS 工具：esc / bytes / num / delta / nodeIdsHtml / expandNodeIds /
 // showDetail / toggleDetail / chainHtml。各 formatter 注入后可追加自己的专属交互逻辑。
-std::string report_common_js();
+std::string ReportCommonJs();
 
 // 二级页签（详情列表 / 引用链总览图）+ 冰柱图画布容器的共享 CSS。
-std::string report_common_sub_tab_css();
+std::string ReportCommonSubTabCss();
 
 // 二级页签切换 / 「查看」跳总览图 / 引用链树表展开折叠与复制的共享 JS；
 // 暴露 window.markSelectedRow / switchSubTab / showInOverview / toggleIcicleTreeRow /
 // toggleIcicleTreeAll / copyIcicleTree。
-std::string report_common_sub_tab_js();
+std::string ReportCommonSubTabJs();
 
 // 引用链总览图（冰柱图）初始化 JS：把 window.ICICLE_CHARTS_DATA 交给图表模块，
 // 启用「子树上包络」布局。
-std::string report_common_chart_init_js();
+std::string ReportCommonChartInitJs();
 
 } // namespace mem_analyzer

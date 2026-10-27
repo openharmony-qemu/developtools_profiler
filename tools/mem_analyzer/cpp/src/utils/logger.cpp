@@ -30,13 +30,14 @@ namespace log {
 
 namespace {
 
-std::atomic<Level> g_level{Level::Info};
-std::atomic<unsigned> g_prefix{0};
-std::mutex g_mutex;                          // 保护 g_sink 与单条日志的原子输出
-std::shared_ptr<Sink> g_sink;                // null = 默认 console（stdout/stderr）
+std::atomic<Level> gLevel{Level::Info};
+std::atomic<unsigned> gPrefix{0};
+std::mutex gMutex;                          // 保护 g_sink 与单条日志的原子输出
+std::shared_ptr<Sink> gSink;                // null = 默认 console（stdout/stderr）
 
 // 级别标签（定宽 7 字符，便于对齐）。
-const char* tag(Level lv) {
+const char* tag(Level lv)
+{
     switch (lv) {
         case Level::Debug:   return "[DEBUG]";
         case Level::Info:    return "[ INFO]";
@@ -48,7 +49,8 @@ const char* tag(Level lv) {
 }
 
 // 正文着色（整条同色的正文部分）：正色 = 不染色。
-std::string paint(Level lv, bool dim, const std::string& text) {
+std::string paint(Level lv, bool dim, const std::string& text)
+{
     switch (lv) {
         case Level::Debug:   return style::dim(text);
         case Level::Info:    return dim ? style::dim(text) : text;
@@ -60,7 +62,8 @@ std::string paint(Level lv, bool dim, const std::string& text) {
 }
 
 // 前缀着色：级别色 + 加粗（增强级别辨识），颜色与正文一致。
-std::string paint_tag(Level lv, bool dim, const std::string& text) {
+std::string PaintTag(Level lv, bool dim, const std::string& text)
+{
     switch (lv) {
         case Level::Debug:   return style::bold(style::dim(text));
         case Level::Info:    return dim ? style::bold(style::dim(text)) : style::bold(text);
@@ -71,7 +74,8 @@ std::string paint_tag(Level lv, bool dim, const std::string& text) {
     return text;
 }
 
-std::string timestamp_now() {
+std::string TimestampNow()
+{
     using namespace std::chrono;
     const auto now = system_clock::now();
     const auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
@@ -89,7 +93,8 @@ std::string timestamp_now() {
     return oss.str();
 }
 
-unsigned thread_id_short() {
+unsigned ThreadIdShort()
+{
     std::ostringstream oss;
     oss << std::this_thread::get_id();
     std::hash<std::string> h;
@@ -98,35 +103,37 @@ unsigned thread_id_short() {
 
 } // namespace
 
-void set_level(Level min) { g_level.store(min); }
-Level level() { return g_level.load(); }
-void set_prefix(Prefix flags) { g_prefix.store(static_cast<unsigned>(flags)); }
+void SetLevel(Level min) { gLevel.store(min); }
+Level level() { return gLevel.load(); }
+void SetPrefix(Prefix flags) { gPrefix.store(static_cast<unsigned>(flags)); }
 
-void set_sink(std::shared_ptr<Sink> sink) {
-    std::lock_guard<std::mutex> g(g_mutex);
-    g_sink = std::move(sink);
+void SetSink(std::shared_ptr<Sink> sink)
+{
+    std::lock_guard<std::mutex> g(gMutex);
+    gSink = std::move(sink);
 }
 
-void write_line(Level lv, bool dim, const std::string& msg) {
-    std::lock_guard<std::mutex> g(g_mutex);   // 单条日志原子输出，多线程不交错
+void WriteLine(Level lv, bool dim, const std::string& msg)
+{
+    std::lock_guard<std::mutex> g(gMutex);   // 单条日志原子输出，多线程不交错
 
-    const unsigned prefix_flags = g_prefix.load();
+    const unsigned prefixFlags = gPrefix.load();
 
     std::string prefix;
-    if (prefix_flags & static_cast<unsigned>(Prefix::Timestamp)) {
-        prefix += "[" + timestamp_now() + "]";
+    if (prefixFlags & static_cast<unsigned>(Prefix::Timestamp)) {
+        prefix += "[" + TimestampNow() + "]";
     }
-    if (prefix_flags & static_cast<unsigned>(Prefix::ThreadId)) {
+    if (prefixFlags & static_cast<unsigned>(Prefix::ThreadId)) {
         std::ostringstream oss;
-        oss << '[' << thread_id_short() << ']';
+        oss << '[' << ThreadIdShort() << ']';
         prefix += oss.str();
     }
 
-    const std::string line = prefix + paint_tag(lv, dim, tag(lv)) + " " +
+    const std::string line = prefix + PaintTag(lv, dim, tag(lv)) + " " +
                              paint(lv, dim, msg) + "\n";
 
-    if (g_sink) {
-        g_sink->write(lv, line);
+    if (gSink) {
+        gSink->write(lv, line);
         return;
     }
     // 诊断统一走 stderr（无缓冲单流）：保证与 error 的严格输出顺序，并保持 stdout 干净

@@ -26,31 +26,31 @@ namespace mem_analyzer {
 /// 全局选项：真正跨子命令共享的开关。
 /// 各子命令自己的参数不放这里，由命令自身持有（见 ICommand::bind）。
 struct GlobalOptions {
-    std::string out_dir = defaults::OUTPUT_DIR;  // -d/--out-dir
+    std::string outDir = defaults::OUTPUT_DIR;  // -d/--out-dir
     std::string format;                          // -f/--format（空 = 用该命令的默认格式）
-    bool parse_only = false;                     // -p/--parse-only
-    bool auto_open = false;                      // -o/--auto-open
-    bool show_version = false;                   // -v/--version（仅顶层）
+    bool parseOnly = false;                     // -p/--parse-only
+    bool autoOpen = false;                      // -o/--auto-open
+    bool showVersion = false;                   // -v/--version（仅顶层）
     bool verbose = false;                        // --verbose（启用 debug 日志）
-    bool keep_temp = false;                      // --keep-temp（保留临时目录）
+    bool keepTemp = false;                      // --keep-temp（保留临时目录）
     bool debug = false;                          // --debug（= --verbose --keep-temp）
-    std::string command_line;                    // 原始命令行（由 main 填入，写入输出 meta）
+    std::string commandLine;                    // 原始命令行（由 main 填入，写入输出 meta）
     std::vector<std::string> files;              // 顶层位置参数（auto-detect 模式）
 };
 
 /// 顶层注册：-d/-p/-o/-v/-f + 位置参数 <files>
-void bind_global_options(CliParser& app, GlobalOptions& g);
+void BindGlobalOptions(CliParser& app, GlobalOptions& g);
 
 /// 子命令公共注册：-d/-p/-o/-f + 诊断三件套（不含 -v 与位置参数）
-void bind_common_options(CliParser& sub, GlobalOptions& g);
+void BindCommonOptions(CliParser& sub, GlobalOptions& g);
 
 /// 诊断/排障三件套：--verbose/--keep-temp/--debug。
 /// 效果由 main 统一生效（--debug ⇒ --verbose --keep-temp），各子命令在 bind() 中调用即可。
-void bind_debug_options(CliParser& sub, GlobalOptions& g);
+void BindDebugOptions(CliParser& sub, GlobalOptions& g);
 
 /// 从全局选项构造 RunContext 的基础部分（output + command_line）。
 /// 各命令随后自行填充 resources 与所属域的算法参数。
-RunContext make_base_run_context(const GlobalOptions& g);
+RunContext MakeBaseRunContext(const GlobalOptions& g);
 
 /**
  * 一个子命令 = 一个自包含单元：自己声明参数、自己执行。
@@ -88,7 +88,7 @@ public:
     /// 按 order() 稳定排序返回，保证 --help 输出不受链接顺序影响
     static std::vector<std::shared_ptr<ICommand>> all();
     /// 按主名或别名查找；未找到返回 nullptr
-    static std::shared_ptr<ICommand> find(const std::string& name_or_alias);
+    static std::shared_ptr<ICommand> find(const std::string& nameOrAlias);
 };
 
 } // namespace mem_analyzer

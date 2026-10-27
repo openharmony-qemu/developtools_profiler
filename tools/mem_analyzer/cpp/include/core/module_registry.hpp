@@ -30,16 +30,16 @@ public:
     static AnalysisModule* find(const std::string& name);
 
     /// 按扩展名查找（大小写不敏感，允许带前导点）。
-    static AnalysisModule* find_by_extension(const std::string& ext);
+    static AnalysisModule* FindByExtension(const std::string& ext);
 
     /// 按文件路径的扩展名查找。
-    static AnalysisModule* detect(const std::string& file_path);
+    static AnalysisModule* detect(const std::string& filePath);
 
     static std::vector<AnalysisModule*> all();
 
     /// 能力表一致性自检（见 `ModuleCapability` 的约定）。
     /// 返回不一致条目，空 = 一致；正常构建下应始终为空。
-    static std::vector<std::string> self_check();
+    static std::vector<std::string> SelfCheck();
 };
 
 } // namespace mem_analyzer

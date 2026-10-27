@@ -41,30 +41,30 @@ public:
     bool load(std::string& err);
 
     /// 指定预览特性是否使能；未登记的 id 恒为 false
-    bool enabled(const std::string& feature_id) const;
+    bool enabled(const std::string& featureId) const;
 
     /// 使能/关闭全部已登记预览特性并持久化
-    bool set_enabled(bool enabled, std::string& err);
+    bool SetEnabled(bool enabled, std::string& err);
 
     /// 受管控的特性清单（名称、描述）；新增预览特性时在此登记
     static const std::vector<PreviewFeatureInfo>& registry();
 
     /// 配置文件的路径（已在 resolve_config_path 中确定）
-    std::string config_path() const { return config_path_; }
+    std::string ConfigPath() const { return configPath_; }
 
 private:
     PreviewFeaturesMgr() = default;
 
     /// 解析配置文件路径：优先已存在的 config/preview_features.json
     /// （当前目录 → 可执行文件父目录 → 可执行文件目录），否则落在可执行文件目录的 config/ 下
-    static std::string resolve_config_path();
+    static std::string ResolveConfigPath();
 
     /// 将当前状态写入配置文件（含目录创建）
     bool save(std::string& err) const;
 
     /// 当前已使能的特性 id（仅包含 registry 中登记过的 id）
-    std::unordered_set<std::string> enabled_features_;
-    std::string config_path_;
+    std::unordered_set<std::string> enabledFeatures_;
+    std::string configPath_;
 };
 
 } // namespace mem_analyzer

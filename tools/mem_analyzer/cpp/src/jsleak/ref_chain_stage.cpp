@@ -35,111 +35,127 @@ namespace {
 /// top_k 为空时单遍聚合全部引用链。
 template <typename Pred>
 std::vector<RefChainInfo>
-collect_ref_chains(const HeapSnapshot& heap,
+collectRefChains(const HeapSnapshot& heap,
                    Pred&& predicate,
-                   const std::optional<size_t>& top_k,
-                   const std::unordered_set<std::string>& exclude_chains) {
+                   const std::optional<size_t>& topK,
+                   const std::unordered_set<std::string>& excludeChains) {
     std::vector<RefChainInfo> result;
 
     // 关键路径耗时 trace
     StageTimer timer("ref_chain");
-    timer.stage("start node_count=" + std::to_string(heap.node_count) +
-                " top_k=" + (top_k ? std::to_string(*top_k) : "all"));
+    timer.stage("start node_count=" + std::to_string(heap.nodeCount) +
+                " top_k=" + (topK ? std::to_string(*topK) : "all"));
 
     // exclude 语义：排除「目标节点名」在 exclude_chains 中的链。
     // 原实现按完整链字符串精确匹配；当前唯一用例为 {"SyntheticRoot"}（仅根节点，
     // 其链字符串 == 目标节点简单名），故按简单名匹配等价且无需展开扩展名。
-    auto is_excluded = [&](uint32_t u_ni) {
-        return !exclude_chains.empty() &&
-               exclude_chains.find(heap.get_node_name(u_ni)) != exclude_chains.end();
+    auto isExcluded = [&](uint32_t uNi) {
+        return !excludeChains.empty() &&
+               excludeChains.find(heap.GetNodeName(uNi)) != excludeChains.end();
     };
 
-    if (!top_k.has_value()) {
+    if (!topK.has_value()) {
         // 单遍：按引用链 128-bit hash 聚合（避免整条链字符串常驻）
-        std::unordered_map<RefChainKey, RefChainInfo, RefChainKeyHash> chain_map;
-        for (int ni = 0; ni < heap.node_count; ++ni) {
-            const uint32_t u_ni = static_cast<uint32_t>(ni);
-            if (!predicate(u_ni)) continue;
-            const RefChainKey h = heap.ref_chain_hash(u_ni);  // 不可达返回 {0,0}
-            if (h == RefChainKey{} || is_excluded(u_ni)) continue;
-            auto& info = chain_map[h];
-            if (info.frames.empty()) {
-                info.frames = heap.format_ref_chain_frames(u_ni);
+        std::unordered_map<RefChainKey, RefChainInfo, RefChainKeyHash> chainMap;
+        for (int ni = 0; ni < heap.nodeCount; ++ni) {
+            const uint32_t uNi = static_cast<uint32_t>(ni);
+            if (!predicate(uNi)) {
+                continue;
             }
-            info.node_ids.push_back(heap.get_node_id(u_ni));
-            info.total_retained_size += static_cast<uint64_t>(heap.get_retained_size(u_ni));
+            const RefChainKey h = heap.RefChainHash(uNi);  // 不可达返回 {0,0}
+            if (h == RefChainKey{} || isExcluded(uNi)) {
+                continue;
+            }
+            auto& info = chainMap[h];
+            if (info.frames.empty()) {
+                info.frames = heap.FormatRefChainFrames(uNi);
+            }
+            info.nodeIds.push_back(heap.GetNodeId(uNi));
+            info.totalRetainedSize += static_cast<uint64_t>(heap.GetRetainedSize(uNi));
         }
-        timer.tick("pass1", "entries=" + std::to_string(chain_map.size()));
+        timer.tick("pass1", "entries=" + std::to_string(chainMap.size()));
 
-        result.reserve(chain_map.size());
-        for (auto& kv : chain_map) {
+        result.reserve(chainMap.size());
+        for (auto& kv : chainMap) {
             result.emplace_back(std::move(kv.second));
         }
     } else {
-        const size_t K = *top_k;
+        const size_t K = *topK;
 
         // 第一遍：统计每条引用链（按 hash）的累计 retained size
-        std::unordered_map<RefChainKey, uint64_t, RefChainKeyHash> size_map;
-        for (int ni = 0; ni < heap.node_count; ++ni) {
-            const uint32_t u_ni = static_cast<uint32_t>(ni);
-            if (!predicate(u_ni)) continue;
-            const RefChainKey h = heap.ref_chain_hash(u_ni);
-            if (h == RefChainKey{} || is_excluded(u_ni)) continue;
-            size_map[h] += static_cast<uint64_t>(heap.get_retained_size(u_ni));
+        std::unordered_map<RefChainKey, uint64_t, RefChainKeyHash> sizeMap;
+        for (int ni = 0; ni < heap.nodeCount; ++ni) {
+            const uint32_t uNi = static_cast<uint32_t>(ni);
+            if (!predicate(uNi)) {
+                continue;
+            }
+            const RefChainKey h = heap.RefChainHash(uNi);
+            if (h == RefChainKey{} || isExcluded(uNi)) {
+                continue;
+            }
+            sizeMap[h] += static_cast<uint64_t>(heap.GetRetainedSize(uNi));
         }
-        timer.tick("pass1", "entries=" + std::to_string(size_map.size()));
+        timer.tick("pass1", "entries=" + std::to_string(sizeMap.size()));
 
         // 用最小堆选出累计 retained size 最大的前 K 条（堆顶最小）
         using Pair = std::pair<RefChainKey, uint64_t>;  // (key, retained_size)
         auto cmp = [](const Pair& a, const Pair& b) { return a.second > b.second; };
-        std::priority_queue<Pair, std::vector<Pair>, decltype(cmp)> min_heap(cmp);
-        for (const auto& entry : size_map) {
-            if (min_heap.size() < K) {
-                min_heap.push(entry);
-            } else if (!min_heap.empty() && entry.second > min_heap.top().second) {
-                min_heap.pop();
-                min_heap.push(entry);
+        std::priority_queue<Pair, std::vector<Pair>, decltype(cmp)> minHeap(cmp);
+        for (const auto& entry : sizeMap) {
+            if (minHeap.size() < K) {
+                minHeap.push(entry);
+            } else if (!minHeap.empty() && entry.second > minHeap.top().second)
+            {
+                minHeap.pop();
+                minHeap.push(entry);
             }
         }
 
-        std::vector<Pair> top_pairs;
-        top_pairs.reserve(min_heap.size());
-        while (!min_heap.empty()) {
-            top_pairs.push_back(min_heap.top());
-            min_heap.pop();
+        std::vector<Pair> topPairs;
+        topPairs.reserve(minHeap.size());
+        while (!minHeap.empty()) {
+            topPairs.push_back(minHeap.top());
+            minHeap.pop();
         }
-        if (top_pairs.empty()) return result;
-        timer.tick("topK", "K=" + std::to_string(top_pairs.size()));
+        if (topPairs.empty()) {
+            return result;
+        }
+        timer.tick("topK", "K=" + std::to_string(topPairs.size()));
 
         // 第二遍：只收集 top K 引用链的节点 ID
-        std::unordered_map<RefChainKey, size_t, RefChainKeyHash> hash_to_index;
-        hash_to_index.reserve(top_pairs.size());
-        result.reserve(top_pairs.size());
-        for (const auto& p : top_pairs) {
+        std::unordered_map<RefChainKey, size_t, RefChainKeyHash> hashToIndex;
+        hashToIndex.reserve(topPairs.size());
+        result.reserve(topPairs.size());
+        for (const auto& p : topPairs) {
             RefChainInfo info;
-            info.total_retained_size = p.second;
+            info.totalRetainedSize = p.second;
             result.emplace_back(std::move(info));
-            hash_to_index[p.first] = result.size() - 1;
+            hashToIndex[p.first] = result.size() - 1;
         }
-        for (int ni = 0; ni < heap.node_count; ++ni) {
-            const uint32_t u_ni = static_cast<uint32_t>(ni);
-            if (!predicate(u_ni)) continue;
-            const RefChainKey h = heap.ref_chain_hash(u_ni);
-            if (h == RefChainKey{} || is_excluded(u_ni)) continue;
-            auto it = hash_to_index.find(h);
-            if (it != hash_to_index.end()) {
+        for (int ni = 0; ni < heap.nodeCount; ++ni) {
+            const uint32_t uNi = static_cast<uint32_t>(ni);
+            if (!predicate(uNi)) {
+                continue;
+            }
+            const RefChainKey h = heap.RefChainHash(uNi);
+            if (h == RefChainKey{} || isExcluded(uNi)) {
+                continue;
+            }
+            auto it = hashToIndex.find(h);
+            if (it != hashToIndex.end()) {
                 auto& info = result[it->second];
                 if (info.frames.empty()) {
-                    info.frames = heap.format_ref_chain_frames(u_ni);
+                    info.frames = heap.FormatRefChainFrames(uNi);
                 }
-                info.node_ids.push_back(heap.get_node_id(u_ni));
+                info.nodeIds.push_back(heap.GetNodeId(uNi));
             }
         }
         timer.tick("pass2");
     }
 
-    std::sort(result.begin(), result.end(), [](const RefChainInfo& a, const RefChainInfo& b) {
-        return a.total_retained_size > b.total_retained_size;
+    std::sort(result.begin(), result.end(), [](const RefChainInfo& a, const RefChainInfo& b)
+    {
+        return a.totalRetainedSize > b.totalRetainedSize;
     });
     return result;
 }
@@ -147,55 +163,62 @@ collect_ref_chains(const HeapSnapshot& heap,
 } // namespace
 
 RefChainStage::RefChainStage(std::string mode,
-                             const char* preview_id,
-                             const char* json_key,
-                             std::optional<std::string> target_class,
-                             std::optional<size_t> top_k,
-                             std::unordered_set<std::string> exclude_chains)
+                             const char* PreviewId,
+                             const char* JsonKey,
+                             std::optional<std::string> targetClass,
+                             std::optional<size_t> topK,
+                             std::unordered_set<std::string> excludeChains)
     : mode_(std::move(mode)),
-      preview_id_(preview_id),
-      json_key_(json_key),
-      target_class_(std::move(target_class)),
-      top_k_(top_k),
-      exclude_chains_(std::move(exclude_chains)) {}
+      previewId(PreviewId),
+      jsonKey(JsonKey),
+      targetClass(std::move(targetClass)),
+      topK(topK),
+      excludeChains(std::move(excludeChains)) {}
 
-const std::string& RefChainStage::mode() const {
+const std::string& RefChainStage::mode() const
+{
     return mode_;
 }
 
-const char* RefChainStage::preview_id() const {
-    return preview_id_;
+const char* RefChainStage::PreviewId() const
+{
+    return previewId;
 }
 
-const char* RefChainStage::json_key() const {
-    return json_key_;
+const char* RefChainStage::JsonKey() const
+{
+    return jsonKey;
 }
 
-void RefChainStage::run(const HeapSnapshot& heap) {
-    ref_chain_infos_ = collect_ref_chains(
+void RefChainStage::run(const HeapSnapshot& heap)
+{
+    refChainInfos = collectRefChains(
         heap,
-        [&](uint32_t u_ni) {
-            if (!target_class_) return true;
-            return heap.get_node_name(u_ni) == *target_class_;
+        [&](uint32_t uNi) {
+            if (!targetClass) {
+                return true;
+            }
+            return heap.GetNodeName(uNi) == *targetClass;
         },
-        top_k_,
-        exclude_chains_);
+        topK,
+        excludeChains);
 
-    if (target_class_) {
-        size_t node_count = 0;
-        for (const auto& chain : ref_chain_infos_) {
-            node_count += chain.node_ids.size();
+    if (targetClass) {
+        size_t nodeCount = 0;
+        for (const auto& chain : refChainInfos) {
+            nodeCount += chain.nodeIds.size();
         }
-        log::logok("  Analysis completed. Found ", node_count, " ", *target_class_,
-                   " nodes across ", ref_chain_infos_.size(), " reference chains.");
+        log::Logok("  Analysis completed. Found ", nodeCount, " ", *targetClass,
+                   " nodes across ", refChainInfos.size(), " reference chains.");
     } else {
-        log::logok("  Analysis completed. Found ", ref_chain_infos_.size(),
+        log::Logok("  Analysis completed. Found ", refChainInfos.size(),
                    " top reference chains.");
     }
 }
 
-json RefChainStage::to_json() const {
-    return ref_chains_to_json(ref_chain_infos_);
+json RefChainStage::ToJson() const
+{
+    return RefChainsToJson(refChainInfos);
 }
 
 } // namespace mem_analyzer

@@ -18,14 +18,14 @@
 
 namespace mem_analyzer {
 
-std::string build_chain_path_html(const json& chain_frames);
-std::string build_property_tag_tab_html(const json& property_tag_objects,
+std::string BuildChainPathHtml(const json& chainFrames);
+std::string BuildPropertyTagTabHtml(const json& propertyTagObjects,
                                         const std::string& prefix,
-                                        const std::string& tab_id, bool active,
-                                        json& icicle_charts);
-std::string build_top_chain_tab_html(const json& top_ref_chains,
+                                        const std::string& tabId, bool active,
+                                        json& icicleCharts);
+std::string BuildTopChainTabHtml(const json& topRefChains,
                                      const std::string& prefix,
-                                     const std::string& tab_id, bool active,
-                                     json& icicle_charts, bool search_on_overview = false);
+                                     const std::string& tabId, bool active,
+                                     json& icicleCharts, bool searchOnOverview = false);
 
 } // namespace mem_analyzer

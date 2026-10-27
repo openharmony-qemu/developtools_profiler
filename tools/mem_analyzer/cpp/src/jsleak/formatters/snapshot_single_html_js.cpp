@@ -20,10 +20,13 @@ namespace mem_analyzer {
 // 详情展开折叠(showDetail/toggleDetail)、节点 ID 展开(expandNodeIds)、字节格式化(bytes)
 // 已统一到 report_common_js（经 core_script 注入），单快照与 compare 共用。
 // 二级页签切换、引用链树表交互、冰柱图初始化已抽到 report_common 供多快照共用。
-std::string snapshot_html_js() {
+std::string SnapshotHtmlJs()
+{
     return R"JS(
-(function() {
-  function switchTab(tabId, el) {
+(function()
+{
+  function switchTab(tabId, el)
+  {
     var target = document.getElementById(tabId);
     if (!target) {
       target = document.querySelector('.tab-content[data-tab="' + tabId + '"]');
@@ -61,13 +64,18 @@ std::string snapshot_html_js() {
     if (window.icicleRedrawAll) { window.icicleRedrawAll(); }
   }
 
-  function expandHashValues(containerId) {
+  function expandHashValues(containerId)
+  {
     var container = document.getElementById(containerId);
     var btnId = "expandBtn_" + containerId;
     var btn = document.getElementById(btnId);
-    if (!container || !btn) return;
+    if (!container || !btn) {
+        return;
+    }
     var allHashes = container.getAttribute('data-all-hashes');
-    if (!allHashes) return;
+    if (!allHashes) {
+        return;
+    }
     var hashes = allHashes.split(',');
     var isExpanded = btn.getAttribute('data-expanded') === 'true';
     if (isExpanded) {
@@ -76,7 +84,7 @@ std::string snapshot_html_js() {
         html += '<span class="node-id-tag">' + hashes[i] + '</span>';
       }
       if (hashes.length > 10) {
-        html += '<span class="node-id-tag expand-btn" id="' + btnId + '" onclick="expandHashValues(\'' + containerId + '\')">展开</span>';
+        html += '<span class="node-id-tag expand-btn" id="' + btnId + '" onclick="ExpandHashValues(\'' + containerId + '\')">展开</span>';
       }
       container.innerHTML = html;
     } else {
@@ -89,8 +97,8 @@ std::string snapshot_html_js() {
     }
   }
 
-  window.switchTab = switchTab;
-  window.expandHashValues = expandHashValues;
+  window.SwitchTab = SwitchTab;
+  window.ExpandHashValues = ExpandHashValues;
 })();
 )JS";
 }

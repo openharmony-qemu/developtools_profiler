@@ -31,52 +31,57 @@ namespace mem_analyzer {
 namespace {
 
 // Round double to 2 decimal places for JSON output
-static double round2(double v) {
+static double round2(double v)
+{
     return std::round(v * 100.0) / 100.0;
 }
 
-json build_summary(const std::vector<ResolvedCallStack>& call_stacks,
-                  const std::vector<ArkTsClass>& arkts_classes) {
+json BuildSummary(const std::vector<ResolvedCallStack>& CallStacks,
+                  const std::vector<ArkTsClass>& arktsClasses) {
     struct Totals {
         long long count = 0;
         long long memory = 0;
         long long shallow = 0;
         long long retained = 0;
     };
-    std::unordered_map<HtraceEventType, Totals> by_type = {
+    std::unordered_map<HtraceEventType, Totals> byType = {
         {HtraceEventType::ARK_GLOBAL_HANDLE, {}},
         {HtraceEventType::ARK_LOCAL_HANDLE, {}}
     };
 
-    for (const auto& stack : call_stacks) {
-        const auto found = by_type.find(stack.type);
-        if (found == by_type.end()) continue;
+    for (const auto& stack : CallStacks) {
+        const auto found = byType.find(stack.type);
+        if (found == byType.end()) {
+            continue;
+        }
         ++found->second.count;
-        found->second.memory += stack.existing_size;
+        found->second.memory += stack.existingSize;
     }
 
-    for (const auto& cls : arkts_classes) {
+    for (const auto& cls : arktsClasses) {
         for (const auto& instance : cls.instances) {
             std::unordered_set<HtraceEventType> types;
-            for (const auto& ref : instance.native_ref) {
-                types.insert(ref.handle_type);
+            for (const auto& ref : instance.nativeRef) {
+                types.insert(ref.handleType);
             }
             for (const auto& type : types) {
-                const auto found = by_type.find(type);
-                if (found == by_type.end()) continue;
-                found->second.shallow += instance.shallow_size;
-                found->second.retained += instance.retained_size;
+                const auto found = byType.find(type);
+                if (found == byType.end()) {
+                    continue;
+                }
+                found->second.shallow += instance.shallowSize;
+                found->second.retained += instance.retainedSize;
             }
         }
     }
 
     json handles = json::array();
     for (auto htype : {HtraceEventType::ARK_GLOBAL_HANDLE, HtraceEventType::ARK_LOCAL_HANDLE}) {
-        const auto& total = by_type.at(htype);
-        if (total.count == 0 && total.memory == 0
-            && total.shallow == 0 && total.retained == 0) continue;
+        const auto& total = byType.at(htype);
+        if (total.count == 0 && total.memory == 0 &&
+            total.shallow == 0 && total.retained == 0) continue;
         handles.push_back({
-            {"handleType", htrace_event_type_name(htype)},
+            {"handleType", HtraceEventTypeName(htype)},
             {"totalCount", total.count},
             {"totalMemory", total.memory},
             {"totalShallowSize", total.shallow},
@@ -87,15 +92,16 @@ json build_summary(const std::vector<ResolvedCallStack>& call_stacks,
 }
 
 // Convert ResolvedCallStack to JSON for output
-static json call_stack_to_json(const ResolvedCallStack& stack) {
+static json CallStackToJson(const ResolvedCallStack& stack)
+{
     json j;
     j["id"] = stack.id;
-    j["type"] = htrace_event_type_name(stack.type);
-    j["existingSize"] = round2(stack.related_size);
-    j["nativeRefObjSize"] = stack.existing_size;
+    j["type"] = HtraceEventTypeName(stack.type);
+    j["existingSize"] = round2(stack.relatedSize);
+    j["nativeRefObjSize"] = stack.existingSize;
     json addrs = json::array();
-    if (stack.existing_addrs) {
-        for (const auto& addr : *stack.existing_addrs) {
+    if (stack.existingAddrs) {
+        for (const auto& addr : *stack.existingAddrs) {
             addrs.push_back(addr);
         }
     }
@@ -105,9 +111,9 @@ static json call_stack_to_json(const ResolvedCallStack& stack) {
         frames.push_back({
             {"depth", f.depth},
             {"symbol", f.symbol},
-            {"buildId", f.build_id},
+            {"buildId", f.buildId},
             {"lib", f.lib},
-            {"libOffset", f.lib_offset}
+            {"libOffset", f.libOffset}
         });
     }
     j["frames"] = frames;
@@ -115,43 +121,47 @@ static json call_stack_to_json(const ResolvedCallStack& stack) {
 }
 
 // Convert TraceMeta to JSON
-static json trace_meta_to_json(const TraceMeta& meta) {
+static json TraceMetaToJson(const TraceMeta& meta)
+{
     return {
-        {"startTimeMs", meta.start_time_ms},
-        {"endTimeMs", meta.end_time_ms},
-        {"duration", meta.duration_ns},
-        {"processName", meta.process_name}
+        {"startTimeMs", meta.startTimeMs},
+        {"endTimeMs", meta.endTimeMs},
+        {"duration", meta.durationNs},
+        {"processName", meta.processName}
     };
 }
 
 // Convert ArkTsClass vector to JSON
-static json arkts_classes_to_json(const std::vector<ArkTsClass>& classes) {
+static json ArktsClassesToJson(const std::vector<ArkTsClass>& classes)
+{
     // 1. Merge buckets by clean JSON name
-    std::unordered_map<std::string, ArkTsClass> merged_map;
+    std::unordered_map<std::string, ArkTsClass> mergedMap;
     std::vector<std::string> order; // Preserve insertion order
     
     for (const auto& cls : classes) {
-        std::string json_name = cls.name;
-        if (json_name.find("JSSharedObject(") == 0) {
-            json_name = "JSSharedObject";
-        } else if (json_name.find("JSObject(") == 0) {
-            json_name = "JSObject";
-        } else if (json_name.find("string(size:") == 0) {
-            json_name = "(unknown)";
+        std::string jsonName = cls.name;
+        if (jsonName.find("JSSharedObject(") == 0) {
+            jsonName = "JSSharedObject";
+        } else if (jsonName.find("JSObject(") == 0)
+        {
+            jsonName = "JSObject";
+        } else if (jsonName.find("string(size:") == 0)
+        {
+            jsonName = "(unknown)";
         }
         
-        auto it = merged_map.find(json_name);
-        if (it == merged_map.end()) {
-            ArkTsClass new_cls;
-            new_cls.name = json_name;
-            new_cls.shallow_size = cls.shallow_size;
-            new_cls.retained_size = cls.retained_size;
-            new_cls.instances = cls.instances;
-            merged_map[json_name] = std::move(new_cls);
-            order.push_back(json_name);
+        auto it = mergedMap.find(jsonName);
+        if (it == mergedMap.end()) {
+            ArkTsClass newCls;
+            newCls.name = jsonName;
+            newCls.shallowSize = cls.shallowSize;
+            newCls.retainedSize = cls.retainedSize;
+            newCls.instances = cls.instances;
+            mergedMap[jsonName] = std::move(newCls);
+            order.push_back(jsonName);
         } else {
-            it->second.shallow_size += cls.shallow_size;
-            it->second.retained_size += cls.retained_size;
+            it->second.shallowSize += cls.shallowSize;
+            it->second.retainedSize += cls.retainedSize;
             it->second.instances.insert(it->second.instances.end(), cls.instances.begin(), cls.instances.end());
         }
     }
@@ -162,31 +172,31 @@ static json arkts_classes_to_json(const std::vector<ArkTsClass>& classes) {
     // 2. Output to JSON
     json arr = json::array();
     for (const auto& key : order) {
-        const auto& cls = merged_map[key];
+        const auto& cls = mergedMap[key];
         json cj;
         cj["name"] = cls.name;
-        cj["shallowSize"] = cls.shallow_size;
-        cj["retainedSize"] = cls.retained_size;
+        cj["shallowSize"] = cls.shallowSize;
+        cj["retainedSize"] = cls.retainedSize;
         json instances = json::array();
         for (const auto& inst : cls.instances) {
             json ij;
             ij["id"] = inst.id;
-            ij["shallowSize"] = inst.shallow_size;
-            ij["retainedSize"] = inst.retained_size;
+            ij["shallowSize"] = inst.shallowSize;
+            ij["retainedSize"] = inst.retainedSize;
             json refs = json::array();
             // 排序：先按 handleType（global handle 优先），再按 callStackId 从大到小
-            auto sorted_refs = inst.native_ref;
-            std::sort(sorted_refs.begin(), sorted_refs.end(),
+            auto sortedRefs = inst.nativeRef;
+            std::sort(sortedRefs.begin(), sortedRefs.end(),
                 [](const NativeRefEntry& a, const NativeRefEntry& b) {
-                    if (a.handle_type != b.handle_type) {
-                        return a.handle_type < b.handle_type;
+                    if (a.handleType != b.handleType) {
+                        return a.handleType < b.handleType;
                     }
-                    return a.call_stack_id > b.call_stack_id;
+                    return a.callStackId > b.callStackId;
                 });
-            for (const auto& ref : sorted_refs) {
+            for (const auto& ref : sortedRefs) {
                 json rj;
-                rj["handleType"] = htrace_event_type_name(ref.handle_type);
-                rj["callStackId"] = ref.call_stack_id;
+                rj["handleType"] = HtraceEventTypeName(ref.handleType);
+                rj["callStackId"] = ref.callStackId;
                 json raddrs = json::array();
                 for (const auto& addr : ref.addrs) {
                     raddrs.push_back(addr);
@@ -205,49 +215,51 @@ static json arkts_classes_to_json(const std::vector<ArkTsClass>& classes) {
 
 } // namespace
 
-std::string tshandle_write_parse_json(const TshandleParseResult& parsed, const std::string& file_path,
-                                      const RunContext& ctx, const std::string& out_dir) {
+std::string TshandleWriteParseJson(const TshandleParseResult& parsed, const std::string& filePath,
+                                      const RunContext& ctx, const std::string& outDir) {
     StageTimer timer("JSON write");
 
-    auto base = platform::stem(file_path);
-    if (base.empty()) base = "output";
-    auto out_path = platform::join_path(out_dir, base + ".json");
-    platform::create_directories(out_dir);
+    auto base = platform::stem(filePath);
+    if (base.empty()) {
+        base = "output";
+    }
+    auto outPath = platform::JoinPath(outDir, base + ".json");
+    platform::CreateDirectories(outDir);
 
-    JsonStreamWriter writer(out_path);
+    JsonStreamWriter writer(outPath);
 
-    json meta = build_output_meta_base(ctx);
-    meta["sourceFileInfo"] = {{"zipFile", file_path}};
+    json meta = BuildOutputMetaBase(ctx);
+    meta["sourceFileInfo"] = {{"zipFile", filePath}};
 
     json content;
-    content["summary"] = build_summary(parsed.call_stacks(), parsed.arkts_classes);
+    content["summary"] = BuildSummary(parsed.CallStacks(), parsed.arktsClasses);
 
-    if (!parsed.arkts_classes.empty()) {
-        content["arkTsClasses"] = arkts_classes_to_json(parsed.arkts_classes);
+    if (!parsed.arktsClasses.empty()) {
+        content["arkTsClasses"] = ArktsClassesToJson(parsed.arktsClasses);
     } else {
         content["arkTsClasses"] = json::array();
     }
 
     // memoryTraceInfo
-    json call_stacks_json = json::array();
-    for (const auto& cs : parsed.call_stacks()) {
-        call_stacks_json.push_back(call_stack_to_json(cs));
+    json callStacksJson = json::array();
+    for (const auto& cs : parsed.CallStacks()) {
+        callStacksJson.push_back(CallStackToJson(cs));
     }
     content["memoryTraceInfo"] = json::object();
-    content["memoryTraceInfo"]["callStacks"] = call_stacks_json;
+    content["memoryTraceInfo"]["callStacks"] = callStacksJson;
 
-    writer.begin_object();
-    writer.write_key("meta");
-    writer.write_raw(meta.dump(4));
-    writer.write_key("content");
-    writer.write_raw(content.dump(4));
-    writer.end_object();
+    writer.BeginObject();
+    writer.WriteKey("meta");
+    writer.WriteRaw(meta.dump(4));
+    writer.WriteKey("content");
+    writer.WriteRaw(content.dump(4));
+    writer.EndObject();
 
     writer.close();
 
     timer.tick("total");
-    log::logok("Output written to: ", out_path);
-    return out_path;
+    log::Logok("Output written to: ", outPath);
+    return outPath;
 }
 
 } // namespace mem_analyzer

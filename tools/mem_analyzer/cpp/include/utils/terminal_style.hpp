@@ -22,10 +22,10 @@ namespace style {
 void init();
 
 /// True if stdout is a terminal (not piped/redirected).
-bool is_tty();
+bool IsTty();
 
 /// True if stderr is a terminal (not piped/redirected).
-bool is_stderr_tty();
+bool IsStderrTty();
 
 /// Wrap text with ANSI color/style. Returns raw text if stderr is not a TTY.
 std::string green(const std::string& text);

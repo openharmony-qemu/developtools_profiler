@@ -29,59 +29,65 @@
 namespace mem_analyzer {
 namespace {
 
-double round2(double v) {
+double round2(double v)
+{
     return std::round(v * 100.0) / 100.0;
 }
 
-double round1(double v) {
+double round1(double v)
+{
     return std::round(v * 10.0) / 10.0;
 }
 
-std::string format_duration(long long duration_ns) {
+std::string FormatDuration(long long durationNs)
+{
     std::ostringstream oss;
-    oss << std::fixed << std::setprecision(3)
-        << (static_cast<double>(duration_ns) / 1e9);
+    oss << std::fixed << std::setprecision(3) <<
+        (static_cast<double>(durationNs) / 1e9);
     return oss.str();
 }
 
-json trace_meta_to_json(const TshandleAnalysisOutput& analysis) {
+json TraceMetaToJson(const TshandleAnalysisOutput& analysis)
+{
     struct Totals {
         long long count = 0;
         long long memory = 0;
         long long shallow = 0;
         long long retained = 0;
     };
-    Totals global_totals, local_totals;
+    Totals globalTotals, localTotals;
 
-    for (const auto& stack : analysis.call_stacks) {
+    for (const auto& stack : analysis.CallStacks) {
         if (stack.type == HtraceEventType::ARK_GLOBAL_HANDLE) {
-            ++global_totals.count;
-            global_totals.memory += stack.existing_size;
-        } else if (stack.type == HtraceEventType::ARK_LOCAL_HANDLE) {
-            ++local_totals.count;
-            local_totals.memory += stack.existing_size;
+            ++globalTotals.count;
+            globalTotals.memory += stack.existingSize;
+        } else if (stack.type == HtraceEventType::ARK_LOCAL_HANDLE)
+        {
+            ++localTotals.count;
+            localTotals.memory += stack.existingSize;
         }
     }
 
-    for (const auto& cls : analysis.arkts_classes) {
+    for (const auto& cls : analysis.arktsClasses) {
         for (const auto& instance : cls.instances) {
             std::unordered_set<HtraceEventType> types;
-            for (const auto& ref : instance.native_ref) {
-                types.insert(ref.handle_type);
+            for (const auto& ref : instance.nativeRef) {
+                types.insert(ref.handleType);
             }
             for (const auto& type : types) {
                 if (type == HtraceEventType::ARK_GLOBAL_HANDLE) {
-                    global_totals.shallow += instance.shallow_size;
-                    global_totals.retained += instance.retained_size;
-                } else if (type == HtraceEventType::ARK_LOCAL_HANDLE) {
-                    local_totals.shallow += instance.shallow_size;
-                    local_totals.retained += instance.retained_size;
+                    globalTotals.shallow += instance.shallowSize;
+                    globalTotals.retained += instance.retainedSize;
+                } else if (type == HtraceEventType::ARK_LOCAL_HANDLE)
+                {
+                    localTotals.shallow += instance.shallowSize;
+                    localTotals.retained += instance.retainedSize;
                 }
             }
         }
     }
 
-    auto make_obj = [](const Totals& t) -> json {
+    auto makeObj = [](const Totals& t) -> json {
         return {
             {"totalCount", t.count},
             {"totalMemory", t.memory},
@@ -90,22 +96,23 @@ json trace_meta_to_json(const TshandleAnalysisOutput& analysis) {
         };
     };
 
-    const auto& meta = analysis.trace_meta;
+    const auto& meta = analysis.traceMeta;
     return {
         {"isStatistics", (meta.mode == "detail") ? "0" : "1"},
-        {"duration", format_duration(meta.duration_ns)},
-        {"timestampFrom", meta.start_time_ms > 0 ? format_readable_timestamp(meta.start_time_ms) : "0"},
-        {"timestampTo", meta.end_time_ms > 0 ? format_readable_timestamp(meta.end_time_ms) : "0"},
-        {"processName", meta.process_name},
-        {"global", make_obj(global_totals)},
-        {"local", make_obj(local_totals)}
+        {"duration", FormatDuration(meta.durationNs)},
+        {"timestampFrom", meta.startTimeMs > 0 ? FormatReadableTimestamp(meta.startTimeMs) : "0"},
+        {"timestampTo", meta.endTimeMs > 0 ? FormatReadableTimestamp(meta.endTimeMs) : "0"},
+        {"processName", meta.processName},
+        {"global", makeObj(globalTotals)},
+        {"local", makeObj(localTotals)}
     };
 }
 
-json render_node_to_json(const TshandleRenderNode& node) {
+json RenderNodeToJson(const TshandleRenderNode& node)
+{
     json children = json::array();
     for (const auto& child : node.children) {
-        children.push_back(render_node_to_json(child));
+        children.push_back(RenderNodeToJson(child));
     }
     return {
         {"depth", node.depth},
@@ -114,80 +121,83 @@ json render_node_to_json(const TshandleRenderNode& node) {
         {"count", node.count},
         {"name", node.symbol},
         {"lib", node.lib},
-        {"libOffset", node.lib_offset},
-        {"buildId", node.build_id},
+        {"libOffset", node.libOffset},
+        {"buildId", node.buildId},
         {"callees", std::move(children)}
     };
 }
 
-json section_with_trees_to_json(const TshandleTypeSection& section) {
-    json object_json = json::array();
-    for (const auto& object : section.top_objects) {
-        auto tree = build_tshandle_downstream_graph(
-            object.object_name, object.call_chains, object.existing_size);
+json SectionWithTreesToJson(const TshandleTypeSection& section)
+{
+    json objectJson = json::array();
+    for (const auto& object : section.topObjects) {
+        auto tree = BuildTshandleDownstreamGraph(
+            object.objectName, object.callChains, object.existingSize);
         json obj = {
             {"rank", object.rank},
-            {"existingSize", object.existing_size},
+            {"existingSize", object.existingSize},
             {"existingCount", object.count},
             {"percentage", round2(object.percentage)},
             {"name", tree.symbol}
         };
-        json icicle_arr = json::array();
+        json icicleArr = json::array();
         for (const auto& child : tree.children) {
-            icicle_arr.push_back(render_node_to_json(child));
+            icicleArr.push_back(RenderNodeToJson(child));
         }
-        obj["icicle"] = std::move(icicle_arr);
-        object_json.push_back(std::move(obj));
+        obj["icicle"] = std::move(icicleArr);
+        objectJson.push_back(std::move(obj));
     }
     return {
-        {"totalObjects", section.total_objects},
-        {"totalSize", round1(section.total_size)},
-        {"totalCount", section.total_count},
-        {"totalCallStackExistingSize", round1(section.total_call_stack_existing_size)},
-        {"topArkTsObjects", object_json}
+        {"totalObjects", section.totalObjects},
+        {"totalSize", round1(section.totalSize)},
+        {"totalCount", section.totalCount},
+        {"totalCallStackExistingSize", round1(section.totalCallStackExistingSize)},
+        {"topArkTsObjects", objectJson}
     };
 }
 
 } // namespace
 
-std::string tshandle_write_analysis_json(const TshandleAnalysisOutput& analysis,
-                                        const std::string& file_path, const RunContext& ctx,
-                                        const std::string& out_dir) {
+std::string TshandleWriteAnalysisJson(const TshandleAnalysisOutput& analysis,
+                                        const std::string& filePath, const RunContext& ctx,
+                                        const std::string& outDir) {
     StageTimer timer("JSON write");
 
-    auto base = platform::stem(file_path);
-    if (base.empty()) base = "output";
-    auto out_path = platform::join_path(out_dir, base + ".json");
-    platform::create_directories(out_dir);
+    auto base = platform::stem(filePath);
+    if (base.empty()) {
+        base = "output";
+    }
+    auto outPath = platform::JoinPath(outDir, base + ".json");
+    platform::CreateDirectories(outDir);
 
-    JsonStreamWriter writer(out_path);
+    JsonStreamWriter writer(outPath);
 
-    json meta = build_output_meta_base(ctx);
-    std::string filename = platform::filename(file_path);
-    auto dot_pos = filename.rfind('.');
-    std::string file_type = (dot_pos != std::string::npos) ? filename.substr(dot_pos + 1) : "";
-    meta["sourceFileInfo"] = {{"name", file_path}, {"fileType", file_type}};
+    json meta = BuildOutputMetaBase(ctx);
+    std::string filename = platform::filename(filePath);
+    auto dotPos = filename.rfind('.');
+    std::string fileType = (dotPos != std::string::npos) ? filename.substr(dotPos + 1) : "";
+    meta["sourceFileInfo"] = {{"name", filePath}, {"fileType", fileType}};
 
     json content;
-    content["summary"] = {{"tshandle", trace_meta_to_json(analysis)}};
+    content["summary"] = {{"tshandle", TraceMetaToJson(analysis)}};
     content["global"] = {
-        {"app", section_with_trees_to_json(analysis.global.app)},
-        {"system", section_with_trees_to_json(analysis.global.sys)}
+        {"app", SectionWithTreesToJson(analysis.global.app)},
+        {"system", SectionWithTreesToJson(analysis.global.sys)}
     };
-    content["local"] = section_with_trees_to_json(analysis.local);
+    content["local"] = SectionWithTreesToJson(analysis.local);
 
-    writer.begin_object();
-    writer.write_key("meta");
-    writer.write_raw(meta.dump(4));
-    writer.write_key("content");
-    writer.write_raw(content.dump(4));
-    writer.end_object();
+    writer.BeginObject();
+    writer.WriteKey("meta");
+    writer.WriteRaw(meta.dump(4));
+    writer.WriteKey("content");
+    writer.WriteRaw(content.dump(4));
+    writer.EndObject();
 
     writer.close();
 
     timer.tick("total");
-    log::logok("Output written to: ", out_path);
-    return out_path;
+    log::Logok("Output written to: ", outPath);
+    return outPath;
 }
 
 } // namespace mem_analyzer

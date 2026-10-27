@@ -23,15 +23,16 @@ namespace mem_analyzer {
 // Construction / Destruction
 // -----------------------------------------------------------------------------
 
-JsonStreamWriter::JsonStreamWriter(const std::string& file_path)
+JsonStreamWriter::JsonStreamWriter(const std::string& filePath)
 {
     // Use wide-path aware open to handle Chinese paths on Windows
-    auto ofs_path = path_from_utf8(file_path);
-    file_.open(ofs_path);
+    auto ofsPath = PathFromUtf8(filePath);
+    file_.open(ofsPath);
     // If the file fails to open, the stream's failbit will be set.
 }
 
-JsonStreamWriter::~JsonStreamWriter() {
+JsonStreamWriter::~JsonStreamWriter()
+{
     close();
 }
 
@@ -39,22 +40,25 @@ JsonStreamWriter::~JsonStreamWriter() {
 // Private helpers
 // -----------------------------------------------------------------------------
 
-void JsonStreamWriter::write_indent() {
+void JsonStreamWriter::WriteIndent()
+{
     for (int i = 0; i < depth_; ++i) {
         file_ << "    ";
     }
 }
 
-void JsonStreamWriter::write_separator() {
-    if (!needs_comma_.empty()) {
-        if (needs_comma_.back()) {
+void JsonStreamWriter::WriteSeparator()
+{
+    if (!needsComma_.empty()) {
+        if (needsComma_.back()) {
             file_ << ",";
         }
         file_ << "\n";
     }
 }
 
-void JsonStreamWriter::write_escaped_string(const std::string& s) {
+void JsonStreamWriter::WriteEscapedString(const std::string& s)
+{
     file_ << "\"";
     for (std::size_t i = 0; i < s.size(); ++i) {
         unsigned char c = static_cast<unsigned char>(s[i]);
@@ -69,10 +73,10 @@ void JsonStreamWriter::write_escaped_string(const std::string& s) {
             default:
                 if (c < 0x20) {
                     // Control character: write as \uXXXX
-                    file_ << "\\u"
-                          << std::hex << std::setw(4) << std::setfill('0')
-                          << static_cast<int>(c)
-                          << std::dec;
+                    file_ << "\\u" <<
+                          std::hex << std::setw(4) << std::setfill('0') <<
+                          static_cast<int>(c) <<
+                          std::dec;
                 } else {
                     file_ << static_cast<char>(c);
                 }
@@ -86,189 +90,209 @@ void JsonStreamWriter::write_escaped_string(const std::string& s) {
 // Primitives
 // -----------------------------------------------------------------------------
 
-void JsonStreamWriter::write_null() {
-    if (just_wrote_key_) {
-        just_wrote_key_ = false;
+void JsonStreamWriter::WriteNull()
+{
+    if (justWroteKey_) {
+        justWroteKey_ = false;
     } else {
-        write_separator();
-        write_indent();
+        WriteSeparator();
+        WriteIndent();
     }
     file_ << "null";
-    needs_comma_.back() = true;
+    needsComma_.back() = true;
 }
 
-void JsonStreamWriter::write_boolean(bool val) {
-    if (just_wrote_key_) {
-        just_wrote_key_ = false;
+void JsonStreamWriter::WriteBoolean(bool val)
+{
+    if (justWroteKey_) {
+        justWroteKey_ = false;
     } else {
-        write_separator();
-        write_indent();
+        WriteSeparator();
+        WriteIndent();
     }
     file_ << (val ? "true" : "false");
-    needs_comma_.back() = true;
+    needsComma_.back() = true;
 }
 
-void JsonStreamWriter::write_number(double val) {
-    if (just_wrote_key_) {
-        just_wrote_key_ = false;
+void JsonStreamWriter::WriteNumber(double val)
+{
+    if (justWroteKey_) {
+        justWroteKey_ = false;
     } else {
-        write_separator();
-        write_indent();
+        WriteSeparator();
+        WriteIndent();
     }
     // Use default std::ostream formatting for double
     file_ << val;
-    needs_comma_.back() = true;
+    needsComma_.back() = true;
 }
 
-void JsonStreamWriter::write_number(int64_t val) {
-    if (just_wrote_key_) {
-        just_wrote_key_ = false;
+void JsonStreamWriter::WriteNumber(int64_t val)
+{
+    if (justWroteKey_) {
+        justWroteKey_ = false;
     } else {
-        write_separator();
-        write_indent();
+        WriteSeparator();
+        WriteIndent();
     }
     file_ << val;
-    needs_comma_.back() = true;
+    needsComma_.back() = true;
 }
 
-void JsonStreamWriter::write_number(uint64_t val) {
-    if (just_wrote_key_) {
-        just_wrote_key_ = false;
+void JsonStreamWriter::WriteNumber(uint64_t val)
+{
+    if (justWroteKey_) {
+        justWroteKey_ = false;
     } else {
-        write_separator();
-        write_indent();
+        WriteSeparator();
+        WriteIndent();
     }
     file_ << val;
-    needs_comma_.back() = true;
+    needsComma_.back() = true;
 }
 
-void JsonStreamWriter::write_string(const std::string& val) {
-    if (just_wrote_key_) {
-        just_wrote_key_ = false;
+void JsonStreamWriter::WriteString(const std::string& val)
+{
+    if (justWroteKey_) {
+        justWroteKey_ = false;
     } else {
-        write_separator();
-        write_indent();
+        WriteSeparator();
+        WriteIndent();
     }
-    write_escaped_string(val);
-    needs_comma_.back() = true;
+    WriteEscapedString(val);
+    needsComma_.back() = true;
 }
 
-void JsonStreamWriter::write_string(const char* val) {
-    write_string(std::string(val));
+void JsonStreamWriter::WriteString(const char* val)
+{
+    WriteString(std::string(val));
 }
 
 // -----------------------------------------------------------------------------
 // Array
 // -----------------------------------------------------------------------------
 
-void JsonStreamWriter::begin_array() {
-    if (!just_wrote_key_) {
-        write_separator();
-        write_indent();
+void JsonStreamWriter::BeginArray()
+{
+    if (!justWroteKey_) {
+        WriteSeparator();
+        WriteIndent();
     }
-    just_wrote_key_ = false;
+    justWroteKey_ = false;
     file_ << "[";
-    needs_comma_.push_back(false);
+    needsComma_.push_back(false);
     depth_++;
 }
 
-void JsonStreamWriter::end_array() {
+void JsonStreamWriter::EndArray()
+{
     depth_--;
     file_ << "\n";
-    write_indent();
+    WriteIndent();
     file_ << "]";
-    needs_comma_.pop_back();
+    needsComma_.pop_back();
     // Mark the parent level that we've written a complete element
-    if (!needs_comma_.empty()) {
-        needs_comma_.back() = true;
+    if (!needsComma_.empty()) {
+        needsComma_.back() = true;
     }
 }
 
-void JsonStreamWriter::write_array(const std::vector<int>& vals) {
-    begin_array();
+void JsonStreamWriter::WriteArray(const std::vector<int>& vals)
+{
+    BeginArray();
     for (std::size_t i = 0; i < vals.size(); ++i) {
-        write_number(static_cast<int64_t>(vals[i]));
+        WriteNumber(static_cast<int64_t>(vals[i]));
     }
-    end_array();
+    EndArray();
 }
 
-void JsonStreamWriter::write_array(const std::vector<std::string>& vals) {
-    begin_array();
+void JsonStreamWriter::WriteArray(const std::vector<std::string>& vals)
+{
+    BeginArray();
     for (std::size_t i = 0; i < vals.size(); ++i) {
-        write_string(vals[i]);
+        WriteString(vals[i]);
     }
-    end_array();
+    EndArray();
 }
 
 // -----------------------------------------------------------------------------
 // Object
 // -----------------------------------------------------------------------------
 
-void JsonStreamWriter::begin_object() {
-    if (!just_wrote_key_) {
-        write_separator();
-        write_indent();
+void JsonStreamWriter::BeginObject()
+{
+    if (!justWroteKey_) {
+        WriteSeparator();
+        WriteIndent();
     }
-    just_wrote_key_ = false;
+    justWroteKey_ = false;
     file_ << "{";
-    needs_comma_.push_back(false);
+    needsComma_.push_back(false);
     depth_++;
 }
 
-void JsonStreamWriter::end_object() {
+void JsonStreamWriter::EndObject()
+{
     depth_--;
     file_ << "\n";
-    write_indent();
+    WriteIndent();
     file_ << "}";
-    needs_comma_.pop_back();
+    needsComma_.pop_back();
     // Mark the parent level that we've written a complete element
-    if (!needs_comma_.empty()) {
-        needs_comma_.back() = true;
+    if (!needsComma_.empty()) {
+        needsComma_.back() = true;
     }
 }
 
-void JsonStreamWriter::write_key(const std::string& key) {
-    write_separator();
-    write_indent();
-    write_escaped_string(key);
+void JsonStreamWriter::WriteKey(const std::string& key)
+{
+    WriteSeparator();
+    WriteIndent();
+    WriteEscapedString(key);
     file_ << ": ";
-    just_wrote_key_ = true;
+    justWroteKey_ = true;
 }
 
-void JsonStreamWriter::write_key_value(const std::string& key, const std::string& val) {
-    write_key(key);
-    write_string(val);
+void JsonStreamWriter::WriteKeyValue(const std::string& key, const std::string& val)
+{
+    WriteKey(key);
+    WriteString(val);
 }
 
-void JsonStreamWriter::write_key_value(const std::string& key, const char* val) {
-    write_key_value(key, std::string(val));
+void JsonStreamWriter::WriteKeyValue(const std::string& key, const char* val)
+{
+    WriteKeyValue(key, std::string(val));
 }
 
-void JsonStreamWriter::write_key_value(const std::string& key, double val) {
-    write_key(key);
-    write_number(val);
+void JsonStreamWriter::WriteKeyValue(const std::string& key, double val)
+{
+    WriteKey(key);
+    WriteNumber(val);
 }
 
-void JsonStreamWriter::write_key_value(const std::string& key, int64_t val) {
-    write_key(key);
-    write_number(val);
+void JsonStreamWriter::WriteKeyValue(const std::string& key, int64_t val)
+{
+    WriteKey(key);
+    WriteNumber(val);
 }
 
-void JsonStreamWriter::write_key_value(const std::string& key, bool val) {
-    write_key(key);
-    write_boolean(val);
+void JsonStreamWriter::WriteKeyValue(const std::string& key, bool val)
+{
+    WriteKey(key);
+    WriteBoolean(val);
 }
 
 // -----------------------------------------------------------------------------
 // Raw / Lifecycle
 // -----------------------------------------------------------------------------
 
-void JsonStreamWriter::write_raw(const std::string& raw) {
-    if (just_wrote_key_) {
-        just_wrote_key_ = false;
+void JsonStreamWriter::WriteRaw(const std::string& raw)
+{
+    if (justWroteKey_) {
+        justWroteKey_ = false;
     } else {
-        write_separator();
-        write_indent();
+        WriteSeparator();
+        WriteIndent();
     }
     // Auto-detect: single-line → write as-is; multi-line → re-indent
     if (raw.find('\n') == std::string::npos) {
@@ -277,14 +301,16 @@ void JsonStreamWriter::write_raw(const std::string& raw) {
         // Find the minimum indentation across all lines to preserve relative nesting
         std::istringstream iss(raw);
         std::string line;
-        size_t min_indent = std::string::npos;
+        size_t minIndent = std::string::npos;
         while (std::getline(iss, line)) {
             size_t pos = line.find_first_not_of(" \t");
-            if (pos != std::string::npos && pos < min_indent) {
-                min_indent = pos;
+            if (pos != std::string::npos && pos < minIndent) {
+                minIndent = pos;
             }
         }
-        if (min_indent == std::string::npos) min_indent = 0;
+        if (minIndent == std::string::npos) {
+            minIndent = 0;
+        }
 
         iss.clear();
         iss.seekg(0);
@@ -292,26 +318,30 @@ void JsonStreamWriter::write_raw(const std::string& raw) {
         while (std::getline(iss, line)) {
             if (!first) {
                 file_ << "\n";
-                write_indent();
+                WriteIndent();
             }
             size_t pos = line.find_first_not_of(" \t");
             if (pos != std::string::npos) {
                 // Strip only the common indentation, preserve relative nesting
-                size_t strip = (pos >= min_indent) ? (pos - min_indent) : 0;
+                size_t strip = (pos >= minIndent) ? (pos - minIndent) : 0;
                 file_ << line.substr(pos - strip);
             }
             first = false;
         }
     }
-    needs_comma_.back() = true;
+    needsComma_.back() = true;
 }
 
-void JsonStreamWriter::flush() {
+void JsonStreamWriter::flush()
+{
     file_.flush();
 }
 
-void JsonStreamWriter::close() {
-    if (closed_) return;
+void JsonStreamWriter::close()
+{
+    if (closed_) {
+        return;
+    }
     closed_ = true;
     file_.flush();
     file_.close();

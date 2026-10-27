@@ -66,20 +66,20 @@ public:
 
     /// Remove the root mem-analyzer/ directory in the system temp if empty.
     /// Safe to call even if the directory does not exist.
-    static void cleanup_root();
+    static void CleanupRoot();
 
     /// 排障开关：为 true 时，非 quiet 的中间产物 cleanup() 只提示路径、不删除；
     /// quiet 的内部缓冲目录不受影响、照常清理。cleanup_root() 保留 root。
-    static void set_keep(bool keep);
+    static void SetKeep(bool keep);
 
 private:
     std::string path_;
     bool released_ = false;
     bool quiet_ = false;
 
-    static std::string system_temp_root();
-    static std::string generate_random_hex();
-    static bool s_keep;
+    static std::string SystemTempRoot();
+    static std::string GenerateRandomHex();
+    static bool sKeep;
 };
 
 } // namespace mem_analyzer

@@ -36,32 +36,37 @@ namespace fs = std::filesystem;
 // against the process CWD at file-access time.
 
 // Default config file path (relative to CWD).
-std::string default_config_path() {
+std::string DefaultConfigPath()
+{
     return "config/profiler/profiler_cmd_config.json";
 }
 
-std::string resolve_config_path() {
+std::string ResolveConfigPath()
+{
     // 固定目录：可执行文件同级的 config/profiler/profiler_cmd_config.json
-    const std::string rel = default_config_path();
-    const std::string exe_dir = proc::get_executable_dir();
-    if (exe_dir.empty()) return rel;
-    return platform::join_path(exe_dir, rel);
+    const std::string rel = DefaultConfigPath();
+    const std::string exeDir = proc::GetExecutableDir();
+    if (exeDir.empty()) {
+        return rel;
+    }
+    return platform::JoinPath(exeDir, rel);
 }
 
 // Load and parse profiler_cmd_config.json. Resolves option_path_map paths
 // relative to the json file's directory (lexical normalization only, no
 // fs::absolute() to avoid getcwd()). Returns false and sets `err` on any
 // open / parse / structural error rather than throwing.
-bool load_cmd_config(const std::string& config_path, CmdConfig& out, std::string& err) {
+bool LoadCmdConfig(const std::string& ConfigPath, CmdConfig& out, std::string& err)
+{
     // Use config_path as-is (lexical operations only; no fs::absolute — see
     // getcwd caveat). Relative paths resolve against CWD at file-access time.
-    const fs::path config_fp = path_from_utf8(config_path);
+    const fs::path configFp = PathFromUtf8(ConfigPath);
 
     // Open the file. We use a non-throwing open so we can produce a friendly
     // error message instead of letting an exception escape.
-    std::ifstream stream(config_fp);
+    std::ifstream stream(configFp);
     if (!stream.is_open()) {
-        err = "failed to open config file: " + path_to_utf8(config_fp);
+        err = "failed to open config file: " + PathToUtf8(configFp);
         return false;
     }
 
@@ -71,19 +76,20 @@ bool load_cmd_config(const std::string& config_path, CmdConfig& out, std::string
     nlohmann::json j;
     try {
         j = nlohmann::json::parse(stream);
-    } catch (const nlohmann::json::parse_error& e) {
+    } catch (const nlohmann::json::parse_error& e)
+    {
         err = "config file JSON parse failed: " + std::string(e.what());
         return false;
     }
 
     // `config_dir`: lexically-normalized parent of the json file (may be
     // relative — no fs::absolute, see getcwd caveat).
-    out.config_dir = path_to_utf8(config_fp.parent_path().lexically_normal());
+    out.configDir = PathToUtf8(configFp.parent_path().lexically_normal());
 
     // `option_path_map`: array of { "option": "-n", "path": "xxx.txt" }.
     // The `path` is interpreted relative to config_dir and lexically
     // normalized. Missing key => empty list (not an error).
-    out.option_path_map.clear();
+    out.optionPathMap.clear();
     if (j.contains("option_path_map")) {
         if (!j["option_path_map"].is_array()) {
             err = "the 'option_path_map' field in the config file is not an array";
@@ -96,19 +102,19 @@ bool load_cmd_config(const std::string& config_path, CmdConfig& out, std::string
             }
             OptionPath op;
             op.option = elem.value("option", std::string{});
-            const std::string rel_path = elem.value("path", std::string{});
+            const std::string relPath = elem.value("path", std::string{});
             // Resolve relative to config_dir; lexically_normal collapses any
             // redundant components (e.g. "." / "..").
-            op.path = path_to_utf8(
-                (path_from_utf8(out.config_dir) / path_from_utf8(rel_path)).lexically_normal());
+            op.path = PathToUtf8(
+                (PathFromUtf8(out.configDir) / PathFromUtf8(relPath)).lexically_normal());
             // Optional device-side async result directory (snapshot flow). Read
             // verbatim — it is a device path, not resolved against config_dir.
-            op.result_dir = elem.value("result_dir", std::string{});
+            op.resultDir = elem.value("result_dir", std::string{});
             // Optional flag: requires app to be in fresh start state (e.g., -l).
-            op.require_fresh_start = elem.value("require_fresh_start", false);
+            op.requireFreshStart = elem.value("require_fresh_start", false);
             // Optional minimum device API version (0 = no check).
-            op.min_api_version = elem.value("min_api_version", 0);
-            out.option_path_map.push_back(std::move(op));
+            op.minApiVersion = elem.value("min_api_version", 0);
+            out.optionPathMap.push_back(std::move(op));
         }
     }
 

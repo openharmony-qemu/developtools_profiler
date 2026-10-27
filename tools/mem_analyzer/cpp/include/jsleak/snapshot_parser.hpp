@@ -24,6 +24,6 @@ namespace mem_analyzer {
 /// 任一环节失败抛 std::runtime_error（由 `JsleakModule` 统一打印为 `Error: ...`）。
 ///
 /// 强类型入参/出参：不再经过 ProcessData / std::any。
-HeapSnapshot jsleak_parse(const std::string& file_path, const RunContext& ctx);
+HeapSnapshot JsleakParse(const std::string& filePath, const RunContext& ctx);
 
 } // namespace mem_analyzer

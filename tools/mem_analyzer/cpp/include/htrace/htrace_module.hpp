@@ -25,7 +25,8 @@ namespace mem_analyzer {
 class HtraceModule final : public AnalysisModule {
 public:
     std::string name() const override { return "htrace"; }
-    bool supports_extension(const std::string& ext) const override {
+    bool SupportsExtension(const std::string& ext) const override
+    {
         return ext == "htrace" || ext == "htrce";
     }
     ModuleCapability capability() const override;

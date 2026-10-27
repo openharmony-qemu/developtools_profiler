@@ -25,12 +25,15 @@
 #include <string>
 #include <vector>
 
-namespace mem_analyzer::html_analysis {
+namespace mem_analyzer::htmlAnalysis {
 
 // ===== Helper functions =====
 
-std::string replace_all(std::string str, const std::string& from, const std::string& to) {
-    if (from.empty()) return str;
+std::string ReplaceAll(std::string str, const std::string& from, const std::string& to)
+{
+    if (from.empty()) {
+        return str;
+    }
     size_t pos = 0;
     while ((pos = str.find(from, pos)) != std::string::npos) {
         str.replace(pos, from.length(), to);
@@ -39,49 +42,70 @@ std::string replace_all(std::string str, const std::string& from, const std::str
     return str;
 }
 
-std::string formatFuncName(const std::string& symbol, const std::string& lib, const std::string& libOffset) {
+std::string FormatFuncName(const std::string& symbol, const std::string& lib, const std::string& libOffset)
+{
     // If symbol is unresolved (contains .so), skip (symbol) part to avoid duplication
     bool isUnresolved = symbol.find(".so") != std::string::npos;
     if (!lib.empty()) {
         if (isUnresolved) {
             return libOffset.empty() ? lib : (lib + "+" + libOffset);
-        } else if (!symbol.empty()) {
+        } else if (!symbol.empty())
+        {
             return libOffset.empty() ? (lib + " (" + symbol + ")") : (lib + "+" + libOffset + " (" + symbol + ")");
         } else {
             return libOffset.empty() ? lib : (lib + "+" + libOffset);
         }
     }
-    if (!symbol.empty()) return symbol;
+    if (!symbol.empty()) {
+        return symbol;
+    }
     return "unknown";
 }
 
-std::string formatShortFuncName(const std::string& symbol, const std::string& lib, const std::string& libOffset) {
+std::string FormatShortFuncName(const std::string& symbol, const std::string& lib, const std::string& libOffset)
+{
     bool isUnresolved = symbol.find(".so") != std::string::npos;
     std::string libBase = platform::basename(lib);
     if (isUnresolved) {
-        if (!libBase.empty() && !libOffset.empty()) return libBase + "+" + libOffset;
-        if (!libBase.empty()) return libBase;
+        if (!libBase.empty() && !libOffset.empty()) {
+            return libBase + "+" + libOffset;
+        }
+        if (!libBase.empty()) {
+            return libBase;
+        }
         return symbol;
     }
     if (!symbol.empty()) {
-        if (!libBase.empty()) return libOffset.empty() ? (libBase + " (" + symbol + ")") : (libBase + "+" + libOffset + " (" + symbol + ")");
+        if (!libBase.empty()) {
+            return libOffset.empty() ? (libBase + " (" + symbol + ")") : (libBase + "+" + libOffset + " (" + symbol + ")");
+        }
         return symbol;
     }
-    if (!libBase.empty() && !libOffset.empty()) return libBase + "+" + libOffset;
-    if (!libBase.empty()) return libBase;
+    if (!libBase.empty() && !libOffset.empty()) {
+        return libBase + "+" + libOffset;
+    }
+    if (!libBase.empty()) {
+        return libBase;
+    }
     return "unknown";
 }
 
-std::string getLibForDisplay(const std::string& lib, const std::string& symbol) {
-    if (!lib.empty() && lib != "unknown" && lib != "unknow") return lib;
+std::string GetLibForDisplay(const std::string& lib, const std::string& symbol)
+{
+    if (!lib.empty() && lib != "unknown" && lib != "unknow") {
+        return lib;
+    }
     std::regex tsMatch("(\\S+\\.ts):\\d+:\\d+");
     std::smatch m;
-    if (std::regex_search(symbol, m, tsMatch) && m.size() > 1) return m[1].str();
+    if (std::regex_search(symbol, m, tsMatch) && m.size() > 1) {
+        return m[1].str();
+    }
     return lib.empty() ? "" : lib;
 }
 
 // Round half away from zero to match JavaScript's toFixed() behavior
-double roundHalfAwayFromZero(double value, int precision) {
+double RoundHalfAwayFromZero(double value, int precision)
+{
     double factor = std::pow(10.0, precision);
     double scaled = value * factor;
     double sign = scaled >= 0 ? 1.0 : -1.0;
@@ -89,49 +113,60 @@ double roundHalfAwayFromZero(double value, int precision) {
     return rounded / factor;
 }
 
-std::string formatBytes(double bytes) {
-    if (bytes == 0) return "0 B";
+std::string FormatBytes(double bytes)
+{
+    if (bytes == 0) {
+        return "0 B";
+    }
     static const char* units[] = {"B", "KB", "MB", "GB"};
     int k = 1024;
     double dbytes = bytes;
     int i = 0;
     if (dbytes >= 1) {
         i = (int)std::floor(std::log(dbytes) / std::log((double)k));
-        if (i > 3) i = 3;
+        if (i > 3) {
+            i = 3;
+        }
     }
     double val = dbytes / std::pow((double)k, i);
-    val = roundHalfAwayFromZero(val, 2);
+    val = RoundHalfAwayFromZero(val, 2);
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(2) << val << " " << units[i];
     return oss.str();
 }
 
-std::string formatSizeText(double val, bool countMode) {
+std::string FormatSizeText(double val, bool countMode)
+{
     if (countMode) {
         // fd/thread 等类型的“大小”实际是个数，直接显示整数
         return std::to_string((long long)std::llround(val));
     }
-    return formatBytes(val);
+    return FormatBytes(val);
 }
 
-std::string formatDuration(const std::string& durationStr) {
-    if (durationStr.empty()) return "0ms";
+std::string FormatDuration(const std::string& durationStr)
+{
+    if (durationStr.empty()) {
+        return "0ms";
+    }
     char* end = nullptr;
     double d = std::strtod(durationStr.c_str(), &end);
-    if (end == durationStr.c_str() || d == 0) return "0ms";
+    if (end == durationStr.c_str() || d == 0) {
+        return "0ms";
+    }
     if (d >= 1.0) {
         std::ostringstream oss;
-        oss << std::fixed << std::setprecision(2) << roundHalfAwayFromZero(d, 2) << "s";
+        oss << std::fixed << std::setprecision(2) << RoundHalfAwayFromZero(d, 2) << "s";
         return oss.str();
     }
     if (d >= 1e-3) {
         std::ostringstream oss;
-        oss << std::fixed << std::setprecision(2) << roundHalfAwayFromZero(d * 1e3, 2) << "ms";
+        oss << std::fixed << std::setprecision(2) << RoundHalfAwayFromZero(d * 1e3, 2) << "ms";
         return oss.str();
     }
     if (d >= 1e-6) {
         std::ostringstream oss;
-        oss << std::fixed << std::setprecision(2) << roundHalfAwayFromZero(d * 1e6, 2) << "\u03bcs";
+        oss << std::fixed << std::setprecision(2) << RoundHalfAwayFromZero(d * 1e6, 2) << "\u03bcs";
         return oss.str();
     }
     std::ostringstream oss;
@@ -139,7 +174,8 @@ std::string formatDuration(const std::string& durationStr) {
     return oss.str();
 }
 
-std::string escapeHtml(const std::string& str) {
+std::string EscapeHtml(const std::string& str)
+{
     std::string result;
     result.reserve(str.size() * 11 / 10);  // ~10% headroom for escape expansion
     for (char c : str) {
@@ -155,8 +191,9 @@ std::string escapeHtml(const std::string& str) {
     return result;
 }
 
-std::string toFixed(double value, int precision) {
-    value = roundHalfAwayFromZero(value, precision);
+std::string ToFixed(double value, int precision)
+{
+    value = RoundHalfAwayFromZero(value, precision);
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(precision) << value;
     return oss.str();
@@ -164,7 +201,8 @@ std::string toFixed(double value, int precision) {
 
 // ===== HTML building helpers =====
 
-json buildSymbolDataEntryJSON(SymbolDataEntry& entry) {
+json BuildSymbolDataEntryJSON(SymbolDataEntry& entry)
+{
     json j;
     j["info"] = entry.info;
     j["names"] = std::move(entry.names);
@@ -172,7 +210,7 @@ json buildSymbolDataEntryJSON(SymbolDataEntry& entry) {
     j["icicleTree"] = std::move(entry.icicleTree);
     json chainsArr = json::array();
     for (const auto& chain : entry.callChains) {
-        json chainJson;
+        json ChainJson;
         json framesArr = json::array();
         for (const auto& frame : chain.frames) {
             json f;
@@ -181,22 +219,24 @@ json buildSymbolDataEntryJSON(SymbolDataEntry& entry) {
             f["libOffset"] = frame.libOffset;
             framesArr.push_back(f);
         }
-        chainJson["frames"] = framesArr;
-        chainJson["size"] = (long long)chain.size;
-        chainsArr.push_back(chainJson);
+        ChainJson["frames"] = framesArr;
+        ChainJson["size"] = (long long)chain.size;
+        chainsArr.push_back(ChainJson);
     }
     j["callChains"] = chainsArr;
     return j;
 }
 
-std::string buildCallChainHTML(
+std::string BuildCallChainHTML(
     const std::vector<CallChainResult>& callChains,
     double totalExistingSize,
     bool countMode)
 {
     std::string result;
     for (size_t ci = 0; ci < callChains.size(); ci++) {
-        if (ci > 0) result += "\n";
+        if (ci > 0) {
+            result += "\n";
+        }
         const auto& chain = callChains[ci];
         double chainSize = chain.size;
         double pct = totalExistingSize > 0 ? (chainSize / totalExistingSize * 100.0) : 0.0;
@@ -214,10 +254,10 @@ std::string buildCallChainHTML(
             // 2. 底层函数
             keptIndices.push_back((int)frames.size() - 1);
             for (int fi = 1; fi < (int)frames.size() - 1; fi++) {
-                bool curIsTs = HtraceConfigMgr::instance().is_ts_symbol(frames[fi].lib, true);
-                bool nextIsTs = (fi + 1 < (int)frames.size()) && HtraceConfigMgr::instance().is_ts_symbol(frames[fi + 1].lib, true);
-                bool curIsApp = HtraceConfigMgr::instance().is_app_symbol(frames[fi].lib, true);
-                bool nextIsApp = (fi + 1 < (int)frames.size()) && HtraceConfigMgr::instance().is_app_symbol(frames[fi + 1].lib, true);
+                bool curIsTs = HtraceConfigMgr::instance().IsTsSymbol(frames[fi].lib, true);
+                bool nextIsTs = (fi + 1 < (int)frames.size()) && HtraceConfigMgr::instance().IsTsSymbol(frames[fi + 1].lib, true);
+                bool curIsApp = HtraceConfigMgr::instance().IsAppSymbol(frames[fi].lib, true);
+                bool nextIsApp = (fi + 1 < (int)frames.size()) && HtraceConfigMgr::instance().IsAppSymbol(frames[fi + 1].lib, true);
                 // 3. JS函数调用Native函数时的JS函数
                 if (curIsTs && !nextIsTs) {
                     keptIndices.push_back(fi);
@@ -242,9 +282,9 @@ std::string buildCallChainHTML(
             int fi = keptIndices[k];
             bool isFirst = (fi == 0);
             std::string cls = isFirst ? "frame target" : "frame";
-            std::string frameName = formatShortFuncName(frames[fi].name, frames[fi].lib, frames[fi].libOffset);
+            std::string frameName = FormatShortFuncName(frames[fi].name, frames[fi].lib, frames[fi].libOffset);
             parts.push_back("<span class=\"" + cls + "\">"
-                    + escapeHtml(frameName)
+                    + EscapeHtml(frameName)
                     + "</span>");
         }
 
@@ -260,26 +300,28 @@ std::string buildCallChainHTML(
         std::string plainText;
         plainText += "\u8c03\u7528\u94fe" + std::to_string(ci + 1) + "\uff1a\n";
         for (size_t fi = 0; fi < frames.size(); fi++) {
-            if (fi > 0) plainText += "\n";
-            plainText += formatShortFuncName(frames[fi].name, frames[fi].lib, frames[fi].libOffset);
+            if (fi > 0) {
+                plainText += "\n";
+            }
+            plainText += FormatShortFuncName(frames[fi].name, frames[fi].lib, frames[fi].libOffset);
         }
-        plainText += std::string("\n") + (countMode ? "\u6b21\u6570" : "\u5927\u5c0f") + " " + formatSizeText(chainSize, countMode) + "\n\u5360\u6bd4" + toFixed(pct, 2) + "%";
+        plainText += std::string("\n") + (countMode ? "\u6b21\u6570" : "\u5927\u5c0f") + " " + FormatSizeText(chainSize, countMode) + "\n\u5360\u6bd4" + ToFixed(pct, 2) + "%";
 
         result += "<div class=\"call-chain-line\">\u8c03\u7528\u94fe"
             + std::to_string(ci + 1)
             + "\uff1a"
             + joinedParts
             + ", " + (countMode ? "\u6b21\u6570" : "\u5927\u5c0f") + " <span class=\"chain-size\">"
-            + formatSizeText(chainSize, countMode)
+            + FormatSizeText(chainSize, countMode)
             + "</span>, \u5360\u6bd4<span class=\"chain-pct\">"
-            + toFixed(pct, 2) + "%</span>"
-            + "<span class=\"copy-chain-btn\" data-copy-chain=\"" + escapeHtml(plainText) + "\" title=\"\u590d\u5236\u5b8c\u6574\u8c03\u7528\u94fe\">\u590d\u5236</span>"
+            + ToFixed(pct, 2) + "%</span>"
+            + "<span class=\"copy-chain-btn\" data-copy-chain=\"" + EscapeHtml(plainText) + "\" title=\"\u590d\u5236\u5b8c\u6574\u8c03\u7528\u94fe\">\u590d\u5236</span>"
             + "</div>";
     }
     return result;
 }
 
-std::string buildTopTableRows(const std::vector<SymbolDataEntry>& symbols,
+std::string BuildTopTableRows(const std::vector<SymbolDataEntry>& symbols,
                                      size_t startIndex,
                                      bool countMode)
 {
@@ -292,9 +334,9 @@ std::string buildTopTableRows(const std::vector<SymbolDataEntry>& symbols,
         std::string sym = s.value("name", "");
         std::string lib = s.value("lib", "");
         std::string libOffset = s.value("libOffset", "");
-        std::string shortFuncName = formatShortFuncName(sym, lib, libOffset);
-        std::string fullFuncName = formatFuncName(sym, lib, libOffset);
-        std::string libDisplay = getLibForDisplay(lib, sym);
+        std::string shortFuncName = FormatShortFuncName(sym, lib, libOffset);
+        std::string fullFuncName = FormatFuncName(sym, lib, libOffset);
+        std::string libDisplay = GetLibForDisplay(lib, sym);
         long long existingSize = s.value("existingSize", (long long)0);
         long long existingCount = s.value("existingCount", (long long)0);
         double percentage = s.value("percentage", 0.0);
@@ -304,27 +346,29 @@ std::string buildTopTableRows(const std::vector<SymbolDataEntry>& symbols,
 
         rowStrs.push_back("<tr>\n"
             "  <td><a onclick=\"showDetail(" + std::to_string(idx) + "); return false;\" class=\"detail-link\">\u8be6\u60c5</a></td>\n"
-            + std::string(countMode ? "" : "  <td class=\"top-size-val\">" + formatSizeText((double)existingSize, false) + "</td>\n")
+            + std::string(countMode ? "" : "  <td class=\"top-size-val\">" + FormatSizeText((double)existingSize, false) + "</td>\n")
             + "  <td class=\"top-count-val\">" + std::to_string(existingCount) + "</td>\n"
             "  <td class=\"top-pct-val\">" + pctStr + "%</td>\n"
-            "  <td class=\"top-func\"><b>" + escapeHtml(shortFuncName) + "</b></td>\n"
-            "  <td class=\"top-lib\">" + escapeHtml(libDisplay) + "</td>\n"
+            "  <td class=\"top-func\"><b>" + EscapeHtml(shortFuncName) + "</b></td>\n"
+            "  <td class=\"top-lib\">" + EscapeHtml(libDisplay) + "</td>\n"
             "</tr>");
     }
     // Join with \n to match TS .join('\n') — no trailing \n after last element
     std::string rows;
     for (size_t i = 0; i < rowStrs.size(); i++) {
-        if (i > 0) rows += "\n";
+        if (i > 0) {
+            rows += "\n";
+        }
         rows += rowStrs[i];
     }
     return rows;
 }
 
-std::string buildDetailSectionContent(
+std::string BuildDetailSectionContent(
     const SymbolDataEntry& entry, size_t idx, long long totalExistingSize, bool addBlankLine, bool countMode)
 {
     const auto& s = entry.info;
-    std::string shortName = formatShortFuncName(
+    std::string shortName = FormatShortFuncName(
         s.value("name", ""),
         s.value("lib", ""),
         s.value("libOffset", "")
@@ -338,7 +382,7 @@ std::string buildDetailSectionContent(
     pctSS << percentage;
     std::string pctStr = pctSS.str();
 
-    std::string callChainLines = buildCallChainHTML(entry.callChains, totalExistingSize, countMode);
+    std::string callChainLines = BuildCallChainHTML(entry.callChains, totalExistingSize, countMode);
     std::string noCallChainLine;
     if (callChainLines.empty()) {
         noCallChainLine = "<div class=\"call-chain-line\" style=\"color:#a0a0b0;\">\u65e0\u8c03\u7528\u94fe\u6570\u636e</div>";
@@ -348,10 +392,10 @@ std::string buildDetailSectionContent(
     result = "<div class=\"top-item\" id=\"topItem" + std::to_string(idx) + "\">\n"
         "  <div class=\"top-item-header collapsed\" id=\"topItemHeader" + std::to_string(idx) + "\" onclick=\"toggleDetail(" + std::to_string(idx) + ")\">\n"
         "    <span class=\"arrow\" id=\"topItemArrow" + std::to_string(idx) + "\">&#9654;</span>\n"
-        "    <span class=\"header-rank\">TOP" + std::to_string(rank) + "\u51fd\u6570\uff1a</span><span class=\"header-func\">" + escapeHtml(shortName) + "</span>\n"
+        "    <span class=\"header-rank\">TOP" + std::to_string(rank) + "\u51fd\u6570\uff1a</span><span class=\"header-func\">" + EscapeHtml(shortName) + "</span>\n"
         "    <div class=\"header-stats\">" + (countMode
             ? "\u6b21\u6570" + std::to_string(existingCount) + "\uff0c\u5360\u6bd4" + pctStr + "%"
-            : "\u5927\u5c0f " + formatSizeText((double)existingSize, false) + "\uff0c\u6b21\u6570" + std::to_string(existingCount) + "\uff0c\u5360\u6bd4" + pctStr + "%") + "</div>\n"
+            : "\u5927\u5c0f " + FormatSizeText((double)existingSize, false) + "\uff0c\u6b21\u6570" + std::to_string(existingCount) + "\uff0c\u5360\u6bd4" + pctStr + "%") + "</div>\n"
         "  </div>\n"
         "  <div class=\"top-item-body\" id=\"topItemBody" + std::to_string(idx) + "\">\n"
         "    <div class=\"call-chains-section\">\n"
@@ -365,8 +409,8 @@ std::string buildDetailSectionContent(
         "      <span class=\"shortcut-hint\">w/s\uff1a\u653e\u5927/\u7f29\u5c0f&emsp;&emsp;a/d\uff1a\u5de6/\u53f3\u79fb\u52a8</span>\n"
         "    </div>\n";
     // other: 只一个火焰图（整栈合并），无上下游之分；其余 top 函数保持上游+下游双 panel
-    bool is_other = (s.value("name", "") == OTHER_SYMBOL);
-    if (is_other) {
+    bool isOther = (s.value("name", "") == OTHER_SYMBOL);
+    if (isOther) {
         result += "    <div class=\"dual-graph-container\">\n"
             "      <div class=\"graph-panel\">\n"
             "        <div class=\"graph-side-label\">\u4e0b\u6e38\u8c03\u7528\u94fe</div>\n"
@@ -403,18 +447,20 @@ std::string buildDetailSectionContent(
 }
 
 
-std::string buildDetailSections(const std::vector<SymbolDataEntry>& symbols,
+std::string BuildDetailSections(const std::vector<SymbolDataEntry>& symbols,
                                        size_t startIndex,
                                        long long totalExistingSize,
                                        bool countMode)
 {
     std::vector<std::string> sectionStrs;
     for (size_t i = 0; i < symbols.size(); i++) {
-        sectionStrs.push_back(buildDetailSectionContent(symbols[i], startIndex + i, totalExistingSize, true, countMode));
+        sectionStrs.push_back(BuildDetailSectionContent(symbols[i], startIndex + i, totalExistingSize, true, countMode));
     }
     std::string sections;
     for (size_t i = 0; i < sectionStrs.size(); i++) {
-        if (i > 0) sections += "\n";
+        if (i > 0) {
+            sections += "\n";
+        }
         sections += sectionStrs[i];
     }
     return sections;
@@ -547,16 +593,20 @@ var allData = __DATA_JSON__;
 __CHART_MODULE_JS__
 </script>
 <script>
-(function() {
+(function()
+{
   var autoExpand = __AUTO_EXPAND__;
 
 __NAV_BAR_SWITCH_NAV_FUNC__
 
   // ===== 手风琴：展开/收起 =====
-  function toggleDetail(idx) {
+  function toggleDetail(idx)
+  {
     var body = document.getElementById('topItemBody' + idx);
     var header = document.getElementById('topItemHeader' + idx);
-    if (!body) return;
+    if (!body) {
+        return;
+    }
 
     if (body.classList.contains('expanded')) {
       body.classList.remove('expanded');
@@ -567,10 +617,13 @@ __NAV_BAR_SWITCH_NAV_FUNC__
     }
   }
 
-  function showDetail(idx) {
+  function showDetail(idx)
+  {
     var body = document.getElementById('topItemBody' + idx);
     var header = document.getElementById('topItemHeader' + idx);
-    if (!body) return;
+    if (!body) {
+        return;
+    }
 
     body.classList.add('expanded');
     header.classList.remove('collapsed');
@@ -580,7 +633,9 @@ __NAV_BAR_SWITCH_NAV_FUNC__
     setTimeout(function() { MemChart.redraw(idx); }, 50);
 
     var item = document.getElementById('topItem' + idx);
-    if (item) item.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (item) {
+        item.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   // Expose to HTML onclick handlers
@@ -588,25 +643,40 @@ __NAV_BAR_SWITCH_NAV_FUNC__
   window.showDetail = showDetail;
 
   // ===== Tab switching =====
-  function switchTab(tabId, tabEl) {
+  function switchTab(tabId, tabEl)
+  {
     var tabs = document.querySelectorAll('.tab-item');
-    for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
-    if (tabEl) tabEl.classList.add('active');
+    for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.remove('active');
+    }
+    if (tabEl) {
+        tabEl.classList.add('active');
+    }
     var contents = document.querySelectorAll('.tab-content');
-    for (var i = 0; i < contents.length; i++) contents[i].classList.remove('active');
+    for (var i = 0; i < contents.length; i++) {
+        contents[i].classList.remove('active');
+    }
     var content = document.getElementById(tabId);
-    if (content) content.classList.add('active');
+    if (content) {
+        content.classList.add('active');
+    }
     MemChart.redrawAll();
   }
   window.switchTab = switchTab;
 
   // Copy chain button click
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', function(e)
+  {
     var btn = e.target.closest('.copy-chain-btn');
-    if (!btn) return;
+    if (!btn) {
+        return;
+    }
     var text = btn.getAttribute('data-copy-chain');
-    if (!text) return;
-    navigator.clipboard.writeText(text).then(function() {
+    if (!text) {
+        return;
+    }
+    navigator.clipboard.writeText(text).then(function()
+    {
       btn.textContent = '已拷贝';
       btn.classList.add('copied');
       setTimeout(function() { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
@@ -618,7 +688,9 @@ __NAV_BAR_SWITCH_NAV_FUNC__
   // 必须同步激活，否则首屏正文空白，且图表在隐藏容器里量不到画布尺寸。
   var firstTabItem = document.querySelector('.tab-item.active');
   var firstTabContent = firstTabItem ? document.getElementById(firstTabItem.getAttribute('data-tab')) : null;
-  if (firstTabContent) firstTabContent.classList.add('active');
+  if (firstTabContent) {
+      firstTabContent.classList.add('active');
+  }
 
   // ===== 初始化图表（共享图表模块） =====
   MemChart.init({ entries: allData, unitCountMode: __UNIT_COUNT_MODE__ });
@@ -627,13 +699,18 @@ __NAV_BAR_SWITCH_NAV_FUNC__
   var allHeaders = document.querySelectorAll('.top-item-header.expanded');
   for (var h = 0; h < allHeaders.length; h++) {
     var arr = allHeaders[h].querySelector('.arrow');
-    if (arr) arr.textContent = '\u25BC';
+    if (arr) {
+        arr.textContent = '\u25BC';
+    }
   }
 
   // Auto-expand all details
   if (autoExpand) {
-    function expandNextAuto(idx) {
-      if (idx >= allData.length) return;
+    function expandNextAuto(idx)
+    {
+      if (idx >= allData.length) {
+          return;
+      }
       var body = document.getElementById('topItemBody' + idx);
       var header = document.getElementById('topItemHeader' + idx);
       if (!body || !header) { expandNextAuto(idx + 1); return; }
@@ -642,7 +719,8 @@ __NAV_BAR_SWITCH_NAV_FUNC__
       header.classList.remove('collapsed');
       header.classList.add('expanded');
 
-      setTimeout(function() {
+      setTimeout(function()
+      {
         MemChart.redraw(idx);
         expandNextAuto(idx + 1);
       }, 50);

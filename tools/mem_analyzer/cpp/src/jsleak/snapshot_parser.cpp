@@ -26,65 +26,66 @@
 
 namespace mem_analyzer {
 
-HeapSnapshot jsleak_parse(const std::string& file_path, const RunContext& ctx) {
-    std::string heapsnapshot_file = file_path;
+HeapSnapshot JsleakParse(const std::string& filePath, const RunContext& ctx)
+{
+    std::string heapsnapshotFile = filePath;
 
-    const bool need_deobfuscate =
-        !ctx.resources.sourcemap_dir.empty() || !ctx.resources.name_cache_dir.empty();
-    bool from_rawheap = ends_with_ignore_case(file_path, "rawheap");
+    const bool needDeobfuscate =
+        !ctx.resources.sourcemapDir.empty() || !ctx.resources.nameCacheDir.empty();
+    bool fromRawheap = EndsWithIgnoreCase(filePath, "rawheap");
 
     // 函数级 RAII：rawheap 转换/反混淆产物须存活到下方 HeapSnapshot::from_file
     // 完成之后，故 temp_dir 不能放在 if 块内（否则块结束即清理，读取将失败）。
-    TempDir temp_dir;
-    if (from_rawheap || need_deobfuscate) {
+    TempDir tempDir;
+    if (fromRawheap || needDeobfuscate) {
         // rawheap 转换和/或反混淆：中间产物放入系统 TempDir（RAII 自动清理），
         // 反混淆产物保持原始 stem 名，使下游无需感知反混淆。
-        if (!temp_dir.valid()) {
-            temp_dir = TempDir("snapshot");
+        if (!tempDir.valid()) {
+            tempDir = TempDir("snapshot");
         }
-        const std::string& temp_base = temp_dir.valid() ? temp_dir.path() : ctx.output.out_dir;
-        std::string source = file_path;
+        const std::string& tempBase = tempDir.valid() ? tempDir.path() : ctx.output.outDir;
+        std::string source = filePath;
 
         // Step 1: rawheap → heapsnapshot（输出到 convert 子目录，父目录由转换函数创建）
-        if (from_rawheap) {
-            log::logi("  Converting rawheap to heapsnapshot...");
-            heapsnapshot_file = platform::join_path(
-                platform::join_path(temp_base, "convert"),
-                platform::stem(file_path) + ".heapsnapshot");
-            std::string convert_err;
-            if (!rawheap_to_heapsnapshot(file_path, heapsnapshot_file, &convert_err)) {
-                if (!convert_err.empty()) {
-                    log::loge("Error: ", convert_err);
+        if (fromRawheap) {
+            log::Logi("  Converting rawheap to heapsnapshot...");
+            heapsnapshotFile = platform::JoinPath(
+                platform::JoinPath(tempBase, "convert"),
+                platform::stem(filePath) + ".heapsnapshot");
+            std::string convertErr;
+            if (!RawheapToHeapsnapshot(filePath, heapsnapshotFile, &convertErr)) {
+                if (!convertErr.empty()) {
+                    log::Loge("Error: ", convertErr);
                 }
-                throw std::runtime_error("Failed to convert the file " + file_path +
+                throw std::runtime_error("Failed to convert the file " + filePath +
                                          " to heapsnapshot format!");
             }
-            source = heapsnapshot_file;
+            source = heapsnapshotFile;
         }
 
         // Step 2: deobfuscate（保持原始 stem 名，失败时降级为转换后的快照；
         // deob 目录由 deobfuscate_with_indices 自行创建）
-        if (need_deobfuscate) {
-            log::logi("  Deobfuscating snapshot...");
-            std::string deob_dir = platform::join_path(temp_base, "deob");
-            std::string deob_path = platform::join_path(
-                deob_dir, platform::stem(file_path) + ".heapsnapshot");
-            if (deobfuscate_with_indices(source, deob_path,
-                                          ctx.resources.sourcemap_dir,
-                                          ctx.resources.name_cache_dir)) {
-                heapsnapshot_file = deob_path;
+        if (needDeobfuscate) {
+            log::Logi("  Deobfuscating snapshot...");
+            std::string deobDir = platform::JoinPath(tempBase, "deob");
+            std::string deobPath = platform::JoinPath(
+                deobDir, platform::stem(filePath) + ".heapsnapshot");
+            if (DeobfuscateWithIndices(source, deobPath,
+                                          ctx.resources.sourcemapDir,
+                                          ctx.resources.nameCacheDir)) {
+                heapsnapshotFile = deobPath;
             }
             // 反混淆失败时 heapsnapshot_file 保持为 Step 1 的转换结果（或原始输入）
         }
 
         std::error_code ec;
-        if (!fs::is_regular_file(mem_analyzer::path_from_utf8(heapsnapshot_file), ec)) {
-            throw std::runtime_error("Heapsnapshot file " + heapsnapshot_file + " doesn't exist!");
+        if (!fs::is_regular_file(mem_analyzer::PathFromUtf8(heapsnapshotFile), ec)) {
+            throw std::runtime_error("Heapsnapshot file " + heapsnapshotFile + " doesn't exist!");
         }
     }
 
     // 加载失败（文件不存在/格式非法）由 HeapSnapshot::from_file 抛异常，由模块统一打印
-    return HeapSnapshot::from_file(heapsnapshot_file);
+    return HeapSnapshot::FromFile(heapsnapshotFile);
 }
 
 } // namespace mem_analyzer

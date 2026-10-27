@@ -28,55 +28,58 @@
 
 namespace mem_analyzer {
 
-ModuleCapability TshandleModule::capability() const {
+ModuleCapability TshandleModule::capability() const
+{
     ModuleCapability cap;
     cap.parse.formats = {"json"};
-    cap.parse.default_format = "json";
+    cap.parse.defaultFormat = "json";
     cap.analysis.formats = {"json", "html"};
-    cap.analysis.default_format = "html";
+    cap.analysis.defaultFormat = "html";
     return cap;
 }
 
-std::string TshandleModule::run(const ModuleRequest& req, const RunContext& ctx) const {
-    FormatKeyword kw = resolve_format_keyword(name(), capability(), req.format, req.parse_only);
+std::string TshandleModule::run(const ModuleRequest& req, const RunContext& ctx) const
+{
+    FormatKeyword kw = ResolveFormatKeyword(name(), capability(), req.format, req.parseOnly);
     if (!kw.error.empty()) {
-        log::loge("Error: ", kw.error);
+        log::Loge("Error: ", kw.error);
         return {};
     }
-    log::logd("Resolved format: ", kw.keyword, " (parse_only=", req.parse_only, ")");
+    log::Logd("Resolved format: ", kw.keyword, " (parse_only=", req.parseOnly, ")");
 
-    const std::string& out_dir = ctx.output.out_dir;
+    const std::string& outDir = ctx.output.outDir;
     try {
-        log::logi("  Parsing...");
+        log::Logi("  Parsing...");
         StageTimer timer("process_file");
         timer.stage("Parsing");
-        TshandleParseResult parsed = tshandle_parse(req.file_path, ctx);
+        TshandleParseResult parsed = TshandleParse(req.filePath, ctx);
         timer.tick("parse");
 
-        if (!req.parse_only) {
-            log::logi("  Analyzing...");
+        if (!req.parseOnly) {
+            log::Logi("  Analyzing...");
             timer.stage("Analyzing");
-            TshandleAnalysisOutput analysis = tshandle_analyze(parsed, ctx);
+            TshandleAnalysisOutput analysis = TshandleAnalyze(parsed, ctx);
             timer.tick("analysis");
 
             timer.stage("Writing output");
             std::string out = kw.keyword == "json"
-                       ? tshandle_write_analysis_json(analysis, req.file_path, ctx, out_dir)
-                       : tshandle_write_analysis_html(analysis, req.file_path, ctx, out_dir);
+                       ? TshandleWriteAnalysisJson(analysis, req.filePath, ctx, outDir)
+                       : TshandleWriteAnalysisHtml(analysis, req.filePath, ctx, outDir);
             timer.tick("write");
             timer.done();
             return out;
         }
 
         // parse-only：产物仍含 ArkTS 类（见头文件约定）
-        log::logi_minor("  Parse-only mode: skipping analysis.");
+        log::LogiMinor("  Parse-only mode: skipping analysis.");
         timer.stage("Writing output");
-        std::string out = tshandle_write_parse_json(parsed, req.file_path, ctx, out_dir);
+        std::string out = TshandleWriteParseJson(parsed, req.filePath, ctx, outDir);
         timer.tick("write");
         timer.done();
         return out;
-    } catch (const std::exception& e) {
-        log::loge("Error: ", e.what());
+    } catch (const std::exception& e)
+    {
+        log::Loge("Error: ", e.what());
         return {};
     }
 }

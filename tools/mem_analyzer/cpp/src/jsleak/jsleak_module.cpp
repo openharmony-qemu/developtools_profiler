@@ -29,76 +29,79 @@
 
 namespace mem_analyzer {
 
-ModuleCapability JsleakModule::capability() const {
+ModuleCapability JsleakModule::capability() const
+{
     // parse 侧全空 = 该域明确不支持 parse-only（`-p` 会被拒绝）
     ModuleCapability cap;
     cap.analysis.formats = {"html", "json"};
-    cap.analysis.default_format = "html";
+    cap.analysis.defaultFormat = "html";
     return cap;
 }
 
-std::string JsleakModule::run(const ModuleRequest& req, const RunContext& ctx) const {
-    FormatKeyword kw = resolve_format_keyword(name(), capability(), req.format, req.parse_only);
+std::string JsleakModule::run(const ModuleRequest& req, const RunContext& ctx) const
+{
+    FormatKeyword kw = ResolveFormatKeyword(name(), capability(), req.format, req.parseOnly);
     if (!kw.error.empty()) {
-        log::loge("Error: ", kw.error);
+        log::Loge("Error: ", kw.error);
         return {};
     }
-    log::logd("Resolved format: ", kw.keyword, " (parse_only=", req.parse_only, ")");
+    log::Logd("Resolved format: ", kw.keyword, " (parse_only=", req.parseOnly, ")");
 
-    const std::string& out_dir = ctx.output.out_dir;
+    const std::string& outDir = ctx.output.outDir;
     try {
         // 对比模式：-b/--baseline 非空时，req.file_path 为目标快照 B。
         // 与单文件路径共用 parse → analyze → write 骨架与格式路由。
-        if (!ctx.snapshot.compare.baseline_file.empty()) {
+        if (!ctx.snapshot.compare.baselineFile.empty()) {
             std::string error;
-            if (!jsleak_compare_inputs_valid(ctx.snapshot.compare.baseline_file,
-                                             req.file_path, error)) {
-                log::loge("Error: ", error);
+            if (!JsleakCompareInputsValid(ctx.snapshot.compare.baselineFile,
+                                             req.filePath, error)) {
+                log::Loge("Error: ", error);
                 return {};
             }
             StageTimer timer("process_file");
             timer.stage("Parsing baseline");
-            HeapSnapshot baseline = jsleak_parse(ctx.snapshot.compare.baseline_file, ctx);
+            HeapSnapshot baseline = JsleakParse(ctx.snapshot.compare.baselineFile, ctx);
             timer.tick("parse_baseline");
             timer.stage("Parsing target");
-            HeapSnapshot target = jsleak_parse(req.file_path, ctx);
+            HeapSnapshot target = JsleakParse(req.filePath, ctx);
             timer.tick("parse_target");
 
             timer.stage("Analyzing comparison");
-            json report = jsleak_compare_analyze(
-                baseline, target, ctx.snapshot.compare.baseline_file, req.file_path,
-                ctx.snapshot.top_n, ctx.snapshot.mode);
+            json report = JsleakCompareAnalyze(
+                baseline, target, ctx.snapshot.compare.baselineFile, req.filePath,
+                ctx.snapshot.topN, ctx.snapshot.mode);
             timer.tick("analysis");
 
             timer.stage("Writing output");
             std::string out = kw.keyword == "json"
-                       ? jsleak_write_compare_json(report, out_dir)
-                       : jsleak_write_compare_html(report, out_dir);
+                       ? JsleakWriteCompareJson(report, outDir)
+                       : JsleakWriteCompareHtml(report, outDir);
             timer.tick("write");
             timer.done();
             return out;
         }
 
-        log::logi("  Parsing...");
+        log::Logi("  Parsing...");
         StageTimer timer("process_file");
         timer.stage("Parsing");
-        HeapSnapshot heap = jsleak_parse(req.file_path, ctx);
+        HeapSnapshot heap = JsleakParse(req.filePath, ctx);
         timer.tick("parse");
 
-        log::logi("  Analyzing...");
+        log::Logi("  Analyzing...");
         timer.stage("Analyzing");
-        json data = jsleak_analyze(heap, req.file_path, ctx);
+        json data = JsleakAnalyze(heap, req.filePath, ctx);
         timer.tick("analysis");
 
         timer.stage("Writing output");
         std::string out = kw.keyword == "json"
-                   ? jsleak_write_analysis_json(data, req.file_path, ctx, out_dir)
-                   : jsleak_write_analysis_html(data, req.file_path, ctx, out_dir);
+                   ? JsleakWriteAnalysisJson(data, req.filePath, ctx, outDir)
+                   : JsleakWriteAnalysisHtml(data, req.filePath, ctx, outDir);
         timer.tick("write");
         timer.done();
         return out;
-    } catch (const std::exception& e) {
-        log::loge("Error: ", e.what());
+    } catch (const std::exception& e)
+    {
+        log::Loge("Error: ", e.what());
         return {};
     }
 }

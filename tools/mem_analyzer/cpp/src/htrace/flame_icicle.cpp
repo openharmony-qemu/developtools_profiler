@@ -19,42 +19,44 @@
 
 namespace mem_analyzer {
 
-json FlameNode::to_flame_json(const std::unordered_map<int, std::string>& data_dict) const {
+json FlameNode::ToFlameJson(const std::unordered_map<int, std::string>& dataDict) const
+{
     json j = {
         {"depth", depth},
-        {"size", leak_size},
-        {"count", existing_count},
-        {"name", resolve_str(symbol_id, data_dict)},
-        {"lib", file_id_null ? "unknown" : resolve_str(file_id, data_dict)},
-        {"libOffset", resolve_offset_str(vaddr, vaddr_null)},
-        {"buildId", (!build_id_null && build_id != 0)
-            ? json(data_dict.at(build_id)) : ""}
+        {"size", leakSize},
+        {"count", existingCount},
+        {"name", ResolveStr(symbolId, dataDict)},
+        {"lib", fileIdNull ? "unknown" : ResolveStr(fileId, dataDict)},
+        {"libOffset", ResolveOffsetStr(vaddr, vaddrNull)},
+        {"buildId", (!buildIdNull && buildId != 0)
+            ? json(dataDict.at(buildId)) : ""}
     };
     if (!children.empty()) {
         json arr = json::array();
         for (const auto& c : children) {
-            arr.push_back(c.to_flame_json(data_dict));
+            arr.push_back(c.ToFlameJson(dataDict));
         }
         j["callers"] = arr;
     }
     return j;
 }
 
-json FlameNode::to_icicle_json(const std::unordered_map<int, std::string>& data_dict) const {
+json FlameNode::ToIcicleJson(const std::unordered_map<int, std::string>& dataDict) const
+{
     json j = {
         {"depth", depth},
-        {"size", leak_size},
-        {"count", existing_count},
-        {"name", resolve_str(symbol_id, data_dict)},
-        {"lib", file_id_null ? "unknown" : resolve_str(file_id, data_dict)},
-        {"libOffset", resolve_offset_str(vaddr, vaddr_null)},
-        {"buildId", (!build_id_null && build_id != 0)
-            ? json(data_dict.at(build_id)) : ""}
+        {"size", leakSize},
+        {"count", existingCount},
+        {"name", ResolveStr(symbolId, dataDict)},
+        {"lib", fileIdNull ? "unknown" : ResolveStr(fileId, dataDict)},
+        {"libOffset", ResolveOffsetStr(vaddr, vaddrNull)},
+        {"buildId", (!buildIdNull && buildId != 0)
+            ? json(dataDict.at(buildId)) : ""}
     };
     if (!children.empty()) {
         json arr = json::array();
         for (const auto& c : children) {
-            arr.push_back(c.to_icicle_json(data_dict));
+            arr.push_back(c.ToIcicleJson(dataDict));
         }
         j["callees"] = arr;
     }
@@ -64,129 +66,151 @@ json FlameNode::to_icicle_json(const std::unordered_map<int, std::string>& data_
 // Insert a path into a prefix trie (O(1) child lookup via int-based key)
 // Both leak size and existing count of each chain are accumulated onto
 // every node along the path.
-static void insert_path(FlameNode& root, std::vector<FlameNode>& path, long long leak, long long count) {
-    root.leak_size += leak;
-    root.existing_count += count;
+static void InsertPath(FlameNode& root, std::vector<FlameNode>& path, long long leak, long long count)
+{
+    root.leakSize += leak;
+    root.existingCount += count;
     FlameNode* current = &root;
 
     for (auto& node : path) {
-        FlameKey key{node.symbol_id, node.file_id, node.file_id_null, node.depth};
+        FlameKey key{node.symbolId, node.fileId, node.fileIdNull, node.depth};
 
-        auto it = current->child_map.find(key);
-        if (it != current->child_map.end()) {
+        auto it = current->childMap.find(key);
+        if (it != current->childMap.end()) {
             size_t idx = it->second;
-            current->children[idx].leak_size += leak;
-            current->children[idx].existing_count += count;
+            current->children[idx].leakSize += leak;
+            current->children[idx].existingCount += count;
             current = &current->children[idx];
         } else {
             size_t idx = current->children.size();
-            current->child_map[key] = idx;
-            FlameNode new_node = node;
-            new_node.leak_size = leak;
-            new_node.existing_count = count;
-            current->children.push_back(std::move(new_node));
+            current->childMap[key] = idx;
+            FlameNode newNode = node;
+            newNode.leakSize = leak;
+            newNode.existingCount = count;
+            current->children.push_back(std::move(newNode));
             current = &current->children.back();
         }
     }
 }
 
 // 递归清理FlameNode的child_map（构建完成后不再需要，释放冗余内存）
-static void clear_child_maps(FlameNode& node) {
-    node.child_map.clear();
+static void ClearChildMaps(FlameNode& node)
+{
+    node.childMap.clear();
     for (auto& child : node.children) {
-        clear_child_maps(child);
+        ClearChildMaps(child);
     }
 }
 
-FlameNode build_flame_graph(
+FlameNode BuildFlameGraph(
     const std::string& /*target_symbol*/,
-    const std::vector<CompressedCallStack>& call_stacks,
-    const std::vector<int>& chain_ids,
-    const std::unordered_map<int, int>& depth_per_chain,
+    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<int>& chainIds,
+    const std::unordered_map<int, int>& depthPerChain,
     const std::unordered_map<int, std::string>& /*data_dict*/)
 {
     FlameNode root{};
 
-    for (int ci : chain_ids) {
-        if (ci < 0 || ci >= (int)call_stacks.size()) continue;
-        auto& chain = call_stacks[ci];
-        auto depth_it = depth_per_chain.find(ci);
-        if (depth_it == depth_per_chain.end()) continue;
-        int target_depth = depth_it->second;
-        long long leak = chain.existing_size;
-        if (leak <= 0) continue;
+    for (int ci : chainIds) {
+        if (ci < 0 || ci >= (int)CallStacks.size()) {
+            continue;
+        }
+        auto& chain = CallStacks[ci];
+        auto depthIt = depthPerChain.find(ci);
+        if (depthIt == depthPerChain.end()) {
+            continue;
+        }
+        int targetDepth = depthIt->second;
+        long long leak = chain.existingSize;
+        if (leak <= 0) {
+            continue;
+        }
 
         // Collect frames above target_depth (store int IDs, no string resolution)
         std::vector<FlameNode> path;
         for (auto& frame : chain.frames) {
             int fd = frame.depth;
-            if (fd >= target_depth) continue;
-            path.push_back({frame.symbol_id, frame.file_id, frame.file_id_null,
-                           frame.vaddr, frame.vaddr_null, frame.build_id, frame.build_id_null,
-                           fd - target_depth, 0, 0, {}});
+            if (fd >= targetDepth) {
+                continue;
+            }
+            path.push_back({frame.symbolId, frame.fileId, frame.fileIdNull,
+                           frame.vaddr, frame.vaddrNull, frame.buildId, frame.buildIdNull,
+                           fd - targetDepth, 0, 0, {}});
         }
         std::reverse(path.begin(), path.end());
-        insert_path(root, path, leak, chain.existing_count);
+        InsertPath(root, path, leak, chain.existingCount);
     }
-    clear_child_maps(root);  // 构建完成，释放child_map冗余内存
+    ClearChildMaps(root);  // 构建完成，释放child_map冗余内存
     return root;
 }
 
-FlameNode build_icicle_graph(
+FlameNode BuildIcicleGraph(
     const std::string& /*target_symbol*/,
-    const std::vector<CompressedCallStack>& call_stacks,
-    const std::vector<int>& chain_ids,
-    const std::unordered_map<int, int>& depth_per_chain,
+    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<int>& chainIds,
+    const std::unordered_map<int, int>& depthPerChain,
     const std::unordered_map<int, std::string>& /*data_dict*/)
 {
     FlameNode root{};
 
-    for (int ci : chain_ids) {
-        if (ci < 0 || ci >= (int)call_stacks.size()) continue;
-        auto& chain = call_stacks[ci];
-        auto depth_it = depth_per_chain.find(ci);
-        if (depth_it == depth_per_chain.end()) continue;
-        int target_depth = depth_it->second;
-        long long leak = chain.existing_size;
-        if (leak <= 0) continue;
+    for (int ci : chainIds) {
+        if (ci < 0 || ci >= (int)CallStacks.size()) {
+            continue;
+        }
+        auto& chain = CallStacks[ci];
+        auto depthIt = depthPerChain.find(ci);
+        if (depthIt == depthPerChain.end()) {
+            continue;
+        }
+        int targetDepth = depthIt->second;
+        long long leak = chain.existingSize;
+        if (leak <= 0) {
+            continue;
+        }
 
         std::vector<FlameNode> path;
         for (auto& frame : chain.frames) {
             int fd = frame.depth;
-            if (fd <= target_depth) continue;
-            path.push_back({frame.symbol_id, frame.file_id, frame.file_id_null,
-                           frame.vaddr, frame.vaddr_null, frame.build_id, frame.build_id_null,
-                           fd - target_depth, 0, 0, {}});
+            if (fd <= targetDepth) {
+                continue;
+            }
+            path.push_back({frame.symbolId, frame.fileId, frame.fileIdNull,
+                           frame.vaddr, frame.vaddrNull, frame.buildId, frame.buildIdNull,
+                           fd - targetDepth, 0, 0, {}});
         }
-        insert_path(root, path, leak, chain.existing_count);
+        InsertPath(root, path, leak, chain.existingCount);
     }
-    clear_child_maps(root);  // 构建完成，释放child_map冗余内存
+    ClearChildMaps(root);  // 构建完成，释放child_map冗余内存
     return root;
 }
 
-FlameNode build_merged_icicle(
-    const std::vector<CompressedCallStack>& call_stacks,
-    const std::vector<int>& chain_ids,
+FlameNode BuildMergedIcicle(
+    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<int>& chainIds,
     const std::unordered_map<int, std::string>& /*data_dict*/)
 {
     FlameNode root{};
-    for (int ci : chain_ids) {
-        if (ci < 0 || ci >= (int)call_stacks.size()) continue;
-        auto& chain = call_stacks[ci];
-        long long leak = chain.existing_size;
-        if (leak <= 0) continue;
+    for (int ci : chainIds) {
+        if (ci < 0 || ci >= (int)CallStacks.size()) {
+            continue;
+        }
+        auto& chain = CallStacks[ci];
+        long long leak = chain.existingSize;
+        if (leak <= 0) {
+            continue;
+        }
         // 整栈帧序列（caller→callee 正序），insert 成 root→caller→callee；
         // icicle 渲染时 root 在顶、caller 在上、callee 在下，与原 flame 栈方向一致
         std::vector<FlameNode> path;
         path.reserve(chain.frames.size());
         for (auto it = chain.frames.begin(); it != chain.frames.end(); ++it) {
-            path.push_back({it->symbol_id, it->file_id, it->file_id_null,
-                            it->vaddr, it->vaddr_null, it->build_id, it->build_id_null,
+            path.push_back({it->symbolId, it->fileId, it->fileIdNull,
+                            it->vaddr, it->vaddrNull, it->buildId, it->buildIdNull,
                             it->depth, 0, 0, {}});
         }
-        insert_path(root, path, leak, chain.existing_count);
+        InsertPath(root, path, leak, chain.existingCount);
     }
-    clear_child_maps(root);
+    ClearChildMaps(root);
     return root;
 }
 

@@ -24,8 +24,8 @@ enum class Scope {
     Mixed
 };
 
-Scope scope_from_string(const std::string& s);
-std::string scope_to_string(Scope s);
+Scope ScopeFromString(const std::string& s);
+std::string ScopeToString(Scope s);
 
 // Default values for CLI options
 namespace defaults {

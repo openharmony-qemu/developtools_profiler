@@ -36,14 +36,15 @@
 #include <sstream>
 
 namespace mem_analyzer {
-using html_analysis::escapeHtml;
-using html_analysis::formatBytes;
-using html_analysis::formatSizeText;
+using htmlAnalysis::EscapeHtml;
+using htmlAnalysis::FormatBytes;
+using htmlAnalysis::FormatSizeText;
 
 namespace {
 
 // 单文件报告专属覆盖与扩展（多快照对比报告不引用；二级页签/冰柱图容器见 report_common_sub_tab_css）。
-std::string snapshot_html_css() {
+std::string SnapshotHtmlCss()
+{
     return R"CSS(
 .meta-grid { grid-template-columns: 1fr 1fr 1fr; }
 .meta-item:nth-child(n+4) { border-bottom: none; }
@@ -59,14 +60,14 @@ std::string snapshot_html_css() {
 )CSS";
 }
 
-std::string generateSnapshotHTML(const json& data,
+std::string GenerateSnapshotHTML(const json& data,
                                  const std::string& sourceFile,
                                  const std::string& jsleakMode) {
-    std::string escapedSourceFile = escapeHtml(platform::basename(sourceFile));
-    std::string fileType = ends_with_ignore_case(sourceFile, "rawheap") ? "rawheap" : "heapsnapshot";
+    std::string escapedSourceFile = EscapeHtml(platform::basename(sourceFile));
+    std::string fileType = EndsWithIgnoreCase(sourceFile, "rawheap") ? "rawheap" : "heapsnapshot";
     std::string parsedAt = data.value("parsedAt", "");
     int64_t totalHeapSize = data.value("totalHeapSize", (int64_t)0);
-    std::string totalMem = formatBytes((double)totalHeapSize);
+    std::string totalMem = FormatBytes((double)totalHeapSize);
 
     const bool hasPropertyTag = data.contains("propertyTagObjects") && !data["propertyTagObjects"].empty();
     const bool hasTop  = data.contains("topRefChains") && !data["topRefChains"].empty();
@@ -92,7 +93,7 @@ std::string generateSnapshotHTML(const json& data,
     if (hasPropertyTag || showTopTab) {
         tabs.push_back({"tabPropertyTag",
                         "ArkUI组件/ArkTS对象泄漏分析报告",
-                        build_property_tag_tab_html(hasPropertyTag ? data["propertyTagObjects"] : json::object(),
+                        BuildPropertyTagTabHtml(hasPropertyTag ? data["propertyTagObjects"] : json::object(),
                                                 hasPropertyTag ? (hasTop ? "lc" : "") : "",
                                                 "tabPropertyTag", hasPropertyTag, icicleCharts),
                         hasPropertyTag,
@@ -102,7 +103,7 @@ std::string generateSnapshotHTML(const json& data,
     if (showTopTab) {
         tabs.push_back({"tabTopchain",
                         "快照最短引用链分析报告",
-                        build_top_chain_tab_html(data["topRefChains"],
+                        BuildTopChainTabHtml(data["topRefChains"],
                                              (hasPropertyTag && hasTop) ? "tc" : "",
                                              "tabTopchain", !hasPropertyTag, icicleCharts, true),
                         !hasPropertyTag});
@@ -114,7 +115,7 @@ std::string generateSnapshotHTML(const json& data,
         // 因此「查看」不带搜索词，直接跳到完整总览图（见 buildTopChainTableRow）
         tabs.push_back({"tabNapiWrap",
                         "绑定了Native内存的ArkTS对象引用链分析报告",
-                        build_top_chain_tab_html(data["napiWrapRefChains"], "np", "tabNapiWrap", active,
+                        BuildTopChainTabHtml(data["napiWrapRefChains"], "np", "tabNapiWrap", active,
                                              icicleCharts, false),
                         active});
     }
@@ -144,61 +145,63 @@ std::string generateSnapshotHTML(const json& data,
 
     // ========== 用 report_skeleton 组装页面 ==========
     std::ostringstream html;
-    html << html_report_begin("资源泄漏日志分析报告");
-    html << report_common_css();        // jsleak 域公共基础样式（单快照 + compare 共用）
-    html << snapshot_html_css();        // 单文件报告专属覆盖 CSS
-    html << report_common_sub_tab_css();      // 二级页签 + 冰柱图容器 CSS（与多快照共用）
-    html << chart_module_css();         // 可选组件：图引擎
-    html << tree_table_css();           // 可选组件：引用链树表
-    html << html_report_css_end();      // 自动注入 version/help_tooltip/nav_bar CSS
-    html << html_report_title("资源泄漏日志分析报告");
-    html << html_report_body_open();
-    html << html_report_meta({
+    html << HtmlReportBegin("资源泄漏日志分析报告");
+    html << ReportCommonCss();        // jsleak 域公共基础样式（单快照 + compare 共用）
+    html << SnapshotHtmlCss();        // 单文件报告专属覆盖 CSS
+    html << ReportCommonSubTabCss();      // 二级页签 + 冰柱图容器 CSS（与多快照共用）
+    html << ChartModuleCss();         // 可选组件：图引擎
+    html << TreeTableCss();           // 可选组件：引用链树表
+    html << HtmlReportCssEnd();      // 自动注入 version/help_tooltip/nav_bar CSS
+    html << HtmlReportTitle("资源泄漏日志分析报告");
+    html << HtmlReportBodyOpen();
+    html << HtmlReportMeta({
         {"日志名", escapedSourceFile},
         {"类型", fileType},
-        {"时间", escapeHtml(parsedAt)},
+        {"时间", EscapeHtml(parsedAt)},
         {"总内存", totalMem},
         {"时长", "未知"},
         {"进程", "未知"},
     });
-    html << "<div class=\"tab-bar\">" << tabItems << "</div>"
-         << "<div class=\"tab-area\">" << tabContents << "</div>";
-    html << html_report_body_close();
-    html << html_report_core_script();
-    html << html_report_script(report_common_js());   // jsleak 域公共交互脚本
-    html << html_report_script(snapshot_html_js());
-    html << html_report_script(report_common_sub_tab_js());
-    html << html_report_script("window.ICICLE_CHARTS_DATA = " +
-                               html_escape_script_json(icicleCharts.dump()) + ";");
-    html << html_report_script(chart_module_js());
-    html << html_report_script(report_common_chart_init_js());
-    html << html_report_end();
+    html << "<div class=\"tab-bar\">" << tabItems << "</div>" <<
+         "<div class=\"tab-area\">" << tabContents << "</div>";
+    html << HtmlReportBodyClose();
+    html << HtmlReportCoreScript();
+    html << HtmlReportScript(ReportCommonJs());   // jsleak 域公共交互脚本
+    html << HtmlReportScript(SnapshotHtmlJs());
+    html << HtmlReportScript(ReportCommonSubTabJs());
+    html << HtmlReportScript("window.ICICLE_CHARTS_DATA = " +
+                               HtmlEscapeScriptJson(icicleCharts.dump()) + ";");
+    html << HtmlReportScript(ChartModuleJs());
+    html << HtmlReportScript(ReportCommonChartInitJs());
+    html << HtmlReportEnd();
     return html.str();
 }
 
 } // namespace
 
-std::string jsleak_write_analysis_html(const json& data, const std::string& file_path,
-                                       const RunContext& ctx, const std::string& out_dir) {
+std::string JsleakWriteAnalysisHtml(const json& data, const std::string& filePath,
+                                       const RunContext& ctx, const std::string& outDir) {
     StageTimer timer("HTML write");
 
-    auto base = platform::stem(file_path);
-    if (base.empty()) base = "output";
-    auto out_path = platform::join_path(out_dir, base + ".html");
-    platform::create_directories(out_dir);
+    auto base = platform::stem(filePath);
+    if (base.empty()) {
+        base = "output";
+    }
+    auto outPath = platform::JoinPath(outDir, base + ".html");
+    platform::CreateDirectories(outDir);
 
-    auto ofs = open_ofstream(out_path);
+    auto ofs = OpenOfstream(outPath);
     if (!ofs) {
-        log::loge("Error: Cannot write to ", out_path);
+        log::Loge("Error: Cannot write to ", outPath);
         return {};
     }
 
-    ofs << generateSnapshotHTML(data, file_path, ctx.snapshot.mode);
+    ofs << GenerateSnapshotHTML(data, filePath, ctx.snapshot.mode);
 
     ofs.close();
     timer.tick("total");
-    log::logok("Output written to: ", out_path);
-    return out_path;
+    log::Logok("Output written to: ", outPath);
+    return outPath;
 }
 
 } // namespace mem_analyzer

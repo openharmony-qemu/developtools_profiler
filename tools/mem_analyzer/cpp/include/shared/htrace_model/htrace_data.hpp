@@ -59,7 +59,8 @@ enum class HtraceEventType : int {
 };
 
 /** Returns the human-readable name for an HtraceEventType. */
-inline const char* htrace_event_type_name(HtraceEventType type) {
+inline const char* HtraceEventTypeName(HtraceEventType type)
+{
     switch (type) {
         case HtraceEventType::UNKNOWN: return "unknown";
         case HtraceEventType::MALLOC: return "malloc";
@@ -89,22 +90,44 @@ inline const char* htrace_event_type_name(HtraceEventType type) {
 }
 
 /** Returns the HtraceEventType value for a name string, or UNKNOWN if not recognized. */
-inline HtraceEventType htrace_event_type_from_name(const std::string& name) {
-    if (name == "unknown") return HtraceEventType::UNKNOWN;
-    if (name == "malloc") return HtraceEventType::MALLOC;
-    if (name == "ark_global_handle") return HtraceEventType::ARK_GLOBAL_HANDLE;
-    if (name == "ark_local_handle") return HtraceEventType::ARK_LOCAL_HANDLE;
-    if (name == "dma") return HtraceEventType::HP_DMA;
-    if (name == "mmap-anon") return HtraceEventType::MMAP_ANON;
-    if (name == "mmap-filepage") return HtraceEventType::FILE_PAGE_MSG;
-    if (name == "ashmem") return HtraceEventType::ASHMEM;
-    if (name == "fd") return HtraceEventType::HP_FD;
-    if (name == "thread") return HtraceEventType::HP_THREAD;
+inline HtraceEventType HtraceEventTypeFromName(const std::string& name)
+{
+    if (name == "unknown") {
+        return HtraceEventType::UNKNOWN;
+    }
+    if (name == "malloc") {
+        return HtraceEventType::MALLOC;
+    }
+    if (name == "ark_global_handle") {
+        return HtraceEventType::ARK_GLOBAL_HANDLE;
+    }
+    if (name == "ark_local_handle") {
+        return HtraceEventType::ARK_LOCAL_HANDLE;
+    }
+    if (name == "dma") {
+        return HtraceEventType::HP_DMA;
+    }
+    if (name == "mmap-anon") {
+        return HtraceEventType::MMAP_ANON;
+    }
+    if (name == "mmap-filepage") {
+        return HtraceEventType::FILE_PAGE_MSG;
+    }
+    if (name == "ashmem") {
+        return HtraceEventType::ASHMEM;
+    }
+    if (name == "fd") {
+        return HtraceEventType::HP_FD;
+    }
+    if (name == "thread") {
+        return HtraceEventType::HP_THREAD;
+    }
     return HtraceEventType::UNKNOWN;
 }
 
 /** detail 模式下 data_dict 的 sub_type 值可能带 "FilePage:" 前缀，输出时剥离。 */
-inline std::string normalize_filepage_filename(std::string name, const std::string& mode) {
+inline std::string NormalizeFilepageFilename(std::string name, const std::string& mode)
+{
     if (mode == "detail") {
         const std::string prefix = "FilePage:";
         if (name.compare(0, prefix.size(), prefix) == 0) {
@@ -127,7 +150,7 @@ struct StackFrame {
 
     virtual ~StackFrame() = default;
 
-    bool is_resolved() const { return resolved; }
+    bool IsResolved() const { return resolved; }
 };
 
 /// Frame with fully resolved string fields.
@@ -135,8 +158,8 @@ struct StackFrame {
 struct ResolvedStackFrame : StackFrame {
     std::string symbol;       // function / symbol name (with offset)
     std::string lib;          // library / file path
-    std::string lib_offset;   // offset within library (hex string, e.g. "0x1234")
-    std::string build_id;     // library build ID
+    std::string libOffset;   // offset within library (hex string, e.g. "0x1234")
+    std::string buildId;     // library build ID
 
     ResolvedStackFrame() { resolved = true; }
 };
@@ -145,13 +168,13 @@ struct ResolvedStackFrame : StackFrame {
 /// Used by: htrace parser (avoids string allocation for large datasets).
 /// Flame/icicle graph construction uses int IDs for memory-efficient O(1) lookup.
 struct CompressedStackFrame : StackFrame {
-    int symbol_id = 0;
-    int file_id = 0;
-    bool file_id_null = false;
+    int symbolId = 0;
+    int fileId = 0;
+    bool fileIdNull = false;
     uint64_t vaddr = 0;
-    bool vaddr_null = false;
-    int build_id = 0;
-    bool build_id_null = true;
+    bool vaddrNull = false;
+    int buildId = 0;
+    bool buildIdNull = true;
 
     CompressedStackFrame() { resolved = false; }
 
@@ -167,11 +190,11 @@ struct CompressedStackFrame : StackFrame {
 struct CallStack {
     long long id = 0;
     HtraceEventType type = HtraceEventType::UNKNOWN;
-    long long existing_size = 0;       // original allocation size (bytes)
-    long long existing_count = 0;
-    double related_size = 0.0;         // associated retained/shared size (tshandle: ArkTS retained_size)
-    int sub_type_id = -1;              // data_dict id → 文件名（mmap-filepage 非 NULL，其余 -1）
-    std::shared_ptr<std::vector<std::string>> existing_addrs;  // tshandle: address list for ArkTS node mapping
+    long long existingSize = 0;       // original allocation size (bytes)
+    long long existingCount = 0;
+    double relatedSize = 0.0;         // associated retained/shared size (tshandle: ArkTS retained_size)
+    int subTypeId = -1;              // data_dict id → 文件名（mmap-filepage 非 NULL，其余 -1）
+    std::shared_ptr<std::vector<std::string>> existingAddrs;  // tshandle: address list for ArkTS node mapping
 };
 
 /// Call stack with fully resolved string frames.
@@ -197,16 +220,16 @@ struct CompressedCallStack : CallStack {
 /// Replaces the ad-hoc TraceRange / TshandleTraceMeta structures.
 struct TraceMeta {
     // ── Time range ──
-    long long start_time_ms = 0;   // trace start, millisecond timestamp
-    long long end_time_ms = 0;     // trace end, millisecond timestamp
-    long long duration_ns = 0;     // trace duration in nanoseconds
+    long long startTimeMs = 0;   // trace start, millisecond timestamp
+    long long endTimeMs = 0;     // trace end, millisecond timestamp
+    long long durationNs = 0;     // trace duration in nanoseconds
 
     // ── Process ──
-    std::string process_name;
+    std::string processName;
 
     // ── htrace-specific ──
     std::string mode;              // "statistic" or "detail" (htrace only)
-    std::unordered_map<HtraceEventType, long long> type_sizes;  // HtraceEventType → accumulated size
+    std::unordered_map<HtraceEventType, long long> typeSizes;  // HtraceEventType → accumulated size
 };
 
 // ============================================================================
@@ -246,16 +269,16 @@ struct TraceDB {
     // ── Queries ──
 
     /// True if this DB contains compressed (int-ID) call stacks.
-    bool is_compressed() const;
+    bool IsCompressed() const;
 
     /// Total number of call stacks.
-    size_t stack_count() const;
+    size_t StackCount() const;
 
     // ── Resolution ──
 
     /// If compressed, resolve all stacks in-place and replace with resolved form.
     /// No-op if already resolved.
-    void resolve_stacks();
+    void ResolveStacks();
 };
 
 } // namespace mem_analyzer

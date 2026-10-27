@@ -24,16 +24,17 @@
 
 namespace mem_analyzer {
 
-CaptureCommand process_template(const std::string& config_file_path, const ProfilerOptions& opts) {
+CaptureCommand ProcessTemplate(const std::string& configFilePath, const ProfilerOptions& opts)
+{
     CaptureCommand result;
 
     // 1. Read the entire file at config_file_path into a std::string content.
     //    Use binary mode to preserve newlines exactly (the file has `\`
     //    line continuations and a heredoc).
-    std::ifstream ifs(path_from_utf8(config_file_path), std::ios::binary);
+    std::ifstream ifs(PathFromUtf8(configFilePath), std::ios::binary);
     if (!ifs.is_open()) {
         result.ok = false;
-        result.error = "failed to open config file: " + config_file_path;
+        result.error = "failed to open config file: " + configFilePath;
         return result;
     }
     std::stringstream ss;
@@ -56,13 +57,14 @@ CaptureCommand process_template(const std::string& config_file_path, const Profi
         duration = opts.t.value();
     } else {
         // Search the original content for the FIRST occurrence of `$(t:default)`.
-        std::regex dur_re(R"(\$\(t:([^)]*)\))");
-        std::smatch dur_match;
-        if (std::regex_search(content, dur_match, dur_re)) {
-            const std::string def = dur_match[1].str();
+        std::regex durRe(R"(\$\(t:([^)]*)\))");
+        std::smatch durMatch;
+        if (std::regex_search(content, durMatch, durRe)) {
+            const std::string def = durMatch[1].str();
             try {
                 duration = std::stoll(def);
-            } catch (...) {
+            } catch (...)
+            {
                 // If it fails to parse, treat as 0.
                 duration = 0;
             }
@@ -86,7 +88,7 @@ CaptureCommand process_template(const std::string& config_file_path, const Profi
 
     std::sregex_iterator it(content.cbegin(), content.cend(), re);
     std::sregex_iterator end;
-    std::string::const_iterator last_end = content.cbegin();
+    std::string::const_iterator lastEnd = content.cbegin();
 
     for (; it != end; ++it) {
         const std::smatch& match = *it;
@@ -99,23 +101,25 @@ CaptureCommand process_template(const std::string& config_file_path, const Profi
             // Capture the resolved process name so run_hdc can poll the
             // device for it during the countdown. All $(p:...) occurrences
             // resolve to the same value, so overwriting is harmless.
-            result.process_name = replacement;
-        } else if (letter == "t") {
+            result.processName = replacement;
+        } else if (letter == "t")
+        {
             replacement = opts.t.has_value() ? std::to_string(opts.t.value()) : def;
-        } else if (letter == "ts") {
-            replacement = current_timestamp();
+        } else if (letter == "ts")
+        {
+            replacement = CurrentTimestamp();
         }
 
         // Append the text between previous match end and this match start.
-        out.append(last_end, match[0].first);
+        out.append(lastEnd, match[0].first);
         // Append the replacement.
         out.append(replacement);
 
-        last_end = match[0].second;
+        lastEnd = match[0].second;
     }
 
     // Append any trailing text after the last match.
-    out.append(last_end, content.cend());
+    out.append(lastEnd, content.cend());
 
     result.content = out;
 
@@ -125,15 +129,15 @@ CaptureCommand process_template(const std::string& config_file_path, const Profi
     //    content to be written to a file on the device. Snapshot commands are
     //    single-line (just the hidumper command).
     {
-        const auto first_nl = out.find('\n');
-        if (first_nl == std::string::npos) {
+        const auto firstNl = out.find('\n');
+        if (firstNl == std::string::npos) {
             result.command = out;
-            result.device_config_content.clear();
+            result.deviceConfigContent.clear();
         } else {
-            result.command = out.substr(0, first_nl);
+            result.command = out.substr(0, firstNl);
             // Everything after the first newline is the config content.
             // Preserve the remaining content as-is.
-            result.device_config_content = out.substr(first_nl + 1);
+            result.deviceConfigContent = out.substr(firstNl + 1);
         }
     }
 
@@ -143,16 +147,16 @@ CaptureCommand process_template(const std::string& config_file_path, const Profi
     {
         std::istringstream iss(result.command);
         std::string tok;
-        bool waiting_for_value = false;
+        bool waitingForValue = false;
         while (iss >> tok) {
-            if (waiting_for_value) {
+            if (waitingForValue) {
                 if (!tok.empty() && tok[0] != '-') {
-                    result.remote_output_path = tok;
+                    result.remoteOutputPath = tok;
                 }
                 break;  // consumed the value (or found none); done
             }
             if (tok == "-o") {
-                waiting_for_value = true;
+                waitingForValue = true;
             }
         }
     }

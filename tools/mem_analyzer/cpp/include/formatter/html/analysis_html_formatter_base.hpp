@@ -32,13 +32,13 @@ namespace mem_analyzer {
 
 // 延迟构建回调：在流式写入时按需填充entry的flameTree/icicleTree
 // 避免所有entry的flameTree/icicleTree同时驻留内存，大幅降低峰值内存
-using FillTreeCallback = std::function<void(html_analysis::SymbolDataEntry& entry, size_t groupIdx, size_t entryIdx)>;
+using FillTreeCallback = std::function<void(htmlAnalysis::SymbolDataEntry& entry, size_t groupIdx, size_t entryIdx)>;
 
 // Tab页数据组，对应HTML中的"应用函数"/"系统函数"/"混合函数"Tab
 struct TabGroup {
     std::string tabId;                                  // Tab的DOM id（如 "tabApp"）
     std::string tabLabel;                               // Tab显示标签（如 "TOP应用函数分析报告"）
-    std::vector<html_analysis::SymbolDataEntry> symbols; // 该Tab下的所有符号数据
+    std::vector<htmlAnalysis::SymbolDataEntry> symbols; // 该Tab下的所有符号数据
     size_t startIndex;                                  // 全局序号起始值（用于表格行号）
 };
 

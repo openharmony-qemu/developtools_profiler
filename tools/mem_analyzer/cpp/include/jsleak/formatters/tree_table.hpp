@@ -24,10 +24,10 @@ namespace mem_analyzer {
 // 数据构建见 icicle_tree.hpp 的 build_ref_chain_icicle_tree（引用链 → 前缀树）。
 
 // 树表样式（.icicle-tree-* / .itt-*）。
-std::string tree_table_css();
+std::string TreeTableCss();
 
 // 树 JSON → 可折叠树表 HTML（含全部展开/全部折叠/复制引用链按钮）。
 // canvas_id 为对应冰柱图的 canvas id，内部用 "treeTable_" + canvas_id 作为表格 id。
-std::string tree_table_html(const json& tree, const std::string& canvas_id);
+std::string TreeTableHtml(const json& tree, const std::string& canvasId);
 
 } // namespace mem_analyzer

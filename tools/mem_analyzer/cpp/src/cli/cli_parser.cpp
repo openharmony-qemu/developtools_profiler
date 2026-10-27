@@ -25,18 +25,25 @@ namespace mem_analyzer {
 // Helpers
 // ═══════════════════════════════════════════════════════════════
 
-static std::string strip_leading_dashes(const std::string& s) {
-    if (s.size() >= 2 && s[0] == '-' && s[1] == '-') return s.substr(2);
-    if (s.size() >= 1 && s[0] == '-') return s.substr(1);
+static std::string StripLeadingDashes(const std::string& s)
+{
+    if (s.size() >= 2 && s[0] == '-' && s[1] == '-') {
+        return s.substr(2);
+    }
+    if (s.size() >= 1 && s[0] == '-') {
+        return s.substr(1);
+    }
     return s;
 }
 
-static std::string extract_program_name(const std::string& argv0) {
+static std::string ExtractProgramName(const std::string& argv0)
+{
     auto pos = argv0.find_last_of("/\\");
     return (pos == std::string::npos) ? argv0 : argv0.substr(pos + 1);
 }
 
-static int parse_int(const std::string& s) {
+static int ParseInt(const std::string& s)
+{
     char* end = nullptr;
     errno = 0;
     long val = std::strtol(s.c_str(), &end, 10);
@@ -55,19 +62,28 @@ static int parse_int(const std::string& s) {
 /// 短名（-x）存入 short_name，长名（--xxx）存入 long_name；
 /// 同名 token 重复出现时只保留第一个。实际注册最多一个短名加一个长名，
 /// 因此无需额外的多别名（extra_names）与去重收集逻辑。
-static void parse_option_names(const std::string& names, std::string& short_name,
-                               std::string& long_name) {
+static void ParseOptionNames(const std::string& names, std::string& shortName,
+                               std::string& longName) {
     size_t start = 0;
     while (start <= names.size()) {
         size_t end = names.find_first_of(", ", start);
-        if (end == std::string::npos) end = names.size();
+        if (end == std::string::npos) {
+            end = names.size();
+        }
         const std::string tok = names.substr(start, end - start);
         if (tok.size() >= 2 && tok[0] == '-' && tok[1] == '-') {
-            if (long_name.empty()) long_name = tok;
-        } else if (tok.size() >= 1 && tok[0] == '-') {
-            if (short_name.empty()) short_name = tok;
+            if (longName.empty()) {
+                longName = tok;
+            }
+        } else if (tok.size() >= 1 && tok[0] == '-')
+        {
+            if (shortName.empty()) {
+                shortName = tok;
+            }
         }
-        if (end == names.size()) break;
+        if (end == names.size()) {
+            break;
+        }
         start = end + 1;
     }
 }
@@ -83,69 +99,72 @@ CliParser::CliParser(const std::string& description)
 // Option registration
 // ═══════════════════════════════════════════════════════════════
 
-CliParser& CliParser::add_option(const std::string& names, std::string& target, const std::string& desc,
+CliParser& CliParser::AddOption(const std::string& names, std::string& target, const std::string& desc,
                                  bool* provided) {
     Option opt;
-    opt.short_name = "";
-    opt.long_name = "";
+    opt.shortName = "";
+    opt.longName = "";
     opt.description = desc;
-    opt.group = option_group_;
+    opt.group = optionGroup_;
     opt.type = Option::STRING;
     opt.target = &target;
     opt.provided = provided;
-    opt.default_str = target;
+    opt.defaultStr = target;
 
     // Parse comma/space-separated names
     // e.g., "-o,--output-path" → short="-o", long="--output-path"
-    parse_option_names(names, opt.short_name, opt.long_name);
+    ParseOptionNames(names, opt.shortName, opt.longName);
 
     options_.push_back(std::move(opt));
     return *this;
 }
 
-CliParser& CliParser::add_switch(const std::string& names, bool& target, const std::string& desc) {
+CliParser& CliParser::AddSwitch(const std::string& names, bool& target, const std::string& desc)
+{
     Option opt;
-    opt.short_name = "";
-    opt.long_name = "";
+    opt.shortName = "";
+    opt.longName = "";
     opt.description = desc;
-    opt.group = option_group_;
+    opt.group = optionGroup_;
     opt.type = Option::BOOL;
     opt.target = &target;
-    opt.default_str = target ? "true" : "false";
+    opt.defaultStr = target ? "true" : "false";
 
     // Parse comma/space-separated names
-    parse_option_names(names, opt.short_name, opt.long_name);
+    ParseOptionNames(names, opt.shortName, opt.longName);
 
     options_.push_back(std::move(opt));
     return *this;
 }
 
-CliParser& CliParser::add_option(const std::string& names, int& target, const std::string& desc,
+CliParser& CliParser::AddOption(const std::string& names, int& target, const std::string& desc,
                                  bool* provided) {
     Option opt;
-    opt.short_name = "";
-    opt.long_name = "";
+    opt.shortName = "";
+    opt.longName = "";
     opt.description = desc;
-    opt.group = option_group_;
+    opt.group = optionGroup_;
     opt.type = Option::INT;
     opt.target = &target;
     opt.provided = provided;
-    opt.default_str = std::to_string(target);
+    opt.defaultStr = std::to_string(target);
 
     // Parse comma/space-separated names
-    parse_option_names(names, opt.short_name, opt.long_name);
+    ParseOptionNames(names, opt.shortName, opt.longName);
 
     options_.push_back(std::move(opt));
     return *this;
 }
 
-CliParser& CliParser::set_option_group(const std::string& group) {
-    option_group_ = group;
+CliParser& CliParser::SetOptionGroup(const std::string& group)
+{
+    optionGroup_ = group;
     return *this;
 }
 
-CliParser& CliParser::set_usage(const std::string& args) {
-    usage_args_ = args;
+CliParser& CliParser::SetUsage(const std::string& args)
+{
+    usageArgs_ = args;
     return *this;
 }
 
@@ -153,21 +172,23 @@ CliParser& CliParser::set_usage(const std::string& args) {
 // Positionals
 // ═══════════════════════════════════════════════════════════════
 
-CliParser& CliParser::add_positional(const std::string& name, std::vector<std::string>& target, const std::string& desc) {
+CliParser& CliParser::AddPositional(const std::string& name, std::vector<std::string>& target, const std::string& desc)
+{
     Positional p;
     p.name = name;
     p.description = desc;
-    p.is_string = false;
+    p.isString = false;
     p.target = &target;
     positionals_.push_back(std::move(p));
     return *this;
 }
 
-CliParser& CliParser::add_positional(const std::string& name, std::string& target, const std::string& desc) {
+CliParser& CliParser::AddPositional(const std::string& name, std::string& target, const std::string& desc)
+{
     Positional p;
     p.name = name;
     p.description = desc;
-    p.is_string = true;
+    p.isString = true;
     p.target = &target;
     positionals_.push_back(std::move(p));
     return *this;
@@ -177,7 +198,7 @@ CliParser& CliParser::add_positional(const std::string& name, std::string& targe
 // Subcommands
 // ═══════════════════════════════════════════════════════════════
 
-CliParser& CliParser::add_subcommand(const std::string& name, const std::string& desc,
+CliParser& CliParser::AddSubcommand(const std::string& name, const std::string& desc,
                                      const std::string& alias, bool hidden) {
     SubcommandEntry entry;
     entry.parser = std::make_unique<CliParser>(desc);
@@ -192,9 +213,12 @@ CliParser& CliParser::add_subcommand(const std::string& name, const std::string&
 // Internal: find an option by name
 // ═══════════════════════════════════════════════════════════════
 
-CliParser::Option* CliParser::find_option_by_name(const std::string& name) {
+CliParser::Option* CliParser::FindOptionByName(const std::string& name)
+{
     for (auto& opt : options_) {
-        if (opt.short_name == name || opt.long_name == name) return &opt;
+        if (opt.shortName == name || opt.longName == name) {
+            return &opt;
+        }
     }
     return nullptr;
 }
@@ -203,7 +227,8 @@ CliParser::Option* CliParser::find_option_by_name(const std::string& name) {
 // Internal: apply default values
 // ═══════════════════════════════════════════════════════════════
 
-void CliParser::apply_defaults() {
+void CliParser::ApplyDefaults()
+{
     // Defaults are already set via initial values of the target variables.
     // Nothing to do here since we captured default_str at registration time
     // for documentation purposes only.
@@ -213,20 +238,21 @@ void CliParser::apply_defaults() {
 // Internal: consume remaining args (options + positionals)
 // ═══════════════════════════════════════════════════════════════
 
-void CliParser::consume_args(const std::vector<std::string>& args, size_t start) {
+void CliParser::ConsumeArgs(const std::vector<std::string>& args, size_t start)
+{
     size_t i = start;
-    size_t positional_idx = 0;
+    size_t positionalIdx = 0;
 
-    auto next_string_pos = [&]() -> std::string* {
-        if (positional_idx < positionals_.size() && positionals_[positional_idx].is_string) {
-            return static_cast<std::string*>(positionals_[positional_idx].target);
+    auto nextStringPos = [&]() -> std::string* {
+        if (positionalIdx < positionals_.size() && positionals_[positionalIdx].isString) {
+            return static_cast<std::string*>(positionals_[positionalIdx].target);
         }
         return nullptr;
     };
 
-    auto next_vector_pos = [&]() -> std::vector<std::string>* {
-        if (positional_idx < positionals_.size() && !positionals_[positional_idx].is_string) {
-            return static_cast<std::vector<std::string>*>(positionals_[positional_idx].target);
+    auto nextVectorPos = [&]() -> std::vector<std::string>* {
+        if (positionalIdx < positionals_.size() && !positionals_[positionalIdx].isString) {
+            return static_cast<std::vector<std::string>*>(positionals_[positionalIdx].target);
         }
         return nullptr;
     };
@@ -241,15 +267,17 @@ void CliParser::consume_args(const std::vector<std::string>& args, size_t start)
 
         // Option (starts with -)
         if (arg.size() > 1 && arg[0] == '-') {
-            std::string opt_name = arg;
+            std::string optName = arg;
             // Check if this is a known option
-            Option* opt = find_option_by_name(opt_name);
+            Option* opt = FindOptionByName(optName);
             if (!opt) {
-                throw CliError("Unknown option: " + opt_name);
+                throw CliError("Unknown option: " + optName);
             }
 
             // 标记该选项被显式指定（如 -t），供上层区分「用户传入」与「默认值」。
-            if (opt->provided) *opt->provided = true;
+            if (opt->provided) {
+                *opt->provided = true;
+            }
 
             if (opt->type == Option::BOOL) {
                 *static_cast<bool*>(opt->target) = true;
@@ -257,13 +285,13 @@ void CliParser::consume_args(const std::vector<std::string>& args, size_t start)
             } else {
                 // STRING or INT: need a value argument
                 if (i + 1 >= args.size()) {
-                    throw CliError("Option " + opt_name + " requires a value");
+                    throw CliError("Option " + optName + " requires a value");
                 }
                 const std::string& val = args[i + 1];
                 if (opt->type == Option::STRING) {
                     *static_cast<std::string*>(opt->target) = val;
                 } else {
-                    *static_cast<int*>(opt->target) = parse_int(val);
+                    *static_cast<int*>(opt->target) = ParseInt(val);
                 }
                 i += 2;
             }
@@ -271,25 +299,27 @@ void CliParser::consume_args(const std::vector<std::string>& args, size_t start)
         }
 
         // Positional argument
-        if (positional_idx < positionals_.size()) {
-            auto* str_target = next_string_pos();
-            if (str_target) {
-                *str_target = arg;
-                positional_idx++;
+        if (positionalIdx < positionals_.size()) {
+            auto* strTarget = nextStringPos();
+            if (strTarget) {
+                *strTarget = arg;
+                positionalIdx++;
                 i++;
                 continue;
             }
-            auto* vec_target = next_vector_pos();
-            if (vec_target) {
+            auto* vecTarget = nextVectorPos();
+            if (vecTarget) {
                 // vector positionals consume remaining non-option args only
                 while (i < args.size()) {
                     const std::string& a = args[i];
                     // Stop at option-like args (they'll be parsed on next iteration)
-                    if (a.size() > 1 && a[0] == '-') break;
-                    vec_target->push_back(a);
+                    if (a.size() > 1 && a[0] == '-') {
+                        break;
+                    }
+                    vecTarget->push_back(a);
                     i++;
                 }
-                positional_idx++;
+                positionalIdx++;
                 continue;
             }
         }
@@ -306,8 +336,9 @@ void CliParser::consume_args(const std::vector<std::string>& args, size_t start)
 // parse()
 // ═══════════════════════════════════════════════════════════════
 
-void CliParser::parse(int argc, char** argv) {
-    program_name_ = (argc > 0) ? extract_program_name(argv[0]) : "mem-analyzer";
+void CliParser::parse(int argc, char** argv)
+{
+    programName_ = (argc > 0) ? ExtractProgramName(argv[0]) : "mem-analyzer";
 
     // Collect args as strings (skip argv[0])
     std::vector<std::string> args;
@@ -325,59 +356,61 @@ void CliParser::parse(int argc, char** argv) {
     // If we have subcommands, check if the first non-option arg is a subcommand
     // Supports: bare name "trace" or alias "tr"
     if (!subcommands_.empty() && !args.empty() && args[0][0] != '-') {
-        std::string subcmd_name = resolve_subcommand(args[0]);
-        const SubcommandEntry* entry = find_subcommand(subcmd_name);
+        std::string subcmdName = ResolveSubcommand(args[0]);
+        const SubcommandEntry* entry = FindSubcommand(subcmdName);
         if (entry) {
-            matched_subcommand_ = subcmd_name;
+            matchedSubcommand_ = subcmdName;
             // Forward remaining args to subcommand's internal parse
-            std::vector<std::string> sub_args(args.begin() + 1, args.end());
-            entry->parser->program_name_ = program_name_ + " " + subcmd_name;
+            std::vector<std::string> subArgs(args.begin() + 1, args.end());
+            entry->parser->programName_ = programName_ + " " + subcmdName;
 
             // Support --help on subcommand
-            if (!sub_args.empty() && (sub_args[0] == "--help" || sub_args[0] == "-h")) {
+            if (!subArgs.empty() && (subArgs[0] == "--help" || subArgs[0] == "-h")) {
                 throw CliError("", true);
             }
 
             // Parse subcommand args
-            entry->parser->consume_args(sub_args, 0);
+            entry->parser->ConsumeArgs(subArgs, 0);
             return;
         }
     }
 
     // No subcommand matched: parse as auto-detect / top-level
-    consume_args(args, 0);
+    ConsumeArgs(args, 0);
 }
 
 // ═══════════════════════════════════════════════════════════════
 // is_subcommand()
 // ═══════════════════════════════════════════════════════════════
 
-bool CliParser::is_subcommand(const std::string& name) const {
-    return matched_subcommand_ == name;
+bool CliParser::IsSubcommand(const std::string& name) const
+{
+    return matchedSubcommand_ == name;
 }
 
 // ═══════════════════════════════════════════════════════════════
 // exit()
 // ═══════════════════════════════════════════════════════════════
 
-int CliParser::exit(const std::exception& e) const {
+int CliParser::exit(const std::exception& e) const
+{
     const auto* ce = dynamic_cast<const CliError*>(&e);
-    if (ce && ce->is_help) {
+    if (ce && ce->IsHelp) {
         // For subcommand help, print subcommand help
-        if (!matched_subcommand_.empty()) {
-            const SubcommandEntry* entry = find_subcommand(matched_subcommand_);
+        if (!matchedSubcommand_.empty()) {
+            const SubcommandEntry* entry = FindSubcommand(matchedSubcommand_);
             if (entry) {
-                entry->parser->print_help(std::cout);
+                entry->parser->PrintHelp(std::cout);
                 return 0;
             }
         }
-        print_help(std::cout);
+        PrintHelp(std::cout);
         return 0;
     }
 
     // Regular error
-    log::loge(e.what());
-    log::logw("Use '", program_name_, " --help' for usage.");
+    log::Loge(e.what());
+    log::Logw("Use '", programName_, " --help' for usage.");
     return 1;
 }
 
@@ -385,36 +418,41 @@ int CliParser::exit(const std::exception& e) const {
 // print_help()
 // ═══════════════════════════════════════════════════════════════
 
-void CliParser::print_help(std::ostream& os) const {
+void CliParser::PrintHelp(std::ostream& os) const
+{
     os << description_;
-    if (!version_.empty()) os << "  version " << version_;
+    if (!version_.empty()) {
+        os << "  version " << version_;
+    }
     os << "\n\n";
 
     // Usage line
     os << "USAGE:\n";
-    if (!usage_args_.empty()) {
-        os << "  " << program_name_ << " " << usage_args_ << "\n";
+    if (!usageArgs_.empty()) {
+        os << "  " << programName_ << " " << usageArgs_ << "\n";
     } else {
         // Auto-detect form (no subcommand)
-        os << "  " << program_name_ << " [options]";
+        os << "  " << programName_ << " [options]";
         if (!positionals_.empty()) {
             for (const auto& p : positionals_)
                 os << " <" << p.name << ">";
         }
         os << "\n";
         // Subcommand forms
-        bool has_visible_sub = false;
+        bool hasVisibleSub = false;
         for (const auto& [name, entry] : subcommands_) {
-            if (!entry.hidden) { has_visible_sub = true; break; }
+            if (!entry.hidden) { hasVisibleSub = true; break; }
         }
-        if (has_visible_sub) {
+        if (hasVisibleSub) {
             for (const auto& [name, entry] : subcommands_) {
-                if (entry.hidden) continue;  // hidden subcommands are omitted from help
-                os << "  " << program_name_ << " " << name;
+                if (entry.hidden) {
+                    continue;
+                }// hidden subcommands are omitted from help
+                os << "  " << programName_ << " " << name;
                 // Use subcommand's own usage_args if set, else generate from positionals
-                const auto& sub_usage = entry.parser->get_usage_args();
-                if (!sub_usage.empty()) {
-                    os << " " << sub_usage << "\n";
+                const auto& subUsage = entry.parser->GetUsageArgs();
+                if (!subUsage.empty()) {
+                    os << " " << subUsage << "\n";
                 } else {
                     os << " [options]";
                     for (const auto& p : entry.parser->positionals_)
@@ -442,31 +480,41 @@ void CliParser::print_help(std::ostream& os) const {
             for (const Option* opt : opts) {
                 // Compute display name
                 std::string display;
-                if (!opt->short_name.empty()) display = opt->short_name;
-                if (!opt->long_name.empty()) {
-                    if (!display.empty()) display += ", ";
-                    display += opt->long_name;
+                if (!opt->shortName.empty()) {
+                    display = opt->shortName;
+                }
+                if (!opt->longName.empty()) {
+                    if (!display.empty()) {
+                        display += ", ";
+                    }
+                    display += opt->longName;
                 }
 
                 // Type indicator
-                std::string type_str;
+                std::string typeStr;
                 switch (opt->type) {
-                    case Option::STRING: type_str = " TEXT"; break;
-                    case Option::INT:    type_str = " INT";  break;
-                    case Option::BOOL:   type_str = "";      break;
+                    case Option::STRING: typeStr = " TEXT"; break;
+                    case Option::INT:    typeStr = " INT";  break;
+                    case Option::BOOL:   typeStr = "";      break;
                 }
 
-                std::string opt_line = "  " + display + type_str;
+                std::string optLine = "  " + display + typeStr;
                 // Pad to 32 chars
-                if (opt_line.size() < 32) opt_line.append(32 - opt_line.size(), ' ');
-                else opt_line += "\n" + std::string(34, ' ');
+                if (optLine.size() < 32) {
+                    optLine.append(32 - optLine.size(), ' ');
+                }
+                else {
+                    optLine += "\n" + std::string(34, ' ');
+                }
 
-                os << opt_line;
+                os << optLine;
 
                 // Description + default
-                if (!opt->description.empty()) os << opt->description;
-                if (!opt->default_str.empty() && opt->type != Option::BOOL) {
-                    os << " (default: " << opt->default_str << ")";
+                if (!opt->description.empty()) {
+                    os << opt->description;
+                }
+                if (!opt->defaultStr.empty() && opt->type != Option::BOOL) {
+                    os << " (default: " << opt->defaultStr << ")";
                 }
                 os << "\n";
             }
@@ -480,8 +528,12 @@ void CliParser::print_help(std::ostream& os) const {
         os << "ARGUMENTS:\n";
         for (const auto& p : positionals_) {
             std::string line = "  " + p.name;
-            if (line.size() < 32) line.append(32 - line.size(), ' ');
-            else line += "\n" + std::string(34, ' ');
+            if (line.size() < 32) {
+                line.append(32 - line.size(), ' ');
+            }
+            else {
+                line += "\n" + std::string(34, ' ');
+            }
             line += p.description;
             os << line << "\n";
         }
@@ -489,22 +541,28 @@ void CliParser::print_help(std::ostream& os) const {
     }
 
     // Subcommands
-    bool has_visible_sub = false;
+    bool hasVisibleSub = false;
     for (const auto& [name, entry] : subcommands_) {
-        if (!entry.hidden) { has_visible_sub = true; break; }
+        if (!entry.hidden) { hasVisibleSub = true; break; }
     }
-    if (has_visible_sub) {
+    if (hasVisibleSub) {
         os << "SUBCOMMANDS:\n";
         os << "  (no subcommand)" << std::string(15, ' ') << "Omit subcommand to auto-detect file type\n";
         for (const auto& [name, entry] : subcommands_) {
-            if (entry.hidden) continue;  // hidden subcommands are omitted from help
+            if (entry.hidden) {
+                continue;
+            }// hidden subcommands are omitted from help
             std::string display = "  " + name;
-            if (!entry.alias.empty()) display += ", " + entry.alias;
-            if (display.size() < 32) display.append(32 - display.size(), ' ');
+            if (!entry.alias.empty()) {
+                display += ", " + entry.alias;
+            }
+            if (display.size() < 32) {
+                display.append(32 - display.size(), ' ');
+            }
             os << display << entry.parser->description_ << "\n";
         }
         os << "\n";
-        os << "Use \"" << program_name_ << " <command> --help\" for more information about a specific command.\n";
+        os << "Use \"" << programName_ << " <command> --help\" for more information about a specific command.\n";
     }
 }
 
@@ -512,19 +570,27 @@ void CliParser::print_help(std::ostream& os) const {
 // resolve_subcommand()
 // ═══════════════════════════════════════════════════════════════
 
-std::string CliParser::resolve_subcommand(const std::string& name) const {
+std::string CliParser::ResolveSubcommand(const std::string& name) const
+{
     // Direct match?
-    if (find_subcommand(name)) return name;
+    if (FindSubcommand(name)) {
+        return name;
+    }
     // Check aliases
     for (const auto& [key, entry] : subcommands_) {
-        if (entry.alias == name) return key;
+        if (entry.alias == name) {
+            return key;
+        }
     }
     return name;  // not found, return as-is
 }
 
-const CliParser::SubcommandEntry* CliParser::find_subcommand(const std::string& name) const {
+const CliParser::SubcommandEntry* CliParser::FindSubcommand(const std::string& name) const
+{
     for (const auto& [key, entry] : subcommands_) {
-        if (key == name) return &entry;
+        if (key == name) {
+            return &entry;
+        }
     }
     return nullptr;
 }

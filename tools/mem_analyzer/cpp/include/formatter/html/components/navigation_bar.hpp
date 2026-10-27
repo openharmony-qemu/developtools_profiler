@@ -21,18 +21,18 @@ namespace mem_analyzer {
 // HTML/CSS/JS 片段，由各 formatter 通过占位符注入（见 chart_module.hpp 的同名约定）。
 
 // 设置导航栏格式
-std::string nav_bar_format();
+std::string NavBarFormat();
 
 // 构建标题
-std::string nav_bar_title();
+std::string NavBarTitle();
 
 // 构建资料文档导航栏内容
-std::string nav_bar_doc_content();
+std::string NavBarDocContent();
 
 // 构建帮助中心导航栏内容
-std::string nav_bar_help_center_content();
+std::string NavBarHelpCenterContent();
 
 // 设置切换导航栏函数
-std::string nav_bar_switch_nav_func();
+std::string NavBarSwitchNavFunc();
 
 }

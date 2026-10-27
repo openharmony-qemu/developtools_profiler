@@ -28,18 +28,24 @@ ProcessSpinner::ProcessSpinner(const std::string& description)
     : description_(description)
     , start_(std::chrono::steady_clock::now())
 {
-    if (style::is_tty()) {
+    if (style::IsTty()) {
         thread_ = std::thread(&ProcessSpinner::run, this);
     }
 }
 
-ProcessSpinner::~ProcessSpinner() {
-    if (running_.load()) done(false);
+ProcessSpinner::~ProcessSpinner()
+{
+    if (running_.load()) {
+        done(false);
+    }
 }
 
-void ProcessSpinner::done(bool success) {
+void ProcessSpinner::done(bool success)
+{
     running_.store(false);
-    if (thread_.joinable()) thread_.join();
+    if (thread_.joinable()) {
+        thread_.join();
+    }
 
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now() - start_).count();
@@ -51,17 +57,18 @@ void ProcessSpinner::done(bool success) {
     auto status = success ? style::green("done") : style::red("failed");
     auto time   = style::dim("(" + oss.str() + "s)");
 
-    if (style::is_tty()) {
-        std::cout << "\r  " << description_ << "...  "
-                  << status << " " << time << "     " << std::endl;
+    if (style::IsTty()) {
+        std::cout << "\r  " << description_ << "...  " <<
+                  status << " " << time << "     " << std::endl;
     } else {
-        std::cout << "  " << description_ << "...  "
-                  << (success ? "done" : "failed")
-                  << " (" << oss.str() << "s)" << std::endl;
+        std::cout << "  " << description_ << "...  " <<
+                  (success ? "done" : "failed") <<
+                  " (" << oss.str() << "s)" << std::endl;
     }
 }
 
-void ProcessSpinner::run() {
+void ProcessSpinner::run()
+{
     int frame = 0;
     while (running_.load()) {
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -71,8 +78,8 @@ void ProcessSpinner::run() {
         std::ostringstream oss;
         oss << std::fixed << std::setprecision(1) << sec << "s";
 
-        std::cout << "\r  " << description_ << "...  "
-                  << FRAMES[frame] << "  (" << oss.str() << ")   " << std::flush;
+        std::cout << "\r  " << description_ << "...  " <<
+                  FRAMES[frame] << "  (" << oss.str() << ")   " << std::flush;
 
         frame = (frame + 1) % FRAME_COUNT;
         std::this_thread::sleep_for(std::chrono::milliseconds(INTERVAL_MS));

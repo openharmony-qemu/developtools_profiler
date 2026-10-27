@@ -37,11 +37,14 @@ static constexpr const char* ANSI_BOLD   = "\033[1m";
 static constexpr const char* ANSI_DIM    = "\033[2m";
 static constexpr const char* ANSI_RESET  = "\033[0m";
 
-static bool s_initialized = false;
+static bool sInitialized = false;
 
-void init() {
+void init()
+{
 #if defined(_WIN32)
-    if (s_initialized) return;
+    if (sInitialized) {
+        return;
+    }
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
     if (h != INVALID_HANDLE_VALUE) {
         DWORD mode = 0;
@@ -49,22 +52,27 @@ void init() {
             SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
         }
     }
-    s_initialized = true;
+    sInitialized = true;
 #else
-    (void)s_initialized;
+    (void)sInitialized;
 #endif
 }
 
-bool is_tty() {
+bool IsTty()
+{
     return ISATTY(FILENO(stdout)) != 0;
 }
 
-bool is_stderr_tty() {
+bool IsStderrTty()
+{
     return ISATTY(FILENO(stderr)) != 0;
 }
 
-static std::string wrap(const char* code, const std::string& text) {
-    if (!is_stderr_tty()) return text;
+static std::string wrap(const char* code, const std::string& text)
+{
+    if (!IsStderrTty()) {
+        return text;
+    }
     return std::string(code) + text + ANSI_RESET;
 }
 

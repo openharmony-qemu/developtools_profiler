@@ -25,22 +25,24 @@
 
 namespace mem_analyzer {
 
-std::string jsleak_write_analysis_json(const json& data, const std::string& file_path,
-                                       const RunContext& ctx, const std::string& out_dir) {
+std::string JsleakWriteAnalysisJson(const json& data, const std::string& filePath,
+                                       const RunContext& ctx, const std::string& outDir) {
     StageTimer timer("JSON write");
 
-    auto base = platform::stem(file_path);
-    if (base.empty()) base = "output";
-    auto out_path = platform::join_path(out_dir, base + ".json");
-    platform::create_directories(out_dir);
+    auto base = platform::stem(filePath);
+    if (base.empty()) {
+        base = "output";
+    }
+    auto outPath = platform::JoinPath(outDir, base + ".json");
+    platform::CreateDirectories(outDir);
 
-    JsonStreamWriter writer(out_path);
+    JsonStreamWriter writer(outPath);
 
     // 与 htrace JSON 保持一致：name 用完整路径；fileType 按输入扩展名区分。
-    json meta = build_output_meta_base(ctx);
+    json meta = BuildOutputMetaBase(ctx);
     meta["sourceFileInfo"] = {
-        {"name", file_path},
-        {"fileType", ends_with_ignore_case(file_path, "rawheap") ? "rawheap" : "heapsnapshot"}
+        {"name", filePath},
+        {"fileType", EndsWithIgnoreCase(filePath, "rawheap") ? "rawheap" : "heapsnapshot"}
     };
 
     json content = json::object();
@@ -64,18 +66,18 @@ std::string jsleak_write_analysis_json(const json& data, const std::string& file
         content["napiWrapRefChains"] = data["napiWrapRefChains"];
     }
 
-    writer.begin_object();
-    writer.write_key("meta");
-    writer.write_raw(meta.dump(4));
-    writer.write_key("content");
-    writer.write_raw(content.dump(4));
-    writer.end_object();
+    writer.BeginObject();
+    writer.WriteKey("meta");
+    writer.WriteRaw(meta.dump(4));
+    writer.WriteKey("content");
+    writer.WriteRaw(content.dump(4));
+    writer.EndObject();
 
     writer.close();
 
     timer.tick("total");
-    log::logok("Output written to: ", out_path);
-    return out_path;
+    log::Logok("Output written to: ", outPath);
+    return outPath;
 }
 
 } // namespace mem_analyzer

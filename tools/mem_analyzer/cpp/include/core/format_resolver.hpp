@@ -34,7 +34,7 @@ struct FormatKeyword {
 ///      **不回落默认格式**；
 ///   3. 未显式指定：用该模式的默认格式；默认缺失时沿用历史兜底关键词 "json"；
 ///   4. 最后用该模式的格式列表校验关键词。
-FormatKeyword resolve_format_keyword(const std::string& module_name, const ModuleCapability& cap,
-                                     const std::string& explicit_format, bool parse_only);
+FormatKeyword ResolveFormatKeyword(const std::string& moduleName, const ModuleCapability& cap,
+                                     const std::string& explicitFormat, bool parseOnly);
 
 } // namespace mem_analyzer

@@ -26,7 +26,7 @@ namespace mem_analyzer {
 /// display_type 为展示类型（可空，空时回退为 name）。
 struct BaseClassInfo {
     std::string name;
-    std::string display_type;
+    std::string displayType;
 };
 
 /// 属性标签泄漏分析阶段：沿节点出边查找 isDeleting_ / _isDisposed / isDestroyed
@@ -34,34 +34,34 @@ struct BaseClassInfo {
 /// 与引用链阶段互不相干，独立持有自己的状态与配置。
 class PropertyTagStage : public JsleakStage {
 public:
-    explicit PropertyTagStage(const std::string& jsleak_list_file);
+    explicit PropertyTagStage(const std::string& jsleakListFile);
 
     const std::string& mode() const override;   // "property-tag"
-    const char* preview_id() const override;    // nullptr（不受预览开关管控）
-    const char* json_key() const override;      // "propertyTagObjects"
+    const char* PreviewId() const override;    // nullptr（不受预览开关管控）
+    const char* JsonKey() const override;      // "propertyTagObjects"
     void run(const HeapSnapshot& heap) override;
-    json to_json() const override;
+    json ToJson() const override;
 
     /// Run the property/hash leak rules for a caller-defined subset of nodes.
     json analyze(const HeapSnapshot& heap,
-                 const std::function<bool(uint32_t)>& include_node = {});
+                 const std::function<bool(uint32_t)>& includeNode = {});
 
 private:
-    std::string check_destoryed_tag(uint32_t u_ni, const HeapSnapshot& heap);
-    BaseClassInfo find_concern_type(uint32_t u_ni, const std::vector<BaseClassInfo>& base_classes, const HeapSnapshot& heap);
-    void assemble_property_tag_obj(uint32_t u_ni, const HeapSnapshot& heap,
-                                   const std::string& property_name, const BaseClassInfo& base_class,
-                                   uint32_t hash_value);
-    void generate_property_tag_objs(const HeapSnapshot& heap,
-                                    const std::function<bool(uint32_t)>& include_node = {});
+    std::string CheckDestoryedTag(uint32_t uNi, const HeapSnapshot& heap);
+    BaseClassInfo FindConcernType(uint32_t uNi, const std::vector<BaseClassInfo>& baseClasses, const HeapSnapshot& heap);
+    void AssemblePropertyTagObj(uint32_t uNi, const HeapSnapshot& heap,
+                                   const std::string& propertyName, const BaseClassInfo& baseClass,
+                                   uint32_t hashValue);
+    void GeneratePropertyTagObjs(const HeapSnapshot& heap,
+                                    const std::function<bool(uint32_t)>& includeNode = {});
 
-    void load_jsleak_list_file(const std::string& file_path);
-    void load_property_tag_config();
+    void LoadJsleakListFile(const std::string& filePath);
+    void LoadPropertyTagConfig();
 
-    std::unordered_map<std::string, PropertyTagObjInfo> property_tag_objs_;
-    std::unordered_map<std::string, std::vector<BaseClassInfo>> property_tag_base_classes_;  // 属性标签 → 目标组件基类（包含匹配）
-    std::string default_display_type_;       // 未命中任何基类时的展示类型（默认「其他」）
-    std::unordered_set<uint32_t> jsleak_hash_set_;
+    std::unordered_map<std::string, PropertyTagObjInfo> propertyTagObjs;
+    std::unordered_map<std::string, std::vector<BaseClassInfo>> propertyTagBaseClasses;  // 属性标签 → 目标组件基类（包含匹配）
+    std::string defaultDisplayType;       // 未命中任何基类时的展示类型（默认「其他」）
+    std::unordered_set<uint32_t> jsleakHashSet;
 };
 
 } // namespace mem_analyzer

@@ -28,36 +28,39 @@ class PreviewCommand final : public ICommand {
 
 public:
     std::string name() const override { return "preview"; }
-    std::string description() const override {
+    std::string description() const override
+    {
         return "Enable/disable preview features (internal)";
     }
     bool hidden() const override { return true; }
     int order() const override { return 90; }
 
-    void bind(CliParser& sub, GlobalOptions&) override {
-        sub.add_positional("action", action_, "enable | disable | status (default: status)");
+    void bind(CliParser& sub, GlobalOptions&) override
+    {
+        sub.AddPositional("action", action_, "enable | disable | status (default: status)");
     }
 
-    int run(const GlobalOptions&) override {
+    int run(const GlobalOptions&) override
+    {
         auto& mgr = PreviewFeaturesMgr::instance();
 
         if (action_.empty() || action_ == "status") {
             std::cout << "Preview features:" << std::endl;
             for (const auto& f : PreviewFeaturesMgr::registry()) {
-                std::cout << "  " << f.name << ": " << (mgr.enabled(f.name) ? "enabled" : "disabled")
-                          << " - " << f.description << std::endl;
+                std::cout << "  " << f.name << ": " << (mgr.enabled(f.name) ? "enabled" : "disabled") <<
+                          " - " << f.description << std::endl;
             }
             return 0;
         }
         if (action_ != "enable" && action_ != "disable") {
-            log::loge("Error: preview expects 'enable', 'disable' or 'status'");
+            log::Loge("Error: preview expects 'enable', 'disable' or 'status'");
             return 1;
         }
 
         const bool enable = (action_ == "enable");
         std::string err;
-        if (!mgr.set_enabled(enable, err)) {
-            log::loge("Error: ", err);
+        if (!mgr.SetEnabled(enable, err)) {
+            log::Loge("Error: ", err);
             return 1;
         }
         std::cout << "Preview features " << (enable ? "enabled" : "disabled") << "." << std::endl;

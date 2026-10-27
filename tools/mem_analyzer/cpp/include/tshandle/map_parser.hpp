@@ -21,18 +21,18 @@
 namespace mem_analyzer {
 
 struct ParseAddrResult {
-    std::unordered_map<std::string, uint32_t> addr_to_node_id;
+    std::unordered_map<std::string, uint32_t> addrToNodeId;
 
-    int duplicate_count = 0;
-    int addr_file_invalid_count = 0;
+    int duplicateCount = 0;
+    int addrFileInvalidCount = 0;
 
-    std::vector<std::string> dup_keys;
-    std::vector<std::string> dup_original_addrs;
-    std::vector<std::vector<uint32_t>> dup_node_ids;
-    std::vector<std::string> invalid_original_addrs;
+    std::vector<std::string> dupKeys;
+    std::vector<std::string> dupOriginalAddrs;
+    std::vector<std::vector<uint32_t>> dupNodeIds;
+    std::vector<std::string> invalidOriginalAddrs;
 };
 
-ParseAddrResult parse_addr_to_node_id(const std::string& content);
+ParseAddrResult ParseAddrToNodeId(const std::string& content);
 
 /**
  * Read an addr file from disk and auto-detect its format:
@@ -40,6 +40,6 @@ ParseAddrResult parse_addr_to_node_id(const std::string& content);
  *  - Plain text (addr nodeId per line) as fallback
  * Returns the same ParseAddrResult as parse_addr_to_node_id.
  */
-ParseAddrResult parse_addr_file(const std::string& file_path);
+ParseAddrResult ParseAddrFile(const std::string& filePath);
 
 } // namespace mem_analyzer

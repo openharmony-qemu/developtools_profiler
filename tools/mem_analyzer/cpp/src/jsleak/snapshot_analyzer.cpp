@@ -24,41 +24,45 @@ namespace mem_analyzer {
 
 // ===== 共享序列化 =====
 
-json ref_chain_to_json(const RefChainInfo& chain) {
+json RefChainToJson(const RefChainInfo& chain)
+{
     nlohmann::ordered_json item;
     item["chain"] = chain.frames;         // 帧名数组（根 -> 目标）
-    item["nodeIds"] = chain.node_ids;
-    item["totalRetainedSize"] = chain.total_retained_size;
+    item["nodeIds"] = chain.nodeIds;
+    item["totalRetainedSize"] = chain.totalRetainedSize;
     return item;
 }
 
 /// 把「引用链 → 聚合信息」列表序列化为数组，元素含 chain/nodeIds/totalRetainedSize，
 /// 并保持传入顺序。
-json ref_chains_to_json(const std::vector<RefChainInfo>& chains) {
+json RefChainsToJson(const std::vector<RefChainInfo>& chains)
+{
     nlohmann::ordered_json arr = nlohmann::ordered_json::array();
     for (const auto& chain : chains) {
-        arr.push_back(ref_chain_to_json(chain));
+        arr.push_back(RefChainToJson(chain));
     }
     return arr;
 }
 
 /// 同上，输入为以引用链名称为 key 的 map（propertyTagObjects 的 referenceChains）。
-json ref_chains_to_json(const std::unordered_map<std::string, RefChainInfo>& chains) {
+json RefChainsToJson(const std::unordered_map<std::string, RefChainInfo>& chains)
+{
     nlohmann::ordered_json arr = nlohmann::ordered_json::array();
     for (const auto& [name, chain] : chains) {
-        arr.push_back(ref_chain_to_json(chain));
+        arr.push_back(RefChainToJson(chain));
     }
     return arr;
 }
 
 // ===== 分析器 =====
 
-json jsleak_analyze(const HeapSnapshot& heap, const std::string& file_path, const RunContext& ctx) {
+json JsleakAnalyze(const HeapSnapshot& heap, const std::string& filePath, const RunContext& ctx)
+{
     const std::string& mode = ctx.snapshot.mode;
 
     // 阶段按「结果 json 输出顺序」组装。
     std::vector<std::unique_ptr<JsleakStage>> stages;
-    stages.push_back(std::make_unique<PropertyTagStage>(ctx.snapshot.leak_list_file));
+    stages.push_back(std::make_unique<PropertyTagStage>(ctx.snapshot.leakListFile));
 
     // 预览阶段：mode 填 "all" 表示仅在 -m all 时运行，不与 property-tag 绑定。
     stages.push_back(std::make_unique<RefChainStage>(
@@ -69,26 +73,29 @@ json jsleak_analyze(const HeapSnapshot& heap, const std::string& file_path, cons
     // top_n 为负时按 size_t 溢出为极大值，等价于不限制条数（保持原行为）。
     stages.push_back(std::make_unique<RefChainStage>(
         "top-chain", nullptr, "topRefChains",
-        std::nullopt, static_cast<size_t>(ctx.snapshot.top_n),
+        std::nullopt, static_cast<size_t>(ctx.snapshot.topN),
         std::unordered_set<std::string>{"SyntheticRoot"}));
 
     // json 由各阶段在分析完成后依次写入（快照数据本身即为 map 结构）
     nlohmann::ordered_json data;
-    data["parsedAt"] = format_readable_timestamp(
+    data["parsedAt"] = FormatReadableTimestamp(
         std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count());
-    data["sourceFile"] = file_path;
-    data["totalHeapSize"] = heap.get_total_heap_size();
+    data["sourceFile"] = filePath;
+    data["totalHeapSize"] = heap.GetTotalHeapSize();
 
     for (auto& stage : stages) {
         // 唯一过滤点：① 预览特性未使能则跳过；② 分析模式不匹配则跳过。
-        if (stage->preview_id() &&
-            !PreviewFeaturesMgr::instance().enabled(stage->preview_id())) {
+        if (stage->PreviewId() &&
+            !PreviewFeaturesMgr::instance().enabled(stage->PreviewId()))
+            {
             continue;
         }
-        if (mode != "all" && mode != stage->mode()) continue;
+        if (mode != "all" && mode != stage->mode()) {
+            continue;
+        }
         stage->run(heap);
-        data[stage->json_key()] = stage->to_json();
+        data[stage->JsonKey()] = stage->ToJson();
     }
 
     return data;

@@ -27,25 +27,30 @@ namespace mem_analyzer {
 
 // ===== Singleton =====
 
-HtraceConfigMgr& HtraceConfigMgr::instance() {
+HtraceConfigMgr& HtraceConfigMgr::instance()
+{
     static HtraceConfigMgr inst;
     return inst;
 }
 
 // ===== Path resolution =====
 
-std::string HtraceConfigMgr::resolve_default_path() {
+std::string HtraceConfigMgr::ResolveDefaultPath()
+{
     // 固定目录：可执行文件同级的 config/htrace/trace_analyzer_config.json
     const std::string rel = "config/htrace/trace_analyzer_config.json";
-    const std::string exe_dir = platform::get_executable_dir();
-    if (exe_dir.empty()) return "";
-    const std::string path = platform::join_path(exe_dir, rel);
-    return platform::file_exists(path) ? path : "";
+    const std::string exeDir = platform::GetExecutableDir();
+    if (exeDir.empty()) {
+        return "";
+    }
+    const std::string path = platform::JoinPath(exeDir, rel);
+    return platform::FileExists(path) ? path : "";
 }
 
 // ===== Default rules =====
 
-std::vector<ClassificationRule> HtraceConfigMgr::default_classification_rules() {
+std::vector<ClassificationRule> HtraceConfigMgr::DefaultClassificationRules()
+{
     return {
         {"system", {"libc++.so", "libc++_shared.so"}, {}, {}, false},
         {"app", {"/system/app/", "/sys_prod/app/", "/data/storage/el1/bundle"}, {}, {}, false},
@@ -54,7 +59,8 @@ std::vector<ClassificationRule> HtraceConfigMgr::default_classification_rules() 
     };
 }
 
-std::vector<SymbolFilterRule> HtraceConfigMgr::default_filter_rules() {
+std::vector<SymbolFilterRule> HtraceConfigMgr::DefaultFilterRules()
+{
     return {
         {"global", {"unknown", ""}, {"alloc size("}, {}},
         {"global", {"libc++.so", "libc++_shared.so"}, {"operator new"}, {}},
@@ -63,8 +69,9 @@ std::vector<SymbolFilterRule> HtraceConfigMgr::default_filter_rules() {
 
 // ===== Load =====
 
-bool HtraceConfigMgr::load(const std::string& path, std::string& err) {
-    std::ifstream ifs(path_from_utf8(path), std::ios::binary);
+bool HtraceConfigMgr::load(const std::string& path, std::string& err)
+{
+    std::ifstream ifs(PathFromUtf8(path), std::ios::binary);
     if (!ifs.is_open()) {
         err = "cannot open file: " + path;
         return false;
@@ -77,7 +84,8 @@ bool HtraceConfigMgr::load(const std::string& path, std::string& err) {
     json root;
     try {
         root = json::parse(content);
-    } catch (const json::parse_error& e) {
+    } catch (const json::parse_error& e)
+    {
         err = std::string("JSON parse error: ") + e.what();
         return false;
     }
@@ -86,28 +94,28 @@ bool HtraceConfigMgr::load(const std::string& path, std::string& err) {
     if (root.contains("algorithm") && root["algorithm"].is_object()) {
         auto& a = root["algorithm"];
         if (a.contains("low_threshold") && a["low_threshold"].is_number()) {
-            algo_.low_threshold = a["low_threshold"].get<long long>();
+            algo_.lowThreshold = a["low_threshold"].get<long long>();
         }
         if (a.contains("appro_rel_ratio") && a["appro_rel_ratio"].is_number()) {
-            algo_.appro_rel_ratio = a["appro_rel_ratio"].get<int>();
+            algo_.approRelRatio = a["appro_rel_ratio"].get<int>();
         }
         if (a.contains("appro_rel_cap") && a["appro_rel_cap"].is_number()) {
-            algo_.appro_rel_cap = a["appro_rel_cap"].get<long long>();
+            algo_.approRelCap = a["appro_rel_cap"].get<long long>();
         }
         if (a.contains("appro_ratio_threshold") && a["appro_ratio_threshold"].is_number()) {
-            algo_.appro_ratio_threshold = a["appro_ratio_threshold"].get<int>();
+            algo_.approRatioThreshold = a["appro_ratio_threshold"].get<int>();
         }
         if (a.contains("orphan_rel_ratio") && a["orphan_rel_ratio"].is_number()) {
-            algo_.orphan_rel_ratio = a["orphan_rel_ratio"].get<int>();
+            algo_.orphanRelRatio = a["orphan_rel_ratio"].get<int>();
         }
         if (a.contains("orphan_rel_cap") && a["orphan_rel_cap"].is_number()) {
-            algo_.orphan_rel_cap = a["orphan_rel_cap"].get<long long>();
+            algo_.orphanRelCap = a["orphan_rel_cap"].get<long long>();
         }
     }
 
     // Classification rules
     if (root.contains("symbol_classification_rules") && root["symbol_classification_rules"].is_array()) {
-        class_rules_.clear();
+        classRules_.clear();
         for (const auto& item : root["symbol_classification_rules"]) {
             ClassificationRule rule;
             if (item.contains("type") && item["type"].is_string()) {
@@ -115,32 +123,38 @@ bool HtraceConfigMgr::load(const std::string& path, std::string& err) {
             }
             if (item.contains("lib_contains") && item["lib_contains"].is_array()) {
                 for (const auto& v : item["lib_contains"]) {
-                    if (v.is_string()) rule.lib_contains.push_back(v.get<std::string>());
+                    if (v.is_string()) {
+                        rule.libContains.push_back(v.get<std::string>());
+                    }
                 }
             }
             if (item.contains("lib_ends_with") && item["lib_ends_with"].is_array()) {
                 for (const auto& v : item["lib_ends_with"]) {
-                    if (v.is_string()) rule.lib_ends_with.push_back(v.get<std::string>());
+                    if (v.is_string()) {
+                        rule.libEndsWith.push_back(v.get<std::string>());
+                    }
                 }
             }
             if (item.contains("lib_ts_pattern") && item["lib_ts_pattern"].is_array()) {
                 for (const auto& v : item["lib_ts_pattern"]) {
-                    if (v.is_string()) rule.lib_ts_pattern.push_back(v.get<std::string>());
+                    if (v.is_string()) {
+                        rule.libTsPattern.push_back(v.get<std::string>());
+                    }
                 }
             }
             if (item.contains("require_no_vaddr") && item["require_no_vaddr"].is_boolean()) {
-                rule.require_no_vaddr = item["require_no_vaddr"].get<bool>();
+                rule.requireNoVaddr = item["require_no_vaddr"].get<bool>();
             }
-            class_rules_.push_back(std::move(rule));
+            classRules_.push_back(std::move(rule));
         }
     }
-    if (class_rules_.empty()) {
-        class_rules_ = default_classification_rules();
+    if (classRules_.empty()) {
+        classRules_ = DefaultClassificationRules();
     }
 
     // Filter rules
     if (root.contains("symbol_filter_rules") && root["symbol_filter_rules"].is_array()) {
-        filter_rules_.clear();
+        filterRules_.clear();
         for (const auto& item : root["symbol_filter_rules"]) {
             SymbolFilterRule rule;
             if (item.contains("scope") && item["scope"].is_string()) {
@@ -148,76 +162,94 @@ bool HtraceConfigMgr::load(const std::string& path, std::string& err) {
             }
             if (item.contains("lib") && item["lib"].is_array()) {
                 for (const auto& v : item["lib"]) {
-                    if (v.is_string()) rule.lib.push_back(v.get<std::string>());
+                    if (v.is_string()) {
+                        rule.lib.push_back(v.get<std::string>());
+                    }
                 }
             }
             if (item.contains("symbol_contains") && item["symbol_contains"].is_array()) {
                 for (const auto& v : item["symbol_contains"]) {
-                    if (v.is_string()) rule.symbol_contains.push_back(v.get<std::string>());
+                    if (v.is_string()) {
+                        rule.symbolContains.push_back(v.get<std::string>());
+                    }
                 }
             }
             if (item.contains("symbol_equals") && item["symbol_equals"].is_array()) {
                 for (const auto& v : item["symbol_equals"]) {
-                    if (v.is_string()) rule.symbol_equals.push_back(v.get<std::string>());
+                    if (v.is_string()) {
+                        rule.symbolEquals.push_back(v.get<std::string>());
+                    }
                 }
             }
             if (item.contains("orphan_recoverable") && item["orphan_recoverable"].is_boolean()) {
-                rule.orphan_recoverable = item["orphan_recoverable"].get<bool>();
+                rule.orphanRecoverable = item["orphan_recoverable"].get<bool>();
             }
-            filter_rules_.push_back(std::move(rule));
+            filterRules_.push_back(std::move(rule));
         }
     }
-    if (filter_rules_.empty()) {
-        filter_rules_ = default_filter_rules();
+    if (filterRules_.empty()) {
+        filterRules_ = DefaultFilterRules();
     }
 
     loaded_ = true;
     return true;
 }
 
-bool HtraceConfigMgr::load_default(std::string& err) {
-    std::string path = resolve_default_path();
+bool HtraceConfigMgr::LoadDefault(std::string& err)
+{
+    std::string path = ResolveDefaultPath();
     if (path.empty()) {
         // Config file not found — use defaults
         algo_ = HtraceAlgorithmConfig();
-        class_rules_ = default_classification_rules();
-        filter_rules_ = default_filter_rules();
+        classRules_ = DefaultClassificationRules();
+        filterRules_ = DefaultFilterRules();
         loaded_ = true;
         return true;
     }
     return load(path, err);
 }
 
-bool HtraceConfigMgr::is_loaded() const {
+bool HtraceConfigMgr::IsLoaded() const
+{
     return loaded_;
 }
 
 // ===== Accessors =====
 
-const HtraceAlgorithmConfig& HtraceConfigMgr::algorithm() const {
+const HtraceAlgorithmConfig& HtraceConfigMgr::algorithm() const
+{
     return algo_;
 }
 
-const std::vector<ClassificationRule>& HtraceConfigMgr::classification_rules() const {
-    return class_rules_;
+const std::vector<ClassificationRule>& HtraceConfigMgr::ClassificationRules() const
+{
+    return classRules_;
 }
 
-const std::vector<SymbolFilterRule>& HtraceConfigMgr::filter_rules() const {
-    return filter_rules_;
+const std::vector<SymbolFilterRule>& HtraceConfigMgr::FilterRules() const
+{
+    return filterRules_;
 }
 
 // ===== Classification =====
 
-bool HtraceConfigMgr::match_ts_pattern(const std::string& lib, const std::string& ext) {
+bool HtraceConfigMgr::MatchTsPattern(const std::string& lib, const std::string& ext)
+{
     // Find last '.' and check for .ts:/.js:/.ets: pattern
     auto dot = lib.rfind('.');
-    if (dot == std::string::npos) return false;
+    if (dot == std::string::npos) {
+        return false;
+    }
 
     // Validate :digits:digits suffix starting at 'start'
-    auto valid_line_col = [&](size_t start) -> bool {
-        if (start + 1 >= lib.size() || !std::isdigit((unsigned char)lib[start + 1])) return false;
+    auto ValidLineCol = [&](size_t start) -> bool {
+        if (start + 1 >= lib.size() || !std::isdigit((unsigned char)lib[start + 1])) {
+            return false;
+        }
         size_t i = start + 1;
-        while (i < lib.size() && std::isdigit((unsigned char)lib[i])) i++;
+        while (i < lib.size() && std::isdigit((unsigned char)lib[i])) {
+            i++;
+        }
         return i + 1 < lib.size() && lib[i] == ':' && std::isdigit((unsigned char)lib[i + 1]);
     };
 
@@ -225,63 +257,80 @@ bool HtraceConfigMgr::match_ts_pattern(const std::string& lib, const std::string
         if (dot + 4 <= lib.size()) {
             char a = lib[dot + 1], b = lib[dot + 2], c = lib[dot + 3];
             if (a == ext[1] && b == ext[2] && c == ':') {
-                return valid_line_col(dot + 3);
+                return ValidLineCol(dot + 3);
             }
         }
-    } else if (ext == ".ets") {
+    } else if (ext == ".ets")
+    {
         if (dot + 5 <= lib.size()) {
             if (lib[dot + 1] == 'e' && lib[dot + 2] == 't' && lib[dot + 3] == 's' && lib[dot + 4] == ':') {
-                return valid_line_col(dot + 4);
+                return ValidLineCol(dot + 4);
             }
         }
     }
     return false;
 }
 
-bool HtraceConfigMgr::match_classification_rule(const ClassificationRule& rule,
-                                                  const std::string& lib, bool vaddr_null) const {
-    if (rule.require_no_vaddr && !vaddr_null) return false;
+bool HtraceConfigMgr::MatchClassificationRule(const ClassificationRule& rule,
+                                                  const std::string& lib, bool vaddrNull) const {
+    if (rule.requireNoVaddr && !vaddrNull) {
+        return false;
+    }
 
     // lib_contains: OR
-    for (const auto& pattern : rule.lib_contains) {
-        if (lib.find(pattern) != std::string::npos) return true;
+    for (const auto& pattern : rule.libContains) {
+        if (lib.find(pattern) != std::string::npos) {
+            return true;
+        }
     }
 
     // lib_ends_with: OR
-    for (const auto& suffix : rule.lib_ends_with) {
+    for (const auto& suffix : rule.libEndsWith) {
         if (lib.size() >= suffix.size() &&
-            lib.compare(lib.size() - suffix.size(), suffix.size(), suffix) == 0) {
+            lib.compare(lib.size() - suffix.size(), suffix.size(), suffix) == 0)
+            {
             return true;
         }
     }
 
     // lib_ts_pattern: OR
-    for (const auto& ext : rule.lib_ts_pattern) {
-        if (match_ts_pattern(lib, ext)) return true;
+    for (const auto& ext : rule.libTsPattern) {
+        if (MatchTsPattern(lib, ext)) {
+            return true;
+        }
     }
 
     return false;
 }
 
-bool HtraceConfigMgr::is_app_symbol(const std::string& lib, bool vaddr_null) const {
-    for (const auto& rule : class_rules_) {
-        if (match_classification_rule(rule, lib, vaddr_null)) {
+bool HtraceConfigMgr::IsAppSymbol(const std::string& lib, bool vaddrNull) const
+{
+    for (const auto& rule : classRules_) {
+        if (MatchClassificationRule(rule, lib, vaddrNull)) {
             return rule.type == "app";
         }
     }
     return false;
 }
 
-bool HtraceConfigMgr::is_ts_symbol(const std::string& lib, bool vaddr_null) const {
-    for (const auto& rule : class_rules_) {
-        if (rule.type != "app") continue;
-        if (rule.require_no_vaddr && !vaddr_null) continue;
-        for (const auto& ext : rule.lib_ts_pattern) {
-            if (match_ts_pattern(lib, ext)) return true;
+bool HtraceConfigMgr::IsTsSymbol(const std::string& lib, bool vaddrNull) const
+{
+    for (const auto& rule : classRules_) {
+        if (rule.type != "app") {
+            continue;
         }
-        for (const auto& suffix : rule.lib_ends_with) {
+        if (rule.requireNoVaddr && !vaddrNull) {
+            continue;
+        }
+        for (const auto& ext : rule.libTsPattern) {
+            if (MatchTsPattern(lib, ext)) {
+                return true;
+            }
+        }
+        for (const auto& suffix : rule.libEndsWith) {
             if (lib.size() >= suffix.size() &&
-                lib.compare(lib.size() - suffix.size(), suffix.size(), suffix) == 0) {
+                lib.compare(lib.size() - suffix.size(), suffix.size(), suffix) == 0)
+                {
                 return true;
             }
         }
@@ -291,60 +340,69 @@ bool HtraceConfigMgr::is_ts_symbol(const std::string& lib, bool vaddr_null) cons
 
 // ===== Filtering =====
 
-bool HtraceConfigMgr::match_filter_rule(const SymbolFilterRule& rule,
-                                         const std::string& lib_file,
-                                         const std::string& sym_name,
+bool HtraceConfigMgr::MatchFilterRule(const SymbolFilterRule& rule,
+                                         const std::string& libFile,
+                                         const std::string& symName,
                                          Scope scope) const {
     if (rule.scope == "app") {
         if (scope != Scope::AppOnly && scope != Scope::AppAndSystem && scope != Scope::Mixed)
             return false;
-    } else if (rule.scope == "system") {
+    } else if (rule.scope == "system")
+    {
         if (scope != Scope::SystemOnly && scope != Scope::AppAndSystem && scope != Scope::Mixed)
             return false;
     }
 
     if (!rule.lib.empty()) {
-        bool lib_matched = false;
+        bool libMatched = false;
         for (const auto& l : rule.lib) {
-            if (lib_file == l) { lib_matched = true; break; }
+            if (libFile == l) { libMatched = true; break; }
         }
-        if (!lib_matched) return false;
+        if (!libMatched) {
+            return false;
+        }
     }
 
-    if (rule.symbol_contains.empty() && rule.symbol_equals.empty()) {
+    if (rule.symbolContains.empty() && rule.symbolEquals.empty()) {
         return true;
     }
 
-    for (const auto& substr : rule.symbol_contains) {
-        if (sym_name.find(substr) != std::string::npos) return true;
+    for (const auto& substr : rule.symbolContains) {
+        if (symName.find(substr) != std::string::npos) {
+            return true;
+        }
     }
-    for (const auto& exact : rule.symbol_equals) {
-        if (sym_name == exact) return true;
+    for (const auto& exact : rule.symbolEquals) {
+        if (symName == exact) {
+            return true;
+        }
     }
 
     return false;
 }
 
-bool HtraceConfigMgr::should_filter(const std::string& lib_file,
-                                     const std::string& sym_name,
+bool HtraceConfigMgr::ShouldFilter(const std::string& libFile,
+                                     const std::string& symName,
                                      Scope scope) const {
-    for (const auto& rule : filter_rules_) {
-        if (match_filter_rule(rule, lib_file, sym_name, scope))
+    for (const auto& rule : filterRules_) {
+        if (MatchFilterRule(rule, libFile, symName, scope))
             return true;
     }
     return false;
 }
 
-bool HtraceConfigMgr::is_orphan_recoverable(const std::string& lib_file,
-                                            const std::string& sym_name,
+bool HtraceConfigMgr::IsOrphanRecoverable(const std::string& libFile,
+                                            const std::string& symName,
                                             Scope scope) const {
     // 仅在符号命中至少一条噪声规则时才可能回收；若同时命中任意一条
     // orphan_recoverable=false 的规则，则孤儿栈兜底时也不回收它。
     bool matched = false;
-    for (const auto& rule : filter_rules_) {
-        if (match_filter_rule(rule, lib_file, sym_name, scope)) {
+    for (const auto& rule : filterRules_) {
+        if (MatchFilterRule(rule, libFile, symName, scope)) {
             matched = true;
-            if (!rule.orphan_recoverable) return false;
+            if (!rule.orphanRecoverable) {
+                return false;
+            }
         }
     }
     return matched;

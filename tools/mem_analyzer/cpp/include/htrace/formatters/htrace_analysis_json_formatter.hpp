@@ -21,8 +21,8 @@ namespace mem_analyzer {
 
 /// analysis JSON 输出。强类型入参：不再经过 ProcessData / std::any。
 /// 返回写出的文件路径。
-std::string htrace_write_analysis_json(const HtraceAnalysisOutput& full,
-                                       const std::string& file_path, const RunContext& ctx,
-                                       const std::string& out_dir);
+std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
+                                       const std::string& filePath, const RunContext& ctx,
+                                       const std::string& outDir);
 
 } // namespace mem_analyzer

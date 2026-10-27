@@ -16,16 +16,16 @@
 
 namespace mem_analyzer {
 
-FormatKeyword resolve_format_keyword(const std::string& module_name, const ModuleCapability& cap,
-                                     const std::string& explicit_format, bool parse_only) {
+FormatKeyword ResolveFormatKeyword(const std::string& moduleName, const ModuleCapability& cap,
+                                     const std::string& explicitFormat, bool parseOnly) {
     FormatKeyword out;
-    const std::string mode_name = parse_only ? "parse-only" : "analysis";
-    const ModeCapability& mode_cap = cap.for_mode(parse_only);
+    const std::string modeName = parseOnly ? "parse-only" : "analysis";
+    const ModeCapability& modeCap = cap.ForMode(parseOnly);
 
     // 能力表为空 = 该模块明确不支持此模式（如 snapshot 没有 parse 格式）。
     // 提前判定：否则会先兜底出一个关键词，再用它报「格式不支持」，误导用户。
-    if (!mode_cap.supported()) {
-        out.error = "Parser \"" + module_name + "\" does not support " + mode_name +
+    if (!modeCap.supported()) {
+        out.error = "Parser \"" + moduleName + "\" does not support " + modeName +
                     " mode. Skipping.";
         return out;
     }
@@ -34,18 +34,20 @@ FormatKeyword resolve_format_keyword(const std::string& module_name, const Modul
     // 避免用户拿到与请求不符的产物。未显式指定则用该模式默认格式；
     // 默认格式缺失时取声明列表的第一个（formats 为空已在上方报错，此处必非空），
     // 保证选出来的关键词一定落在 formats 内。
-    if (explicit_format.empty()) {
-        out.keyword = mode_cap.default_format.empty() ? mode_cap.formats.front()
-                                                      : mode_cap.default_format;
+    if (explicitFormat.empty()) {
+        out.keyword = modeCap.defaultFormat.empty() ? modeCap.formats.front()
+                                                      : modeCap.defaultFormat;
     } else {
-        out.keyword = explicit_format;
+        out.keyword = explicitFormat;
     }
 
-    for (const auto& f : mode_cap.formats) {
-        if (f == out.keyword) return out;
+    for (const auto& f : modeCap.formats) {
+        if (f == out.keyword) {
+            return out;
+        }
     }
     out.error =
-        "Format '" + out.keyword + "' is not supported in " + mode_name + " mode. Skipping.";
+        "Format '" + out.keyword + "' is not supported in " + modeName + " mode. Skipping.";
     return out;
 }
 

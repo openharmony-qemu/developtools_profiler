@@ -28,6 +28,6 @@
 
 namespace mem_analyzer {
 
-std::unordered_set<uint64_t> read_leak_file(const std::string& path);
+std::unordered_set<uint64_t> ReadLeakFile(const std::string& path);
 
 } // namespace mem_analyzer

@@ -18,7 +18,8 @@
 
 namespace mem_analyzer {
 
-std::string version_format() {
+std::string VersionFormat()
+{
     return R"CSS(
 .footer { margin: 30px 20px 20px; }
 .footer-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 16px 24px; }
@@ -30,8 +31,9 @@ std::string version_format() {
 )CSS";
 }
 
-std::string version_content() {
-    const std::string version = get_version();
+std::string VersionContent()
+{
+    const std::string version = GetVersion();
     return "<div class=\"footer\">\n"
            "  <div class=\"footer-version\">工具版本：v" + version + "</div>\n"
            "</div>";

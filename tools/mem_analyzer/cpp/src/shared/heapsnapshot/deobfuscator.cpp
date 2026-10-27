@@ -48,68 +48,86 @@ constexpr size_t COPY_CHUNK = 4 * 1024 * 1024; // 4 MB — 字节流式拷贝块
 
 /// 在文件中从 start_pos 起流式扫描 marker（如 "\"strings\":"），返回其字节偏移。
 /// 窗口按 (marker.size() - 1) 字节重叠，避免跨块边界遗漏。
-size_t find_marker_offset(std::ifstream& file, const std::string& marker,
-                         size_t start_pos, size_t file_size) {
+size_t FindMarkerOffset(std::ifstream& file, const std::string& marker,
+                         size_t startPos, size_t file_size) {
     std::string buf(SCAN_WIN, '\0');
-    size_t pos = start_pos;
+    size_t pos = startPos;
     file.clear();
     while (pos < file_size) {
-        size_t to_read = std::min(SCAN_WIN, file_size - pos);
+        size_t toRead = std::min(SCAN_WIN, file_size - pos);
         file.seekg(pos);
-        file.read(&buf[0], to_read);
+        file.read(&buf[0], toRead);
         size_t bytes = static_cast<size_t>(file.gcount());
-        if (bytes == 0) break;
+        if (bytes == 0) {
+            break;
+        }
         std::string view(buf.data(), bytes);
         size_t idx = view.find(marker);
-        if (idx != std::string::npos) return pos + idx;
-        if (pos + bytes >= file_size) break;
+        if (idx != std::string::npos) {
+            return pos + idx;
+        }
+        if (pos + bytes >= file_size) {
+            break;
+        }
         pos += bytes;
-        if (pos >= marker.size()) pos -= (marker.size() - 1);
+        if (pos >= marker.size()) {
+            pos -= (marker.size() - 1);
+        }
     }
     return std::string::npos;
 }
 
 /// 从 start_pos 起读取最多 256 字节，返回首个 ch 的字节偏移。
-size_t find_char_after(std::ifstream& file, char ch, size_t start_pos, size_t file_size) {
-    std::string buf(std::min<size_t>(256, file_size - start_pos), '\0');
+size_t FindCharAfter(std::ifstream& file, char ch, size_t startPos, size_t file_size)
+{
+    std::string buf(std::min<size_t>(256, file_size - startPos), '\0');
     file.clear();
-    file.seekg(start_pos);
+    file.seekg(startPos);
     file.read(&buf[0], buf.size());
     size_t bytes = static_cast<size_t>(file.gcount());
     for (size_t i = 0; i < bytes; ++i) {
-        if (buf[i] == ch) return start_pos + i;
+        if (buf[i] == ch) {
+            return startPos + i;
+        }
     }
     return std::string::npos;
 }
 
 /// 从 open_pos 的 '[' 起流式扫描其匹配的 ']'，正确处理字符串字面量与转义。
 /// 适用于 strings 这种扁平字符串数组（无嵌套对象/数组）。返回 ']' 的字节偏移。
-size_t find_matching_close_bracket(std::ifstream& file, size_t open_pos, size_t file_size) {
+size_t FindMatchingCloseBracket(std::ifstream& file, size_t openPos, size_t file_size)
+{
     std::string buf(BRACKET_CHUNK, '\0');
-    size_t pos = open_pos + 1;  // 跳过 '['
-    bool in_string = false;
+    size_t pos = openPos + 1;  // 跳过 '['
+    bool inString = false;
     bool escaped = false;
     file.clear();
     while (pos < file_size) {
-        size_t to_read = std::min(BRACKET_CHUNK, file_size - pos);
+        size_t toRead = std::min(BRACKET_CHUNK, file_size - pos);
         file.seekg(pos);
-        file.read(&buf[0], to_read);
+        file.read(&buf[0], toRead);
         size_t bytes = static_cast<size_t>(file.gcount());
-        if (bytes == 0) break;
+        if (bytes == 0) {
+            break;
+        }
         for (size_t i = 0; i < bytes; ++i) {
             char c = buf[i];
-            if (in_string) {
+            if (inString) {
                 if (escaped) {
                     escaped = false;
-                } else if (c == '\\') {
+                } else if (c == '\\')
+                {
                     escaped = true;
-                } else if (c == '"') {
-                    in_string = false;
+                } else if (c == '"')
+                {
+                    inString = false;
                 }
-            } else if (c == '"') {
-                in_string = true;
+            } else if (c == '"')
+            {
+                inString = true;
                 escaped = false;
-            } else if (c == ']') {
+            } else if (c == ']')
+            {
                 return pos + i;
             }
         }
@@ -119,8 +137,11 @@ size_t find_matching_close_bracket(std::ifstream& file, size_t open_pos, size_t 
 }
 
 /// 读取 [start, end) 字节范围为字符串。
-std::string read_byte_range(std::ifstream& file, size_t start, size_t end) {
-    if (end <= start) return {};
+std::string ReadByteRange(std::ifstream& file, size_t start, size_t end)
+{
+    if (end <= start) {
+        return {};
+    }
     std::string buf(end - start, '\0');
     file.clear();
     file.seekg(start);
@@ -130,19 +151,26 @@ std::string read_byte_range(std::ifstream& file, size_t start, size_t end) {
 }
 
 /// 将输入文件 [start, end) 字节流式拷贝到输出流。
-bool copy_byte_range(std::ifstream& in, std::ofstream& out, size_t start, size_t end) {
-    if (end <= start) return true;
+bool CopyByteRange(std::ifstream& in, std::ofstream& out, size_t start, size_t end)
+{
+    if (end <= start) {
+        return true;
+    }
     std::string buf(COPY_CHUNK, '\0');
     size_t pos = start;
     in.clear();
     while (pos < end) {
-        size_t to_read = std::min(COPY_CHUNK, end - pos);
+        size_t toRead = std::min(COPY_CHUNK, end - pos);
         in.seekg(pos);
-        in.read(&buf[0], to_read);
+        in.read(&buf[0], toRead);
         size_t bytes = static_cast<size_t>(in.gcount());
-        if (bytes == 0) return false;
+        if (bytes == 0) {
+            return false;
+        }
         out.write(buf.data(), bytes);
-        if (!out.good()) return false;
+        if (!out.good()) {
+            return false;
+        }
         pos += bytes;
     }
     return true;
@@ -151,7 +179,8 @@ bool copy_byte_range(std::ifstream& in, std::ofstream& out, size_t start, size_t
 /// 对 JSON 文本做 sanitize：把 U+0000-U+001F 控制字符替换为空格，
 /// 使 nlohmann::json 能够解析（参考 heap_snapshot.cpp read_strings_array 思路）。
 /// 仅在首次解析失败时作为降级手段使用。
-std::string sanitize_control_chars(const std::string& text) {
+std::string SanitizeControlChars(const std::string& text)
+{
     std::string sanitized;
     sanitized.reserve(text.size());
     for (char c : text) {
@@ -171,48 +200,57 @@ std::string sanitize_control_chars(const std::string& text) {
 ///    "com.xxx/@douyin/camera_impl@1.0.0/src/main/ets/camera/a.ts"，
 ///    bundle 前缀与 @scope 前缀均可省略）。
 /// 成功时返回 true 并填充 module / version / rel_path。
-bool parse_arkts_module_path(const std::string& path_part, std::string& module,
-                             std::string& version, std::string& rel_path) {
-    const size_t at_pos = path_part.rfind('@');
-    if (at_pos == std::string::npos) return false;
-    const size_t version_end = path_part.find('/', at_pos + 1);
-    if (version_end == std::string::npos) return false;
-    version = path_part.substr(at_pos + 1, version_end - at_pos - 1);
-    if (version.empty()) return false;
+bool ParseArktsModulePath(const std::string& pathPart, std::string& module,
+                             std::string& version, std::string& relPath) {
+    const size_t atPos = pathPart.rfind('@');
+    if (atPos == std::string::npos) {
+        return false;
+    }
+    const size_t versionEnd = pathPart.find('/', atPos + 1);
+    if (versionEnd == std::string::npos) {
+        return false;
+    }
+    version = pathPart.substr(atPos + 1, versionEnd - atPos - 1);
+    if (version.empty()) {
+        return false;
+    }
 
-    const std::string module_part = path_part.substr(0, at_pos);
-    const size_t last_slash = module_part.rfind('/');
-    std::string extracted_module;
-    if (last_slash == std::string::npos) {
-        extracted_module = module_part;
-    } else if (last_slash == 0) {
+    const std::string modulePart = pathPart.substr(0, atPos);
+    const size_t lastSlash = modulePart.rfind('/');
+    std::string extractedModule;
+    if (lastSlash == std::string::npos) {
+        extractedModule = modulePart;
+    } else if (lastSlash == 0)
+    {
         // 路径以 '/' 开头（如 "/entry@1.0.0/..."），无 scope 前缀，取 '/' 之后的部分
-        extracted_module = module_part.substr(1);
+        extractedModule = modulePart.substr(1);
     } else {
         // 检查上一级目录段是否以 '@' 开头，若是则合并两段作为完整 module 名
         // （作用域包名格式为 @scope/name，需要把 @scope/ 前缀一并保留）。
-        const size_t prev_slash = module_part.rfind('/', last_slash - 1);
-        std::string scope_candidate;
-        if (prev_slash == std::string::npos) {
-            scope_candidate = module_part.substr(0, last_slash);
+        const size_t prevSlash = modulePart.rfind('/', lastSlash - 1);
+        std::string scopeCandidate;
+        if (prevSlash == std::string::npos) {
+            scopeCandidate = modulePart.substr(0, lastSlash);
         } else {
-            scope_candidate = module_part.substr(prev_slash + 1, last_slash - prev_slash - 1);
+            scopeCandidate = modulePart.substr(prevSlash + 1, lastSlash - prevSlash - 1);
         }
-        if (!scope_candidate.empty() && scope_candidate.front() == '@') {
-            if (prev_slash == std::string::npos) {
-                extracted_module = module_part;
+        if (!scopeCandidate.empty() && scopeCandidate.front() == '@') {
+            if (prevSlash == std::string::npos) {
+                extractedModule = modulePart;
             } else {
-                extracted_module = module_part.substr(prev_slash + 1);
+                extractedModule = modulePart.substr(prevSlash + 1);
             }
         } else {
-            extracted_module = module_part.substr(last_slash + 1);
+            extractedModule = modulePart.substr(lastSlash + 1);
         }
     }
-    module = extracted_module;
-    if (module.empty()) return false;
+    module = extractedModule;
+    if (module.empty()) {
+        return false;
+    }
 
-    rel_path = path_part.substr(version_end + 1);
-    return !rel_path.empty();
+    relPath = pathPart.substr(versionEnd + 1);
+    return !relPath.empty();
 }
 
 /// 用官方 nameCache 行号范围修正源码行号（参考官方"异常堆栈解析原理"文档）。
@@ -224,37 +262,49 @@ bool parse_arkts_module_path(const std::string& path_part, std::string& module,
 /// 记录落在字段声明区），当还原行号不在该方法的行号范围内时，
 /// 修正为定义起始行最贴近还原行号的候选。函数名可能是混淆名（开启属性混淆）
 /// 或原始名（未开启时），两者都查。未修正返回 false（保持 sourceMap 映射结果）。
-bool refine_line_by_name_cache(const NameCacheIndex* ncache, const std::string& source_path,
-                               const std::string& suffix, int& orig_line) {
-    if (ncache == nullptr || source_path.empty()) return false;
+bool RefineLineByNameCache(const NameCacheIndex* ncache, const std::string& sourcePath,
+                               const std::string& suffix, int& origLine) {
+    if (ncache == nullptr || sourcePath.empty()) {
+        return false;
+    }
     // 从 suffix（形如 "#funcName(line:N)[module]"）提取函数名，
     // 按官方约定保留最后一级名称（如 "#Class#method" 取 "method"）
-    const size_t name_begin = suffix.find('#');
-    if (name_begin == std::string::npos) return false;
-    const size_t name_end = suffix.find("(line:", name_begin + 1);
-    if (name_end == std::string::npos || name_end <= name_begin + 1) return false;
-    const std::string full_name = suffix.substr(name_begin + 1, name_end - name_begin - 1);
-    if (full_name.empty()) return false;
-    const size_t last_hash = full_name.rfind('#');
-    const std::string short_name =
-        (last_hash == std::string::npos) ? full_name : full_name.substr(last_hash + 1);
+    const size_t nameBegin = suffix.find('#');
+    if (nameBegin == std::string::npos) {
+        return false;
+    }
+    const size_t nameEnd = suffix.find("(line:", nameBegin + 1);
+    if (nameEnd == std::string::npos || nameEnd <= nameBegin + 1) {
+        return false;
+    }
+    const std::string fullName = suffix.substr(nameBegin + 1, nameEnd - nameBegin - 1);
+    if (fullName.empty()) {
+        return false;
+    }
+    const size_t lastHash = fullName.rfind('#');
+    const std::string shortName =
+        (lastHash == std::string::npos) ? fullName : fullName.substr(lastHash + 1);
 
     // 依次尝试：短名(混淆) → 短名(原始) → 完整名(混淆) → 完整名(原始)，
     // 取首个有候选者即停止。函数名可能是混淆名（开启属性混淆）或原始名（未开启时）。
     std::vector<NameCacheCandidate> candidates;
-    auto try_lookup = [&](const std::string& name, bool obfuscated) {
-        if (name.empty() || !candidates.empty()) return;
+    auto tryLookup = [&](const std::string& name, bool obfuscated) {
+        if (name.empty() || !candidates.empty()) {
+            return;
+        }
         if (obfuscated) {
-            ncache->lookup_obfuscated_name(name, candidates);
+            ncache->LookupObfuscatedName(name, candidates);
         } else {
-            ncache->lookup_original_name(name, candidates);
+            ncache->LookupOriginalName(name, candidates);
         }
     };
-    try_lookup(short_name, true);
-    try_lookup(short_name, false);
-    try_lookup(full_name, true);
-    try_lookup(full_name, false);
-    if (candidates.empty()) return false;
+    tryLookup(shortName, true);
+    tryLookup(shortName, false);
+    tryLookup(fullName, true);
+    tryLookup(fullName, false);
+    if (candidates.empty()) {
+        return false;
+    }
 
     // 官方算法：行号范围包含还原行号的条目为命中（此时行号本身正确，无需修正）；
     // 范围外（构造函数首语句提升）时选择定义起始行最贴近还原行号的候选修正：
@@ -262,24 +312,32 @@ bool refine_line_by_name_cache(const NameCacheIndex* ncache, const std::string& 
     const NameCacheCandidate* hit = nullptr;
     const NameCacheCandidate* fallback = nullptr;
     for (const auto& cand : candidates) {
-        if (cand.start_line <= 0 || cand.end_line < cand.start_line) continue;
-        if (!source_path_matches(source_path, cand.file_path)) continue;
-        if (orig_line >= cand.start_line && orig_line <= cand.end_line) {
+        if (cand.startLine <= 0 || cand.endLine < cand.startLine) {
+            continue;
+        }
+        if (!SourcePathMatches(sourcePath, cand.filePath)) {
+            continue;
+        }
+        if (origLine >= cand.startLine && origLine <= cand.endLine) {
             hit = &cand;
             break;
         }
         if (fallback == nullptr) {
             fallback = &cand;
-        } else if (cand.start_line <= orig_line) {
-            if (fallback->start_line > orig_line || cand.start_line > fallback->start_line) {
+        } else if (cand.startLine <= origLine)
+        {
+            if (fallback->startLine > origLine || cand.startLine > fallback->startLine) {
                 fallback = &cand;
             }
-        } else if (fallback->start_line > orig_line && cand.start_line < fallback->start_line) {
+        } else if (fallback->startLine > origLine && cand.startLine < fallback->startLine)
+        {
             fallback = &cand;
         }
     }
-    if (hit != nullptr || fallback == nullptr) return false;
-    orig_line = fallback->start_line;
+    if (hit != nullptr || fallback == nullptr) {
+        return false;
+    }
+    origLine = fallback->startLine;
     return true;
 }
 
@@ -288,46 +346,70 @@ bool refine_line_by_name_cache(const NameCacheIndex* ncache, const std::string& 
 /// 路径部分经 sourceMap 还原后为 "entry/src/main/ets/pages/WebPage.ets#g1(line:24)[entry]"，
 /// 但其中的函数名（如 g1/d1/a1）仍是混淆名。此处按文件上下文过滤 nameCache 候选，
 /// 候选去重后仅一种原始名时才替换，保证不会误还原。
-bool restore_function_name_in_suffix(const NameCacheIndex* ncache, std::string& value) {
-    if (ncache == nullptr) return false;
+bool RestoreFunctionNameInSuffix(const NameCacheIndex* ncache, std::string& value)
+{
+    if (ncache == nullptr) {
+        return false;
+    }
     const size_t kLine = value.find("(line:");
-    if (kLine == std::string::npos || kLine == 0) return false;
+    if (kLine == std::string::npos || kLine == 0) {
+        return false;
+    }
     // 取 '(' 之前最后一个 '#'，其后的子串即为混淆函数名（如 "#d1(" → "d1"）
     const size_t hash = value.rfind('#', kLine - 1);
-    if (hash == std::string::npos || hash + 1 >= kLine) return false;
-    const size_t name_len = kLine - hash - 1;  // '#' 与 '(' 之间的函数名长度
-    if (name_len == 0) return false;
-    const std::string obf_name = value.substr(hash + 1, name_len);
-    if (obf_name.empty()) return false;
+    if (hash == std::string::npos || hash + 1 >= kLine) {
+        return false;
+    }
+    const size_t nameLen = kLine - hash - 1;  // '#' 与 '(' 之间的函数名长度
+    if (nameLen == 0) {
+        return false;
+    }
+    const std::string obfName = value.substr(hash + 1, nameLen);
+    if (obfName.empty()) {
+        return false;
+    }
 
     // 反查混淆名候选，用已还原的源码路径做文件上下文过滤，再按原始名去重。
     // 同一混淆名可能同时命中 IdentifierCache（类名，原始名带 '#' 前缀）与
     // MemberMethodCache（构造函数与方法名，原始名不带 '#'，如类与构造函数同名），
     // 比较与替换前统一剥离 '#' 前缀，避免同名不同前缀导致误判无法唯一还原。
     std::vector<NameCacheCandidate> candidates;
-    if (!ncache->lookup_obfuscated_name(obf_name, candidates)) return false;
-    const std::string ctx_path = value.substr(0, hash);
+    if (!ncache->LookupObfuscatedName(obfName, candidates)) {
+        return false;
+    }
+    const std::string ctxPath = value.substr(0, hash);
     std::string original;
     for (const auto& cand : candidates) {
-        if (cand.original.empty()) continue;
-        if (!source_path_matches(ctx_path, cand.file_path)) continue;
+        if (cand.original.empty()) {
+            continue;
+        }
+        if (!SourcePathMatches(ctxPath, cand.filePath)) {
+            continue;
+        }
         std::string name = cand.original;
-        if (name.front() == '#') name.erase(0, 1);
-        if (name.empty() || name == obf_name) continue;
+        if (name.front() == '#') {
+            name.erase(0, 1);
+        }
+        if (name.empty() || name == obfName) {
+            continue;
+        }
         if (original.empty()) {
             original = name;
-        } else if (original != name) {
+        } else if (original != name)
+        {
             return false;  // 同一文件下候选原始名不一致，无法唯一还原
         }
     }
-    if (original.empty()) return false;
-    value.replace(hash + 1, name_len, original);
+    if (original.empty()) {
+        return false;
+    }
+    value.replace(hash + 1, nameLen, original);
     return true;
 }
 
 /// 对单个 strings 数组元素做反混淆还原（混淆路径→源码路径、混淆名→原始名）。
 /// 返回还原后的字符串；发生替换时递增 replaced。
-std::string deobfuscate_one_string(const std::string& value,
+std::string DeobfuscateOneString(const std::string& value,
                                    const SourceMapIndex* smap,
                                    const NameCacheIndex* ncache,
                                    size_t& replaced) {
@@ -335,69 +417,70 @@ std::string deobfuscate_one_string(const std::string& value,
     std::string original;
 
     // 1. obfName 混淆路径 → 原始文件路径
-    if (ncache && ncache->lookup_obf_name_path(result, original)) {
+    if (ncache && ncache->LookupObfNamePath(result, original)) {
         result = original;
         replaced++;
     }
     // 2. 混淆编译产物路径 key → 源码路径（sources[0]）
     if (smap) {
         const SourceMapEntry* entry = smap->lookup(result);
-        if (entry != nullptr && !entry->source_path.empty()) {
-            result = entry->source_path;
+        if (entry != nullptr && !entry->sourcePath.empty()) {
+            result = entry->sourcePath;
             replaced++;
         } else {
             // 兼容 heapsnapshot 中的 ArkTS 模块路径格式
             // "[<bundle>/]<module>@<version>/<rel_path>[#func(line:N)[module]]"：
             // 按 (module, version, rel_path) 命中后，仅替换路径部分，保留 "#" 后缀，
             // 并尝试将 (line:N) 由编译产物行号映射为源码行号。
-            const size_t hash_pos = result.find('#');
-            const std::string path_part = result.substr(0, hash_pos);
-            std::string module, version, rel_path;
+            const size_t hashPos = result.find('#');
+            const std::string pathPart = result.substr(0, hashPos);
+            std::string module, version, relPath;
             entry = nullptr;
-            if (parse_arkts_module_path(path_part, module, version, rel_path)) {
-                entry = smap->lookup_by_module(module, version, rel_path);
+            if (ParseArktsModulePath(pathPart, module, version, relPath)) {
+                entry = smap->LookupByModule(module, version, relPath);
             }
-            if (entry != nullptr && !entry->source_path.empty()) {
-                std::string suffix = (hash_pos == std::string::npos) ? "" : result.substr(hash_pos);
+            if (entry != nullptr && !entry->sourcePath.empty()) {
+                std::string suffix = (hashPos == std::string::npos) ? "" : result.substr(hashPos);
                 // 映射 (line:N)：取 N，若该行在 mappings 中有映射则替换为源码行号
                 const std::string kLinePrefix = "(line:";
                 const size_t lp = suffix.find(kLinePrefix);
                 if (lp != std::string::npos) {
-                    const size_t num_begin = lp + kLinePrefix.size();
-                    const size_t num_end = suffix.find(')', num_begin);
-                    if (num_end != std::string::npos) {
-                        const std::string num_str = suffix.substr(num_begin, num_end - num_begin);
-                        if (all_digits(num_str)) {
-                            int gen_line = 0;
+                    const size_t numBegin = lp + kLinePrefix.size();
+                    const size_t numEnd = suffix.find(')', numBegin);
+                    if (numEnd != std::string::npos) {
+                        const std::string numStr = suffix.substr(numBegin, numEnd - numBegin);
+                        if (AllDigits(numStr)) {
+                            int genLine = 0;
                             // 快照损坏时可能为超长数字串，stoi 抛异常则跳过行号映射
                             try {
-                                gen_line = std::stoi(num_str);
-                            } catch (const std::exception&) {
-                                gen_line = -1;
+                                genLine = std::stoi(numStr);
+                            } catch (const std::exception&)
+                            {
+                                genLine = -1;
                             }
-                            if (gen_line > 0) {
-                                int orig_line = gen_line;
-                                smap->resolve_original_line(entry->mappings, gen_line, orig_line);
-                                refine_line_by_name_cache(ncache, entry->source_path, suffix, orig_line);
-                                suffix.replace(lp, num_end - lp + 1,
-                                               "(line:" + std::to_string(orig_line) + ")");
+                            if (genLine > 0) {
+                                int origLine = genLine;
+                                smap->ResolveOriginalLine(entry->mappings, genLine, origLine);
+                                RefineLineByNameCache(ncache, entry->sourcePath, suffix, origLine);
+                                suffix.replace(lp, numEnd - lp + 1,
+                                               "(line:" + std::to_string(origLine) + ")");
                             }
                         }
                     }
                 }
-                result = entry->source_path + suffix;
+                result = entry->sourcePath + suffix;
                 replaced++;
             }
         }
     }
     // 3. 混淆名 → 原始名（仅当候选唯一）
-    if (ncache && ncache->lookup_unique(result, original)) {
+    if (ncache && ncache->LookupUnique(result, original)) {
         result = original;
         replaced++;
     }
     // 4. "path#funcName(line:N)[module]" 后缀中的混淆函数名 → 原始名
     //    （按文件上下文过滤，候选去重后仅一种原始名时替换）
-    if (ncache && restore_function_name_in_suffix(ncache, result)) {
+    if (ncache && RestoreFunctionNameInSuffix(ncache, result)) {
         replaced++;
     }
 
@@ -412,105 +495,109 @@ std::string deobfuscate_one_string(const std::string& value,
 //  仅解析并改写顶层 "strings" 字符串数组，nodes / edges / meta 等其余字段
 //  按原始字节流式拷贝，避免大快照全量 json::parse + dump 导致的内存峰值。
 // ============================================================================
-bool deobfuscate_heapsnapshot(const std::string& input_path, const std::string& output_path,
+bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& outputPath,
                               const SourceMapIndex* smap, const NameCacheIndex* ncache) {
     std::error_code ec;
-    if (!fs::is_regular_file(mem_analyzer::path_from_utf8(input_path), ec)) {
-        log::loge("Error: Heapsnapshot file not found: ", input_path);
+    if (!fs::is_regular_file(mem_analyzer::PathFromUtf8(inputPath), ec)) {
+        log::Loge("Error: Heapsnapshot file not found: ", inputPath);
         return false;
     }
 
-    std::ifstream in(mem_analyzer::path_from_utf8(input_path), std::ios::binary);
+    std::ifstream in(mem_analyzer::PathFromUtf8(inputPath), std::ios::binary);
     if (!in) {
-        log::loge("Error: Failed to open heapsnapshot file: ", input_path);
+        log::Loge("Error: Failed to open heapsnapshot file: ", inputPath);
         return false;
     }
     in.seekg(0, std::ios::end);
     const size_t file_size = static_cast<size_t>(in.tellg());
     if (file_size == 0) {
-        log::loge("Error: Heapsnapshot file is empty: ", input_path);
+        log::Loge("Error: Heapsnapshot file is empty: ", inputPath);
         return false;
     }
 
     // 1. 流式定位 "strings": 标记及其后的 '['
     const std::string kMarker = "\"strings\":";
-    size_t mark_pos = find_marker_offset(in, kMarker, 0, file_size);
-    if (mark_pos == std::string::npos) {
-        log::loge("Error: No \"strings\" field in heapsnapshot file: ", input_path);
+    size_t markPos = FindMarkerOffset(in, kMarker, 0, file_size);
+    if (markPos == std::string::npos) {
+        log::Loge("Error: No \"strings\" field in heapsnapshot file: ", inputPath);
         return false;
     }
-    size_t open_bracket = find_char_after(in, '[', mark_pos + kMarker.size(), file_size);
-    if (open_bracket == std::string::npos) {
-        log::loge("Error: \"strings\" is not an array in heapsnapshot file: ", input_path);
+    size_t openBracket = FindCharAfter(in, '[', markPos + kMarker.size(), file_size);
+    if (openBracket == std::string::npos) {
+        log::Loge("Error: \"strings\" is not an array in heapsnapshot file: ", inputPath);
         return false;
     }
 
     // 2. 流式扫描 strings 数组的匹配 ']'（正确处理字符串字面量与转义）
-    size_t close_bracket = find_matching_close_bracket(in, open_bracket, file_size);
-    if (close_bracket == std::string::npos) {
-        log::loge("Error: Unterminated \"strings\" array in heapsnapshot file: ", input_path);
+    size_t closeBracket = FindMatchingCloseBracket(in, openBracket, file_size);
+    if (closeBracket == std::string::npos) {
+        log::Loge("Error: Unterminated \"strings\" array in heapsnapshot file: ", inputPath);
         return false;
     }
 
     // 3. 读取 strings 数组文本 [open_bracket, close_bracket]
-    std::string arr_text = read_byte_range(in, open_bracket, close_bracket + 1);
+    std::string arrText = ReadByteRange(in, openBracket, closeBracket + 1);
 
     // 4. 解析 strings 数组（首次失败则对控制字符做 sanitize 后重试）
-    json strings_arr;
+    json stringsArr;
     bool parsed = false;
     try {
-        strings_arr = json::parse(arr_text);
+        stringsArr = json::parse(arrText);
         parsed = true;
-    } catch (const std::exception&) {
+    } catch (const std::exception&)
+    {
         try {
-            strings_arr = json::parse(sanitize_control_chars(arr_text));
+            stringsArr = json::parse(SanitizeControlChars(arrText));
             parsed = true;
-        } catch (const std::exception& e) {
-            log::loge("Error: Failed to parse \"strings\" array in ", input_path, " as JSON: ", e.what());
+        } catch (const std::exception& e)
+        {
+            log::Loge("Error: Failed to parse \"strings\" array in ", inputPath, " as JSON: ", e.what());
         }
     }
-    if (!parsed || !strings_arr.is_array()) {
-        log::loge("Error: \"strings\" is not an array in heapsnapshot file: ", input_path);
+    if (!parsed || !stringsArr.is_array()) {
+        log::Loge("Error: \"strings\" is not an array in heapsnapshot file: ", inputPath);
         return false;
     }
 
     // 5. 逐条反混淆 strings 数组元素
     size_t replaced = 0;
-    for (auto& s : strings_arr) {
-        if (!s.is_string()) continue;
+    for (auto& s : stringsArr) {
+        if (!s.is_string()) {
+            continue;
+        }
         std::string value = s.get<std::string>();
-        std::string restored = deobfuscate_one_string(value, smap, ncache, replaced);
+        std::string restored = DeobfuscateOneString(value, smap, ncache, replaced);
         s = restored;
     }
 
     // 6. 重新序列化 strings 数组（紧凑格式）
-    std::string new_arr = strings_arr.dump();
+    std::string newArr = stringsArr.dump();
 
     // 7. 写出输出文件：[0, open_bracket) + 新 strings 数组 + (close_bracket, end)
-    std::ofstream out(mem_analyzer::path_from_utf8(output_path), std::ios::binary);
+    std::ofstream out(mem_analyzer::PathFromUtf8(outputPath), std::ios::binary);
     if (!out) {
-        log::loge("Error: Failed to open output file for writing: ", output_path);
+        log::Loge("Error: Failed to open output file for writing: ", outputPath);
         return false;
     }
-    if (!copy_byte_range(in, out, 0, open_bracket)) {
-        log::loge("Error: Failed to copy snapshot header to output: ", output_path);
+    if (!CopyByteRange(in, out, 0, openBracket)) {
+        log::Loge("Error: Failed to copy snapshot header to output: ", outputPath);
         return false;
     }
-    out.write(new_arr.data(), new_arr.size());
+    out.write(newArr.data(), newArr.size());
     if (!out.good()) {
-        log::loge("Error: Failed to write deobfuscated strings to output: ", output_path);
+        log::Loge("Error: Failed to write deobfuscated strings to output: ", outputPath);
         return false;
     }
-    if (!copy_byte_range(in, out, close_bracket + 1, file_size)) {
-        log::loge("Error: Failed to copy snapshot tail to output: ", output_path);
+    if (!CopyByteRange(in, out, closeBracket + 1, file_size)) {
+        log::Loge("Error: Failed to copy snapshot tail to output: ", outputPath);
         return false;
     }
     if (!out.good()) {
-        log::loge("Error: Failed to finalize output file: ", output_path);
+        log::Loge("Error: Failed to finalize output file: ", outputPath);
         return false;
     }
 
-    log::logi("  Deobfuscated ", replaced, " strings in: ", input_path);
+    log::Logi("  Deobfuscated ", replaced, " strings in: ", inputPath);
     return true;
 }
 
@@ -520,63 +607,63 @@ bool deobfuscate_heapsnapshot(const std::string& input_path, const std::string& 
 //  供 jsleak_parse()（jsleak 入口）与 deobfuscate_zip_snapshot
 //  （tshandle zip 入口）共用，消除重复逻辑。
 // ============================================================================
-bool deobfuscate_with_indices(const std::string& input_path, const std::string& output_path,
-                              const std::string& sourcemap_dir,
-                              const std::string& namecache_dir) {
+bool DeobfuscateWithIndices(const std::string& inputPath, const std::string& outputPath,
+                              const std::string& sourcemapDir,
+                              const std::string& namecacheDir) {
     // 两个目录都为空 → 无操作，调用方应直接降级为原始输入
-    if (sourcemap_dir.empty() && namecache_dir.empty()) {
+    if (sourcemapDir.empty() && namecacheDir.empty()) {
         return false;
     }
 
     // 校验路径存在（--sourcemap / --namecache 支持目录或单个文件）
     // 用户路径可能含中文，需按 UTF-8 构造 fs::path（Windows 宽路径安全）
-    auto path_exists = [](const std::string& path) {
+    auto pathExists = [](const std::string& path) {
         std::error_code ec;
-        return !path.empty() && fs::exists(mem_analyzer::path_from_utf8(path), ec);
+        return !path.empty() && fs::exists(mem_analyzer::PathFromUtf8(path), ec);
     };
-    if (!sourcemap_dir.empty() && !path_exists(sourcemap_dir)) {
-        log::loge("Error: Source map file or directory does not exist: ", sourcemap_dir);
+    if (!sourcemapDir.empty() && !pathExists(sourcemapDir)) {
+        log::Loge("Error: Source map file or directory does not exist: ", sourcemapDir);
         return false;
     }
-    if (!namecache_dir.empty() && !path_exists(namecache_dir)) {
-        log::loge("Error: nameCache file or directory does not exist: ", namecache_dir);
+    if (!namecacheDir.empty() && !pathExists(namecacheDir)) {
+        log::Loge("Error: nameCache file or directory does not exist: ", namecacheDir);
         return false;
     }
 
     // 加载索引，加载失败仅警告并继续（对应还原降级）
     SourceMapIndex smap;
     NameCacheIndex ncache;
-    if (!sourcemap_dir.empty()) {
-        if (!smap.load_from_dir(sourcemap_dir)) {
-            log::logw("Warning: Source map index unavailable, path deobfuscation will be skipped.");
+    if (!sourcemapDir.empty()) {
+        if (!smap.LoadFromDir(sourcemapDir)) {
+            log::Logw("Warning: Source map index unavailable, path deobfuscation will be skipped.");
         }
     }
-    if (!namecache_dir.empty()) {
-        if (!ncache.load_from_dir(namecache_dir)) {
-            log::logw("Warning: nameCache index unavailable, name deobfuscation will be skipped.");
+    if (!namecacheDir.empty()) {
+        if (!ncache.LoadFromDir(namecacheDir)) {
+            log::Logw("Warning: nameCache index unavailable, name deobfuscation will be skipped.");
         }
     }
     // 两者均空 → 警告后降级为原始输入
     if (smap.empty() && ncache.empty()) {
-        log::logw("Warning: No source map / nameCache entries loaded, proceeding with the original snapshot.");
+        log::Logw("Warning: No source map / nameCache entries loaded, proceeding with the original snapshot.");
         return false;
     }
 
     // 创建输出文件的父目录。注意：macOS libc++ 的 fs::create_directories 在
     // 目录已存在时返回 false 且 ec 为空（与 Linux/标准实现返回 true 不同），
     // 因此仅当 ec 非空（创建真失败）时才报错，目录已存在视为成功。
-    const std::string parent_dir = mem_analyzer::platform::dirname(output_path);
-    if (!parent_dir.empty()) {
+    const std::string parentDir = mem_analyzer::platform::dirname(outputPath);
+    if (!parentDir.empty()) {
         std::error_code ec;
-        if (!fs::create_directories(mem_analyzer::path_from_utf8(parent_dir), ec) && ec) {
-            log::loge("Error: Failed to create output directory: ", parent_dir, " (", ec.message(), ")");
+        if (!fs::create_directories(mem_analyzer::PathFromUtf8(parentDir), ec) && ec) {
+            log::Loge("Error: Failed to create output directory: ", parentDir, " (", ec.message(), ")");
             return false;
         }
     }
 
-    const SourceMapIndex* smap_ptr = sourcemap_dir.empty() ? nullptr : &smap;
-    const NameCacheIndex* ncache_ptr = namecache_dir.empty() ? nullptr : &ncache;
-    return deobfuscate_heapsnapshot(input_path, output_path, smap_ptr, ncache_ptr);
+    const SourceMapIndex* smapPtr = sourcemapDir.empty() ? nullptr : &smap;
+    const NameCacheIndex* ncachePtr = namecacheDir.empty() ? nullptr : &ncache;
+    return DeobfuscateHeapsnapshot(inputPath, outputPath, smapPtr, ncachePtr);
 }
 
 } // namespace mem_analyzer

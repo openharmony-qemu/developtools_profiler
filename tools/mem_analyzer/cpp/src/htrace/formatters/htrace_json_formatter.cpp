@@ -24,75 +24,85 @@
 
 namespace mem_analyzer {
 
-json htrace_build_meta(const std::string& file_path, const RunContext& ctx) {
-    json meta = build_output_meta_base(ctx);
+json HtraceBuildMeta(const std::string& filePath, const RunContext& ctx)
+{
+    json meta = BuildOutputMetaBase(ctx);
     meta["sourceFileInfo"] = {
-        {"name", file_path},
+        {"name", filePath},
         {"fileType", "htrace"}
     };
     return meta;
 }
 
-json htrace_build_summary_common(const std::string& mode, long long duration_ns, long long start_ms,
-                                 long long end_ms, const std::string& process_name) {
+json HtraceBuildSummaryCommon(const std::string& mode, long long durationNs, long long startMs,
+                                 long long endMs, const std::string& processName) {
     json summary;
     summary["isStatistics"] = (mode == "detail") ? "0" : "1";
 
-    double duration_seconds = std::round(duration_ns / 1e6) / 1e3;
-    std::ostringstream dur_ss;
-    dur_ss << std::fixed << std::setprecision(3) << duration_seconds;
-    summary["duration"] = dur_ss.str();
-    summary["timestampFrom"] = start_ms > 0 ? format_readable_timestamp(start_ms) : "0";
-    summary["timestampTo"] = end_ms > 0 ? format_readable_timestamp(end_ms) : "0";
-    summary["processName"] = process_name;
+    double durationSeconds = std::round(durationNs / 1e6) / 1e3;
+    std::ostringstream durSs;
+    durSs << std::fixed << std::setprecision(3) << durationSeconds;
+    summary["duration"] = durSs.str();
+    summary["timestampFrom"] = startMs > 0 ? FormatReadableTimestamp(startMs) : "0";
+    summary["timestampTo"] = endMs > 0 ? FormatReadableTimestamp(endMs) : "0";
+    summary["processName"] = processName;
     return summary;
 }
 
-long long htrace_summary_total_for_type(const json& htrace_summary, const std::string& category) {
-    const char* key = htrace_category(category).summary_total_key;
-    if (htrace_summary.contains(key)) {
-        const auto& v = htrace_summary[key];
-        if (v.is_string()) return std::atoll(v.get<std::string>().c_str());
+long long HtraceSummaryTotalForType(const json& htraceSummary, const std::string& category)
+{
+    const char* key = HtraceCategory(category).summaryTotalKey;
+    if (htraceSummary.contains(key)) {
+        const auto& v = htraceSummary[key];
+        if (v.is_string()) {
+            return std::atoll(v.get<std::string>().c_str());
+        }
         return v.get<long long>();
     }
     return 0;
 }
 
-void htrace_write_callstack_frame(JsonStreamWriter& writer,
+void HtraceWriteCallstackFrame(JsonStreamWriter& writer,
                                   const CompressedStackFrame& frame,
                                   const DataDict& dict) {
-    writer.begin_object();
+    writer.BeginObject();
 
-    writer.write_key_value("depth", std::to_string(frame.depth));
+    writer.WriteKeyValue("depth", std::to_string(frame.depth));
 
     std::string symbol = "unknown";
-    auto sym_it = dict.find(frame.symbol_id);
-    if (sym_it != dict.end()) symbol = sym_it->second;
-    writer.write_key_value("symbol", symbol);
+    auto symIt = dict.find(frame.symbolId);
+    if (symIt != dict.end()) {
+        symbol = symIt->second;
+    }
+    writer.WriteKeyValue("symbol", symbol);
 
     std::string lib = "unknown";
-    if (!frame.file_id_null) {
-        auto lib_it = dict.find(frame.file_id);
-        if (lib_it != dict.end()) lib = lib_it->second;
+    if (!frame.fileIdNull) {
+        auto libIt = dict.find(frame.fileId);
+        if (libIt != dict.end()) {
+            lib = libIt->second;
+        }
     }
-    writer.write_key_value("lib", lib);
+    writer.WriteKeyValue("lib", lib);
 
-    std::string lib_offset;
-    if (!frame.vaddr_null) {
+    std::string libOffset;
+    if (!frame.vaddrNull) {
         char buf[32];
         snprintf(buf, sizeof(buf), "0x%llx", (unsigned long long)frame.vaddr);
-        lib_offset = buf;
+        libOffset = buf;
     }
-    writer.write_key_value("libOffset", lib_offset);
+    writer.WriteKeyValue("libOffset", libOffset);
 
-    std::string build_id;
-    if (!frame.build_id_null && frame.build_id != 0) {
-        auto bd_it = dict.find(frame.build_id);
-        if (bd_it != dict.end()) build_id = bd_it->second;
+    std::string buildId;
+    if (!frame.buildIdNull && frame.buildId != 0) {
+        auto bdIt = dict.find(frame.buildId);
+        if (bdIt != dict.end()) {
+            buildId = bdIt->second;
+        }
     }
-    writer.write_key_value("buildId", build_id);
+    writer.WriteKeyValue("buildId", buildId);
 
-    writer.end_object();
+    writer.EndObject();
 }
 
 } // namespace mem_analyzer

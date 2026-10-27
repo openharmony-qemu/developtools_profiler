@@ -31,7 +31,8 @@ using json = nlohmann::ordered_json;
 namespace mem_analyzer {
 
 /** Only types in this set are processed; all others are skipped entirely. */
-inline const std::unordered_set<HtraceEventType>& htrace_enabled_types() {
+inline const std::unordered_set<HtraceEventType>& HtraceEnabledTypes()
+{
     static const std::unordered_set<HtraceEventType> enabled = {
         HtraceEventType::MALLOC,
         HtraceEventType::MMAP_ANON,
@@ -50,12 +51,14 @@ inline const std::unordered_set<HtraceEventType>& htrace_enabled_types() {
 }
 
 /** Returns true if the type should be processed. */
-inline bool htrace_is_enabled_type(HtraceEventType type) {
-    return htrace_enabled_types().count(type) > 0;
+inline bool HtraceIsEnabledType(HtraceEventType type)
+{
+    return HtraceEnabledTypes().count(type) > 0;
 }
 
 /** Only types in this set have their size counted toward totalExistingSize; others treat size as 0. */
-inline const std::unordered_set<HtraceEventType>& htrace_count_size_types() {
+inline const std::unordered_set<HtraceEventType>& HtraceCountSizeTypes()
+{
     static const std::unordered_set<HtraceEventType> count = {
         HtraceEventType::MALLOC,
         HtraceEventType::MMAP_ANON,
@@ -74,8 +77,9 @@ inline const std::unordered_set<HtraceEventType>& htrace_count_size_types() {
 }
 
 /** Returns true if the type's size should be counted toward total. */
-inline bool htrace_is_count_size_type(HtraceEventType type) {
-    return htrace_count_size_types().count(type) > 0;
+inline bool HtraceIsCountSizeType(HtraceEventType type)
+{
+    return HtraceCountSizeTypes().count(type) > 0;
 }
 
 /**
@@ -91,16 +95,17 @@ enum class SubTypeCondition {
 };
 
 struct EventTypeMapping {
-    std::string alloc_event;
-    HtraceEventType htrace_type;
-    SubTypeCondition sub_type_cond = SubTypeCondition::Any;
+    std::string allocEvent;
+    HtraceEventType htraceType;
+    SubTypeCondition subTypeCond = SubTypeCondition::Any;
 };
 
 /**
  * Returns the default event type configurations.
  * Extend this vector to support additional event types.
  */
-inline std::vector<EventTypeMapping> default_event_mappings() {
+inline std::vector<EventTypeMapping> DefaultEventMappings()
+{
     return {
         {"AllocEvent", HtraceEventType::MALLOC},
         {"MmapEvent", HtraceEventType::MMAP_ANON, SubTypeCondition::IsNull},      // MAP_ANONYMOUS: sub_type_id IS NULL
@@ -120,7 +125,7 @@ inline std::vector<EventTypeMapping> default_event_mappings() {
  * `category` 决定纳入哪些资源类型（如 "nativeheap"/"fd"）；
  * `filter_category` 为 false 时（parse-only 模式）不做类型过滤，全部启用的类型都纳入。
  */
-TraceDB process_htrace_db(const std::string& db_path, const std::string& category,
-                          bool filter_category, bool need_addrs = false);
+TraceDB ProcessHtraceDb(const std::string& dbPath, const std::string& category,
+                          bool filterCategory, bool needAddrs = false);
 
 } // namespace mem_analyzer

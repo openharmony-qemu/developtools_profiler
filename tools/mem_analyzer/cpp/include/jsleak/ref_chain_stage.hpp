@@ -25,26 +25,26 @@ namespace mem_analyzer {
 class RefChainStage : public JsleakStage {
 public:
     RefChainStage(std::string mode,
-                  const char* preview_id,
-                  const char* json_key,
-                  std::optional<std::string> target_class,   // nullopt=全节点；非空=节点名精确匹配
-                  std::optional<size_t> top_k,
-                  std::unordered_set<std::string> exclude_chains);
+                  const char* PreviewId,
+                  const char* JsonKey,
+                  std::optional<std::string> targetClass,   // nullopt=全节点；非空=节点名精确匹配
+                  std::optional<size_t> topK,
+                  std::unordered_set<std::string> excludeChains);
 
     const std::string& mode() const override;
-    const char* preview_id() const override;
-    const char* json_key() const override;
+    const char* PreviewId() const override;
+    const char* JsonKey() const override;
     void run(const HeapSnapshot& heap) override;
-    json to_json() const override;
+    json ToJson() const override;
 
 private:
     std::string mode_;
-    const char* preview_id_;
-    const char* json_key_;
-    std::optional<std::string> target_class_;
-    std::optional<size_t> top_k_;
-    std::unordered_set<std::string> exclude_chains_;
-    std::vector<RefChainInfo> ref_chain_infos_;
+    const char* previewId;
+    const char* jsonKey;
+    std::optional<std::string> targetClass;
+    std::optional<size_t> topK;
+    std::unordered_set<std::string> excludeChains;
+    std::vector<RefChainInfo> refChainInfos;
 };
 
 } // namespace mem_analyzer

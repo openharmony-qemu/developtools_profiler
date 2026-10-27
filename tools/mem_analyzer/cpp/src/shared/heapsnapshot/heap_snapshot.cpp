@@ -59,10 +59,15 @@ namespace mem_analyzer {
 namespace {
 
 // 快速判断字符串是否为纯数字（内联）
-inline bool is_numeric_string(const std::string& s) {
-    if (s.empty()) return false;
+inline bool IsNumericString(const std::string& s)
+{
+    if (s.empty()) {
+        return false;
+    }
     for (char c : s) {
-        if (!std::isdigit(static_cast<unsigned char>(c))) return false;
+        if (!std::isdigit(static_cast<unsigned char>(c))) {
+            return false;
+        }
     }
     return true;
 }
@@ -70,27 +75,30 @@ inline bool is_numeric_string(const std::string& s) {
 } // anonymous namespace
 
 // 获取 JSObject 扩展名
-std::string HeapSnapshot::get_js_object_ext_name(uint32_t node_index) const {
-    uint32_t ctor_node = 0xFFFFFFFF;
-    std::string ctor_name;
-    std::vector<std::string> prop_names;
-    prop_names.reserve(10);
+std::string HeapSnapshot::GetJsObjectExtName(uint32_t NodeIndex) const
+{
+    uint32_t ctorNode = 0xFFFFFFFF;
+    std::string ctorName;
+    std::vector<std::string> propNames;
+    propNames.reserve(10);
     std::unordered_set<std::string> added;
     added.reserve(16);
 
-    size_t begin = first_edge_pointers[node_index];
-    size_t end = first_edge_pointers[node_index + 1];
-    for (size_t ptr = begin; ptr < end; ptr += edge_fields_count) {
-        uint32_t name_idx = edges[ptr + edge_name_or_index_offset];
-        if (name_idx >= strings.size()) continue;
-        const std::string& en = strings[name_idx];
+    size_t begin = firstEdgePointers[NodeIndex];
+    size_t end = firstEdgePointers[NodeIndex + 1];
+    for (size_t ptr = begin; ptr < end; ptr += edgeFieldsCount) {
+        uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
+        if (nameIdx >= strings.size()) {
+            continue;
+        }
+        const std::string& en = strings[nameIdx];
 
         // 查找 constructor
         if (en == "constructor") {
-            uint32_t child = edges[ptr + edge_to_node_offset] / node_fields_count;
-            if (child < static_cast<uint32_t>(node_count)) {
-                ctor_node = child;
-                ctor_name = get_node_name(child);
+            uint32_t child = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
+            if (child < static_cast<uint32_t>(nodeCount)) {
+                ctorNode = child;
+                ctorName = GetNodeName(child);
             }
             continue;
         }
@@ -98,29 +106,35 @@ std::string HeapSnapshot::get_js_object_ext_name(uint32_t node_index) const {
         // 跳过系统属性和数字索引
         if (en == "(object elements)" || en == "(object properties)" ||
             en == "ArkInternalHash" || en == "hclass" || en == "__proto__" ||
-            en == "Properties" || en == "Elements" || is_numeric_string(en) || 
+            en == "Properties" || en == "Elements" || IsNumericString(en) || 
             en == "HashField") {
             continue;
         }
-        if (added.find(en) != added.end()) continue;
-        if (prop_names.size() >= 10) break;
-        prop_names.push_back(en);
+        if (added.find(en) != added.end()) {
+            continue;
+        }
+        if (propNames.size() >= 10) {
+            break;
+        }
+        propNames.push_back(en);
         added.insert(en);
     }
 
     std::ostringstream oss;
-    if (!ctor_name.empty()) {
-        oss << "JSObject(ctor=" << ctor_name << ", ";
+    if (!ctorName.empty()) {
+        oss << "JSObject(ctor=" << ctorName << ", ";
     } else {
         oss << "JSObject(";
     }
-    uint32_t edge_count = get_node_edge_count(node_index);
-    oss << "len=" << edge_count;
-    if (!prop_names.empty()) { 
+    uint32_t edgeCount = GetNodeEdgeCount(NodeIndex);
+    oss << "len=" << edgeCount;
+    if (!propNames.empty()) { 
          oss << ", prop="; 
-         for (size_t i = 0; i < prop_names.size(); ++i) { 
-             if (i > 0) oss << ","; 
-             oss << prop_names[i]; 
+         for (size_t i = 0; i < propNames.size(); ++i) { 
+             if (i > 0) {
+                 oss << ",";
+             }
+             oss << propNames[i]; 
          } 
      }
     oss << ")";
@@ -128,212 +142,233 @@ std::string HeapSnapshot::get_js_object_ext_name(uint32_t node_index) const {
 }
 
 // 获取 String 扩展名
-std::string HeapSnapshot::get_string_ext_name(uint32_t node_index) const {
+std::string HeapSnapshot::GetStringExtName(uint32_t NodeIndex) const
+{
     static constexpr uint32_t kStringSize10KB = 10 * 1024;
     static constexpr uint32_t kStringSize1MB = 1024 * 1024;
 
-    uint32_t base = node_index * node_fields_count;
-    uint32_t size = nodes[base + node_self_size_offset];
-    std::string content = get_node_name(node_index);
-    if (content.length() > 20) content = content.substr(0, 20);
+    uint32_t base = NodeIndex * nodeFieldsCount;
+    uint32_t size = nodes[base + nodeSelfSizeOffset];
+    std::string content = GetNodeName(NodeIndex);
+    if (content.length() > 20) {
+        content = content.substr(0, 20);
+    }
 
     // 按大小区间归类展示，避免精确 size 导致字符串对象过于分散
-    const char* size_range = "<10KB";
+    const char* sizeRange = "<10KB";
     if (size >= kStringSize1MB) {
-        size_range = ">=1MB";
-    } else if (size >= kStringSize10KB) {
-        size_range = ">=10KB && <1MB";
+        sizeRange = ">=1MB";
+    } else if (size >= kStringSize10KB)
+    {
+        sizeRange = ">=10KB && <1MB";
     }
 
     std::ostringstream oss;
-    oss << "string(size: " << size_range << ", content=" << content << ")";
+    oss << "string(size: " << sizeRange << ", content=" << content << ")";
     return oss.str();
 }
 
 // 沿 hclass → Proto 交替上溯，提取 stateMgmt 包装对象背后被包装的类名。
 // skip_markers：原型名命中其中任一子串即视为「仍是包装层」，跳过并继续上溯。
 // 返回被包装的类名；返回空表示链上未找到可用类名。
-std::string HeapSnapshot::resolve_state_mgmt_wrapped_class(
-    uint32_t node_index, const std::vector<std::string>& skip_markers) const {
+std::string HeapSnapshot::ResolveStateMgmtWrappedClass(
+    uint32_t NodeIndex, const std::vector<std::string>& skipMarkers) const {
     std::unordered_set<uint32_t> visited;
     visited.reserve(16);
-    uint32_t cur = node_index;
-    std::string result_proto;
-    bool looking_for_hclass = true;
+    uint32_t cur = NodeIndex;
+    std::string resultProto;
+    bool lookingForHclass = true;
 
-    while (cur < static_cast<uint32_t>(node_count) && visited.insert(cur).second) {
-        size_t begin = first_edge_pointers[cur];
-        size_t end = first_edge_pointers[cur + 1];
+    while (cur < static_cast<uint32_t>(nodeCount) && visited.insert(cur).second) {
+        size_t begin = firstEdgePointers[cur];
+        size_t end = firstEdgePointers[cur + 1];
         bool found = false;
 
-        if (looking_for_hclass) {
-            for (size_t ptr = begin; ptr < end; ptr += edge_fields_count) {
-                uint32_t name_idx = edges[ptr + edge_name_or_index_offset];
-                if (name_idx < strings.size() && strings[name_idx] == "hclass") {
-                    cur = edges[ptr + edge_to_node_offset] / node_fields_count;
+        if (lookingForHclass) {
+            for (size_t ptr = begin; ptr < end; ptr += edgeFieldsCount) {
+                uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
+                if (nameIdx < strings.size() && strings[nameIdx] == "hclass") {
+                    cur = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
                     found = true;
-                    looking_for_hclass = false;
+                    lookingForHclass = false;
                     break;
                 }
             }
         } else {
-            for (size_t ptr = begin; ptr < end; ptr += edge_fields_count) {
-                uint32_t name_idx = edges[ptr + edge_name_or_index_offset];
-                if (name_idx >= strings.size()) continue;
-                const std::string& en = strings[name_idx];
+            for (size_t ptr = begin; ptr < end; ptr += edgeFieldsCount) {
+                uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
+                if (nameIdx >= strings.size()) {
+                    continue;
+                }
+                const std::string& en = strings[nameIdx];
                 if (en == "Proto" || en == "__proto__") {
-                    uint32_t proto = edges[ptr + edge_to_node_offset] / node_fields_count;
-                    std::string proto_name = get_node_name(proto);
-                    if (proto_name.find('#') != std::string::npos && proto_name.find(".ts") != std::string::npos) {
-                        return proto_name;
+                    uint32_t proto = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
+                    std::string protoName = GetNodeName(proto);
+                    if (protoName.find('#') != std::string::npos && protoName.find(".ts") != std::string::npos) {
+                        return protoName;
                     }
-                    bool is_wrapper = false;
-                    for (const std::string& marker : skip_markers) {
-                        if (proto_name.find(marker) != std::string::npos) {
-                            is_wrapper = true;
+                    bool isWrapper = false;
+                    for (const std::string& marker : skipMarkers) {
+                        if (protoName.find(marker) != std::string::npos) {
+                            isWrapper = true;
                             break;
                         }
                     }
-                    if (is_wrapper) {
-                        result_proto.clear();
-                    } else if (result_proto.empty()) {
-                        result_proto = proto_name;
+                    if (isWrapper) {
+                        resultProto.clear();
+                    } else if (resultProto.empty())
+                    {
+                        resultProto = protoName;
                     }
                     cur = proto;
-                    looking_for_hclass = true;
+                    lookingForHclass = true;
                     found = true;
                     break;
                 }
             }
         }
-        if (!found) break;
+        if (!found) {
+            break;
+        }
     }
-    return result_proto;
+    return resultProto;
 }
 
 // 获取 stateMgmt.js#observedClass 全局对象的扩展名（沿原型链提取 ArkTS 类名）
-std::string HeapSnapshot::get_observed_class_ext_name(uint32_t node_index) const {
-    std::string result_proto =
-        resolve_state_mgmt_wrapped_class(node_index, {"stateMgmt.js#observedClass"});
+std::string HeapSnapshot::GetObservedClassExtName(uint32_t NodeIndex) const
+{
+    std::string resultProto =
+        ResolveStateMgmtWrappedClass(NodeIndex, {"stateMgmt.js#observedClass"});
 
-    if (!result_proto.empty()) {
-        return "stateMgmt.js#observedClass(" + result_proto + ")";
+    if (!resultProto.empty()) {
+        return "stateMgmt.js#observedClass(" + resultProto + ")";
     }
 
-    std::string node_name = get_node_name(node_index);
-    if (node_name.find('#') != std::string::npos && node_name.find(".js") != std::string::npos) {
-        size_t hash = node_name.find('#');
-        if (hash != std::string::npos && hash + 1 < node_name.size()) {
-            return "stateMgmt.js#observedClass(" + node_name.substr(hash + 1) + ")";
+    std::string nodeName = GetNodeName(NodeIndex);
+    if (nodeName.find('#') != std::string::npos && nodeName.find(".js") != std::string::npos) {
+        size_t hash = nodeName.find('#');
+        if (hash != std::string::npos && hash + 1 < nodeName.size()) {
+            return "stateMgmt.js#observedClass(" + nodeName.substr(hash + 1) + ")";
         }
     }
-    return node_name;
+    return nodeName;
 }
 
 // 获取 declarative_frontend/stateMgmt.js#JSObject 的扩展名：与 observedClass 同一套路，
 // 沿 hclass → Proto → hclass → Proto 交替上溯，用被包装的 ArkTS 类名替换掉 JSObject 本身。
 // 链上找不到可用类名时，退回到「去掉 declarative_frontend/ 前缀」的旧行为。
-std::string HeapSnapshot::get_state_mgmt_js_object_ext_name(uint32_t node_index,
-                                                           const std::string& node_name) const {
-    const std::string wrapped = resolve_state_mgmt_wrapped_class(
-        node_index, {"stateMgmt.js#JSObject", "stateMgmt.js#observedClass"});
+std::string HeapSnapshot::GetStateMgmtJsObjectExtName(uint32_t NodeIndex,
+                                                           const std::string& nodeName) const {
+    const std::string wrapped = ResolveStateMgmtWrappedClass(
+        NodeIndex, {"stateMgmt.js#JSObject", "stateMgmt.js#observedClass"});
     if (!wrapped.empty()) {
         return "stateMgmt.js#JSObject(" + wrapped + ")";
     }
-    size_t pos = node_name.find("stateMgmt.js");
-    return (pos != std::string::npos) ? node_name.substr(pos) : node_name;
+    size_t pos = nodeName.find("stateMgmt.js");
+    return (pos != std::string::npos) ? nodeName.substr(pos) : nodeName;
 }
 
 // declarative_frontend/stateMgmt.js 对象扩展名的统一入口：
 // observedClass 沿原型链取 ArkTS 类名，JSObject 展开被包装的类，其余对象只去掉前缀。
-std::string HeapSnapshot::get_state_mgmt_ext_name(uint32_t node_index,
-                                                 const std::string& node_name) const {
-    if (node_name.find("stateMgmt.js#observedClass") != std::string::npos) {
-        return get_observed_class_ext_name(node_index);
+std::string HeapSnapshot::GetStateMgmtExtName(uint32_t NodeIndex,
+                                                 const std::string& nodeName) const {
+    if (nodeName.find("stateMgmt.js#observedClass") != std::string::npos) {
+        return GetObservedClassExtName(NodeIndex);
     }
-    if (node_name.find("stateMgmt.js#JSObject") != std::string::npos) {
-        return get_state_mgmt_js_object_ext_name(node_index, node_name);
+    if (nodeName.find("stateMgmt.js#JSObject") != std::string::npos) {
+        return GetStateMgmtJsObjectExtName(NodeIndex, nodeName);
     }
     // 其余 stateMgmt 对象：去掉 declarative_frontend/ 前缀，保留 stateMgmt.js#后面的字符串
-    size_t pos = node_name.find("stateMgmt.js");
-    return (pos != std::string::npos) ? node_name.substr(pos) : node_name;
+    size_t pos = nodeName.find("stateMgmt.js");
+    return (pos != std::string::npos) ? nodeName.substr(pos) : nodeName;
 }
 
 // 获取 SourceTextModule 扩展名
-std::string HeapSnapshot::get_source_text_module_ext_name(uint32_t node_index) const {
-    uint32_t local_export_entries_node = 0xFFFFFFFF;
-    uint32_t name_dict_node = 0xFFFFFFFF;
+std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t NodeIndex) const
+{
+    uint32_t localExportEntriesNode = 0xFFFFFFFF;
+    uint32_t nameDictNode = 0xFFFFFFFF;
 
-    size_t begin = first_edge_pointers[node_index];
-    size_t end = first_edge_pointers[node_index + 1];
-    for (size_t ptr = begin; ptr < end; ptr += edge_fields_count) {
-        uint32_t name_idx = edges[ptr + edge_name_or_index_offset];
-        if (name_idx >= strings.size()) continue;
-        const std::string& en = strings[name_idx];
-        if (en == "LocalExportEntries") {
-            local_export_entries_node = edges[ptr + edge_to_node_offset] / node_fields_count;
-        } else if (en == "NameDictionary") {
-            name_dict_node = edges[ptr + edge_to_node_offset] / node_fields_count;
+    size_t begin = firstEdgePointers[NodeIndex];
+    size_t end = firstEdgePointers[NodeIndex + 1];
+    for (size_t ptr = begin; ptr < end; ptr += edgeFieldsCount) {
+        uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
+        if (nameIdx >= strings.size()) {
+            continue;
         }
-        if (local_export_entries_node != 0xFFFFFFFF && name_dict_node != 0xFFFFFFFF) break;
+        const std::string& en = strings[nameIdx];
+        if (en == "LocalExportEntries") {
+            localExportEntriesNode = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
+        } else if (en == "NameDictionary")
+        {
+            nameDictNode = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
+        }
+        if (localExportEntriesNode != 0xFFFFFFFF && nameDictNode != 0xFFFFFFFF) {
+            break;
+        }
     }
 
-    std::string module_name;
-    if (name_dict_node != 0xFFFFFFFF && name_dict_node < static_cast<uint32_t>(node_count)) {
-        size_t d_begin = first_edge_pointers[name_dict_node];
-        size_t d_end = first_edge_pointers[name_dict_node + 1];
-        for (size_t ptr = d_begin; ptr < d_end; ptr += edge_fields_count) {
-            uint32_t child = edges[ptr + edge_to_node_offset] / node_fields_count;
-            if (child < static_cast<uint32_t>(node_count)) {
-                std::string child_name = get_node_name(child);
-                if (child_name.find('#') != std::string::npos) {
-                    module_name = child_name.substr(0, child_name.find('#'));
+    std::string moduleName;
+    if (nameDictNode != 0xFFFFFFFF && nameDictNode < static_cast<uint32_t>(nodeCount)) {
+        size_t dBegin = firstEdgePointers[nameDictNode];
+        size_t dEnd = firstEdgePointers[nameDictNode + 1];
+        for (size_t ptr = dBegin; ptr < dEnd; ptr += edgeFieldsCount) {
+            uint32_t child = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
+            if (child < static_cast<uint32_t>(nodeCount)) {
+                std::string childName = GetNodeName(child);
+                if (childName.find('#') != std::string::npos) {
+                    moduleName = childName.substr(0, childName.find('#'));
                     break;
                 }
             }
         }
     }
 
-    uint32_t export_count = 0;
-    if (local_export_entries_node != 0xFFFFFFFF && local_export_entries_node < static_cast<uint32_t>(node_count)) {
-        export_count = get_node_edge_count(local_export_entries_node);
-        if (export_count > 0) export_count -= 1;
+    uint32_t exportCount = 0;
+    if (localExportEntriesNode != 0xFFFFFFFF && localExportEntriesNode < static_cast<uint32_t>(nodeCount)) {
+        exportCount = GetNodeEdgeCount(localExportEntriesNode);
+        if (exportCount > 0) {
+            exportCount -= 1;
+        }
     }
 
-    std::vector<std::string> export_names;
-    export_names.reserve(4);
-    if (local_export_entries_node != 0xFFFFFFFF && local_export_entries_node < static_cast<uint32_t>(node_count)) {
-        size_t e_begin = first_edge_pointers[local_export_entries_node];
-        size_t e_end = first_edge_pointers[local_export_entries_node + 1];
-        for (size_t ptr = e_begin; ptr < e_end && export_names.size() < 4; ptr += edge_fields_count) {
-            uint32_t name_idx = edges[ptr + edge_name_or_index_offset];
-            if (name_idx < strings.size() && is_numeric_string(strings[name_idx])) {
-                uint32_t entry_node = edges[ptr + edge_to_node_offset] / node_fields_count;
-                if (entry_node >= static_cast<uint32_t>(node_count)) continue;
-                size_t e2_begin = first_edge_pointers[entry_node];
-                size_t e2_end = first_edge_pointers[entry_node + 1];
-                for (size_t ptr2 = e2_begin; ptr2 < e2_end; ptr2 += edge_fields_count) {
-                    uint32_t ename_idx = edges[ptr2 + edge_name_or_index_offset];
-                    if (ename_idx < strings.size() && strings[ename_idx] == "ExportName") {
-                        uint32_t export_name_node = edges[ptr2 + edge_to_node_offset] / node_fields_count;
-                        if (export_name_node < static_cast<uint32_t>(node_count)) {
-                            std::string ename = get_node_name(export_name_node);
+    std::vector<std::string> exportNames;
+    exportNames.reserve(4);
+    if (localExportEntriesNode != 0xFFFFFFFF && localExportEntriesNode < static_cast<uint32_t>(nodeCount)) {
+        size_t eBegin = firstEdgePointers[localExportEntriesNode];
+        size_t eEnd = firstEdgePointers[localExportEntriesNode + 1];
+        for (size_t ptr = eBegin; ptr < eEnd && exportNames.size() < 4; ptr += edgeFieldsCount) {
+            uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
+            if (nameIdx < strings.size() && IsNumericString(strings[nameIdx])) {
+                uint32_t entryNode = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
+                if (entryNode >= static_cast<uint32_t>(nodeCount)) {
+                    continue;
+                }
+                size_t e2Begin = firstEdgePointers[entryNode];
+                size_t e2End = firstEdgePointers[entryNode + 1];
+                for (size_t ptr2 = e2Begin; ptr2 < e2End; ptr2 += edgeFieldsCount) {
+                    uint32_t enameIdx = edges[ptr2 + edgeNameOrIndexOffset];
+                    if (enameIdx < strings.size() && strings[enameIdx] == "ExportName") {
+                        uint32_t exportNameNode = edges[ptr2 + edgeToNodeOffset] / nodeFieldsCount;
+                        if (exportNameNode < static_cast<uint32_t>(nodeCount)) {
+                            std::string ename = GetNodeName(exportNameNode);
                             if (ename == "default" || ename.empty()) {
-                                if (name_dict_node != 0xFFFFFFFF) {
-                                    size_t d_begin2 = first_edge_pointers[name_dict_node];
-                                    size_t d_end2 = first_edge_pointers[name_dict_node + 1];
-                                    for (size_t ptr3 = d_begin2; ptr3 < d_end2; ptr3 += edge_fields_count) {
-                                        uint32_t key_idx = edges[ptr3 + edge_name_or_index_offset];
-                                        if (key_idx < strings.size() && (strings[key_idx] == "0" || strings[key_idx] == "1")) {
-                                            uint32_t target_node = edges[ptr3 + edge_to_node_offset] / node_fields_count;
-                                            if (target_node < static_cast<uint32_t>(node_count)) {
-                                                std::string ext_name = get_js_object_ext_name(target_node);
+                                if (nameDictNode != 0xFFFFFFFF) {
+                                    size_t dBegin2 = firstEdgePointers[nameDictNode];
+                                    size_t dEnd2 = firstEdgePointers[nameDictNode + 1];
+                                    for (size_t ptr3 = dBegin2; ptr3 < dEnd2; ptr3 += edgeFieldsCount) {
+                                        uint32_t keyIdx = edges[ptr3 + edgeNameOrIndexOffset];
+                                        if (keyIdx < strings.size() && (strings[keyIdx] == "0" || strings[keyIdx] == "1")) {
+                                            uint32_t targetNode = edges[ptr3 + edgeToNodeOffset] / nodeFieldsCount;
+                                            if (targetNode < static_cast<uint32_t>(nodeCount)) {
+                                                std::string extName = GetJsObjectExtName(targetNode);
                                                 // get_js_object_ext_name 总是返回 "JSObject(...)"（:98/:100），
                                                 // 裸 "JSObject" 永远不会出现；按前缀判断才能真正跳过无信息对象。
-                                                if (ext_name.rfind("JSObject(", 0) != 0 &&
-                                                    ext_name != "JSSharedObject" &&
-                                                    ext_name.rfind("JSSharedObject(", 0) != 0) {
-                                                    export_names.push_back(ext_name);
+                                                if (extName.rfind("JSObject(", 0) != 0 &&
+                                                    extName != "JSSharedObject" &&
+                                                    extName.rfind("JSSharedObject(", 0) != 0)
+                                                    {
+                                                    exportNames.push_back(extName);
                                                     break;
                                                 }
                                             }
@@ -341,7 +376,7 @@ std::string HeapSnapshot::get_source_text_module_ext_name(uint32_t node_index) c
                                     }
                                 }
                             } else {
-                                export_names.push_back(ename);
+                                exportNames.push_back(ename);
                             }
                         }
                         break;
@@ -352,17 +387,19 @@ std::string HeapSnapshot::get_source_text_module_ext_name(uint32_t node_index) c
     }
 
     std::ostringstream oss;
-    oss << "SourceTextModule(nums=" << export_count;
-    if (!module_name.empty()) {
-        oss << ", module=" << module_name;
+    oss << "SourceTextModule(nums=" << exportCount;
+    if (!moduleName.empty()) {
+        oss << ", module=" << moduleName;
     } else {
         oss << ", module=None";
     }
-    if (!export_names.empty()) {
+    if (!exportNames.empty()) {
         oss << ", names=";
-        for (size_t i = 0; i < export_names.size(); ++i) {
-            if (i > 0) oss << ", ";
-            oss << export_names[i];
+        for (size_t i = 0; i < exportNames.size(); ++i) {
+            if (i > 0) {
+                oss << ", ";
+            }
+            oss << exportNames[i];
         }
     }
     oss << ")";
@@ -371,66 +408,74 @@ std::string HeapSnapshot::get_source_text_module_ext_name(uint32_t node_index) c
 
 // 获取节点的扩展名称
 // 计算单个节点的扩展名（不查缓存、不递归调用 get_extended_node_name）。
-std::string HeapSnapshot::compute_extended_name(uint32_t node_index) const {
+std::string HeapSnapshot::ComputeExtendedName(uint32_t NodeIndex) const
+{
     std::string result;
-    std::string node_name = get_node_name(node_index);
-    std::string node_type = get_node_type_name(node_index);
+    std::string nodeName = GetNodeName(NodeIndex);
+    std::string nodeType = GetNodeTypeName(NodeIndex);
 
     // 先按类型分流：string 节点的 node_name 就是字符串内容本身，若内容恰好含
     // "declarative_frontend/stateMgmt.js"（例如堆里保存的模块 URL），会被误判成
     // stateMgmt 对象，进而改变 property-tag / compare / 引用链的分组键。
-    if (node_type != "string" &&
-        node_name.find("declarative_frontend/stateMgmt.js") != std::string::npos) {
-        result = get_state_mgmt_ext_name(node_index, node_name);
-    } else if (node_type == "string") {
-        result = get_string_ext_name(node_index);
-    } else if (node_type == "object" &&
-               (node_name == "JSObject" || node_name == "JSSharedObject" || node_name == "js_shared_object")) {
-        result = get_js_object_ext_name(node_index);
-    } else if (node_type == "native" &&
-               (node_name == "source_text_module_record" || node_name == "SourceTextModule")) {
-        result = get_source_text_module_ext_name(node_index);
+    if (nodeType != "string" &&
+        nodeName.find("declarative_frontend/stateMgmt.js") != std::string::npos)
+        {
+        result = GetStateMgmtExtName(NodeIndex, nodeName);
+    } else if (nodeType == "string")
+    {
+        result = GetStringExtName(NodeIndex);
+    } else if (nodeType == "object" &&
+               (nodeName == "JSObject" || nodeName == "JSSharedObject" || nodeName == "js_shared_object")) {
+        result = GetJsObjectExtName(NodeIndex);
+    } else if (nodeType == "native" &&
+               (nodeName == "source_text_module_record" || nodeName == "SourceTextModule")) {
+        result = GetSourceTextModuleExtName(NodeIndex);
     } else {
-        result = node_name;
+        result = nodeName;
     }
     return result;
 }
 
 // 获取节点的扩展名称
-const std::string& HeapSnapshot::get_extended_node_name(uint32_t node_index) const {
-    if (node_index >= static_cast<uint32_t>(node_count)) {
+const std::string& HeapSnapshot::GetExtendedNodeName(uint32_t NodeIndex) const
+{
+    if (NodeIndex >= static_cast<uint32_t>(nodeCount)) {
         static const std::string empty;
         return empty;
     }
 
     // 一次性并行预构建全量扩展名，之后并行阶段无锁只读。
-    std::call_once(*ext_names_once_, [this]() {
+    std::call_once(*ExtNamesOnce_, [this]()
+    {
         const auto t0 = std::chrono::steady_clock::now();
-        log::logd("[ref_chain] build ext_names start node_count=", node_count);
+        log::Logd("[ref_chain] build ext_names start node_count=", nodeCount);
 
-        ext_names_.resize(static_cast<size_t>(node_count));
+        extNames_.resize(static_cast<size_t>(nodeCount));
         const int T = std::max(1, static_cast<int>(std::thread::hardware_concurrency()));
-        const int N = node_count;
+        const int N = nodeCount;
         std::vector<std::thread> workers;
         workers.reserve(T);
         for (int t = 0; t < T; ++t) {
             const int b = static_cast<int>((static_cast<long long>(N) * t) / T);
             const int e = static_cast<int>((static_cast<long long>(N) * (t + 1)) / T);
-            workers.emplace_back([this, b, e]() {
+            workers.emplace_back([this, b, e]()
+            {
                 for (int i = b; i < e; ++i) {
-                    ext_names_[static_cast<size_t>(i)] =
-                        compute_extended_name(static_cast<uint32_t>(i));
+                    extNames_[static_cast<size_t>(i)] =
+                        ComputeExtendedName(static_cast<uint32_t>(i));
                 }
             });
         }
-        for (auto& w : workers) w.join();
+        for (auto& w : workers) {
+            w.join();
+        }
 
         const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::steady_clock::now() - t0)
                             .count();
-        log::logd("[ref_chain] build ext_names done (", ms, "ms)");
+        log::Logd("[ref_chain] build ext_names done (", ms, "ms)");
     });
-    return ext_names_[node_index];
+    return extNames_[NodeIndex];
 }
 
 // ============================================================================
@@ -461,17 +506,20 @@ public:
     std::string overflow_;          // partial number straddling a chunk boundary
 
     /// Feed one chunk of text. When ']' appears the parser finishes.
-    void feed(const std::string& chunk_text) {
-        if (done_) return;
-        std::string text = overflow_ + chunk_text;
+    void feed(const std::string& chunkText)
+    {
+        if (done_) {
+            return;
+        }
+        std::string text = overflow_ + chunkText;
         overflow_.clear();
 
         // Check if this chunk contains the closing bracket
-        size_t r_bracket = text.find(']');
-        if (r_bracket != std::string::npos) {
+        size_t rBracket = text.find(']');
+        if (rBracket != std::string::npos) {
             // Append a trailing comma to flush the last number, then parse
-            std::string complete = text.substr(0, r_bracket) + ',';
-            parse_numbers_from_string(complete, result);
+            std::string complete = text.substr(0, rBracket) + ',';
+            ParseNumbersFromString(complete, result);
             done_ = true;
             return;
         }
@@ -480,11 +528,11 @@ public:
         // The number before the last comma is safe to parse because the
         // trailing comma terminates it.  Without the comma, the number
         // would be lost, causing a -1 shift at every chunk boundary.
-        size_t last_comma = text.rfind(',');
-        if (last_comma != std::string::npos) {
-            std::string complete = text.substr(0, last_comma + 1);
-            overflow_ = text.substr(last_comma + 1);
-            parse_numbers_from_string(complete, result);
+        size_t lastComma = text.rfind(',');
+        if (lastComma != std::string::npos) {
+            std::string complete = text.substr(0, lastComma + 1);
+            overflow_ = text.substr(lastComma + 1);
+            ParseNumbersFromString(complete, result);
         } else {
             // Entire chunk may be part of a single number (unlikely but possible)
             overflow_ = text;
@@ -492,23 +540,27 @@ public:
     }
 
     /// Must be called after the last chunk to flush pending overflow.
-    void done() {
-        if (done_) return;
+    void done()
+    {
+        if (done_) {
+            return;
+        }
         if (!overflow_.empty()) {
-            parse_numbers_from_string(overflow_, result);
+            ParseNumbersFromString(overflow_, result);
             overflow_.clear();
         }
         done_ = true;
     }
 
-    bool is_done() const { return done_; }
+    bool IsDone() const { return done_; }
 
 private:
     /// Parse comma-separated unsigned integers from a string.
     /// Non-digit characters (commas, whitespace, brackets) terminate numbers.
-    static void parse_numbers_from_string(const std::string& s, std::vector<uint32_t>& out) {
+    static void ParseNumbersFromString(const std::string& s, std::vector<uint32_t>& out)
+    {
         uint32_t num = 0;
-        bool in_num = false;
+        bool inNum = false;
         for (size_t i = 0; i < s.size(); i++) {
             char c = s[i];
             if (c >= '0' && c <= '9') {
@@ -519,11 +571,12 @@ private:
                         "heapsnapshot: numeric array contains an integer exceeding uint32");
                 }
                 num = num * 10 + digit;
-                in_num = true;
-            } else if (in_num) {
+                inNum = true;
+            } else if (inNum)
+            {
                 out.push_back(num);
                 num = 0;
-                in_num = false;
+                inNum = false;
             }
         }
     }
@@ -535,31 +588,34 @@ private:
 
 struct HeaderResult {
     std::string buf;            // accumulated header buffer
-    size_t nodes_marker_pos;    // byte offset of "\"nodes\":" in buf
+    size_t nodesMarkerPos;    // byte offset of "\"nodes\":" in buf
 };
 
 /// Read file header in META_CHUNK-sized chunks until both "\"snapshot\":"
 /// and "\"nodes\":" markers are found.  Returns the accumulated buffer
 /// and the position of the nodes marker.
 /// Throws if markers are not found within META_LIMIT bytes.
-static HeaderResult read_header(std::ifstream& file, size_t file_size) {
+static HeaderResult ReadHeader(std::ifstream& file, size_t file_size)
+{
     size_t limit = std::min<size_t>(file_size, META_LIMIT);
     std::string acc;
     size_t pos = 0;
 
     while (pos < limit) {
-        size_t chunk_size = std::min<size_t>(META_CHUNK, limit - pos);
-        std::string chunk(chunk_size, '\0');
-        file.read(&chunk[0], chunk_size);
-        size_t bytes_read = file.gcount();
-        if (bytes_read == 0) break;
+        size_t chunkSize = std::min<size_t>(META_CHUNK, limit - pos);
+        std::string chunk(chunkSize, '\0');
+        file.read(&chunk[0], chunkSize);
+        size_t bytesRead = file.gcount();
+        if (bytesRead == 0) {
+            break;
+        }
 
-        acc.append(chunk.data(), bytes_read);
-        pos += bytes_read;
+        acc.append(chunk.data(), bytesRead);
+        pos += bytesRead;
 
-        size_t nodes_idx = acc.find("\"nodes\":");
-        if (nodes_idx != std::string::npos && acc.find("\"snapshot\":") != std::string::npos) {
-            return {acc, nodes_idx};
+        size_t nodesIdx = acc.find("\"nodes\":");
+        if (nodesIdx != std::string::npos && acc.find("\"snapshot\":") != std::string::npos) {
+            return {acc, nodesIdx};
         }
     }
     throw std::runtime_error("cannot find \"snapshot\" and \"nodes\" fields in file header");
@@ -567,21 +623,26 @@ static HeaderResult read_header(std::ifstream& file, size_t file_size) {
 
 /// Stream-parse a flat numeric JSON array from file starting at byte_offset.
 /// Uses ChunkedUintParser with CHUNK_SIZE (16 MB) chunks.
-static std::vector<uint32_t> parse_array_chunked(std::ifstream& file, size_t byte_offset, size_t file_size) {
+static std::vector<uint32_t> parseArrayChunked(std::ifstream& file, size_t byteOffset, size_t file_size)
+{
     ChunkedUintParser parser;
-    std::string read_buf(CHUNK_SIZE, '\0');
-    size_t pos = byte_offset;
+    std::string readBuf(CHUNK_SIZE, '\0');
+    size_t pos = byteOffset;
 
     while (pos < file_size) {
-        size_t to_read = std::min<size_t>(CHUNK_SIZE, file_size - pos);
+        size_t toRead = std::min<size_t>(CHUNK_SIZE, file_size - pos);
         file.seekg(pos);
-        file.read(&read_buf[0], to_read);
-        size_t bytes_read = file.gcount();
-        if (bytes_read == 0) break;
+        file.read(&readBuf[0], toRead);
+        size_t bytesRead = file.gcount();
+        if (bytesRead == 0) {
+            break;
+        }
 
-        parser.feed(std::string(read_buf.data(), bytes_read));
-        pos += bytes_read;
-        if (parser.is_done()) break;
+        parser.feed(std::string(readBuf.data(), bytesRead));
+        pos += bytesRead;
+        if (parser.IsDone()) {
+            break;
+        }
     }
 
     parser.done();
@@ -592,27 +653,33 @@ static std::vector<uint32_t> parse_array_chunked(std::ifstream& file, size_t byt
 /// To avoid missing markers that straddle chunk boundaries, each window
 /// overlaps the previous one by (marker.length() - 1) bytes.
 /// Returns the absolute byte offset of the marker, or std::string::npos.
-static size_t find_marker_in_file(std::ifstream& file, const std::string& marker,
-                                   size_t start_pos, size_t file_size) {
-    std::string read_buf(META_CHUNK, '\0');
+static size_t FindMarkerInFile(std::ifstream& file, const std::string& marker,
+                                   size_t startPos, size_t file_size) {
+    std::string readBuf(META_CHUNK, '\0');
     file.clear();  // ensure stream is in good state before scanning
-    size_t pos = start_pos;
+    size_t pos = startPos;
 
     while (pos < file_size) {
-        size_t to_read = std::min<size_t>(META_CHUNK, file_size - pos);
+        size_t toRead = std::min<size_t>(META_CHUNK, file_size - pos);
         file.seekg(pos);
-        file.read(&read_buf[0], to_read);
-        size_t bytes_read = file.gcount();
-        if (bytes_read == 0) break;
+        file.read(&readBuf[0], toRead);
+        size_t bytesRead = file.gcount();
+        if (bytesRead == 0) {
+            break;
+        }
 
-        std::string view(read_buf.data(), bytes_read);
+        std::string view(readBuf.data(), bytesRead);
         size_t idx = view.find(marker);
-        if (idx != std::string::npos) return pos + idx;
+        if (idx != std::string::npos) {
+            return pos + idx;
+        }
 
         // Overlap windows to catch markers that straddle boundaries
-        if (pos + bytes_read < file_size) {
-            pos += bytes_read;
-            if (pos >= marker.length()) pos -= (marker.length() - 1);
+        if (pos + bytesRead < file_size) {
+            pos += bytesRead;
+            if (pos >= marker.length()) {
+                pos -= (marker.length() - 1);
+            }
         } else {
             break;
         }
@@ -623,20 +690,24 @@ static size_t find_marker_in_file(std::ifstream& file, const std::string& marker
 /// Find the position of '[' that starts a JSON array after a given marker.
 /// e.g., find_array_bracket_after(file, "\"nodes\":", start_pos, file_size)
 /// returns the byte offset of the '[' after the marker.
-static size_t find_array_bracket_after(std::ifstream& file, const std::string& marker,
-                                        size_t start_pos, size_t file_size) {
-    size_t mark_pos = find_marker_in_file(file, marker, start_pos, file_size);
-    if (mark_pos == std::string::npos) return std::string::npos;
+static size_t FindArrayBracketAfter(std::ifstream& file, const std::string& marker,
+                                        size_t startPos, size_t file_size) {
+    size_t markPos = FindMarkerInFile(file, marker, startPos, file_size);
+    if (markPos == std::string::npos) {
+        return std::string::npos;
+    }
 
     std::string buf(256, '\0');
-    size_t search_start = mark_pos + marker.size();
-    file.seekg(search_start);
+    size_t searchStart = markPos + marker.size();
+    file.seekg(searchStart);
     file.read(&buf[0], 256);
     size_t bytes = file.gcount();
     std::string view(buf.data(), bytes);
     size_t bracket = view.find('[');
-    if (bracket == std::string::npos) return std::string::npos;
-    return search_start + bracket;
+    if (bracket == std::string::npos) {
+        return std::string::npos;
+    }
+    return searchStart + bracket;
 }
 
 // ============================================================================
@@ -657,8 +728,11 @@ static size_t find_array_bracket_after(std::ifstream& file, const std::string& m
 /// Correctly handles string literals so ']' inside strings is not mistaken
 /// for the array terminator.  Works for flat JSON arrays of strings
 /// (no nested objects/arrays).
-static size_t find_matching_close_bracket(const std::string& text, size_t start) {
-    if (start >= text.size() || text[start] != '[') return std::string::npos;
+static size_t FindMatchingCloseBracket(const std::string& text, size_t start)
+{
+    if (start >= text.size() || text[start] != '[') {
+        return std::string::npos;
+    }
     size_t pos = start + 1;
     while (pos < text.size()) {
         char c = text[pos];
@@ -667,12 +741,17 @@ static size_t find_matching_close_bracket(const std::string& text, size_t start)
             pos++;
             while (pos < text.size()) {
                 if (text[pos] == '\\') { pos += 2; continue; }  // skip escaped char
-                if (text[pos] == '"') break;                     // end of string
+                if (text[pos] == '"') {
+                    break; // end of string
+                }
                 pos++;
             }
-            if (pos >= text.size()) return std::string::npos;   // unterminated string
+            if (pos >= text.size()) {
+                return std::string::npos;
+            }// unterminated string
             pos++;
-        } else if (c == ']') {
+        } else if (c == ']')
+        {
             return pos;  // found matching bracket
         } else {
             pos++;
@@ -686,23 +765,24 @@ static size_t find_matching_close_bracket(const std::string& text, size_t start)
 ///   1. Control characters (U+0000-U+001F, except \t \n \r) are escaped as \u00XX
 ///   2. Orphan surrogate pairs (\uD800-\uDFFF) are replaced with \uFFFD
 /// The sanitization is done in-place on a copy; the original buffer is unchanged.
-static std::string sanitize_json_string_array(const std::string& str_buf) {
+static std::string SanitizeJsonStringArray(const std::string& strBuf)
+{
     std::string sanitized;
-    sanitized.reserve(str_buf.size());
+    sanitized.reserve(strBuf.size());
     size_t i = 0;
-    while (i < str_buf.size()) {
-        char c = str_buf[i];
+    while (i < strBuf.size()) {
+        char c = strBuf[i];
         if (c == '"') {
             // Inside a string literal — copy until closing quote
             sanitized += c;
             i++;
-            while (i < str_buf.size()) {
-                char sc = str_buf[i];
+            while (i < strBuf.size()) {
+                char sc = strBuf[i];
                 if (sc == '\\') {
                     // Check for orphan surrogate: \uD[89AB]xx or \uD[CDEF]xx
-                    if (i + 5 < str_buf.size() && str_buf[i+1] == 'u') {
-                        char h1 = str_buf[i+2] | 0x20;  // lowercase
-                        char h2 = str_buf[i+3];
+                    if (i + 5 < strBuf.size() && strBuf[i+1] == 'u') {
+                        char h1 = strBuf[i+2] | 0x20;  // lowercase
+                        char h2 = strBuf[i+3];
                         if (h1 == 'd' && ((h2 >= '8' && h2 <= 'f') || (h2 >= 'A' && h2 <= 'F'))) {
                             sanitized += "\\uFFFD";  // replace with replacement character
                             i += 6;
@@ -711,7 +791,7 @@ static std::string sanitize_json_string_array(const std::string& str_buf) {
                     }
                     sanitized += sc;
                     i++;
-                    if (i < str_buf.size()) { sanitized += str_buf[i]; i++; }
+                    if (i < strBuf.size()) { sanitized += strBuf[i]; i++; }
                     continue;
                 }
                 if (sc == '"') {
@@ -744,43 +824,49 @@ static std::string sanitize_json_string_array(const std::string& str_buf) {
 /// The strings array is located at bracket_pos and parsed via JSON.
 /// If the initial parse fails, the buffer is sanitized and retried.
 /// If that also fails, an empty string table is returned as fallback.
-static std::vector<std::string> read_strings_array(std::ifstream& file, size_t bracket_pos, size_t file_size) {
+static std::vector<std::string> readStringsArray(std::ifstream& file, size_t bracketPos, size_t file_size)
+{
     // Read up to 1 MB (META_CHUNK * 16) for the strings array
-    size_t remaining = file_size - bracket_pos;
-    size_t read_size = std::min<size_t>(remaining, META_CHUNK * 16);
-    std::string str_buf(read_size, '\0');
+    size_t remaining = file_size - bracketPos;
+    size_t readSize = std::min<size_t>(remaining, META_CHUNK * 16);
+    std::string strBuf(readSize, '\0');
     file.clear();
-    file.seekg(bracket_pos);
-    file.read(&str_buf[0], read_size);
-    size_t bytes_read = file.gcount();
-    str_buf.resize(bytes_read);
+    file.seekg(bracketPos);
+    file.read(&strBuf[0], readSize);
+    size_t bytesRead = file.gcount();
+    strBuf.resize(bytesRead);
 
     // Find the closing bracket to trim the buffer to exact array content
-    size_t close_bracket = find_matching_close_bracket(str_buf, 0);
-    if (close_bracket != std::string::npos && close_bracket + 1 < str_buf.size()) {
-        str_buf.resize(close_bracket + 1);
-    } else if (close_bracket == std::string::npos && bytes_read == read_size && read_size < remaining) {
+    size_t closeBracket = FindMatchingCloseBracket(strBuf, 0);
+    if (closeBracket != std::string::npos && closeBracket + 1 < strBuf.size()) {
+        strBuf.resize(closeBracket + 1);
+    } else if (closeBracket == std::string::npos && bytesRead == readSize && readSize < remaining)
+    {
         // Strings array is larger than 1 MB — read the entire rest of the file
-        std::string rest_buf(remaining, '\0');
+        std::string restBuf(remaining, '\0');
         file.clear();
-        file.seekg(bracket_pos);
-        file.read(&rest_buf[0], remaining);
-        size_t rest_bytes = file.gcount();
-        rest_buf.resize(rest_bytes);
-        size_t full_close = find_matching_close_bracket(rest_buf, 0);
-        if (full_close != std::string::npos) rest_buf.resize(full_close + 1);
-        str_buf = std::move(rest_buf);
+        file.seekg(bracketPos);
+        file.read(&restBuf[0], remaining);
+        size_t restBytes = file.gcount();
+        restBuf.resize(restBytes);
+        size_t fullClose = FindMatchingCloseBracket(restBuf, 0);
+        if (fullClose != std::string::npos) {
+            restBuf.resize(fullClose + 1);
+        }
+        strBuf = std::move(restBuf);
     }
 
     // First attempt: direct JSON parse
     try {
-        return json::parse(str_buf).get<std::vector<std::string>>();
-    } catch (const std::exception&) {
+        return json::parse(strBuf).get<std::vector<std::string>>();
+    } catch (const std::exception&)
+    {
         // Second attempt: sanitize and retry
-        std::string sanitized = sanitize_json_string_array(str_buf);
+        std::string sanitized = SanitizeJsonStringArray(strBuf);
         try {
             return json::parse(sanitized).get<std::vector<std::string>>();
-        } catch (const std::exception&) {
+        } catch (const std::exception&)
+        {
             // 不再静默回退成空表：空 strings 会让所有节点名/分类/引用链/总量
             // 静默失效，报告"看起来成功"却毫无分析价值。宁可显式失败。
             throw std::runtime_error("failed to parse snapshot strings table");
@@ -796,115 +882,122 @@ static std::vector<std::string> read_strings_array(std::ifstream& file, size_t b
 //    - edge_types / node_types arrays → numeric type values
 //  Also returns the byte position of the nodes array bracket for Phase 2.
 // ============================================================================
-static void parse_snapshot_meta(HeapSnapshot& snapshot,
-                                 const std::string& head_buf,
-                                 size_t nodes_marker_pos,
-                                 size_t& nodes_array_bracket) {
+static void ParseSnapshotMeta(HeapSnapshot& snapshot,
+                                 const std::string& headBuf,
+                                 size_t nodesMarkerPos,
+                                 size_t& nodesArrayBracket) {
     // Locate the snapshot metadata JSON between "snapshot": and "nodes":
-    size_t snap_idx = head_buf.find("\"snapshot\":");
-    nodes_array_bracket = head_buf.find('[', nodes_marker_pos + 8);
-    size_t meta_end = head_buf.rfind('}', nodes_array_bracket);
-    if (meta_end == std::string::npos) {
+    size_t snapIdx = headBuf.find("\"snapshot\":");
+    nodesArrayBracket = headBuf.find('[', nodesMarkerPos + 8);
+    size_t metaEnd = headBuf.rfind('}', nodesArrayBracket);
+    if (metaEnd == std::string::npos) {
         throw std::runtime_error("cannot find snapshot metadata end");
     }
-    meta_end += 1;
+    metaEnd += 1;
 
     // Extract and trim the JSON string
-    std::string snapshot_json_str = head_buf.substr(snap_idx + 11, meta_end - (snap_idx + 11));
-    const size_t first_nonspace = snapshot_json_str.find_first_not_of(" \t\r\n");
-    if (first_nonspace != std::string::npos) {
-        snapshot_json_str.erase(0, first_nonspace);
+    std::string snapshotJsonStr = headBuf.substr(snapIdx + 11, metaEnd - (snapIdx + 11));
+    const size_t firstNonspace = snapshotJsonStr.find_first_not_of(" \t\r\n");
+    if (firstNonspace != std::string::npos) {
+        snapshotJsonStr.erase(0, firstNonspace);
     } else {
-        snapshot_json_str.clear();
+        snapshotJsonStr.clear();
     }
-    const size_t last_nonspace = snapshot_json_str.find_last_not_of(" \t\r\n");
-    if (last_nonspace != std::string::npos) {
-        snapshot_json_str.erase(last_nonspace + 1);
+    const size_t lastNonspace = snapshotJsonStr.find_last_not_of(" \t\r\n");
+    if (lastNonspace != std::string::npos) {
+        snapshotJsonStr.erase(lastNonspace + 1);
     } else {
-        snapshot_json_str.clear();
+        snapshotJsonStr.clear();
     }
 
-    json snapshot_meta;
+    json snapshotMeta;
     try {
-        snapshot_meta = json::parse(snapshot_json_str);
-    } catch (const std::exception& e) {
+        snapshotMeta = json::parse(snapshotJsonStr);
+    } catch (const std::exception& e)
+    {
         throw std::runtime_error(std::string("failed to parse snapshot metadata: ") + e.what());
     }
 
-    auto meta = snapshot_meta["meta"];
-    auto node_fields = meta["node_fields"].get<std::vector<std::string>>();
-    auto edge_fields = meta["edge_fields"].get<std::vector<std::string>>();
+    auto meta = snapshotMeta["meta"];
+    auto nodeFields = meta["node_fields"].get<std::vector<std::string>>();
+    auto edgeFields = meta["edge_fields"].get<std::vector<std::string>>();
 
-    snapshot.node_fields_count = static_cast<int>(node_fields.size());
-    snapshot.edge_fields_count = static_cast<int>(edge_fields.size());
-    if (snapshot.node_fields_count <= 0) {
+    snapshot.nodeFieldsCount = static_cast<int>(nodeFields.size());
+    snapshot.edgeFieldsCount = static_cast<int>(edgeFields.size());
+    if (snapshot.nodeFieldsCount <= 0) {
         throw std::runtime_error("invalid snapshot metadata: empty node_fields");
     }
 
     // Discover node field offsets by name
     // Typical V8 node_fields: ["type","name","id","self_size","edge_count","trace_node_id","detachedness"]
-    for (int i = 0; i < static_cast<int>(node_fields.size()); i++) {
-        if (node_fields[i] == "type") snapshot.node_type_offset = i;
-        else if (node_fields[i] == "name") snapshot.node_name_offset = i;
-        else if (node_fields[i] == "id") snapshot.node_id_offset = i;
-        else if (node_fields[i] == "self_size") snapshot.node_self_size_offset = i;
-        else if (node_fields[i] == "native_size") snapshot.node_native_size_offset = i;
-        else if (node_fields[i] == "edge_count") snapshot.node_edge_count_offset = i;
+    for (int i = 0; i < static_cast<int>(nodeFields.size()); i++) {
+        if (nodeFields[i] == "type") {
+            snapshot.nodeTypeOffset = i;
+        }
+        else if (nodeFields[i] == "name") snapshot.nodeNameOffset = i;
+        else if (nodeFields[i] == "id") snapshot.nodeIdOffset = i;
+        else if (nodeFields[i] == "self_size") snapshot.nodeSelfSizeOffset = i;
+        else if (nodeFields[i] == "native_size") snapshot.nodeNativeSizeOffset = i;
+        else if (nodeFields[i] == "edge_count") snapshot.nodeEdgeCountOffset = i;
     }
 
     // Discover edge field offsets by name
     // Typical V8 edge_fields: ["type","name_or_index","to_node"]
-    for (int i = 0; i < static_cast<int>(edge_fields.size()); i++) {
-        if (edge_fields[i] == "type") snapshot.edge_type_offset = i;
-        else if (edge_fields[i] == "name_or_index") snapshot.edge_name_or_index_offset = i;
-        else if (edge_fields[i] == "to_node") snapshot.edge_to_node_offset = i;
+    for (int i = 0; i < static_cast<int>(edgeFields.size()); i++) {
+        if (edgeFields[i] == "type") {
+            snapshot.edgeTypeOffset = i;
+        }
+        else if (edgeFields[i] == "name_or_index") snapshot.edgeNameOrIndexOffset = i;
+        else if (edgeFields[i] == "to_node") snapshot.edgeToNodeOffset = i;
     }
 
     // 元数据完整性校验：缺失必填字段会让下游用 -1（转成 SIZE_MAX）当数组下标越界读，
     // edge_fields 为空则会在边解析处除以 0。畸形/异构生成器产出的快照挡在这里。
-    if (snapshot.edge_fields_count <= 0) {
+    if (snapshot.edgeFieldsCount <= 0) {
         throw std::runtime_error("invalid snapshot metadata: empty edge_fields");
     }
-    if (snapshot.node_type_offset < 0 || snapshot.node_name_offset < 0 ||
-        snapshot.node_id_offset < 0 || snapshot.node_self_size_offset < 0 ||
-        snapshot.node_edge_count_offset < 0) {
+    if (snapshot.nodeTypeOffset < 0 || snapshot.nodeNameOffset < 0 ||
+        snapshot.nodeIdOffset < 0 || snapshot.nodeSelfSizeOffset < 0 ||
+        snapshot.nodeEdgeCountOffset < 0) {
         throw std::runtime_error(
             "invalid snapshot metadata: missing required node field "
             "(type/name/id/self_size/edge_count)");
     }
-    if (snapshot.edge_type_offset < 0 || snapshot.edge_name_or_index_offset < 0 ||
-        snapshot.edge_to_node_offset < 0) {
+    if (snapshot.edgeTypeOffset < 0 || snapshot.edgeNameOrIndexOffset < 0 ||
+        snapshot.edgeToNodeOffset < 0) {
         throw std::runtime_error(
             "invalid snapshot metadata: missing required edge field (type/name_or_index/to_node)");
     }
 
     // Resolve edge type numeric values from meta.edge_types[type_offset]
     // Typical V8 edge types: ["context","element","property","internal","hidden","shortcut","weak"]
-    snapshot.edge_weak_type = -1;
-    snapshot.edge_shortcut_type = -1;
-    snapshot.edge_hidden_type = -1;
-    snapshot.edge_element_type = -1;
-    snapshot.edge_internal_type = -1;
-    if (meta.contains("edge_types") && snapshot.edge_type_offset >= 0) {
-        auto edge_types = meta["edge_types"][snapshot.edge_type_offset];
-        if (edge_types.is_array()) {
-            auto types = edge_types.get<std::vector<std::string>>();
+    snapshot.edgeWeakType = -1;
+    snapshot.edgeShortcutType = -1;
+    snapshot.edgeHiddenType = -1;
+    snapshot.edgeElementType = -1;
+    snapshot.edgeInternalType = -1;
+    if (meta.contains("edge_types") && snapshot.edgeTypeOffset >= 0) {
+        auto edgeTypes = meta["edge_types"][snapshot.edgeTypeOffset];
+        if (edgeTypes.is_array()) {
+            auto types = edgeTypes.get<std::vector<std::string>>();
             for (int i = 0; i < static_cast<int>(types.size()); i++) {
-                if (types[i] == "weak") snapshot.edge_weak_type = i;
-                else if (types[i] == "shortcut") snapshot.edge_shortcut_type = i;
-                else if (types[i] == "hidden") snapshot.edge_hidden_type = i;
-                else if (types[i] == "element") snapshot.edge_element_type = i;
-                else if (types[i] == "internal") snapshot.edge_internal_type = i;
+                if (types[i] == "weak") {
+                    snapshot.edgeWeakType = i;
+                }
+                else if (types[i] == "shortcut") snapshot.edgeShortcutType = i;
+                else if (types[i] == "hidden") snapshot.edgeHiddenType = i;
+                else if (types[i] == "element") snapshot.edgeElementType = i;
+                else if (types[i] == "internal") snapshot.edgeInternalType = i;
             }
         }
     }
 
     // Parse node type names from meta.node_types[type_offset]
     // Typical V8 node types: ["hidden","array","string","object","code","closure",...]
-    if (meta.contains("node_types") && snapshot.node_type_offset >= 0) {
-        auto node_types = meta["node_types"][snapshot.node_type_offset];
-        if (node_types.is_array()) {
-            snapshot.node_type_names = node_types.get<std::vector<std::string>>();
+    if (meta.contains("node_types") && snapshot.nodeTypeOffset >= 0) {
+        auto NodeTypes = meta["node_types"][snapshot.nodeTypeOffset];
+        if (NodeTypes.is_array()) {
+            snapshot.nodeTypeNames = NodeTypes.get<std::vector<std::string>>();
         }
     }
 }
@@ -917,13 +1010,13 @@ static void parse_snapshot_meta(HeapSnapshot& snapshot,
 //  Parsed via ChunkedUintParser to handle large arrays without loading the
 //  entire JSON string into memory.
 // ============================================================================
-static void parse_nodes_array(HeapSnapshot& snapshot, std::ifstream& file,
-                               size_t nodes_array_bracket, size_t file_size) {
-    snapshot.nodes = parse_array_chunked(file, nodes_array_bracket + 1, file_size);
-    size_t nc = snapshot.nodes.size() / snapshot.node_fields_count;
+static void ParseNodesArray(HeapSnapshot& snapshot, std::ifstream& file,
+                               size_t nodesArrayBracket, size_t file_size) {
+    snapshot.nodes = parseArrayChunked(file, nodesArrayBracket + 1, file_size);
+    size_t nc = snapshot.nodes.size() / snapshot.nodeFieldsCount;
     if (nc > static_cast<size_t>(std::numeric_limits<int>::max()))
         throw std::runtime_error("malformed heapsnapshot: node count exceeds INT_MAX");
-    snapshot.node_count = static_cast<int>(nc);
+    snapshot.nodeCount = static_cast<int>(nc);
 }
 
 // ============================================================================
@@ -934,34 +1027,36 @@ static void parse_nodes_array(HeapSnapshot& snapshot, std::ifstream& file,
 //  (after the nodes array).  We try the header first, then scan forward.
 //  Returns the bracket position for use in the strings phase.
 // ============================================================================
-static size_t parse_edges_array(HeapSnapshot& snapshot, std::ifstream& file,
-                                 const std::string& head_buf,
-                                 size_t nodes_array_bracket, size_t file_size) {
-    size_t edges_bracket_pos = std::string::npos;
+static size_t ParseEdgesArray(HeapSnapshot& snapshot, std::ifstream& file,
+                                 const std::string& headBuf,
+                                 size_t nodesArrayBracket, size_t file_size) {
+    size_t edgesBracketPos = std::string::npos;
 
     // First try: header buffer (edges may be close to the beginning)
-    size_t edges_marker_pos = head_buf.find("\"edges\":");
-    if (edges_marker_pos != std::string::npos) {
-        size_t bracket = head_buf.find('[', edges_marker_pos + 8);
-        if (bracket != std::string::npos) edges_bracket_pos = bracket;
+    size_t edgesMarkerPos = headBuf.find("\"edges\":");
+    if (edgesMarkerPos != std::string::npos) {
+        size_t bracket = headBuf.find('[', edgesMarkerPos + 8);
+        if (bracket != std::string::npos) {
+            edgesBracketPos = bracket;
+        }
     }
 
     // Second try: scan forward from after the nodes array
-    if (edges_bracket_pos == std::string::npos) {
+    if (edgesBracketPos == std::string::npos) {
         // Estimate: nodes array occupies roughly nodes.size() * 2 bytes (JSON text)
-        size_t search_start = nodes_array_bracket + snapshot.nodes.size() * 2;
-        edges_bracket_pos = find_array_bracket_after(file, "\"edges\":", search_start, file_size);
-        if (edges_bracket_pos == std::string::npos) {
+        size_t searchStart = nodesArrayBracket + snapshot.nodes.size() * 2;
+        edgesBracketPos = FindArrayBracketAfter(file, "\"edges\":", searchStart, file_size);
+        if (edgesBracketPos == std::string::npos) {
             throw std::runtime_error("cannot find \"edges\" field");
         }
     }
 
-    snapshot.edges = parse_array_chunked(file, edges_bracket_pos + 1, file_size);
-    size_t ec = snapshot.edges.size() / snapshot.edge_fields_count;
+    snapshot.edges = parseArrayChunked(file, edgesBracketPos + 1, file_size);
+    size_t ec = snapshot.edges.size() / snapshot.edgeFieldsCount;
     if (ec > static_cast<size_t>(std::numeric_limits<int>::max()))
         throw std::runtime_error("malformed heapsnapshot: edge count exceeds INT_MAX");
-    snapshot.edge_count = static_cast<int>(ec);
-    return edges_bracket_pos;
+    snapshot.edgeCount = static_cast<int>(ec);
+    return edgesBracketPos;
 }
 
 // ============================================================================
@@ -973,59 +1068,63 @@ static size_t parse_edges_array(HeapSnapshot& snapshot, std::ifstream& file,
 //    Pass 2: tail of file (strings often sit at the very end)
 //    Pass 3: forward scan from after edges
 // ============================================================================
-static void parse_strings_table(HeapSnapshot& snapshot, std::ifstream& file,
-                                 const std::string& head_buf,
-                                 size_t edges_bracket_pos, size_t file_size) {
-    size_t strings_bracket_pos = std::string::npos;
+static void ParseStringsTable(HeapSnapshot& snapshot, std::ifstream& file,
+                                 const std::string& headBuf,
+                                 size_t edgesBracketPos, size_t file_size) {
+    size_t stringsBracketPos = std::string::npos;
 
     // Clear stream state (may have failbit from earlier reads)
     file.clear();
     file.seekg(0);
 
     // Pass 1: header buffer
-    size_t strings_marker_pos = head_buf.find("\"strings\":");
-    if (strings_marker_pos != std::string::npos) {
-        size_t bracket = head_buf.find('[', strings_marker_pos + 10);
-        if (bracket != std::string::npos) strings_bracket_pos = bracket;
+    size_t stringsMarkerPos = headBuf.find("\"strings\":");
+    if (stringsMarkerPos != std::string::npos) {
+        size_t bracket = headBuf.find('[', stringsMarkerPos + 10);
+        if (bracket != std::string::npos) {
+            stringsBracketPos = bracket;
+        }
     }
 
     // Pass 2: tail of file (strings array is often the last field)
-    if (strings_bracket_pos == std::string::npos && file_size > META_LIMIT) {
-        size_t tail_read_size = std::min<size_t>(file_size, META_LIMIT);
-        std::string tail_buf(tail_read_size, '\0');
+    if (stringsBracketPos == std::string::npos && file_size > META_LIMIT) {
+        size_t tailReadSize = std::min<size_t>(file_size, META_LIMIT);
+        std::string tailBuf(tailReadSize, '\0');
         file.clear();
-        file.seekg(file_size - tail_read_size);
-        file.read(&tail_buf[0], tail_read_size);
+        file.seekg(file_size - tailReadSize);
+        file.read(&tailBuf[0], tailReadSize);
         size_t bytes = file.gcount();
-        tail_buf.resize(bytes);
+        tailBuf.resize(bytes);
 
-        strings_marker_pos = tail_buf.find("\"strings\":");
-        if (strings_marker_pos != std::string::npos) {
-            size_t bracket = tail_buf.find('[', strings_marker_pos + 10);
+        stringsMarkerPos = tailBuf.find("\"strings\":");
+        if (stringsMarkerPos != std::string::npos) {
+            size_t bracket = tailBuf.find('[', stringsMarkerPos + 10);
             if (bracket != std::string::npos) {
-                strings_bracket_pos = (file_size - tail_read_size) + bracket;
+                stringsBracketPos = (file_size - tailReadSize) + bracket;
             }
         }
     }
 
     // Pass 3: forward scan from after edges
-    if (strings_bracket_pos == std::string::npos) {
-        size_t search_start = std::max<size_t>(META_LIMIT, edges_bracket_pos + 1);
-        size_t mark_pos = find_marker_in_file(file, "\"strings\":", search_start, file_size);
-        if (mark_pos != std::string::npos) {
+    if (stringsBracketPos == std::string::npos) {
+        size_t searchStart = std::max<size_t>(META_LIMIT, edgesBracketPos + 1);
+        size_t markPos = FindMarkerInFile(file, "\"strings\":", searchStart, file_size);
+        if (markPos != std::string::npos) {
             std::string buf(256, '\0');
             file.clear();
-            file.seekg(mark_pos + 10);
+            file.seekg(markPos + 10);
             file.read(&buf[0], 256);
             size_t bytes = file.gcount();
             std::string view(buf.data(), bytes);
             size_t bracket = view.find('[');
-            if (bracket != std::string::npos) strings_bracket_pos = mark_pos + 10 + bracket;
+            if (bracket != std::string::npos) {
+                stringsBracketPos = markPos + 10 + bracket;
+            }
         }
     }
 
-    if (strings_bracket_pos != std::string::npos) {
-        snapshot.strings = read_strings_array(file, strings_bracket_pos, file_size);
+    if (stringsBracketPos != std::string::npos) {
+        snapshot.strings = readStringsArray(file, stringsBracketPos, file_size);
     }
 }
 
@@ -1039,47 +1138,48 @@ static void parse_strings_table(HeapSnapshot& snapshot, std::ifstream& file,
 //    - node_id_to_idx: unordered_map from node id to node index.
 //      Used for O(1) lookup of nodes by their numeric id.
 // ============================================================================
-static void build_csr_and_id_map(HeapSnapshot& snapshot) {
+static void BuildCsrAndIdMap(HeapSnapshot& snapshot)
+{
     // ---- Build forward CSR ----
     // The total number of edge fields is the sum of edge_count * edge_fields_count
     // for each node.  We iterate nodes and accumulate the edge pointer.
-    snapshot.first_edge_pointers.resize(snapshot.node_count + 1, 0);
+    snapshot.firstEdgePointers.resize(snapshot.nodeCount + 1, 0);
     // 用 64 位累加，避免 4G 个字段以上的无符号回绕；累加结果必须与解析到的
     // edges 数组完全一致 —— 截断的文件或 edge_count 与实际数组不符的生成器，
     // 否则会让所有消费方越界读 edges，把垃圾当成图结构、静默产出错误报告。
-    uint64_t total_edge_fields = 0;
-    for (int i = 0; i < snapshot.node_count; i++) {
-        snapshot.first_edge_pointers[i] = static_cast<uint32_t>(total_edge_fields);
-        total_edge_fields +=
+    uint64_t totalEdgeFields = 0;
+    for (int i = 0; i < snapshot.nodeCount; i++) {
+        snapshot.firstEdgePointers[i] = static_cast<uint32_t>(totalEdgeFields);
+        totalEdgeFields +=
             static_cast<uint64_t>(
-                snapshot.nodes[i * snapshot.node_fields_count + snapshot.node_edge_count_offset]) *
-            static_cast<uint64_t>(snapshot.edge_fields_count);
+                snapshot.nodes[i * snapshot.nodeFieldsCount + snapshot.nodeEdgeCountOffset]) *
+            static_cast<uint64_t>(snapshot.edgeFieldsCount);
     }
-    snapshot.first_edge_pointers[snapshot.node_count] = static_cast<uint32_t>(total_edge_fields);
-    if (total_edge_fields != static_cast<uint64_t>(snapshot.edges.size())) {
+    snapshot.firstEdgePointers[snapshot.nodeCount] = static_cast<uint32_t>(totalEdgeFields);
+    if (totalEdgeFields != static_cast<uint64_t>(snapshot.edges.size())) {
         throw std::runtime_error(
             "invalid snapshot: edges array size (" + std::to_string(snapshot.edges.size()) +
             ") does not match the sum of per-node edge counts (" +
-            std::to_string(total_edge_fields) + ")");
+            std::to_string(totalEdgeFields) + ")");
     }
     // 一次遍历校验所有 to_node 在范围内；不在每个 for_each_edge 里加分支
     // （边数千万级，逐边检查会拖慢分析）。
     for (size_t ptr = 0; ptr < snapshot.edges.size();
-         ptr += static_cast<size_t>(snapshot.edge_fields_count)) {
-        const uint32_t to_node =
-            snapshot.edges[ptr + static_cast<size_t>(snapshot.edge_to_node_offset)] /
-            static_cast<uint32_t>(snapshot.node_fields_count);
-        if (to_node >= static_cast<uint32_t>(snapshot.node_count)) {
-            throw std::runtime_error("invalid snapshot: edge target " + std::to_string(to_node) +
-                                     " exceeds node count " + std::to_string(snapshot.node_count));
+         ptr += static_cast<size_t>(snapshot.edgeFieldsCount)) {
+        const uint32_t toNode =
+            snapshot.edges[ptr + static_cast<size_t>(snapshot.edgeToNodeOffset)] /
+            static_cast<uint32_t>(snapshot.nodeFieldsCount);
+        if (toNode >= static_cast<uint32_t>(snapshot.nodeCount)) {
+            throw std::runtime_error("invalid snapshot: edge target " + std::to_string(toNode) +
+                                     " exceeds node count " + std::to_string(snapshot.nodeCount));
         }
     }
 
     // ---- Build node_id_to_idx map ----
-    for (int i = 0; i < snapshot.node_count; i++) {
-        if (snapshot.node_id_offset >= 0) {
-            uint32_t id = snapshot.nodes[i * snapshot.node_fields_count + snapshot.node_id_offset];
-            snapshot.node_id_to_idx[id] = static_cast<uint32_t>(i);
+    for (int i = 0; i < snapshot.nodeCount; i++) {
+        if (snapshot.nodeIdOffset >= 0) {
+            uint32_t id = snapshot.nodes[i * snapshot.nodeFieldsCount + snapshot.nodeIdOffset];
+            snapshot.nodeIdToIdx[id] = static_cast<uint32_t>(i);
         }
     }
 }
@@ -1092,23 +1192,24 @@ static void build_csr_and_id_map(HeapSnapshot& snapshot) {
 //      reference chain to every reachable node
 //    - compute_node_sizes: LT dominator algorithm to compute retained sizes
 // ============================================================================
-static void compute_paths_and_retained(HeapSnapshot& snapshot) {
+static void ComputePathsAndRetained(HeapSnapshot& snapshot)
+{
     // Shortest paths BFS: exclude weak, shortcut, and hidden edges
     {
-        auto paths = compute_shortest_paths(snapshot, true, true, true);
-        snapshot.path_parent_index.resize(snapshot.node_count);
-        snapshot.path_edge_start.resize(snapshot.node_count);
+        auto paths = ComputeShortestPaths(snapshot, true, true, true);
+        snapshot.pathParentIndex.resize(snapshot.nodeCount);
+        snapshot.pathEdgeStart.resize(snapshot.nodeCount);
         constexpr uint32_t INVALID = 0xFFFFFFFF;
-        for (uint32_t i = 0; i < static_cast<uint32_t>(snapshot.node_count); i++) {
-            snapshot.path_parent_index[i] = paths.path_edges[i].parent_node_index;
-            snapshot.path_edge_start[i] = paths.path_edges[i].edge_field_start;
+        for (uint32_t i = 0; i < static_cast<uint32_t>(snapshot.nodeCount); i++) {
+            snapshot.pathParentIndex[i] = paths.pathEdges[i].parentNodeIndex;
+            snapshot.pathEdgeStart[i] = paths.pathEdges[i].edgeFieldStart;
         }
     }
 
     // Dominator-based retained sizes: exclude weak and shortcut edges
     {
-        auto ret = compute_node_sizes(snapshot, true, true);
-        snapshot.retained_sizes = std::move(ret.retained_sizes);
+        auto ret = ComputeNodeSizes(snapshot, true, true);
+        snapshot.retainedSizes = std::move(ret.retainedSizes);
         snapshot.dominators = std::move(ret.dominators);
         snapshot.reachable = std::move(ret.reachable);
     }
@@ -1126,9 +1227,10 @@ static void compute_paths_and_retained(HeapSnapshot& snapshot) {
 //    6. Compute shortest paths and retained sizes
 // ============================================================================
 
-HeapSnapshot HeapSnapshot::from_file(const std::string& path) {
+HeapSnapshot HeapSnapshot::FromFile(const std::string& path)
+{
     // Open file in binary mode, seek to end to get file size
-    auto file = open_ifstream(path, std::ios::binary | std::ios::ate);
+    auto file = OpenIfstream(path, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
         throw std::runtime_error("cannot open file: " + path);
     }
@@ -1140,58 +1242,58 @@ HeapSnapshot HeapSnapshot::from_file(const std::string& path) {
 
     // ---- Phase 1: metadata ----
     timer.stage("Reading header");
-    auto header = read_header(file, file_size);
-    size_t nodes_array_bracket = 0;
-    parse_snapshot_meta(snapshot, header.buf, header.nodes_marker_pos, nodes_array_bracket);
+    auto header = ReadHeader(file, file_size);
+    size_t nodesArrayBracket = 0;
+    ParseSnapshotMeta(snapshot, header.buf, header.nodesMarkerPos, nodesArrayBracket);
     timer.tick("meta_parsed");
 
     // ---- Phase 2: nodes ----
     timer.stage("Parsing nodes array");
-    parse_nodes_array(snapshot, file, nodes_array_bracket, file_size);
-    timer.tick("nodes", std::to_string(snapshot.node_count) + " nodes");
+    ParseNodesArray(snapshot, file, nodesArrayBracket, file_size);
+    timer.tick("nodes", std::to_string(snapshot.nodeCount) + " nodes");
     // 空 nodes 数组会让下游 compute_shortest_paths 对空 vector 执行 path_edges[0] = ...
-    if (snapshot.node_count <= 0) {
+    if (snapshot.nodeCount <= 0) {
         throw std::runtime_error("invalid snapshot: nodes array is empty");
     }
 
     // ---- Phase 3: edges ----
     timer.stage("Parsing edges array");
-    size_t edges_bracket_pos = parse_edges_array(snapshot, file, header.buf,
-                                                  nodes_array_bracket, file_size);
-    timer.tick("edges", std::to_string(snapshot.edge_count) + " edges");
+    size_t edgesBracketPos = ParseEdgesArray(snapshot, file, header.buf,
+                                                  nodesArrayBracket, file_size);
+    timer.tick("edges", std::to_string(snapshot.edgeCount) + " edges");
 
     // ---- Phase 4: strings ----
     timer.stage("Parsing strings table");
-    parse_strings_table(snapshot, file, header.buf, edges_bracket_pos, file_size);
+    ParseStringsTable(snapshot, file, header.buf, edgesBracketPos, file_size);
     timer.tick("strings", std::to_string(snapshot.strings.size()) + " strings");
 
     // ---- Phase 5: CSR + node_id_to_idx ----
     timer.stage("Building CSR indices");
-    build_csr_and_id_map(snapshot);
+    BuildCsrAndIdMap(snapshot);
     timer.tick("csr");
     timer.stage("Building node_id_to_idx");
-    timer.tick("node_id_map", std::to_string(snapshot.node_id_to_idx.size()) + " entries");
+    timer.tick("node_id_map", std::to_string(snapshot.nodeIdToIdx.size()) + " entries");
 
     // ---- Phase 5.5: locate SyntheticRoot once for O(1) get_total_heap_size (#27) ----
-    snapshot.synthetic_root_index = UINT32_MAX;
-    for (int i = 0; i < snapshot.node_count; i++) {
+    snapshot.syntheticRootIndex = UINT32_MAX;
+    for (int i = 0; i < snapshot.nodeCount; i++) {
         uint32_t ui = static_cast<uint32_t>(i);
-        if (snapshot.get_node_name(ui) == "SyntheticRoot") {
-            snapshot.synthetic_root_index = ui;
+        if (snapshot.GetNodeName(ui) == "SyntheticRoot") {
+            snapshot.syntheticRootIndex = ui;
             break;
         }
     }
 
     // ---- Phase 6: shortest paths + retained sizes ----
     timer.stage("Computing shortest paths");
-    compute_paths_and_retained(snapshot);
+    ComputePathsAndRetained(snapshot);
     timer.tick("shortest_paths");
     timer.stage("Computing retained sizes");
     timer.tick("retained_sizes");
 
     timer.done();
-    log::logok("  Heap snapshot loaded: ", snapshot.node_count, " nodes, ",
-               snapshot.edge_count, " edges, ", snapshot.strings.size(), " strings.");
+    log::Logok("  Heap snapshot loaded: ", snapshot.nodeCount, " nodes, ",
+               snapshot.edgeCount, " edges, ", snapshot.strings.size(), " strings.");
     return snapshot;
 }
 
@@ -1199,57 +1301,74 @@ HeapSnapshot HeapSnapshot::from_file(const std::string& path) {
 //  HeapSnapshot member functions — node/edge accessors
 // ============================================================================
 
-HeapSnapshot::NodeView HeapSnapshot::get_node_by_id(uint32_t id) const {
-    auto it = node_id_to_idx.find(id);
-    if (it == node_id_to_idx.end()) {
+HeapSnapshot::NodeView HeapSnapshot::GetNodeById(uint32_t id) const
+{
+    auto it = nodeIdToIdx.find(id);
+    if (it == nodeIdToIdx.end()) {
         return {0xFFFFFFFF, 0, "", 0};  // sentinel: not found
     }
-    uint32_t node_index = it->second;
-    uint32_t base = node_index * node_fields_count;
-    uint32_t name_idx = nodes[base + node_name_offset];
-    std::string name = (name_idx < strings.size()) ? strings[name_idx] : "";
-    return {node_index, id, std::move(name), nodes[base + node_self_size_offset]};
+    uint32_t NodeIndex = it->second;
+    uint32_t base = NodeIndex * nodeFieldsCount;
+    uint32_t nameIdx = nodes[base + nodeNameOffset];
+    std::string name = (nameIdx < strings.size()) ? strings[nameIdx] : "";
+    return {NodeIndex, id, std::move(name), nodes[base + nodeSelfSizeOffset]};
 }
 
-std::string HeapSnapshot::get_node_name(uint32_t node_index) const {
-    if (node_index >= static_cast<uint32_t>(node_count)) return "";
-    uint32_t base = node_index * static_cast<uint32_t>(node_fields_count);
-    uint32_t name_idx = nodes[base + static_cast<size_t>(node_name_offset)];
-    return (name_idx < strings.size()) ? strings[name_idx] : "";
+std::string HeapSnapshot::GetNodeName(uint32_t NodeIndex) const
+{
+    if (NodeIndex >= static_cast<uint32_t>(nodeCount)) {
+        return "";
+    }
+    uint32_t base = NodeIndex * static_cast<uint32_t>(nodeFieldsCount);
+    uint32_t nameIdx = nodes[base + static_cast<size_t>(nodeNameOffset)];
+    return (nameIdx < strings.size()) ? strings[nameIdx] : "";
 }
 
-std::string HeapSnapshot::get_node_type_name(uint32_t node_index) const {
-    if (node_index >= static_cast<uint32_t>(node_count)) return "";
-    if (node_type_names.empty()) return "";
-    uint32_t base = node_index * static_cast<uint32_t>(node_fields_count);
-    uint32_t type_idx = nodes[base + static_cast<size_t>(node_type_offset)];
-    return (type_idx < node_type_names.size()) ? node_type_names[type_idx] : "";
+std::string HeapSnapshot::GetNodeTypeName(uint32_t NodeIndex) const
+{
+    if (NodeIndex >= static_cast<uint32_t>(nodeCount)) {
+        return "";
+    }
+    if (nodeTypeNames.empty()) {
+        return "";
+    }
+    uint32_t base = NodeIndex * static_cast<uint32_t>(nodeFieldsCount);
+    uint32_t typeIdx = nodes[base + static_cast<size_t>(nodeTypeOffset)];
+    return (typeIdx < nodeTypeNames.size()) ? nodeTypeNames[typeIdx] : "";
 }
 
-uint32_t HeapSnapshot::get_node_edge_count(uint32_t node_index) const {
-    if (node_index >= static_cast<uint32_t>(node_count)) return 0;
-    uint32_t base = node_index * static_cast<uint32_t>(node_fields_count);
-    return nodes[base + static_cast<size_t>(node_edge_count_offset)];
+uint32_t HeapSnapshot::GetNodeEdgeCount(uint32_t NodeIndex) const
+{
+    if (NodeIndex >= static_cast<uint32_t>(nodeCount)) {
+        return 0;
+    }
+    uint32_t base = NodeIndex * static_cast<uint32_t>(nodeFieldsCount);
+    return nodes[base + static_cast<size_t>(nodeEdgeCountOffset)];
 }
 
 /// Extract the ArkInternalHash value from a node's edges.
 /// ArkTS (HarmonyOS) stores internal hash values in edge names matching
 /// "ArkInternalHash", with the target node name containing "Int: <hash>".
-uint32_t HeapSnapshot::get_node_internal_hash(uint32_t node_index) const {
-    if (node_index >= static_cast<uint32_t>(node_count)) return 0;
+uint32_t HeapSnapshot::GetNodeInternalHash(uint32_t NodeIndex) const
+{
+    if (NodeIndex >= static_cast<uint32_t>(nodeCount)) {
+        return 0;
+    }
     uint32_t hash = 0;
     static const std::regex pattern(R"(Int:\s*(\d+))");
     std::smatch matches;
 
-    for_each_edge(node_index, [&](const EdgeInfo &edge, size_t) {
-        if (edge.name_or_index < static_cast<uint32_t>(strings.size())) {
-            std::string edge_name = strings[edge.name_or_index];
-            if (edge_name == "ArkInternalHash") {
-                std::string target_node_name = get_node_name(edge.to_node);
-                if (std::regex_search(target_node_name, matches, pattern)) {
+    ForEachEdge(NodeIndex, [&](const EdgeInfo &edge, size_t)
+    {
+        if (edge.nameOrIndex < static_cast<uint32_t>(strings.size())) {
+            std::string edgeName = strings[edge.nameOrIndex];
+            if (edgeName == "ArkInternalHash") {
+                std::string targetNodeName = GetNodeName(edge.toNode);
+                if (std::regex_search(targetNodeName, matches, pattern)) {
                     try {
                         hash = std::stoi(matches[1].str());
-                    } catch (const std::exception&) {
+                    } catch (const std::exception&)
+                    {
                         hash = 0;  // 越界/非法 ArkInternalHash 值按 0 处理
                     }
                 }
@@ -1264,81 +1383,95 @@ uint32_t HeapSnapshot::get_node_internal_hash(uint32_t node_index) const {
 /// Root nodes have path_parent_index[root] == root (self-reference).
 /// Unreachable nodes have path_parent_index == INVALID.
 /// Format: "RootNode -> ChildNode -> TargetNode"
-std::string HeapSnapshot::format_ref_chain(uint32_t node_index) const {
+std::string HeapSnapshot::FormatRefChain(uint32_t NodeIndex) const
+{
     constexpr uint32_t INVALID = 0xFFFFFFFF;
     
     // 先收集节点索引，避免在收集过程中反复访问名称
     std::vector<uint32_t> indices;
     indices.reserve(32); // 预留常见链长度
     
-    uint32_t cur = node_index;
+    uint32_t cur = NodeIndex;
     uint32_t guard = 0;
-    while (cur < static_cast<uint32_t>(node_count)) {
-        if (++guard > static_cast<uint32_t>(node_count)) {
-            log::logw("[ref_chain] WARN cycle in path_parent_index at node_index=", node_index);
+    while (cur < static_cast<uint32_t>(nodeCount)) {
+        if (++guard > static_cast<uint32_t>(nodeCount)) {
+            log::Logw("[ref_chain] WARN cycle in path_parent_index at node_index=", NodeIndex);
             return "";
         }
-        uint32_t parent = path_parent_index[cur];
+        uint32_t parent = pathParentIndex[cur];
         if (parent == INVALID) {
             return ""; // unreachable
         }
         indices.push_back(cur);
-        if (parent == cur) break; // 到达根节点
+        if (parent == cur) {
+            break;
+        }// 到达根节点
         cur = parent;
     }
     
-    if (indices.empty()) return "";
+    if (indices.empty()) {
+        return "";
+    }
     
     // 预计算最终字符串长度，避免多次 realloc
-    size_t total_len = 0;
+    size_t totalLen = 0;
     for (auto it = indices.rbegin(); it != indices.rend(); ++it) {
         // 直接获取节点名称，避免临时拷贝
-        const std::string& name = get_extended_node_name(*it);
-        total_len += name.size();
-        if (it != indices.rbegin()) total_len += 4; // " -> "
+        const std::string& name = GetExtendedNodeName(*it);
+        totalLen += name.size();
+        if (it != indices.rbegin()) {
+            totalLen += 4;
+        }// " -> "
     }
     
     std::string result;
-    result.reserve(total_len);
+    result.reserve(totalLen);
     
     bool first = true;
     for (auto it = indices.rbegin(); it != indices.rend(); ++it) {
-        if (!first) result += " -> ";
+        if (!first) {
+            result += " -> ";
+        }
         first = false;
-        result += get_extended_node_name(*it);
+        result += GetExtendedNodeName(*it);
     }
     return result;
 }
 
-std::vector<std::string> HeapSnapshot::format_ref_chain_frames(uint32_t node_index) const {
+std::vector<std::string> HeapSnapshot::FormatRefChainFrames(uint32_t NodeIndex) const
+{
     constexpr uint32_t INVALID = 0xFFFFFFFF;
 
     std::vector<uint32_t> indices;
     indices.reserve(32);
 
-    uint32_t cur = node_index;
+    uint32_t cur = NodeIndex;
     uint32_t guard = 0;
-    while (cur < static_cast<uint32_t>(node_count)) {
-        if (++guard > static_cast<uint32_t>(node_count)) {
-            log::logw("[ref_chain] WARN cycle in path_parent_index at node_index=", node_index);
+    while (cur < static_cast<uint32_t>(nodeCount)) {
+        if (++guard > static_cast<uint32_t>(nodeCount)) {
+            log::Logw("[ref_chain] WARN cycle in path_parent_index at node_index=", NodeIndex);
             return {};
         }
-        uint32_t parent = path_parent_index[cur];
+        uint32_t parent = pathParentIndex[cur];
         if (parent == INVALID) {
             return {};  // unreachable
         }
         indices.push_back(cur);
-        if (parent == cur) break;  // 到达根节点
+        if (parent == cur) {
+            break;
+        }// 到达根节点
         cur = parent;
     }
 
-    if (indices.empty()) return {};
+    if (indices.empty()) {
+        return {};
+    }
 
     // 反向遍历，从根到目标，只取扩展名，不做 " -> " 拼接。
     std::vector<std::string> frames;
     frames.reserve(indices.size());
     for (auto it = indices.rbegin(); it != indices.rend(); ++it) {
-        frames.push_back(get_extended_node_name(*it));
+        frames.push_back(GetExtendedNodeName(*it));
     }
     return frames;
 }
@@ -1352,7 +1485,8 @@ constexpr uint64_t FNV1_SEED = 0x8CF9DB0E64FD9E9BULL;
 constexpr uint64_t FNV1_PRIME = 0x9E3779B97F4A7C15ULL;
 constexpr uint8_t FNV_SEP = 0x1Fu;
 
-RefChainKey fnv_seed(const std::string& name) {
+RefChainKey FnvSeed(const std::string& name)
+{
     uint64_t h1 = FNV1A_OFFSET;
     uint64_t h2 = FNV1_SEED;
     for (unsigned char c : name) {
@@ -1364,7 +1498,8 @@ RefChainKey fnv_seed(const std::string& name) {
     return RefChainKey{h1, h2};
 }
 
-RefChainKey fnv_continue(const RefChainKey& prev, const std::string& name) {
+RefChainKey FnvContinue(const RefChainKey& prev, const std::string& name)
+{
     uint64_t h1 = prev.lo;
     uint64_t h2 = prev.hi;
     // 先喂分隔符，再喂子节点名（避免 "AB"+"C" vs "A"+"BC" 边界碰撞）。
@@ -1382,65 +1517,77 @@ RefChainKey fnv_continue(const RefChainKey& prev, const std::string& name) {
 }
 } // anonymous namespace
 
-RefChainKey HeapSnapshot::ref_chain_hash(uint32_t node_index) const {
+RefChainKey HeapSnapshot::RefChainHash(uint32_t NodeIndex) const
+{
     constexpr uint32_t INVALID = 0xFFFFFFFF;
-    if (node_index >= static_cast<uint32_t>(node_count)) return RefChainKey{};
+    if (NodeIndex >= static_cast<uint32_t>(nodeCount)) {
+        return RefChainKey{};
+    }
 
     // 一次性预构建「正向链 hash」表（root → node），之后 O(1) 查表。
-    std::call_once(*chain_hash_once_, [this]() {
+    std::call_once(*ChainHashOnce_, [this]()
+    {
         const auto t0 = std::chrono::steady_clock::now();
-        log::logd("[ref_chain] build chain_hash start node_count=", node_count);
+        log::Logd("[ref_chain] build chain_hash start node_count=", nodeCount);
 
-        const int N = node_count;
-        if (N > 0) get_extended_node_name(0);  // 触发 ext_names_ 预构建
+        const int N = nodeCount;
+        if (N > 0) {
+            GetExtendedNodeName(0);
+        }// 触发 ext_names_ 预构建
 
-        chain_hash_.resize(static_cast<size_t>(N));
-        chain_hash_computed_.assign(static_cast<size_t>(N), 0);
+        chainHash_.resize(static_cast<size_t>(N));
+        chainHashComputed_.assign(static_cast<size_t>(N), 0);
 
         // 复用 scratch：沿父链反向收集未算节点，再反转回填（天然正向拓扑序）。
         std::vector<uint32_t> path;
         path.reserve(64);
-        const size_t cycle_limit = static_cast<size_t>(N) + 1;
+        const size_t cycleLimit = static_cast<size_t>(N) + 1;
 
         for (int ni = 0; ni < N; ++ni) {
             const uint32_t node = static_cast<uint32_t>(ni);
-            if (chain_hash_computed_[node]) continue;
+            if (chainHashComputed_[node]) {
+                continue;
+            }
 
             path.clear();
             uint32_t cur = node;
-            while (!chain_hash_computed_[cur] && path.size() < cycle_limit) {
+            while (!chainHashComputed_[cur] && path.size() < cycleLimit) {
                 path.push_back(cur);
-                const uint32_t parent = path_parent_index[cur];
-                if (parent == INVALID || parent == cur) break;
+                const uint32_t parent = pathParentIndex[cur];
+                if (parent == INVALID || parent == cur) {
+                    break;
+                }
                 cur = parent;
             }
-            if (path.size() >= cycle_limit) {
-                log::logw("[ref_chain] WARN cycle in path_parent_index at node_index=", node);
+            if (path.size() >= cycleLimit) {
+                log::Logw("[ref_chain] WARN cycle in path_parent_index at node_index=", node);
             }
 
             for (auto it = path.rbegin(); it != path.rend(); ++it) {
                 const uint32_t u = *it;
-                const uint32_t p = path_parent_index[u];
+                const uint32_t p = pathParentIndex[u];
                 if (p == INVALID || p >= static_cast<uint32_t>(N)) {
-                    chain_hash_[u] = RefChainKey{};  // 不可达 => {0,0}
-                } else if (p == u) {
-                    chain_hash_[u] = fnv_seed(ext_names_[u]);  // root：种子
-                } else if (chain_hash_computed_[p]) {
-                    chain_hash_[u] = fnv_continue(chain_hash_[p], ext_names_[u]);
+                    chainHash_[u] = RefChainKey{};  // 不可达 => {0,0}
+                } else if (p == u)
+                {
+                    chainHash_[u] = FnvSeed(extNames_[u]);  // root：种子
+                } else if (chainHashComputed_[p])
+                {
+                    chainHash_[u] = FnvContinue(chainHash_[p], extNames_[u]);
                 } else {
-                    chain_hash_[u] = RefChainKey{};  // p 未算（环/异常）兜底
+                    chainHash_[u] = RefChainKey{};  // p 未算（环/异常）兜底
                 }
-                chain_hash_computed_[u] = 1;
+                chainHashComputed_[u] = 1;
             }
         }
 
         const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::steady_clock::now() - t0)
                             .count();
-        log::logd("[ref_chain] build chain_hash done (", ms, "ms)");
+        log::Logd("[ref_chain] build chain_hash done (", ms, "ms)");
     });
 
-    return chain_hash_[node_index];
+    return chainHash_[NodeIndex];
 }
 
 } // namespace mem_analyzer

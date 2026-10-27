@@ -29,9 +29,9 @@ namespace mem_analyzer {
 // tshandle/tshandle_processor.hpp (shared with TshandleParseResult).
 
 struct ArkTsAnalyzeResult {
-    std::vector<ArkTsClass> arkts_classes;
-    AnomalyCounts anomaly_counts;
-    std::vector<std::string> anomaly_lines;  // lines for addr_anomaly.txt
+    std::vector<ArkTsClass> arktsClasses;
+    AnomalyCounts anomalyCounts;
+    std::vector<std::string> anomalyLines;  // lines for addr_anomaly.txt
 };
 
 /**
@@ -42,16 +42,16 @@ struct ArkTsAnalyzeResult {
  * 4. Aggregate by class name
  * 5. Generate anomaly report
  */
-ArkTsAnalyzeResult analyze_arkts_classes(
-    const std::string& heapsnapshot_path,
-    const std::string& addr_file_path,
-    std::vector<ResolvedCallStack>& call_stacks
+ArkTsAnalyzeResult AnalyzeArktsClasses(
+    const std::string& heapsnapshotPath,
+    const std::string& addrFilePath,
+    std::vector<ResolvedCallStack>& CallStacks
 );
 
 /**
  * Write anomaly report to file (if any anomalies).
  * Returns the file path written to, or empty string if no anomalies.
  */
-std::string write_anomaly_report(const std::string& output_dir, const ArkTsAnalyzeResult& result);
+std::string WriteAnomalyReport(const std::string& outputDir, const ArkTsAnalyzeResult& result);
 
 } // namespace mem_analyzer

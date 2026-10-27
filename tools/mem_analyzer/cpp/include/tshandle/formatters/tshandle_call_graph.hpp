@@ -21,24 +21,24 @@ namespace mem_analyzer {
 
 struct TshandleRenderNode {
     std::string name;
-    std::string display_name;
+    std::string displayName;
     std::string symbol;
     std::string lib;
-    std::string lib_offset;
+    std::string libOffset;
     int depth = 0;
     double value = 0.0;
     double total = 0.0;
     long long count = 0;
     std::vector<TshandleRenderNode> children;
     bool ts = false;
-    std::string build_id;
+    std::string buildId;
 
-    json to_json() const;
+    json ToJson() const;
 };
 
-TshandleRenderNode build_tshandle_downstream_graph(
-    const std::string& object_name,
-    const std::vector<TshandleCallChain>& call_chains,
-    double object_existing_size);
+TshandleRenderNode BuildTshandleDownstreamGraph(
+    const std::string& objectName,
+    const std::vector<TshandleCallChain>& callChains,
+    double objectExistingSize);
 
 } // namespace mem_analyzer

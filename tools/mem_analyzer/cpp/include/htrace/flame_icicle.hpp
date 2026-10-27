@@ -27,79 +27,84 @@ namespace mem_analyzer {
 
 // Key for O(1) child lookup in flame/icicle trie (int-based, no string memory)
 struct FlameKey {
-    int symbol_id = 0;
-    int file_id = 0;
-    bool file_id_null = false;
+    int symbolId = 0;
+    int fileId = 0;
+    bool fileIdNull = false;
     int depth = 0;
 
     bool operator==(const FlameKey& o) const {
-        return symbol_id == o.symbol_id && file_id == o.file_id &&
-               file_id_null == o.file_id_null && depth == o.depth;
+        return symbolId == o.symbolId && fileId == o.fileId &&
+               fileIdNull == o.fileIdNull && depth == o.depth;
     }
 };
 
 struct FlameKeyHash {
-    size_t operator()(const FlameKey& k) const {
-        size_t h = std::hash<int>{}(k.symbol_id);
-        h ^= std::hash<int>{}(k.file_id) + 0x9e3779b9 + (h << 6) + (h >> 2);
-        h ^= std::hash<bool>{}(k.file_id_null) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    size_t operator()(const FlameKey& k) const
+    {
+        size_t h = std::hash<int>{}(k.symbolId);
+        h ^= std::hash<int>{}(k.fileId) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        h ^= std::hash<bool>{}(k.fileIdNull) + 0x9e3779b9 + (h << 6) + (h >> 2);
         h ^= std::hash<int>{}(k.depth) + 0x9e3779b9 + (h << 6) + (h >> 2);
         return h;
     }
 };
 
 struct FlameNode {
-    int symbol_id = 0;
-    int file_id = 0;
-    bool file_id_null = false;
+    int symbolId = 0;
+    int fileId = 0;
+    bool fileIdNull = false;
     uint64_t vaddr = 0;
-    bool vaddr_null = false;
-    int build_id = 0;
-    bool build_id_null = true;
+    bool vaddrNull = false;
+    int buildId = 0;
+    bool buildIdNull = true;
     int depth = 0;           // relative depth: negative for flame (up), positive for icicle (down)
-    long long leak_size = 0;
-    long long existing_count = 0;   // accumulated existing count of allocations passing through this node
+    long long leakSize = 0;
+    long long existingCount = 0;   // accumulated existing count of allocations passing through this node
     std::vector<FlameNode> children;
     // O(1) child lookup keyed by (symbol_id, file_id, file_id_null, depth)
-    std::unordered_map<FlameKey, size_t, FlameKeyHash> child_map;
+    std::unordered_map<FlameKey, size_t, FlameKeyHash> childMap;
 
     // Serialization: resolves int IDs to strings via data_dict at output time
-    json to_flame_json(const std::unordered_map<int, std::string>& data_dict) const;
-    json to_icicle_json(const std::unordered_map<int, std::string>& data_dict) const;
+    json ToFlameJson(const std::unordered_map<int, std::string>& dataDict) const;
+    json ToIcicleJson(const std::unordered_map<int, std::string>& dataDict) const;
 };
 
-FlameNode build_flame_graph(
-    const std::string& target_symbol,
-    const std::vector<CompressedCallStack>& call_stacks,
-    const std::vector<int>& chain_ids,
-    const std::unordered_map<int, int>& depth_per_chain,
-    const std::unordered_map<int, std::string>& data_dict
+FlameNode BuildFlameGraph(
+    const std::string& targetSymbol,
+    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<int>& chainIds,
+    const std::unordered_map<int, int>& depthPerChain,
+    const std::unordered_map<int, std::string>& dataDict
 );
 
-FlameNode build_icicle_graph(
-    const std::string& target_symbol,
-    const std::vector<CompressedCallStack>& call_stacks,
-    const std::vector<int>& chain_ids,
-    const std::unordered_map<int, int>& depth_per_chain,
-    const std::unordered_map<int, std::string>& data_dict
+FlameNode BuildIcicleGraph(
+    const std::string& targetSymbol,
+    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<int>& chainIds,
+    const std::unordered_map<int, int>& depthPerChain,
+    const std::unordered_map<int, std::string>& dataDict
 );
 
 // 整栈合并火焰图（无根符号，所有栈整帧序列合并到一个 trie）；用于 other
-FlameNode build_merged_icicle(
-    const std::vector<CompressedCallStack>& call_stacks,
-    const std::vector<int>& chain_ids,
-    const std::unordered_map<int, std::string>& data_dict
+FlameNode BuildMergedIcicle(
+    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<int>& chainIds,
+    const std::unordered_map<int, std::string>& dataDict
 );
 
 // Helper: resolve int IDs to strings (used by FlameNode serialization and HTML formatter)
-inline const std::string& resolve_str(int id, const std::unordered_map<int, std::string>& data_dict) {
+inline const std::string& ResolveStr(int id, const std::unordered_map<int, std::string>& dataDict)
+{
     static const std::string unknown = "unknown";
-    auto it = data_dict.find(id);
-    return (it != data_dict.end()) ? it->second : unknown;
+    auto it = dataDict.find(id);
+    return (it != dataDict.end()) ? it->second : unknown;
 }
 
-inline std::string resolve_offset_str(uint64_t vaddr, bool vaddr_null) {
-    if (vaddr_null) return "";
+inline std::string ResolveOffsetStr(uint64_t vaddr, bool vaddrNull)
+{
+    if (vaddrNull) {
+        return "";
+    }
     char buf[32];
     snprintf(buf, sizeof(buf), "0x%llx", (unsigned long long)vaddr);
     return buf;

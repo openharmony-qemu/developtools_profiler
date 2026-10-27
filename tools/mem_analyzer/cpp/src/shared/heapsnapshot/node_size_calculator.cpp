@@ -60,17 +60,17 @@ constexpr int EMPTY_SLOT = -1;                // Cooper algorithm sentinel (unus
 
 /// Decode the target node index from an edge field pointer.
 /// V8 stores to_node as (nodeIndex * nodeFieldsCount), so we divide.
-inline uint32_t target_index_of(const std::vector<uint32_t>& edges, size_t ptr,
-                                 int to_node_off, int node_fields_count) {
-    return edges[ptr + static_cast<size_t>(to_node_off)] / static_cast<uint32_t>(node_fields_count);
+inline uint32_t TargetIndexOf(const std::vector<uint32_t>& edges, size_t ptr,
+                                 int toNodeOff, int nodeFieldsCount) {
+    return edges[ptr + static_cast<size_t>(toNodeOff)] / static_cast<uint32_t>(nodeFieldsCount);
 }
 
 /// Read self_size for a node from the flat nodes array.
 /// node_index * node_fields_count + self_size_off
-inline uint32_t self_size_of(const std::vector<uint32_t>& nodes, uint32_t node_index,
-                              int node_fields_count, int self_size_off) {
-    return nodes[static_cast<size_t>(node_index) * static_cast<size_t>(node_fields_count)
-                 + static_cast<size_t>(self_size_off)];
+inline uint32_t SelfSizeOf(const std::vector<uint32_t>& nodes, uint32_t NodeIndex,
+                              int nodeFieldsCount, int selfSizeOff) {
+    return nodes[static_cast<size_t>(NodeIndex) * static_cast<size_t>(nodeFieldsCount)
+                 + static_cast<size_t>(selfSizeOff)];
 }
 
 // ============================================================================
@@ -86,32 +86,33 @@ struct DomContext {
     const std::vector<uint32_t>& nodes;               // flat node field array
     const std::vector<uint32_t>& edges;               // flat edge field array
     const std::vector<std::string>& strings;          // string table
-    const std::vector<std::string>& node_type_names;  // e.g. ["object", "string", "code", ...]
-    const std::vector<uint32_t>& first_edge_pointers; // CSR: node i's edges start at first_edge_pointers[i]
+    const std::vector<std::string>& nodeTypeNames;  // e.g. ["object", "string", "code", ...]
+    const std::vector<uint32_t>& firstEdgePointers; // CSR: node i's edges start at first_edge_pointers[i]
 
     // ---- Field counts and offsets (discovered from snapshot metadata) ----
-    int node_fields_count;        // number of fields per node record
-    int edge_fields_count;        // number of fields per edge record
-    int self_size_off;            // offset of self_size within node record
-    int native_size_off;          // offset of native_size within node record
-    int edge_type_off;            // offset of edge type within edge record
-    int edge_name_off;            // offset of edge name_or_index within edge record
-    int to_node_off;              // offset of to_node within edge record
-    int name_off;                 // offset of name (string table index) within node record
-    int node_type_off;            // offset of type within node record
+    int nodeFieldsCount;        // number of fields per node record
+    int edgeFieldsCount;        // number of fields per edge record
+    int selfSizeOff;            // offset of self_size within node record
+    int nativeSizeOff;          // offset of native_size within node record
+    int edgeTypeOff;            // offset of edge type within edge record
+    int edgeNameOff;            // offset of edge name_or_index within edge record
+    int toNodeOff;              // offset of to_node within edge record
+    int nameOff;                 // offset of name (string table index) within node record
+    int nodeTypeOff;            // offset of type within node record
 
     // ---- Edge type numeric values (-1 if not present in this snapshot) ----
-    int weak_type;                // numeric value for "weak" edges
-    int shortcut_type;            // numeric value for "shortcut" edges
-    int element_type;             // numeric value for "element" edges
+    int weakType;                // numeric value for "weak" edges
+    int shortcutType;            // numeric value for "shortcut" edges
+    int elementType;             // numeric value for "element" edges
 
     // ---- Total node count ----
-    uint32_t node_count;
+    uint32_t nodeCount;
 
     /// Look up a node's name from the string table.
-    std::string get_node_name(uint32_t idx) const {
-        size_t base = static_cast<size_t>(idx) * static_cast<size_t>(node_fields_count);
-        uint32_t ni = nodes[base + static_cast<size_t>(name_off)];
+    std::string GetNodeName(uint32_t idx) const
+    {
+        size_t base = static_cast<size_t>(idx) * static_cast<size_t>(nodeFieldsCount);
+        uint32_t ni = nodes[base + static_cast<size_t>(nameOff)];
         return (ni < strings.size()) ? strings[ni] : "";
     }
 };
@@ -131,39 +132,43 @@ struct DomContext {
 //    - element edges to (Document DOM trees) synthetic node
 //    - weak edges (in the DFS phase)
 // ============================================================================
-static void compute_page_flags(DomContext& ctx, std::vector<uint32_t>& page_flags,
+static void ComputePageFlags(DomContext& ctx, std::vector<uint32_t>& pageFlags,
                                 StageTimer& timer) {
     constexpr uint32_t PAGE_OBJECT_FLAG = 1;  // single bit flag
-    page_flags.assign(ctx.node_count, 0);
+    pageFlags.assign(ctx.nodeCount, 0);
 
     // Use a stack-based DFS (not recursive) to avoid stack overflow on large heaps
-    std::vector<uint32_t> stack(ctx.node_count, 0);
+    std::vector<uint32_t> stack(ctx.nodeCount, 0);
     uint32_t sp = 0;
 
     // ---- Seed: root's children ----
     // We iterate root's outgoing edges and seed the DFS with all non-excluded children.
     // This matches the reference implementation's flagReachableNodesFromWindow
     // which starts from root's children (not root itself).
-    size_t r_begin = ctx.first_edge_pointers[ROOT];
-    size_t r_end = ctx.first_edge_pointers[ROOT + 1];
-    for (size_t ptr = r_begin; ptr < r_end; ptr += static_cast<size_t>(ctx.edge_fields_count)) {
-        int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edge_type_off)]);
+    size_t rBegin = ctx.firstEdgePointers[ROOT];
+    size_t rEnd = ctx.firstEdgePointers[ROOT + 1];
+    for (size_t ptr = rBegin; ptr < rEnd; ptr += static_cast<size_t>(ctx.edgeFieldsCount)) {
+        int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edgeTypeOff)]);
 
         // Skip shortcut edges from root (they point to synthetic GC internals)
-        if (ctx.shortcut_type >= 0 && t == ctx.shortcut_type) continue;
+        if (ctx.shortcutType >= 0 && t == ctx.shortcutType) {
+            continue;
+        }
 
         // Skip element edges to (Document DOM trees) — this synthetic node
         // is not a real page object and should not propagate page flags.
-        if (ctx.element_type >= 0 && t == ctx.element_type) {
-            uint32_t child = target_index_of(ctx.edges, ptr, ctx.to_node_off, ctx.node_fields_count);
-            if (child < ctx.node_count) {
-                if (ctx.get_node_name(child) == "(Document DOM trees)") continue;
+        if (ctx.elementType >= 0 && t == ctx.elementType) {
+            uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
+            if (child < ctx.nodeCount) {
+                if (ctx.GetNodeName(child) == "(Document DOM trees)") {
+                    continue;
+                }
             }
         }
 
-        uint32_t child = target_index_of(ctx.edges, ptr, ctx.to_node_off, ctx.node_fields_count);
-        if (child < ctx.node_count && !(page_flags[child] & PAGE_OBJECT_FLAG)) {
-            page_flags[child] |= PAGE_OBJECT_FLAG;
+        uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
+        if (child < ctx.nodeCount && !(pageFlags[child] & PAGE_OBJECT_FLAG)) {
+            pageFlags[child] |= PAGE_OBJECT_FLAG;
             stack[sp++] = child;
         }
     }
@@ -173,14 +178,16 @@ static void compute_page_flags(DomContext& ctx, std::vector<uint32_t>& page_flag
     // Weak edges are excluded because weak references don't indicate page ownership.
     while (sp > 0) {
         uint32_t cur = stack[--sp];
-        size_t begin = ctx.first_edge_pointers[cur];
-        size_t end = ctx.first_edge_pointers[static_cast<size_t>(cur) + 1];
-        for (size_t ptr = begin; ptr < end; ptr += static_cast<size_t>(ctx.edge_fields_count)) {
-            int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edge_type_off)]);
-            if (ctx.weak_type >= 0 && t == ctx.weak_type) continue;
-            uint32_t child = target_index_of(ctx.edges, ptr, ctx.to_node_off, ctx.node_fields_count);
-            if (child < ctx.node_count && !(page_flags[child] & PAGE_OBJECT_FLAG)) {
-                page_flags[child] |= PAGE_OBJECT_FLAG;
+        size_t begin = ctx.firstEdgePointers[cur];
+        size_t end = ctx.firstEdgePointers[static_cast<size_t>(cur) + 1];
+        for (size_t ptr = begin; ptr < end; ptr += static_cast<size_t>(ctx.edgeFieldsCount)) {
+            int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edgeTypeOff)]);
+            if (ctx.weakType >= 0 && t == ctx.weakType) {
+                continue;
+            }
+            uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
+            if (child < ctx.nodeCount && !(pageFlags[child] & PAGE_OBJECT_FLAG)) {
+                pageFlags[child] |= PAGE_OBJECT_FLAG;
                 stack[sp++] = child;
             }
         }
@@ -202,75 +209,81 @@ static void compute_page_flags(DomContext& ctx, std::vector<uint32_t>& page_flag
 // ============================================================================
 struct PostOrderResult {
     std::vector<uint8_t> visited;              // 1 if node was reached in DFS
-    std::vector<uint32_t> post_order;          // post_order[po_index] = node_index
-    std::vector<int> node_index_2_post_order;  // reverse mapping: node_index -> po_index
-    uint32_t reachable_count;                  // number of nodes reached from root
-    uint32_t root_po;                          // post-order index of root (always node_count-1)
+    std::vector<uint32_t> postOrder;          // post_order[po_index] = node_index
+    std::vector<int> nodeIndex2PostOrder;  // reverse mapping: node_index -> po_index
+    uint32_t reachableCount;                  // number of nodes reached from root
+    uint32_t rootPo;                          // post-order index of root (always node_count-1)
 };
 
-static PostOrderResult compute_dfs_post_order(DomContext& ctx,
-                                               const std::vector<uint32_t>& page_flags,
+static PostOrderResult ComputeDfsPostOrder(DomContext& ctx,
+                                               const std::vector<uint32_t>& pageFlags,
                                                StageTimer& timer) {
     constexpr uint32_t PAGE_OBJECT_FLAG = 1;
 
     // ---- Edge filter for DFS reachability ----
     // Combines isEssentialEdge (weak + non-root shortcut) with page-flag exclusion.
     // This is identical to the filter used in the LT DFS (Step 3a).
-    auto is_traversable = [&](uint32_t source_node, size_t ptr) -> bool {
-        int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edge_type_off)]);
+    auto isTraversable = [&](uint32_t sourceNode, size_t ptr) -> bool {
+        int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edgeTypeOff)]);
 
         // isEssentialEdge: weak edges are always excluded;
         // shortcut edges are excluded from non-root nodes
-        if (ctx.weak_type >= 0 && t == ctx.weak_type) return false;
-        if (ctx.shortcut_type >= 0 && t == ctx.shortcut_type && source_node != ROOT) return false;
+        if (ctx.weakType >= 0 && t == ctx.weakType) {
+            return false;
+        }
+        if (ctx.shortcutType >= 0 && t == ctx.shortcutType && sourceNode != ROOT) {
+            return false;
+        }
 
         // Page-flag exclusion: skip edges from non-page-owned to page-owned nodes.
         // The debugger may inject additional references into page objects;
         // these should not affect the dominance relation.
-        uint32_t child = target_index_of(ctx.edges, ptr, ctx.to_node_off, ctx.node_fields_count);
-        if (source_node != ROOT && child < ctx.node_count &&
-            (page_flags[child] & PAGE_OBJECT_FLAG) &&
-            !(page_flags[source_node] & PAGE_OBJECT_FLAG)) {
+        uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
+        if (sourceNode != ROOT && child < ctx.nodeCount &&
+            (pageFlags[child] & PAGE_OBJECT_FLAG) &&
+            !(pageFlags[sourceNode] & PAGE_OBJECT_FLAG)) {
             return false;
         }
         return true;
     };
 
     PostOrderResult po;
-    po.visited.assign(ctx.node_count, 0);
-    po.post_order.assign(ctx.node_count, 0);
-    po.node_index_2_post_order.assign(ctx.node_count, -1);
+    po.visited.assign(ctx.nodeCount, 0);
+    po.postOrder.assign(ctx.nodeCount, 0);
+    po.nodeIndex2PostOrder.assign(ctx.nodeCount, -1);
 
     // ---- Iterative DFS using explicit stack ----
     // s_node[sp] = current node, s_cur[sp] = current edge cursor for that node.
     // This avoids recursion which would overflow the stack on large heaps (3M+ nodes).
-    std::vector<uint32_t> s_node(ctx.node_count, 0);
-    std::vector<uint32_t> s_cur(ctx.node_count, 0);
+    std::vector<uint32_t> sNode(ctx.nodeCount, 0);
+    std::vector<uint32_t> sCur(ctx.nodeCount, 0);
     uint32_t sp = 0;
-    uint32_t reachable_count = 0;
+    uint32_t reachableCount = 0;
 
     po.visited[ROOT] = 1;
-    s_node[sp] = ROOT;
-    s_cur[sp] = ctx.first_edge_pointers[ROOT];
+    sNode[sp] = ROOT;
+    sCur[sp] = ctx.firstEdgePointers[ROOT];
     sp++;
 
     while (sp > 0) {
         uint32_t i = sp - 1;
-        uint32_t node = s_node[i];
-        uint32_t end = ctx.first_edge_pointers[static_cast<size_t>(node) + 1];
+        uint32_t node = sNode[i];
+        uint32_t end = ctx.firstEdgePointers[static_cast<size_t>(node) + 1];
         bool descended = false;
 
         // Try to find the next unvisited child via a traversable edge
-        while (s_cur[i] < end) {
-            size_t ptr = s_cur[i];
-            s_cur[i] += static_cast<uint32_t>(ctx.edge_fields_count);
-            if (!is_traversable(node, ptr)) continue;
+        while (sCur[i] < end) {
+            size_t ptr = sCur[i];
+            sCur[i] += static_cast<uint32_t>(ctx.edgeFieldsCount);
+            if (!isTraversable(node, ptr)) {
+                continue;
+            }
 
-            uint32_t child = target_index_of(ctx.edges, ptr, ctx.to_node_off, ctx.node_fields_count);
-            if (child < ctx.node_count && !po.visited[child]) {
+            uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
+            if (child < ctx.nodeCount && !po.visited[child]) {
                 po.visited[child] = 1;
-                s_node[sp] = child;
-                s_cur[sp] = ctx.first_edge_pointers[child];
+                sNode[sp] = child;
+                sCur[sp] = ctx.firstEdgePointers[child];
                 sp++;
                 descended = true;
                 break;
@@ -279,9 +292,9 @@ static PostOrderResult compute_dfs_post_order(DomContext& ctx,
 
         // If no unvisited child was found, this node is done — emit post-order
         if (!descended) {
-            po.node_index_2_post_order[node] = static_cast<int>(reachable_count);
-            po.post_order[reachable_count] = node;
-            reachable_count++;
+            po.nodeIndex2PostOrder[node] = static_cast<int>(reachableCount);
+            po.postOrder[reachableCount] = node;
+            reachableCount++;
             sp--;
         }
     }
@@ -291,39 +304,39 @@ static PostOrderResult compute_dfs_post_order(DomContext& ctx,
     // a valid post-order index.  Unreachable nodes are placed after reachable
     // ones, and root is placed at the very end (highest index).
     {
-        std::vector<uint32_t> new_po(ctx.node_count, 0);
-        uint32_t new_po_idx = 0;
+        std::vector<uint32_t> newPo(ctx.nodeCount, 0);
+        uint32_t newPoIdx = 0;
 
         // 1) Reachable non-root nodes (keep existing relative order)
-        for (uint32_t i = 0; i < reachable_count; i++) {
-            uint32_t ni = po.post_order[i];
+        for (uint32_t i = 0; i < reachableCount; i++) {
+            uint32_t ni = po.postOrder[i];
             if (ni != ROOT) {
-                new_po[new_po_idx] = ni;
-                po.node_index_2_post_order[ni] = static_cast<int>(new_po_idx);
-                new_po_idx++;
+                newPo[newPoIdx] = ni;
+                po.nodeIndex2PostOrder[ni] = static_cast<int>(newPoIdx);
+                newPoIdx++;
             }
         }
 
         // 2) Unreachable nodes (not visited, not root)
-        for (uint32_t ni = 0; ni < ctx.node_count; ni++) {
+        for (uint32_t ni = 0; ni < ctx.nodeCount; ni++) {
             if (!po.visited[ni] && ni != ROOT) {
-                new_po[new_po_idx] = ni;
-                po.node_index_2_post_order[ni] = static_cast<int>(new_po_idx);
-                new_po_idx++;
+                newPo[newPoIdx] = ni;
+                po.nodeIndex2PostOrder[ni] = static_cast<int>(newPoIdx);
+                newPoIdx++;
             }
         }
 
         // 3) Root at the VERY END (highest post-order index)
-        po.node_index_2_post_order[ROOT] = static_cast<int>(new_po_idx);
-        new_po[new_po_idx] = ROOT;
-        new_po_idx++;
+        po.nodeIndex2PostOrder[ROOT] = static_cast<int>(newPoIdx);
+        newPo[newPoIdx] = ROOT;
+        newPoIdx++;
 
-        po.post_order = std::move(new_po);
+        po.postOrder = std::move(newPo);
     }
 
-    po.reachable_count = reachable_count;
-    po.root_po = ctx.node_count - 1;  // root is always at the highest PO index
-    timer.tick("dfs_po", std::to_string(reachable_count) + " reachable");
+    po.reachableCount = reachableCount;
+    po.rootPo = ctx.nodeCount - 1;  // root is always at the highest PO index
+    timer.tick("dfs_po", std::to_string(reachableCount) + " reachable");
     return po;
 }
 
@@ -342,52 +355,57 @@ static PostOrderResult compute_dfs_post_order(DomContext& ctx,
 //  implementation's --retainingEdgeCount pre-decrement fill pattern.
 // ============================================================================
 struct ReverseCSR {
-    std::vector<uint32_t> rev_start;     // CSR row pointers: rev_start[node] = start index
-    std::vector<uint32_t> rev_adj;       // compact predecessor list
-    std::vector<uint32_t> rev_edge_ptr;  // edge field pointer for each predecessor
-    uint32_t rev_total;                  // total number of reverse edges
+    std::vector<uint32_t> revStart;     // CSR row pointers: rev_start[node] = start index
+    std::vector<uint32_t> revAdj;       // compact predecessor list
+    std::vector<uint32_t> revEdgePtr;  // edge field pointer for each predecessor
+    uint32_t revTotal;                  // total number of reverse edges
 };
 
-static ReverseCSR build_reverse_csr(DomContext& ctx, StageTimer& timer) {
+static ReverseCSR BuildReverseCsr(DomContext& ctx, StageTimer& timer)
+{
     // ---- Pass 1: count predecessors per node ----
-    std::vector<uint32_t> rev_count(ctx.node_count, 0);
-    for (uint32_t src = 0; src < ctx.node_count; src++) {
-        size_t begin = ctx.first_edge_pointers[src];
-        size_t end = ctx.first_edge_pointers[static_cast<size_t>(src) + 1];
-        for (size_t ptr = begin; ptr < end; ptr += static_cast<size_t>(ctx.edge_fields_count)) {
-            uint32_t t = target_index_of(ctx.edges, ptr, ctx.to_node_off, ctx.node_fields_count);
-            if (t < ctx.node_count) rev_count[t]++;
+    std::vector<uint32_t> revCount(ctx.nodeCount, 0);
+    for (uint32_t src = 0; src < ctx.nodeCount; src++) {
+        size_t begin = ctx.firstEdgePointers[src];
+        size_t end = ctx.firstEdgePointers[static_cast<size_t>(src) + 1];
+        for (size_t ptr = begin; ptr < end; ptr += static_cast<size_t>(ctx.edgeFieldsCount)) {
+            uint32_t t = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
+            if (t < ctx.nodeCount) {
+                revCount[t]++;
+            }
         }
     }
 
     // ---- Pass 2: compute CSR row pointers (prefix sum) ----
-    std::vector<uint32_t> rev_start(ctx.node_count + 1, 0);
-    for (uint32_t i = 0; i < ctx.node_count; i++) {
-        rev_start[i + 1] = rev_start[i] + rev_count[i];
+    std::vector<uint32_t> revStart(ctx.nodeCount + 1, 0);
+    for (uint32_t i = 0; i < ctx.nodeCount; i++) {
+        revStart[i + 1] = revStart[i] + revCount[i];
     }
-    uint32_t rev_total = rev_start[ctx.node_count];
-    std::vector<uint32_t> rev_adj(rev_total, 0);
-    std::vector<uint32_t> rev_edge_ptr(rev_total, 0);
-    std::vector<uint32_t> rev_fill(ctx.node_count, 0);
+    uint32_t revTotal = revStart[ctx.nodeCount];
+    std::vector<uint32_t> revAdj(revTotal, 0);
+    std::vector<uint32_t> revEdgePtr(revTotal, 0);
+    std::vector<uint32_t> revFill(ctx.nodeCount, 0);
 
     // ---- Pass 3: fill with reversed source order ----
     // Iterating sources in reverse order (N-1 down to 0) and filling forward
     // produces the same slot order as the reference implementation's
     // --retainingEdgeCount pre-decrement pattern.
-    for (uint32_t src = ctx.node_count; src > 0; ) {
+    for (uint32_t src = ctx.nodeCount; src > 0; ) {
         src--;
-        size_t begin = ctx.first_edge_pointers[src];
-        size_t end = ctx.first_edge_pointers[static_cast<size_t>(src) + 1];
-        for (size_t ptr = begin; ptr < end; ptr += static_cast<size_t>(ctx.edge_fields_count)) {
-            uint32_t t = target_index_of(ctx.edges, ptr, ctx.to_node_off, ctx.node_fields_count);
-            if (t >= ctx.node_count) continue;
-            size_t slot = rev_start[t] + rev_fill[t]++;
-            rev_adj[slot] = src;
-            rev_edge_ptr[slot] = static_cast<uint32_t>(ptr);
+        size_t begin = ctx.firstEdgePointers[src];
+        size_t end = ctx.firstEdgePointers[static_cast<size_t>(src) + 1];
+        for (size_t ptr = begin; ptr < end; ptr += static_cast<size_t>(ctx.edgeFieldsCount)) {
+            uint32_t t = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
+            if (t >= ctx.nodeCount) {
+                continue;
+            }
+            size_t slot = revStart[t] + revFill[t]++;
+            revAdj[slot] = src;
+            revEdgePtr[slot] = static_cast<uint32_t>(ptr);
         }
     }
-    timer.tick("rev_csr", std::to_string(rev_total) + " edges");
-    return {std::move(rev_start), std::move(rev_adj), std::move(rev_edge_ptr), rev_total};
+    timer.tick("rev_csr", std::to_string(revTotal) + " edges");
+    return {std::move(revStart), std::move(revAdj), std::move(revEdgePtr), revTotal};
 }
 
 // ============================================================================
@@ -406,23 +424,27 @@ static ReverseCSR build_reverse_csr(DomContext& ctx, StageTimer& timer) {
 //    - self-reference
 //    - page-flag exclusion (non-page-owned -> page-owned)
 // ============================================================================
-static std::vector<uint32_t> compute_lt_dominators(
+static std::vector<uint32_t> computeLtDominators(
     DomContext& ctx,
-    const std::vector<uint32_t>& page_flags,
+    const std::vector<uint32_t>& pageFlags,
     const ReverseCSR& rev,
     StageTimer& timer)
 {
     constexpr uint32_t PAGE_OBJECT_FLAG = 1;
 
     // ---- Edge filter for the LT DFS (same as post-order DFS) ----
-    auto is_traversable = [&](uint32_t source_node, size_t ptr) -> bool {
-        int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edge_type_off)]);
-        if (ctx.weak_type >= 0 && t == ctx.weak_type) return false;
-        if (ctx.shortcut_type >= 0 && t == ctx.shortcut_type && source_node != ROOT) return false;
-        uint32_t child = target_index_of(ctx.edges, ptr, ctx.to_node_off, ctx.node_fields_count);
-        if (source_node != ROOT && child < ctx.node_count &&
-            (page_flags[child] & PAGE_OBJECT_FLAG) &&
-            !(page_flags[source_node] & PAGE_OBJECT_FLAG)) {
+    auto isTraversable = [&](uint32_t sourceNode, size_t ptr) -> bool {
+        int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edgeTypeOff)]);
+        if (ctx.weakType >= 0 && t == ctx.weakType) {
+            return false;
+        }
+        if (ctx.shortcutType >= 0 && t == ctx.shortcutType && sourceNode != ROOT) {
+            return false;
+        }
+        uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
+        if (sourceNode != ROOT && child < ctx.nodeCount &&
+            (pageFlags[child] & PAGE_OBJECT_FLAG) &&
+            !(pageFlags[sourceNode] & PAGE_OBJECT_FLAG)) {
             return false;
         }
         return true;
@@ -437,65 +459,67 @@ static std::vector<uint32_t> compute_lt_dominators(
     // lt_ancestor[v]   : DSU ancestor pointer (0 = root of DSU tree)
     // lt_label[v]      : DSU label: node with minimal semi on the path to ancestor
     // lt_bucket_head[v]: head of linked list of nodes whose semi-dominator is v
-    std::vector<uint32_t> lt_dfn(ctx.node_count, 0);
-    std::vector<uint32_t> lt_vertex(ctx.node_count + 1, 0);
-    std::vector<uint32_t> lt_parent(ctx.node_count, ROOT);
-    std::vector<int> lt_semi(ctx.node_count, 0);
-    std::vector<uint32_t> lt_idom(ctx.node_count, ROOT);
-    std::vector<uint32_t> lt_ancestor(ctx.node_count, 0);
-    std::vector<uint32_t> lt_label(ctx.node_count, 0);
-    std::vector<uint32_t> lt_bucket_head(ctx.node_count, 0);
-    std::vector<uint32_t> lt_bucket_next(ctx.node_count, 0);
+    std::vector<uint32_t> ltDfn(ctx.nodeCount, 0);
+    std::vector<uint32_t> ltVertex(ctx.nodeCount + 1, 0);
+    std::vector<uint32_t> ltParent(ctx.nodeCount, ROOT);
+    std::vector<int> ltSemi(ctx.nodeCount, 0);
+    std::vector<uint32_t> ltIdom(ctx.nodeCount, ROOT);
+    std::vector<uint32_t> ltAncestor(ctx.nodeCount, 0);
+    std::vector<uint32_t> ltLabel(ctx.nodeCount, 0);
+    std::vector<uint32_t> ltBucketHead(ctx.nodeCount, 0);
+    std::vector<uint32_t> ltBucketNext(ctx.nodeCount, 0);
 
     // ---- 3a) Iterative DFS to number nodes ----
     // Uses the same is_traversable filter as the post-order DFS.
     // Assigns DFS numbers starting from 1 (root = 1).
-    std::vector<uint32_t> lt_dfs_stack(ctx.node_count);
-    std::vector<uint32_t> lt_dfs_child_idx(ctx.node_count);
-    uint32_t lt_dfs_sp = 0;
-    uint32_t lt_dfn_count = 0;
+    std::vector<uint32_t> ltDfsStack(ctx.nodeCount);
+    std::vector<uint32_t> ltDfsChildIdx(ctx.nodeCount);
+    uint32_t ltDfsSp = 0;
+    uint32_t ltDfnCount = 0;
 
-    lt_dfn[ROOT] = 1;
-    lt_vertex[1] = ROOT;
-    lt_semi[ROOT] = 1;        // semi-dominator of root is itself
-    lt_label[ROOT] = ROOT;    // DSU label: root points to itself
-    lt_dfn_count = 1;
+    ltDfn[ROOT] = 1;
+    ltVertex[1] = ROOT;
+    ltSemi[ROOT] = 1;        // semi-dominator of root is itself
+    ltLabel[ROOT] = ROOT;    // DSU label: root points to itself
+    ltDfnCount = 1;
 
-    lt_dfs_stack[0] = ROOT;
-    lt_dfs_child_idx[0] = ctx.first_edge_pointers[ROOT];
-    lt_dfs_sp = 1;
+    ltDfsStack[0] = ROOT;
+    ltDfsChildIdx[0] = ctx.firstEdgePointers[ROOT];
+    ltDfsSp = 1;
 
-    while (lt_dfs_sp > 0) {
-        uint32_t top = lt_dfs_sp - 1;
-        uint32_t node = lt_dfs_stack[top];
-        size_t end = ctx.first_edge_pointers[static_cast<size_t>(node) + 1];
+    while (ltDfsSp > 0) {
+        uint32_t top = ltDfsSp - 1;
+        uint32_t node = ltDfsStack[top];
+        size_t end = ctx.firstEdgePointers[static_cast<size_t>(node) + 1];
         bool descended = false;
 
-        while (lt_dfs_child_idx[top] < end) {
-            size_t ptr = lt_dfs_child_idx[top];
-            lt_dfs_child_idx[top] += static_cast<uint32_t>(ctx.edge_fields_count);
-            if (!is_traversable(node, ptr)) continue;
+        while (ltDfsChildIdx[top] < end) {
+            size_t ptr = ltDfsChildIdx[top];
+            ltDfsChildIdx[top] += static_cast<uint32_t>(ctx.edgeFieldsCount);
+            if (!isTraversable(node, ptr)) {
+                continue;
+            }
 
-            uint32_t child = target_index_of(ctx.edges, ptr, ctx.to_node_off, ctx.node_fields_count);
-            if (child < ctx.node_count && lt_dfn[child] == 0) {
+            uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
+            if (child < ctx.nodeCount && ltDfn[child] == 0) {
                 // First time visiting this child — assign DFS number and tree edge
-                lt_dfn_count++;
-                lt_dfn[child] = lt_dfn_count;
-                lt_vertex[lt_dfn_count] = child;
-                lt_parent[child] = node;
-                lt_semi[child] = static_cast<int>(lt_dfn_count);  // initial semi = own dfn
-                lt_label[child] = child;                           // DSU label = self
+                ltDfnCount++;
+                ltDfn[child] = ltDfnCount;
+                ltVertex[ltDfnCount] = child;
+                ltParent[child] = node;
+                ltSemi[child] = static_cast<int>(ltDfnCount);  // initial semi = own dfn
+                ltLabel[child] = child;                           // DSU label = self
 
-                lt_dfs_stack[lt_dfs_sp] = child;
-                lt_dfs_child_idx[lt_dfs_sp] = ctx.first_edge_pointers[child];
-                lt_dfs_sp++;
+                ltDfsStack[ltDfsSp] = child;
+                ltDfsChildIdx[ltDfsSp] = ctx.firstEdgePointers[child];
+                ltDfsSp++;
                 descended = true;
                 break;
             }
         }
 
         if (!descended) {
-            lt_dfs_sp--;
+            ltDfsSp--;
         }
     }
 
@@ -510,46 +534,48 @@ static std::vector<uint32_t> compute_lt_dominators(
     // consistent with the iterative DFS used elsewhere in this file.
     // After compression, lt_label[v] holds the node with minimal semi
     // on the path from v to the DSU root.
-    std::vector<uint32_t> lt_compress_path(ctx.node_count);
-    std::function<void(uint32_t)> lt_compress;
-    lt_compress = [&](uint32_t v) {
+    std::vector<uint32_t> ltCompressPath(ctx.nodeCount);
+    std::function<void(uint32_t)> ltCompress;
+    ltCompress = [&](uint32_t v) {
         // 1) Walk up the ancestor chain until reaching a node whose ancestor
         //    is a DSU root (lt_ancestor[lt_ancestor[cur]] == 0), recording
         //    the path for the post-order update below.
-        uint32_t path_len = 0;
+        uint32_t pathLen = 0;
         uint32_t cur = v;
-        while (lt_ancestor[lt_ancestor[cur]] != 0) {
-            lt_compress_path[path_len++] = cur;
-            cur = lt_ancestor[cur];
+        while (ltAncestor[ltAncestor[cur]] != 0) {
+            ltCompressPath[pathLen++] = cur;
+            cur = ltAncestor[cur];
         }
         // 2) Replay the path in reverse so deeper nodes are finalized first,
         //    mirroring the recursive version's post-return updates.
-        while (path_len > 0) {
-            uint32_t u = lt_compress_path[--path_len];
-            uint32_t a = lt_ancestor[u];
-            if (lt_semi[lt_label[a]] < lt_semi[lt_label[u]]) {
-                lt_label[u] = lt_label[a];
+        while (pathLen > 0) {
+            uint32_t u = ltCompressPath[--pathLen];
+            uint32_t a = ltAncestor[u];
+            if (ltSemi[ltLabel[a]] < ltSemi[ltLabel[u]]) {
+                ltLabel[u] = ltLabel[a];
             }
-            lt_ancestor[u] = lt_ancestor[a];
+            ltAncestor[u] = ltAncestor[a];
         }
     };
 
     // eval(v): returns the node with minimal semi-dominator on the path
     // from v to the root of its DSU tree.
-    auto lt_eval = [&](uint32_t v) -> uint32_t {
-        if (lt_ancestor[v] == 0) return lt_label[v];  // v is a DSU root
-        lt_compress(v);
+    auto ltEval = [&](uint32_t v) -> uint32_t {
+        if (ltAncestor[v] == 0) {
+            return ltLabel[v];
+        }// v is a DSU root
+        ltCompress(v);
         // After compression, lt_ancestor[v] is the DSU root.
         // Compare semi of label[ancestor[v]] with label[v].
-        if (lt_semi[lt_label[lt_ancestor[v]]] < lt_semi[lt_label[v]]) {
-            return lt_label[lt_ancestor[v]];
+        if (ltSemi[ltLabel[ltAncestor[v]]] < ltSemi[ltLabel[v]]) {
+            return ltLabel[ltAncestor[v]];
         }
-        return lt_label[v];
+        return ltLabel[v];
     };
 
     // link(v, w): makes v the parent of w in the DSU forest.
-    auto lt_link = [&](uint32_t v, uint32_t w) {
-        lt_ancestor[w] = v;
+    auto ltLink = [&](uint32_t v, uint32_t w) {
+        ltAncestor[w] = v;
     };
 
     // ---- 3b) Compute semi-dominators in reverse dfn order ----
@@ -557,91 +583,99 @@ static std::vector<uint32_t> compute_lt_dominators(
     // For each node w, examine all its predecessors (from reverse CSR).
     // The semi-dominator of w is the minimum of:
     //   eval(pred).semi  for all essential predecessors pred of w
-    for (uint32_t i = lt_dfn_count; i >= 2; i--) {
-        uint32_t w = lt_vertex[i];  // current node (by descending dfn)
-        int w_semi = lt_semi[w];    // current best semi-dominator
+    for (uint32_t i = ltDfnCount; i >= 2; i--) {
+        uint32_t w = ltVertex[i];  // current node (by descending dfn)
+        int wSemi = ltSemi[w];    // current best semi-dominator
 
-        size_t r_begin = rev.rev_start[w];
-        size_t r_end = rev.rev_start[static_cast<size_t>(w) + 1];
-        for (size_t r = r_begin; r < r_end; r++) {
-            uint32_t pred = rev.rev_adj[r];
-            if (lt_dfn[pred] == 0) continue;  // predecessor not in DFS tree
+        size_t rBegin = rev.revStart[w];
+        size_t rEnd = rev.revStart[static_cast<size_t>(w) + 1];
+        for (size_t r = rBegin; r < rEnd; r++) {
+            uint32_t pred = rev.revAdj[r];
+            if (ltDfn[pred] == 0) {
+                continue;
+            }// predecessor not in DFS tree
 
             // ---- Edge filtering (matching the reference implementation) ----
-            uint32_t edge_ptr = rev.rev_edge_ptr[r];
-            int et = static_cast<int>(ctx.edges[edge_ptr + static_cast<size_t>(ctx.edge_type_off)]);
+            uint32_t edgePtr = rev.revEdgePtr[r];
+            int et = static_cast<int>(ctx.edges[edgePtr + static_cast<size_t>(ctx.edgeTypeOff)]);
 
             // isEssentialEdge: exclude weak edges and non-root shortcut edges
-            bool essential = !((ctx.weak_type >= 0 && et == ctx.weak_type) ||
-                               (ctx.shortcut_type >= 0 && et == ctx.shortcut_type && pred != ROOT));
-            if (!essential) continue;
+            bool essential = !((ctx.weakType >= 0 && et == ctx.weakType) ||
+                               (ctx.shortcutType >= 0 && et == ctx.shortcutType && pred != ROOT));
+            if (!essential) {
+                continue;
+            }
 
             // Self-reference: a node cannot dominate itself through a self-loop
-            if (pred == w) continue;
+            if (pred == w) {
+                continue;
+            }
 
             // Page-flag exclusion: skip edges from non-page-owned to page-owned nodes
             if (pred != ROOT &&
-                (page_flags[w] & PAGE_OBJECT_FLAG) &&
-                !(page_flags[pred] & PAGE_OBJECT_FLAG)) {
+                (pageFlags[w] & PAGE_OBJECT_FLAG) &&
+                !(pageFlags[pred] & PAGE_OBJECT_FLAG)) {
                 continue;
             }
 
             // Evaluate the predecessor: find the node with minimal semi-dominator
             // on the path from pred to the DSU root.
-            uint32_t u_eval = lt_eval(pred);
-            int u_semi = lt_semi[u_eval];
-            if (u_semi < w_semi) {
-                w_semi = u_semi;
+            uint32_t uEval = ltEval(pred);
+            int uSemi = ltSemi[uEval];
+            if (uSemi < wSemi) {
+                wSemi = uSemi;
             }
         }
 
-        lt_semi[w] = w_semi;
+        ltSemi[w] = wSemi;
 
         // ---- Bucket processing ----
         // Add w to the bucket of its semi-dominator node.
         // Later, when processing the parent of w, we resolve the dominators
         // of all nodes in the parent's bucket.
-        uint32_t semi_node = lt_vertex[static_cast<size_t>(w_semi)];
-        lt_bucket_next[w] = lt_bucket_head[semi_node];
-        lt_bucket_head[semi_node] = w;
+        uint32_t semiNode = ltVertex[static_cast<size_t>(wSemi)];
+        ltBucketNext[w] = ltBucketHead[semiNode];
+        ltBucketHead[semiNode] = w;
 
         // Link w into the DSU forest as a child of its DFS parent
-        lt_link(lt_parent[w], w);
+        ltLink(ltParent[w], w);
 
         // Process the bucket of parent[w]: for each node v in the bucket,
         // compute its immediate dominator using eval.
-        uint32_t p = lt_parent[w];
-        uint32_t b = lt_bucket_head[p];
+        uint32_t p = ltParent[w];
+        uint32_t b = ltBucketHead[p];
         while (b != 0) {
             uint32_t v = b;
-            b = lt_bucket_next[v];
-            uint32_t u = lt_eval(v);
+            b = ltBucketNext[v];
+            uint32_t u = ltEval(v);
             // If semi(u) < semi(v), then u is a better candidate for idom(v);
             // otherwise the parent p is the idom.
-            lt_idom[v] = (lt_semi[u] < lt_semi[v]) ? u : p;
+            ltIdom[v] = (ltSemi[u] < ltSemi[v]) ? u : p;
         }
-        lt_bucket_head[p] = 0;
+        ltBucketHead[p] = 0;
     }
 
     // ---- 3c) Finalize immediate dominators in forward dfn order ----
     // For nodes where idom[w] != vertex[semi[w]], the true idom is the
     // idom of the current idom (implicit dominator resolution).
-    for (uint32_t i = 2; i <= lt_dfn_count; i++) {
-        uint32_t w = lt_vertex[i];
-        if (lt_idom[w] != lt_vertex[static_cast<size_t>(lt_semi[w])]) {
-            lt_idom[w] = lt_idom[lt_idom[w]];
+    for (uint32_t i = 2; i <= ltDfnCount; i++) {
+        uint32_t w = ltVertex[i];
+        if (ltIdom[w] != ltVertex[static_cast<size_t>(ltSemi[w])]) {
+            ltIdom[w] = ltIdom[ltIdom[w]];
         }
     }
-    lt_idom[ROOT] = ROOT;  // root dominates itself
+    ltIdom[ROOT] = ROOT;  // root dominates itself
 
     // ---- Materialize dominators indexed by nodeIndex ----
     // Nodes not reached in the DFS (lt_dfn == 0) are marked UNREACHABLE.
-    std::vector<uint32_t> dominators(ctx.node_count, UNREACHABLE);
-    for (uint32_t i = 0; i < ctx.node_count; i++) {
-        if (lt_dfn[i] != 0) dominators[i] = lt_idom[i];
+    std::vector<uint32_t> dominators(ctx.nodeCount, UNREACHABLE);
+    for (uint32_t i = 0; i < ctx.nodeCount; i++) {
+        if (ltDfn[i] != 0) {
+            dominators[i] = ltIdom[i];
+        }
     }
     dominators[ROOT] = ROOT;
-    timer.tick("lt_dominator", std::to_string(lt_dfn_count) + " dfn");
+    timer.tick("lt_dominator", std::to_string(ltDfnCount) + " dfn");
     return dominators;
 }
 
@@ -655,27 +689,27 @@ static std::vector<uint32_t> compute_lt_dominators(
 //  Uses self_size only (not native_size), matching the reference
 //  implementation's calculateRetainedSizesFromDominatorNodes.
 // ============================================================================
-static void compute_retained_sizes(
+static void ComputeRetainedSizes(
     DomContext& ctx,
     const PostOrderResult& po,
     const std::vector<uint32_t>& dominators,
     RetainedSizeResult& result)
 {
     // ---- Initialize: each node's retained size starts as its self_size ----
-    std::vector<double> retained_sizes(ctx.node_count, 0.0);
-    double total_self_size = 0.0;
+    std::vector<double> retainedSizes(ctx.nodeCount, 0.0);
+    double totalSelfSize = 0.0;
 
-    for (uint32_t i = 0; i < ctx.node_count; i++) {
-        double s = static_cast<double>(self_size_of(ctx.nodes, i, ctx.node_fields_count, ctx.self_size_off));
-        retained_sizes[i] = s;
-        total_self_size += s;
+    for (uint32_t i = 0; i < ctx.nodeCount; i++) {
+        double s = static_cast<double>(SelfSizeOf(ctx.nodes, i, ctx.nodeFieldsCount, ctx.selfSizeOff));
+        retainedSizes[i] = s;
+        totalSelfSize += s;
     }
 
     // ---- Compute reachable self_size for statistics ----
-    double reachable_self_size = 0.0;
-    for (uint32_t i = 0; i < po.reachable_count; i++) {
-        reachable_self_size += static_cast<double>(
-            self_size_of(ctx.nodes, po.post_order[i], ctx.node_fields_count, ctx.self_size_off));
+    double reachableSelfSize = 0.0;
+    for (uint32_t i = 0; i < po.reachableCount; i++) {
+        reachableSelfSize += static_cast<double>(
+            SelfSizeOf(ctx.nodes, po.postOrder[i], ctx.nodeFieldsCount, ctx.selfSizeOff));
     }
 
     // ---- Propagate retained sizes up the dominator tree ----
@@ -683,23 +717,23 @@ static void compute_retained_sizes(
     // For each node, add its retained size to its immediate dominator.
     // Since we process in post-order, a node's retained size is fully
     // computed (all descendants already added) before it's propagated.
-    for (uint32_t i = 0; i < po.root_po; i++) {
-        uint32_t node_index = po.post_order[i];
-        uint32_t dom_node_index = dominators[node_index];
-        if (dom_node_index != UNREACHABLE) {
-            retained_sizes[dom_node_index] += retained_sizes[node_index];
+    for (uint32_t i = 0; i < po.rootPo; i++) {
+        uint32_t NodeIndex = po.postOrder[i];
+        uint32_t domNodeIndex = dominators[NodeIndex];
+        if (domNodeIndex != UNREACHABLE) {
+            retainedSizes[domNodeIndex] += retainedSizes[NodeIndex];
         }
     }
 
     // ---- Populate result ----
-    result.retained_sizes = std::move(retained_sizes);
+    result.retainedSizes = std::move(retainedSizes);
     result.dominators = dominators;
-    result.post_order.assign(po.post_order.begin(), po.post_order.begin() + ctx.node_count);
+    result.postOrder.assign(po.postOrder.begin(), po.postOrder.begin() + ctx.nodeCount);
     result.reachable = po.visited;
-    result.reachable_count = po.reachable_count;
-    result.total_self_size = total_self_size;
-    result.reachable_self_size = reachable_self_size;
-    result.root_retained_size = result.retained_sizes[ROOT];
+    result.reachableCount = po.reachableCount;
+    result.totalSelfSize = totalSelfSize;
+    result.reachableSelfSize = reachableSelfSize;
+    result.rootRetainedSize = result.retainedSizes[ROOT];
 }
 
 } // anonymous namespace
@@ -715,9 +749,9 @@ static void compute_retained_sizes(
 //    4. Retained size propagation (post-order prefix sum)
 // ============================================================================
 
-RetainedSizeResult compute_node_sizes(const HeapSnapshot& snapshot,
-                                         bool exclude_weak_edges,
-                                         bool exclude_shortcut_edges) {
+RetainedSizeResult ComputeNodeSizes(const HeapSnapshot& snapshot,
+                                         bool excludeWeakEdges,
+                                         bool excludeShortcutEdges) {
     StageTimer timer("NodeSizes");
 
     // ---- Build the context struct from snapshot data ----
@@ -725,39 +759,41 @@ RetainedSizeResult compute_node_sizes(const HeapSnapshot& snapshot,
         snapshot.nodes,
         snapshot.edges,
         snapshot.strings,
-        snapshot.node_type_names,
-        snapshot.first_edge_pointers,
-        snapshot.node_fields_count,
-        snapshot.edge_fields_count,
-        snapshot.node_self_size_offset,
-        snapshot.node_native_size_offset,
-        snapshot.edge_type_offset,
-        snapshot.edge_name_or_index_offset,
-        snapshot.edge_to_node_offset,
-        snapshot.node_name_offset,
-        snapshot.node_type_offset,
-        exclude_weak_edges ? snapshot.edge_weak_type : -1,
-        exclude_shortcut_edges ? snapshot.edge_shortcut_type : -1,
-        snapshot.edge_element_type,
-        static_cast<uint32_t>(snapshot.node_count),
+        snapshot.nodeTypeNames,
+        snapshot.firstEdgePointers,
+        snapshot.nodeFieldsCount,
+        snapshot.edgeFieldsCount,
+        snapshot.nodeSelfSizeOffset,
+        snapshot.nodeNativeSizeOffset,
+        snapshot.edgeTypeOffset,
+        snapshot.edgeNameOrIndexOffset,
+        snapshot.edgeToNodeOffset,
+        snapshot.nodeNameOffset,
+        snapshot.nodeTypeOffset,
+        excludeWeakEdges ? snapshot.edgeWeakType : -1,
+        excludeShortcutEdges ? snapshot.edgeShortcutType : -1,
+        snapshot.edgeElementType,
+        static_cast<uint32_t>(snapshot.nodeCount),
     };
 
-    if (ctx.node_count == 0) return {};
+    if (ctx.nodeCount == 0) {
+        return {};
+    }
 
     RetainedSizeResult result;
-    result.node_count = ctx.node_count;
+    result.nodeCount = ctx.nodeCount;
 
     // ---- Execute the pipeline ----
-    std::vector<uint32_t> page_flags;
-    compute_page_flags(ctx, page_flags, timer);
+    std::vector<uint32_t> pageFlags;
+    ComputePageFlags(ctx, pageFlags, timer);
 
-    auto po = compute_dfs_post_order(ctx, page_flags, timer);
+    auto po = ComputeDfsPostOrder(ctx, pageFlags, timer);
 
-    auto rev = build_reverse_csr(ctx, timer);
+    auto rev = BuildReverseCsr(ctx, timer);
 
-    auto dominators = compute_lt_dominators(ctx, page_flags, rev, timer);
+    auto dominators = computeLtDominators(ctx, pageFlags, rev, timer);
 
-    compute_retained_sizes(ctx, po, dominators, result);
+    ComputeRetainedSizes(ctx, po, dominators, result);
 
     timer.done();
     return result;
@@ -788,67 +824,76 @@ struct BfsContext {
     const std::vector<uint32_t>& edges;
     const std::vector<uint32_t>& nodes;
     const std::vector<std::string>& strings;
-    const std::vector<std::string>& node_type_names;
-    const std::vector<uint32_t>& first_edge_pointers;
-    int edge_fields_count;
-    int edge_type_off;
-    int edge_name_off;
-    int to_node_off;
-    int node_fields_count;
-    int node_type_off;
-    int name_off;
-    int id_off;            // offset of node id within node record
-    int weak_type;
-    int shortcut_type;
-    int hidden_type;
-    int internal_type;
-    int element_type;
-    uint32_t node_count;
+    const std::vector<std::string>& nodeTypeNames;
+    const std::vector<uint32_t>& firstEdgePointers;
+    int edgeFieldsCount;
+    int edgeTypeOff;
+    int edgeNameOff;
+    int toNodeOff;
+    int nodeFieldsCount;
+    int nodeTypeOff;
+    int nameOff;
+    int idOff;            // offset of node id within node record
+    int weakType;
+    int shortcutType;
+    int hiddenType;
+    int internalType;
+    int elementType;
+    uint32_t nodeCount;
 
     /// Look up an edge's name from the string table.
-    const std::string& get_edge_name(size_t ptr) const {
-        uint32_t name_idx = edges[ptr + static_cast<size_t>(edge_name_off)];
-        return (name_idx < strings.size()) ? strings[name_idx] : kEmptyString;
+    const std::string& getEdgeName(size_t ptr) const
+    {
+        uint32_t nameIdx = edges[ptr + static_cast<size_t>(edgeNameOff)];
+        return (nameIdx < strings.size()) ? strings[nameIdx] : kEmptyString;
     }
 
     /// Look up a node's name from the string table.
-    const std::string& get_node_name(uint32_t idx) const {
-        if (idx >= node_count) return kEmptyString;
-        size_t base = static_cast<size_t>(idx) * static_cast<size_t>(node_fields_count);
-        uint32_t ni = nodes[base + static_cast<size_t>(name_off)];
+    const std::string& GetNodeName(uint32_t idx) const
+    {
+        if (idx >= nodeCount) {
+            return kEmptyString;
+        }
+        size_t base = static_cast<size_t>(idx) * static_cast<size_t>(nodeFieldsCount);
+        uint32_t ni = nodes[base + static_cast<size_t>(nameOff)];
         return (ni < strings.size()) ? strings[ni] : kEmptyString;
     }
 
     /// Look up a node's type name (e.g. "object", "string", "code").
-    const std::string& get_node_type(uint32_t idx) const {
-        if (idx >= node_count || node_type_names.empty()) return kEmptyString;
-        size_t base = static_cast<size_t>(idx) * static_cast<size_t>(node_fields_count);
-        uint32_t ti = nodes[base + static_cast<size_t>(node_type_off)];
-        return (ti < node_type_names.size()) ? node_type_names[ti] : kEmptyString;
+    const std::string& getNodeType(uint32_t idx) const
+    {
+        if (idx >= nodeCount || nodeTypeNames.empty()) {
+            return kEmptyString;
+        }
+        size_t base = static_cast<size_t>(idx) * static_cast<size_t>(nodeFieldsCount);
+        uint32_t ti = nodes[base + static_cast<size_t>(nodeTypeOff)];
+        return (ti < nodeTypeNames.size()) ? nodeTypeNames[ti] : kEmptyString;
     }
 };
 
 // ---- Block lists (matching the reference implementation's Config) ----
 
 /// Edge name block list: edges with these names are never traversed.
-static bool is_edge_name_blocked(const std::string& name) {
+static bool IsEdgeNameBlocked(const std::string& name)
+{
     return name == "feedback_cell" ||
            name == "part of key -> value pair in ephemeron table";
 }
 
 /// Node name block list: nodes with these names are skipped entirely.
-static bool is_node_name_blocked(const std::string& name) {
+static bool IsNodeNameBlocked(const std::string& name)
+{
     return name == "system / PropertyCell";
 }
 
 // ---- Grey lists (low priority) ----
 // Edges/nodes matching these are deferred to the postpone queue.
 
-static const std::unordered_set<std::string> edge_name_grey_list = {
+static const std::unordered_set<std::string> edgeNameGreyList = {
     "alternate", "firstEffect", "lastEffect"
 };
 
-static const std::unordered_set<std::string> node_name_grey_list = {
+static const std::unordered_set<std::string> nodeNameGreyList = {
     "InternalNode", "Pending activities", "StyleEngine",
     "(GC roots)", "(Internalized strings)", "(External strings)",
     "(Read-only roots)", "(Strong roots)", "(Smi roots)",
@@ -861,8 +906,9 @@ static const std::unordered_set<std::string> node_name_grey_list = {
 };
 
 /// Check if a node is a "C++ roots" synthetic node (low priority).
-static bool is_cpp_roots_node(const BfsContext& ctx, uint32_t idx) {
-    return ctx.get_node_name(idx) == "C++ roots" && ctx.get_node_type(idx) == "synthetic";
+static bool IsCppRootsNode(const BfsContext& ctx, uint32_t idx)
+{
+    return ctx.GetNodeName(idx) == "C++ roots" && ctx.getNodeType(idx) == "synthetic";
 }
 
 // ============================================================================
@@ -882,36 +928,38 @@ static bool is_cpp_roots_node(const BfsContext& ctx, uint32_t idx) {
 //      - type == "synthetic" && name is Blink roots
 //      - (synthetic || native) && name == "Pending activities"
 // ============================================================================
-static void collect_shortest_path_roots(
+static void CollectShortestPathRoots(
     const BfsContext& ctx,
-    std::vector<uint32_t>& high_pri,
-    std::vector<uint32_t>& low_pri)
+    std::vector<uint32_t>& highPri,
+    std::vector<uint32_t>& lowPri)
 {
     // Node 0 (SyntheticRoot) is always a high-priority root
-    high_pri.push_back(0);
+    highPri.push_back(0);
 
-    for (uint32_t i = 1; i < ctx.node_count; i++) {
-        uint32_t nid = ctx.nodes[i * static_cast<size_t>(ctx.node_fields_count)
-                               + static_cast<size_t>(ctx.id_off)];
+    for (uint32_t i = 1; i < ctx.nodeCount; i++) {
+        uint32_t nid = ctx.nodes[i * static_cast<size_t>(ctx.nodeFieldsCount)
+                               + static_cast<size_t>(ctx.idOff)];
 
-        std::string type_name = ctx.get_node_type(i);
-        std::string node_name = ctx.get_node_name(i);
+        std::string typeName = ctx.getNodeType(i);
+        std::string nodeName = ctx.GetNodeName(i);
 
         // High-priority root check (excludeBlinkRoot=true, excludePendingActivity=true)
         if (nid == 0 || nid == 1) {
-            high_pri.push_back(i);
-        } else if (type_name == "native" && node_name.find("Window") == 0) {
-            high_pri.push_back(i);
-        } else if (type_name == "synthetic" && node_name == "(GC roots)") {
-            high_pri.push_back(i);
+            highPri.push_back(i);
+        } else if (typeName == "native" && nodeName.find("Window") == 0)
+        {
+            highPri.push_back(i);
+        } else if (typeName == "synthetic" && nodeName == "(GC roots)")
+        {
+            highPri.push_back(i);
         }
         // Low-priority root check: Blink cross-thread roots, Blink roots, Pending activities
-        else if (type_name == "synthetic" &&
-                 (node_name == "Blink cross-thread roots" || node_name == "Blink roots")) {
-            low_pri.push_back(i);
-        } else if ((type_name == "synthetic" || type_name == "native") &&
-                    node_name == "Pending activities") {
-            low_pri.push_back(i);
+        else if (typeName == "synthetic" &&
+                 (nodeName == "Blink cross-thread roots" || nodeName == "Blink roots")) {
+            lowPri.push_back(i);
+        } else if ((typeName == "synthetic" || typeName == "native") &&
+                    nodeName == "Pending activities") {
+            lowPri.push_back(i);
         }
     }
 }
@@ -928,10 +976,10 @@ static void collect_shortest_path_roots(
 //    4. Fallback to postpone queue when normal queue is empty
 //    5. Fallback to low-priority roots when both are empty
 // ============================================================================
-static void run_layered_bfs(
+static void RunLayeredBfs(
     BfsContext& ctx,
-    std::vector<uint32_t>& high_pri_roots,
-    std::vector<uint32_t>& low_pri_roots,
+    std::vector<uint32_t>& highPriRoots,
+    std::vector<uint32_t>& lowPriRoots,
     ShortestPathsResult& result)
 {
     constexpr uint32_t INVALID = 0xFFFFFFFF;
@@ -940,131 +988,160 @@ static void run_layered_bfs(
     // reference implementation's queued[toNode.nodeIndex] = 1.
     // This is separate from hasPathEdge — nodes in the postpone queue have
     // queued[] = 1 but NOT hasPathEdge yet.
-    std::vector<uint8_t> queued(ctx.node_count, 0);
-    std::vector<uint32_t> cur_queue;
+    std::vector<uint8_t> queued(ctx.nodeCount, 0);
+    std::vector<uint32_t> curQueue;
 
     // Enqueue high-priority roots in node-index order.
     // pop_back() then processes the highest-index root first (LIFO),
     // matching the reference implementation's curQueue.pop().
-    for (uint32_t idx : high_pri_roots) {
-        result.path_edges[idx] = {idx, INVALID};  // root points to itself
-        cur_queue.push_back(idx);
+    for (uint32_t idx : highPriRoots) {
+        result.pathEdges[idx] = {idx, INVALID};  // root points to itself
+        curQueue.push_back(idx);
         queued[idx] = 1;
-        result.reachable_count++;
+        result.reachableCount++;
     }
 
     // Postpone queue: (parent_node_index, edge_field_start)
-    std::vector<std::pair<uint32_t, size_t>> postpone_queue;
+    std::vector<std::pair<uint32_t, size_t>> postponeQueue;
 
-    while (!cur_queue.empty()) {
-        std::vector<uint32_t> next_queue;
+    while (!curQueue.empty()) {
+        std::vector<uint32_t> nextQueue;
 
         // ---- Process current layer (LIFO) ----
-        while (!cur_queue.empty()) {
-            uint32_t cur = cur_queue.back();
-            cur_queue.pop_back();
+        while (!curQueue.empty()) {
+            uint32_t cur = curQueue.back();
+            curQueue.pop_back();
 
-            size_t begin = ctx.first_edge_pointers[cur];
-            size_t end = ctx.first_edge_pointers[static_cast<size_t>(cur) + 1];
+            size_t begin = ctx.firstEdgePointers[cur];
+            size_t end = ctx.firstEdgePointers[static_cast<size_t>(cur) + 1];
 
-            for (size_t ptr = begin; ptr < end; ptr += static_cast<size_t>(ctx.edge_fields_count)) {
-                int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edge_type_off)]);
+            for (size_t ptr = begin; ptr < end; ptr += static_cast<size_t>(ctx.edgeFieldsCount)) {
+                int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edgeTypeOff)]);
 
                 // ---- Basic edge-type exclusions ----
-                if (ctx.weak_type >= 0 && t == ctx.weak_type) continue;
-                if (ctx.shortcut_type >= 0 && t == ctx.shortcut_type && cur != 0) continue;
-                if (ctx.hidden_type >= 0 && t == ctx.hidden_type) continue;
+                if (ctx.weakType >= 0 && t == ctx.weakType) {
+                    continue;
+                }
+                if (ctx.shortcutType >= 0 && t == ctx.shortcutType && cur != 0) {
+                    continue;
+                }
+                if (ctx.hiddenType >= 0 && t == ctx.hiddenType) {
+                    continue;
+                }
 
-                uint32_t child = ctx.edges[ptr + static_cast<size_t>(ctx.to_node_off)]
-                                / static_cast<uint32_t>(ctx.node_fields_count);
-                if (child >= ctx.node_count) continue;
+                uint32_t child = ctx.edges[ptr + static_cast<size_t>(ctx.toNodeOff)]
+                                / static_cast<uint32_t>(ctx.nodeFieldsCount);
+                if (child >= ctx.nodeCount) {
+                    continue;
+                }
 
                 // ---- isMeaningfulEdge checks (matching the reference implementation) ----
 
-                if (cur == child) continue;  // self-reference
+                if (cur == child) {
+                    continue;
+                }// self-reference
 
                 // Edge name block list + WeakMap key edge check
                 // WeakMap edges: keys are weakly referenced; skip the forward direction
                 // where the edge name contains "@<key_id>) ->" and key_id == target.id
                 {
-                    const std::string& en = ctx.get_edge_name(ptr);
-                    if (is_edge_name_blocked(en)) continue;
+                    const std::string& en = ctx.getEdgeName(ptr);
+                    if (IsEdgeNameBlocked(en)) {
+                        continue;
+                    }
                     if (en.find("WeakMap") != std::string::npos) {
-                        static const std::regex key_re(R"(@(\d+)\) ->)");
+                        static const std::regex KeyRe(R"(@(\d+)\) ->)");
                         std::smatch match;
-                        if (std::regex_search(en, match, key_re)) {
-                            uint32_t key_id = 0xFFFFFFFFu;
+                        if (std::regex_search(en, match, KeyRe)) {
+                            uint32_t keyId = 0xFFFFFFFFu;
                             try {
-                                key_id = static_cast<uint32_t>(std::stoul(match[1].str()));
-                            } catch (const std::exception&) {
+                                keyId = static_cast<uint32_t>(std::stoul(match[1].str()));
+                            } catch (const std::exception&)
+                            {
                                 // 越界/非法 key id：不当作 WeakMap key 匹配
                             }
-                            uint32_t child_id = ctx.nodes[static_cast<size_t>(child) * static_cast<size_t>(ctx.node_fields_count)
-                                                       + static_cast<size_t>(ctx.id_off)];
-                            if (key_id == child_id) continue;
+                            uint32_t childId = ctx.nodes[static_cast<size_t>(child) * static_cast<size_t>(ctx.nodeFieldsCount)
+                                                       + static_cast<size_t>(ctx.idOff)];
+                            if (keyId == childId) {
+                                continue;
+                            }
                         }
                     }
                 }
 
                 // Already queued — prevents multi-parent targeting
-                if (queued[child]) continue;
+                if (queued[child]) {
+                    continue;
+                }
 
                 // Internal edge named "code" — V8 internal, not meaningful for leak analysis
-                if (ctx.internal_type >= 0 && t == ctx.internal_type) {
-                    const std::string& en = ctx.get_edge_name(ptr);
-                    if (en == "code") continue;
+                if (ctx.internalType >= 0 && t == ctx.internalType) {
+                    const std::string& en = ctx.getEdgeName(ptr);
+                    if (en == "code") {
+                        continue;
+                    }
                 }
 
                 // Element edge to (map descriptors): only specific indices are meaningful.
                 // In V8, (map descriptors) are fixed-length arrays; only elements at
                 // index < 2 or index % 3 != 1 hold representative references.
-                if (ctx.element_type >= 0 && t == ctx.element_type) {
-                    const std::string& child_name = ctx.get_node_name(child);
-                    if (child_name == "(map descriptors)") {
-                        uint32_t index = ctx.edges[ptr + static_cast<size_t>(ctx.edge_name_off)];
-                        if (index >= 2 || index % 3 == 1) continue;
+                if (ctx.elementType >= 0 && t == ctx.elementType) {
+                    const std::string& childName = ctx.GetNodeName(child);
+                    if (childName == "(map descriptors)") {
+                        uint32_t index = ctx.edges[ptr + static_cast<size_t>(ctx.edgeNameOff)];
+                        if (index >= 2 || index % 3 == 1) {
+                            continue;
+                        }
                     }
                 }
 
                 // ---- isMeaningfulNode check (applied to the TARGET node) ----
                 {
-                    const std::string& child_name = ctx.get_node_name(child);
-                    if (child_name == "system / NativeContext" ||
-                        child_name == "system / SourcePositionTableWithFrameCache" ||
-                        child_name == "(map descriptors)") continue;
-                    if (ctx.get_node_type(child) == "code") continue;
-                    if (is_node_name_blocked(child_name)) continue;
+                    const std::string& childName = ctx.GetNodeName(child);
+                    if (childName == "system / NativeContext" ||
+                        childName == "system / SourcePositionTableWithFrameCache" ||
+                        childName == "(map descriptors)") continue;
+                    if (ctx.getNodeType(child) == "code") {
+                        continue;
+                    }
+                    if (IsNodeNameBlocked(childName)) {
+                        continue;
+                    }
                 }
 
                 // ---- Priority checks (isLessPreferableEdge / isLessPreferableNode) ----
-                bool is_low_priority = false;
+                bool isLowPriority = false;
 
                 // Edge name in grey list → defer
                 {
-                    const std::string& en = ctx.get_edge_name(ptr);
-                    if (edge_name_grey_list.count(en)) is_low_priority = true;
+                    const std::string& en = ctx.getEdgeName(ptr);
+                    if (edgeNameGreyList.count(en)) {
+                        isLowPriority = true;
+                    }
                 }
 
                 // Node name in grey list → defer
-                if (!is_low_priority) {
-                    const std::string& child_name = ctx.get_node_name(child);
-                    if (node_name_grey_list.count(child_name)) is_low_priority = true;
+                if (!isLowPriority) {
+                    const std::string& childName = ctx.GetNodeName(child);
+                    if (nodeNameGreyList.count(childName)) {
+                        isLowPriority = true;
+                    }
                 }
 
                 // C++ roots synthetic node → defer
-                if (!is_low_priority && is_cpp_roots_node(ctx, child)) {
-                    is_low_priority = true;
+                if (!isLowPriority && IsCppRootsNode(ctx, child)) {
+                    isLowPriority = true;
                 }
 
                 // ---- Enqueue ----
-                if (is_low_priority) {
+                if (isLowPriority) {
                     // Deferred: add to postpone queue (queued but no path edge yet)
-                    postpone_queue.emplace_back(cur, ptr);
+                    postponeQueue.emplace_back(cur, ptr);
                     queued[child] = 1;
                 } else {
                     // Normal priority: assign path edge and add to next layer
-                    result.path_edges[child] = {cur, static_cast<uint32_t>(ptr)};
-                    next_queue.push_back(child);
+                    result.pathEdges[child] = {cur, static_cast<uint32_t>(ptr)};
+                    nextQueue.push_back(child);
                     queued[child] = 1;
                 }
             }
@@ -1073,31 +1150,31 @@ static void run_layered_bfs(
         // ---- Fallback 1: process postponed queue ----
         // When no normal-priority nodes were found in this layer,
         // promote the postponed edges to the next layer.
-        while (next_queue.empty() && !postpone_queue.empty()) {
-            auto [parent, ptr] = postpone_queue.back();
-            postpone_queue.pop_back();
-            uint32_t child = target_index_of(ctx.edges, ptr, ctx.to_node_off, ctx.node_fields_count);
-            if (result.path_edges[child].parent_node_index == INVALID) {
-                result.path_edges[child] = {parent, static_cast<uint32_t>(ptr)};
-                next_queue.push_back(child);
+        while (nextQueue.empty() && !postponeQueue.empty()) {
+            auto [parent, ptr] = postponeQueue.back();
+            postponeQueue.pop_back();
+            uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
+            if (result.pathEdges[child].parentNodeIndex == INVALID) {
+                result.pathEdges[child] = {parent, static_cast<uint32_t>(ptr)};
+                nextQueue.push_back(child);
             }
         }
 
         // ---- Fallback 2: process low-priority roots ----
         // When both normal and postponed queues are empty,
         // promote low-priority roots to the next layer.
-        while (next_queue.empty() && !low_pri_roots.empty()) {
-            uint32_t idx = low_pri_roots.back();
-            low_pri_roots.pop_back();
+        while (nextQueue.empty() && !lowPriRoots.empty()) {
+            uint32_t idx = lowPriRoots.back();
+            lowPriRoots.pop_back();
             if (!queued[idx]) {
-                result.path_edges[idx] = {idx, INVALID};
-                next_queue.push_back(idx);
+                result.pathEdges[idx] = {idx, INVALID};
+                nextQueue.push_back(idx);
                 queued[idx] = 1;
-                result.reachable_count++;
+                result.reachableCount++;
             }
         }
 
-        cur_queue = std::move(next_queue);
+        curQueue = std::move(nextQueue);
     }
 }
 
@@ -1107,47 +1184,49 @@ static void run_layered_bfs(
 //  Public API: compute_shortest_paths
 // ============================================================================
 
-ShortestPathsResult compute_shortest_paths(const HeapSnapshot& snapshot,
-                                           bool exclude_weak_edges,
-                                           bool exclude_shortcut_edges,
-                                           bool exclude_hidden_edges) {
+ShortestPathsResult ComputeShortestPaths(const HeapSnapshot& snapshot,
+                                           bool excludeWeakEdges,
+                                           bool excludeShortcutEdges,
+                                           bool excludeHiddenEdges) {
     StageTimer timer("ShortPaths");
 
     BfsContext ctx{
         snapshot.edges,
         snapshot.nodes,
         snapshot.strings,
-        snapshot.node_type_names,
-        snapshot.first_edge_pointers,
-        snapshot.edge_fields_count,
-        snapshot.edge_type_offset,
-        snapshot.edge_name_or_index_offset,
-        snapshot.edge_to_node_offset,
-        snapshot.node_fields_count,
-        snapshot.node_type_offset,
-        snapshot.node_name_offset,
-        snapshot.node_id_offset,
-        exclude_weak_edges ? snapshot.edge_weak_type : -1,
-        exclude_shortcut_edges ? snapshot.edge_shortcut_type : -1,
-        exclude_hidden_edges ? snapshot.edge_hidden_type : -1,
-        snapshot.edge_internal_type,
-        snapshot.edge_element_type,
-        static_cast<uint32_t>(snapshot.node_count),
+        snapshot.nodeTypeNames,
+        snapshot.firstEdgePointers,
+        snapshot.edgeFieldsCount,
+        snapshot.edgeTypeOffset,
+        snapshot.edgeNameOrIndexOffset,
+        snapshot.edgeToNodeOffset,
+        snapshot.nodeFieldsCount,
+        snapshot.nodeTypeOffset,
+        snapshot.nodeNameOffset,
+        snapshot.nodeIdOffset,
+        excludeWeakEdges ? snapshot.edgeWeakType : -1,
+        excludeShortcutEdges ? snapshot.edgeShortcutType : -1,
+        excludeHiddenEdges ? snapshot.edgeHiddenType : -1,
+        snapshot.edgeInternalType,
+        snapshot.edgeElementType,
+        static_cast<uint32_t>(snapshot.nodeCount),
     };
 
     constexpr uint32_t INVALID = 0xFFFFFFFF;
     ShortestPathsResult result;
     // 与 compute_node_sizes 对称：空快照直接返回，避免后面 collect_shortest_path_roots
     // 把节点 0 当根、对空 vector 越界写。
-    if (ctx.node_count == 0) return result;
-    result.path_edges.resize(ctx.node_count, {INVALID, INVALID});
+    if (ctx.nodeCount == 0) {
+        return result;
+    }
+    result.pathEdges.resize(ctx.nodeCount, {INVALID, INVALID});
 
-    std::vector<uint32_t> high_pri_roots, low_pri_roots;
-    collect_shortest_path_roots(ctx, high_pri_roots, low_pri_roots);
+    std::vector<uint32_t> highPriRoots, lowPriRoots;
+    CollectShortestPathRoots(ctx, highPriRoots, lowPriRoots);
 
-    run_layered_bfs(ctx, high_pri_roots, low_pri_roots, result);
+    RunLayeredBfs(ctx, highPriRoots, lowPriRoots, result);
 
-    timer.tick("bfs", std::to_string(result.reachable_count) + " reachable");
+    timer.tick("bfs", std::to_string(result.reachableCount) + " reachable");
     timer.done();
     return result;
 }

@@ -28,9 +28,9 @@ namespace mem_analyzer {
 /// @param so_dir      可选 native .so 符号表目录（空则跳过 --So_dir）
 /// @param error       可选，失败原因；成功时保持不变
 /// @return 转换成功返回 true；streamer 缺失 / 转换非零退出返回 false
-bool run_trace_streamer(const std::string& htrace_path,
-                        const std::string& db_path,
-                        const std::string& so_dir,
+bool RunTraceStreamer(const std::string& htracePath,
+                        const std::string& dbPath,
+                        const std::string& soDir,
                         std::string* error = nullptr);
 
 } // namespace mem_analyzer

@@ -34,38 +34,41 @@
 
 namespace mem_analyzer {
 
-TraceDB htrace_parse(const std::string& file_path, const RunContext& ctx) {
+TraceDB HtraceParse(const std::string& filePath, const RunContext& ctx)
+{
     StageTimer timer("Parse");
 
     // 1. Validate magic number + dataType (profiler file)
     timer.stage("Validating file magic number");
-    if (!HtraceReader::is_profiler_file(file_path)) {
+    if (!HtraceReader::IsProfilerFile(filePath)) {
         throw std::runtime_error("Invalid file signature");
     }
     timer.tick("validate");
 
     // 2. Create temp directory (in system temp dir, not output dir).
     //    RAII：DB 文件在函数返回前已被消费完，故可随作用域自动清理。
-    TempDir temp_dir("htrace");
-    auto source_name = platform::stem(file_path);
+    TempDir tempDir("htrace");
+    auto sourceName = platform::stem(filePath);
 
-    auto db_path = platform::join_path(temp_dir.path(), source_name + "_trace_streamer.db");
+    auto dbPath = platform::JoinPath(tempDir.path(), sourceName + "_trace_streamer.db");
 
     // 3. Run trace_streamer
-    std::string streamer_err;
-    if (!run_trace_streamer(file_path, db_path, ctx.resources.so_dir, &streamer_err)) {
-        throw std::runtime_error(streamer_err.empty() ? "trace_streamer conversion failed"
-                                                       : streamer_err);
+    std::string streamerErr;
+    if (!RunTraceStreamer(filePath, dbPath, ctx.resources.soDir, &streamerErr)) {
+        throw std::runtime_error(streamerErr.empty() ? "trace_streamer conversion failed"
+                                                       : streamerErr);
     }
-    log::logok("    DB file generated: ", db_path);
+    log::Logok("    DB file generated: ", dbPath);
     timer.tick("trace_streamer");
 
     // 4. Process DB into TraceDB with compressed stacks + metadata
     timer.stage("Processing DB into call stacks");
-    auto db = process_htrace_db(db_path, ctx.htrace.category, !ctx.output.parse_only, !ctx.htrace.leak_addrs.empty());
-    if (db.meta.process_name.empty()) {
-        std::string nm = HtraceReader::read_process_name(file_path);
-        if (!nm.empty()) db.meta.process_name = std::move(nm);
+    auto db = ProcessHtraceDb(dbPath, ctx.htrace.category, !ctx.output.parseOnly, !ctx.htrace.leakAddrs.empty());
+    if (db.meta.processName.empty()) {
+        std::string nm = HtraceReader::ReadProcessName(filePath);
+        if (!nm.empty()) {
+            db.meta.processName = std::move(nm);
+        }
     }
     auto* clist = std::get_if<CompressedCallStackList>(&db.stacks);
     timer.tick("db_process", std::to_string(clist ? clist->stacks.size() : 0) + " call stacks");

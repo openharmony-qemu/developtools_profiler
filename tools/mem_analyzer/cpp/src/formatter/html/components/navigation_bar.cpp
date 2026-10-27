@@ -16,12 +16,13 @@
 #include <vector>
 #include "formatter/html/html_analysis_common.hpp"
 
-using namespace mem_analyzer::html_analysis;
+using namespace mem_analyzer::htmlAnalysis;
 
 namespace mem_analyzer {
 
 // 设置导航栏格式
-std::string nav_bar_format() {
+std::string NavBarFormat()
+{
     return R"HTML(
 .nav-bar {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 0 20px; text-align: center; }
 .nav-item { display: inline-block; padding: 14px 28px; cursor: pointer; font-size: 16px; font-weight: 500; color: rgba(255,255,255,0.85); border-bottom: 3px solid transparent; transition: all 0.3s ease; }
@@ -78,7 +79,8 @@ std::string nav_bar_format() {
 }
 
 // 构建标题
-std::string nav_bar_title() {
+std::string NavBarTitle()
+{
     return R"HTML(
 <div class="nav-bar" style="display: flex; justify-content: center;">
   <span class="nav-item active" data-nav="navReport" onclick="switchNav('navReport', this)">分析报告</span>
@@ -90,7 +92,8 @@ std::string nav_bar_title() {
 
 
 // ========== 构建资料文档导航栏内容 ==========
-std::string nav_bar_doc_content() {
+std::string NavBarDocContent()
+{
     return R"HTML(
 <div class="doc-container">
   <div class="doc-category">
@@ -329,7 +332,8 @@ std::string nav_bar_doc_content() {
 }
 
 // 构建帮助中心导航栏内容
-std::string nav_bar_help_center_content() {
+std::string nav_bar_help_center_content()
+{
     std::string content = R"HTML(
 <div class="help-container">
   <div class="help-section help-hero">
@@ -369,9 +373,11 @@ std::string nav_bar_help_center_content() {
 }
 
 // 设置切换导航栏函数
-std::string nav_bar_switch_nav_func() {
+std::string nav_bar_switch_nav_func()
+{
     return R"HTML(
-    window.switchNav = function(navId, el) {
+    window.switchNav = function(navId, el)
+    {
     var target = document.getElementById(navId);
     if (!target) {
       console.error('Nav content not found:', navId);

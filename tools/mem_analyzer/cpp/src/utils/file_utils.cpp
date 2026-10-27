@@ -22,7 +22,8 @@ namespace fs = std::filesystem;
 
 namespace mem_analyzer {
 
-std::wstring widen_path(const std::string& path) {
+std::wstring WidenPath(const std::string& path)
+{
 #if defined(_WIN32)
     // Try UTF-8 first with MB_ERR_INVALID_CHARS to reject non-UTF-8 input
     int wlen = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path.c_str(), -1, nullptr, 0);
@@ -44,7 +45,8 @@ std::wstring widen_path(const std::string& path) {
 #endif
 }
 
-bool ends_with_ignore_case(const std::string &str, const std::string &suffix) {
+bool EndsWithIgnoreCase(const std::string &str, const std::string &suffix)
+{
     if (str.size() < suffix.size()) {
         return false;
     }

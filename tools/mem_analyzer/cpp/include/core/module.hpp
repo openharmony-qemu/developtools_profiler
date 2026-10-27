@@ -22,8 +22,8 @@ namespace mem_analyzer {
 
 /// 单个文件的处理请求。
 struct ModuleRequest {
-    std::string file_path;
-    bool parse_only = false;
+    std::string filePath;
+    bool parseOnly = false;
     std::string format;  ///< 显式 `-f`；空 = 用模块的默认格式
 };
 
@@ -39,7 +39,7 @@ public:
     virtual std::string name() const = 0;
 
     /// 是否接受该扩展名（小写、不含点）。
-    virtual bool supports_extension(const std::string& ext) const = 0;
+    virtual bool SupportsExtension(const std::string& ext) const = 0;
 
     /// 当前能力表。调用期求值，避免静态初始化顺序问题。
     virtual ModuleCapability capability() const = 0;

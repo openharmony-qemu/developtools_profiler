@@ -30,7 +30,8 @@ public:
     /// 该域的 parser 名历史上是 "snapshot"，`process_file()` 会打印 `Using parser: <name>`。
     /// 保持该名以免改变既有输出（域目录按 CLI 命令名归入 `jsleak/`）。
     std::string name() const override { return "snapshot"; }
-    bool supports_extension(const std::string& ext) const override {
+    bool SupportsExtension(const std::string& ext) const override
+    {
         return ext == "heapsnapshot" || ext == "rawheap";
     }
     ModuleCapability capability() const override;

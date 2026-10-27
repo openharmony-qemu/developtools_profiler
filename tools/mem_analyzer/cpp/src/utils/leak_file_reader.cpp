@@ -23,9 +23,12 @@ namespace mem_analyzer {
 namespace {
 
 // 从二进制流读取 8 字节小端 uint64（不依赖主机字节序）
-bool read_u64_le(std::ifstream& f, uint64_t& out) {
+bool ReadU64Le(std::ifstream& f, uint64_t& out)
+{
     unsigned char b[8];
-    if (!f.read(reinterpret_cast<char*>(b), 8)) return false;
+    if (!f.read(reinterpret_cast<char*>(b), 8)) {
+        return false;
+    }
     out =  static_cast<uint64_t>(b[0])
         | (static_cast<uint64_t>(b[1]) << 8)
         | (static_cast<uint64_t>(b[2]) << 16)
@@ -39,14 +42,16 @@ bool read_u64_le(std::ifstream& f, uint64_t& out) {
 
 } // namespace
 
-std::unordered_set<uint64_t> read_leak_file(const std::string& path) {
+std::unordered_set<uint64_t> ReadLeakFile(const std::string& path)
+{
     std::unordered_set<uint64_t> addrs;
     // open_ifstream 打不开时抛 std::system_error（不会返回未打开的流），
     // 这里统一转成本函数的错误信息，与下面的 !f 分支保持一致。
     std::ifstream f;
     try {
-        f = open_ifstream(path, std::ios::binary);
-    } catch (const std::exception&) {
+        f = OpenIfstream(path, std::ios::binary);
+    } catch (const std::exception&)
+    {
         throw std::runtime_error("Cannot open leak file: " + path);
     }
     if (!f) {
@@ -65,7 +70,7 @@ std::unordered_set<uint64_t> read_leak_file(const std::string& path) {
 
     // count: 8 bytes uint64 LE
     uint64_t count = 0;
-    if (!read_u64_le(f, count)) {
+    if (!ReadU64Le(f, count)) {
         throw std::runtime_error("Leak file too short for count: " + path);
     }
     if (count == 0) {
@@ -93,7 +98,7 @@ std::unordered_set<uint64_t> read_leak_file(const std::string& path) {
     for (uint64_t i = 0; i < count; ++i) {
         uint64_t addr = 0;
         uint64_t size = 0;  // 大小暂不使用，仅消费 8 字节
-        if (!read_u64_le(f, addr) || !read_u64_le(f, size)) {
+        if (!ReadU64Le(f, addr) || !ReadU64Le(f, size)) {
             throw std::runtime_error("Leak file truncated at entry " + std::to_string(i)
                                      + " (expected " + std::to_string(count) + ")");
         }

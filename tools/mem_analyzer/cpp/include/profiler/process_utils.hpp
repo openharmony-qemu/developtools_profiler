@@ -25,44 +25,44 @@ namespace proc {
 // kept out of utils/platform to avoid touching shared code.
 struct CapturedCmd {
     std::string output;
-    int exit_code = -1;
+    int exitCode = -1;
     bool spawned = false;
-    bool timed_out = false;  // true when `timeout_ms` expired before completion
+    bool timedOut = false;  // true when `timeout_ms` expired before completion
 };
 
 // Run a command and capture all stdout. The caller embeds `2>&1` to merge
 // stderr. When `timeout_ms > 0` the command is bounded by that many
 // milliseconds: on expiry the child is terminated and `timed_out` is set.
-CapturedCmd capture_command(const std::string& cmd, long long timeout_ms = 0);
+CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs = 0);
 
 // Wrap `s` as a single shell argument for the host shell.
 // POSIX  -> '...' with each ' escaped as '\''
 // Windows -> "..." with each " escaped as \"
-std::string shell_quote(const std::string& s);
+std::string ShellQuote(const std::string& s);
 
 // Wrap `s` as a single shell argument for the device-side shell (POSIX),
 // regardless of the host platform. Reached through `hdc shell`, where the
 // host-side Windows/cmd quoting rules do not apply.
-std::string shell_quote_device(const std::string& s);
+std::string ShellQuoteDevice(const std::string& s);
 
 // Look up `name` on PATH. POSIX: `command -v`; Windows: `where`.
-CapturedCmd find_in_path(const std::string& name);
+CapturedCmd FindInPath(const std::string& name);
 
 // Directory containing the running executable, or empty on failure.
-std::string get_executable_dir();
+std::string GetExecutableDir();
 
 #if !defined(_WIN32)
 // Result of spawn_piped: child pid + pipe read fd (stdout+stderr merged).
 struct SpawnedProc {
     pid_t pid = -1;
-    int read_fd = -1;
+    int ReadFd = -1;
     bool ok() const { return pid > 0; }
 };
 
 // POSIX only: fork + execl("/bin/sh","-c",cmd) with stdout+stderr piped.
 // On success returns {pid>0, read_fd}; on failure {-1,-1} (nothing to close).
 // Caller owns read_fd (close after consuming) and must waitpid(pid).
-SpawnedProc spawn_piped(const std::string& cmd);
+SpawnedProc SpawnPiped(const std::string& cmd);
 #endif
 
 } // namespace proc

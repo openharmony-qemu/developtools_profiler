@@ -21,15 +21,16 @@
 
 namespace mem_analyzer {
 
-json build_output_meta_base(const RunContext& ctx) {
+json BuildOutputMetaBase(const RunContext& ctx)
+{
     auto now = std::chrono::system_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 
     json meta;
     meta["generator"] = "OpenHarmony Memory Analyzer";
-    meta["generatorVersion"] = get_version();
-    meta["generateTimestamp"] = format_readable_timestamp(ms);
-    meta["command"] = ctx.command_line;
+    meta["generatorVersion"] = GetVersion();
+    meta["generateTimestamp"] = FormatReadableTimestamp(ms);
+    meta["command"] = ctx.commandLine;
     return meta;
 }
 

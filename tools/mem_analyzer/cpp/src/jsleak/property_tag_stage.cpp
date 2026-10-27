@@ -24,92 +24,104 @@
 
 namespace mem_analyzer {
 
-PropertyTagStage::PropertyTagStage(const std::string& jsleak_list_file) {
-    load_property_tag_config();
-    if (!jsleak_list_file.empty()) {
-        load_jsleak_list_file(jsleak_list_file);
+PropertyTagStage::PropertyTagStage(const std::string& jsleakListFile)
+{
+    LoadPropertyTagConfig();
+    if (!jsleakListFile.empty()) {
+        LoadJsleakListFile(jsleakListFile);
     }
 }
 
-const std::string& PropertyTagStage::mode() const {
+const std::string& PropertyTagStage::mode() const
+{
     static const std::string kMode = "property-tag";
     return kMode;
 }
 
-const char* PropertyTagStage::preview_id() const {
+const char* PropertyTagStage::PreviewId() const
+{
     return nullptr;
 }
 
-const char* PropertyTagStage::json_key() const {
+const char* PropertyTagStage::JsonKey() const
+{
     return "propertyTagObjects";
 }
 
-void PropertyTagStage::run(const HeapSnapshot& heap) {
-    generate_property_tag_objs(heap);
-    log::logok("  Analysis completed. Found ", property_tag_objs_.size(),
+void PropertyTagStage::run(const HeapSnapshot& heap)
+{
+    GeneratePropertyTagObjs(heap);
+    log::Logok("  Analysis completed. Found ", propertyTagObjs.size(),
                " suspicious object types.");
 }
 
 json PropertyTagStage::analyze(
         const HeapSnapshot& heap,
-        const std::function<bool(uint32_t)>& include_node) {
-    property_tag_objs_.clear();
-    generate_property_tag_objs(heap, include_node);
-    return to_json();
+        const std::function<bool(uint32_t)>& includeNode)
+        {
+    propertyTagObjs.clear();
+    GeneratePropertyTagObjs(heap, includeNode);
+    return ToJson();
 }
 
-json PropertyTagStage::to_json() const {
+json PropertyTagStage::ToJson() const
+{
     nlohmann::ordered_json output = nlohmann::ordered_json::object();
 
-    for (const auto& [name, obj_info] : property_tag_objs_) {
-        nlohmann::ordered_json obj_json;
-        obj_json["totalRetainedSize"] = obj_info.total_retained_size;
-        obj_json["totalNodeCount"] = obj_info.total_node_count;
+    for (const auto& [name, objInfo] : propertyTagObjs) {
+        nlohmann::ordered_json objJson;
+        objJson["totalRetainedSize"] = objInfo.totalRetainedSize;
+        objJson["totalNodeCount"] = objInfo.totalNodeCount;
         // 为空时也始终输出，保持输出结构稳定
-        obj_json["propertyName"] = obj_info.property_name;
-        obj_json["displayType"] = obj_info.concern_display_type.empty()
-                                      ? default_display_type_
-                                      : obj_info.concern_display_type;
-        obj_json["hashValues"] = obj_info.hash_values;
+        objJson["propertyName"] = objInfo.propertyName;
+        objJson["displayType"] = objInfo.concernDisplayType.empty()
+                                      ? defaultDisplayType
+                                      : objInfo.concernDisplayType;
+        objJson["hashValues"] = objInfo.hashValues;
 
-        obj_json["referenceChains"] = ref_chains_to_json(obj_info.reference_chains);
-        output[name] = std::move(obj_json);
+        objJson["referenceChains"] = RefChainsToJson(objInfo.referenceChains);
+        output[name] = std::move(objJson);
     }
 
     return output;
 }
 
-std::string PropertyTagStage::check_destoryed_tag(uint32_t u_ni, const HeapSnapshot& heap) {
-    std::string found_edge_name;
+std::string PropertyTagStage::CheckDestoryedTag(uint32_t uNi, const HeapSnapshot& heap)
+{
+    std::string foundEdgeName;
 
-    heap.for_each_edge(u_ni, [&](const HeapSnapshot::EdgeInfo& edge, size_t) {
-        std::string edge_name;
-        if (edge.name_or_index < static_cast<uint32_t>(heap.strings.size())) {
-            edge_name = heap.strings[edge.name_or_index];
+    heap.ForEachEdge(uNi, [&](const HeapSnapshot::EdgeInfo& edge, size_t)
+    {
+        std::string edgeName;
+        if (edge.nameOrIndex < static_cast<uint32_t>(heap.strings.size())) {
+            edgeName = heap.strings[edge.nameOrIndex];
         }
-        if (property_tag_base_classes_.find(edge_name) != property_tag_base_classes_.end()) {
-            std::string target_name = heap.get_node_name(edge.to_node);
-            if (target_name.find("true") != std::string::npos) {
-                found_edge_name = edge_name;
+        if (propertyTagBaseClasses.find(edgeName) != propertyTagBaseClasses.end()) {
+            std::string targetName = heap.GetNodeName(edge.toNode);
+            if (targetName.find("true") != std::string::npos) {
+                foundEdgeName = edgeName;
             }
         }
     });
 
-    return found_edge_name;
+    return foundEdgeName;
 }
 
-BaseClassInfo PropertyTagStage::find_concern_type(uint32_t u_ni, const std::vector<BaseClassInfo>& base_classes, const HeapSnapshot& heap) {
-    if (base_classes.empty()) return {};
+BaseClassInfo PropertyTagStage::FindConcernType(uint32_t uNi, const std::vector<BaseClassInfo>& baseClasses, const HeapSnapshot& heap)
+{
+    if (baseClasses.empty()) {
+        return {};
+    }
 
     std::unordered_set<uint32_t> visited;
     visited.reserve(16);
-    uint32_t cur = u_ni;
-    bool looking_for_hclass = true;
+    uint32_t cur = uNi;
+    bool lookingForHclass = true;
 
-    while (cur < static_cast<uint32_t>(heap.node_count) && visited.insert(cur).second) {
+    while (cur < static_cast<uint32_t>(heap.nodeCount) && visited.insert(cur).second) {
         // 当前节点名做包含匹配，命中即返回（沿继承链从近到远，首个命中优先）
-        std::string name = heap.get_node_name(cur);
-        for (const auto& base : base_classes) {
+        std::string name = heap.GetNodeName(cur);
+        for (const auto& base : baseClasses) {
             if (!base.name.empty() && name.find(base.name) != std::string::npos) {
                 return base;
             }
@@ -117,107 +129,120 @@ BaseClassInfo PropertyTagStage::find_concern_type(uint32_t u_ni, const std::vect
 
         // 沿原型链推进：node → hclass → Proto/__proto__ → 父原型 → hclass → ...
         bool advanced = false;
-        heap.for_each_edge(cur, [&](const HeapSnapshot::EdgeInfo& edge, size_t) {
-            if (advanced) return;
-            if (edge.name_or_index >= static_cast<uint32_t>(heap.strings.size())) return;
-            const std::string& edge_name = heap.strings[edge.name_or_index];
-            if (looking_for_hclass) {
-                if (edge_name == "hclass") {
-                    cur = edge.to_node;
+        heap.ForEachEdge(cur, [&](const HeapSnapshot::EdgeInfo& edge, size_t)
+        {
+            if (advanced) {
+                return;
+            }
+            if (edge.nameOrIndex >= static_cast<uint32_t>(heap.strings.size())) {
+                return;
+            }
+            const std::string& edgeName = heap.strings[edge.nameOrIndex];
+            if (lookingForHclass) {
+                if (edgeName == "hclass") {
+                    cur = edge.toNode;
                     advanced = true;
-                    looking_for_hclass = false;
+                    lookingForHclass = false;
                 }
             } else {
-                if (edge_name == "Proto" || edge_name == "__proto__") {
-                    cur = edge.to_node;
+                if (edgeName == "Proto" || edgeName == "__proto__") {
+                    cur = edge.toNode;
                     advanced = true;
-                    looking_for_hclass = true;
+                    lookingForHclass = true;
                 }
             }
         });
-        if (!advanced) break;
+        if (!advanced) {
+            break;
+        }
     }
     return {};
 }
 
-void PropertyTagStage::assemble_property_tag_obj(uint32_t u_ni, const HeapSnapshot& heap,
-        const std::string& property_name, const BaseClassInfo& base_class, uint32_t hash_value) {
-    std::string ref_chain = heap.format_ref_chain(u_ni);
-    uint64_t retained_size = static_cast<uint64_t>(heap.get_retained_size(u_ni));
+void PropertyTagStage::AssemblePropertyTagObj(uint32_t uNi, const HeapSnapshot& heap,
+        const std::string& propertyName, const BaseClassInfo& baseClass, uint32_t hashValue) {
+    std::string refChain = heap.FormatRefChain(uNi);
+    uint64_t retainedSize = static_cast<uint64_t>(heap.GetRetainedSize(uNi));
 
-    auto& obj_info = property_tag_objs_[heap.get_extended_node_name(u_ni)];
-    obj_info.total_retained_size += retained_size;
-    obj_info.total_node_count++;
-    if (!property_name.empty() && obj_info.property_name.empty()) {
-        obj_info.property_name = property_name;
+    auto& objInfo = propertyTagObjs[heap.GetExtendedNodeName(uNi)];
+    objInfo.totalRetainedSize += retainedSize;
+    objInfo.totalNodeCount++;
+    if (!propertyName.empty() && objInfo.propertyName.empty()) {
+        objInfo.propertyName = propertyName;
     }
     // concern_type 记录技术名；display_type 记录展示类型（未配置则回退 name；未命中基类则用 default_display_type_）
-    if (!base_class.name.empty() && obj_info.concern_type.empty()) {
-        obj_info.concern_type = base_class.name;
-        obj_info.concern_display_type = base_class.display_type.empty() ? base_class.name : base_class.display_type;
-    } else if (obj_info.concern_display_type.empty()) {
-        obj_info.concern_display_type = default_display_type_;
+    if (!baseClass.name.empty() && objInfo.concernType.empty()) {
+        objInfo.concernType = baseClass.name;
+        objInfo.concernDisplayType = baseClass.displayType.empty() ? baseClass.name : baseClass.displayType;
+    } else if (objInfo.concernDisplayType.empty())
+    {
+        objInfo.concernDisplayType = defaultDisplayType;
     }
-    if (hash_value != 0) {
-        obj_info.hash_values.push_back(hash_value);
+    if (hashValue != 0) {
+        objInfo.hashValues.push_back(hashValue);
     }
-    auto& rc = obj_info.reference_chains[ref_chain];
+    auto& rc = objInfo.referenceChains[refChain];
     if (rc.frames.empty()) {
-        rc.frames = heap.format_ref_chain_frames(u_ni);
+        rc.frames = heap.FormatRefChainFrames(uNi);
     }
-    rc.node_ids.push_back(heap.get_node_id(u_ni));
-    rc.total_retained_size += retained_size;
+    rc.nodeIds.push_back(heap.GetNodeId(uNi));
+    rc.totalRetainedSize += retainedSize;
 }
 
-void PropertyTagStage::generate_property_tag_objs(
+void PropertyTagStage::GeneratePropertyTagObjs(
         const HeapSnapshot& heap,
-        const std::function<bool(uint32_t)>& include_node) {
-    for (int ni = 0; ni < heap.node_count; ni++) {
-        uint32_t u_ni = static_cast<uint32_t>(ni);
-        if (include_node && !include_node(u_ni)) continue;
+        const std::function<bool(uint32_t)>& includeNode)
+        {
+    for (int ni = 0; ni < heap.nodeCount; ni++) {
+        uint32_t uNi = static_cast<uint32_t>(ni);
+        if (includeNode && !includeNode(uNi)) {
+            continue;
+        }
 
         // 1) 先过滤属性名：命中配置的属性标签才继续（避免对每个节点都查继承链）
-        std::string property_name = check_destoryed_tag(u_ni, heap);
+        std::string propertyName = CheckDestoryedTag(uNi, heap);
 
         // 2) 命中属性标签后，再沿继承链查首个命中的目标组件基类（关注类型）
-        BaseClassInfo base_class;
-        if (!property_name.empty()) {
-            auto it = property_tag_base_classes_.find(property_name);
-            if (it != property_tag_base_classes_.end() && !it->second.empty()) {
-                base_class = find_concern_type(u_ni, it->second, heap);
+        BaseClassInfo baseClass;
+        if (!propertyName.empty()) {
+            auto it = propertyTagBaseClasses.find(propertyName);
+            if (it != propertyTagBaseClasses.end() && !it->second.empty()) {
+                baseClass = FindConcernType(uNi, it->second, heap);
             }
         }
 
         // 3) Check if hash value matches.
-        uint32_t hash_value = 0;
-        if (!jsleak_hash_set_.empty()) {
-            hash_value = heap.get_node_internal_hash(u_ni);
-            if (hash_value != 0 && jsleak_hash_set_.find(hash_value) == jsleak_hash_set_.end()) {
-                hash_value = 0;
+        uint32_t hashValue = 0;
+        if (!jsleakHashSet.empty()) {
+            hashValue = heap.GetNodeInternalHash(uNi);
+            if (hashValue != 0 && jsleakHashSet.find(hashValue) == jsleakHashSet.end()) {
+                hashValue = 0;
             }
         }
 
-        if (property_name.empty() && hash_value == 0) {
+        if (propertyName.empty() && hashValue == 0) {
             continue;
         }
 
-        assemble_property_tag_obj(u_ni, heap, property_name, base_class, hash_value);
+        AssemblePropertyTagObj(uNi, heap, propertyName, baseClass, hashValue);
     }
 }
 
-void PropertyTagStage::load_jsleak_list_file(const std::string& file_path) {
+void PropertyTagStage::LoadJsleakListFile(const std::string& filePath)
+{
     // open_ifstream 打不开时会抛 std::system_error，不会返回未打开的流。
     // 必须在这里捕获：-l 是可选参数，路径不可读不应终止整轮分析
     // （此前 Windows 上该异常会一路逃到 JsleakModule::run，直接丢整份报告）。
     std::ifstream file;
     try {
-        file = open_ifstream(file_path);
-    } catch (const std::exception&) {
-        log::logw("Warning: Cannot open jsleaklist file: ", file_path);
+        file = OpenIfstream(filePath);
+    } catch (const std::exception&)
+    {
+        log::Logw("Warning: Cannot open jsleaklist file: ", filePath);
         return;
     }
     if (!file.is_open()) {
-        log::logw("Warning: Cannot open jsleaklist file: ", file_path);
+        log::Logw("Warning: Cannot open jsleaklist file: ", filePath);
         return;
     }
     try {
@@ -225,16 +250,18 @@ void PropertyTagStage::load_jsleak_list_file(const std::string& file_path) {
         if (j.contains("leakObjList") && j["leakObjList"].is_array()) {
             for (const auto& obj : j["leakObjList"]) {
                 if (obj.contains("hash")) {
-                    jsleak_hash_set_.insert(obj["hash"].get<uint32_t>());
+                    jsleakHashSet.insert(obj["hash"].get<uint32_t>());
                 }
             }
         }
-    } catch (const std::exception& e) {
-        log::logw("Warning: Failed to parse jsleaklist file: ", e.what());
+    } catch (const std::exception& e)
+    {
+        log::Logw("Warning: Failed to parse jsleaklist file: ", e.what());
     }
 }
 
-void PropertyTagStage::load_property_tag_config() {
+void PropertyTagStage::LoadPropertyTagConfig()
+{
     // 内置默认：配置文件缺失或解析失败时兜底
     static const std::unordered_map<std::string, std::vector<BaseClassInfo>> kDefaults = {
         {"isDeleting_", {{"ViewBuildNodeBase", "Component"}}},
@@ -246,22 +273,22 @@ void PropertyTagStage::load_property_tag_config() {
     const std::string rel = "config/jsleak/jsleak_config.json";
 
     // 固定目录：可执行文件同级的 config/jsleak/jsleak_config.json
-    std::string config_path;
-    const std::string exe_dir = platform::get_executable_dir();
-    if (!exe_dir.empty()) {
-        config_path = platform::join_path(exe_dir, rel);
+    std::string ConfigPath;
+    const std::string exeDir = platform::GetExecutableDir();
+    if (!exeDir.empty()) {
+        ConfigPath = platform::JoinPath(exeDir, rel);
     }
 
-    if (config_path.empty() || !platform::file_exists(config_path)) {
-        property_tag_base_classes_ = kDefaults;
-        default_display_type_ = kDefaultDisplayType;
+    if (ConfigPath.empty() || !platform::FileExists(ConfigPath)) {
+        propertyTagBaseClasses = kDefaults;
+        defaultDisplayType = kDefaultDisplayType;
         return;
     }
 
     try {
         json j;
         {
-            auto ifs = open_ifstream(config_path);
+            auto ifs = OpenIfstream(ConfigPath);
             ifs >> j;
         }
 
@@ -274,10 +301,16 @@ void PropertyTagStage::load_property_tag_config() {
         if (root && root->contains("tags") && (*root)["tags"].is_array()) {
             std::unordered_map<std::string, std::vector<BaseClassInfo>> parsed;
             for (const auto& item : (*root)["tags"]) {
-                if (!item.is_object()) continue;
-                if (!item.contains("propertyName") || !item["propertyName"].is_string()) continue;
+                if (!item.is_object()) {
+                    continue;
+                }
+                if (!item.contains("propertyName") || !item["propertyName"].is_string()) {
+                    continue;
+                }
                 const std::string tag = item["propertyName"].get<std::string>();
-                if (tag.empty()) continue;
+                if (tag.empty()) {
+                    continue;
+                }
 
                 std::vector<BaseClassInfo> bases;
                 if (item.contains("baseClasses") && item["baseClasses"].is_array()) {
@@ -285,10 +318,11 @@ void PropertyTagStage::load_property_tag_config() {
                         BaseClassInfo info;
                         if (b.is_string()) {
                             info.name = b.get<std::string>();
-                        } else if (b.is_object() && b.contains("name") && b["name"].is_string()) {
+                        } else if (b.is_object() && b.contains("name") && b["name"].is_string())
+                        {
                             info.name = b["name"].get<std::string>();
                             if (b.contains("displayType") && b["displayType"].is_string()) {
-                                info.display_type = b["displayType"].get<std::string>();
+                                info.displayType = b["displayType"].get<std::string>();
                             }
                         }
                         if (!info.name.empty()) {
@@ -298,21 +332,22 @@ void PropertyTagStage::load_property_tag_config() {
                 }
                 parsed[tag] = std::move(bases);
             }
-            property_tag_base_classes_ = parsed.empty() ? kDefaults : std::move(parsed);
+            propertyTagBaseClasses = parsed.empty() ? kDefaults : std::move(parsed);
         } else {
-            property_tag_base_classes_ = kDefaults;
+            propertyTagBaseClasses = kDefaults;
         }
 
         // 默认展示类型（可缺省）
         if (root && root->contains("defaultDisplayType") && (*root)["defaultDisplayType"].is_string()) {
-            default_display_type_ = (*root)["defaultDisplayType"].get<std::string>();
+            defaultDisplayType = (*root)["defaultDisplayType"].get<std::string>();
         } else {
-            default_display_type_ = kDefaultDisplayType;
+            defaultDisplayType = kDefaultDisplayType;
         }
-    } catch (const std::exception& e) {
-        log::logw("Warning: Failed to parse property tag config: ", e.what());
-        property_tag_base_classes_ = kDefaults;
-        default_display_type_ = kDefaultDisplayType;
+    } catch (const std::exception& e)
+    {
+        log::Logw("Warning: Failed to parse property tag config: ", e.what());
+        propertyTagBaseClasses = kDefaults;
+        defaultDisplayType = kDefaultDisplayType;
     }
 }
 

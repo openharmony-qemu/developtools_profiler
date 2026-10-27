@@ -23,24 +23,24 @@ namespace mem_analyzer {
 // 类名沿用现状 .tab-item/.tab-content；.filter 归一留 Phase 2a。
 
 // tab 栏样式（.tab-bar/.tab-item/.tab-content）。
-std::string tab_bar_css();
+std::string TabBarCss();
 
 // tab 栏开壳：<div class="tab-bar">
-std::string tab_bar_open();
+std::string TabBarOpen();
 
 // 单个 tab 项：<div class="tab-item[ active]" data-tab="{id}" onclick="switchTab('{id}', this)">{label}</div>
-std::string tab_bar_item(const std::string& id, const std::string& label, bool active);
+std::string TabBarItem(const std::string& id, const std::string& label, bool active);
 
 // tab 栏收壳：</div>
-std::string tab_bar_close();
+std::string TabBarClose();
 
 // tab 内容开壳：<div class="tab-content[ active]" id="{id}">
-std::string tab_content_open(const std::string& id, bool active);
+std::string TabContentOpen(const std::string& id, bool active);
 
 // tab 内容收壳：</div>
-std::string tab_content_close();
+std::string TabContentClose();
 
 // tab 切换逻辑（switchTab，含 tab-content 联动；有图时 redraw）。
-std::string tab_bar_js();
+std::string TabBarJs();
 
 } // namespace mem_analyzer

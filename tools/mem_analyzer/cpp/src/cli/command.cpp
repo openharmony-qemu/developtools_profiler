@@ -18,18 +18,23 @@
 namespace mem_analyzer {
 
 namespace {
-std::vector<std::shared_ptr<ICommand>>& registry() {
+std::vector<std::shared_ptr<ICommand>>& registry()
+{
     static std::vector<std::shared_ptr<ICommand>> reg;
     return reg;
 }
 } // namespace
 
-void CommandRegistry::add(std::shared_ptr<ICommand> cmd) {
-    if (!cmd) return;
+void CommandRegistry::add(std::shared_ptr<ICommand> cmd)
+{
+    if (!cmd) {
+        return;
+    }
     registry().push_back(std::move(cmd));
 }
 
-std::vector<std::shared_ptr<ICommand>> CommandRegistry::all() {
+std::vector<std::shared_ptr<ICommand>> CommandRegistry::all()
+{
     auto cmds = registry();
     std::stable_sort(cmds.begin(), cmds.end(),
                      [](const std::shared_ptr<ICommand>& a,
@@ -39,47 +44,58 @@ std::vector<std::shared_ptr<ICommand>> CommandRegistry::all() {
     return cmds;
 }
 
-std::shared_ptr<ICommand> CommandRegistry::find(const std::string& name_or_alias) {
-    if (name_or_alias.empty()) return nullptr;
+std::shared_ptr<ICommand> CommandRegistry::find(const std::string& nameOrAlias)
+{
+    if (nameOrAlias.empty()) {
+        return nullptr;
+    }
     for (const auto& cmd : registry()) {
-        if (cmd->name() == name_or_alias) return cmd;
-        if (!cmd->alias().empty() && cmd->alias() == name_or_alias) return cmd;
+        if (cmd->name() == nameOrAlias) {
+            return cmd;
+        }
+        if (!cmd->alias().empty() && cmd->alias() == nameOrAlias) {
+            return cmd;
+        }
     }
     return nullptr;
 }
 
-void bind_debug_options(CliParser& sub, GlobalOptions& g) {
-    sub.add_switch("--verbose", g.verbose, "Enable debug-level logging")
-       .add_switch("--keep-temp", g.keep_temp, "Keep temporary directories after processing")
-       .add_switch("--debug", g.debug, "Troubleshooting mode (implies --verbose and --keep-temp)");
+void BindDebugOptions(CliParser& sub, GlobalOptions& g)
+{
+    sub.AddSwitch("--verbose", g.verbose, "Enable debug-level logging")
+       .AddSwitch("--keep-temp", g.keepTemp, "Keep temporary directories after processing")
+       .AddSwitch("--debug", g.debug, "Troubleshooting mode (implies --verbose and --keep-temp)");
 }
 
-void bind_global_options(CliParser& app, GlobalOptions& g) {
-    app.add_option("-d,--out-dir", g.out_dir, "Output result directory")
-       .add_switch("-p,--parse-only", g.parse_only, "Only parse, skip analysis")
-       .add_switch("-o,--auto-open", g.auto_open, "Open result file after processing")
-       .add_switch("-v,--version", g.show_version, "Print version information");
-    bind_debug_options(app, g);
-    app.add_option("-f,--format", g.format, "Output format (json/html)")
-       .add_positional("files", g.files,
+void BindGlobalOptions(CliParser& app, GlobalOptions& g)
+{
+    app.AddOption("-d,--out-dir", g.outDir, "Output result directory")
+       .AddSwitch("-p,--parse-only", g.parseOnly, "Only parse, skip analysis")
+       .AddSwitch("-o,--auto-open", g.autoOpen, "Open result file after processing")
+       .AddSwitch("-v,--version", g.showVersion, "Print version information");
+    BindDebugOptions(app, g);
+    app.AddOption("-f,--format", g.format, "Output format (json/html)")
+       .AddPositional("files", g.files,
                        "Files to analyze (auto-detect: htrace, tshandle zip, heapsnapshot, rawheap)");
 }
 
-void bind_common_options(CliParser& sub, GlobalOptions& g) {
-    sub.add_option("-d,--out-dir", g.out_dir, "Output result directory")
-       .add_switch("-p,--parse-only", g.parse_only, "Only parse, skip analysis")
-       .add_switch("-o,--auto-open", g.auto_open, "Open result file after processing");
-    bind_debug_options(sub, g);
-    sub.add_option("-f,--format", g.format, "Output format (json/html)");
+void BindCommonOptions(CliParser& sub, GlobalOptions& g)
+{
+    sub.AddOption("-d,--out-dir", g.outDir, "Output result directory")
+       .AddSwitch("-p,--parse-only", g.parseOnly, "Only parse, skip analysis")
+       .AddSwitch("-o,--auto-open", g.autoOpen, "Open result file after processing");
+    BindDebugOptions(sub, g);
+    sub.AddOption("-f,--format", g.format, "Output format (json/html)");
 }
 
-RunContext make_base_run_context(const GlobalOptions& g) {
+RunContext MakeBaseRunContext(const GlobalOptions& g)
+{
     RunContext ctx;
-    ctx.output.out_dir = g.out_dir;
+    ctx.output.outDir = g.outDir;
     ctx.output.format = g.format;
-    ctx.output.parse_only = g.parse_only;
-    ctx.output.auto_open = g.auto_open;
-    ctx.command_line = g.command_line;
+    ctx.output.parseOnly = g.parseOnly;
+    ctx.output.autoOpen = g.autoOpen;
+    ctx.commandLine = g.commandLine;
     return ctx;
 }
 

@@ -16,7 +16,8 @@
 
 namespace mem_analyzer {
 
-std::string tab_bar_css() {
+std::string TabBarCss()
+{
     return R"CSS(
 .tab-bar { margin: 20px 20px 0; }
 .tab-item { display: inline-block; padding: 10px 16px 8px; margin-right: 8px; cursor: pointer; font-size: 16px; font-weight: 600; color: #888; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
@@ -26,39 +27,56 @@ std::string tab_bar_css() {
 )CSS";
 }
 
-std::string tab_bar_open() {
+std::string TabBarOpen()
+{
     return R"HTML(<div class="tab-bar">)HTML";
 }
 
-std::string tab_bar_item(const std::string& id, const std::string& label, bool active) {
+std::string TabBarItem(const std::string& id, const std::string& label, bool active)
+{
     return "<div class=\"tab-item" + std::string(active ? " active" : "") + "\" data-tab=\"" + id +
            "\" onclick=\"switchTab('" + id + "', this)\">" + label + "</div>";
 }
 
-std::string tab_bar_close() {
+std::string TabBarClose()
+{
     return "</div>";
 }
 
-std::string tab_content_open(const std::string& id, bool active) {
+std::string TabContentOpen(const std::string& id, bool active)
+{
     return "<div class=\"tab-content" + std::string(active ? " active" : "") + "\" id=\"" + id +
            "\">";
 }
 
-std::string tab_content_close() {
+std::string TabContentClose()
+{
     return "</div>";
 }
 
-std::string tab_bar_js() {
+std::string TabBarJs()
+{
     return R"JS(
-function switchTab(tabId, tabEl) {
+function switchTab(tabId, tabEl)
+{
   var tabs = document.querySelectorAll('.tab-item');
-  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
-  if (tabEl) tabEl.classList.add('active');
+  for (var i = 0; i < tabs.length; i++) {
+      tabs[i].classList.remove('active');
+  }
+  if (tabEl) {
+      tabEl.classList.add('active');
+  }
   var contents = document.querySelectorAll('.tab-content');
-  for (var i = 0; i < contents.length; i++) contents[i].classList.remove('active');
+  for (var i = 0; i < contents.length; i++) {
+      contents[i].classList.remove('active');
+  }
   var content = document.getElementById(tabId);
-  if (content) content.classList.add('active');
-  if (window.MemChart) MemChart.redrawAll();
+  if (content) {
+      content.classList.add('active');
+  }
+  if (window.MemChart) {
+      MemChart.redrawAll();
+  }
 }
 window.switchTab = switchTab;
 )JS";

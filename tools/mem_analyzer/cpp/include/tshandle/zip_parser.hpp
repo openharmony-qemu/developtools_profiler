@@ -27,6 +27,6 @@ namespace mem_analyzer {
 /// 这不是缺陷，是有意为之；模块化必须保持该行为。
 ///
 /// 强类型入参/出参：不再经过 ProcessData / std::any。
-TshandleParseResult tshandle_parse(const std::string& file_path, const RunContext& ctx);
+TshandleParseResult TshandleParse(const std::string& filePath, const RunContext& ctx);
 
 } // namespace mem_analyzer

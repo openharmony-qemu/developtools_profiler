@@ -28,29 +28,36 @@
 namespace mem_analyzer {
 namespace {
 
-json build_summary(const TraceDB& db) {
-    const auto& ts = db.meta.type_sizes;
+json BuildSummary(const TraceDB& db)
+{
+    const auto& ts = db.meta.typeSizes;
 
-    auto get_type_size = [&](const char* name) -> long long {
-        auto et = htrace_event_type_from_name(name);
-        if (et == HtraceEventType::UNKNOWN) return 0;
+    auto getTypeSize = [&](const char* name) -> long long {
+        auto et = HtraceEventTypeFromName(name);
+        if (et == HtraceEventType::UNKNOWN) {
+            return 0;
+        }
         auto it = ts.find(et);
         return it != ts.end() ? it->second : 0;
     };
 
-    json summary = htrace_build_summary_common(db.meta.mode, db.meta.duration_ns,
-                                               db.meta.start_time_ms, db.meta.end_time_ms,
-                                               db.meta.process_name);
+    json summary = HtraceBuildSummaryCommon(db.meta.mode, db.meta.durationNs,
+                                               db.meta.startTimeMs, db.meta.endTimeMs,
+                                               db.meta.processName);
 
     // Parse mode: output all resource types（summary_entries 表驱动，顺序=历史字节序）
     static const char* const kParseSummaryOrder[] = {
         "nativeheap", "mmap", "ashmem", "dma", "fd", "thread"
     };
     for (const char* cat : kParseSummaryOrder) {
-        for (const auto& e : htrace_category(cat).summary_entries) {
+        for (const auto& e : HtraceCategory(cat).summaryEntries) {
             long long v = 0;
-            for (const char* tn : e.type_names) v += get_type_size(tn);
-            if (v > 0) summary[e.json_key] = std::to_string(v);
+            for (const char* tn : e.typeNames) {
+                v += getTypeSize(tn);
+            }
+            if (v > 0) {
+                summary[e.JsonKey] = std::to_string(v);
+            }
         }
     }
 
@@ -59,72 +66,76 @@ json build_summary(const TraceDB& db) {
 
 } // namespace
 
-std::string htrace_write_parse_json(const TraceDB& db, const std::string& file_path,
-                                    const RunContext& ctx, const std::string& out_dir) {
+std::string HtraceWriteParseJson(const TraceDB& db, const std::string& filePath,
+                                    const RunContext& ctx, const std::string& outDir) {
     StageTimer timer("JSON write");
 
-    auto base = platform::stem(file_path);
-    if (base.empty()) base = "output";
-    auto out_path = platform::join_path(out_dir, base + ".json");
-    platform::create_directories(out_dir);
+    auto base = platform::stem(filePath);
+    if (base.empty()) {
+        base = "output";
+    }
+    auto outPath = platform::JoinPath(outDir, base + ".json");
+    platform::CreateDirectories(outDir);
 
-    JsonStreamWriter writer(out_path);
+    JsonStreamWriter writer(outPath);
 
     const auto& stacks = std::get<CompressedCallStackList>(db.stacks);
-    json summary = build_summary(db);
+    json summary = BuildSummary(db);
 
-    writer.begin_object();
+    writer.BeginObject();
 
-    json meta = htrace_build_meta(file_path, ctx);
-    writer.write_key("meta");
-    writer.write_raw(meta.dump(4));
+    json meta = HtraceBuildMeta(filePath, ctx);
+    writer.WriteKey("meta");
+    writer.WriteRaw(meta.dump(4));
 
-    writer.write_key("content");
-    writer.begin_object();
+    writer.WriteKey("content");
+    writer.BeginObject();
 
     // summary (small, raw dump)
-    writer.write_key("summary");
-    writer.begin_object();
-    writer.write_key("htrace");
-    writer.write_raw(summary.dump(4));
-    writer.end_object();
+    writer.WriteKey("summary");
+    writer.BeginObject();
+    writer.WriteKey("htrace");
+    writer.WriteRaw(summary.dump(4));
+    writer.EndObject();
 
     // callStacks — streaming, one at a time
-    writer.write_key("callStacks");
-    writer.begin_array();
+    writer.WriteKey("callStacks");
+    writer.BeginArray();
     for (const auto& cs : stacks.stacks) {
-        writer.begin_object();
-        writer.write_key_value("id", std::to_string(cs.id));
-        writer.write_key_value("type", htrace_event_type_name(cs.type));
+        writer.BeginObject();
+        writer.WriteKeyValue("id", std::to_string(cs.id));
+        writer.WriteKeyValue("type", HtraceEventTypeName(cs.type));
         if (cs.type == HtraceEventType::FILE_PAGE_MSG) {
             std::string filename = "unknown";
-            auto fit = stacks.dict.find(cs.sub_type_id);
-            if (fit != stacks.dict.end()) filename = fit->second;
-            filename = normalize_filepage_filename(filename, db.meta.mode);
-            writer.write_key_value("fileName", filename);
+            auto fit = stacks.dict.find(cs.subTypeId);
+            if (fit != stacks.dict.end()) {
+                filename = fit->second;
+            }
+            filename = NormalizeFilepageFilename(filename, db.meta.mode);
+            writer.WriteKeyValue("fileName", filename);
         }
-        writer.write_key_value("existingSize", std::to_string(cs.existing_size));
-        writer.write_key_value("existingCount", std::to_string(cs.existing_count));
+        writer.WriteKeyValue("existingSize", std::to_string(cs.existingSize));
+        writer.WriteKeyValue("existingCount", std::to_string(cs.existingCount));
 
-        writer.write_key("frames");
-        writer.begin_array();
+        writer.WriteKey("frames");
+        writer.BeginArray();
         for (const auto& f : cs.frames) {
-            htrace_write_callstack_frame(writer, f, stacks.dict);
+            HtraceWriteCallstackFrame(writer, f, stacks.dict);
         }
-        writer.end_array();
+        writer.EndArray();
 
-        writer.end_object();
+        writer.EndObject();
     }
-    writer.end_array();
+    writer.EndArray();
 
-    writer.end_object();
-    writer.end_object();
+    writer.EndObject();
+    writer.EndObject();
 
     writer.close();
 
     timer.tick("total");
-    log::logok("Output written to: ", out_path);
-    return out_path;
+    log::Logok("Output written to: ", outPath);
+    return outPath;
 }
 
 } // namespace mem_analyzer

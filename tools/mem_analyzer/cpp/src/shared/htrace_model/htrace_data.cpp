@@ -20,34 +20,35 @@ namespace mem_analyzer {
 //  CompressedStackFrame → ResolvedStackFrame
 // ============================================================================
 
-ResolvedStackFrame CompressedStackFrame::resolve(const DataDict& dict) const {
+ResolvedStackFrame CompressedStackFrame::resolve(const DataDict& dict) const
+{
     ResolvedStackFrame r;
     r.depth = depth;
 
     // Resolve symbol name
-    auto sym_it = dict.find(symbol_id);
-    r.symbol = (sym_it != dict.end()) ? sym_it->second : "unknown";
+    auto symIt = dict.find(symbolId);
+    r.symbol = (symIt != dict.end()) ? symIt->second : "unknown";
 
     // Resolve library name
-    if (file_id_null) {
+    if (fileIdNull) {
         r.lib = "unknown";
     } else {
-        auto lib_it = dict.find(file_id);
-        r.lib = (lib_it != dict.end()) ? lib_it->second : "unknown";
+        auto libIt = dict.find(fileId);
+        r.lib = (libIt != dict.end()) ? libIt->second : "unknown";
     }
 
     // Build library offset string
-    if (!vaddr_null) {
+    if (!vaddrNull) {
         char buf[32];
         snprintf(buf, sizeof(buf), "0x%llx", static_cast<unsigned long long>(vaddr));
-        r.lib_offset = buf;
+        r.libOffset = buf;
     }
 
     // Resolve build ID
-    if (!build_id_null) {
-        auto bid_it = dict.find(build_id);
-        if (bid_it != dict.end()) {
-            r.build_id = bid_it->second;
+    if (!buildIdNull) {
+        auto bidIt = dict.find(buildId);
+        if (bidIt != dict.end()) {
+            r.buildId = bidIt->second;
         }
     }
 
@@ -58,13 +59,14 @@ ResolvedStackFrame CompressedStackFrame::resolve(const DataDict& dict) const {
 //  CompressedCallStack → ResolvedCallStack
 // ============================================================================
 
-ResolvedCallStack CompressedCallStack::resolve(const DataDict& dict) const {
+ResolvedCallStack CompressedCallStack::resolve(const DataDict& dict) const
+{
     ResolvedCallStack r;
     r.id = id;
     r.type = type;
-    r.existing_size = existing_size;
-    r.existing_count = existing_count;
-    r.sub_type_id = sub_type_id;
+    r.existingSize = existingSize;
+    r.existingCount = existingCount;
+    r.subTypeId = subTypeId;
     r.frames.reserve(frames.size());
     for (const auto& f : frames) {
         r.frames.push_back(f.resolve(dict));
@@ -76,7 +78,8 @@ ResolvedCallStack CompressedCallStack::resolve(const DataDict& dict) const {
 //  CompressedCallStackList → ResolvedCallStackList
 // ============================================================================
 
-ResolvedCallStackList CompressedCallStackList::resolve() const {
+ResolvedCallStackList CompressedCallStackList::resolve() const
+{
     ResolvedCallStackList result;
     result.stacks.reserve(stacks.size());
     for (const auto& cs : stacks) {
@@ -89,11 +92,13 @@ ResolvedCallStackList CompressedCallStackList::resolve() const {
 //  TraceDB
 // ============================================================================
 
-bool TraceDB::is_compressed() const {
+bool TraceDB::IsCompressed() const
+{
     return std::holds_alternative<CompressedCallStackList>(stacks);
 }
 
-size_t TraceDB::stack_count() const {
+size_t TraceDB::StackCount() const
+{
     if (auto* v = std::get_if<CompressedCallStackList>(&stacks)) {
         return v->stacks.size();
     }
@@ -103,9 +108,12 @@ size_t TraceDB::stack_count() const {
     return 0;
 }
 
-void TraceDB::resolve_stacks() {
+void TraceDB::ResolveStacks()
+{
     auto* compressed = std::get_if<CompressedCallStackList>(&stacks);
-    if (!compressed) return;  // already resolved, no-op
+    if (!compressed) {
+        return;
+    }// already resolved, no-op
 
     stacks = compressed->resolve();
 }

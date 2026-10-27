@@ -32,7 +32,8 @@ StmtGuard& StmtGuard::operator=(StmtGuard&& o) noexcept {
     return *this;
 }
 
-void StmtGuard::reset(sqlite3_stmt* s) {
+void StmtGuard::reset(sqlite3_stmt* s)
+{
     if (stmt_) {
         sqlite3_finalize(stmt_);
     }
@@ -41,32 +42,42 @@ void StmtGuard::reset(sqlite3_stmt* s) {
 
 // ── Scalar query ──────────────────────────────────────────────────
 namespace {
-bool query_scalar(sqlite3* db, const char* sql,
-                  void (*read)(sqlite3_stmt*, void*), void* out) {
-    if (!db || !sql) return false;
+bool QueryScalar(sqlite3* db, const char* sql,
+                  void (*read)(sqlite3_stmt*, void*), void* out)
+                  {
+    if (!db || !sql) {
+        return false;
+    }
     sqlite3_stmt* stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
         return false;
     }
     StmtGuard guard(stmt);
-    if (sqlite3_step(stmt) != SQLITE_ROW) return false;
+    if (sqlite3_step(stmt) != SQLITE_ROW) {
+        return false;
+    }
     read(stmt, out);
     return true;
 }
 
-void read_int64(sqlite3_stmt* s, void* out) {
+void ReadInt64(sqlite3_stmt* s, void* out)
+{
     *static_cast<long long*>(out) = sqlite3_column_int64(s, 0);
 }
 
-bool query_int64(sqlite3* db, const char* sql, long long& out) {
-    return query_scalar(db, sql, read_int64, &out);
+bool QueryInt64(sqlite3* db, const char* sql, long long& out)
+{
+    return QueryScalar(db, sql, ReadInt64, &out);
 }
 } // namespace
 
 // ── query_trace_meta ──────────────────────────────────────────────
-TraceMeta query_trace_meta(sqlite3* db) {
+TraceMeta QueryTraceMeta(sqlite3* db)
+{
     TraceMeta meta;
-    if (!db) return meta;
+    if (!db) {
+        return meta;
+    }
 
     // Time range
     sqlite3_stmt* stmt = nullptr;
@@ -75,63 +86,67 @@ TraceMeta query_trace_meta(sqlite3* db) {
         StmtGuard guard(stmt);
         if (sqlite3_step(stmt) == SQLITE_ROW &&
             sqlite3_column_type(stmt, 0) != SQLITE_NULL &&
-            sqlite3_column_type(stmt, 1) != SQLITE_NULL) {
-            const long long start_ts = sqlite3_column_int64(stmt, 0);
-            const long long end_ts = sqlite3_column_int64(stmt, 1);
-            if (start_ts >= 0 && end_ts >= start_ts) {
-                meta.duration_ns = end_ts - start_ts;
+            sqlite3_column_type(stmt, 1) != SQLITE_NULL)
+            {
+            const long long startTs = sqlite3_column_int64(stmt, 0);
+            const long long endTs = sqlite3_column_int64(stmt, 1);
+            if (startTs >= 0 && endTs >= startTs) {
+                meta.durationNs = endTs - startTs;
 
-                long long boot_ts = 0;
-                long long real_ts = 0;
-                if (query_int64(db,
+                long long bootTs = 0;
+                long long realTs = 0;
+                if (QueryInt64(db,
                         "SELECT ts FROM clock_snapshot WHERE clock_name = 'boottime' LIMIT 1",
-                        boot_ts) &&
-                    query_int64(db,
+                        bootTs) &&
+                    QueryInt64(db,
                         "SELECT ts FROM clock_snapshot WHERE clock_name = 'realtime' LIMIT 1",
-                        real_ts) &&
-                    boot_ts != 0 && real_ts != 0) {
-                    const long long offset_ns = real_ts - boot_ts;
-                    meta.start_time_ms = (start_ts + offset_ns + 500000LL) / 1000000LL;
-                    meta.end_time_ms = (end_ts + offset_ns + 500000LL) / 1000000LL;
+                        realTs) &&
+                    bootTs != 0 && realTs != 0) {
+                    const long long offsetNs = realTs - bootTs;
+                    meta.startTimeMs = (startTs + offsetNs + 500000LL) / 1000000LL;
+                    meta.endTimeMs = (endTs + offsetNs + 500000LL) / 1000000LL;
                 }
             }
         }
     }
 
     // Mode detection: statistic / detail / (empty for both or none)
-    long long stat_count = 0;
-    long long detail_count = 0;
-    query_int64(db, "SELECT COUNT(*) FROM native_hook_statistic", stat_count);
-    query_int64(db, "SELECT COUNT(*) FROM native_hook", detail_count);
+    long long statCount = 0;
+    long long detailCount = 0;
+    QueryInt64(db, "SELECT COUNT(*) FROM native_hook_statistic", statCount);
+    QueryInt64(db, "SELECT COUNT(*) FROM native_hook", detailCount);
 
-    std::string hook_table;
-    if (stat_count > 0 && detail_count == 0) {
+    std::string hookTable;
+    if (statCount > 0 && detailCount == 0) {
         meta.mode = "statistic";
-        hook_table = "native_hook_statistic";
-    } else if (detail_count > 0 && stat_count == 0) {
+        hookTable = "native_hook_statistic";
+    } else if (detailCount > 0 && statCount == 0)
+    {
         meta.mode = "detail";
-        hook_table = "native_hook";
+        hookTable = "native_hook";
     } else {
         return meta;
     }
 
     // Process name (from hook table's ipid → process.name)
-    const std::string ipid_sql =
-        "SELECT DISTINCT ipid FROM " + hook_table + " WHERE ipid IS NOT NULL LIMIT 1";
-    sqlite3_stmt* ipid_stmt = nullptr;
-    if (sqlite3_prepare_v2(db, ipid_sql.c_str(), -1, &ipid_stmt, nullptr) == SQLITE_OK) {
-        StmtGuard guard(ipid_stmt);
-        if (sqlite3_step(ipid_stmt) == SQLITE_ROW) {
-            const int ipid = sqlite3_column_int(ipid_stmt, 0);
+    const std::string ipidSql =
+        "SELECT DISTINCT ipid FROM " + hookTable + " WHERE ipid IS NOT NULL LIMIT 1";
+    sqlite3_stmt* ipidStmt = nullptr;
+    if (sqlite3_prepare_v2(db, ipidSql.c_str(), -1, &ipidStmt, nullptr) == SQLITE_OK) {
+        StmtGuard guard(ipidStmt);
+        if (sqlite3_step(ipidStmt) == SQLITE_ROW) {
+            const int ipid = sqlite3_column_int(ipidStmt, 0);
             sqlite3_stmt* pstmt = nullptr;
             const char* psql = "SELECT name FROM process WHERE id = ?";
             if (sqlite3_prepare_v2(db, psql, -1, &pstmt, nullptr) == SQLITE_OK) {
                 StmtGuard pguard(pstmt);
                 sqlite3_bind_int(pstmt, 1, ipid);
                 if (sqlite3_step(pstmt) == SQLITE_ROW) {
-                    const auto* raw_name =
+                    const auto* rawName =
                         reinterpret_cast<const char*>(sqlite3_column_text(pstmt, 0));
-                    if (raw_name) meta.process_name = platform::sanitize_utf8(raw_name);
+                    if (rawName) {
+                        meta.processName = platform::SanitizeUtf8(rawName);
+                    }
                 }
             }
         }
@@ -143,12 +158,12 @@ TraceMeta query_trace_meta(sqlite3* db) {
 // ── read_frames ───────────────────────────────────────────────────
 namespace {
 
-void query_frames(sqlite3* db, const std::string& chain_select,
+void QueryFrames(sqlite3* db, const std::string& chainSelect,
                   std::unordered_map<int, std::vector<FrameRow>>& out) {
     const std::string sql =
         "SELECT depth, symbol_id, file_id, callchain_id, vaddr, build_id "
         "FROM native_hook_frame "
-        "WHERE callchain_id IN (" + chain_select + ") "
+        "WHERE callchain_id IN (" + chainSelect + ") "
         "ORDER BY callchain_id, depth ASC";
 
     sqlite3_stmt* stmt = nullptr;
@@ -156,7 +171,7 @@ void query_frames(sqlite3* db, const std::string& chain_select,
         // 各版本 DB 的 native_hook_frame 列集合不同（缺 vaddr/build_id 等列时
         // prepare 会失败）。此处曾静默返回空表，导致所有 call stack 无帧、
         // 报告显示 0 栈/0 符号却"成功"退出。
-        log::logw("read_frames: prepare failed: ", sqlite3_errmsg(db));
+        log::Logw("read_frames: prepare failed: ", sqlite3_errmsg(db));
         return;
     }
     StmtGuard guard(stmt);
@@ -164,53 +179,57 @@ void query_frames(sqlite3* db, const std::string& chain_select,
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         FrameRow fr;
         fr.depth        = sqlite3_column_int(stmt, 0);
-        fr.symbol_id    = sqlite3_column_int(stmt, 1);
-        fr.file_id_null = (sqlite3_column_type(stmt, 2) == SQLITE_NULL);
-        fr.file_id      = fr.file_id_null ? 0 : sqlite3_column_int(stmt, 2);
-        fr.callchain_id = sqlite3_column_int(stmt, 3);
-        fr.vaddr_null   = (sqlite3_column_type(stmt, 4) == SQLITE_NULL);
+        fr.symbolId    = sqlite3_column_int(stmt, 1);
+        fr.fileIdNull = (sqlite3_column_type(stmt, 2) == SQLITE_NULL);
+        fr.fileId      = fr.fileIdNull ? 0 : sqlite3_column_int(stmt, 2);
+        fr.callchainId = sqlite3_column_int(stmt, 3);
+        fr.vaddrNull   = (sqlite3_column_type(stmt, 4) == SQLITE_NULL);
         fr.vaddr        = 0;
-        if (!fr.vaddr_null) {
+        if (!fr.vaddrNull) {
             const char* s = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
             fr.vaddr = s ? static_cast<uint64_t>(strtoull(s, nullptr, 0)) : 0;
         }
-        fr.build_id_null = (sqlite3_column_type(stmt, 5) == SQLITE_NULL);
-        fr.build_id      = fr.build_id_null ? 0 : sqlite3_column_int(stmt, 5);
+        fr.buildIdNull = (sqlite3_column_type(stmt, 5) == SQLITE_NULL);
+        fr.buildId      = fr.buildIdNull ? 0 : sqlite3_column_int(stmt, 5);
 
-        out[fr.callchain_id].push_back(std::move(fr));
+        out[fr.callchainId].push_back(std::move(fr));
     }
 }
 
 } // namespace
 
-std::unordered_map<int, std::vector<FrameRow>> read_frames(
-        sqlite3* db, const std::string& chain_select) {
+std::unordered_map<int, std::vector<FrameRow>> ReadFrames(
+        sqlite3* db, const std::string& chainSelect) {
     std::unordered_map<int, std::vector<FrameRow>> result;
-    if (!db || chain_select.empty()) return result;
-    query_frames(db, chain_select, result);
+    if (!db || chainSelect.empty()) {
+        return result;
+    }
+    QueryFrames(db, chainSelect, result);
     return result;
 }
 
-std::unordered_map<int, std::vector<std::string>> read_callchain_addrs(
-        sqlite3* db, const std::string& chain_select) {
+std::unordered_map<int, std::vector<std::string>> ReadCallchainAddrs(
+        sqlite3* db, const std::string& chainSelect) {
     std::unordered_map<int, std::vector<std::string>> result;
-    if (!db || chain_select.empty()) return result;
+    if (!db || chainSelect.empty()) {
+        return result;
+    }
     // detail 模式：直接 SELECT 单个地址（hex 串），C++ 按 callchain_id push_back，无需 GROUP_CONCAT + split。
     // chain_select 复用 read_frames 的同源子查询（已含 end_ts IS NULL + event_type 过滤）。
     std::string sql =
         "SELECT callchain_id, '0x'||printf('%x',addr) "
-        "FROM native_hook WHERE callchain_id IN (" + chain_select + ")";
+        "FROM native_hook WHERE callchain_id IN (" + chainSelect + ")";
     sqlite3_stmt* stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        log::logw("read_callchain_addrs: prepare failed: ", sqlite3_errmsg(db));
+        log::Logw("read_callchain_addrs: prepare failed: ", sqlite3_errmsg(db));
         return result;
     }
     StmtGuard guard(stmt);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int ccid = sqlite3_column_int(stmt, 0);
-        auto addr_str = (const char*)sqlite3_column_text(stmt, 1);
-        if (addr_str) {
-            result[ccid].push_back(addr_str);
+        auto addrStr = (const char*)sqlite3_column_text(stmt, 1);
+        if (addrStr) {
+            result[ccid].push_back(addrStr);
         }
     }
     return result;

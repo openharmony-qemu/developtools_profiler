@@ -26,13 +26,16 @@ namespace fs = std::filesystem;
 
 namespace mem_analyzer {
 
-static std::string s_root;  // per-process root, cached
-bool TempDir::s_keep = false;
+static std::string sRoot;  // per-process root, cached
+bool TempDir::sKeep = false;
 
-void TempDir::set_keep(bool keep) { s_keep = keep; }
+void TempDir::SetKeep(bool keep) { sKeep = keep; }
 
-std::string TempDir::system_temp_root() {
-    if (!s_root.empty()) return s_root;
+std::string TempDir::SystemTempRoot()
+{
+    if (!sRoot.empty()) {
+        return sRoot;
+    }
     // std::filesystem::temp_directory_path() is cross-platform:
     //   Windows : %TEMP%  (typically C:\Users\<user>\AppData\Local\Temp)
     //   Linux   : /tmp
@@ -42,15 +45,17 @@ std::string TempDir::system_temp_root() {
     if (ec) {
         tmp = fs::current_path();
     }
-    s_root = path_to_utf8(tmp / ("mem-analyzer." + generate_random_hex()));
-    return s_root;
+    sRoot = PathToUtf8(tmp / ("mem-analyzer." + GenerateRandomHex()));
+    return sRoot;
 }
 
-static void ensure_root_exists(const std::string& root) {
-    platform::create_directories(root);
+static void EnsureRootExists(const std::string& root)
+{
+    platform::CreateDirectories(root);
 }
 
-std::string TempDir::generate_random_hex() {
+std::string TempDir::GenerateRandomHex()
+{
     static std::mt19937 rng(std::random_device{}());
     static std::uniform_int_distribution<uint32_t> dist(0, 0xFFFFFF);
     std::ostringstream oss;
@@ -58,24 +63,26 @@ std::string TempDir::generate_random_hex() {
     return oss.str();
 }
 
-TempDir::TempDir(const std::string& prefix, bool quiet) : quiet_(quiet) {
-    auto root = system_temp_root();
-    ensure_root_exists(root);
+TempDir::TempDir(const std::string& prefix, bool quiet) : quiet_(quiet)
+{
+    auto root = SystemTempRoot();
+    EnsureRootExists(root);
 
     for (int attempt = 0; attempt < 10; ++attempt) {
-        auto candidate = path_to_utf8(path_from_utf8(root) / (prefix + "." + generate_random_hex()));
-        if (platform::create_directory(candidate)) {
+        auto candidate = PathToUtf8(PathFromUtf8(root) / (prefix + "." + GenerateRandomHex()));
+        if (platform::CreateDirectory(candidate)) {
             path_ = candidate;
             return;
         }
     }
     // Last resort: append timestamp to avoid collision
     auto ts = std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
-    path_ = path_to_utf8(path_from_utf8(root) / (prefix + "." + ts));
-    platform::create_directories(path_);
+    path_ = PathToUtf8(PathFromUtf8(root) / (prefix + "." + ts));
+    platform::CreateDirectories(path_);
 }
 
-TempDir::~TempDir() {
+TempDir::~TempDir()
+{
     cleanup();
 }
 
@@ -92,27 +99,33 @@ TempDir& TempDir::operator=(TempDir&& other) noexcept {
     return *this;
 }
 
-void TempDir::cleanup() {
-    if (path_.empty() || released_) return;
+void TempDir::cleanup()
+{
+    if (path_.empty() || released_) {
+        return;
+    }
     // 排障模式仅保留有分析价值的中间产物（非 quiet）；quiet 的内部缓冲目录照常清理。
-    if (s_keep && !quiet_) {
-        log::logi("  Kept temp: ", path_);
+    if (sKeep && !quiet_) {
+        log::Logi("  Kept temp: ", path_);
         released_ = true;
         return;
     }
-    platform::remove_all(path_);
-    if (!quiet_) log::logi_minor("  Cleaned up temp: ", path_);
+    platform::RemoveAll(path_);
+    if (!quiet_) {
+        log::LogiMinor("  Cleaned up temp: ", path_);
+    }
     path_.clear();
 }
 
-void TempDir::cleanup_root() {
-    auto root = system_temp_root();
-    if (s_keep) {
-        log::logi("  Kept root temp: ", root);
+void TempDir::CleanupRoot()
+{
+    auto root = SystemTempRoot();
+    if (sKeep) {
+        log::Logi("  Kept root temp: ", root);
         return;
     }
-    platform::remove_all(root);
-    log::logi_minor("  Cleaned up root temp: ", root);
+    platform::RemoveAll(root);
+    log::LogiMinor("  Cleaned up root temp: ", root);
 }
 
 } // namespace mem_analyzer

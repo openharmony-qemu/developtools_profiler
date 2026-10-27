@@ -24,7 +24,7 @@ struct ModeCapability {
     /// **为空 = 该模块明确不支持此模式**（如 snapshot 没有 parse 格式），此时 `-p` 会被拒绝。
     std::vector<std::string> formats;
     /// 未显式给 `-f` 时使用的格式；`formats` 为空时必须留空。
-    std::string default_format;
+    std::string defaultFormat;
 
     bool supported() const { return !formats.empty(); }
 };
@@ -42,8 +42,9 @@ struct ModuleCapability {
     ModeCapability parse;
     ModeCapability analysis;
 
-    const ModeCapability& for_mode(bool parse_only) const {
-        return parse_only ? parse : analysis;
+    const ModeCapability& ForMode(bool parseOnly) const
+    {
+        return parseOnly ? parse : analysis;
     }
 };
 

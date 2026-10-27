@@ -23,42 +23,42 @@ namespace mem_analyzer {
 
 // ── 通用（管道层）────────────────────────────────────────────────
 struct OutputOptions {
-    std::string out_dir = defaults::OUTPUT_DIR;  // 输出根目录（process_file 会再嵌一层 source stem）
+    std::string outDir = defaults::OUTPUT_DIR;  // 输出根目录（process_file 会再嵌一层 source stem）
     std::string format;                          // 空 = 用该解析器的默认格式
-    bool parse_only = false;
-    bool auto_open = false;
+    bool parseOnly = false;
+    bool autoOpen = false;
 };
 
 // ── 解析期需要的外部资源 ────────────────────────────────────────
 struct ResourceOptions {
-    std::string so_dir;          // -S/--so-dir：native 符号表目录
-    std::string sourcemap_dir;   // --sourcemap：源码映射
-    std::string name_cache_dir;  // --namecache：nameCache
+    std::string soDir;          // -S/--so-dir：native 符号表目录
+    std::string sourcemapDir;   // --sourcemap：源码映射
+    std::string nameCacheDir;  // --namecache：nameCache
 };
 
 // ── 各域的算法参数 ──────────────────────────────────────────────
 struct HtraceOptions {
     Scope scope = defaults::SCOPE;
-    int top_n = defaults::TRACE_TOP_N;
+    int topN = defaults::TRACE_TOP_N;
     std::string category = defaults::HTRACE_TYPE;
     // -l: Native Leaks 不可达内存泄漏文件地址集合（TraceCommand 读 leak 文件后填入；空 = 非 -l 模式）
-    std::unordered_set<uint64_t> leak_addrs;
+    std::unordered_set<uint64_t> leakAddrs;
 };
 
 struct TshandleOptions {
-    int top_n = defaults::TSHANDLE_TOP_N;
+    int topN = defaults::TSHANDLE_TOP_N;
 };
 
 /// 快照对比运行参数（jsleak 域的对比模式）。baseline_file 非空 = 对比模式：
 /// req.file_path 为目标快照 B，本字段为 -b/--baseline 指定的基线快照 A。
 struct SnapshotCompareOptions {
-    std::string baseline_file;
+    std::string baselineFile;
 };
 
 struct SnapshotOptions {
     std::string mode = defaults::JSLEAK_MODE;
-    std::string leak_list_file;
-    int top_n = defaults::JSLEAK_TOP_N;
+    std::string leakListFile;
+    int topN = defaults::JSLEAK_TOP_N;
     SnapshotCompareOptions compare;
 };
 
@@ -75,7 +75,7 @@ struct SnapshotOptions {
 struct RunContext {
     OutputOptions output;
     ResourceOptions resources;
-    std::string command_line;  // 写入输出 meta.command
+    std::string commandLine;  // 写入输出 meta.command
 
     HtraceOptions htrace;
     TshandleOptions tshandle;
@@ -84,7 +84,8 @@ struct RunContext {
 
 /// 兜底默认上下文：仅用于 ctx 未被设置的异常路径，避免空指针解引用。
 /// 默认值与 Config 的历史默认保持一致。
-inline const RunContext& default_run_context() {
+inline const RunContext& DefaultRunContext()
+{
     static const RunContext ctx{};
     return ctx;
 }

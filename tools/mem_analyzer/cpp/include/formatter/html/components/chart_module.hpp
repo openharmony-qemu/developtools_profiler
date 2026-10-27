@@ -38,10 +38,10 @@ namespace mem_analyzer {
 
 // 图表模块的 CSS（工具栏/搜索框/快捷键提示/tooltip/右键菜单）。
 // 注入占位符：__CHART_MODULE_CSS__
-std::string chart_module_css();
+std::string ChartModuleCss();
 
 // 图表模块的 JS 引擎（IIFE，暴露 window.MemChart）。
 // 注入占位符：__CHART_MODULE_JS__
-std::string chart_module_js();
+std::string ChartModuleJs();
 
 } // namespace mem_analyzer

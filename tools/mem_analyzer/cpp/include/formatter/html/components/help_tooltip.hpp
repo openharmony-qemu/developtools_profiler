@@ -22,9 +22,9 @@ namespace mem_analyzer {
 // 由各 HTML 报告通过占位符或流式拼接注入（见 navigation_bar.hpp 的同名约定）。
 
 // help-icon / help-tooltip 样式（含箭头与 above/below 翻转态）
-std::string help_tooltip_css();
+std::string HelpTooltipCss();
 
 // initHelpTooltip 脚本（函数定义 + 调用，注入在 </script> 之前）
-std::string help_tooltip_js();
+std::string HelpTooltipJs();
 
 }

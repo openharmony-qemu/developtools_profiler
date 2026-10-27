@@ -22,9 +22,9 @@ namespace mem_analyzer {
 // 三域（htrace/tshandle/jsleak）通用。
 
 // footer 页脚样式（对应占位符 __VERSION_FORMAT__）。
-std::string version_format();
+std::string VersionFormat();
 
 // footer 页脚内容（含工具版本号，对应占位符 __VERSION_CONTENT__）。
-std::string version_content();
+std::string VersionContent();
 
 } // namespace mem_analyzer

@@ -49,19 +49,22 @@ namespace {
 // Stderr is merged into stdout via STARTUPINFO hStdError = hStdOutput pipe.
 // The caller must NOT append "2>&1" to the command (it is handled internally).
 // Returns the exit code, or -1 if the command could not be launched.
-int run_command_streaming(const std::string& cmd) {
+int RunCommandStreaming(const std::string& cmd)
+{
 #if defined(_WIN32)
     SECURITY_ATTRIBUTES sa{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
-    HANDLE h_read = nullptr, h_write = nullptr;
-    if (!CreatePipe(&h_read, &h_write, &sa, 0)) return -1;
-    if (!SetHandleInformation(h_read, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
-        CloseHandle(h_read); CloseHandle(h_write); return -1;
+    HANDLE hRead = nullptr, hWrite = nullptr;
+    if (!CreatePipe(&hRead, &hWrite, &sa, 0)) {
+        return -1;
+    }
+    if (!SetHandleInformation(hRead, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
+        CloseHandle(hRead); CloseHandle(hWrite); return -1;
     }
 
     STARTUPINFOW si{ sizeof(STARTUPINFOW) };
     si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdOutput = h_write;
-    si.hStdError = h_write;
+    si.hStdOutput = hWrite;
+    si.hStdError = hWrite;
     si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
     PROCESS_INFORMATION pi{};
 
@@ -70,28 +73,32 @@ int run_command_streaming(const std::string& cmd) {
     // corrupts command lines with multiple quoted arguments.
     // Strip any trailing "2>&1" that the caller may have appended (it's
     // redundant since STARTUPINFO already merges stderr into stdout).
-    std::string clean_cmd = cmd;
-    if (clean_cmd.size() >= 5 && clean_cmd.substr(clean_cmd.size() - 5) == " 2>&1") {
-        clean_cmd.resize(clean_cmd.size() - 5);
+    std::string cleanCmd = cmd;
+    if (cleanCmd.size() >= 5 && cleanCmd.substr(cleanCmd.size() - 5) == " 2>&1") {
+        cleanCmd.resize(cleanCmd.size() - 5);
     }
-    std::string cmdline = clean_cmd;
-    std::wstring wcmdline = widen_path(cmdline);
+    std::string cmdline = cleanCmd;
+    std::wstring wcmdline = WidenPath(cmdline);
     if (!CreateProcessW(nullptr, wcmdline.data(),
                         nullptr, nullptr, TRUE, 0, nullptr, nullptr,
                         &si, &pi)) {
-        CloseHandle(h_read); CloseHandle(h_write);
+        CloseHandle(hRead); CloseHandle(hWrite);
         return -1;
     }
-    CloseHandle(h_write);
+    CloseHandle(hWrite);
 
-    auto drain_available = [&]() {
+    auto drainAvailable = [&]() {
         for (;;) {
             DWORD avail = 0;
-            if (!PeekNamedPipe(h_read, nullptr, 0, nullptr, &avail, nullptr)) break;
-            if (avail == 0) break;
+            if (!PeekNamedPipe(hRead, nullptr, 0, nullptr, &avail, nullptr)) {
+                break;
+            }
+            if (avail == 0) {
+                break;
+            }
             char buf[4096];
             DWORD n = 0;
-            if (!ReadFile(h_read, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
+            if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
                           &n, nullptr) || n == 0) break;
             std::cout.write(buf, n);
             std::cout.flush();
@@ -99,12 +106,14 @@ int run_command_streaming(const std::string& cmd) {
     };
 
     for (;;) {
-        drain_available();
-        if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) break;
+        drainAvailable();
+        if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) {
+            break;
+        }
         Sleep(20);
     }
-    drain_available();
-    CloseHandle(h_read);
+    drainAvailable();
+    CloseHandle(hRead);
     WaitForSingleObject(pi.hProcess, INFINITE);
     DWORD code = 0;
     GetExitCodeProcess(pi.hProcess, &code);
@@ -112,29 +121,34 @@ int run_command_streaming(const std::string& cmd) {
     CloseHandle(pi.hThread);
     return static_cast<int>(code);
 #else
-    auto sp = proc::spawn_piped(cmd);
-    if (!sp.ok()) return -1;
+    auto sp = proc::SpawnPiped(cmd);
+    if (!sp.ok()) {
+        return -1;
+    }
     char buf[4096];
     ssize_t n = 0;
-    while ((n = read(sp.read_fd, buf, sizeof(buf))) > 0) {
+    while ((n = read(sp.ReadFd, buf, sizeof(buf))) > 0) {
         std::cout.write(buf, n);
         std::cout.flush();
     }
-    close(sp.read_fd);
+    close(sp.ReadFd);
     int st = 0;
     waitpid(sp.pid, &st, 0);
-    if (WIFEXITED(st)) return WEXITSTATUS(st);
+    if (WIFEXITED(st)) {
+        return WEXITSTATUS(st);
+    }
     return -1;
 #endif
 }
 
 // Pre-flight environment checks for the `profiler` subcommand.
-bool check_profiler_env() {
+bool CheckProfilerEnv()
+{
     // 1. hdc binary available?
     {
-        auto cap = proc::find_in_path("hdc");
-        if (!cap.spawned || cap.exit_code != 0 || cap.output.empty()) {
-            log::loge("Environment check failed: hdc command-line tool not found.\n\n"
+        auto cap = proc::FindInPath("hdc");
+        if (!cap.spawned || cap.exitCode != 0 || cap.output.empty()) {
+            log::Loge("Environment check failed: hdc command-line tool not found.\n\n"
                       "Suggested fix:\n"
                       "  1. Install the HarmonyOS SDK toolkit.\n"
                       "  2. Add the hdc directory to your PATH.\n"
@@ -145,25 +159,25 @@ bool check_profiler_env() {
 
     // 2. at least one device connected?
     {
-        auto cap = proc::capture_command("hdc list targets 2>&1");
+        auto cap = proc::CaptureCommand("hdc list targets 2>&1");
         if (!cap.spawned) {
-            log::loge("Environment check failed: unable to launch hdc list targets.");
+            log::Loge("Environment check failed: unable to launch hdc list targets.");
             return false;
         }
-        bool has_device = false;
+        bool hasDevice = false;
         if (!cap.output.empty() && cap.output.find("[Empty]") == std::string::npos) {
             std::string line;
             std::istringstream iss(cap.output);
             while (std::getline(iss, line)) {
                 const auto f = line.find_first_not_of(" \t\r\n");
                 if (f != std::string::npos) {
-                    has_device = true;
+                    hasDevice = true;
                     break;
                 }
             }
         }
-        if (!has_device) {
-            log::loge("Environment check failed: no connected device detected.\n\n"
+        if (!hasDevice) {
+            log::Loge("Environment check failed: no connected device detected.\n\n"
                       "Suggested fix:\n"
                       "  1. Connect your HarmonyOS device via USB.\n"
                       "  2. Enable USB debugging in Developer options.\n"
@@ -207,30 +221,36 @@ constexpr size_t kMaxProbeKeyLen = 256;   // longer values skip the probe comman
 // Surrounding whitespace is invisible in a shell and would otherwise make an
 // otherwise correct id miss the exact match against `hdc list targets` (`hdc -t`
 // would not match it either), so the gate compares trimmed values.
-std::string trim_ws(const std::string& s) {
+std::string TrimWs(const std::string& s)
+{
     const auto b = s.find_first_not_of(" \t\r\n");
-    if (b == std::string::npos) return {};
+    if (b == std::string::npos) {
+        return {};
+    }
     const auto e = s.find_last_not_of(" \t\r\n");
     return s.substr(b, e - b + 1);
 }
 
 // Probe command: explicit target (never touches global state); the device side runs
 // the harmless no-op ':'.
-static std::string hdc_probe(const std::string& target) {
-    auto cap = proc::capture_command(
-        hdc_raw_with_target(target, "shell " + proc::shell_quote(":")) + " 2>&1");
+static std::string HdcProbe(const std::string& target)
+{
+    auto cap = proc::CaptureCommand(
+        HdcRawWithTarget(target, "shell " + proc::ShellQuote(":")) + " 2>&1");
     return cap.spawned ? cap.output : std::string();
 }
 
 // Candidate devices + rejected-target note + a copy-paste example.
-static void append_target_hints(std::string& out, const std::vector<std::string>& keys,
-                                const std::string& rejected_key) {
+static void AppendTargetHints(std::string& out, const std::vector<std::string>& keys,
+                                const std::string& rejectedKey) {
     if (!keys.empty()) {
         out += "Available targets (" + std::to_string(keys.size()) + "):\n";
-        for (const auto& k : keys) out += "  " + k + "\n";
+        for (const auto& k : keys) {
+            out += "  " + k + "\n";
+        }
     }
-    if (!rejected_key.empty()) {
-        out += "Note: '" + rejected_key +
+    if (!rejectedKey.empty()) {
+        out += "Note: '" + rejectedKey +
                "' is not a usable target now (it may be Offline, unauthorized, or disconnected).\n";
     }
     if (!keys.empty()) {
@@ -242,74 +262,85 @@ static void append_target_hints(std::string& out, const std::vector<std::string>
 // Append the lines the parser could not classify, indented, so a rejected/ambiguous verdict
 // says exactly what blocked it. Keeping the offending text in the message is also how a new
 // hdc output shape becomes visible instead of turning into an unexplained error.
-static void append_unparsed_lines(std::string& out, const HdcTargets& t) {
-    const std::string lines = hdc_unparsed_lines(t.raw_output);
-    if (lines.empty()) return;
+static void AppendUnparsedLines(std::string& out, const HdcTargets& t)
+{
+    const std::string lines = HdcUnparsedLines(t.rawOutput);
+    if (lines.empty()) {
+        return;
+    }
     out += "Unrecognized 'hdc list targets' line(s):\n";
     std::istringstream iss(lines);
     std::string line;
-    while (std::getline(iss, line)) out += "  " + line + "\n";
+    while (std::getline(iss, line)) {
+        out += "  " + line + "\n";
+    }
 }
 
 // hdc text + candidates + hints + example (the hdc line itself is left unchanged).
 // NOTE: only hdc output may be passed in here — the text is filtered down to its
 // "[Fail]" lines, which would swallow a message produced by this tool.
-static std::string decorate_device_error(const std::string& hdc_text,
+static std::string DecorateDeviceError(const std::string& hdcText,
                                         const std::vector<std::string>& keys,
-                                        const std::string& rejected_key) {
+                                        const std::string& rejectedKey) {
     // Keep only the "[Fail]" lines: drops hdc internal log noise such as
     // "[F][2026-09-18 18:10:10] Send isDead channelId:...".
-    std::string out = hdc_failure_lines(hdc_text);
-    if (out.empty() || out.back() != '\n') out += '\n';
-    append_target_hints(out, keys, rejected_key);
+    std::string out = HdcFailureLines(hdcText);
+    if (out.empty() || out.back() != '\n') {
+        out += '\n';
+    }
+    AppendTargetHints(out, keys, rejectedKey);
     return out;
 }
 
 // Returns true when we may continue; on false, msg holds the full error message.
-static bool resolve_device_target(const std::string& raw_key, bool key_provided,
+static bool ResolveDeviceTarget(const std::string& rawKey, bool keyProvided,
                                   std::string& msg) {
     // Both branches below compare against `hdc list targets` verbatim, so normalize the
     // user's value once here. A whitespace-only value thereby becomes empty and lands in
     // branch (1), which is the intended reading of `--device " "`.
-    const std::string key = trim_ws(raw_key);
+    const std::string key = TrimWs(rawKey);
     // (1) explicit empty value: `--device ""` is a parameter error, not "no device
     //     selected". hdc's own reaction is surfaced when it reports one; otherwise this
     //     tool's wording is used. Either way the candidate list is appended, so a user
     //     with several devices can see the ids to choose from.
-    if (key_provided && key.empty()) {
-        auto t = hdc_list_targets();
-        std::string text = hdc_probe("");
-        if (hdc_is_device_failure(text)) {
-            msg = decorate_device_error(text, t.keys, "");
+    if (keyProvided && key.empty()) {
+        auto t = HdcListTargets();
+        std::string text = HdcProbe("");
+        if (HdcIsDeviceFailure(text)) {
+            msg = DecorateDeviceError(text, t.keys, "");
             return false;
         }
         // Our own wording must skip decorate_device_error(): that one filters the text
         // down to hdc's "[Fail]" lines, which would drop this message entirely.
         msg = std::string(kEmptyKeyMsg) + "\n";
-        append_target_hints(msg, t.keys, "");   // keys is empty when hdc is missing
+        AppendTargetHints(msg, t.keys, "");   // keys is empty when hdc is missing
         return false;
     }
     // (2) explicit target: it must match a target hdc currently lists, so a key that
     //     names an unplugged / unauthorized device is caught here rather than later.
-    if (key_provided) {
-        auto t = hdc_list_targets();
-        if (t.spawn_failed) { msg = kHdcMissingMsg; return false; }
+    if (keyProvided) {
+        auto t = HdcListTargets();
+        if (t.spawnFailed) { msg = kHdcMissingMsg; return false; }
         bool found = false;
         for (const auto& k : t.keys) { if (k == key) { found = true; break; } }
         if (!found) {
             // fail-open: an incomplete parse means the candidate list may be wrong, so
             // let hdc decide instead of rejecting a possibly valid target locally.
-            if (t.unparsed_lines > 0) {
-                hdc_set_connect_key(key);
+            if (t.unparsedLines > 0) {
+                HdcSetConnectKey(key);
                 return true;
             }
             std::string text;
-            if (key.size() <= kMaxProbeKeyLen) text = hdc_probe(key);
-            if (!hdc_is_device_failure(text)) text = kFallbackNotMatch;
-            msg = decorate_device_error(text, t.keys, key);
+            if (key.size() <= kMaxProbeKeyLen) {
+                text = HdcProbe(key);
+            }
+            if (!HdcIsDeviceFailure(text)) {
+                text = kFallbackNotMatch;
+            }
+            msg = DecorateDeviceError(text, t.keys, key);
             return false;
         }
-        hdc_set_connect_key(key);   // matched a listed target
+        HdcSetConnectKey(key);   // matched a listed target
         return true;
     }
     // (3) not given: silently probe the device count.
@@ -322,11 +353,13 @@ static bool resolve_device_target(const std::string& raw_key, bool key_provided,
     // parsed ids are stronger evidence than one failed line, and letting "[Fail]" win
     // would send untargeted commands to a two-device setup — the exact hazard the gate
     // exists to prevent.
-    auto t = hdc_list_targets();
-    if (!t.spawn_failed && t.keys.size() >= 2) {
-        std::string text = hdc_probe("");
-        if (!hdc_is_device_failure(text)) text = kFallbackNeedKey;
-        msg = decorate_device_error(text, t.keys, "");
+    auto t = HdcListTargets();
+    if (!t.spawnFailed && t.keys.size() >= 2) {
+        std::string text = HdcProbe("");
+        if (!HdcIsDeviceFailure(text)) {
+            text = kFallbackNeedKey;
+        }
+        msg = DecorateDeviceError(text, t.keys, "");
         return false;
     }
     // One candidate, but the listing is not trustworthy (an unrecognized entry, or hdc
@@ -335,10 +368,10 @@ static bool resolve_device_target(const std::string& raw_key, bool key_provided,
     // hands the device choice back to hdc, so ask the user to name the device instead.
     // Note this must come *after* the >=2 verdict above, which stays the more specific
     // message when the count already proves multiple devices.
-    if (!t.spawn_failed && t.keys.size() == 1 && (t.unparsed_lines > 0 || t.saw_fail)) {
+    if (!t.spawnFailed && t.keys.size() == 1 && (t.unparsedLines > 0 || t.sawFail)) {
         msg = std::string(kAmbiguousListMsg) + "\n";
-        append_unparsed_lines(msg, t);
-        append_target_hints(msg, t.keys, "");   // our wording: skip decorate_device_error()
+        AppendUnparsedLines(msg, t);
+        AppendTargetHints(msg, t.keys, "");   // our wording: skip decorate_device_error()
         return false;
     }
     // Exactly one usable target: pin its id. Every business command then carries
@@ -347,8 +380,8 @@ static bool resolve_device_target(const std::string& raw_key, bool key_provided,
     // newly attached device, and the pinned key is what arms the early device-loss
     // detection (note_device_failure() ignores "[Fail]" while no key is pinned).
     // (hdc's own chatter is skipped by the parser, so it does not block the pin.)
-    if (!t.spawn_failed && !t.saw_fail && t.unparsed_lines == 0 && t.keys.size() == 1) {
-        hdc_set_connect_key(t.keys[0]);
+    if (!t.spawnFailed && !t.sawFail && t.unparsedLines == 0 && t.keys.size() == 1) {
+        HdcSetConnectKey(t.keys[0]);
         return true;
     }
     // 0 devices, a failed spawn or "[Fail]": stay untargeted, i.e. keep the pre-change
@@ -356,63 +389,67 @@ static bool resolve_device_target(const std::string& raw_key, bool key_provided,
     // held entries we could not classify we are not actually sure the device count is 0,
     // so say so instead of silently emitting untargeted commands (this must not fire on a
     // clean 0-device listing, whose output has to stay byte-identical to the baseline).
-    if (!t.spawn_failed && t.keys.empty() && t.unparsed_lines > 0) {
+    if (!t.spawnFailed && t.keys.empty() && t.unparsedLines > 0) {
         std::string warn = "Warning: 'hdc list targets' returned output this tool cannot recognize; continuing"
             " WITHOUT a pinned target (no -t), so hdc picks the device.\n";
-        append_unparsed_lines(warn, t);
-        log::logw(warn);
+        AppendUnparsedLines(warn, t);
+        log::Logw(warn);
     }
-    hdc_mark_target_resolved();   // must mark here too, or the builders report a missed gate
+    HdcMarkTargetResolved();   // must mark here too, or the builders report a missed gate
     return true;
 }
 
 // Check that the device's API version meets the minimum required.
-bool check_api_version(int min_api_version) {
-    if (min_api_version <= 0) return true;
+bool CheckApiVersion(int minApiVersion)
+{
+    if (minApiVersion <= 0) {
+        return true;
+    }
 
-    auto cap = proc::capture_command(hdc_shell("param get const.ohos.apiversion") + " 2>&1");
+    auto cap = proc::CaptureCommand(HdcShell("param get const.ohos.apiversion") + " 2>&1");
     if (!cap.spawned) {
-        log::loge("API version check failed: unable to launch hdc shell.");
+        log::Loge("API version check failed: unable to launch hdc shell.");
         return false;
     }
     // A pinned target surfaces the hdc device-level failure verbatim, instead of
     // misreporting it as "could not parse version". Untargeted runs (no key pinned:
     // 0 devices, noisy parse, hdc failure) keep the original branch and wording.
-    if (!hdc_connect_key().empty() && hdc_is_device_failure(cap.output)) {
-        log::loge(hdc_failure_lines(cap.output));
+    if (!HdcConnectKey().empty() && HdcIsDeviceFailure(cap.output)) {
+        log::Loge(HdcFailureLines(cap.output));
         return false;
     }
 
     std::string trimmed = cap.output;
     const auto first = trimmed.find_first_not_of(" \t\r\n");
     if (first == std::string::npos) {
-        log::loge("API version check failed: empty response from device.");
+        log::Loge("API version check failed: empty response from device.");
         return false;
     }
-    std::string num_str;
+    std::string numStr;
     for (size_t i = first; i < trimmed.size(); ++i) {
         if (trimmed[i] >= '0' && trimmed[i] <= '9') {
-            num_str += trimmed[i];
+            numStr += trimmed[i];
         } else {
             break;
         }
     }
-    if (num_str.empty()) {
-        log::loge("API version check failed: could not parse version.");
+    if (numStr.empty()) {
+        log::Loge("API version check failed: could not parse version.");
         return false;
     }
 
     int version = 0;
     try {
-        version = std::stoi(num_str);
-    } catch (...) {
-        log::loge("API version check failed: invalid version number.");
+        version = std::stoi(numStr);
+    } catch (...)
+    {
+        log::Loge("API version check failed: invalid version number.");
         return false;
     }
 
-    if (version < min_api_version) {
-        log::loge("API version check failed: device API version is ", version,
-                  ", but this capture type requires >= ", min_api_version, ".");
+    if (version < minApiVersion) {
+        log::Loge("API version check failed: device API version is ", version,
+                  ", but this capture type requires >= ", minApiVersion, ".");
         return false;
     }
 
@@ -425,11 +462,11 @@ bool check_api_version(int min_api_version) {
 // if-else chains that must stay in sync.
 struct CaptureTypeInfo {
     const char* flag;            // CLI flag, e.g. "-s"
-    bool require_app;            // target must be an installed app (ArkTS types)
-    bool wait_for_zip;           // result arrives as a hiprofiler_data_*.zip
-    const char* snapshot_prefix; // local snapshot file prefix: "smaps" or "fds"
-    const char* report_subcmd;   // analysis subcommand used by --report
-    const char* report_extra;    // extra args for the report subcommand
+    bool requireApp;            // target must be an installed app (ArkTS types)
+    bool waitForZip;           // result arrives as a hiprofiler_data_*.zip
+    const char* snapshotPrefix; // local snapshot file prefix: "smaps" or "fds"
+    const char* reportSubcmd;   // analysis subcommand used by --report
+    const char* reportExtra;    // extra args for the report subcommand
 };
 
 const CaptureTypeInfo kCaptureTypes[] = {
@@ -455,7 +492,8 @@ constexpr size_t kCaptureTypeCount = sizeof(kCaptureTypes) / sizeof(kCaptureType
 //   localhandle  → local, lh
 //   fd, dma, thread, ashmem → (no alias, already short)
 // Returns nullptr and sets err_msg on unrecognized input.
-const CaptureTypeInfo* resolve_category(const std::string& cat, std::string& err_msg) {
+const CaptureTypeInfo* resolveCategory(const std::string& cat, std::string& errMsg)
+{
     struct CategoryMapping {
         const char* name;
         const char* alias1;
@@ -482,13 +520,15 @@ const CaptureTypeInfo* resolve_category(const std::string& cat, std::string& err
         }
     }
     if (!resolved) {
-        err_msg = "invalid category '" + cat + "'. Valid: nativeheap/nh, nativeleaks/nl, snapshot/snap, global/gh, local/lh, fd, dma, thread, ashmem";
+        errMsg = "invalid category '" + cat + "'. Valid: nativeheap/nh, nativeleaks/nl, snapshot/snap, global/gh, local/lh, fd, dma, thread, ashmem";
         return nullptr;
     }
     for (size_t i = 0; i < kCaptureTypeCount; ++i) {
-        if (kCaptureTypes[i].flag == resolved) return &kCaptureTypes[i];
+        if (kCaptureTypes[i].flag == resolved) {
+            return &kCaptureTypes[i];
+        }
     }
-    err_msg = "internal error: category '" + cat + "' resolved to unknown flag '" + resolved + "'";
+    errMsg = "internal error: category '" + cat + "' resolved to unknown flag '" + resolved + "'";
     return nullptr;
 }
 
@@ -499,7 +539,7 @@ const CaptureTypeInfo* resolve_category(const std::string& cat, std::string& err
 //   simple:  pkg:App
 struct AppEntry {
     std::string package;
-    std::string app_name;
+    std::string appName;
 };
 
 // Result of an app query: carries the "hdc device-level failure" flag so callers can tell
@@ -507,65 +547,88 @@ struct AppEntry {
 // fall back to the system-process path).
 struct AppQueryResult {
     std::vector<AppEntry> apps;
-    bool device_failed = false;   // set only when a target is pinned (see hdc_connect_key())
-    std::string device_err;
+    bool deviceFailed = false;   // set only when a target is pinned (see hdc_connect_key())
+    std::string deviceErr;
 };
 
-static AppQueryResult query_device_apps() {
+static AppQueryResult QueryDeviceApps()
+{
     AppQueryResult out;
     std::vector<AppEntry>& apps = out.apps;
-    auto cap = proc::capture_command(hdc_shell("bm dump -a -l") + " 2>&1");
+    auto cap = proc::CaptureCommand(HdcShell("bm dump -a -l") + " 2>&1");
     // A pinned target surfaces the hdc device-level failure verbatim, instead of
     // misreading it as "no apps / system process". Untargeted runs are untouched.
-    if (!hdc_connect_key().empty() && hdc_is_device_failure(cap.output)) {
-        out.device_failed = true;
-        out.device_err = hdc_failure_lines(cap.output);
+    if (!HdcConnectKey().empty() && HdcIsDeviceFailure(cap.output)) {
+        out.deviceFailed = true;
+        out.deviceErr = HdcFailureLines(cap.output);
         return out;
     }
-    if (!cap.spawned || cap.exit_code != 0) return out;
+    if (!cap.spawned || cap.exitCode != 0) {
+        return out;
+    }
 
     const std::string& output = cap.output;
 
     // Try JSON format first: [{...}, ...]
-    auto json_start = output.find('[');
-    auto json_end = output.rfind(']');
-    if (json_start != std::string::npos && json_end != std::string::npos &&
-        json_end > json_start) {
-        std::string json_str = output.substr(json_start, json_end - json_start + 1);
+    auto jsonStart = output.find('[');
+    auto jsonEnd = output.rfind(']');
+    if (jsonStart != std::string::npos && jsonEnd != std::string::npos &&
+        jsonEnd > jsonStart) {
+        std::string jsonStr = output.substr(jsonStart, jsonEnd - jsonStart + 1);
         // Simple JSON parser for the expected structure without nlohmann dep.
         size_t pos = 0;
-        while ((pos = json_str.find("\"bundleName\"", pos)) != std::string::npos) {
+        while ((pos = jsonStr.find("\"bundleName\"", pos)) != std::string::npos) {
             AppEntry entry;
             // Extract bundleName value
-            auto colon = json_str.find(':', pos);
-            if (colon == std::string::npos) break;
-            auto val_start = json_str.find('"', colon + 1);
-            if (val_start == std::string::npos) break;
-            auto val_end = json_str.find('"', val_start + 1);
-            if (val_end == std::string::npos) break;
-            entry.package = json_str.substr(val_start + 1, val_end - val_start - 1);
+            auto colon = jsonStr.find(':', pos);
+            if (colon == std::string::npos) {
+                break;
+            }
+            auto valStart = jsonStr.find('"', colon + 1);
+            if (valStart == std::string::npos) {
+                break;
+            }
+            auto valEnd = jsonStr.find('"', valStart + 1);
+            if (valEnd == std::string::npos) {
+                break;
+            }
+            entry.package = jsonStr.substr(valStart + 1, valEnd - valStart - 1);
 
             // Extract app name (may be "label", "appName", or "name")
-            auto extract_label = [&](const std::string& key) -> std::string {
-                auto key_pos = json_str.find("\"" + key + "\"", val_end);
-                if (key_pos == std::string::npos) return "";
-                auto colon = json_str.find(':', key_pos);
-                if (colon == std::string::npos) return "";
-                auto val = json_str.find('"', colon + 1);
-                if (val == std::string::npos) return "";
-                auto end = json_str.find('"', val + 1);
-                if (end == std::string::npos) return "";
-                return json_str.substr(val + 1, end - val - 1);
+            auto extractLabel = [&](const std::string& key) -> std::string {
+                auto keyPos = jsonStr.find("\"" + key + "\"", valEnd);
+                if (keyPos == std::string::npos) {
+                    return "";
+                }
+                auto colon = jsonStr.find(':', keyPos);
+                if (colon == std::string::npos) {
+                    return "";
+                }
+                auto val = jsonStr.find('"', colon + 1);
+                if (val == std::string::npos) {
+                    return "";
+                }
+                auto end = jsonStr.find('"', val + 1);
+                if (end == std::string::npos) {
+                    return "";
+                }
+                return jsonStr.substr(val + 1, end - val - 1);
             };
-            entry.app_name = extract_label("label");
-            if (entry.app_name.empty()) entry.app_name = extract_label("appName");
-            if (entry.app_name.empty()) entry.app_name = extract_label("name");
+            entry.appName = extractLabel("label");
+            if (entry.appName.empty()) {
+                entry.appName = extractLabel("appName");
+            }
+            if (entry.appName.empty()) {
+                entry.appName = extractLabel("name");
+            }
             if (!entry.package.empty()) {
                 apps.push_back(std::move(entry));
             }
-            pos = val_end + 1;
+            pos = valEnd + 1;
         }
-        if (!apps.empty()) return out;
+        if (!apps.empty()) {
+            return out;
+        }
     }
 
     // Fallback: line-by-line key-value parsing.
@@ -595,7 +658,7 @@ static AppQueryResult query_device_apps() {
                 if (colon2 != std::string::npos) {
                     // Format: com.example.app:App Name
                     current.package = line.substr(0, colon2);
-                    current.app_name = line.substr(colon2 + 1);
+                    current.appName = line.substr(colon2 + 1);
                     apps.push_back(std::move(current));
                     current = AppEntry{};
                 } else {
@@ -607,18 +670,21 @@ static AppQueryResult query_device_apps() {
         }
         std::string key = line.substr(0, sep);
         // Trim key
-        while (!key.empty() && key.back() == ' ') key.pop_back();
+        while (!key.empty() && key.back() == ' ') {
+            key.pop_back();
+        }
 
-        auto val_start = line.find_first_not_of(": =", sep);
-        std::string val = (val_start != std::string::npos) ? line.substr(val_start) : "";
+        auto valStart = line.find_first_not_of(": =", sep);
+        std::string val = (valStart != std::string::npos) ? line.substr(valStart) : "";
 
         if (key == "bundleName") {
             if (!current.package.empty()) {
                 apps.push_back(std::move(current));
             }
             current.package = val;
-        } else if (key == "name" || key == "appName") {
-            current.app_name = val;
+        } else if (key == "name" || key == "appName")
+        {
+            current.appName = val;
         }
     }
     // Flush last entry
@@ -637,47 +703,47 @@ static AppQueryResult query_device_apps() {
 // system-process fallback), and sets is_app to whether the resolved target is
 // an installed app. Prints diagnostic info and returns false on unresolvable
 // input.
-static bool resolve_process_name(const std::string& input, bool require_app,
-                                 std::string& resolved_pkg, bool& is_app) {
+static bool ResolveProcessName(const std::string& input, bool requireApp,
+                                 std::string& resolvedPkg, bool& isApp) {
     // Any target resolved from the installed-app list is an app; the verbatim
     // system-process fallbacks below override this to false.
-    is_app = true;
-    auto q = query_device_apps();
+    isApp = true;
+    auto q = QueryDeviceApps();
     // A pinned target reports the device-level failure here, instead of misreading it as
     // a system process and carrying on with a wrong premise.
-    if (q.device_failed) {
-        log::loge(q.device_err);
+    if (q.deviceFailed) {
+        log::Loge(q.deviceErr);
         return false;
     }
     const auto& apps = q.apps;
     if (apps.empty()) {
-        if (!require_app) {
-            resolved_pkg = input;
-            is_app = false;
-            log::logi("Resolved: ", input, " -> package: ", resolved_pkg,
+        if (!requireApp) {
+            resolvedPkg = input;
+            isApp = false;
+            log::Logi("Resolved: ", input, " -> package: ", resolvedPkg,
                       " (unable to query apps; treated as a system process)");
             return true;
         }
-        log::loge("Error: unable to query device apps via 'bm dump -a -l'.\n"
+        log::Loge("Error: unable to query device apps via 'bm dump -a -l'.\n"
                   "Please ensure a device is connected and try again.");
         return false;
     }
 
     // Exact match first (case-insensitive on package name)
     for (const auto& a : apps) {
-        if (contains_ci(a.package, input) && a.package.size() == input.size()) {
+        if (ContainsCi(a.package, input) && a.package.size() == input.size()) {
             // If multiple exact matches on different fields, still prefer package exact
-            resolved_pkg = a.package;
-            log::logi("Resolved: ", input, " -> package: ", resolved_pkg,
-                      (!a.app_name.empty() ? (" (" + a.app_name + ")") : std::string()));
+            resolvedPkg = a.package;
+            log::Logi("Resolved: ", input, " -> package: ", resolvedPkg,
+                      (!a.appName.empty() ? (" (" + a.appName + ")") : std::string()));
             return true;
         }
     }
     for (const auto& a : apps) {
-        if (contains_ci(a.app_name, input) && a.app_name.size() == input.size()) {
-            resolved_pkg = a.package;
-            log::logi("Resolved: ", input, " -> package: ", resolved_pkg,
-                      (!a.app_name.empty() ? (" (" + a.app_name + ")") : std::string()));
+        if (ContainsCi(a.appName, input) && a.appName.size() == input.size()) {
+            resolvedPkg = a.package;
+            log::Logi("Resolved: ", input, " -> package: ", resolvedPkg,
+                      (!a.appName.empty() ? (" (" + a.appName + ")") : std::string()));
             return true;
         }
     }
@@ -686,31 +752,31 @@ static bool resolve_process_name(const std::string& input, bool require_app,
     // Package names require exact match to avoid false positives.
     std::vector<const AppEntry*> matches;
     for (const auto& a : apps) {
-        if (!a.app_name.empty() && contains_ci(a.app_name, input)) {
+        if (!a.appName.empty() && ContainsCi(a.appName, input)) {
             matches.push_back(&a);
         }
     }
 
     if (matches.empty()) {
-        if (!require_app) {
+        if (!requireApp) {
             // Native capture types can also analyze system processes that are
             // not installed apps (e.g. system services / daemons).
-            resolved_pkg = input;
-            is_app = false;
-            log::logi("Resolved: ", input, " -> package: ", resolved_pkg,
+            resolvedPkg = input;
+            isApp = false;
+            log::Logi("Resolved: ", input, " -> package: ", resolvedPkg,
                       " (not an installed app; treated as a system process)");
             return true;
         }
-        log::loge("Error: no app matches '", input, "'.\n"
+        log::Loge("Error: no app matches '", input, "'.\n"
                   "Use 'mem-analyzer prof --list-apps' to see available apps,\n"
                   "or provide an exact package name or a partial app name.");
         return false;
     }
 
     if (matches.size() == 1) {
-        resolved_pkg = matches[0]->package;
-        log::logi("Resolved: ", input, " -> package: ", resolved_pkg,
-                  (!matches[0]->app_name.empty() ? (" (" + matches[0]->app_name + ")") : std::string()));
+        resolvedPkg = matches[0]->package;
+        log::Logi("Resolved: ", input, " -> package: ", resolvedPkg,
+                  (!matches[0]->appName.empty() ? (" (" + matches[0]->appName + ")") : std::string()));
         return true;
     }
 
@@ -718,11 +784,13 @@ static bool resolve_process_name(const std::string& input, bool require_app,
     std::string msg = "Error: '" + input + "' matches " + std::to_string(matches.size()) + " apps:\n";
     for (const auto* m : matches) {
         msg += "  " + m->package;
-        if (!m->app_name.empty()) msg += " (" + m->app_name + ")";
+        if (!m->appName.empty()) {
+            msg += " (" + m->appName + ")";
+        }
         msg += "\n";
     }
     msg += "Please provide a more specific name.";
-    log::loge(msg);
+    log::Loge(msg);
     return false;
 }
 
@@ -733,7 +801,8 @@ static bool resolve_process_name(const std::string& input, bool require_app,
 // that are illegal in a path component on Windows are replaced as well and a
 // trailing space/dot is dropped, so a session directory is valid on every
 // platform the tool ships for.
-static std::string as_path_segment(const std::string& name) {
+static std::string AsPathSegment(const std::string& name)
+{
     static const std::string kIllegal = "/\\:*?\"<>|";
     std::string out;
     out.reserve(name.size());
@@ -748,15 +817,16 @@ static std::string as_path_segment(const std::string& name) {
 
 // Resolve the mem-analyzer binary path: prefer the directory of the
 // current executable, fall back to the bare name on PATH.
-std::string resolve_mem_analyzer_binary() {
+std::string ResolveMemAnalyzerBinary()
+{
 #if defined(_WIN32)
     constexpr const char* kBinaryName = "mem-analyzer.exe";
 #else
     constexpr const char* kBinaryName = "mem-analyzer";
 #endif
-    const std::string exe_dir = proc::get_executable_dir();
-    return exe_dir.empty() ? kBinaryName
-                           : platform::join_path(exe_dir, kBinaryName);
+    const std::string exeDir = proc::GetExecutableDir();
+    return exeDir.empty() ? kBinaryName
+                           : platform::JoinPath(exeDir, kBinaryName);
 }
 
 // Undo the nesting the analysis subcommands apply to their output: move
@@ -764,42 +834,50 @@ std::string resolve_mem_analyzer_binary() {
 // the directory once nothing is left in it. Used when a report is generated
 // into a session directory, where that extra level is redundant. `stem` is the
 // input file stem.
-void flatten_report_dir(const std::string& dir, const std::string& stem) {
-    const std::string nested_dir = platform::join_path(dir, stem);
+void FlattenReportDir(const std::string& dir, const std::string& stem)
+{
+    const std::string nestedDir = platform::JoinPath(dir, stem);
     std::error_code ec;
-    if (!fs::is_directory(path_from_utf8(nested_dir), ec) || ec) return;
+    if (!fs::is_directory(PathFromUtf8(nestedDir), ec) || ec) {
+        return;
+    }
 
-    for (const auto& entry : fs::directory_iterator(path_from_utf8(nested_dir), ec)) {
-        if (ec) break;
-        std::error_code type_ec;
-        if (!entry.is_regular_file(type_ec) || type_ec) continue;
+    for (const auto& entry : fs::directory_iterator(PathFromUtf8(nestedDir), ec)) {
+        if (ec) {
+            break;
+        }
+        std::error_code typeEc;
+        if (!entry.is_regular_file(typeEc) || typeEc) {
+            continue;
+        }
         const std::string dest =
-            platform::join_path(dir, path_to_utf8(entry.path().filename()));
-        std::error_code move_ec;
-        fs::rename(entry.path(), path_from_utf8(dest), move_ec);
-        if (move_ec) {
-            log::loge("Report: unable to move ", path_to_utf8(entry.path()),
-                      " into ", dir, " (", move_ec.message(), ")");
+            platform::JoinPath(dir, PathToUtf8(entry.path().filename()));
+        std::error_code moveEc;
+        fs::rename(entry.path(), PathFromUtf8(dest), moveEc);
+        if (moveEc) {
+            log::Loge("Report: unable to move ", PathToUtf8(entry.path()),
+                      " into ", dir, " (", moveEc.message(), ")");
         }
     }
 
     // Fails while a subdirectory (or an unmovable file) is still there.
-    std::error_code rm_ec;
-    fs::remove(path_from_utf8(nested_dir), rm_ec);
-    if (rm_ec) {
-        log::logw("Warning: ", nested_dir, " was kept (", rm_ec.message(), ")");
+    std::error_code rmEc;
+    fs::remove(PathFromUtf8(nestedDir), rmEc);
+    if (rmEc) {
+        log::Logw("Warning: ", nestedDir, " was kept (", rmEc.message(), ")");
     }
 }
 
 } // namespace
 
-int run_profiler_cmd(const ProfilerCliOptions& opt) {
+int RunProfilerCmd(const ProfilerCliOptions& opt)
+{
     // 1. Determine config path and load config.
-    std::string config_path = resolve_config_path();
+    std::string ConfigPath = ResolveConfigPath();
     CmdConfig cfg;
     std::string err;
-    if (!load_cmd_config(config_path, cfg, err)) {
-        log::loge("Failed to load config: ", err);
+    if (!LoadCmdConfig(ConfigPath, cfg, err)) {
+        log::Loge("Failed to load config: ", err);
         return 2;
     }
 
@@ -807,19 +885,19 @@ int run_profiler_cmd(const ProfilerCliOptions& opt) {
     // so --help/validation are handled by the shared CLI architecture.
 
     // 3. Local copies of the parsed options.
-    std::string process_name = opt.process_name;
-    int duration_val = opt.duration;
-    std::string output_dir_val = opt.output_dir;
+    std::string processName = opt.processName;
+    int durationVal = opt.duration;
+    std::string outputDirVal = opt.outputDir;
     std::string category = opt.category;
-    bool flag_report = opt.flag_report, flag_list_apps = opt.flag_list_apps;
+    bool flagReport = opt.flagReport, flagListApps = opt.flagListApps;
 
     // 3.4 Target device gate: decides the target before ANY hdc command (including
     //     --list-apps) — see resolve_device_target(). It prints nothing on the
     //     untargeted paths, which keeps 0-device output byte-identical.
     {
-        std::string gate_msg;
-        if (!resolve_device_target(opt.connect_key, opt.connect_key_provided, gate_msg)) {
-            log::loge(gate_msg);
+        std::string gateMsg;
+        if (!ResolveDeviceTarget(opt.connectKey, opt.connectKeyProvided, gateMsg)) {
+            log::Loge(gateMsg);
             return 2;
         }
     }
@@ -834,98 +912,100 @@ int run_profiler_cmd(const ProfilerCliOptions& opt) {
     //      This is purely diagnostic and intentionally independent of the output
     //      directory layer, which is added only for an explicit `--device` (see the
     //      session_path block below): an auto-pinned run still echoes the id it picked.
-    if (!hdc_connect_key().empty()) {
-        log::logi("Device: ", hdc_connect_key());
+    if (!HdcConnectKey().empty()) {
+        log::Logi("Device: ", HdcConnectKey());
     }
 
     // 3.5 Handle --list-apps early (before capture type validation).
-    if (flag_list_apps) {
-        auto q = query_device_apps();
-        if (q.device_failed) { log::loge(q.device_err); return 2; }
+    if (flagListApps) {
+        auto q = QueryDeviceApps();
+        if (q.deviceFailed) { log::Loge(q.deviceErr); return 2; }
         const auto& apps = q.apps;
         if (apps.empty()) {
-            log::loge("No apps found or unable to query device.");
+            log::Loge("No apps found or unable to query device.");
             return 2;
         }
         std::cout << "Installed apps (" << apps.size() << "):\n";
         for (const auto& a : apps) {
             std::cout << "  " << a.package;
-            if (!a.app_name.empty()) std::cout << "  (" << a.app_name << ")";
+            if (!a.appName.empty()) {
+                std::cout << "  (" << a.appName << ")";
+            }
             std::cout << "\n";
         }
         return 0;
     }
 
     // 4. Resolve category string to capture type.
-    std::string err_msg;
-    const CaptureTypeInfo* capture = resolve_category(category, err_msg);
+    std::string errMsg;
+    const CaptureTypeInfo* capture = resolveCategory(category, errMsg);
     if (!capture) {
-        log::loge("Error:", err_msg);
+        log::Loge("Error:", errMsg);
         return 2;
     }
-    if (process_name.empty()) {
-        log::loge("Error: <bundle> is required for capture.");
+    if (processName.empty()) {
+        log::Loge("Error: <bundle> is required for capture.");
         return 2;
     }
-    const std::string config_option = capture->flag;
+    const std::string configOption = capture->flag;
 
     // 4. Environment check.
-    if (!check_profiler_env()) {
+    if (!CheckProfilerEnv()) {
         return 2;
     }
 
     // 4.5 Resolve process name: support partial matching of package name or app name.
     //     ArkTS types (-s/-g/-l) require an installed app; native types
     //     (-n/-f/-d) may also target system processes not in the app list.
-    bool is_app = true;  // whether the resolved target is an installed app
+    bool isApp = true;  // whether the resolved target is an installed app
     {
         std::string resolved;
-        const bool require_app = capture->require_app;
-        if (!resolve_process_name(process_name, require_app, resolved, is_app)) {
+        const bool requireApp = capture->requireApp;
+        if (!ResolveProcessName(processName, requireApp, resolved, isApp)) {
             return 2;
         }
-        process_name = resolved;
+        processName = resolved;
     }
 
     // 5. Resolve config option to its template file path.
-    std::string config_file;
-    std::string result_dir;
-    bool require_fresh_start = false;
-    int min_api_version = 0;
-    for (const auto& op : cfg.option_path_map) {
-        if (op.option == config_option) {
-            config_file = op.path;
-            result_dir = op.result_dir;
-            require_fresh_start = op.require_fresh_start;
-            min_api_version = op.min_api_version;
+    std::string configFile;
+    std::string resultDir;
+    bool requireFreshStart = false;
+    int minApiVersion = 0;
+    for (const auto& op : cfg.optionPathMap) {
+        if (op.option == configOption) {
+            configFile = op.path;
+            resultDir = op.resultDir;
+            requireFreshStart = op.requireFreshStart;
+            minApiVersion = op.minApiVersion;
             break;
         }
     }
-    if (config_file.empty()) {
-        log::loge("Unknown config option: ", config_option);
+    if (configFile.empty()) {
+        log::Loge("Unknown config option: ", configOption);
         return 2;
     }
 
     // 6. API version check.
-    if (!check_api_version(min_api_version)) {
+    if (!CheckApiVersion(minApiVersion)) {
         return 2;
     }
 
     // 7. Process template.
     ProfilerOptions popts;
-    popts.p = process_name;
-    if (duration_val > 0) {
-        popts.t = duration_val;
+    popts.p = processName;
+    if (durationVal > 0) {
+        popts.t = durationVal;
     } else {
         // Default to 120s when -t is not given, instead of finishing immediately.
         popts.t = 120;
     }
-    popts.o = output_dir_val;
-    popts.config_option = config_option;
+    popts.o = outputDirVal;
+    popts.configOption = configOption;
 
-    CaptureCommand cc = process_template(config_file, popts);
+    CaptureCommand cc = ProcessTemplate(configFile, popts);
     if (!cc.ok) {
-        log::loge("Failed to process config file:", cc.error);
+        log::Loge("Failed to process config file:", cc.error);
         return 2;
     }
 
@@ -952,76 +1032,83 @@ int run_profiler_cmd(const ProfilerCliOptions& opt) {
     // (start/end + peak-triggered snapshots) instead of exporting once. Both
     // modes share the capture type, so the continuous one carries a `session`
     // segment to tell them apart in the directory name alone.
-    const bool continuous_snapshot =
-        (config_option == "snapshot") && opt.duration_specified;
-    const std::string session_name =
-        config_option + (continuous_snapshot ? "-session" : "") + "-" +
-        as_path_segment(process_name) + "-" + current_timestamp();
-    const std::string device_segment =
-        (opt.connect_key_provided && !hdc_connect_key().empty())
-            ? as_path_segment(hdc_connect_key())
+    const bool continuousSnapshot =
+        (configOption == "snapshot") && opt.durationSpecified;
+    const std::string sessionName =
+        configOption + (continuousSnapshot ? "-session" : "") + "-" +
+        AsPathSegment(processName) + "-" + CurrentTimestamp();
+    const std::string deviceSegment =
+        (opt.connectKeyProvided && !HdcConnectKey().empty())
+            ? AsPathSegment(HdcConnectKey())
             : std::string();
-    const std::string session_path =
-        device_segment.empty() ? session_name
-                               : platform::join_path(device_segment, session_name);
-    const std::string output_dir = platform::join_path(output_dir_val, session_path);
+    const std::string sessionPath =
+        deviceSegment.empty() ? sessionName
+                               : platform::JoinPath(deviceSegment, sessionName);
+    const std::string outputDir = platform::JoinPath(outputDirVal, sessionPath);
     // create_directories also reports false for an existing directory.
-    if (!platform::create_directories(output_dir) && !platform::directory_exists(output_dir)) {
-        log::loge("Error: cannot create the output directory: ", output_dir);
+    if (!platform::CreateDirectories(outputDir) && !platform::DirectoryExists(outputDir)) {
+        log::Loge("Error: cannot create the output directory: ", outputDir);
         return 2;
     }
 
     // 8. Run hdc. The target was already echoed right after the gate (step 3.45).
-    HdcRunOptions run_opts;
-    run_opts.content = cc.command;
-    run_opts.duration = cc.duration;
-    run_opts.output_dir = output_dir;
-    run_opts.remote_output_path = cc.remote_output_path;
-    run_opts.process_name = cc.process_name;
-    run_opts.result_dir = result_dir;
-    run_opts.require_fresh_start = require_fresh_start;
-    run_opts.wait_for_zip = capture->wait_for_zip;
-    run_opts.pull_nativeleaks = (config_option == "nativeleaks");
-    run_opts.device_config_content = cc.device_config_content;
-    run_opts.smaps_prefix = capture->snapshot_prefix;
-    run_opts.is_app = is_app;
-    run_opts.continuous_snapshot = continuous_snapshot;
-    RunResult rr = run_hdc(run_opts);
+    HdcRunOptions runOpts;
+    runOpts.content = cc.command;
+    runOpts.duration = cc.duration;
+    runOpts.outputDir = outputDir;
+    runOpts.remoteOutputPath = cc.remoteOutputPath;
+    runOpts.processName = cc.processName;
+    runOpts.resultDir = resultDir;
+    runOpts.requireFreshStart = requireFreshStart;
+    runOpts.waitForZip = capture->waitForZip;
+    runOpts.pullNativeleaks = (configOption == "nativeleaks");
+    runOpts.deviceConfigContent = cc.deviceConfigContent;
+    runOpts.smapsPrefix = capture->snapshotPrefix;
+    runOpts.isApp = isApp;
+    runOpts.continuousSnapshot = continuousSnapshot;
+    RunResult rr = RunHdc(runOpts);
     if (!rr.ok) {
         // Name the pinned device when there is one: rr.error is hdc text and does not always
         // mention the target, and by now the `Device:` echo is well above this line.
         std::string err = "hdc execution failed: " + rr.error;
-        if (!hdc_connect_key().empty()) err += " [device: " + hdc_connect_key() + "]";
-        log::loge(err);
-        if (!rr.output.empty() && !rr.output_streamed) std::cout << rr.output;
+        if (!HdcConnectKey().empty()) {
+            err += " [device: " + HdcConnectKey() + "]";
+        }
+        log::Loge(err);
+        if (!rr.output.empty() && !rr.outputStreamed) {
+            std::cout << rr.output;
+        }
         return 2;
     }
 
     // 9. Report results.
     // `output_streamed` means the transcript was already printed to the console
     // in real time (async `hiprofiler_cmd start`), so don't print it again.
-    if (!rr.output.empty() && !rr.output_streamed) {
+    if (!rr.output.empty() && !rr.outputStreamed) {
         std::cout << rr.output;
-        if (rr.output.back() != '\n') std::cout << '\n';
-    }
-    log::logi("Elapsed: ", rr.elapsed, "s");
-
-    if (rr.snapshot_attempted) {
-        log::logi("Snapshot status: ", rr.snapshot_status);
-        for (const auto& f : rr.snapshot_pulled_files) {
-            log::logok("Snapshot file exported: ", f);
+        if (rr.output.back() != '\n') {
+            std::cout << '\n';
         }
-    } else if (rr.pull_attempted) {
-        if (rr.pull_ok) {
-            log::logok("Result file exported: ", rr.pulled_file);
+    }
+    log::Logi("Elapsed: ", rr.elapsed, "s");
+
+    if (rr.snapshotAttempted) {
+        log::Logi("Snapshot status: ", rr.snapshotStatus);
+        for (const auto& f : rr.snapshotPulledFiles) {
+            log::Logok("Snapshot file exported: ", f);
+        }
+    } else if (rr.pullAttempted)
+    {
+        if (rr.pullOk) {
+            log::Logok("Result file exported: ", rr.pulledFile);
         } else {
             // `hdc file recv` exits 0 even when the remote file is missing,
             // so the captured output holds the real reason (e.g. "[Fail]Error
             // opening file: ..."); prefer it over the exit code.
-            if (!rr.pull_output.empty()) {
-                log::loge("Result file export failed:\n", rr.pull_output);
+            if (!rr.pullOutput.empty()) {
+                log::Loge("Result file export failed:\n", rr.pullOutput);
             } else {
-                log::loge("Result file export failed: (exit code ", rr.pull_exit_code, ")");
+                log::Loge("Result file export failed: (exit code ", rr.pullExitCode, ")");
             }
             return 3;
         }
@@ -1030,174 +1117,187 @@ int run_profiler_cmd(const ProfilerCliOptions& opt) {
     // Summarize the per-process snapshot files exported during the capture
     // (hidumper --mem-smaps for -n/-g/-l/-d, lsof for -f). The paths were
     // already printed at the moment of export; this consolidates them.
-    if (!rr.smaps_exported_files.empty()) {
-        const char* label = (std::string(capture->snapshot_prefix) == "fds")
+    if (!rr.smapsExportedFiles.empty()) {
+        const char* label = (std::string(capture->snapshotPrefix) == "fds")
                                 ? "FD snapshot exported"
                                 : "Smaps exported";
-        for (const auto& f : rr.smaps_exported_files) {
-            log::logi(label, ": ", f);
+        for (const auto& f : rr.smapsExportedFiles) {
+            log::Logi(label, ": ", f);
         }
     }
 
     // 10. Generate HTML analysis report if --report is set.
-    if (flag_report) {
+    if (flagReport) {
         // Continuous snapshot sessions (snapshot -t) produce start + peak + end
         // snapshots. With -o, generate a single comparison report (start=baseline,
         // end=target) via jsleak -b, instead of per-file reports.
-        if (continuous_snapshot && !rr.snapshot_pulled_files.empty()) {
-            std::string baseline_file, target_file;
-            for (const auto& f : rr.snapshot_pulled_files) {
+        if (continuousSnapshot && !rr.snapshotPulledFiles.empty()) {
+            std::string baselineFile, targetFile;
+            for (const auto& f : rr.snapshotPulledFiles) {
                 const std::string stem = platform::stem(f);
-                if (stem.empty()) continue;
-                const std::string start_sfx = "-start";
-                const std::string end_sfx = "-end";
-                if (baseline_file.empty() &&
-                    stem.size() >= start_sfx.size() &&
-                    stem.compare(stem.size() - start_sfx.size(),
-                                 start_sfx.size(), start_sfx) == 0) {
-                    baseline_file = f;
-                } else if (target_file.empty() &&
-                           stem.size() >= end_sfx.size() &&
-                           stem.compare(stem.size() - end_sfx.size(),
-                                        end_sfx.size(), end_sfx) == 0) {
-                    target_file = f;
+                if (stem.empty()) {
+                    continue;
+                }
+                const std::string startSfx = "-start";
+                const std::string endSfx = "-end";
+                if (baselineFile.empty() &&
+                    stem.size() >= startSfx.size() &&
+                    stem.compare(stem.size() - startSfx.size(),
+                                 startSfx.size(), startSfx) == 0)
+                                 {
+                    baselineFile = f;
+                } else if (targetFile.empty() &&
+                           stem.size() >= endSfx.size() &&
+                           stem.compare(stem.size() - endSfx.size(),
+                                        endSfx.size(), endSfx) == 0)
+                                        {
+                    targetFile = f;
                 }
             }
 
             // Fallback: if either was not located by role suffix, use file
             // modification timestamps — earliest = start (baseline),
             // latest = end (target).
-            if (baseline_file.empty() || target_file.empty()) {
-                log::logi("Role suffix not found on all snapshots; "
+            if (baselineFile.empty() || targetFile.empty()) {
+                log::Logi("Role suffix not found on all snapshots; "
                           "falling back to file modification timestamps.");
-                fs::file_time_type min_time = fs::file_time_type::max();
-                fs::file_time_type max_time = fs::file_time_type::min();
+                fs::file_time_type minTime = fs::file_time_type::max();
+                fs::file_time_type maxTime = fs::file_time_type::min();
                 std::string earliest, latest;
-                for (const auto& f : rr.snapshot_pulled_files) {
+                for (const auto& f : rr.snapshotPulledFiles) {
                     std::error_code ec;
-                    const auto t = fs::last_write_time(path_from_utf8(f), ec);
-                    if (ec) continue;
-                    if (t < min_time) { min_time = t; earliest = f; }
-                    if (t > max_time) { max_time = t; latest = f; }
+                    const auto t = fs::last_write_time(PathFromUtf8(f), ec);
+                    if (ec) {
+                        continue;
+                    }
+                    if (t < minTime) { minTime = t; earliest = f; }
+                    if (t > maxTime) { maxTime = t; latest = f; }
                 }
-                if (baseline_file.empty()) baseline_file = earliest;
-                if (target_file.empty()) target_file = latest;
+                if (baselineFile.empty()) {
+                    baselineFile = earliest;
+                }
+                if (targetFile.empty()) {
+                    targetFile = latest;
+                }
             }
 
-            if (baseline_file.empty() || target_file.empty() ||
-                baseline_file == target_file) {
-                log::loge("Comparison report: could not locate start/end snapshots ",
-                          "(baseline=", baseline_file.empty() ? "<missing>" : baseline_file,
-                          ", target=", target_file.empty() ? "<missing>" : target_file, ").");
-                return rr.exit_code;
+            if (baselineFile.empty() || targetFile.empty() ||
+                baselineFile == targetFile) {
+                log::Loge("Comparison report: could not locate start/end snapshots ",
+                          "(baseline=", baselineFile.empty() ? "<missing>" : baselineFile,
+                          ", target=", targetFile.empty() ? "<missing>" : targetFile, ").");
+                return rr.exitCode;
             }
 
-            log::logi("Generating comparison report: baseline=start, target=end");
+            log::Logi("Generating comparison report: baseline=start, target=end");
 
-            const std::string binary = resolve_mem_analyzer_binary();
+            const std::string binary = ResolveMemAnalyzerBinary();
 
             // jsleak -b <baseline> <target> -d <output_dir>
-            std::string cmd = proc::shell_quote(binary) +
-                " jsleak -b " + proc::shell_quote(baseline_file) +
-                " " + proc::shell_quote(target_file) +
-                " -d " + proc::shell_quote(output_dir);
+            std::string cmd = proc::ShellQuote(binary) +
+                " jsleak -b " + proc::ShellQuote(baselineFile) +
+                " " + proc::ShellQuote(targetFile) +
+                " -d " + proc::ShellQuote(outputDir);
             // Forward ArkTS deobfuscation options (same as per-file path).
-            if (!opt.sourcemap_dir.empty()) {
-                cmd += " --sourcemap " + proc::shell_quote(opt.sourcemap_dir);
+            if (!opt.sourcemapDir.empty()) {
+                cmd += " --sourcemap " + proc::ShellQuote(opt.sourcemapDir);
             }
-            if (!opt.name_obfuscation.empty()) {
-                cmd += " --namecache " + proc::shell_quote(opt.name_obfuscation);
+            if (!opt.nameObfuscation.empty()) {
+                cmd += " --namecache " + proc::ShellQuote(opt.nameObfuscation);
             }
 
-            log::logd("Command: ", cmd);
-            int rc = run_command_streaming(cmd + " 2>&1");
+            log::Logd("Command: ", cmd);
+            int rc = RunCommandStreaming(cmd + " 2>&1");
             if (rc < 0) {
-                log::loge("Comparison report generation failed: unable to launch ", binary);
-            } else if (rc != 0) {
-                log::loge("Comparison report generation failed: exited with code ", rc);
+                log::Loge("Comparison report generation failed: unable to launch ", binary);
+            } else if (rc != 0)
+            {
+                log::Loge("Comparison report generation failed: exited with code ", rc);
             } else {
                 // The jsleak compare subcommand nests its output under
                 // <output_dir>/<target-stem>/, writing
                 // <baseline-stem>-vs-<target-stem>.html there. Lift it up.
-                const std::string target_stem = platform::stem(target_file);
-                const std::string baseline_stem = platform::stem(baseline_file);
-                if (!target_stem.empty()) {
-                    flatten_report_dir(output_dir, target_stem);
+                const std::string targetStem = platform::stem(targetFile);
+                const std::string baselineStem = platform::stem(baselineFile);
+                if (!targetStem.empty()) {
+                    FlattenReportDir(outputDir, targetStem);
                 }
-                const std::string html_name =
-                    (baseline_stem.empty() ? "baseline" : baseline_stem) + "-vs-" +
-                    (target_stem.empty() ? "target" : target_stem) + ".html";
-                const std::string html_path = platform::join_path(output_dir, html_name);
-                log::logok("Comparison report generated: ", html_path);
-                if (platform::file_exists(html_path)) {
-                    platform::open_with_default_app(html_path);
+                const std::string htmlName =
+                    (baselineStem.empty() ? "baseline" : baselineStem) + "-vs-" +
+                    (targetStem.empty() ? "target" : targetStem) + ".html";
+                const std::string htmlPath = platform::JoinPath(outputDir, htmlName);
+                log::Logok("Comparison report generated: ", htmlPath);
+                if (platform::FileExists(htmlPath)) {
+                    platform::OpenWithDefaultApp(htmlPath);
                 } else {
-                    log::loge("Comparison report HTML not found at: ", html_path,
+                    log::Loge("Comparison report HTML not found at: ", htmlPath,
                               " (the capture may have contained no data).");
                 }
             }
-            return rr.exit_code;
+            return rr.exitCode;
         }
 
         // Collect the file(s) to analyze.
-        std::vector<std::string> report_files;
-        if (rr.snapshot_attempted) {
-            report_files = rr.snapshot_pulled_files;
-        } else if (rr.pull_attempted && rr.pull_ok && !rr.pulled_file.empty()) {
-            report_files.push_back(rr.pulled_file);
+        std::vector<std::string> reportFiles;
+        if (rr.snapshotAttempted) {
+            reportFiles = rr.snapshotPulledFiles;
+        } else if (rr.pullAttempted && rr.pullOk && !rr.pulledFile.empty())
+        {
+            reportFiles.push_back(rr.pulledFile);
         }
 
-        if (report_files.empty()) {
-            log::loge("Report: no captured file available to analyze.");
+        if (reportFiles.empty()) {
+            log::Loge("Report: no captured file available to analyze.");
         } else {
             // Determine the subcommand and extra args from the capture type.
-            const std::string subcmd = capture->report_subcmd;
-            const std::string extra_args = capture->report_extra;
+            const std::string subcmd = capture->reportSubcmd;
+            const std::string extraArgs = capture->reportExtra;
 
-            const std::string binary = resolve_mem_analyzer_binary();
+            const std::string binary = ResolveMemAnalyzerBinary();
 
-            for (const auto& f : report_files) {
+            for (const auto& f : reportFiles) {
                 // Every capture file of a session lives directly in the session
                 // directory, so analyzing it there keeps the report inside the
                 // session tree. The analysis subcommand writes it one level
                 // deeper, under <dir>/<stem>/, which is undone below.
                 // nativeleaks: feed the orphan-snapshot file to `trace -l`
                 // alongside the .htrace so the L1/L2/L3 leak filtering runs.
-                std::string leaks_arg;
-                if (config_option == "nativeleaks") {
-                    if (!rr.pulled_leaks_file.empty()) {
-                        leaks_arg = " -l " + proc::shell_quote(rr.pulled_leaks_file);
+                std::string leaksArg;
+                if (configOption == "nativeleaks") {
+                    if (!rr.pulledLeaksFile.empty()) {
+                        leaksArg = " -l " + proc::ShellQuote(rr.pulledLeaksFile);
                     } else {
                         // leaks 文件未获取（超时/设备掉线）：明确告知用户本次
                         // 未做 -l 泄漏过滤，仅输出普通 nativeheap 报告，避免
                         // 静默降级让用户误以为泄漏过滤已运行。
-                        log::logw("Warning: nativeleaks orphan-snapshot file was not captured; "
+                        log::Logw("Warning: nativeleaks orphan-snapshot file was not captured; "
                                   "running trace WITHOUT -l leak filtering (plain nativeheap "
                                   "analysis only). Re-run the capture if leak filtering is needed.");
                     }
                 }
-                std::string cmd = proc::shell_quote(binary) +
-                    " " + subcmd + extra_args + leaks_arg +
-                    " " + proc::shell_quote(f) +
-                    " -d " + proc::shell_quote(output_dir);
+                std::string cmd = proc::ShellQuote(binary) +
+                    " " + subcmd + extraArgs + leaksArg +
+                    " " + proc::ShellQuote(f) +
+                    " -d " + proc::ShellQuote(outputDir);
                 // 转发反混淆选项给 jsleak 报告子命令，还原混淆的符号/路径后再分析
-                if (!opt.sourcemap_dir.empty()) {
-                    cmd += " --sourcemap " + proc::shell_quote(opt.sourcemap_dir);
+                if (!opt.sourcemapDir.empty()) {
+                    cmd += " --sourcemap " + proc::ShellQuote(opt.sourcemapDir);
                 }
-                if (!opt.name_obfuscation.empty()) {
-                    cmd += " --namecache " + proc::shell_quote(opt.name_obfuscation);
+                if (!opt.nameObfuscation.empty()) {
+                    cmd += " --namecache " + proc::ShellQuote(opt.nameObfuscation);
                 }
                 // native .so 符号反解只对 trace/tshandle 分析有意义（jsleak 走 ArkTS 反混淆）
-                if (!opt.so_dir.empty() && (subcmd == "trace" || subcmd == "tshandle")) {
-                    cmd += " --so-dir " + proc::shell_quote(opt.so_dir);
+                if (!opt.soDir.empty() && (subcmd == "trace" || subcmd == "tshandle")) {
+                    cmd += " --so-dir " + proc::ShellQuote(opt.soDir);
                 }
 
-                log::logd("Generating report: ", cmd);
-                int rc = run_command_streaming(cmd + " 2>&1");
+                log::Logd("Generating report: ", cmd);
+                int rc = RunCommandStreaming(cmd + " 2>&1");
                 if (rc < 0) {
-                    log::loge("Report generation failed: unable to launch ", binary);
-                } else if (rc != 0) {
-                    log::loge("Report generation failed: exited with code ", rc);
+                    log::Loge("Report generation failed: unable to launch ", binary);
+                } else if (rc != 0)
+                {
+                    log::Loge("Report generation failed: exited with code ", rc);
                 } else {
                     // The analysis subcommand nests its output under
                     // <output_dir>/<source_name>/, where source_name is the input
@@ -1206,16 +1306,18 @@ int run_profiler_cmd(const ProfilerCliOptions& opt) {
                     // everything the run produced next to it and report the
                     // final location (the subprocess printed the old one).
                     std::string base = platform::stem(f);
-                    if (base.empty()) base = "output";
-                    flatten_report_dir(output_dir, base);
+                    if (base.empty()) {
+                        base = "output";
+                    }
+                    FlattenReportDir(outputDir, base);
 
-                    const std::string html_path = platform::join_path(output_dir, base + ".html");
-                    log::logok("Report generated: ", html_path);
-                    if (platform::file_exists(html_path)) {
+                    const std::string htmlPath = platform::JoinPath(outputDir, base + ".html");
+                    log::Logok("Report generated: ", htmlPath);
+                    if (platform::FileExists(htmlPath)) {
                         // Open the generated HTML in the default browser.
-                        platform::open_with_default_app(html_path);
+                        platform::OpenWithDefaultApp(htmlPath);
                     } else {
-                        log::loge("Report HTML not found at: ", html_path,
+                        log::Loge("Report HTML not found at: ", htmlPath,
                                   " (the capture may have contained no data).");
                     }
                 }
@@ -1223,7 +1325,7 @@ int run_profiler_cmd(const ProfilerCliOptions& opt) {
         }
     }
 
-    return rr.exit_code;
+    return rr.exitCode;
 }
 
 } // namespace mem_analyzer

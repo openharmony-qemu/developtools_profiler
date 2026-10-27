@@ -23,14 +23,17 @@
 
 namespace mem_analyzer {
 
-using html_analysis::escapeHtml;
-using html_analysis::formatBytes;
+using htmlAnalysis::EscapeHtml;
+using htmlAnalysis::FormatBytes;
 
 namespace {
 
 // 百分比口径与图表 tooltip 一致：以整棵树的根节点（GC Roots）总大小/总节点数为分母。
-std::string format_tree_pct(int64_t part, int64_t total) {
-    if (total <= 0) return "0%";
+std::string FormatTreePct(int64_t part, int64_t total)
+{
+    if (total <= 0) {
+        return "0%";
+    }
     char buf[32];
     std::snprintf(buf, sizeof(buf), "%.1f%%", static_cast<double>(part) / total * 100.0);
     return buf;
@@ -47,7 +50,8 @@ constexpr int kIttMaxExpandDepth = 8;
 // 层级配色表：每一层一个颜色。竖引导线取「该线所代表的层」的颜色，节点 +/- 取
 // 「该节点所在层」的颜色，二者同色，因此顺着一条线的颜色就能找到它属于哪一层。
 // 层数超过配色表长度时循环取用。
-const std::vector<std::string>& itt_level_colors() {
+const std::vector<std::string>& ittLevelColors()
+{
     static const std::vector<std::string> colors = {
         "#4e79a7", "#59a14f", "#e15759", "#f28e2b",
         "#b07aa1", "#76b7b2", "#8c6d31", "#d37295",
@@ -55,8 +59,9 @@ const std::vector<std::string>& itt_level_colors() {
     return colors;
 }
 
-std::string itt_level_color(int level) {
-    const std::vector<std::string>& colors = itt_level_colors();
+std::string IttLevelColor(int level)
+{
+    const std::vector<std::string>& colors = ittLevelColors();
     const size_t idx = static_cast<size_t>(level < 0 ? 0 : level) % colors.size();
     return colors[idx];
 }
@@ -64,12 +69,15 @@ std::string itt_level_color(int level) {
 // 子树内的最大节点值（含自身）。
 // 判定默认展开必须看子树而非自身：引用链 trie 按名字前缀合并，父节点自身值可能远小于其子链
 // （父级占比不到阈值、子孙却超过阈值）。只看自身会让父级被收起，把超过阈值的子孙链一并隐藏。
-int64_t itt_subtree_max_size(const json& node) {
+int64_t IttSubtreeMaxSize(const json& node)
+{
     int64_t maxSize = node.value("t", static_cast<int64_t>(0));
     if (node.contains("c") && node["c"].is_array()) {
         for (const json& child : node["c"]) {
-            const int64_t childMax = itt_subtree_max_size(child);
-            if (childMax > maxSize) maxSize = childMax;
+            const int64_t childMax = IttSubtreeMaxSize(child);
+            if (childMax > maxSize) {
+                maxSize = childMax;
+            }
         }
     }
     return maxSize;
@@ -78,9 +86,9 @@ int64_t itt_subtree_max_size(const json& node) {
 // 递归输出树表行（前序）。path 为该行在排序后兄弟序列中的路径，用于生成行 id 与父子关系；
 // anc 为所有祖先行 id 的逗号列表，前端据此判断该行是否应随某个折叠的祖先一起隐藏；
 // anc_collapsed 表示是否存在处于折叠态的祖先（决定本行初始是否隐藏）。
-void emit_icicle_tree_rows(const json& node, const std::string& tableId,
+void EmitIcicleTreeRows(const json& node, const std::string& tableId,
                            const std::string& path, int depth, const std::string& anc,
-                           bool anc_collapsed,
+                           bool ancCollapsed,
                            int64_t rootSize, std::string& out) {
     const std::string rowId = tableId + "_r" + (path.empty() ? "root" : path);
     const std::string name = node.value("n", std::string());
@@ -91,7 +99,7 @@ void emit_icicle_tree_rows(const json& node, const std::string& tableId,
     // 同时限制默认展开的最大层数，超过 kIttMaxExpandDepth 的节点即使占比达标也收起。
     // 占比按「子树内最大占比」判定，使超过阈值的子孙链不会被未达阈值的父级折叠隐藏。
     const double pct = rootSize > 0
-                           ? 100.0 * static_cast<double>(itt_subtree_max_size(node)) /
+                           ? 100.0 * static_cast<double>(IttSubtreeMaxSize(node)) /
                                  static_cast<double>(rootSize)
                            : 0.0;
     const bool collapsed =
@@ -100,13 +108,17 @@ void emit_icicle_tree_rows(const json& node, const std::string& tableId,
     // 折叠态的唯一来源是 itt-collapsed 类，初始渲染就必须打上：
     // 否则首次点击时 classList.toggle 反而会「加上」该类，表现为点了仍是 "+"，
     // 且重新计算显隐时中间层没有折叠标记，会把整棵子树一次性放出来。
-    out += "<tr id=\"" + escapeHtml(rowId) + "\" data-anc=\"" + escapeHtml(anc) + "\"";
-    if (collapsed) out += " class=\"itt-collapsed\"";
-    if (anc_collapsed) out += " style=\"display:none\"";
+    out += "<tr id=\"" + EscapeHtml(rowId) + "\" data-anc=\"" + EscapeHtml(anc) + "\"";
+    if (collapsed) {
+        out += " class=\"itt-collapsed\"";
+    }
+    if (ancCollapsed) {
+        out += " style=\"display:none\"";
+    }
     out += ">";
     // 列顺序：大小 / 占比 / 节点数 / 节点名称（名称放最后，见 tree_table_html）
-    out += "<td class=\"itt-num\">" + formatBytes(static_cast<double>(size)) + "</td>";
-    out += "<td class=\"itt-num itt-pct\">" + format_tree_pct(size, rootSize) + "</td>";
+    out += "<td class=\"itt-num\">" + FormatBytes(static_cast<double>(size)) + "</td>";
+    out += "<td class=\"itt-num itt-pct\">" + FormatTreePct(size, rootSize) + "</td>";
     out += "<td class=\"itt-num\">" + std::to_string(count) + "</td>";
     // 名称列允许换行，超长节点名完整展示（因此不再需要 title / 省略号）
     out += "<td class=\"itt-name" + std::string(depth == 0 ? " itt-root" : "") +
@@ -117,19 +129,19 @@ void emit_icicle_tree_rows(const json& node, const std::string& tableId,
     // 绝对定位铺满整行高度，名称换行导致行变高时线也不会断开。
     for (int k = 0; k < depth; ++k) {
         out += "<span class=\"itt-guide\" style=\"left:" + std::to_string(18 + k * 16) +
-               "px;background:" + itt_level_color(k) + "\"></span>";
+               "px;background:" + IttLevelColor(k) + "\"></span>";
     }
     if (hasChildren) {
         // 颜色通过 CSS 变量传入，同时作用于 +/- 字形与方框边框
-        out += "<span class=\"itt-toggle\" style=\"--itt-c:" + itt_level_color(depth) +
+        out += "<span class=\"itt-toggle\" style=\"--itt-c:" + IttLevelColor(depth) +
                "\" onclick=\"toggleIcicleTreeRow(this)\">" +
                std::string(collapsed ? "+" : "-") + "</span>";
     } else {
         // 叶子节点没有展开开关，放一个同层颜色的小圆点占位：
         // 避免该列空白导致与上方带方框的 +/- 对不齐，且保持层级配色连续。
-        out += "<span class=\"itt-leaf\" style=\"--itt-c:" + itt_level_color(depth) + "\">•</span>";
+        out += "<span class=\"itt-leaf\" style=\"--itt-c:" + IttLevelColor(depth) + "\">•</span>";
     }
-    out += "<span class=\"itt-name-text\">" + escapeHtml(name) + "</span></td>";
+    out += "<span class=\"itt-name-text\">" + EscapeHtml(name) + "</span></td>";
     out += "</tr>";
 
     if (hasChildren) {
@@ -137,26 +149,32 @@ void emit_icicle_tree_rows(const json& node, const std::string& tableId,
         // 树表内按总大小降序（与 Analyzer 视图一致）；仅影响表格顺序，不改动图表的树
         std::vector<size_t> order;
         order.reserve(children.size());
-        for (size_t i = 0; i < children.size(); ++i) order.push_back(i);
-        std::sort(order.begin(), order.end(), [&](size_t a, size_t b) {
+        for (size_t i = 0; i < children.size(); ++i) {
+            order.push_back(i);
+        }
+        std::sort(order.begin(), order.end(), [&](size_t a, size_t b)
+        {
             const int64_t ta = children[a].value("t", static_cast<int64_t>(0));
             const int64_t tb = children[b].value("t", static_cast<int64_t>(0));
-            if (ta != tb) return ta > tb;
+            if (ta != tb) {
+                return ta > tb;
+            }
             return children[a].value("n", std::string()) < children[b].value("n", std::string());
         });
         const std::string childAnc = anc.empty() ? rowId : anc + "," + rowId;
         for (size_t k = 0; k < order.size(); ++k) {
             const std::string childPath =
                 path.empty() ? std::to_string(k) : path + "-" + std::to_string(k);
-            emit_icicle_tree_rows(children[order[k]], tableId, childPath, depth + 1, childAnc,
-                                  anc_collapsed || collapsed, rootSize, out);
+            EmitIcicleTreeRows(children[order[k]], tableId, childPath, depth + 1, childAnc,
+                                  ancCollapsed || collapsed, rootSize, out);
         }
     }
 }
 
 } // namespace
 
-std::string tree_table_css() {
+std::string TreeTableCss()
+{
     return R"CSS(
 /* ========== 引用链总览图下方的数据树表（参考 Analyzer 的 Analysis 列表） ==========
    table-layout:fixed + colgroup：名称列自适应拿走剩余宽度，后三列固定像素宽。
@@ -217,22 +235,23 @@ std::string tree_table_css() {
 )CSS";
 }
 
-std::string tree_table_html(const json& tree, const std::string& canvas_id) {
-    const std::string tableId = "treeTable_" + canvas_id;
+std::string TreeTableHtml(const json& tree, const std::string& canvasId)
+{
+    const std::string tableId = "treeTable_" + canvasId;
     std::string rows;
-    emit_icicle_tree_rows(tree, tableId, "", 0, "", false,
+    EmitIcicleTreeRows(tree, tableId, "", 0, "", false,
                           tree.value("t", static_cast<int64_t>(0)), rows);
     std::string html;
     html += "<div class=\"itt-actions\">";
-    html += "<button class=\"itt-btn\" onclick=\"toggleIcicleTreeAll('" + escapeHtml(tableId) +
+    html += "<button class=\"itt-btn\" onclick=\"toggleIcicleTreeAll('" + EscapeHtml(tableId) +
             "', true)\">全部展开</button>";
-    html += "<button class=\"itt-btn\" onclick=\"toggleIcicleTreeAll('" + escapeHtml(tableId) +
+    html += "<button class=\"itt-btn\" onclick=\"toggleIcicleTreeAll('" + EscapeHtml(tableId) +
             "', false)\">全部折叠</button>";
-    html += "<button class=\"itt-btn\" onclick=\"copyIcicleTree('" + escapeHtml(tableId) +
+    html += "<button class=\"itt-btn\" onclick=\"copyIcicleTree('" + EscapeHtml(tableId) +
             "', this)\">复制引用链</button>";
     html += "</div>";
     html += "<div class=\"icicle-tree-wrap\">";
-    html += "<table class=\"icicle-tree-table\" id=\"" + escapeHtml(tableId) + "\">";
+    html += "<table class=\"icicle-tree-table\" id=\"" + EscapeHtml(tableId) + "\">";
     html += "<colgroup><col style=\"width:96px\"><col style=\"width:76px\">"
             "<col style=\"width:80px\"><col></colgroup>";
     html += "<thead><tr><th>大小</th><th>占比</th><th>节点数</th>"
