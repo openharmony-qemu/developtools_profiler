@@ -46,7 +46,8 @@ __attribute__((noinline)) void ParseSchedBlockedReasonData(SchedBlockedReasonDat
                            + StringUtils::ConvertToHex(recSize) + "[" + modName + "]";
     eventData.has_caller_str = true;
 }
-void ParseSchedBlockedReason(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedBlockedReason(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedBlockedReasonData eventData {};
@@ -59,21 +60,8 @@ void ParseSchedBlockedReason(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
         msg->set_caller_str(eventData.caller_str);
     }
 }
-void ParseSchedBlockedReasonEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedBlockedReasonData eventData {};
-    ParseSchedBlockedReasonData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_blocked_reason_format();
-    msg->set_pid(eventData.pid);
-    msg->set_caller(eventData.caller);
-    msg->set_io_wait(eventData.io_wait);
-    if (eventData.has_caller_str) {
-        msg->set_caller_str(eventData.caller_str);
-    }
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_blocked_reason, ParseSchedBlockedReason);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_blocked_reason, ParseSchedBlockedReasonEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_blocked_reason, ParseSchedBlockedReason<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_blocked_reason, ParseSchedBlockedReason<ProtoEncoder::FtraceEvent>);
 
 struct SchedKthreadStopData {
     std::string comm {};
@@ -86,7 +74,8 @@ __attribute__((noinline)) void ParseSchedKthreadStopData(SchedKthreadStopData& e
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedKthreadStop(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedKthreadStop(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedKthreadStopData eventData {};
@@ -95,17 +84,8 @@ void ParseSchedKthreadStop(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_comm(eventData.comm);
     msg->set_pid(eventData.pid);
 }
-void ParseSchedKthreadStopEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedKthreadStopData eventData {};
-    ParseSchedKthreadStopData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_kthread_stop_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_kthread_stop, ParseSchedKthreadStop);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_kthread_stop, ParseSchedKthreadStopEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_kthread_stop, ParseSchedKthreadStop<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_kthread_stop, ParseSchedKthreadStop<ProtoEncoder::FtraceEvent>);
 
 struct SchedKthreadStopRetData {
     int32_t ret {};
@@ -116,7 +96,8 @@ __attribute__((noinline)) void ParseSchedKthreadStopRetData(SchedKthreadStopRetD
     int i = 0;
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedKthreadStopRet(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedKthreadStopRet(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedKthreadStopRetData eventData {};
@@ -124,16 +105,8 @@ void ParseSchedKthreadStopRet(FtraceEvent& ftraceEvent, uint8_t data[], size_t s
     auto msg = ftraceEvent.mutable_sched_kthread_stop_ret_format();
     msg->set_ret(eventData.ret);
 }
-void ParseSchedKthreadStopRetEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedKthreadStopRetData eventData {};
-    ParseSchedKthreadStopRetData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_kthread_stop_ret_format();
-    msg->set_ret(eventData.ret);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_kthread_stop_ret, ParseSchedKthreadStopRet);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_kthread_stop_ret, ParseSchedKthreadStopRetEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_kthread_stop_ret, ParseSchedKthreadStopRet<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_kthread_stop_ret, ParseSchedKthreadStopRet<ProtoEncoder::FtraceEvent>);
 
 struct SchedMigrateTaskData {
     std::string comm {};
@@ -152,7 +125,8 @@ __attribute__((noinline)) void ParseSchedMigrateTaskData(SchedMigrateTaskData& e
     eventData.orig_cpu = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.dest_cpu = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedMigrateTask(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedMigrateTask(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedMigrateTaskData eventData {};
@@ -164,20 +138,8 @@ void ParseSchedMigrateTask(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_orig_cpu(eventData.orig_cpu);
     msg->set_dest_cpu(eventData.dest_cpu);
 }
-void ParseSchedMigrateTaskEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedMigrateTaskData eventData {};
-    ParseSchedMigrateTaskData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_migrate_task_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_prio(eventData.prio);
-    msg->set_orig_cpu(eventData.orig_cpu);
-    msg->set_dest_cpu(eventData.dest_cpu);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_migrate_task, ParseSchedMigrateTask);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_migrate_task, ParseSchedMigrateTaskEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_migrate_task, ParseSchedMigrateTask<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_migrate_task, ParseSchedMigrateTask<ProtoEncoder::FtraceEvent>);
 
 struct SchedMoveNumaData {
     int32_t pid {};
@@ -200,7 +162,8 @@ __attribute__((noinline)) void ParseSchedMoveNumaData(SchedMoveNumaData& eventDa
     eventData.dst_cpu = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.dst_nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedMoveNuma(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedMoveNuma(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedMoveNumaData eventData {};
@@ -214,22 +177,8 @@ void ParseSchedMoveNuma(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_dst_cpu(eventData.dst_cpu);
     msg->set_dst_nid(eventData.dst_nid);
 }
-void ParseSchedMoveNumaEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedMoveNumaData eventData {};
-    ParseSchedMoveNumaData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_move_numa_format();
-    msg->set_pid(eventData.pid);
-    msg->set_tgid(eventData.tgid);
-    msg->set_ngid(eventData.ngid);
-    msg->set_src_cpu(eventData.src_cpu);
-    msg->set_src_nid(eventData.src_nid);
-    msg->set_dst_cpu(eventData.dst_cpu);
-    msg->set_dst_nid(eventData.dst_nid);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_move_numa, ParseSchedMoveNuma);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_move_numa, ParseSchedMoveNumaEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_move_numa, ParseSchedMoveNuma<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_move_numa, ParseSchedMoveNuma<ProtoEncoder::FtraceEvent>);
 
 struct SchedPiSetprioData {
     std::string comm {};
@@ -246,7 +195,8 @@ __attribute__((noinline)) void ParseSchedPiSetprioData(SchedPiSetprioData& event
     eventData.oldprio = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.newprio = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedPiSetprio(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedPiSetprio(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedPiSetprioData eventData {};
@@ -257,19 +207,8 @@ void ParseSchedPiSetprio(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_oldprio(eventData.oldprio);
     msg->set_newprio(eventData.newprio);
 }
-void ParseSchedPiSetprioEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedPiSetprioData eventData {};
-    ParseSchedPiSetprioData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_pi_setprio_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_oldprio(eventData.oldprio);
-    msg->set_newprio(eventData.newprio);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_pi_setprio, ParseSchedPiSetprio);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_pi_setprio, ParseSchedPiSetprioEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_pi_setprio, ParseSchedPiSetprio<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_pi_setprio, ParseSchedPiSetprio<ProtoEncoder::FtraceEvent>);
 
 struct SchedProcessExecData {
     std::string filename {};
@@ -284,7 +223,8 @@ __attribute__((noinline)) void ParseSchedProcessExecData(SchedProcessExecData& e
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.old_pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedProcessExec(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedProcessExec(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedProcessExecData eventData {};
@@ -294,18 +234,8 @@ void ParseSchedProcessExec(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_pid(eventData.pid);
     msg->set_old_pid(eventData.old_pid);
 }
-void ParseSchedProcessExecEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedProcessExecData eventData {};
-    ParseSchedProcessExecData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_process_exec_format();
-    msg->set_filename(eventData.filename);
-    msg->set_pid(eventData.pid);
-    msg->set_old_pid(eventData.old_pid);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_process_exec, ParseSchedProcessExec);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_process_exec, ParseSchedProcessExecEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_process_exec, ParseSchedProcessExec<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_process_exec, ParseSchedProcessExec<ProtoEncoder::FtraceEvent>);
 
 struct SchedProcessExitData {
     std::string comm {};
@@ -320,7 +250,8 @@ __attribute__((noinline)) void ParseSchedProcessExitData(SchedProcessExitData& e
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.prio = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedProcessExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedProcessExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedProcessExitData eventData {};
@@ -330,18 +261,8 @@ void ParseSchedProcessExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_pid(eventData.pid);
     msg->set_prio(eventData.prio);
 }
-void ParseSchedProcessExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedProcessExitData eventData {};
-    ParseSchedProcessExitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_process_exit_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_prio(eventData.prio);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_process_exit, ParseSchedProcessExit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_process_exit, ParseSchedProcessExitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_process_exit, ParseSchedProcessExit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_process_exit, ParseSchedProcessExit<ProtoEncoder::FtraceEvent>);
 
 struct SchedProcessForkData {
     std::string parent_comm {};
@@ -358,7 +279,8 @@ __attribute__((noinline)) void ParseSchedProcessForkData(SchedProcessForkData& e
     eventData.child_comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.child_pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedProcessFork(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedProcessFork(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedProcessForkData eventData {};
@@ -369,19 +291,8 @@ void ParseSchedProcessFork(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_child_comm(eventData.child_comm);
     msg->set_child_pid(eventData.child_pid);
 }
-void ParseSchedProcessForkEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedProcessForkData eventData {};
-    ParseSchedProcessForkData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_process_fork_format();
-    msg->set_parent_comm(eventData.parent_comm);
-    msg->set_parent_pid(eventData.parent_pid);
-    msg->set_child_comm(eventData.child_comm);
-    msg->set_child_pid(eventData.child_pid);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_process_fork, ParseSchedProcessFork);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_process_fork, ParseSchedProcessForkEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_process_fork, ParseSchedProcessFork<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_process_fork, ParseSchedProcessFork<ProtoEncoder::FtraceEvent>);
 
 struct SchedProcessFreeData {
     std::string comm {};
@@ -396,7 +307,8 @@ __attribute__((noinline)) void ParseSchedProcessFreeData(SchedProcessFreeData& e
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.prio = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedProcessFree(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedProcessFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedProcessFreeData eventData {};
@@ -406,18 +318,8 @@ void ParseSchedProcessFree(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_pid(eventData.pid);
     msg->set_prio(eventData.prio);
 }
-void ParseSchedProcessFreeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedProcessFreeData eventData {};
-    ParseSchedProcessFreeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_process_free_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_prio(eventData.prio);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_process_free, ParseSchedProcessFree);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_process_free, ParseSchedProcessFreeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_process_free, ParseSchedProcessFree<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_process_free, ParseSchedProcessFree<ProtoEncoder::FtraceEvent>);
 
 struct SchedProcessWaitData {
     std::string comm {};
@@ -432,7 +334,8 @@ __attribute__((noinline)) void ParseSchedProcessWaitData(SchedProcessWaitData& e
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.prio = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedProcessWait(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedProcessWait(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedProcessWaitData eventData {};
@@ -442,18 +345,8 @@ void ParseSchedProcessWait(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_pid(eventData.pid);
     msg->set_prio(eventData.prio);
 }
-void ParseSchedProcessWaitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedProcessWaitData eventData {};
-    ParseSchedProcessWaitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_process_wait_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_prio(eventData.prio);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_process_wait, ParseSchedProcessWait);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_process_wait, ParseSchedProcessWaitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_process_wait, ParseSchedProcessWait<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_process_wait, ParseSchedProcessWait<ProtoEncoder::FtraceEvent>);
 
 struct SchedStatBlockedData {
     std::string comm {};
@@ -468,7 +361,8 @@ __attribute__((noinline)) void ParseSchedStatBlockedData(SchedStatBlockedData& e
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.delay = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseSchedStatBlocked(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedStatBlocked(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedStatBlockedData eventData {};
@@ -478,18 +372,8 @@ void ParseSchedStatBlocked(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_pid(eventData.pid);
     msg->set_delay(eventData.delay);
 }
-void ParseSchedStatBlockedEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedStatBlockedData eventData {};
-    ParseSchedStatBlockedData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_stat_blocked_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_delay(eventData.delay);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_stat_blocked, ParseSchedStatBlocked);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_stat_blocked, ParseSchedStatBlockedEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_stat_blocked, ParseSchedStatBlocked<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_stat_blocked, ParseSchedStatBlocked<ProtoEncoder::FtraceEvent>);
 
 struct SchedStatIowaitData {
     std::string comm {};
@@ -504,7 +388,8 @@ __attribute__((noinline)) void ParseSchedStatIowaitData(SchedStatIowaitData& eve
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.delay = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseSchedStatIowait(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedStatIowait(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedStatIowaitData eventData {};
@@ -514,18 +399,8 @@ void ParseSchedStatIowait(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_pid(eventData.pid);
     msg->set_delay(eventData.delay);
 }
-void ParseSchedStatIowaitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedStatIowaitData eventData {};
-    ParseSchedStatIowaitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_stat_iowait_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_delay(eventData.delay);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_stat_iowait, ParseSchedStatIowait);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_stat_iowait, ParseSchedStatIowaitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_stat_iowait, ParseSchedStatIowait<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_stat_iowait, ParseSchedStatIowait<ProtoEncoder::FtraceEvent>);
 
 struct SchedStatRuntimeData {
     std::string comm {};
@@ -542,7 +417,8 @@ __attribute__((noinline)) void ParseSchedStatRuntimeData(SchedStatRuntimeData& e
     eventData.runtime = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.vruntime = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseSchedStatRuntime(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedStatRuntime(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedStatRuntimeData eventData {};
@@ -553,19 +429,8 @@ void ParseSchedStatRuntime(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_runtime(eventData.runtime);
     msg->set_vruntime(eventData.vruntime);
 }
-void ParseSchedStatRuntimeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedStatRuntimeData eventData {};
-    ParseSchedStatRuntimeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_stat_runtime_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_runtime(eventData.runtime);
-    msg->set_vruntime(eventData.vruntime);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_stat_runtime, ParseSchedStatRuntime);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_stat_runtime, ParseSchedStatRuntimeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_stat_runtime, ParseSchedStatRuntime<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_stat_runtime, ParseSchedStatRuntime<ProtoEncoder::FtraceEvent>);
 
 struct SchedStatSleepData {
     std::string comm {};
@@ -580,7 +445,8 @@ __attribute__((noinline)) void ParseSchedStatSleepData(SchedStatSleepData& event
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.delay = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseSchedStatSleep(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedStatSleep(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedStatSleepData eventData {};
@@ -590,18 +456,8 @@ void ParseSchedStatSleep(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_pid(eventData.pid);
     msg->set_delay(eventData.delay);
 }
-void ParseSchedStatSleepEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedStatSleepData eventData {};
-    ParseSchedStatSleepData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_stat_sleep_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_delay(eventData.delay);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_stat_sleep, ParseSchedStatSleep);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_stat_sleep, ParseSchedStatSleepEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_stat_sleep, ParseSchedStatSleep<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_stat_sleep, ParseSchedStatSleep<ProtoEncoder::FtraceEvent>);
 
 struct SchedStatWaitData {
     std::string comm {};
@@ -616,7 +472,8 @@ __attribute__((noinline)) void ParseSchedStatWaitData(SchedStatWaitData& eventDa
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.delay = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseSchedStatWait(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedStatWait(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedStatWaitData eventData {};
@@ -626,18 +483,8 @@ void ParseSchedStatWait(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_pid(eventData.pid);
     msg->set_delay(eventData.delay);
 }
-void ParseSchedStatWaitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedStatWaitData eventData {};
-    ParseSchedStatWaitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_stat_wait_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_delay(eventData.delay);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_stat_wait, ParseSchedStatWait);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_stat_wait, ParseSchedStatWaitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_stat_wait, ParseSchedStatWait<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_stat_wait, ParseSchedStatWait<ProtoEncoder::FtraceEvent>);
 
 struct SchedStickNumaData {
     int32_t pid {};
@@ -660,7 +507,8 @@ __attribute__((noinline)) void ParseSchedStickNumaData(SchedStickNumaData& event
     eventData.dst_cpu = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.dst_nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedStickNuma(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedStickNuma(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedStickNumaData eventData {};
@@ -674,22 +522,8 @@ void ParseSchedStickNuma(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_dst_cpu(eventData.dst_cpu);
     msg->set_dst_nid(eventData.dst_nid);
 }
-void ParseSchedStickNumaEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedStickNumaData eventData {};
-    ParseSchedStickNumaData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_stick_numa_format();
-    msg->set_pid(eventData.pid);
-    msg->set_tgid(eventData.tgid);
-    msg->set_ngid(eventData.ngid);
-    msg->set_src_cpu(eventData.src_cpu);
-    msg->set_src_nid(eventData.src_nid);
-    msg->set_dst_cpu(eventData.dst_cpu);
-    msg->set_dst_nid(eventData.dst_nid);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_stick_numa, ParseSchedStickNuma);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_stick_numa, ParseSchedStickNumaEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_stick_numa, ParseSchedStickNuma<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_stick_numa, ParseSchedStickNuma<ProtoEncoder::FtraceEvent>);
 
 struct SchedSwapNumaData {
     int32_t src_pid {};
@@ -718,7 +552,8 @@ __attribute__((noinline)) void ParseSchedSwapNumaData(SchedSwapNumaData& eventDa
     eventData.dst_cpu = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.dst_nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedSwapNuma(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedSwapNuma(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedSwapNumaData eventData {};
@@ -735,25 +570,8 @@ void ParseSchedSwapNuma(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_dst_cpu(eventData.dst_cpu);
     msg->set_dst_nid(eventData.dst_nid);
 }
-void ParseSchedSwapNumaEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedSwapNumaData eventData {};
-    ParseSchedSwapNumaData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_swap_numa_format();
-    msg->set_src_pid(eventData.src_pid);
-    msg->set_src_tgid(eventData.src_tgid);
-    msg->set_src_ngid(eventData.src_ngid);
-    msg->set_src_cpu(eventData.src_cpu);
-    msg->set_src_nid(eventData.src_nid);
-    msg->set_dst_pid(eventData.dst_pid);
-    msg->set_dst_tgid(eventData.dst_tgid);
-    msg->set_dst_ngid(eventData.dst_ngid);
-    msg->set_dst_cpu(eventData.dst_cpu);
-    msg->set_dst_nid(eventData.dst_nid);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_swap_numa, ParseSchedSwapNuma);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_swap_numa, ParseSchedSwapNumaEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_swap_numa, ParseSchedSwapNuma<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_swap_numa, ParseSchedSwapNuma<ProtoEncoder::FtraceEvent>);
 
 struct SchedSwitchData {
     std::string prev_comm {};
@@ -779,7 +597,8 @@ __attribute__((noinline)) void ParseSchedSwitchData(SchedSwitchData& eventData, 
     int16_t nextPrio = FtraceFieldParser::ParseIntField<int16_t>(format.fields, i++, data, size);
     eventData.next_prio = static_cast<int32_t>(nextPrio);
 }
-void ParseSchedSwitch(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedSwitch(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedSwitchData eventData {};
@@ -793,22 +612,8 @@ void ParseSchedSwitch(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_next_pid(eventData.next_pid);
     msg->set_next_prio(eventData.next_prio);
 }
-void ParseSchedSwitchEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedSwitchData eventData {};
-    ParseSchedSwitchData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_switch_format();
-    msg->set_prev_comm(eventData.prev_comm);
-    msg->set_prev_pid(eventData.prev_pid);
-    msg->set_prev_prio(eventData.prev_prio);
-    msg->set_prev_state(eventData.prev_state);
-    msg->set_next_comm(eventData.next_comm);
-    msg->set_next_pid(eventData.next_pid);
-    msg->set_next_prio(eventData.next_prio);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_switch, ParseSchedSwitch);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_switch, ParseSchedSwitchEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_switch, ParseSchedSwitch<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_switch, ParseSchedSwitch<ProtoEncoder::FtraceEvent>);
 
 struct SchedWaitTaskData {
     std::string comm {};
@@ -823,7 +628,8 @@ __attribute__((noinline)) void ParseSchedWaitTaskData(SchedWaitTaskData& eventDa
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.prio = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedWaitTask(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedWaitTask(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedWaitTaskData eventData {};
@@ -833,18 +639,8 @@ void ParseSchedWaitTask(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_pid(eventData.pid);
     msg->set_prio(eventData.prio);
 }
-void ParseSchedWaitTaskEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedWaitTaskData eventData {};
-    ParseSchedWaitTaskData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_wait_task_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_prio(eventData.prio);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_wait_task, ParseSchedWaitTask);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_wait_task, ParseSchedWaitTaskEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_wait_task, ParseSchedWaitTask<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_wait_task, ParseSchedWaitTask<ProtoEncoder::FtraceEvent>);
 
 struct SchedWakeIdleWithoutIpiData {
     int32_t cpu {};
@@ -855,7 +651,8 @@ __attribute__((noinline)) void ParseSchedWakeIdleWithoutIpiData(SchedWakeIdleWit
     int i = 0;
     eventData.cpu = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedWakeIdleWithoutIpi(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedWakeIdleWithoutIpi(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedWakeIdleWithoutIpiData eventData {};
@@ -863,16 +660,8 @@ void ParseSchedWakeIdleWithoutIpi(FtraceEvent& ftraceEvent, uint8_t data[], size
     auto msg = ftraceEvent.mutable_sched_wake_idle_without_ipi_format();
     msg->set_cpu(eventData.cpu);
 }
-void ParseSchedWakeIdleWithoutIpiEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedWakeIdleWithoutIpiData eventData {};
-    ParseSchedWakeIdleWithoutIpiData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_wake_idle_without_ipi_format();
-    msg->set_cpu(eventData.cpu);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_wake_idle_without_ipi, ParseSchedWakeIdleWithoutIpi);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_wake_idle_without_ipi, ParseSchedWakeIdleWithoutIpiEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_wake_idle_without_ipi, ParseSchedWakeIdleWithoutIpi<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_wake_idle_without_ipi, ParseSchedWakeIdleWithoutIpi<ProtoEncoder::FtraceEvent>);
 
 struct SchedWakeupData {
     std::string comm {};
@@ -889,7 +678,8 @@ __attribute__((noinline)) void ParseSchedWakeupData(SchedWakeupData& eventData, 
     eventData.prio = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.target_cpu = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedWakeup(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedWakeup(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedWakeupData eventData {};
@@ -900,19 +690,8 @@ void ParseSchedWakeup(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_prio(eventData.prio);
     msg->set_target_cpu(eventData.target_cpu);
 }
-void ParseSchedWakeupEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedWakeupData eventData {};
-    ParseSchedWakeupData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_wakeup_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_prio(eventData.prio);
-    msg->set_target_cpu(eventData.target_cpu);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_wakeup, ParseSchedWakeup);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_wakeup, ParseSchedWakeupEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_wakeup, ParseSchedWakeup<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_wakeup, ParseSchedWakeup<ProtoEncoder::FtraceEvent>);
 
 struct SchedWakeupNewData {
     std::string comm {};
@@ -931,7 +710,8 @@ __attribute__((noinline)) void ParseSchedWakeupNewData(SchedWakeupNewData& event
     int8_t targetCpu = FtraceFieldParser::ParseIntField<int8_t>(format.fields, i++, data, size);
     eventData.target_cpu = static_cast<int32_t>(targetCpu);
 }
-void ParseSchedWakeupNew(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedWakeupNew(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedWakeupNewData eventData {};
@@ -942,19 +722,8 @@ void ParseSchedWakeupNew(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_prio(eventData.prio);
     msg->set_target_cpu(eventData.target_cpu);
 }
-void ParseSchedWakeupNewEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedWakeupNewData eventData {};
-    ParseSchedWakeupNewData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_wakeup_new_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_prio(eventData.prio);
-    msg->set_target_cpu(eventData.target_cpu);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_wakeup_new, ParseSchedWakeupNew);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_wakeup_new, ParseSchedWakeupNewEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_wakeup_new, ParseSchedWakeupNew<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_wakeup_new, ParseSchedWakeupNew<ProtoEncoder::FtraceEvent>);
 
 struct SchedWakingData {
     std::string comm {};
@@ -971,7 +740,8 @@ __attribute__((noinline)) void ParseSchedWakingData(SchedWakingData& eventData, 
     eventData.prio = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.target_cpu = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSchedWaking(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSchedWaking(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SchedWakingData eventData {};
@@ -982,18 +752,7 @@ void ParseSchedWaking(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_prio(eventData.prio);
     msg->set_target_cpu(eventData.target_cpu);
 }
-void ParseSchedWakingEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SchedWakingData eventData {};
-    ParseSchedWakingData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sched_waking_format();
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_prio(eventData.prio);
-    msg->set_target_cpu(eventData.target_cpu);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_waking, ParseSchedWaking);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_waking, ParseSchedWakingEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_waking, ParseSchedWaking<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_waking, ParseSchedWaking<ProtoEncoder::FtraceEvent>);
 } // namespace
 FTRACE_NS_END

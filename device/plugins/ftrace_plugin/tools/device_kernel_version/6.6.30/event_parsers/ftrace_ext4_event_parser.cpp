@@ -33,7 +33,8 @@ __attribute__((noinline)) void ParseExt4AllocDaBlocksData(Ext4AllocDaBlocksData&
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.data_blocks = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4AllocDaBlocks(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4AllocDaBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4AllocDaBlocksData eventData {};
@@ -43,18 +44,8 @@ void ParseExt4AllocDaBlocks(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_ino(eventData.ino);
     msg->set_data_blocks(eventData.data_blocks);
 }
-void ParseExt4AllocDaBlocksEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4AllocDaBlocksData eventData {};
-    ParseExt4AllocDaBlocksData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_alloc_da_blocks_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_data_blocks(eventData.data_blocks);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_alloc_da_blocks, ParseExt4AllocDaBlocks);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_alloc_da_blocks, ParseExt4AllocDaBlocksEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_alloc_da_blocks, ParseExt4AllocDaBlocks<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_alloc_da_blocks, ParseExt4AllocDaBlocks<ProtoEncoder::FtraceEvent>);
 
 struct Ext4AllocateBlocksData {
     uint64_t dev {};
@@ -85,7 +76,8 @@ __attribute__((noinline)) void ParseExt4AllocateBlocksData(Ext4AllocateBlocksDat
     eventData.pright = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4AllocateBlocks(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4AllocateBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4AllocateBlocksData eventData {};
@@ -103,26 +95,8 @@ void ParseExt4AllocateBlocks(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_pright(eventData.pright);
     msg->set_flags(eventData.flags);
 }
-void ParseExt4AllocateBlocksEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4AllocateBlocksData eventData {};
-    ParseExt4AllocateBlocksData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_allocate_blocks_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_block(eventData.block);
-    msg->set_len(eventData.len);
-    msg->set_logical(eventData.logical);
-    msg->set_lleft(eventData.lleft);
-    msg->set_lright(eventData.lright);
-    msg->set_goal(eventData.goal);
-    msg->set_pleft(eventData.pleft);
-    msg->set_pright(eventData.pright);
-    msg->set_flags(eventData.flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_allocate_blocks, ParseExt4AllocateBlocks);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_allocate_blocks, ParseExt4AllocateBlocksEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_allocate_blocks, ParseExt4AllocateBlocks<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_allocate_blocks, ParseExt4AllocateBlocks<ProtoEncoder::FtraceEvent>);
 
 struct Ext4AllocateInodeData {
     uint64_t dev {};
@@ -139,7 +113,8 @@ __attribute__((noinline)) void ParseExt4AllocateInodeData(Ext4AllocateInodeData&
     eventData.dir = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4AllocateInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4AllocateInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4AllocateInodeData eventData {};
@@ -150,19 +125,8 @@ void ParseExt4AllocateInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_dir(eventData.dir);
     msg->set_mode(eventData.mode);
 }
-void ParseExt4AllocateInodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4AllocateInodeData eventData {};
-    ParseExt4AllocateInodeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_allocate_inode_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_dir(eventData.dir);
-    msg->set_mode(eventData.mode);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_allocate_inode, ParseExt4AllocateInode);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_allocate_inode, ParseExt4AllocateInodeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_allocate_inode, ParseExt4AllocateInode<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_allocate_inode, ParseExt4AllocateInode<ProtoEncoder::FtraceEvent>);
 
 struct Ext4BeginOrderedTruncateData {
     uint64_t dev {};
@@ -177,7 +141,8 @@ __attribute__((noinline)) void ParseExt4BeginOrderedTruncateData(Ext4BeginOrdere
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.new_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseExt4BeginOrderedTruncate(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4BeginOrderedTruncate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4BeginOrderedTruncateData eventData {};
@@ -187,18 +152,8 @@ void ParseExt4BeginOrderedTruncate(FtraceEvent& ftraceEvent, uint8_t data[], siz
     msg->set_ino(eventData.ino);
     msg->set_new_size(eventData.new_size);
 }
-void ParseExt4BeginOrderedTruncateEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4BeginOrderedTruncateData eventData {};
-    ParseExt4BeginOrderedTruncateData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_begin_ordered_truncate_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_new_size(eventData.new_size);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_begin_ordered_truncate, ParseExt4BeginOrderedTruncate);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_begin_ordered_truncate, ParseExt4BeginOrderedTruncateEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_begin_ordered_truncate, ParseExt4BeginOrderedTruncate<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_begin_ordered_truncate, ParseExt4BeginOrderedTruncate<ProtoEncoder::FtraceEvent>);
 
 struct Ext4CollapseRangeData {
     uint64_t dev {};
@@ -215,7 +170,8 @@ __attribute__((noinline)) void ParseExt4CollapseRangeData(Ext4CollapseRangeData&
     eventData.offset = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseExt4CollapseRange(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4CollapseRange(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4CollapseRangeData eventData {};
@@ -226,19 +182,8 @@ void ParseExt4CollapseRange(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_offset(eventData.offset);
     msg->set_len(eventData.len);
 }
-void ParseExt4CollapseRangeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4CollapseRangeData eventData {};
-    ParseExt4CollapseRangeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_collapse_range_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_offset(eventData.offset);
-    msg->set_len(eventData.len);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_collapse_range, ParseExt4CollapseRange);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_collapse_range, ParseExt4CollapseRangeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_collapse_range, ParseExt4CollapseRange<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_collapse_range, ParseExt4CollapseRange<ProtoEncoder::FtraceEvent>);
 
 struct Ext4DaReleaseSpaceData {
     uint64_t dev {};
@@ -259,7 +204,8 @@ __attribute__((noinline)) void ParseExt4DaReleaseSpaceData(Ext4DaReleaseSpaceDat
     eventData.reserved_data_blocks = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4DaReleaseSpace(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4DaReleaseSpace(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4DaReleaseSpaceData eventData {};
@@ -272,21 +218,8 @@ void ParseExt4DaReleaseSpace(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_reserved_data_blocks(eventData.reserved_data_blocks);
     msg->set_mode(eventData.mode);
 }
-void ParseExt4DaReleaseSpaceEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4DaReleaseSpaceData eventData {};
-    ParseExt4DaReleaseSpaceData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_da_release_space_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_i_blocks(eventData.i_blocks);
-    msg->set_freed_blocks(eventData.freed_blocks);
-    msg->set_reserved_data_blocks(eventData.reserved_data_blocks);
-    msg->set_mode(eventData.mode);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_da_release_space, ParseExt4DaReleaseSpace);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_da_release_space, ParseExt4DaReleaseSpaceEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_da_release_space, ParseExt4DaReleaseSpace<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_da_release_space, ParseExt4DaReleaseSpace<ProtoEncoder::FtraceEvent>);
 
 struct Ext4DaReserveSpaceData {
     uint64_t dev {};
@@ -305,7 +238,8 @@ __attribute__((noinline)) void ParseExt4DaReserveSpaceData(Ext4DaReserveSpaceDat
     eventData.reserved_data_blocks = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4DaReserveSpace(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4DaReserveSpace(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4DaReserveSpaceData eventData {};
@@ -317,20 +251,8 @@ void ParseExt4DaReserveSpace(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_reserved_data_blocks(eventData.reserved_data_blocks);
     msg->set_mode(eventData.mode);
 }
-void ParseExt4DaReserveSpaceEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4DaReserveSpaceData eventData {};
-    ParseExt4DaReserveSpaceData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_da_reserve_space_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_i_blocks(eventData.i_blocks);
-    msg->set_reserved_data_blocks(eventData.reserved_data_blocks);
-    msg->set_mode(eventData.mode);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_da_reserve_space, ParseExt4DaReserveSpace);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_da_reserve_space, ParseExt4DaReserveSpaceEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_da_reserve_space, ParseExt4DaReserveSpace<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_da_reserve_space, ParseExt4DaReserveSpace<ProtoEncoder::FtraceEvent>);
 
 struct Ext4DaUpdateReserveSpaceData {
     uint64_t dev {};
@@ -353,7 +275,8 @@ __attribute__((noinline)) void ParseExt4DaUpdateReserveSpaceData(Ext4DaUpdateRes
     eventData.quota_claim = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4DaUpdateReserveSpace(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4DaUpdateReserveSpace(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4DaUpdateReserveSpaceData eventData {};
@@ -367,22 +290,8 @@ void ParseExt4DaUpdateReserveSpace(FtraceEvent& ftraceEvent, uint8_t data[], siz
     msg->set_quota_claim(eventData.quota_claim);
     msg->set_mode(eventData.mode);
 }
-void ParseExt4DaUpdateReserveSpaceEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4DaUpdateReserveSpaceData eventData {};
-    ParseExt4DaUpdateReserveSpaceData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_da_update_reserve_space_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_i_blocks(eventData.i_blocks);
-    msg->set_used_blocks(eventData.used_blocks);
-    msg->set_reserved_data_blocks(eventData.reserved_data_blocks);
-    msg->set_quota_claim(eventData.quota_claim);
-    msg->set_mode(eventData.mode);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_da_update_reserve_space, ParseExt4DaUpdateReserveSpace);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_da_update_reserve_space, ParseExt4DaUpdateReserveSpaceEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_da_update_reserve_space, ParseExt4DaUpdateReserveSpace<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_da_update_reserve_space, ParseExt4DaUpdateReserveSpace<ProtoEncoder::FtraceEvent>);
 
 struct Ext4DaWriteBeginData {
     uint64_t dev {};
@@ -399,7 +308,8 @@ __attribute__((noinline)) void ParseExt4DaWriteBeginData(Ext4DaWriteBeginData& e
     eventData.pos = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4DaWriteBegin(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4DaWriteBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4DaWriteBeginData eventData {};
@@ -410,19 +320,8 @@ void ParseExt4DaWriteBegin(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_pos(eventData.pos);
     msg->set_len(eventData.len);
 }
-void ParseExt4DaWriteBeginEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4DaWriteBeginData eventData {};
-    ParseExt4DaWriteBeginData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_da_write_begin_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_pos(eventData.pos);
-    msg->set_len(eventData.len);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_da_write_begin, ParseExt4DaWriteBegin);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_da_write_begin, ParseExt4DaWriteBeginEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_da_write_begin, ParseExt4DaWriteBegin<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_da_write_begin, ParseExt4DaWriteBegin<ProtoEncoder::FtraceEvent>);
 
 struct Ext4DaWriteEndData {
     uint64_t dev {};
@@ -441,7 +340,8 @@ __attribute__((noinline)) void ParseExt4DaWriteEndData(Ext4DaWriteEndData& event
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.copied = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4DaWriteEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4DaWriteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4DaWriteEndData eventData {};
@@ -453,20 +353,8 @@ void ParseExt4DaWriteEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_len(eventData.len);
     msg->set_copied(eventData.copied);
 }
-void ParseExt4DaWriteEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4DaWriteEndData eventData {};
-    ParseExt4DaWriteEndData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_da_write_end_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_pos(eventData.pos);
-    msg->set_len(eventData.len);
-    msg->set_copied(eventData.copied);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_da_write_end, ParseExt4DaWriteEnd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_da_write_end, ParseExt4DaWriteEndEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_da_write_end, ParseExt4DaWriteEnd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_da_write_end, ParseExt4DaWriteEnd<ProtoEncoder::FtraceEvent>);
 
 struct Ext4DaWritePagesData {
     uint64_t dev {};
@@ -485,7 +373,8 @@ __attribute__((noinline)) void ParseExt4DaWritePagesData(Ext4DaWritePagesData& e
     eventData.nr_to_write = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sync_mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4DaWritePages(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4DaWritePages(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4DaWritePagesData eventData {};
@@ -497,20 +386,8 @@ void ParseExt4DaWritePages(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_nr_to_write(eventData.nr_to_write);
     msg->set_sync_mode(eventData.sync_mode);
 }
-void ParseExt4DaWritePagesEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4DaWritePagesData eventData {};
-    ParseExt4DaWritePagesData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_da_write_pages_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_first_page(eventData.first_page);
-    msg->set_nr_to_write(eventData.nr_to_write);
-    msg->set_sync_mode(eventData.sync_mode);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_da_write_pages, ParseExt4DaWritePages);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_da_write_pages, ParseExt4DaWritePagesEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_da_write_pages, ParseExt4DaWritePages<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_da_write_pages, ParseExt4DaWritePages<ProtoEncoder::FtraceEvent>);
 
 struct Ext4DaWritePagesExtentData {
     uint64_t dev {};
@@ -529,7 +406,8 @@ __attribute__((noinline)) void ParseExt4DaWritePagesExtentData(Ext4DaWritePagesE
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4DaWritePagesExtent(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4DaWritePagesExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4DaWritePagesExtentData eventData {};
@@ -541,20 +419,8 @@ void ParseExt4DaWritePagesExtent(FtraceEvent& ftraceEvent, uint8_t data[], size_
     msg->set_len(eventData.len);
     msg->set_flags(eventData.flags);
 }
-void ParseExt4DaWritePagesExtentEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4DaWritePagesExtentData eventData {};
-    ParseExt4DaWritePagesExtentData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_da_write_pages_extent_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_lblk(eventData.lblk);
-    msg->set_len(eventData.len);
-    msg->set_flags(eventData.flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_da_write_pages_extent, ParseExt4DaWritePagesExtent);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_da_write_pages_extent, ParseExt4DaWritePagesExtentEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_da_write_pages_extent, ParseExt4DaWritePagesExtent<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_da_write_pages_extent, ParseExt4DaWritePagesExtent<ProtoEncoder::FtraceEvent>);
 
 struct Ext4DiscardBlocksData {
     uint64_t dev {};
@@ -569,7 +435,8 @@ __attribute__((noinline)) void ParseExt4DiscardBlocksData(Ext4DiscardBlocksData&
     eventData.blk = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.count = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseExt4DiscardBlocks(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4DiscardBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4DiscardBlocksData eventData {};
@@ -579,18 +446,8 @@ void ParseExt4DiscardBlocks(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_blk(eventData.blk);
     msg->set_count(eventData.count);
 }
-void ParseExt4DiscardBlocksEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4DiscardBlocksData eventData {};
-    ParseExt4DiscardBlocksData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_discard_blocks_format();
-    msg->set_dev(eventData.dev);
-    msg->set_blk(eventData.blk);
-    msg->set_count(eventData.count);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_discard_blocks, ParseExt4DiscardBlocks);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_discard_blocks, ParseExt4DiscardBlocksEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_discard_blocks, ParseExt4DiscardBlocks<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_discard_blocks, ParseExt4DiscardBlocks<ProtoEncoder::FtraceEvent>);
 
 struct Ext4DiscardPreallocationsData {
     uint64_t dev {};
@@ -607,7 +464,8 @@ __attribute__((noinline)) void ParseExt4DiscardPreallocationsData(Ext4DiscardPre
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.needed = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4DiscardPreallocations(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4DiscardPreallocations(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4DiscardPreallocationsData eventData {};
@@ -618,19 +476,8 @@ void ParseExt4DiscardPreallocations(FtraceEvent& ftraceEvent, uint8_t data[], si
     msg->set_len(eventData.len);
     msg->set_needed(eventData.needed);
 }
-void ParseExt4DiscardPreallocationsEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4DiscardPreallocationsData eventData {};
-    ParseExt4DiscardPreallocationsData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_discard_preallocations_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_len(eventData.len);
-    msg->set_needed(eventData.needed);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_discard_preallocations, ParseExt4DiscardPreallocations);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_discard_preallocations, ParseExt4DiscardPreallocationsEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_discard_preallocations, ParseExt4DiscardPreallocations<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_discard_preallocations, ParseExt4DiscardPreallocations<ProtoEncoder::FtraceEvent>);
 
 struct Ext4DropInodeData {
     uint64_t dev {};
@@ -645,7 +492,8 @@ __attribute__((noinline)) void ParseExt4DropInodeData(Ext4DropInodeData& eventDa
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.drop = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4DropInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4DropInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4DropInodeData eventData {};
@@ -655,18 +503,8 @@ void ParseExt4DropInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_ino(eventData.ino);
     msg->set_drop(eventData.drop);
 }
-void ParseExt4DropInodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4DropInodeData eventData {};
-    ParseExt4DropInodeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_drop_inode_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_drop(eventData.drop);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_drop_inode, ParseExt4DropInode);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_drop_inode, ParseExt4DropInodeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_drop_inode, ParseExt4DropInode<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_drop_inode, ParseExt4DropInode<ProtoEncoder::FtraceEvent>);
 
 struct Ext4EsCacheExtentData {
     uint64_t dev {};
@@ -687,7 +525,8 @@ __attribute__((noinline)) void ParseExt4EsCacheExtentData(Ext4EsCacheExtentData&
     eventData.pblk = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.status = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4EsCacheExtent(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4EsCacheExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4EsCacheExtentData eventData {};
@@ -700,21 +539,8 @@ void ParseExt4EsCacheExtent(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_pblk(eventData.pblk);
     msg->set_status(eventData.status);
 }
-void ParseExt4EsCacheExtentEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4EsCacheExtentData eventData {};
-    ParseExt4EsCacheExtentData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_es_cache_extent_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_lblk(eventData.lblk);
-    msg->set_len(eventData.len);
-    msg->set_pblk(eventData.pblk);
-    msg->set_status(eventData.status);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_cache_extent, ParseExt4EsCacheExtent);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_cache_extent, ParseExt4EsCacheExtentEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_cache_extent, ParseExt4EsCacheExtent<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_cache_extent, ParseExt4EsCacheExtent<ProtoEncoder::FtraceEvent>);
 
 struct Ext4EsInsertExtentData {
     uint64_t dev {};
@@ -735,7 +561,8 @@ __attribute__((noinline)) void ParseExt4EsInsertExtentData(Ext4EsInsertExtentDat
     eventData.pblk = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.status = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4EsInsertExtent(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4EsInsertExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4EsInsertExtentData eventData {};
@@ -748,21 +575,8 @@ void ParseExt4EsInsertExtent(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_pblk(eventData.pblk);
     msg->set_status(eventData.status);
 }
-void ParseExt4EsInsertExtentEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4EsInsertExtentData eventData {};
-    ParseExt4EsInsertExtentData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_es_insert_extent_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_lblk(eventData.lblk);
-    msg->set_len(eventData.len);
-    msg->set_pblk(eventData.pblk);
-    msg->set_status(eventData.status);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_insert_extent, ParseExt4EsInsertExtent);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_insert_extent, ParseExt4EsInsertExtentEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_insert_extent, ParseExt4EsInsertExtent<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_insert_extent, ParseExt4EsInsertExtent<ProtoEncoder::FtraceEvent>);
 
 struct Ext4EsLookupExtentEnterData {
     uint64_t dev {};
@@ -777,7 +591,8 @@ __attribute__((noinline)) void ParseExt4EsLookupExtentEnterData(Ext4EsLookupExte
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.lblk = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4EsLookupExtentEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4EsLookupExtentEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4EsLookupExtentEnterData eventData {};
@@ -787,18 +602,8 @@ void ParseExt4EsLookupExtentEnter(FtraceEvent& ftraceEvent, uint8_t data[], size
     msg->set_ino(eventData.ino);
     msg->set_lblk(eventData.lblk);
 }
-void ParseExt4EsLookupExtentEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4EsLookupExtentEnterData eventData {};
-    ParseExt4EsLookupExtentEnterData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_es_lookup_extent_enter_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_lblk(eventData.lblk);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_lookup_extent_enter, ParseExt4EsLookupExtentEnter);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_lookup_extent_enter, ParseExt4EsLookupExtentEnterEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_lookup_extent_enter, ParseExt4EsLookupExtentEnter<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_lookup_extent_enter, ParseExt4EsLookupExtentEnter<ProtoEncoder::FtraceEvent>);
 
 struct Ext4EsLookupExtentExitData {
     uint64_t dev {};
@@ -821,7 +626,8 @@ __attribute__((noinline)) void ParseExt4EsLookupExtentExitData(Ext4EsLookupExten
     eventData.status = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.found = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4EsLookupExtentExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4EsLookupExtentExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4EsLookupExtentExitData eventData {};
@@ -835,22 +641,8 @@ void ParseExt4EsLookupExtentExit(FtraceEvent& ftraceEvent, uint8_t data[], size_
     msg->set_status(eventData.status);
     msg->set_found(eventData.found);
 }
-void ParseExt4EsLookupExtentExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4EsLookupExtentExitData eventData {};
-    ParseExt4EsLookupExtentExitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_es_lookup_extent_exit_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_lblk(eventData.lblk);
-    msg->set_len(eventData.len);
-    msg->set_pblk(eventData.pblk);
-    msg->set_status(eventData.status);
-    msg->set_found(eventData.found);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_lookup_extent_exit, ParseExt4EsLookupExtentExit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_lookup_extent_exit, ParseExt4EsLookupExtentExitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_lookup_extent_exit, ParseExt4EsLookupExtentExit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_lookup_extent_exit, ParseExt4EsLookupExtentExit<ProtoEncoder::FtraceEvent>);
 
 struct Ext4EsRemoveExtentData {
     uint64_t dev {};
@@ -867,7 +659,8 @@ __attribute__((noinline)) void ParseExt4EsRemoveExtentData(Ext4EsRemoveExtentDat
     eventData.lblk = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseExt4EsRemoveExtent(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4EsRemoveExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4EsRemoveExtentData eventData {};
@@ -878,19 +671,8 @@ void ParseExt4EsRemoveExtent(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_lblk(eventData.lblk);
     msg->set_len(eventData.len);
 }
-void ParseExt4EsRemoveExtentEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4EsRemoveExtentData eventData {};
-    ParseExt4EsRemoveExtentData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_es_remove_extent_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_lblk(eventData.lblk);
-    msg->set_len(eventData.len);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_remove_extent, ParseExt4EsRemoveExtent);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_remove_extent, ParseExt4EsRemoveExtentEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_remove_extent, ParseExt4EsRemoveExtent<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_remove_extent, ParseExt4EsRemoveExtent<ProtoEncoder::FtraceEvent>);
 
 struct Ext4EsShrinkData {
     uint64_t dev {};
@@ -909,7 +691,8 @@ __attribute__((noinline)) void ParseExt4EsShrinkData(Ext4EsShrinkData& eventData
     eventData.nr_skipped = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.retried = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4EsShrink(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4EsShrink(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4EsShrinkData eventData {};
@@ -921,20 +704,8 @@ void ParseExt4EsShrink(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_nr_skipped(eventData.nr_skipped);
     msg->set_retried(eventData.retried);
 }
-void ParseExt4EsShrinkEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4EsShrinkData eventData {};
-    ParseExt4EsShrinkData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_es_shrink_format();
-    msg->set_dev(eventData.dev);
-    msg->set_nr_shrunk(eventData.nr_shrunk);
-    msg->set_scan_time(eventData.scan_time);
-    msg->set_nr_skipped(eventData.nr_skipped);
-    msg->set_retried(eventData.retried);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_shrink, ParseExt4EsShrink);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_shrink, ParseExt4EsShrinkEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_shrink, ParseExt4EsShrink<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_shrink, ParseExt4EsShrink<ProtoEncoder::FtraceEvent>);
 
 struct Ext4EsShrinkCountData {
     uint64_t dev {};
@@ -949,7 +720,8 @@ __attribute__((noinline)) void ParseExt4EsShrinkCountData(Ext4EsShrinkCountData&
     eventData.nr_to_scan = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.cache_cnt = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4EsShrinkCount(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4EsShrinkCount(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4EsShrinkCountData eventData {};
@@ -959,18 +731,8 @@ void ParseExt4EsShrinkCount(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_nr_to_scan(eventData.nr_to_scan);
     msg->set_cache_cnt(eventData.cache_cnt);
 }
-void ParseExt4EsShrinkCountEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4EsShrinkCountData eventData {};
-    ParseExt4EsShrinkCountData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_es_shrink_count_format();
-    msg->set_dev(eventData.dev);
-    msg->set_nr_to_scan(eventData.nr_to_scan);
-    msg->set_cache_cnt(eventData.cache_cnt);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_shrink_count, ParseExt4EsShrinkCount);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_shrink_count, ParseExt4EsShrinkCountEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_shrink_count, ParseExt4EsShrinkCount<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_shrink_count, ParseExt4EsShrinkCount<ProtoEncoder::FtraceEvent>);
 
 struct Ext4EsShrinkScanEnterData {
     uint64_t dev {};
@@ -985,7 +747,8 @@ __attribute__((noinline)) void ParseExt4EsShrinkScanEnterData(Ext4EsShrinkScanEn
     eventData.nr_to_scan = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.cache_cnt = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4EsShrinkScanEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4EsShrinkScanEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4EsShrinkScanEnterData eventData {};
@@ -995,18 +758,8 @@ void ParseExt4EsShrinkScanEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t
     msg->set_nr_to_scan(eventData.nr_to_scan);
     msg->set_cache_cnt(eventData.cache_cnt);
 }
-void ParseExt4EsShrinkScanEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4EsShrinkScanEnterData eventData {};
-    ParseExt4EsShrinkScanEnterData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_es_shrink_scan_enter_format();
-    msg->set_dev(eventData.dev);
-    msg->set_nr_to_scan(eventData.nr_to_scan);
-    msg->set_cache_cnt(eventData.cache_cnt);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_shrink_scan_enter, ParseExt4EsShrinkScanEnter);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_shrink_scan_enter, ParseExt4EsShrinkScanEnterEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_shrink_scan_enter, ParseExt4EsShrinkScanEnter<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_shrink_scan_enter, ParseExt4EsShrinkScanEnter<ProtoEncoder::FtraceEvent>);
 
 struct Ext4EsShrinkScanExitData {
     uint64_t dev {};
@@ -1021,7 +774,8 @@ __attribute__((noinline)) void ParseExt4EsShrinkScanExitData(Ext4EsShrinkScanExi
     eventData.nr_shrunk = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.cache_cnt = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4EsShrinkScanExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4EsShrinkScanExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4EsShrinkScanExitData eventData {};
@@ -1031,18 +785,8 @@ void ParseExt4EsShrinkScanExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_nr_shrunk(eventData.nr_shrunk);
     msg->set_cache_cnt(eventData.cache_cnt);
 }
-void ParseExt4EsShrinkScanExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4EsShrinkScanExitData eventData {};
-    ParseExt4EsShrinkScanExitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_es_shrink_scan_exit_format();
-    msg->set_dev(eventData.dev);
-    msg->set_nr_shrunk(eventData.nr_shrunk);
-    msg->set_cache_cnt(eventData.cache_cnt);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_shrink_scan_exit, ParseExt4EsShrinkScanExit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_shrink_scan_exit, ParseExt4EsShrinkScanExitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_es_shrink_scan_exit, ParseExt4EsShrinkScanExit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_es_shrink_scan_exit, ParseExt4EsShrinkScanExit<ProtoEncoder::FtraceEvent>);
 
 struct Ext4EvictInodeData {
     uint64_t dev {};
@@ -1057,7 +801,8 @@ __attribute__((noinline)) void ParseExt4EvictInodeData(Ext4EvictInodeData& event
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nlink = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4EvictInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4EvictInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4EvictInodeData eventData {};
@@ -1067,18 +812,8 @@ void ParseExt4EvictInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_ino(eventData.ino);
     msg->set_nlink(eventData.nlink);
 }
-void ParseExt4EvictInodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4EvictInodeData eventData {};
-    ParseExt4EvictInodeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_evict_inode_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_nlink(eventData.nlink);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_evict_inode, ParseExt4EvictInode);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_evict_inode, ParseExt4EvictInodeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_evict_inode, ParseExt4EvictInode<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_evict_inode, ParseExt4EvictInode<ProtoEncoder::FtraceEvent>);
 
 struct Ext4ExtConvertToInitializedEnterData {
     uint64_t dev {};
@@ -1101,7 +836,8 @@ __attribute__((noinline)) void ParseExt4ExtConvertToInitializedEnterData(Ext4Ext
     eventData.u_len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.u_pblk = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseExt4ExtConvertToInitializedEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4ExtConvertToInitializedEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4ExtConvertToInitializedEnterData eventData {};
@@ -1115,22 +851,8 @@ void ParseExt4ExtConvertToInitializedEnter(FtraceEvent& ftraceEvent, uint8_t dat
     msg->set_u_len(eventData.u_len);
     msg->set_u_pblk(eventData.u_pblk);
 }
-void ParseExt4ExtConvertToInitializedEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4ExtConvertToInitializedEnterData eventData {};
-    ParseExt4ExtConvertToInitializedEnterData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_ext_convert_to_initialized_enter_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_m_lblk(eventData.m_lblk);
-    msg->set_m_len(eventData.m_len);
-    msg->set_u_lblk(eventData.u_lblk);
-    msg->set_u_len(eventData.u_len);
-    msg->set_u_pblk(eventData.u_pblk);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_convert_to_initialized_enter, ParseExt4ExtConvertToInitializedEnter);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_convert_to_initialized_enter, ParseExt4ExtConvertToInitializedEnterEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_convert_to_initialized_enter, ParseExt4ExtConvertToInitializedEnter<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_convert_to_initialized_enter, ParseExt4ExtConvertToInitializedEnter<ProtoEncoder::FtraceEvent>);
 
 struct Ext4ExtConvertToInitializedFastpathData {
     uint64_t dev {};
@@ -1159,7 +881,8 @@ __attribute__((noinline)) void ParseExt4ExtConvertToInitializedFastpathData(Ext4
     eventData.i_len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.i_pblk = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseExt4ExtConvertToInitializedFastpath(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4ExtConvertToInitializedFastpath(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4ExtConvertToInitializedFastpathData eventData {};
@@ -1176,25 +899,8 @@ void ParseExt4ExtConvertToInitializedFastpath(FtraceEvent& ftraceEvent, uint8_t 
     msg->set_i_len(eventData.i_len);
     msg->set_i_pblk(eventData.i_pblk);
 }
-void ParseExt4ExtConvertToInitializedFastpathEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4ExtConvertToInitializedFastpathData eventData {};
-    ParseExt4ExtConvertToInitializedFastpathData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_ext_convert_to_initialized_fastpath_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_m_lblk(eventData.m_lblk);
-    msg->set_m_len(eventData.m_len);
-    msg->set_u_lblk(eventData.u_lblk);
-    msg->set_u_len(eventData.u_len);
-    msg->set_u_pblk(eventData.u_pblk);
-    msg->set_i_lblk(eventData.i_lblk);
-    msg->set_i_len(eventData.i_len);
-    msg->set_i_pblk(eventData.i_pblk);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_convert_to_initialized_fastpath, ParseExt4ExtConvertToInitializedFastpath);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_convert_to_initialized_fastpath, ParseExt4ExtConvertToInitializedFastpathEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_convert_to_initialized_fastpath, ParseExt4ExtConvertToInitializedFastpath<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_convert_to_initialized_fastpath, ParseExt4ExtConvertToInitializedFastpath<ProtoEncoder::FtraceEvent>);
 
 struct Ext4ExtHandleUnwrittenExtentsData {
     uint64_t dev {};
@@ -1219,7 +925,8 @@ __attribute__((noinline)) void ParseExt4ExtHandleUnwrittenExtentsData(Ext4ExtHan
     eventData.allocated = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.newblk = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseExt4ExtHandleUnwrittenExtents(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4ExtHandleUnwrittenExtents(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4ExtHandleUnwrittenExtentsData eventData {};
@@ -1234,23 +941,8 @@ void ParseExt4ExtHandleUnwrittenExtents(FtraceEvent& ftraceEvent, uint8_t data[]
     msg->set_allocated(eventData.allocated);
     msg->set_newblk(eventData.newblk);
 }
-void ParseExt4ExtHandleUnwrittenExtentsEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4ExtHandleUnwrittenExtentsData eventData {};
-    ParseExt4ExtHandleUnwrittenExtentsData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_ext_handle_unwritten_extents_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_flags(eventData.flags);
-    msg->set_lblk(eventData.lblk);
-    msg->set_pblk(eventData.pblk);
-    msg->set_len(eventData.len);
-    msg->set_allocated(eventData.allocated);
-    msg->set_newblk(eventData.newblk);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_handle_unwritten_extents, ParseExt4ExtHandleUnwrittenExtents);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_handle_unwritten_extents, ParseExt4ExtHandleUnwrittenExtentsEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_handle_unwritten_extents, ParseExt4ExtHandleUnwrittenExtents<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_handle_unwritten_extents, ParseExt4ExtHandleUnwrittenExtents<ProtoEncoder::FtraceEvent>);
 
 struct Ext4ExtLoadExtentData {
     uint64_t dev {};
@@ -1267,7 +959,8 @@ __attribute__((noinline)) void ParseExt4ExtLoadExtentData(Ext4ExtLoadExtentData&
     eventData.pblk = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.lblk = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4ExtLoadExtent(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4ExtLoadExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4ExtLoadExtentData eventData {};
@@ -1278,19 +971,8 @@ void ParseExt4ExtLoadExtent(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_pblk(eventData.pblk);
     msg->set_lblk(eventData.lblk);
 }
-void ParseExt4ExtLoadExtentEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4ExtLoadExtentData eventData {};
-    ParseExt4ExtLoadExtentData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_ext_load_extent_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_pblk(eventData.pblk);
-    msg->set_lblk(eventData.lblk);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_load_extent, ParseExt4ExtLoadExtent);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_load_extent, ParseExt4ExtLoadExtentEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_load_extent, ParseExt4ExtLoadExtent<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_load_extent, ParseExt4ExtLoadExtent<ProtoEncoder::FtraceEvent>);
 
 struct Ext4ExtMapBlocksEnterData {
     uint64_t dev {};
@@ -1309,7 +991,8 @@ __attribute__((noinline)) void ParseExt4ExtMapBlocksEnterData(Ext4ExtMapBlocksEn
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4ExtMapBlocksEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4ExtMapBlocksEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4ExtMapBlocksEnterData eventData {};
@@ -1321,20 +1004,8 @@ void ParseExt4ExtMapBlocksEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t
     msg->set_len(eventData.len);
     msg->set_flags(eventData.flags);
 }
-void ParseExt4ExtMapBlocksEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4ExtMapBlocksEnterData eventData {};
-    ParseExt4ExtMapBlocksEnterData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_ext_map_blocks_enter_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_lblk(eventData.lblk);
-    msg->set_len(eventData.len);
-    msg->set_flags(eventData.flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_map_blocks_enter, ParseExt4ExtMapBlocksEnter);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_map_blocks_enter, ParseExt4ExtMapBlocksEnterEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_map_blocks_enter, ParseExt4ExtMapBlocksEnter<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_map_blocks_enter, ParseExt4ExtMapBlocksEnter<ProtoEncoder::FtraceEvent>);
 
 struct Ext4ExtMapBlocksExitData {
     uint64_t dev {};
@@ -1359,7 +1030,8 @@ __attribute__((noinline)) void ParseExt4ExtMapBlocksExitData(Ext4ExtMapBlocksExi
     eventData.mflags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4ExtMapBlocksExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4ExtMapBlocksExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4ExtMapBlocksExitData eventData {};
@@ -1374,23 +1046,8 @@ void ParseExt4ExtMapBlocksExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_mflags(eventData.mflags);
     msg->set_ret(eventData.ret);
 }
-void ParseExt4ExtMapBlocksExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4ExtMapBlocksExitData eventData {};
-    ParseExt4ExtMapBlocksExitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_ext_map_blocks_exit_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_flags(eventData.flags);
-    msg->set_pblk(eventData.pblk);
-    msg->set_lblk(eventData.lblk);
-    msg->set_len(eventData.len);
-    msg->set_mflags(eventData.mflags);
-    msg->set_ret(eventData.ret);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_map_blocks_exit, ParseExt4ExtMapBlocksExit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_map_blocks_exit, ParseExt4ExtMapBlocksExitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_map_blocks_exit, ParseExt4ExtMapBlocksExit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_map_blocks_exit, ParseExt4ExtMapBlocksExit<ProtoEncoder::FtraceEvent>);
 
 struct Ext4ExtRemoveSpaceData {
     uint64_t dev {};
@@ -1409,7 +1066,8 @@ __attribute__((noinline)) void ParseExt4ExtRemoveSpaceData(Ext4ExtRemoveSpaceDat
     eventData.end = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.depth = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4ExtRemoveSpace(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4ExtRemoveSpace(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4ExtRemoveSpaceData eventData {};
@@ -1421,20 +1079,8 @@ void ParseExt4ExtRemoveSpace(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_end(eventData.end);
     msg->set_depth(eventData.depth);
 }
-void ParseExt4ExtRemoveSpaceEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4ExtRemoveSpaceData eventData {};
-    ParseExt4ExtRemoveSpaceData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_ext_remove_space_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_start(eventData.start);
-    msg->set_end(eventData.end);
-    msg->set_depth(eventData.depth);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_remove_space, ParseExt4ExtRemoveSpace);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_remove_space, ParseExt4ExtRemoveSpaceEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_remove_space, ParseExt4ExtRemoveSpace<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_remove_space, ParseExt4ExtRemoveSpace<ProtoEncoder::FtraceEvent>);
 
 struct Ext4ExtRemoveSpaceDoneData {
     uint64_t dev {};
@@ -1461,7 +1107,8 @@ __attribute__((noinline)) void ParseExt4ExtRemoveSpaceDoneData(Ext4ExtRemoveSpac
     eventData.pc_state = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.eh_entries = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4ExtRemoveSpaceDone(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4ExtRemoveSpaceDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4ExtRemoveSpaceDoneData eventData {};
@@ -1477,24 +1124,8 @@ void ParseExt4ExtRemoveSpaceDone(FtraceEvent& ftraceEvent, uint8_t data[], size_
     msg->set_pc_state(eventData.pc_state);
     msg->set_eh_entries(eventData.eh_entries);
 }
-void ParseExt4ExtRemoveSpaceDoneEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4ExtRemoveSpaceDoneData eventData {};
-    ParseExt4ExtRemoveSpaceDoneData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_ext_remove_space_done_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_start(eventData.start);
-    msg->set_end(eventData.end);
-    msg->set_depth(eventData.depth);
-    msg->set_pc_pclu(eventData.pc_pclu);
-    msg->set_pc_lblk(eventData.pc_lblk);
-    msg->set_pc_state(eventData.pc_state);
-    msg->set_eh_entries(eventData.eh_entries);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_remove_space_done, ParseExt4ExtRemoveSpaceDone);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_remove_space_done, ParseExt4ExtRemoveSpaceDoneEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_remove_space_done, ParseExt4ExtRemoveSpaceDone<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_remove_space_done, ParseExt4ExtRemoveSpaceDone<ProtoEncoder::FtraceEvent>);
 
 struct Ext4ExtRmIdxData {
     uint64_t dev {};
@@ -1509,7 +1140,8 @@ __attribute__((noinline)) void ParseExt4ExtRmIdxData(Ext4ExtRmIdxData& eventData
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.pblk = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseExt4ExtRmIdx(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4ExtRmIdx(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4ExtRmIdxData eventData {};
@@ -1519,18 +1151,8 @@ void ParseExt4ExtRmIdx(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_ino(eventData.ino);
     msg->set_pblk(eventData.pblk);
 }
-void ParseExt4ExtRmIdxEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4ExtRmIdxData eventData {};
-    ParseExt4ExtRmIdxData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_ext_rm_idx_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_pblk(eventData.pblk);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_rm_idx, ParseExt4ExtRmIdx);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_rm_idx, ParseExt4ExtRmIdxEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_rm_idx, ParseExt4ExtRmIdx<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_rm_idx, ParseExt4ExtRmIdx<ProtoEncoder::FtraceEvent>);
 
 struct Ext4ExtRmLeafData {
     uint64_t dev {};
@@ -1557,7 +1179,8 @@ __attribute__((noinline)) void ParseExt4ExtRmLeafData(Ext4ExtRmLeafData& eventDa
     eventData.pc_lblk = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.pc_state = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4ExtRmLeaf(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4ExtRmLeaf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4ExtRmLeafData eventData {};
@@ -1573,24 +1196,8 @@ void ParseExt4ExtRmLeaf(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_pc_lblk(eventData.pc_lblk);
     msg->set_pc_state(eventData.pc_state);
 }
-void ParseExt4ExtRmLeafEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4ExtRmLeafData eventData {};
-    ParseExt4ExtRmLeafData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_ext_rm_leaf_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_start(eventData.start);
-    msg->set_ee_lblk(eventData.ee_lblk);
-    msg->set_ee_pblk(eventData.ee_pblk);
-    msg->set_ee_len(eventData.ee_len);
-    msg->set_pc_pclu(eventData.pc_pclu);
-    msg->set_pc_lblk(eventData.pc_lblk);
-    msg->set_pc_state(eventData.pc_state);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_rm_leaf, ParseExt4ExtRmLeaf);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_rm_leaf, ParseExt4ExtRmLeafEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_rm_leaf, ParseExt4ExtRmLeaf<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_rm_leaf, ParseExt4ExtRmLeaf<ProtoEncoder::FtraceEvent>);
 
 struct Ext4ExtShowExtentData {
     uint64_t dev {};
@@ -1609,7 +1216,8 @@ __attribute__((noinline)) void ParseExt4ExtShowExtentData(Ext4ExtShowExtentData&
     eventData.lblk = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4ExtShowExtent(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4ExtShowExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4ExtShowExtentData eventData {};
@@ -1621,20 +1229,8 @@ void ParseExt4ExtShowExtent(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_lblk(eventData.lblk);
     msg->set_len(eventData.len);
 }
-void ParseExt4ExtShowExtentEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4ExtShowExtentData eventData {};
-    ParseExt4ExtShowExtentData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_ext_show_extent_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_pblk(eventData.pblk);
-    msg->set_lblk(eventData.lblk);
-    msg->set_len(eventData.len);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_show_extent, ParseExt4ExtShowExtent);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_show_extent, ParseExt4ExtShowExtentEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ext_show_extent, ParseExt4ExtShowExtent<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ext_show_extent, ParseExt4ExtShowExtent<ProtoEncoder::FtraceEvent>);
 
 struct Ext4FallocateEnterData {
     uint64_t dev {};
@@ -1653,7 +1249,8 @@ __attribute__((noinline)) void ParseExt4FallocateEnterData(Ext4FallocateEnterDat
     eventData.len = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4FallocateEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4FallocateEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4FallocateEnterData eventData {};
@@ -1665,20 +1262,8 @@ void ParseExt4FallocateEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_len(eventData.len);
     msg->set_mode(eventData.mode);
 }
-void ParseExt4FallocateEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4FallocateEnterData eventData {};
-    ParseExt4FallocateEnterData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_fallocate_enter_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_offset(eventData.offset);
-    msg->set_len(eventData.len);
-    msg->set_mode(eventData.mode);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_fallocate_enter, ParseExt4FallocateEnter);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_fallocate_enter, ParseExt4FallocateEnterEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_fallocate_enter, ParseExt4FallocateEnter<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_fallocate_enter, ParseExt4FallocateEnter<ProtoEncoder::FtraceEvent>);
 
 struct Ext4FallocateExitData {
     uint64_t dev {};
@@ -1697,7 +1282,8 @@ __attribute__((noinline)) void ParseExt4FallocateExitData(Ext4FallocateExitData&
     eventData.blocks = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4FallocateExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4FallocateExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4FallocateExitData eventData {};
@@ -1709,20 +1295,8 @@ void ParseExt4FallocateExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_blocks(eventData.blocks);
     msg->set_ret(eventData.ret);
 }
-void ParseExt4FallocateExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4FallocateExitData eventData {};
-    ParseExt4FallocateExitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_fallocate_exit_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_pos(eventData.pos);
-    msg->set_blocks(eventData.blocks);
-    msg->set_ret(eventData.ret);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_fallocate_exit, ParseExt4FallocateExit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_fallocate_exit, ParseExt4FallocateExitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_fallocate_exit, ParseExt4FallocateExit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_fallocate_exit, ParseExt4FallocateExit<ProtoEncoder::FtraceEvent>);
 
 struct Ext4ForgetData {
     uint64_t dev {};
@@ -1741,7 +1315,8 @@ __attribute__((noinline)) void ParseExt4ForgetData(Ext4ForgetData& eventData, ui
     eventData.is_metadata = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4Forget(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4Forget(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4ForgetData eventData {};
@@ -1753,20 +1328,8 @@ void ParseExt4Forget(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_is_metadata(eventData.is_metadata);
     msg->set_mode(eventData.mode);
 }
-void ParseExt4ForgetEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4ForgetData eventData {};
-    ParseExt4ForgetData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_forget_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_block(eventData.block);
-    msg->set_is_metadata(eventData.is_metadata);
-    msg->set_mode(eventData.mode);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_forget, ParseExt4Forget);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_forget, ParseExt4ForgetEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_forget, ParseExt4Forget<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_forget, ParseExt4Forget<ProtoEncoder::FtraceEvent>);
 
 struct Ext4FreeBlocksData {
     uint64_t dev {};
@@ -1787,7 +1350,8 @@ __attribute__((noinline)) void ParseExt4FreeBlocksData(Ext4FreeBlocksData& event
     eventData.flags = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4FreeBlocks(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4FreeBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4FreeBlocksData eventData {};
@@ -1800,21 +1364,8 @@ void ParseExt4FreeBlocks(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_flags(eventData.flags);
     msg->set_mode(eventData.mode);
 }
-void ParseExt4FreeBlocksEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4FreeBlocksData eventData {};
-    ParseExt4FreeBlocksData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_free_blocks_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_block(eventData.block);
-    msg->set_count(eventData.count);
-    msg->set_flags(eventData.flags);
-    msg->set_mode(eventData.mode);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_free_blocks, ParseExt4FreeBlocks);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_free_blocks, ParseExt4FreeBlocksEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_free_blocks, ParseExt4FreeBlocks<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_free_blocks, ParseExt4FreeBlocks<ProtoEncoder::FtraceEvent>);
 
 struct Ext4FreeInodeData {
     uint64_t dev {};
@@ -1835,7 +1386,8 @@ __attribute__((noinline)) void ParseExt4FreeInodeData(Ext4FreeInodeData& eventDa
     eventData.blocks = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4FreeInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4FreeInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4FreeInodeData eventData {};
@@ -1848,21 +1400,8 @@ void ParseExt4FreeInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_blocks(eventData.blocks);
     msg->set_mode(eventData.mode);
 }
-void ParseExt4FreeInodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4FreeInodeData eventData {};
-    ParseExt4FreeInodeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_free_inode_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_uid(eventData.uid);
-    msg->set_gid(eventData.gid);
-    msg->set_blocks(eventData.blocks);
-    msg->set_mode(eventData.mode);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_free_inode, ParseExt4FreeInode);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_free_inode, ParseExt4FreeInodeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_free_inode, ParseExt4FreeInode<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_free_inode, ParseExt4FreeInode<ProtoEncoder::FtraceEvent>);
 
 struct Ext4GetImpliedClusterAllocExitData {
     uint64_t dev {};
@@ -1883,7 +1422,8 @@ __attribute__((noinline)) void ParseExt4GetImpliedClusterAllocExitData(Ext4GetIm
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4GetImpliedClusterAllocExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4GetImpliedClusterAllocExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4GetImpliedClusterAllocExitData eventData {};
@@ -1896,21 +1436,8 @@ void ParseExt4GetImpliedClusterAllocExit(FtraceEvent& ftraceEvent, uint8_t data[
     msg->set_len(eventData.len);
     msg->set_ret(eventData.ret);
 }
-void ParseExt4GetImpliedClusterAllocExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4GetImpliedClusterAllocExitData eventData {};
-    ParseExt4GetImpliedClusterAllocExitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_get_implied_cluster_alloc_exit_format();
-    msg->set_dev(eventData.dev);
-    msg->set_flags(eventData.flags);
-    msg->set_lblk(eventData.lblk);
-    msg->set_pblk(eventData.pblk);
-    msg->set_len(eventData.len);
-    msg->set_ret(eventData.ret);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_get_implied_cluster_alloc_exit, ParseExt4GetImpliedClusterAllocExit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_get_implied_cluster_alloc_exit, ParseExt4GetImpliedClusterAllocExitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_get_implied_cluster_alloc_exit, ParseExt4GetImpliedClusterAllocExit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_get_implied_cluster_alloc_exit, ParseExt4GetImpliedClusterAllocExit<ProtoEncoder::FtraceEvent>);
 
 struct Ext4IndMapBlocksEnterData {
     uint64_t dev {};
@@ -1929,7 +1456,8 @@ __attribute__((noinline)) void ParseExt4IndMapBlocksEnterData(Ext4IndMapBlocksEn
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4IndMapBlocksEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4IndMapBlocksEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4IndMapBlocksEnterData eventData {};
@@ -1941,20 +1469,8 @@ void ParseExt4IndMapBlocksEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t
     msg->set_len(eventData.len);
     msg->set_flags(eventData.flags);
 }
-void ParseExt4IndMapBlocksEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4IndMapBlocksEnterData eventData {};
-    ParseExt4IndMapBlocksEnterData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_ind_map_blocks_enter_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_lblk(eventData.lblk);
-    msg->set_len(eventData.len);
-    msg->set_flags(eventData.flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ind_map_blocks_enter, ParseExt4IndMapBlocksEnter);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ind_map_blocks_enter, ParseExt4IndMapBlocksEnterEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ind_map_blocks_enter, ParseExt4IndMapBlocksEnter<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ind_map_blocks_enter, ParseExt4IndMapBlocksEnter<ProtoEncoder::FtraceEvent>);
 
 struct Ext4IndMapBlocksExitData {
     uint64_t dev {};
@@ -1979,7 +1495,8 @@ __attribute__((noinline)) void ParseExt4IndMapBlocksExitData(Ext4IndMapBlocksExi
     eventData.mflags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4IndMapBlocksExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4IndMapBlocksExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4IndMapBlocksExitData eventData {};
@@ -1994,23 +1511,8 @@ void ParseExt4IndMapBlocksExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_mflags(eventData.mflags);
     msg->set_ret(eventData.ret);
 }
-void ParseExt4IndMapBlocksExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4IndMapBlocksExitData eventData {};
-    ParseExt4IndMapBlocksExitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_ind_map_blocks_exit_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_flags(eventData.flags);
-    msg->set_pblk(eventData.pblk);
-    msg->set_lblk(eventData.lblk);
-    msg->set_len(eventData.len);
-    msg->set_mflags(eventData.mflags);
-    msg->set_ret(eventData.ret);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ind_map_blocks_exit, ParseExt4IndMapBlocksExit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ind_map_blocks_exit, ParseExt4IndMapBlocksExitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_ind_map_blocks_exit, ParseExt4IndMapBlocksExit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_ind_map_blocks_exit, ParseExt4IndMapBlocksExit<ProtoEncoder::FtraceEvent>);
 
 struct Ext4InsertRangeData {
     uint64_t dev {};
@@ -2027,7 +1529,8 @@ __attribute__((noinline)) void ParseExt4InsertRangeData(Ext4InsertRangeData& eve
     eventData.offset = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseExt4InsertRange(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4InsertRange(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4InsertRangeData eventData {};
@@ -2038,19 +1541,8 @@ void ParseExt4InsertRange(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_offset(eventData.offset);
     msg->set_len(eventData.len);
 }
-void ParseExt4InsertRangeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4InsertRangeData eventData {};
-    ParseExt4InsertRangeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_insert_range_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_offset(eventData.offset);
-    msg->set_len(eventData.len);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_insert_range, ParseExt4InsertRange);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_insert_range, ParseExt4InsertRangeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_insert_range, ParseExt4InsertRange<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_insert_range, ParseExt4InsertRange<ProtoEncoder::FtraceEvent>);
 
 struct Ext4JournalStartReservedData {
     uint64_t dev {};
@@ -2065,7 +1557,8 @@ __attribute__((noinline)) void ParseExt4JournalStartReservedData(Ext4JournalStar
     eventData.ip = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.blocks = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4JournalStartReserved(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4JournalStartReserved(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4JournalStartReservedData eventData {};
@@ -2075,18 +1568,8 @@ void ParseExt4JournalStartReserved(FtraceEvent& ftraceEvent, uint8_t data[], siz
     msg->set_ip(eventData.ip);
     msg->set_blocks(eventData.blocks);
 }
-void ParseExt4JournalStartReservedEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4JournalStartReservedData eventData {};
-    ParseExt4JournalStartReservedData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_journal_start_reserved_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ip(eventData.ip);
-    msg->set_blocks(eventData.blocks);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_journal_start_reserved, ParseExt4JournalStartReserved);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_journal_start_reserved, ParseExt4JournalStartReservedEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_journal_start_reserved, ParseExt4JournalStartReserved<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_journal_start_reserved, ParseExt4JournalStartReserved<ProtoEncoder::FtraceEvent>);
 
 struct Ext4JournalledWriteEndData {
     uint64_t dev {};
@@ -2105,7 +1588,8 @@ __attribute__((noinline)) void ParseExt4JournalledWriteEndData(Ext4JournalledWri
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.copied = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4JournalledWriteEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4JournalledWriteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4JournalledWriteEndData eventData {};
@@ -2117,20 +1601,8 @@ void ParseExt4JournalledWriteEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_
     msg->set_len(eventData.len);
     msg->set_copied(eventData.copied);
 }
-void ParseExt4JournalledWriteEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4JournalledWriteEndData eventData {};
-    ParseExt4JournalledWriteEndData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_journalled_write_end_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_pos(eventData.pos);
-    msg->set_len(eventData.len);
-    msg->set_copied(eventData.copied);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_journalled_write_end, ParseExt4JournalledWriteEnd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_journalled_write_end, ParseExt4JournalledWriteEndEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_journalled_write_end, ParseExt4JournalledWriteEnd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_journalled_write_end, ParseExt4JournalledWriteEnd<ProtoEncoder::FtraceEvent>);
 
 struct Ext4LoadInodeData {
     uint64_t dev {};
@@ -2143,7 +1615,8 @@ __attribute__((noinline)) void ParseExt4LoadInodeData(Ext4LoadInodeData& eventDa
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseExt4LoadInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4LoadInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4LoadInodeData eventData {};
@@ -2152,17 +1625,8 @@ void ParseExt4LoadInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
 }
-void ParseExt4LoadInodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4LoadInodeData eventData {};
-    ParseExt4LoadInodeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_load_inode_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_load_inode, ParseExt4LoadInode);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_load_inode, ParseExt4LoadInodeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_load_inode, ParseExt4LoadInode<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_load_inode, ParseExt4LoadInode<ProtoEncoder::FtraceEvent>);
 
 struct Ext4LoadInodeBitmapData {
     uint64_t dev {};
@@ -2175,7 +1639,8 @@ __attribute__((noinline)) void ParseExt4LoadInodeBitmapData(Ext4LoadInodeBitmapD
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.group = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4LoadInodeBitmap(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4LoadInodeBitmap(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4LoadInodeBitmapData eventData {};
@@ -2184,17 +1649,8 @@ void ParseExt4LoadInodeBitmap(FtraceEvent& ftraceEvent, uint8_t data[], size_t s
     msg->set_dev(eventData.dev);
     msg->set_group(eventData.group);
 }
-void ParseExt4LoadInodeBitmapEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4LoadInodeBitmapData eventData {};
-    ParseExt4LoadInodeBitmapData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_load_inode_bitmap_format();
-    msg->set_dev(eventData.dev);
-    msg->set_group(eventData.group);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_load_inode_bitmap, ParseExt4LoadInodeBitmap);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_load_inode_bitmap, ParseExt4LoadInodeBitmapEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_load_inode_bitmap, ParseExt4LoadInodeBitmap<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_load_inode_bitmap, ParseExt4LoadInodeBitmap<ProtoEncoder::FtraceEvent>);
 
 struct Ext4MarkInodeDirtyData {
     uint64_t dev {};
@@ -2209,7 +1665,8 @@ __attribute__((noinline)) void ParseExt4MarkInodeDirtyData(Ext4MarkInodeDirtyDat
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ip = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseExt4MarkInodeDirty(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4MarkInodeDirty(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4MarkInodeDirtyData eventData {};
@@ -2219,18 +1676,8 @@ void ParseExt4MarkInodeDirty(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_ino(eventData.ino);
     msg->set_ip(eventData.ip);
 }
-void ParseExt4MarkInodeDirtyEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4MarkInodeDirtyData eventData {};
-    ParseExt4MarkInodeDirtyData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_mark_inode_dirty_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_ip(eventData.ip);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mark_inode_dirty, ParseExt4MarkInodeDirty);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mark_inode_dirty, ParseExt4MarkInodeDirtyEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mark_inode_dirty, ParseExt4MarkInodeDirty<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mark_inode_dirty, ParseExt4MarkInodeDirty<ProtoEncoder::FtraceEvent>);
 
 struct Ext4MbBitmapLoadData {
     uint64_t dev {};
@@ -2243,7 +1690,8 @@ __attribute__((noinline)) void ParseExt4MbBitmapLoadData(Ext4MbBitmapLoadData& e
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.group = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4MbBitmapLoad(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4MbBitmapLoad(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4MbBitmapLoadData eventData {};
@@ -2252,17 +1700,8 @@ void ParseExt4MbBitmapLoad(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_dev(eventData.dev);
     msg->set_group(eventData.group);
 }
-void ParseExt4MbBitmapLoadEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4MbBitmapLoadData eventData {};
-    ParseExt4MbBitmapLoadData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_mb_bitmap_load_format();
-    msg->set_dev(eventData.dev);
-    msg->set_group(eventData.group);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mb_bitmap_load, ParseExt4MbBitmapLoad);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mb_bitmap_load, ParseExt4MbBitmapLoadEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mb_bitmap_load, ParseExt4MbBitmapLoad<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mb_bitmap_load, ParseExt4MbBitmapLoad<ProtoEncoder::FtraceEvent>);
 
 struct Ext4MbBuddyBitmapLoadData {
     uint64_t dev {};
@@ -2275,7 +1714,8 @@ __attribute__((noinline)) void ParseExt4MbBuddyBitmapLoadData(Ext4MbBuddyBitmapL
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.group = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4MbBuddyBitmapLoad(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4MbBuddyBitmapLoad(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4MbBuddyBitmapLoadData eventData {};
@@ -2284,17 +1724,8 @@ void ParseExt4MbBuddyBitmapLoad(FtraceEvent& ftraceEvent, uint8_t data[], size_t
     msg->set_dev(eventData.dev);
     msg->set_group(eventData.group);
 }
-void ParseExt4MbBuddyBitmapLoadEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4MbBuddyBitmapLoadData eventData {};
-    ParseExt4MbBuddyBitmapLoadData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_mb_buddy_bitmap_load_format();
-    msg->set_dev(eventData.dev);
-    msg->set_group(eventData.group);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mb_buddy_bitmap_load, ParseExt4MbBuddyBitmapLoad);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mb_buddy_bitmap_load, ParseExt4MbBuddyBitmapLoadEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mb_buddy_bitmap_load, ParseExt4MbBuddyBitmapLoad<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mb_buddy_bitmap_load, ParseExt4MbBuddyBitmapLoad<ProtoEncoder::FtraceEvent>);
 
 struct Ext4MbDiscardPreallocationsData {
     uint64_t dev {};
@@ -2307,7 +1738,8 @@ __attribute__((noinline)) void ParseExt4MbDiscardPreallocationsData(Ext4MbDiscar
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.needed = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4MbDiscardPreallocations(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4MbDiscardPreallocations(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4MbDiscardPreallocationsData eventData {};
@@ -2316,17 +1748,8 @@ void ParseExt4MbDiscardPreallocations(FtraceEvent& ftraceEvent, uint8_t data[], 
     msg->set_dev(eventData.dev);
     msg->set_needed(eventData.needed);
 }
-void ParseExt4MbDiscardPreallocationsEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4MbDiscardPreallocationsData eventData {};
-    ParseExt4MbDiscardPreallocationsData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_mb_discard_preallocations_format();
-    msg->set_dev(eventData.dev);
-    msg->set_needed(eventData.needed);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mb_discard_preallocations, ParseExt4MbDiscardPreallocations);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mb_discard_preallocations, ParseExt4MbDiscardPreallocationsEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mb_discard_preallocations, ParseExt4MbDiscardPreallocations<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mb_discard_preallocations, ParseExt4MbDiscardPreallocations<ProtoEncoder::FtraceEvent>);
 
 struct Ext4MbNewGroupPaData {
     uint64_t dev {};
@@ -2345,7 +1768,8 @@ __attribute__((noinline)) void ParseExt4MbNewGroupPaData(Ext4MbNewGroupPaData& e
     eventData.pa_lstart = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.pa_len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4MbNewGroupPa(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4MbNewGroupPa(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4MbNewGroupPaData eventData {};
@@ -2357,20 +1781,8 @@ void ParseExt4MbNewGroupPa(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_pa_lstart(eventData.pa_lstart);
     msg->set_pa_len(eventData.pa_len);
 }
-void ParseExt4MbNewGroupPaEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4MbNewGroupPaData eventData {};
-    ParseExt4MbNewGroupPaData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_mb_new_group_pa_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_pa_pstart(eventData.pa_pstart);
-    msg->set_pa_lstart(eventData.pa_lstart);
-    msg->set_pa_len(eventData.pa_len);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mb_new_group_pa, ParseExt4MbNewGroupPa);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mb_new_group_pa, ParseExt4MbNewGroupPaEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mb_new_group_pa, ParseExt4MbNewGroupPa<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mb_new_group_pa, ParseExt4MbNewGroupPa<ProtoEncoder::FtraceEvent>);
 
 struct Ext4MbNewInodePaData {
     uint64_t dev {};
@@ -2389,7 +1801,8 @@ __attribute__((noinline)) void ParseExt4MbNewInodePaData(Ext4MbNewInodePaData& e
     eventData.pa_lstart = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.pa_len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4MbNewInodePa(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4MbNewInodePa(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4MbNewInodePaData eventData {};
@@ -2401,20 +1814,8 @@ void ParseExt4MbNewInodePa(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_pa_lstart(eventData.pa_lstart);
     msg->set_pa_len(eventData.pa_len);
 }
-void ParseExt4MbNewInodePaEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4MbNewInodePaData eventData {};
-    ParseExt4MbNewInodePaData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_mb_new_inode_pa_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_pa_pstart(eventData.pa_pstart);
-    msg->set_pa_lstart(eventData.pa_lstart);
-    msg->set_pa_len(eventData.pa_len);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mb_new_inode_pa, ParseExt4MbNewInodePa);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mb_new_inode_pa, ParseExt4MbNewInodePaEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mb_new_inode_pa, ParseExt4MbNewInodePa<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mb_new_inode_pa, ParseExt4MbNewInodePa<ProtoEncoder::FtraceEvent>);
 
 struct Ext4MbReleaseGroupPaData {
     uint64_t dev {};
@@ -2429,7 +1830,8 @@ __attribute__((noinline)) void ParseExt4MbReleaseGroupPaData(Ext4MbReleaseGroupP
     eventData.pa_pstart = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.pa_len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4MbReleaseGroupPa(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4MbReleaseGroupPa(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4MbReleaseGroupPaData eventData {};
@@ -2439,18 +1841,8 @@ void ParseExt4MbReleaseGroupPa(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_pa_pstart(eventData.pa_pstart);
     msg->set_pa_len(eventData.pa_len);
 }
-void ParseExt4MbReleaseGroupPaEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4MbReleaseGroupPaData eventData {};
-    ParseExt4MbReleaseGroupPaData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_mb_release_group_pa_format();
-    msg->set_dev(eventData.dev);
-    msg->set_pa_pstart(eventData.pa_pstart);
-    msg->set_pa_len(eventData.pa_len);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mb_release_group_pa, ParseExt4MbReleaseGroupPa);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mb_release_group_pa, ParseExt4MbReleaseGroupPaEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mb_release_group_pa, ParseExt4MbReleaseGroupPa<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mb_release_group_pa, ParseExt4MbReleaseGroupPa<ProtoEncoder::FtraceEvent>);
 
 struct Ext4MbReleaseInodePaData {
     uint64_t dev {};
@@ -2467,7 +1859,8 @@ __attribute__((noinline)) void ParseExt4MbReleaseInodePaData(Ext4MbReleaseInodeP
     eventData.block = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.count = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4MbReleaseInodePa(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4MbReleaseInodePa(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4MbReleaseInodePaData eventData {};
@@ -2478,19 +1871,8 @@ void ParseExt4MbReleaseInodePa(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_block(eventData.block);
     msg->set_count(eventData.count);
 }
-void ParseExt4MbReleaseInodePaEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4MbReleaseInodePaData eventData {};
-    ParseExt4MbReleaseInodePaData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_mb_release_inode_pa_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_block(eventData.block);
-    msg->set_count(eventData.count);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mb_release_inode_pa, ParseExt4MbReleaseInodePa);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mb_release_inode_pa, ParseExt4MbReleaseInodePaEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mb_release_inode_pa, ParseExt4MbReleaseInodePa<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mb_release_inode_pa, ParseExt4MbReleaseInodePa<ProtoEncoder::FtraceEvent>);
 
 struct Ext4MballocAllocData {
     uint64_t dev {};
@@ -2539,7 +1921,8 @@ __attribute__((noinline)) void ParseExt4MballocAllocData(Ext4MballocAllocData& e
     eventData.tail = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.cr = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4MballocAlloc(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4MballocAlloc(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4MballocAllocData eventData {};
@@ -2566,35 +1949,8 @@ void ParseExt4MballocAlloc(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_tail(eventData.tail);
     msg->set_cr(eventData.cr);
 }
-void ParseExt4MballocAllocEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4MballocAllocData eventData {};
-    ParseExt4MballocAllocData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_mballoc_alloc_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_orig_logical(eventData.orig_logical);
-    msg->set_orig_start(eventData.orig_start);
-    msg->set_orig_group(eventData.orig_group);
-    msg->set_orig_len(eventData.orig_len);
-    msg->set_goal_logical(eventData.goal_logical);
-    msg->set_goal_start(eventData.goal_start);
-    msg->set_goal_group(eventData.goal_group);
-    msg->set_goal_len(eventData.goal_len);
-    msg->set_result_logical(eventData.result_logical);
-    msg->set_result_start(eventData.result_start);
-    msg->set_result_group(eventData.result_group);
-    msg->set_result_len(eventData.result_len);
-    msg->set_found(eventData.found);
-    msg->set_groups(eventData.groups);
-    msg->set_buddy(eventData.buddy);
-    msg->set_flags(eventData.flags);
-    msg->set_tail(eventData.tail);
-    msg->set_cr(eventData.cr);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mballoc_alloc, ParseExt4MballocAlloc);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mballoc_alloc, ParseExt4MballocAllocEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mballoc_alloc, ParseExt4MballocAlloc<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mballoc_alloc, ParseExt4MballocAlloc<ProtoEncoder::FtraceEvent>);
 
 struct Ext4MballocDiscardData {
     uint64_t dev {};
@@ -2613,7 +1969,8 @@ __attribute__((noinline)) void ParseExt4MballocDiscardData(Ext4MballocDiscardDat
     eventData.result_group = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.result_len = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4MballocDiscard(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4MballocDiscard(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4MballocDiscardData eventData {};
@@ -2625,20 +1982,8 @@ void ParseExt4MballocDiscard(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_result_group(eventData.result_group);
     msg->set_result_len(eventData.result_len);
 }
-void ParseExt4MballocDiscardEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4MballocDiscardData eventData {};
-    ParseExt4MballocDiscardData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_mballoc_discard_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_result_start(eventData.result_start);
-    msg->set_result_group(eventData.result_group);
-    msg->set_result_len(eventData.result_len);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mballoc_discard, ParseExt4MballocDiscard);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mballoc_discard, ParseExt4MballocDiscardEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mballoc_discard, ParseExt4MballocDiscard<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mballoc_discard, ParseExt4MballocDiscard<ProtoEncoder::FtraceEvent>);
 
 struct Ext4MballocFreeData {
     uint64_t dev {};
@@ -2657,7 +2002,8 @@ __attribute__((noinline)) void ParseExt4MballocFreeData(Ext4MballocFreeData& eve
     eventData.result_group = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.result_len = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4MballocFree(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4MballocFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4MballocFreeData eventData {};
@@ -2669,20 +2015,8 @@ void ParseExt4MballocFree(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_result_group(eventData.result_group);
     msg->set_result_len(eventData.result_len);
 }
-void ParseExt4MballocFreeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4MballocFreeData eventData {};
-    ParseExt4MballocFreeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_mballoc_free_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_result_start(eventData.result_start);
-    msg->set_result_group(eventData.result_group);
-    msg->set_result_len(eventData.result_len);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mballoc_free, ParseExt4MballocFree);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mballoc_free, ParseExt4MballocFreeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mballoc_free, ParseExt4MballocFree<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mballoc_free, ParseExt4MballocFree<ProtoEncoder::FtraceEvent>);
 
 struct Ext4MballocPreallocData {
     uint64_t dev {};
@@ -2711,7 +2045,8 @@ __attribute__((noinline)) void ParseExt4MballocPreallocData(Ext4MballocPreallocD
     eventData.result_group = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.result_len = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4MballocPrealloc(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4MballocPrealloc(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4MballocPreallocData eventData {};
@@ -2728,25 +2063,8 @@ void ParseExt4MballocPrealloc(FtraceEvent& ftraceEvent, uint8_t data[], size_t s
     msg->set_result_group(eventData.result_group);
     msg->set_result_len(eventData.result_len);
 }
-void ParseExt4MballocPreallocEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4MballocPreallocData eventData {};
-    ParseExt4MballocPreallocData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_mballoc_prealloc_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_orig_logical(eventData.orig_logical);
-    msg->set_orig_start(eventData.orig_start);
-    msg->set_orig_group(eventData.orig_group);
-    msg->set_orig_len(eventData.orig_len);
-    msg->set_result_logical(eventData.result_logical);
-    msg->set_result_start(eventData.result_start);
-    msg->set_result_group(eventData.result_group);
-    msg->set_result_len(eventData.result_len);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mballoc_prealloc, ParseExt4MballocPrealloc);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mballoc_prealloc, ParseExt4MballocPreallocEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_mballoc_prealloc, ParseExt4MballocPrealloc<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_mballoc_prealloc, ParseExt4MballocPrealloc<ProtoEncoder::FtraceEvent>);
 
 struct Ext4OtherInodeUpdateTimeData {
     uint64_t dev {};
@@ -2767,7 +2085,8 @@ __attribute__((noinline)) void ParseExt4OtherInodeUpdateTimeData(Ext4OtherInodeU
     eventData.gid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4OtherInodeUpdateTime(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4OtherInodeUpdateTime(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4OtherInodeUpdateTimeData eventData {};
@@ -2780,21 +2099,8 @@ void ParseExt4OtherInodeUpdateTime(FtraceEvent& ftraceEvent, uint8_t data[], siz
     msg->set_gid(eventData.gid);
     msg->set_mode(eventData.mode);
 }
-void ParseExt4OtherInodeUpdateTimeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4OtherInodeUpdateTimeData eventData {};
-    ParseExt4OtherInodeUpdateTimeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_other_inode_update_time_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_orig_ino(eventData.orig_ino);
-    msg->set_uid(eventData.uid);
-    msg->set_gid(eventData.gid);
-    msg->set_mode(eventData.mode);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_other_inode_update_time, ParseExt4OtherInodeUpdateTime);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_other_inode_update_time, ParseExt4OtherInodeUpdateTimeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_other_inode_update_time, ParseExt4OtherInodeUpdateTime<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_other_inode_update_time, ParseExt4OtherInodeUpdateTime<ProtoEncoder::FtraceEvent>);
 
 struct Ext4PunchHoleData {
     uint64_t dev {};
@@ -2813,7 +2119,8 @@ __attribute__((noinline)) void ParseExt4PunchHoleData(Ext4PunchHoleData& eventDa
     eventData.len = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4PunchHole(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4PunchHole(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4PunchHoleData eventData {};
@@ -2825,20 +2132,8 @@ void ParseExt4PunchHole(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_len(eventData.len);
     msg->set_mode(eventData.mode);
 }
-void ParseExt4PunchHoleEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4PunchHoleData eventData {};
-    ParseExt4PunchHoleData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_punch_hole_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_offset(eventData.offset);
-    msg->set_len(eventData.len);
-    msg->set_mode(eventData.mode);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_punch_hole, ParseExt4PunchHole);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_punch_hole, ParseExt4PunchHoleEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_punch_hole, ParseExt4PunchHole<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_punch_hole, ParseExt4PunchHole<ProtoEncoder::FtraceEvent>);
 
 struct Ext4ReadBlockBitmapLoadData {
     uint64_t dev {};
@@ -2853,7 +2148,8 @@ __attribute__((noinline)) void ParseExt4ReadBlockBitmapLoadData(Ext4ReadBlockBit
     eventData.group = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.prefetch = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4ReadBlockBitmapLoad(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4ReadBlockBitmapLoad(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4ReadBlockBitmapLoadData eventData {};
@@ -2863,18 +2159,8 @@ void ParseExt4ReadBlockBitmapLoad(FtraceEvent& ftraceEvent, uint8_t data[], size
     msg->set_group(eventData.group);
     msg->set_prefetch(eventData.prefetch);
 }
-void ParseExt4ReadBlockBitmapLoadEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4ReadBlockBitmapLoadData eventData {};
-    ParseExt4ReadBlockBitmapLoadData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_read_block_bitmap_load_format();
-    msg->set_dev(eventData.dev);
-    msg->set_group(eventData.group);
-    msg->set_prefetch(eventData.prefetch);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_read_block_bitmap_load, ParseExt4ReadBlockBitmapLoad);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_read_block_bitmap_load, ParseExt4ReadBlockBitmapLoadEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_read_block_bitmap_load, ParseExt4ReadBlockBitmapLoad<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_read_block_bitmap_load, ParseExt4ReadBlockBitmapLoad<ProtoEncoder::FtraceEvent>);
 
 struct Ext4RemoveBlocksData {
     uint64_t dev {};
@@ -2903,7 +2189,8 @@ __attribute__((noinline)) void ParseExt4RemoveBlocksData(Ext4RemoveBlocksData& e
     eventData.pc_lblk = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.pc_state = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4RemoveBlocks(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4RemoveBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4RemoveBlocksData eventData {};
@@ -2920,25 +2207,8 @@ void ParseExt4RemoveBlocks(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_pc_lblk(eventData.pc_lblk);
     msg->set_pc_state(eventData.pc_state);
 }
-void ParseExt4RemoveBlocksEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4RemoveBlocksData eventData {};
-    ParseExt4RemoveBlocksData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_remove_blocks_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_from(eventData.from);
-    msg->set_to(eventData.to);
-    msg->set_ee_pblk(eventData.ee_pblk);
-    msg->set_ee_lblk(eventData.ee_lblk);
-    msg->set_ee_len(eventData.ee_len);
-    msg->set_pc_pclu(eventData.pc_pclu);
-    msg->set_pc_lblk(eventData.pc_lblk);
-    msg->set_pc_state(eventData.pc_state);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_remove_blocks, ParseExt4RemoveBlocks);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_remove_blocks, ParseExt4RemoveBlocksEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_remove_blocks, ParseExt4RemoveBlocks<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_remove_blocks, ParseExt4RemoveBlocks<ProtoEncoder::FtraceEvent>);
 
 struct Ext4RequestBlocksData {
     uint64_t dev {};
@@ -2967,7 +2237,8 @@ __attribute__((noinline)) void ParseExt4RequestBlocksData(Ext4RequestBlocksData&
     eventData.pright = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4RequestBlocks(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4RequestBlocks(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4RequestBlocksData eventData {};
@@ -2984,25 +2255,8 @@ void ParseExt4RequestBlocks(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_pright(eventData.pright);
     msg->set_flags(eventData.flags);
 }
-void ParseExt4RequestBlocksEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4RequestBlocksData eventData {};
-    ParseExt4RequestBlocksData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_request_blocks_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_len(eventData.len);
-    msg->set_logical(eventData.logical);
-    msg->set_lleft(eventData.lleft);
-    msg->set_lright(eventData.lright);
-    msg->set_goal(eventData.goal);
-    msg->set_pleft(eventData.pleft);
-    msg->set_pright(eventData.pright);
-    msg->set_flags(eventData.flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_request_blocks, ParseExt4RequestBlocks);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_request_blocks, ParseExt4RequestBlocksEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_request_blocks, ParseExt4RequestBlocks<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_request_blocks, ParseExt4RequestBlocks<ProtoEncoder::FtraceEvent>);
 
 struct Ext4RequestInodeData {
     uint64_t dev {};
@@ -3017,7 +2271,8 @@ __attribute__((noinline)) void ParseExt4RequestInodeData(Ext4RequestInodeData& e
     eventData.dir = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4RequestInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4RequestInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4RequestInodeData eventData {};
@@ -3027,18 +2282,8 @@ void ParseExt4RequestInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_dir(eventData.dir);
     msg->set_mode(eventData.mode);
 }
-void ParseExt4RequestInodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4RequestInodeData eventData {};
-    ParseExt4RequestInodeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_request_inode_format();
-    msg->set_dev(eventData.dev);
-    msg->set_dir(eventData.dir);
-    msg->set_mode(eventData.mode);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_request_inode, ParseExt4RequestInode);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_request_inode, ParseExt4RequestInodeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_request_inode, ParseExt4RequestInode<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_request_inode, ParseExt4RequestInode<ProtoEncoder::FtraceEvent>);
 
 struct Ext4SyncFileEnterData {
     uint64_t dev {};
@@ -3055,7 +2300,8 @@ __attribute__((noinline)) void ParseExt4SyncFileEnterData(Ext4SyncFileEnterData&
     eventData.parent = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.datasync = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4SyncFileEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4SyncFileEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4SyncFileEnterData eventData {};
@@ -3066,19 +2312,8 @@ void ParseExt4SyncFileEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_parent(eventData.parent);
     msg->set_datasync(eventData.datasync);
 }
-void ParseExt4SyncFileEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4SyncFileEnterData eventData {};
-    ParseExt4SyncFileEnterData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_sync_file_enter_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_parent(eventData.parent);
-    msg->set_datasync(eventData.datasync);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_sync_file_enter, ParseExt4SyncFileEnter);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_sync_file_enter, ParseExt4SyncFileEnterEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_sync_file_enter, ParseExt4SyncFileEnter<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_sync_file_enter, ParseExt4SyncFileEnter<ProtoEncoder::FtraceEvent>);
 
 struct Ext4SyncFileExitData {
     uint64_t dev {};
@@ -3093,7 +2328,8 @@ __attribute__((noinline)) void ParseExt4SyncFileExitData(Ext4SyncFileExitData& e
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4SyncFileExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4SyncFileExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4SyncFileExitData eventData {};
@@ -3103,18 +2339,8 @@ void ParseExt4SyncFileExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_ino(eventData.ino);
     msg->set_ret(eventData.ret);
 }
-void ParseExt4SyncFileExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4SyncFileExitData eventData {};
-    ParseExt4SyncFileExitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_sync_file_exit_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_ret(eventData.ret);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_sync_file_exit, ParseExt4SyncFileExit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_sync_file_exit, ParseExt4SyncFileExitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_sync_file_exit, ParseExt4SyncFileExit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_sync_file_exit, ParseExt4SyncFileExit<ProtoEncoder::FtraceEvent>);
 
 struct Ext4SyncFsData {
     uint64_t dev {};
@@ -3127,7 +2353,8 @@ __attribute__((noinline)) void ParseExt4SyncFsData(Ext4SyncFsData& eventData, ui
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.wait = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4SyncFs(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4SyncFs(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4SyncFsData eventData {};
@@ -3136,17 +2363,8 @@ void ParseExt4SyncFs(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_dev(eventData.dev);
     msg->set_wait(eventData.wait);
 }
-void ParseExt4SyncFsEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4SyncFsData eventData {};
-    ParseExt4SyncFsData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_sync_fs_format();
-    msg->set_dev(eventData.dev);
-    msg->set_wait(eventData.wait);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_sync_fs, ParseExt4SyncFs);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_sync_fs, ParseExt4SyncFsEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_sync_fs, ParseExt4SyncFs<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_sync_fs, ParseExt4SyncFs<ProtoEncoder::FtraceEvent>);
 
 struct Ext4TrimAllFreeData {
     int32_t dev_major {};
@@ -3165,7 +2383,8 @@ __attribute__((noinline)) void ParseExt4TrimAllFreeData(Ext4TrimAllFreeData& eve
     eventData.start = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4TrimAllFree(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4TrimAllFree(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4TrimAllFreeData eventData {};
@@ -3177,20 +2396,8 @@ void ParseExt4TrimAllFree(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_start(eventData.start);
     msg->set_len(eventData.len);
 }
-void ParseExt4TrimAllFreeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4TrimAllFreeData eventData {};
-    ParseExt4TrimAllFreeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_trim_all_free_format();
-    msg->set_dev_major(eventData.dev_major);
-    msg->set_dev_minor(eventData.dev_minor);
-    msg->set_group(eventData.group);
-    msg->set_start(eventData.start);
-    msg->set_len(eventData.len);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_trim_all_free, ParseExt4TrimAllFree);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_trim_all_free, ParseExt4TrimAllFreeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_trim_all_free, ParseExt4TrimAllFree<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_trim_all_free, ParseExt4TrimAllFree<ProtoEncoder::FtraceEvent>);
 
 struct Ext4TrimExtentData {
     int32_t dev_major {};
@@ -3209,7 +2416,8 @@ __attribute__((noinline)) void ParseExt4TrimExtentData(Ext4TrimExtentData& event
     eventData.start = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4TrimExtent(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4TrimExtent(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4TrimExtentData eventData {};
@@ -3221,20 +2429,8 @@ void ParseExt4TrimExtent(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_start(eventData.start);
     msg->set_len(eventData.len);
 }
-void ParseExt4TrimExtentEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4TrimExtentData eventData {};
-    ParseExt4TrimExtentData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_trim_extent_format();
-    msg->set_dev_major(eventData.dev_major);
-    msg->set_dev_minor(eventData.dev_minor);
-    msg->set_group(eventData.group);
-    msg->set_start(eventData.start);
-    msg->set_len(eventData.len);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_trim_extent, ParseExt4TrimExtent);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_trim_extent, ParseExt4TrimExtentEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_trim_extent, ParseExt4TrimExtent<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_trim_extent, ParseExt4TrimExtent<ProtoEncoder::FtraceEvent>);
 
 struct Ext4TruncateEnterData {
     uint64_t dev {};
@@ -3249,7 +2445,8 @@ __attribute__((noinline)) void ParseExt4TruncateEnterData(Ext4TruncateEnterData&
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.blocks = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseExt4TruncateEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4TruncateEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4TruncateEnterData eventData {};
@@ -3259,18 +2456,8 @@ void ParseExt4TruncateEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_ino(eventData.ino);
     msg->set_blocks(eventData.blocks);
 }
-void ParseExt4TruncateEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4TruncateEnterData eventData {};
-    ParseExt4TruncateEnterData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_truncate_enter_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_blocks(eventData.blocks);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_truncate_enter, ParseExt4TruncateEnter);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_truncate_enter, ParseExt4TruncateEnterEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_truncate_enter, ParseExt4TruncateEnter<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_truncate_enter, ParseExt4TruncateEnter<ProtoEncoder::FtraceEvent>);
 
 struct Ext4TruncateExitData {
     uint64_t dev {};
@@ -3285,7 +2472,8 @@ __attribute__((noinline)) void ParseExt4TruncateExitData(Ext4TruncateExitData& e
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.blocks = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseExt4TruncateExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4TruncateExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4TruncateExitData eventData {};
@@ -3295,18 +2483,8 @@ void ParseExt4TruncateExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_ino(eventData.ino);
     msg->set_blocks(eventData.blocks);
 }
-void ParseExt4TruncateExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4TruncateExitData eventData {};
-    ParseExt4TruncateExitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_truncate_exit_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_blocks(eventData.blocks);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_truncate_exit, ParseExt4TruncateExit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_truncate_exit, ParseExt4TruncateExitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_truncate_exit, ParseExt4TruncateExit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_truncate_exit, ParseExt4TruncateExit<ProtoEncoder::FtraceEvent>);
 
 struct Ext4UnlinkEnterData {
     uint64_t dev {};
@@ -3323,7 +2501,8 @@ __attribute__((noinline)) void ParseExt4UnlinkEnterData(Ext4UnlinkEnterData& eve
     eventData.parent = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseExt4UnlinkEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4UnlinkEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4UnlinkEnterData eventData {};
@@ -3334,19 +2513,8 @@ void ParseExt4UnlinkEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_parent(eventData.parent);
     msg->set_size(eventData.size);
 }
-void ParseExt4UnlinkEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4UnlinkEnterData eventData {};
-    ParseExt4UnlinkEnterData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_unlink_enter_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_parent(eventData.parent);
-    msg->set_size(eventData.size);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_unlink_enter, ParseExt4UnlinkEnter);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_unlink_enter, ParseExt4UnlinkEnterEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_unlink_enter, ParseExt4UnlinkEnter<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_unlink_enter, ParseExt4UnlinkEnter<ProtoEncoder::FtraceEvent>);
 
 struct Ext4UnlinkExitData {
     uint64_t dev {};
@@ -3361,7 +2529,8 @@ __attribute__((noinline)) void ParseExt4UnlinkExitData(Ext4UnlinkExitData& event
     eventData.ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4UnlinkExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4UnlinkExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4UnlinkExitData eventData {};
@@ -3371,18 +2540,8 @@ void ParseExt4UnlinkExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_ino(eventData.ino);
     msg->set_ret(eventData.ret);
 }
-void ParseExt4UnlinkExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4UnlinkExitData eventData {};
-    ParseExt4UnlinkExitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_unlink_exit_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_ret(eventData.ret);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_unlink_exit, ParseExt4UnlinkExit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_unlink_exit, ParseExt4UnlinkExitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_unlink_exit, ParseExt4UnlinkExit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_unlink_exit, ParseExt4UnlinkExit<ProtoEncoder::FtraceEvent>);
 
 struct Ext4WriteBeginData {
     uint64_t dev {};
@@ -3399,7 +2558,8 @@ __attribute__((noinline)) void ParseExt4WriteBeginData(Ext4WriteBeginData& event
     eventData.pos = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4WriteBegin(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4WriteBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4WriteBeginData eventData {};
@@ -3410,19 +2570,8 @@ void ParseExt4WriteBegin(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_pos(eventData.pos);
     msg->set_len(eventData.len);
 }
-void ParseExt4WriteBeginEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4WriteBeginData eventData {};
-    ParseExt4WriteBeginData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_write_begin_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_pos(eventData.pos);
-    msg->set_len(eventData.len);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_write_begin, ParseExt4WriteBegin);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_write_begin, ParseExt4WriteBeginEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_write_begin, ParseExt4WriteBegin<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_write_begin, ParseExt4WriteBegin<ProtoEncoder::FtraceEvent>);
 
 struct Ext4WriteEndData {
     uint64_t dev {};
@@ -3441,7 +2590,8 @@ __attribute__((noinline)) void ParseExt4WriteEndData(Ext4WriteEndData& eventData
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.copied = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4WriteEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4WriteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4WriteEndData eventData {};
@@ -3453,20 +2603,8 @@ void ParseExt4WriteEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_len(eventData.len);
     msg->set_copied(eventData.copied);
 }
-void ParseExt4WriteEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4WriteEndData eventData {};
-    ParseExt4WriteEndData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_write_end_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_pos(eventData.pos);
-    msg->set_len(eventData.len);
-    msg->set_copied(eventData.copied);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_write_end, ParseExt4WriteEnd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_write_end, ParseExt4WriteEndEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_write_end, ParseExt4WriteEnd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_write_end, ParseExt4WriteEnd<ProtoEncoder::FtraceEvent>);
 
 struct Ext4WritepagesData {
     uint64_t dev {};
@@ -3495,7 +2633,8 @@ __attribute__((noinline)) void ParseExt4WritepagesData(Ext4WritepagesData& event
     eventData.for_kupdate = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.range_cyclic = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseExt4Writepages(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4Writepages(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4WritepagesData eventData {};
@@ -3512,25 +2651,8 @@ void ParseExt4Writepages(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_for_kupdate(eventData.for_kupdate);
     msg->set_range_cyclic(eventData.range_cyclic);
 }
-void ParseExt4WritepagesEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4WritepagesData eventData {};
-    ParseExt4WritepagesData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_writepages_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_nr_to_write(eventData.nr_to_write);
-    msg->set_pages_skipped(eventData.pages_skipped);
-    msg->set_range_start(eventData.range_start);
-    msg->set_range_end(eventData.range_end);
-    msg->set_writeback_index(eventData.writeback_index);
-    msg->set_sync_mode(eventData.sync_mode);
-    msg->set_for_kupdate(eventData.for_kupdate);
-    msg->set_range_cyclic(eventData.range_cyclic);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_writepages, ParseExt4Writepages);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_writepages, ParseExt4WritepagesEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_writepages, ParseExt4Writepages<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_writepages, ParseExt4Writepages<ProtoEncoder::FtraceEvent>);
 
 struct Ext4WritepagesResultData {
     uint64_t dev {};
@@ -3553,7 +2675,8 @@ __attribute__((noinline)) void ParseExt4WritepagesResultData(Ext4WritepagesResul
     eventData.writeback_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sync_mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4WritepagesResult(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4WritepagesResult(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4WritepagesResultData eventData {};
@@ -3567,22 +2690,8 @@ void ParseExt4WritepagesResult(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_writeback_index(eventData.writeback_index);
     msg->set_sync_mode(eventData.sync_mode);
 }
-void ParseExt4WritepagesResultEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4WritepagesResultData eventData {};
-    ParseExt4WritepagesResultData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_writepages_result_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_ret(eventData.ret);
-    msg->set_pages_written(eventData.pages_written);
-    msg->set_pages_skipped(eventData.pages_skipped);
-    msg->set_writeback_index(eventData.writeback_index);
-    msg->set_sync_mode(eventData.sync_mode);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_writepages_result, ParseExt4WritepagesResult);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_writepages_result, ParseExt4WritepagesResultEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_writepages_result, ParseExt4WritepagesResult<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_writepages_result, ParseExt4WritepagesResult<ProtoEncoder::FtraceEvent>);
 
 struct Ext4ZeroRangeData {
     uint64_t dev {};
@@ -3601,7 +2710,8 @@ __attribute__((noinline)) void ParseExt4ZeroRangeData(Ext4ZeroRangeData& eventDa
     eventData.len = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseExt4ZeroRange(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseExt4ZeroRange(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     Ext4ZeroRangeData eventData {};
@@ -3613,19 +2723,7 @@ void ParseExt4ZeroRange(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_len(eventData.len);
     msg->set_mode(eventData.mode);
 }
-void ParseExt4ZeroRangeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Ext4ZeroRangeData eventData {};
-    ParseExt4ZeroRangeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_ext4_zero_range_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_offset(eventData.offset);
-    msg->set_len(eventData.len);
-    msg->set_mode(eventData.mode);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_zero_range, ParseExt4ZeroRange);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_zero_range, ParseExt4ZeroRangeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(ext4_zero_range, ParseExt4ZeroRange<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(ext4_zero_range, ParseExt4ZeroRange<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

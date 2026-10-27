@@ -73,7 +73,8 @@ __attribute__((noinline)) void ParseMmcRequestDoneData(MmcRequestDoneData& event
     eventData.mrq = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseMmcRequestDone(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmcRequestDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmcRequestDoneData eventData {};
@@ -103,38 +104,8 @@ void ParseMmcRequestDone(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_mrq(eventData.mrq);
     msg->set_name(eventData.name);
 }
-void ParseMmcRequestDoneEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmcRequestDoneData eventData {};
-    ParseMmcRequestDoneData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mmc_request_done_format();
-    msg->set_cmd_opcode(eventData.cmd_opcode);
-    msg->set_cmd_err(eventData.cmd_err);
-    msg->set_cmd_resp(eventData.cmd_resp);
-    msg->set_cmd_retries(eventData.cmd_retries);
-    msg->set_stop_opcode(eventData.stop_opcode);
-    msg->set_stop_err(eventData.stop_err);
-    msg->set_stop_resp(eventData.stop_resp);
-    msg->set_stop_retries(eventData.stop_retries);
-    msg->set_sbc_opcode(eventData.sbc_opcode);
-    msg->set_sbc_err(eventData.sbc_err);
-    msg->set_sbc_resp(eventData.sbc_resp);
-    msg->set_sbc_retries(eventData.sbc_retries);
-    msg->set_bytes_xfered(eventData.bytes_xfered);
-    msg->set_data_err(eventData.data_err);
-    msg->set_tag(eventData.tag);
-    msg->set_can_retune(eventData.can_retune);
-    msg->set_doing_retune(eventData.doing_retune);
-    msg->set_retune_now(eventData.retune_now);
-    msg->set_need_retune(eventData.need_retune);
-    msg->set_hold_retune(eventData.hold_retune);
-    msg->set_retune_period(eventData.retune_period);
-    msg->set_mrq(eventData.mrq);
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mmc_request_done, ParseMmcRequestDone);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mmc_request_done, ParseMmcRequestDoneEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mmc_request_done, ParseMmcRequestDone<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mmc_request_done, ParseMmcRequestDone<ProtoEncoder::FtraceEvent>);
 
 struct MmcRequestStartData {
     uint32_t cmd_opcode {};
@@ -193,7 +164,8 @@ __attribute__((noinline)) void ParseMmcRequestStartData(MmcRequestStartData& eve
     eventData.mrq = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseMmcRequestStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmcRequestStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmcRequestStartData eventData {};
@@ -225,39 +197,7 @@ void ParseMmcRequestStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_mrq(eventData.mrq);
     msg->set_name(eventData.name);
 }
-void ParseMmcRequestStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmcRequestStartData eventData {};
-    ParseMmcRequestStartData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mmc_request_start_format();
-    msg->set_cmd_opcode(eventData.cmd_opcode);
-    msg->set_cmd_arg(eventData.cmd_arg);
-    msg->set_cmd_flags(eventData.cmd_flags);
-    msg->set_cmd_retries(eventData.cmd_retries);
-    msg->set_stop_opcode(eventData.stop_opcode);
-    msg->set_stop_arg(eventData.stop_arg);
-    msg->set_stop_flags(eventData.stop_flags);
-    msg->set_stop_retries(eventData.stop_retries);
-    msg->set_sbc_opcode(eventData.sbc_opcode);
-    msg->set_sbc_arg(eventData.sbc_arg);
-    msg->set_sbc_flags(eventData.sbc_flags);
-    msg->set_sbc_retries(eventData.sbc_retries);
-    msg->set_blocks(eventData.blocks);
-    msg->set_blk_addr(eventData.blk_addr);
-    msg->set_blksz(eventData.blksz);
-    msg->set_data_flags(eventData.data_flags);
-    msg->set_tag(eventData.tag);
-    msg->set_can_retune(eventData.can_retune);
-    msg->set_doing_retune(eventData.doing_retune);
-    msg->set_retune_now(eventData.retune_now);
-    msg->set_need_retune(eventData.need_retune);
-    msg->set_hold_retune(eventData.hold_retune);
-    msg->set_retune_period(eventData.retune_period);
-    msg->set_mrq(eventData.mrq);
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mmc_request_start, ParseMmcRequestStart);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mmc_request_start, ParseMmcRequestStartEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mmc_request_start, ParseMmcRequestStart<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mmc_request_start, ParseMmcRequestStart<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

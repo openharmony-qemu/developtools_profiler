@@ -39,7 +39,8 @@ __attribute__((noinline)) void ParseCgroupAttachTaskData(CgroupAttachTaskData& e
     eventData.dst_path = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseCgroupAttachTask(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseCgroupAttachTask(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     CgroupAttachTaskData eventData {};
@@ -52,21 +53,8 @@ void ParseCgroupAttachTask(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_dst_path(eventData.dst_path);
     msg->set_comm(eventData.comm);
 }
-void ParseCgroupAttachTaskEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    CgroupAttachTaskData eventData {};
-    ParseCgroupAttachTaskData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_cgroup_attach_task_format();
-    msg->set_dst_root(eventData.dst_root);
-    msg->set_dst_level(eventData.dst_level);
-    msg->set_dst_id(eventData.dst_id);
-    msg->set_pid(eventData.pid);
-    msg->set_dst_path(eventData.dst_path);
-    msg->set_comm(eventData.comm);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_attach_task, ParseCgroupAttachTask);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_attach_task, ParseCgroupAttachTaskEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_attach_task, ParseCgroupAttachTask<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_attach_task, ParseCgroupAttachTask<ProtoEncoder::FtraceEvent>);
 
 struct CgroupDestroyRootData {
     int32_t root {};
@@ -81,7 +69,8 @@ __attribute__((noinline)) void ParseCgroupDestroyRootData(CgroupDestroyRootData&
     eventData.ss_mask = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseCgroupDestroyRoot(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseCgroupDestroyRoot(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     CgroupDestroyRootData eventData {};
@@ -91,18 +80,8 @@ void ParseCgroupDestroyRoot(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_ss_mask(eventData.ss_mask);
     msg->set_name(eventData.name);
 }
-void ParseCgroupDestroyRootEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    CgroupDestroyRootData eventData {};
-    ParseCgroupDestroyRootData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_cgroup_destroy_root_format();
-    msg->set_root(eventData.root);
-    msg->set_ss_mask(eventData.ss_mask);
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_destroy_root, ParseCgroupDestroyRoot);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_destroy_root, ParseCgroupDestroyRootEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_destroy_root, ParseCgroupDestroyRoot<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_destroy_root, ParseCgroupDestroyRoot<ProtoEncoder::FtraceEvent>);
 
 struct CgroupFreezeData {
     int32_t root {};
@@ -119,7 +98,8 @@ __attribute__((noinline)) void ParseCgroupFreezeData(CgroupFreezeData& eventData
     eventData.id = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.path = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseCgroupFreeze(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseCgroupFreeze(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     CgroupFreezeData eventData {};
@@ -130,19 +110,8 @@ void ParseCgroupFreeze(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_id(eventData.id);
     msg->set_path(eventData.path);
 }
-void ParseCgroupFreezeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    CgroupFreezeData eventData {};
-    ParseCgroupFreezeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_cgroup_freeze_format();
-    msg->set_root(eventData.root);
-    msg->set_level(eventData.level);
-    msg->set_id(eventData.id);
-    msg->set_path(eventData.path);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_freeze, ParseCgroupFreeze);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_freeze, ParseCgroupFreezeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_freeze, ParseCgroupFreeze<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_freeze, ParseCgroupFreeze<ProtoEncoder::FtraceEvent>);
 
 struct CgroupMkdirData {
     int32_t root {};
@@ -159,7 +128,8 @@ __attribute__((noinline)) void ParseCgroupMkdirData(CgroupMkdirData& eventData, 
     eventData.id = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.path = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseCgroupMkdir(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseCgroupMkdir(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     CgroupMkdirData eventData {};
@@ -170,19 +140,8 @@ void ParseCgroupMkdir(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_id(eventData.id);
     msg->set_path(eventData.path);
 }
-void ParseCgroupMkdirEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    CgroupMkdirData eventData {};
-    ParseCgroupMkdirData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_cgroup_mkdir_format();
-    msg->set_root(eventData.root);
-    msg->set_level(eventData.level);
-    msg->set_id(eventData.id);
-    msg->set_path(eventData.path);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_mkdir, ParseCgroupMkdir);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_mkdir, ParseCgroupMkdirEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_mkdir, ParseCgroupMkdir<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_mkdir, ParseCgroupMkdir<ProtoEncoder::FtraceEvent>);
 
 struct CgroupNotifyFrozenData {
     int32_t root {};
@@ -201,7 +160,8 @@ __attribute__((noinline)) void ParseCgroupNotifyFrozenData(CgroupNotifyFrozenDat
     eventData.path = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.val = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseCgroupNotifyFrozen(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseCgroupNotifyFrozen(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     CgroupNotifyFrozenData eventData {};
@@ -213,20 +173,8 @@ void ParseCgroupNotifyFrozen(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_path(eventData.path);
     msg->set_val(eventData.val);
 }
-void ParseCgroupNotifyFrozenEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    CgroupNotifyFrozenData eventData {};
-    ParseCgroupNotifyFrozenData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_cgroup_notify_frozen_format();
-    msg->set_root(eventData.root);
-    msg->set_level(eventData.level);
-    msg->set_id(eventData.id);
-    msg->set_path(eventData.path);
-    msg->set_val(eventData.val);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_notify_frozen, ParseCgroupNotifyFrozen);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_notify_frozen, ParseCgroupNotifyFrozenEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_notify_frozen, ParseCgroupNotifyFrozen<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_notify_frozen, ParseCgroupNotifyFrozen<ProtoEncoder::FtraceEvent>);
 
 struct CgroupNotifyPopulatedData {
     int32_t root {};
@@ -245,7 +193,8 @@ __attribute__((noinline)) void ParseCgroupNotifyPopulatedData(CgroupNotifyPopula
     eventData.path = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.val = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseCgroupNotifyPopulated(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseCgroupNotifyPopulated(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     CgroupNotifyPopulatedData eventData {};
@@ -257,20 +206,8 @@ void ParseCgroupNotifyPopulated(FtraceEvent& ftraceEvent, uint8_t data[], size_t
     msg->set_path(eventData.path);
     msg->set_val(eventData.val);
 }
-void ParseCgroupNotifyPopulatedEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    CgroupNotifyPopulatedData eventData {};
-    ParseCgroupNotifyPopulatedData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_cgroup_notify_populated_format();
-    msg->set_root(eventData.root);
-    msg->set_level(eventData.level);
-    msg->set_id(eventData.id);
-    msg->set_path(eventData.path);
-    msg->set_val(eventData.val);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_notify_populated, ParseCgroupNotifyPopulated);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_notify_populated, ParseCgroupNotifyPopulatedEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_notify_populated, ParseCgroupNotifyPopulated<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_notify_populated, ParseCgroupNotifyPopulated<ProtoEncoder::FtraceEvent>);
 
 struct CgroupReleaseData {
     int32_t root {};
@@ -287,7 +224,8 @@ __attribute__((noinline)) void ParseCgroupReleaseData(CgroupReleaseData& eventDa
     eventData.id = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.path = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseCgroupRelease(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseCgroupRelease(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     CgroupReleaseData eventData {};
@@ -298,19 +236,8 @@ void ParseCgroupRelease(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_id(eventData.id);
     msg->set_path(eventData.path);
 }
-void ParseCgroupReleaseEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    CgroupReleaseData eventData {};
-    ParseCgroupReleaseData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_cgroup_release_format();
-    msg->set_root(eventData.root);
-    msg->set_level(eventData.level);
-    msg->set_id(eventData.id);
-    msg->set_path(eventData.path);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_release, ParseCgroupRelease);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_release, ParseCgroupReleaseEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_release, ParseCgroupRelease<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_release, ParseCgroupRelease<ProtoEncoder::FtraceEvent>);
 
 struct CgroupRemountData {
     int32_t root {};
@@ -325,7 +252,8 @@ __attribute__((noinline)) void ParseCgroupRemountData(CgroupRemountData& eventDa
     eventData.ss_mask = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseCgroupRemount(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseCgroupRemount(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     CgroupRemountData eventData {};
@@ -335,18 +263,8 @@ void ParseCgroupRemount(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_ss_mask(eventData.ss_mask);
     msg->set_name(eventData.name);
 }
-void ParseCgroupRemountEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    CgroupRemountData eventData {};
-    ParseCgroupRemountData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_cgroup_remount_format();
-    msg->set_root(eventData.root);
-    msg->set_ss_mask(eventData.ss_mask);
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_remount, ParseCgroupRemount);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_remount, ParseCgroupRemountEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_remount, ParseCgroupRemount<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_remount, ParseCgroupRemount<ProtoEncoder::FtraceEvent>);
 
 struct CgroupRenameData {
     int32_t root {};
@@ -363,7 +281,8 @@ __attribute__((noinline)) void ParseCgroupRenameData(CgroupRenameData& eventData
     eventData.id = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.path = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseCgroupRename(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseCgroupRename(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     CgroupRenameData eventData {};
@@ -374,19 +293,8 @@ void ParseCgroupRename(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_id(eventData.id);
     msg->set_path(eventData.path);
 }
-void ParseCgroupRenameEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    CgroupRenameData eventData {};
-    ParseCgroupRenameData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_cgroup_rename_format();
-    msg->set_root(eventData.root);
-    msg->set_level(eventData.level);
-    msg->set_id(eventData.id);
-    msg->set_path(eventData.path);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_rename, ParseCgroupRename);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_rename, ParseCgroupRenameEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_rename, ParseCgroupRename<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_rename, ParseCgroupRename<ProtoEncoder::FtraceEvent>);
 
 struct CgroupRmdirData {
     int32_t root {};
@@ -403,7 +311,8 @@ __attribute__((noinline)) void ParseCgroupRmdirData(CgroupRmdirData& eventData, 
     eventData.id = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.path = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseCgroupRmdir(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseCgroupRmdir(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     CgroupRmdirData eventData {};
@@ -414,19 +323,8 @@ void ParseCgroupRmdir(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_id(eventData.id);
     msg->set_path(eventData.path);
 }
-void ParseCgroupRmdirEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    CgroupRmdirData eventData {};
-    ParseCgroupRmdirData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_cgroup_rmdir_format();
-    msg->set_root(eventData.root);
-    msg->set_level(eventData.level);
-    msg->set_id(eventData.id);
-    msg->set_path(eventData.path);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_rmdir, ParseCgroupRmdir);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_rmdir, ParseCgroupRmdirEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_rmdir, ParseCgroupRmdir<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_rmdir, ParseCgroupRmdir<ProtoEncoder::FtraceEvent>);
 
 struct CgroupSetupRootData {
     int32_t root {};
@@ -441,7 +339,8 @@ __attribute__((noinline)) void ParseCgroupSetupRootData(CgroupSetupRootData& eve
     eventData.ss_mask = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseCgroupSetupRoot(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseCgroupSetupRoot(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     CgroupSetupRootData eventData {};
@@ -451,18 +350,8 @@ void ParseCgroupSetupRoot(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_ss_mask(eventData.ss_mask);
     msg->set_name(eventData.name);
 }
-void ParseCgroupSetupRootEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    CgroupSetupRootData eventData {};
-    ParseCgroupSetupRootData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_cgroup_setup_root_format();
-    msg->set_root(eventData.root);
-    msg->set_ss_mask(eventData.ss_mask);
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_setup_root, ParseCgroupSetupRoot);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_setup_root, ParseCgroupSetupRootEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_setup_root, ParseCgroupSetupRoot<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_setup_root, ParseCgroupSetupRoot<ProtoEncoder::FtraceEvent>);
 
 struct CgroupTransferTasksData {
     int32_t dst_root {};
@@ -483,7 +372,8 @@ __attribute__((noinline)) void ParseCgroupTransferTasksData(CgroupTransferTasksD
     eventData.dst_path = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseCgroupTransferTasks(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseCgroupTransferTasks(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     CgroupTransferTasksData eventData {};
@@ -496,21 +386,8 @@ void ParseCgroupTransferTasks(FtraceEvent& ftraceEvent, uint8_t data[], size_t s
     msg->set_dst_path(eventData.dst_path);
     msg->set_comm(eventData.comm);
 }
-void ParseCgroupTransferTasksEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    CgroupTransferTasksData eventData {};
-    ParseCgroupTransferTasksData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_cgroup_transfer_tasks_format();
-    msg->set_dst_root(eventData.dst_root);
-    msg->set_dst_level(eventData.dst_level);
-    msg->set_dst_id(eventData.dst_id);
-    msg->set_pid(eventData.pid);
-    msg->set_dst_path(eventData.dst_path);
-    msg->set_comm(eventData.comm);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_transfer_tasks, ParseCgroupTransferTasks);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_transfer_tasks, ParseCgroupTransferTasksEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_transfer_tasks, ParseCgroupTransferTasks<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_transfer_tasks, ParseCgroupTransferTasks<ProtoEncoder::FtraceEvent>);
 
 struct CgroupUnfreezeData {
     int32_t root {};
@@ -527,7 +404,8 @@ __attribute__((noinline)) void ParseCgroupUnfreezeData(CgroupUnfreezeData& event
     eventData.id = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.path = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseCgroupUnfreeze(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseCgroupUnfreeze(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     CgroupUnfreezeData eventData {};
@@ -538,18 +416,7 @@ void ParseCgroupUnfreeze(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_id(eventData.id);
     msg->set_path(eventData.path);
 }
-void ParseCgroupUnfreezeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    CgroupUnfreezeData eventData {};
-    ParseCgroupUnfreezeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_cgroup_unfreeze_format();
-    msg->set_root(eventData.root);
-    msg->set_level(eventData.level);
-    msg->set_id(eventData.id);
-    msg->set_path(eventData.path);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_unfreeze, ParseCgroupUnfreeze);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_unfreeze, ParseCgroupUnfreezeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_unfreeze, ParseCgroupUnfreeze<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_unfreeze, ParseCgroupUnfreeze<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

@@ -33,7 +33,8 @@ __attribute__((noinline)) void ParseRpcBindStatusData(RpcBindStatusData& eventDa
     eventData.client_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.status = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseRpcBindStatus(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRpcBindStatus(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RpcBindStatusData eventData {};
@@ -43,18 +44,8 @@ void ParseRpcBindStatus(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_client_id(eventData.client_id);
     msg->set_status(eventData.status);
 }
-void ParseRpcBindStatusEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RpcBindStatusData eventData {};
-    ParseRpcBindStatusData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rpc_bind_status_format();
-    msg->set_task_id(eventData.task_id);
-    msg->set_client_id(eventData.client_id);
-    msg->set_status(eventData.status);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_bind_status, ParseRpcBindStatus);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_bind_status, ParseRpcBindStatusEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_bind_status, ParseRpcBindStatus<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_bind_status, ParseRpcBindStatus<ProtoEncoder::FtraceEvent>);
 
 struct RpcCallStatusData {
     uint32_t task_id {};
@@ -69,7 +60,8 @@ __attribute__((noinline)) void ParseRpcCallStatusData(RpcCallStatusData& eventDa
     eventData.client_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.status = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseRpcCallStatus(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRpcCallStatus(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RpcCallStatusData eventData {};
@@ -79,18 +71,8 @@ void ParseRpcCallStatus(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_client_id(eventData.client_id);
     msg->set_status(eventData.status);
 }
-void ParseRpcCallStatusEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RpcCallStatusData eventData {};
-    ParseRpcCallStatusData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rpc_call_status_format();
-    msg->set_task_id(eventData.task_id);
-    msg->set_client_id(eventData.client_id);
-    msg->set_status(eventData.status);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_call_status, ParseRpcCallStatus);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_call_status, ParseRpcCallStatusEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_call_status, ParseRpcCallStatus<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_call_status, ParseRpcCallStatus<ProtoEncoder::FtraceEvent>);
 
 struct RpcConnectStatusData {
     uint32_t task_id {};
@@ -105,7 +87,8 @@ __attribute__((noinline)) void ParseRpcConnectStatusData(RpcConnectStatusData& e
     eventData.client_id = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.status = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseRpcConnectStatus(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRpcConnectStatus(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RpcConnectStatusData eventData {};
@@ -115,18 +98,8 @@ void ParseRpcConnectStatus(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_client_id(eventData.client_id);
     msg->set_status(eventData.status);
 }
-void ParseRpcConnectStatusEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RpcConnectStatusData eventData {};
-    ParseRpcConnectStatusData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rpc_connect_status_format();
-    msg->set_task_id(eventData.task_id);
-    msg->set_client_id(eventData.client_id);
-    msg->set_status(eventData.status);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_connect_status, ParseRpcConnectStatus);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_connect_status, ParseRpcConnectStatusEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_connect_status, ParseRpcConnectStatus<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_connect_status, ParseRpcConnectStatus<ProtoEncoder::FtraceEvent>);
 
 struct RpcSocketCloseData {
     uint32_t socket_state {};
@@ -145,7 +118,8 @@ __attribute__((noinline)) void ParseRpcSocketCloseData(RpcSocketCloseData& event
     eventData.dstaddr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.dstport = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRpcSocketClose(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRpcSocketClose(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RpcSocketCloseData eventData {};
@@ -157,20 +131,8 @@ void ParseRpcSocketClose(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_dstaddr(eventData.dstaddr);
     msg->set_dstport(eventData.dstport);
 }
-void ParseRpcSocketCloseEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RpcSocketCloseData eventData {};
-    ParseRpcSocketCloseData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rpc_socket_close_format();
-    msg->set_socket_state(eventData.socket_state);
-    msg->set_sock_state(eventData.sock_state);
-    msg->set_ino(eventData.ino);
-    msg->set_dstaddr(eventData.dstaddr);
-    msg->set_dstport(eventData.dstport);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_socket_close, ParseRpcSocketClose);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_close, ParseRpcSocketCloseEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_socket_close, ParseRpcSocketClose<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_close, ParseRpcSocketClose<ProtoEncoder::FtraceEvent>);
 
 struct RpcSocketConnectData {
     int32_t error {};
@@ -191,7 +153,8 @@ __attribute__((noinline)) void ParseRpcSocketConnectData(RpcSocketConnectData& e
     eventData.dstaddr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.dstport = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRpcSocketConnect(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRpcSocketConnect(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RpcSocketConnectData eventData {};
@@ -204,21 +167,8 @@ void ParseRpcSocketConnect(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_dstaddr(eventData.dstaddr);
     msg->set_dstport(eventData.dstport);
 }
-void ParseRpcSocketConnectEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RpcSocketConnectData eventData {};
-    ParseRpcSocketConnectData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rpc_socket_connect_format();
-    msg->set_error(eventData.error);
-    msg->set_socket_state(eventData.socket_state);
-    msg->set_sock_state(eventData.sock_state);
-    msg->set_ino(eventData.ino);
-    msg->set_dstaddr(eventData.dstaddr);
-    msg->set_dstport(eventData.dstport);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_socket_connect, ParseRpcSocketConnect);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_connect, ParseRpcSocketConnectEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_socket_connect, ParseRpcSocketConnect<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_connect, ParseRpcSocketConnect<ProtoEncoder::FtraceEvent>);
 
 struct RpcSocketErrorData {
     int32_t error {};
@@ -239,7 +189,8 @@ __attribute__((noinline)) void ParseRpcSocketErrorData(RpcSocketErrorData& event
     eventData.dstaddr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.dstport = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRpcSocketError(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRpcSocketError(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RpcSocketErrorData eventData {};
@@ -252,21 +203,8 @@ void ParseRpcSocketError(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_dstaddr(eventData.dstaddr);
     msg->set_dstport(eventData.dstport);
 }
-void ParseRpcSocketErrorEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RpcSocketErrorData eventData {};
-    ParseRpcSocketErrorData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rpc_socket_error_format();
-    msg->set_error(eventData.error);
-    msg->set_socket_state(eventData.socket_state);
-    msg->set_sock_state(eventData.sock_state);
-    msg->set_ino(eventData.ino);
-    msg->set_dstaddr(eventData.dstaddr);
-    msg->set_dstport(eventData.dstport);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_socket_error, ParseRpcSocketError);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_error, ParseRpcSocketErrorEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_socket_error, ParseRpcSocketError<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_error, ParseRpcSocketError<ProtoEncoder::FtraceEvent>);
 
 struct RpcSocketResetConnectionData {
     int32_t error {};
@@ -287,7 +225,8 @@ __attribute__((noinline)) void ParseRpcSocketResetConnectionData(RpcSocketResetC
     eventData.dstaddr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.dstport = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRpcSocketResetConnection(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRpcSocketResetConnection(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RpcSocketResetConnectionData eventData {};
@@ -300,21 +239,8 @@ void ParseRpcSocketResetConnection(FtraceEvent& ftraceEvent, uint8_t data[], siz
     msg->set_dstaddr(eventData.dstaddr);
     msg->set_dstport(eventData.dstport);
 }
-void ParseRpcSocketResetConnectionEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RpcSocketResetConnectionData eventData {};
-    ParseRpcSocketResetConnectionData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rpc_socket_reset_connection_format();
-    msg->set_error(eventData.error);
-    msg->set_socket_state(eventData.socket_state);
-    msg->set_sock_state(eventData.sock_state);
-    msg->set_ino(eventData.ino);
-    msg->set_dstaddr(eventData.dstaddr);
-    msg->set_dstport(eventData.dstport);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_socket_reset_connection, ParseRpcSocketResetConnection);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_reset_connection, ParseRpcSocketResetConnectionEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_socket_reset_connection, ParseRpcSocketResetConnection<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_reset_connection, ParseRpcSocketResetConnection<ProtoEncoder::FtraceEvent>);
 
 struct RpcSocketShutdownData {
     uint32_t socket_state {};
@@ -333,7 +259,8 @@ __attribute__((noinline)) void ParseRpcSocketShutdownData(RpcSocketShutdownData&
     eventData.dstaddr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.dstport = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRpcSocketShutdown(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRpcSocketShutdown(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RpcSocketShutdownData eventData {};
@@ -345,20 +272,8 @@ void ParseRpcSocketShutdown(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_dstaddr(eventData.dstaddr);
     msg->set_dstport(eventData.dstport);
 }
-void ParseRpcSocketShutdownEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RpcSocketShutdownData eventData {};
-    ParseRpcSocketShutdownData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rpc_socket_shutdown_format();
-    msg->set_socket_state(eventData.socket_state);
-    msg->set_sock_state(eventData.sock_state);
-    msg->set_ino(eventData.ino);
-    msg->set_dstaddr(eventData.dstaddr);
-    msg->set_dstport(eventData.dstport);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_socket_shutdown, ParseRpcSocketShutdown);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_shutdown, ParseRpcSocketShutdownEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_socket_shutdown, ParseRpcSocketShutdown<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_shutdown, ParseRpcSocketShutdown<ProtoEncoder::FtraceEvent>);
 
 struct RpcSocketStateChangeData {
     uint32_t socket_state {};
@@ -377,7 +292,8 @@ __attribute__((noinline)) void ParseRpcSocketStateChangeData(RpcSocketStateChang
     eventData.dstaddr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.dstport = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRpcSocketStateChange(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRpcSocketStateChange(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RpcSocketStateChangeData eventData {};
@@ -389,20 +305,8 @@ void ParseRpcSocketStateChange(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_dstaddr(eventData.dstaddr);
     msg->set_dstport(eventData.dstport);
 }
-void ParseRpcSocketStateChangeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RpcSocketStateChangeData eventData {};
-    ParseRpcSocketStateChangeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rpc_socket_state_change_format();
-    msg->set_socket_state(eventData.socket_state);
-    msg->set_sock_state(eventData.sock_state);
-    msg->set_ino(eventData.ino);
-    msg->set_dstaddr(eventData.dstaddr);
-    msg->set_dstport(eventData.dstport);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_socket_state_change, ParseRpcSocketStateChange);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_state_change, ParseRpcSocketStateChangeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_socket_state_change, ParseRpcSocketStateChange<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_state_change, ParseRpcSocketStateChange<ProtoEncoder::FtraceEvent>);
 
 struct RpcTaskBeginData {
     uint32_t task_id {};
@@ -423,7 +327,8 @@ __attribute__((noinline)) void ParseRpcTaskBeginData(RpcTaskBeginData& eventData
     eventData.status = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseRpcTaskBegin(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRpcTaskBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RpcTaskBeginData eventData {};
@@ -436,21 +341,8 @@ void ParseRpcTaskBegin(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_status(eventData.status);
     msg->set_flags(eventData.flags);
 }
-void ParseRpcTaskBeginEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RpcTaskBeginData eventData {};
-    ParseRpcTaskBeginData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rpc_task_begin_format();
-    msg->set_task_id(eventData.task_id);
-    msg->set_client_id(eventData.client_id);
-    msg->set_action(eventData.action);
-    msg->set_runstate(eventData.runstate);
-    msg->set_status(eventData.status);
-    msg->set_flags(eventData.flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_task_begin, ParseRpcTaskBegin);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_task_begin, ParseRpcTaskBeginEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_task_begin, ParseRpcTaskBegin<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_task_begin, ParseRpcTaskBegin<ProtoEncoder::FtraceEvent>);
 
 struct RpcTaskCompleteData {
     uint32_t task_id {};
@@ -471,7 +363,8 @@ __attribute__((noinline)) void ParseRpcTaskCompleteData(RpcTaskCompleteData& eve
     eventData.status = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseRpcTaskComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRpcTaskComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RpcTaskCompleteData eventData {};
@@ -484,21 +377,8 @@ void ParseRpcTaskComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_status(eventData.status);
     msg->set_flags(eventData.flags);
 }
-void ParseRpcTaskCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RpcTaskCompleteData eventData {};
-    ParseRpcTaskCompleteData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rpc_task_complete_format();
-    msg->set_task_id(eventData.task_id);
-    msg->set_client_id(eventData.client_id);
-    msg->set_action(eventData.action);
-    msg->set_runstate(eventData.runstate);
-    msg->set_status(eventData.status);
-    msg->set_flags(eventData.flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_task_complete, ParseRpcTaskComplete);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_task_complete, ParseRpcTaskCompleteEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_task_complete, ParseRpcTaskComplete<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_task_complete, ParseRpcTaskComplete<ProtoEncoder::FtraceEvent>);
 
 struct RpcTaskRunActionData {
     uint32_t task_id {};
@@ -519,7 +399,8 @@ __attribute__((noinline)) void ParseRpcTaskRunActionData(RpcTaskRunActionData& e
     eventData.status = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseRpcTaskRunAction(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRpcTaskRunAction(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RpcTaskRunActionData eventData {};
@@ -532,21 +413,8 @@ void ParseRpcTaskRunAction(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_status(eventData.status);
     msg->set_flags(eventData.flags);
 }
-void ParseRpcTaskRunActionEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RpcTaskRunActionData eventData {};
-    ParseRpcTaskRunActionData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rpc_task_run_action_format();
-    msg->set_task_id(eventData.task_id);
-    msg->set_client_id(eventData.client_id);
-    msg->set_action(eventData.action);
-    msg->set_runstate(eventData.runstate);
-    msg->set_status(eventData.status);
-    msg->set_flags(eventData.flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_task_run_action, ParseRpcTaskRunAction);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_task_run_action, ParseRpcTaskRunActionEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_task_run_action, ParseRpcTaskRunAction<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_task_run_action, ParseRpcTaskRunAction<ProtoEncoder::FtraceEvent>);
 
 struct RpcTaskSleepData {
     uint32_t task_id {};
@@ -569,7 +437,8 @@ __attribute__((noinline)) void ParseRpcTaskSleepData(RpcTaskSleepData& eventData
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.q_name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRpcTaskSleep(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRpcTaskSleep(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RpcTaskSleepData eventData {};
@@ -583,22 +452,8 @@ void ParseRpcTaskSleep(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_flags(eventData.flags);
     msg->set_q_name(eventData.q_name);
 }
-void ParseRpcTaskSleepEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RpcTaskSleepData eventData {};
-    ParseRpcTaskSleepData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rpc_task_sleep_format();
-    msg->set_task_id(eventData.task_id);
-    msg->set_client_id(eventData.client_id);
-    msg->set_timeout(eventData.timeout);
-    msg->set_runstate(eventData.runstate);
-    msg->set_status(eventData.status);
-    msg->set_flags(eventData.flags);
-    msg->set_q_name(eventData.q_name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_task_sleep, ParseRpcTaskSleep);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_task_sleep, ParseRpcTaskSleepEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_task_sleep, ParseRpcTaskSleep<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_task_sleep, ParseRpcTaskSleep<ProtoEncoder::FtraceEvent>);
 
 struct RpcTaskWakeupData {
     uint32_t task_id {};
@@ -621,7 +476,8 @@ __attribute__((noinline)) void ParseRpcTaskWakeupData(RpcTaskWakeupData& eventDa
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.q_name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRpcTaskWakeup(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRpcTaskWakeup(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RpcTaskWakeupData eventData {};
@@ -635,22 +491,8 @@ void ParseRpcTaskWakeup(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_flags(eventData.flags);
     msg->set_q_name(eventData.q_name);
 }
-void ParseRpcTaskWakeupEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RpcTaskWakeupData eventData {};
-    ParseRpcTaskWakeupData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rpc_task_wakeup_format();
-    msg->set_task_id(eventData.task_id);
-    msg->set_client_id(eventData.client_id);
-    msg->set_timeout(eventData.timeout);
-    msg->set_runstate(eventData.runstate);
-    msg->set_status(eventData.status);
-    msg->set_flags(eventData.flags);
-    msg->set_q_name(eventData.q_name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_task_wakeup, ParseRpcTaskWakeup);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_task_wakeup, ParseRpcTaskWakeupEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_task_wakeup, ParseRpcTaskWakeup<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_task_wakeup, ParseRpcTaskWakeup<ProtoEncoder::FtraceEvent>);
 
 struct SvcHandleXprtData {
     uint64_t xprt {};
@@ -667,7 +509,8 @@ __attribute__((noinline)) void ParseSvcHandleXprtData(SvcHandleXprtData& eventDa
     eventData.flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.addr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseSvcHandleXprt(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSvcHandleXprt(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SvcHandleXprtData eventData {};
@@ -678,19 +521,8 @@ void ParseSvcHandleXprt(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_flags(eventData.flags);
     msg->set_addr(eventData.addr);
 }
-void ParseSvcHandleXprtEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SvcHandleXprtData eventData {};
-    ParseSvcHandleXprtData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_svc_handle_xprt_format();
-    msg->set_xprt(eventData.xprt);
-    msg->set_len(eventData.len);
-    msg->set_flags(eventData.flags);
-    msg->set_addr(eventData.addr);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_handle_xprt, ParseSvcHandleXprt);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(svc_handle_xprt, ParseSvcHandleXprtEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_handle_xprt, ParseSvcHandleXprt<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(svc_handle_xprt, ParseSvcHandleXprt<ProtoEncoder::FtraceEvent>);
 
 struct SvcProcessData {
     uint32_t xid {};
@@ -709,7 +541,8 @@ __attribute__((noinline)) void ParseSvcProcessData(SvcProcessData& eventData, ui
     eventData.service = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.addr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseSvcProcess(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSvcProcess(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SvcProcessData eventData {};
@@ -721,20 +554,8 @@ void ParseSvcProcess(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_service(eventData.service);
     msg->set_addr(eventData.addr);
 }
-void ParseSvcProcessEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SvcProcessData eventData {};
-    ParseSvcProcessData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_svc_process_format();
-    msg->set_xid(eventData.xid);
-    msg->set_vers(eventData.vers);
-    msg->set_proc(eventData.proc);
-    msg->set_service(eventData.service);
-    msg->set_addr(eventData.addr);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_process, ParseSvcProcess);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(svc_process, ParseSvcProcessEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_process, ParseSvcProcess<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(svc_process, ParseSvcProcess<ProtoEncoder::FtraceEvent>);
 
 struct SvcRecvData {
     uint32_t xid {};
@@ -751,7 +572,8 @@ __attribute__((noinline)) void ParseSvcRecvData(SvcRecvData& eventData, uint8_t 
     eventData.flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.addr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseSvcRecv(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSvcRecv(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SvcRecvData eventData {};
@@ -762,19 +584,8 @@ void ParseSvcRecv(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_flags(eventData.flags);
     msg->set_addr(eventData.addr);
 }
-void ParseSvcRecvEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SvcRecvData eventData {};
-    ParseSvcRecvData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_svc_recv_format();
-    msg->set_xid(eventData.xid);
-    msg->set_len(eventData.len);
-    msg->set_flags(eventData.flags);
-    msg->set_addr(eventData.addr);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_recv, ParseSvcRecv);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(svc_recv, ParseSvcRecvEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_recv, ParseSvcRecv<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(svc_recv, ParseSvcRecv<ProtoEncoder::FtraceEvent>);
 
 struct SvcSendData {
     uint32_t xid {};
@@ -791,7 +602,8 @@ __attribute__((noinline)) void ParseSvcSendData(SvcSendData& eventData, uint8_t 
     eventData.flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.addr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseSvcSend(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSvcSend(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SvcSendData eventData {};
@@ -802,19 +614,8 @@ void ParseSvcSend(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_flags(eventData.flags);
     msg->set_addr(eventData.addr);
 }
-void ParseSvcSendEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SvcSendData eventData {};
-    ParseSvcSendData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_svc_send_format();
-    msg->set_xid(eventData.xid);
-    msg->set_status(eventData.status);
-    msg->set_flags(eventData.flags);
-    msg->set_addr(eventData.addr);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_send, ParseSvcSend);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(svc_send, ParseSvcSendEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_send, ParseSvcSend<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(svc_send, ParseSvcSend<ProtoEncoder::FtraceEvent>);
 
 struct SvcWakeUpData {
     int32_t pid {};
@@ -825,7 +626,8 @@ __attribute__((noinline)) void ParseSvcWakeUpData(SvcWakeUpData& eventData, uint
     int i = 0;
     eventData.pid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSvcWakeUp(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSvcWakeUp(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SvcWakeUpData eventData {};
@@ -833,16 +635,8 @@ void ParseSvcWakeUp(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     auto msg = ftraceEvent.mutable_svc_wake_up_format();
     msg->set_pid(eventData.pid);
 }
-void ParseSvcWakeUpEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SvcWakeUpData eventData {};
-    ParseSvcWakeUpData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_svc_wake_up_format();
-    msg->set_pid(eventData.pid);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_wake_up, ParseSvcWakeUp);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(svc_wake_up, ParseSvcWakeUpEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_wake_up, ParseSvcWakeUp<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(svc_wake_up, ParseSvcWakeUp<ProtoEncoder::FtraceEvent>);
 
 struct SvcXprtDequeueData {
     uint64_t xprt {};
@@ -859,7 +653,8 @@ __attribute__((noinline)) void ParseSvcXprtDequeueData(SvcXprtDequeueData& event
     eventData.wakeup = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.addr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseSvcXprtDequeue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSvcXprtDequeue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SvcXprtDequeueData eventData {};
@@ -870,19 +665,8 @@ void ParseSvcXprtDequeue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_wakeup(eventData.wakeup);
     msg->set_addr(eventData.addr);
 }
-void ParseSvcXprtDequeueEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SvcXprtDequeueData eventData {};
-    ParseSvcXprtDequeueData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_svc_xprt_dequeue_format();
-    msg->set_xprt(eventData.xprt);
-    msg->set_flags(eventData.flags);
-    msg->set_wakeup(eventData.wakeup);
-    msg->set_addr(eventData.addr);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_xprt_dequeue, ParseSvcXprtDequeue);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(svc_xprt_dequeue, ParseSvcXprtDequeueEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_xprt_dequeue, ParseSvcXprtDequeue<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(svc_xprt_dequeue, ParseSvcXprtDequeue<ProtoEncoder::FtraceEvent>);
 
 struct SvcXprtDoEnqueueData {
     uint64_t xprt {};
@@ -899,7 +683,8 @@ __attribute__((noinline)) void ParseSvcXprtDoEnqueueData(SvcXprtDoEnqueueData& e
     eventData.flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.addr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseSvcXprtDoEnqueue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSvcXprtDoEnqueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SvcXprtDoEnqueueData eventData {};
@@ -910,19 +695,8 @@ void ParseSvcXprtDoEnqueue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_flags(eventData.flags);
     msg->set_addr(eventData.addr);
 }
-void ParseSvcXprtDoEnqueueEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SvcXprtDoEnqueueData eventData {};
-    ParseSvcXprtDoEnqueueData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_svc_xprt_do_enqueue_format();
-    msg->set_xprt(eventData.xprt);
-    msg->set_pid(eventData.pid);
-    msg->set_flags(eventData.flags);
-    msg->set_addr(eventData.addr);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_xprt_do_enqueue, ParseSvcXprtDoEnqueue);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(svc_xprt_do_enqueue, ParseSvcXprtDoEnqueueEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(svc_xprt_do_enqueue, ParseSvcXprtDoEnqueue<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(svc_xprt_do_enqueue, ParseSvcXprtDoEnqueue<ProtoEncoder::FtraceEvent>);
 
 struct XprtCompleteRqstData {
     uint32_t xid {};
@@ -939,7 +713,8 @@ __attribute__((noinline)) void ParseXprtCompleteRqstData(XprtCompleteRqstData& e
     eventData.addr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.port = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseXprtCompleteRqst(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseXprtCompleteRqst(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     XprtCompleteRqstData eventData {};
@@ -950,19 +725,8 @@ void ParseXprtCompleteRqst(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_addr(eventData.addr);
     msg->set_port(eventData.port);
 }
-void ParseXprtCompleteRqstEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    XprtCompleteRqstData eventData {};
-    ParseXprtCompleteRqstData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_xprt_complete_rqst_format();
-    msg->set_xid(eventData.xid);
-    msg->set_status(eventData.status);
-    msg->set_addr(eventData.addr);
-    msg->set_port(eventData.port);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(xprt_complete_rqst, ParseXprtCompleteRqst);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(xprt_complete_rqst, ParseXprtCompleteRqstEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(xprt_complete_rqst, ParseXprtCompleteRqst<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(xprt_complete_rqst, ParseXprtCompleteRqst<ProtoEncoder::FtraceEvent>);
 
 struct XprtLookupRqstData {
     uint32_t xid {};
@@ -979,7 +743,8 @@ __attribute__((noinline)) void ParseXprtLookupRqstData(XprtLookupRqstData& event
     eventData.addr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.port = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseXprtLookupRqst(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseXprtLookupRqst(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     XprtLookupRqstData eventData {};
@@ -990,19 +755,8 @@ void ParseXprtLookupRqst(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_addr(eventData.addr);
     msg->set_port(eventData.port);
 }
-void ParseXprtLookupRqstEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    XprtLookupRqstData eventData {};
-    ParseXprtLookupRqstData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_xprt_lookup_rqst_format();
-    msg->set_xid(eventData.xid);
-    msg->set_status(eventData.status);
-    msg->set_addr(eventData.addr);
-    msg->set_port(eventData.port);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(xprt_lookup_rqst, ParseXprtLookupRqst);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(xprt_lookup_rqst, ParseXprtLookupRqstEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(xprt_lookup_rqst, ParseXprtLookupRqst<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(xprt_lookup_rqst, ParseXprtLookupRqst<ProtoEncoder::FtraceEvent>);
 
 struct XprtTransmitData {
     uint32_t xid {};
@@ -1019,7 +773,8 @@ __attribute__((noinline)) void ParseXprtTransmitData(XprtTransmitData& eventData
     eventData.addr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.port = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseXprtTransmit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseXprtTransmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     XprtTransmitData eventData {};
@@ -1030,19 +785,8 @@ void ParseXprtTransmit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_addr(eventData.addr);
     msg->set_port(eventData.port);
 }
-void ParseXprtTransmitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    XprtTransmitData eventData {};
-    ParseXprtTransmitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_xprt_transmit_format();
-    msg->set_xid(eventData.xid);
-    msg->set_status(eventData.status);
-    msg->set_addr(eventData.addr);
-    msg->set_port(eventData.port);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(xprt_transmit, ParseXprtTransmit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(xprt_transmit, ParseXprtTransmitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(xprt_transmit, ParseXprtTransmit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(xprt_transmit, ParseXprtTransmit<ProtoEncoder::FtraceEvent>);
 
 struct XsTcpDataReadyData {
     int32_t err {};
@@ -1059,7 +803,8 @@ __attribute__((noinline)) void ParseXsTcpDataReadyData(XsTcpDataReadyData& event
     eventData.addr = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.port = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseXsTcpDataReady(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseXsTcpDataReady(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     XsTcpDataReadyData eventData {};
@@ -1070,19 +815,8 @@ void ParseXsTcpDataReady(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_addr(eventData.addr);
     msg->set_port(eventData.port);
 }
-void ParseXsTcpDataReadyEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    XsTcpDataReadyData eventData {};
-    ParseXsTcpDataReadyData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_xs_tcp_data_ready_format();
-    msg->set_err(eventData.err);
-    msg->set_total(eventData.total);
-    msg->set_addr(eventData.addr);
-    msg->set_port(eventData.port);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(xs_tcp_data_ready, ParseXsTcpDataReady);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(xs_tcp_data_ready, ParseXsTcpDataReadyEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(xs_tcp_data_ready, ParseXsTcpDataReady<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(xs_tcp_data_ready, ParseXsTcpDataReady<ProtoEncoder::FtraceEvent>);
 
 struct XsTcpDataRecvData {
     std::string addr {};
@@ -1105,7 +839,8 @@ __attribute__((noinline)) void ParseXsTcpDataRecvData(XsTcpDataRecvData& eventDa
     eventData.reclen = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.offset = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseXsTcpDataRecv(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseXsTcpDataRecv(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     XsTcpDataRecvData eventData {};
@@ -1119,21 +854,7 @@ void ParseXsTcpDataRecv(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_reclen(eventData.reclen);
     msg->set_offset(eventData.offset);
 }
-void ParseXsTcpDataRecvEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    XsTcpDataRecvData eventData {};
-    ParseXsTcpDataRecvData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_xs_tcp_data_recv_format();
-    msg->set_addr(eventData.addr);
-    msg->set_port(eventData.port);
-    msg->set_xid(eventData.xid);
-    msg->set_flags(eventData.flags);
-    msg->set_copied(eventData.copied);
-    msg->set_reclen(eventData.reclen);
-    msg->set_offset(eventData.offset);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(xs_tcp_data_recv, ParseXsTcpDataRecv);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(xs_tcp_data_recv, ParseXsTcpDataRecvEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(xs_tcp_data_recv, ParseXsTcpDataRecv<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(xs_tcp_data_recv, ParseXsTcpDataRecv<ProtoEncoder::FtraceEvent>);
 } // namespace
 FTRACE_NS_END

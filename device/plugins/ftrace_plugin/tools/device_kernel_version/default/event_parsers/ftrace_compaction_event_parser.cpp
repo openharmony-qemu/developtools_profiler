@@ -37,7 +37,8 @@ __attribute__((noinline)) void ParseMmCompactionBeginData(MmCompactionBeginData&
     eventData.zone_end = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sync = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseMmCompactionBegin(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmCompactionBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmCompactionBeginData eventData {};
@@ -49,20 +50,8 @@ void ParseMmCompactionBegin(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_zone_end(eventData.zone_end);
     msg->set_sync(eventData.sync);
 }
-void ParseMmCompactionBeginEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmCompactionBeginData eventData {};
-    ParseMmCompactionBeginData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_compaction_begin_format();
-    msg->set_zone_start(eventData.zone_start);
-    msg->set_migrate_pfn(eventData.migrate_pfn);
-    msg->set_free_pfn(eventData.free_pfn);
-    msg->set_zone_end(eventData.zone_end);
-    msg->set_sync(eventData.sync);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_begin, ParseMmCompactionBegin);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_begin, ParseMmCompactionBeginEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_begin, ParseMmCompactionBegin<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_begin, ParseMmCompactionBegin<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionDeferCompactionData {
     int32_t nid {};
@@ -83,7 +72,8 @@ __attribute__((noinline)) void ParseMmCompactionDeferCompactionData(MmCompaction
     eventData.defer_shift = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.order_failed = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseMmCompactionDeferCompaction(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmCompactionDeferCompaction(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmCompactionDeferCompactionData eventData {};
@@ -96,21 +86,8 @@ void ParseMmCompactionDeferCompaction(FtraceEvent& ftraceEvent, uint8_t data[], 
     msg->set_defer_shift(eventData.defer_shift);
     msg->set_order_failed(eventData.order_failed);
 }
-void ParseMmCompactionDeferCompactionEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmCompactionDeferCompactionData eventData {};
-    ParseMmCompactionDeferCompactionData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_compaction_defer_compaction_format();
-    msg->set_nid(eventData.nid);
-    msg->set_idx(eventData.idx);
-    msg->set_order(eventData.order);
-    msg->set_considered(eventData.considered);
-    msg->set_defer_shift(eventData.defer_shift);
-    msg->set_order_failed(eventData.order_failed);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_defer_compaction, ParseMmCompactionDeferCompaction);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_defer_compaction, ParseMmCompactionDeferCompactionEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_defer_compaction, ParseMmCompactionDeferCompaction<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_defer_compaction, ParseMmCompactionDeferCompaction<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionDeferResetData {
     int32_t nid {};
@@ -131,7 +108,8 @@ __attribute__((noinline)) void ParseMmCompactionDeferResetData(MmCompactionDefer
     eventData.defer_shift = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.order_failed = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseMmCompactionDeferReset(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmCompactionDeferReset(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmCompactionDeferResetData eventData {};
@@ -144,21 +122,8 @@ void ParseMmCompactionDeferReset(FtraceEvent& ftraceEvent, uint8_t data[], size_
     msg->set_defer_shift(eventData.defer_shift);
     msg->set_order_failed(eventData.order_failed);
 }
-void ParseMmCompactionDeferResetEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmCompactionDeferResetData eventData {};
-    ParseMmCompactionDeferResetData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_compaction_defer_reset_format();
-    msg->set_nid(eventData.nid);
-    msg->set_idx(eventData.idx);
-    msg->set_order(eventData.order);
-    msg->set_considered(eventData.considered);
-    msg->set_defer_shift(eventData.defer_shift);
-    msg->set_order_failed(eventData.order_failed);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_defer_reset, ParseMmCompactionDeferReset);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_defer_reset, ParseMmCompactionDeferResetEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_defer_reset, ParseMmCompactionDeferReset<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_defer_reset, ParseMmCompactionDeferReset<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionDeferredData {
     int32_t nid {};
@@ -179,7 +144,8 @@ __attribute__((noinline)) void ParseMmCompactionDeferredData(MmCompactionDeferre
     eventData.defer_shift = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.order_failed = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseMmCompactionDeferred(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmCompactionDeferred(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmCompactionDeferredData eventData {};
@@ -192,21 +158,8 @@ void ParseMmCompactionDeferred(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_defer_shift(eventData.defer_shift);
     msg->set_order_failed(eventData.order_failed);
 }
-void ParseMmCompactionDeferredEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmCompactionDeferredData eventData {};
-    ParseMmCompactionDeferredData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_compaction_deferred_format();
-    msg->set_nid(eventData.nid);
-    msg->set_idx(eventData.idx);
-    msg->set_order(eventData.order);
-    msg->set_considered(eventData.considered);
-    msg->set_defer_shift(eventData.defer_shift);
-    msg->set_order_failed(eventData.order_failed);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_deferred, ParseMmCompactionDeferred);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_deferred, ParseMmCompactionDeferredEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_deferred, ParseMmCompactionDeferred<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_deferred, ParseMmCompactionDeferred<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionEndData {
     uint64_t zone_start {};
@@ -227,7 +180,8 @@ __attribute__((noinline)) void ParseMmCompactionEndData(MmCompactionEndData& eve
     eventData.sync = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.status = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseMmCompactionEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmCompactionEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmCompactionEndData eventData {};
@@ -240,21 +194,8 @@ void ParseMmCompactionEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_sync(eventData.sync);
     msg->set_status(eventData.status);
 }
-void ParseMmCompactionEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmCompactionEndData eventData {};
-    ParseMmCompactionEndData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_compaction_end_format();
-    msg->set_zone_start(eventData.zone_start);
-    msg->set_migrate_pfn(eventData.migrate_pfn);
-    msg->set_free_pfn(eventData.free_pfn);
-    msg->set_zone_end(eventData.zone_end);
-    msg->set_sync(eventData.sync);
-    msg->set_status(eventData.status);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_end, ParseMmCompactionEnd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_end, ParseMmCompactionEndEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_end, ParseMmCompactionEnd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_end, ParseMmCompactionEnd<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionFinishedData {
     int32_t nid {};
@@ -271,7 +212,8 @@ __attribute__((noinline)) void ParseMmCompactionFinishedData(MmCompactionFinishe
     eventData.order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseMmCompactionFinished(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmCompactionFinished(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmCompactionFinishedData eventData {};
@@ -282,19 +224,8 @@ void ParseMmCompactionFinished(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_order(eventData.order);
     msg->set_ret(eventData.ret);
 }
-void ParseMmCompactionFinishedEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmCompactionFinishedData eventData {};
-    ParseMmCompactionFinishedData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_compaction_finished_format();
-    msg->set_nid(eventData.nid);
-    msg->set_idx(eventData.idx);
-    msg->set_order(eventData.order);
-    msg->set_ret(eventData.ret);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_finished, ParseMmCompactionFinished);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_finished, ParseMmCompactionFinishedEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_finished, ParseMmCompactionFinished<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_finished, ParseMmCompactionFinished<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionIsolateFreepagesData {
     uint64_t start_pfn {};
@@ -311,7 +242,8 @@ __attribute__((noinline)) void ParseMmCompactionIsolateFreepagesData(MmCompactio
     eventData.nr_scanned = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nr_taken = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseMmCompactionIsolateFreepages(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmCompactionIsolateFreepages(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmCompactionIsolateFreepagesData eventData {};
@@ -322,19 +254,8 @@ void ParseMmCompactionIsolateFreepages(FtraceEvent& ftraceEvent, uint8_t data[],
     msg->set_nr_scanned(eventData.nr_scanned);
     msg->set_nr_taken(eventData.nr_taken);
 }
-void ParseMmCompactionIsolateFreepagesEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmCompactionIsolateFreepagesData eventData {};
-    ParseMmCompactionIsolateFreepagesData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_compaction_isolate_freepages_format();
-    msg->set_start_pfn(eventData.start_pfn);
-    msg->set_end_pfn(eventData.end_pfn);
-    msg->set_nr_scanned(eventData.nr_scanned);
-    msg->set_nr_taken(eventData.nr_taken);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_freepages, ParseMmCompactionIsolateFreepages);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_freepages, ParseMmCompactionIsolateFreepagesEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_freepages, ParseMmCompactionIsolateFreepages<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_freepages, ParseMmCompactionIsolateFreepages<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionIsolateMigratepagesData {
     uint64_t start_pfn {};
@@ -351,7 +272,8 @@ __attribute__((noinline)) void ParseMmCompactionIsolateMigratepagesData(MmCompac
     eventData.nr_scanned = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nr_taken = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseMmCompactionIsolateMigratepages(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmCompactionIsolateMigratepages(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmCompactionIsolateMigratepagesData eventData {};
@@ -362,19 +284,8 @@ void ParseMmCompactionIsolateMigratepages(FtraceEvent& ftraceEvent, uint8_t data
     msg->set_nr_scanned(eventData.nr_scanned);
     msg->set_nr_taken(eventData.nr_taken);
 }
-void ParseMmCompactionIsolateMigratepagesEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmCompactionIsolateMigratepagesData eventData {};
-    ParseMmCompactionIsolateMigratepagesData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_compaction_isolate_migratepages_format();
-    msg->set_start_pfn(eventData.start_pfn);
-    msg->set_end_pfn(eventData.end_pfn);
-    msg->set_nr_scanned(eventData.nr_scanned);
-    msg->set_nr_taken(eventData.nr_taken);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_migratepages, ParseMmCompactionIsolateMigratepages);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_migratepages, ParseMmCompactionIsolateMigratepagesEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_migratepages, ParseMmCompactionIsolateMigratepages<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_migratepages, ParseMmCompactionIsolateMigratepages<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionMigratepagesData {
     uint64_t nr_migrated {};
@@ -387,7 +298,8 @@ __attribute__((noinline)) void ParseMmCompactionMigratepagesData(MmCompactionMig
     eventData.nr_migrated = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nr_failed = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseMmCompactionMigratepages(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmCompactionMigratepages(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmCompactionMigratepagesData eventData {};
@@ -396,17 +308,8 @@ void ParseMmCompactionMigratepages(FtraceEvent& ftraceEvent, uint8_t data[], siz
     msg->set_nr_migrated(eventData.nr_migrated);
     msg->set_nr_failed(eventData.nr_failed);
 }
-void ParseMmCompactionMigratepagesEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmCompactionMigratepagesData eventData {};
-    ParseMmCompactionMigratepagesData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_compaction_migratepages_format();
-    msg->set_nr_migrated(eventData.nr_migrated);
-    msg->set_nr_failed(eventData.nr_failed);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_migratepages, ParseMmCompactionMigratepages);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_migratepages, ParseMmCompactionMigratepagesEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_migratepages, ParseMmCompactionMigratepages<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_migratepages, ParseMmCompactionMigratepages<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionSuitableData {
     int32_t nid {};
@@ -423,7 +326,8 @@ __attribute__((noinline)) void ParseMmCompactionSuitableData(MmCompactionSuitabl
     eventData.order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseMmCompactionSuitable(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmCompactionSuitable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmCompactionSuitableData eventData {};
@@ -434,19 +338,8 @@ void ParseMmCompactionSuitable(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_order(eventData.order);
     msg->set_ret(eventData.ret);
 }
-void ParseMmCompactionSuitableEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmCompactionSuitableData eventData {};
-    ParseMmCompactionSuitableData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_compaction_suitable_format();
-    msg->set_nid(eventData.nid);
-    msg->set_idx(eventData.idx);
-    msg->set_order(eventData.order);
-    msg->set_ret(eventData.ret);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_suitable, ParseMmCompactionSuitable);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_suitable, ParseMmCompactionSuitableEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_suitable, ParseMmCompactionSuitable<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_suitable, ParseMmCompactionSuitable<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionTryToCompactPagesData {
     int32_t order {};
@@ -461,7 +354,8 @@ __attribute__((noinline)) void ParseMmCompactionTryToCompactPagesData(MmCompacti
     eventData.gfp_mask = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.prio = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseMmCompactionTryToCompactPages(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmCompactionTryToCompactPages(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmCompactionTryToCompactPagesData eventData {};
@@ -471,17 +365,7 @@ void ParseMmCompactionTryToCompactPages(FtraceEvent& ftraceEvent, uint8_t data[]
     msg->set_gfp_mask(eventData.gfp_mask);
     msg->set_prio(eventData.prio);
 }
-void ParseMmCompactionTryToCompactPagesEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmCompactionTryToCompactPagesData eventData {};
-    ParseMmCompactionTryToCompactPagesData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_compaction_try_to_compact_pages_format();
-    msg->set_order(eventData.order);
-    msg->set_gfp_mask(eventData.gfp_mask);
-    msg->set_prio(eventData.prio);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_try_to_compact_pages, ParseMmCompactionTryToCompactPages);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_try_to_compact_pages, ParseMmCompactionTryToCompactPagesEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_try_to_compact_pages, ParseMmCompactionTryToCompactPages<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_try_to_compact_pages, ParseMmCompactionTryToCompactPages<ProtoEncoder::FtraceEvent>);
 } // namespace
 FTRACE_NS_END

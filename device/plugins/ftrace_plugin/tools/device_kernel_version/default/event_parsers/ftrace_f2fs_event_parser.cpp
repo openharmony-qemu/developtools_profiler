@@ -43,7 +43,8 @@ __attribute__((noinline)) void ParseF2fsSyncFileEnterData(F2fsSyncFileEnterData&
     eventData.blocks = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.advise = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseF2fsSyncFileEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseF2fsSyncFileEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     F2fsSyncFileEnterData eventData {};
@@ -58,23 +59,8 @@ void ParseF2fsSyncFileEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_blocks(eventData.blocks);
     msg->set_advise(eventData.advise);
 }
-void ParseF2fsSyncFileEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    F2fsSyncFileEnterData eventData {};
-    ParseF2fsSyncFileEnterData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_f2fs_sync_file_enter_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_pino(eventData.pino);
-    msg->set_mode(eventData.mode);
-    msg->set_size(eventData.size);
-    msg->set_nlink(eventData.nlink);
-    msg->set_blocks(eventData.blocks);
-    msg->set_advise(eventData.advise);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_sync_file_enter, ParseF2fsSyncFileEnter);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_sync_file_enter, ParseF2fsSyncFileEnterEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_sync_file_enter, ParseF2fsSyncFileEnter<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_sync_file_enter, ParseF2fsSyncFileEnter<ProtoEncoder::FtraceEvent>);
 
 struct F2fsSyncFileExitData {
     uint64_t dev {};
@@ -93,7 +79,8 @@ __attribute__((noinline)) void ParseF2fsSyncFileExitData(F2fsSyncFileExitData& e
     eventData.datasync = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseF2fsSyncFileExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseF2fsSyncFileExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     F2fsSyncFileExitData eventData {};
@@ -105,20 +92,8 @@ void ParseF2fsSyncFileExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_datasync(eventData.datasync);
     msg->set_ret(eventData.ret);
 }
-void ParseF2fsSyncFileExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    F2fsSyncFileExitData eventData {};
-    ParseF2fsSyncFileExitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_f2fs_sync_file_exit_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_cp_reason(eventData.cp_reason);
-    msg->set_datasync(eventData.datasync);
-    msg->set_ret(eventData.ret);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_sync_file_exit, ParseF2fsSyncFileExit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_sync_file_exit, ParseF2fsSyncFileExitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_sync_file_exit, ParseF2fsSyncFileExit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_sync_file_exit, ParseF2fsSyncFileExit<ProtoEncoder::FtraceEvent>);
 
 struct F2fsWriteBeginData {
     uint64_t dev {};
@@ -137,7 +112,8 @@ __attribute__((noinline)) void ParseF2fsWriteBeginData(F2fsWriteBeginData& event
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseF2fsWriteBegin(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseF2fsWriteBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     F2fsWriteBeginData eventData {};
@@ -149,20 +125,8 @@ void ParseF2fsWriteBegin(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_len(eventData.len);
     msg->set_flags(eventData.flags);
 }
-void ParseF2fsWriteBeginEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    F2fsWriteBeginData eventData {};
-    ParseF2fsWriteBeginData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_f2fs_write_begin_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_pos(eventData.pos);
-    msg->set_len(eventData.len);
-    msg->set_flags(eventData.flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_write_begin, ParseF2fsWriteBegin);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_write_begin, ParseF2fsWriteBeginEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_write_begin, ParseF2fsWriteBegin<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_write_begin, ParseF2fsWriteBegin<ProtoEncoder::FtraceEvent>);
 
 struct F2fsWriteEndData {
     uint64_t dev {};
@@ -181,7 +145,8 @@ __attribute__((noinline)) void ParseF2fsWriteEndData(F2fsWriteEndData& eventData
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.copied = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseF2fsWriteEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseF2fsWriteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     F2fsWriteEndData eventData {};
@@ -193,19 +158,7 @@ void ParseF2fsWriteEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_len(eventData.len);
     msg->set_copied(eventData.copied);
 }
-void ParseF2fsWriteEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    F2fsWriteEndData eventData {};
-    ParseF2fsWriteEndData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_f2fs_write_end_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_pos(eventData.pos);
-    msg->set_len(eventData.len);
-    msg->set_copied(eventData.copied);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_write_end, ParseF2fsWriteEnd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_write_end, ParseF2fsWriteEndEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(f2fs_write_end, ParseF2fsWriteEnd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(f2fs_write_end, ParseF2fsWriteEnd<ProtoEncoder::FtraceEvent>);
 } // namespace
 FTRACE_NS_END

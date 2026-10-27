@@ -37,7 +37,8 @@ __attribute__((noinline)) void ParseFileCheckAndAdvanceWbErrData(FileCheckAndAdv
     eventData.old = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.seq_new = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseFileCheckAndAdvanceWbErr(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseFileCheckAndAdvanceWbErr(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     FileCheckAndAdvanceWbErrData eventData {};
@@ -49,20 +50,8 @@ void ParseFileCheckAndAdvanceWbErr(FtraceEvent& ftraceEvent, uint8_t data[], siz
     msg->set_old(eventData.old);
     msg->set_seq_new(eventData.seq_new);
 }
-void ParseFileCheckAndAdvanceWbErrEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    FileCheckAndAdvanceWbErrData eventData {};
-    ParseFileCheckAndAdvanceWbErrData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_file_check_and_advance_wb_err_format();
-    msg->set_file(eventData.file);
-    msg->set_i_ino(eventData.i_ino);
-    msg->set_s_dev(eventData.s_dev);
-    msg->set_old(eventData.old);
-    msg->set_seq_new(eventData.seq_new);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(file_check_and_advance_wb_err, ParseFileCheckAndAdvanceWbErr);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(file_check_and_advance_wb_err, ParseFileCheckAndAdvanceWbErrEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(file_check_and_advance_wb_err, ParseFileCheckAndAdvanceWbErr<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(file_check_and_advance_wb_err, ParseFileCheckAndAdvanceWbErr<ProtoEncoder::FtraceEvent>);
 
 struct FilemapSetWbErrData {
     uint64_t i_ino {};
@@ -77,7 +66,8 @@ __attribute__((noinline)) void ParseFilemapSetWbErrData(FilemapSetWbErrData& eve
     eventData.s_dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.errseq = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseFilemapSetWbErr(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseFilemapSetWbErr(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     FilemapSetWbErrData eventData {};
@@ -87,18 +77,8 @@ void ParseFilemapSetWbErr(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_s_dev(eventData.s_dev);
     msg->set_errseq(eventData.errseq);
 }
-void ParseFilemapSetWbErrEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    FilemapSetWbErrData eventData {};
-    ParseFilemapSetWbErrData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_filemap_set_wb_err_format();
-    msg->set_i_ino(eventData.i_ino);
-    msg->set_s_dev(eventData.s_dev);
-    msg->set_errseq(eventData.errseq);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(filemap_set_wb_err, ParseFilemapSetWbErr);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(filemap_set_wb_err, ParseFilemapSetWbErrEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(filemap_set_wb_err, ParseFilemapSetWbErr<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(filemap_set_wb_err, ParseFilemapSetWbErr<ProtoEncoder::FtraceEvent>);
 
 struct MmFilemapAddToPageCacheData {
     uint64_t pfn {};
@@ -117,7 +97,8 @@ __attribute__((noinline)) void ParseMmFilemapAddToPageCacheData(MmFilemapAddToPa
     eventData.s_dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.order = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseMmFilemapAddToPageCache(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmFilemapAddToPageCache(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmFilemapAddToPageCacheData eventData {};
@@ -129,20 +110,8 @@ void ParseMmFilemapAddToPageCache(FtraceEvent& ftraceEvent, uint8_t data[], size
     msg->set_s_dev(eventData.s_dev);
     msg->set_order(eventData.order);
 }
-void ParseMmFilemapAddToPageCacheEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmFilemapAddToPageCacheData eventData {};
-    ParseMmFilemapAddToPageCacheData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_filemap_add_to_page_cache_format();
-    msg->set_pfn(eventData.pfn);
-    msg->set_i_ino(eventData.i_ino);
-    msg->set_index(eventData.index);
-    msg->set_s_dev(eventData.s_dev);
-    msg->set_order(eventData.order);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_filemap_add_to_page_cache, ParseMmFilemapAddToPageCache);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_filemap_add_to_page_cache, ParseMmFilemapAddToPageCacheEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_filemap_add_to_page_cache, ParseMmFilemapAddToPageCache<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_filemap_add_to_page_cache, ParseMmFilemapAddToPageCache<ProtoEncoder::FtraceEvent>);
 
 struct MmFilemapDeleteFromPageCacheData {
     uint64_t pfn {};
@@ -161,7 +130,8 @@ __attribute__((noinline)) void ParseMmFilemapDeleteFromPageCacheData(MmFilemapDe
     eventData.s_dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.order = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseMmFilemapDeleteFromPageCache(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmFilemapDeleteFromPageCache(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmFilemapDeleteFromPageCacheData eventData {};
@@ -173,19 +143,7 @@ void ParseMmFilemapDeleteFromPageCache(FtraceEvent& ftraceEvent, uint8_t data[],
     msg->set_s_dev(eventData.s_dev);
     msg->set_order(eventData.order);
 }
-void ParseMmFilemapDeleteFromPageCacheEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmFilemapDeleteFromPageCacheData eventData {};
-    ParseMmFilemapDeleteFromPageCacheData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_filemap_delete_from_page_cache_format();
-    msg->set_pfn(eventData.pfn);
-    msg->set_i_ino(eventData.i_ino);
-    msg->set_index(eventData.index);
-    msg->set_s_dev(eventData.s_dev);
-    msg->set_order(eventData.order);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_filemap_delete_from_page_cache, ParseMmFilemapDeleteFromPageCache);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_filemap_delete_from_page_cache, ParseMmFilemapDeleteFromPageCacheEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_filemap_delete_from_page_cache, ParseMmFilemapDeleteFromPageCache<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_filemap_delete_from_page_cache, ParseMmFilemapDeleteFromPageCache<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

@@ -227,12 +227,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.rpc_task_begin_format();
         char buffer[BUFFER_SIZE] = {0};
         int len = 0;
-        std::string functionStr = "";
+        std::string functionStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.action()) > 0) {
             functionStr = kernelSymbols[msg.action()];
         }
-        if (functionStr != "") {
+        if (!functionStr.empty()) {
             len = snprintf_s(
                 buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                 "rpc_task_begin: task:%08x@%08x flags=%s runstate=%s status=%d action=%s", msg.task_id(),
@@ -277,12 +277,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.rpc_task_complete_format();
         char buffer[BUFFER_SIZE] = {0};
         int len = 0;
-        std::string functionStr = "";
+        std::string functionStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.action()) > 0) {
             functionStr = kernelSymbols[msg.action()];
         }
-        if (functionStr != "") {
+        if (!functionStr.empty()) {
             len = snprintf_s(
                 buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                 "rpc_task_complete: task:%08x@%08x flags=%s runstate=%s status=%d action=%s", msg.task_id(),
@@ -327,12 +327,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.rpc_task_run_action_format();
         char buffer[BUFFER_SIZE] = {0};
         int len = 0;
-        std::string functionStr = "";
+        std::string functionStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.action()) > 0) {
             functionStr = kernelSymbols[msg.action()];
         }
-        if (functionStr != "") {
+        if (!functionStr.empty()) {
             len = snprintf_s(
                 buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                 "rpc_task_run_action: task:%08x@%08x flags=%s runstate=%s status=%d action=%s", msg.task_id(),

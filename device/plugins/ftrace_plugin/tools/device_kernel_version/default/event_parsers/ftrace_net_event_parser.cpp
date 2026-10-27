@@ -65,7 +65,8 @@ __attribute__((noinline)) void ParseNapiGroFragsEntryData(NapiGroFragsEntryData&
     eventData.gso_size = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.gso_type = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseNapiGroFragsEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseNapiGroFragsEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     NapiGroFragsEntryData eventData {};
@@ -91,34 +92,8 @@ void ParseNapiGroFragsEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_gso_size(eventData.gso_size);
     msg->set_gso_type(eventData.gso_type);
 }
-void ParseNapiGroFragsEntryEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    NapiGroFragsEntryData eventData {};
-    ParseNapiGroFragsEntryData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_napi_gro_frags_entry_format();
-    msg->set_name(eventData.name);
-    msg->set_napi_id(eventData.napi_id);
-    msg->set_queue_mapping(eventData.queue_mapping);
-    msg->set_skbaddr(eventData.skbaddr);
-    msg->set_vlan_tagged(eventData.vlan_tagged);
-    msg->set_vlan_proto(eventData.vlan_proto);
-    msg->set_vlan_tci(eventData.vlan_tci);
-    msg->set_protocol(eventData.protocol);
-    msg->set_ip_summed(eventData.ip_summed);
-    msg->set_hash(eventData.hash);
-    msg->set_l4_hash(eventData.l4_hash);
-    msg->set_len(eventData.len);
-    msg->set_data_len(eventData.data_len);
-    msg->set_truesize(eventData.truesize);
-    msg->set_mac_header_valid(eventData.mac_header_valid);
-    msg->set_mac_header(eventData.mac_header);
-    msg->set_nr_frags(eventData.nr_frags);
-    msg->set_gso_size(eventData.gso_size);
-    msg->set_gso_type(eventData.gso_type);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(napi_gro_frags_entry, ParseNapiGroFragsEntry);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(napi_gro_frags_entry, ParseNapiGroFragsEntryEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(napi_gro_frags_entry, ParseNapiGroFragsEntry<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(napi_gro_frags_entry, ParseNapiGroFragsEntry<ProtoEncoder::FtraceEvent>);
 
 struct NapiGroReceiveEntryData {
     std::string name {};
@@ -165,7 +140,8 @@ __attribute__((noinline)) void ParseNapiGroReceiveEntryData(NapiGroReceiveEntryD
     eventData.gso_size = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.gso_type = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseNapiGroReceiveEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseNapiGroReceiveEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     NapiGroReceiveEntryData eventData {};
@@ -191,34 +167,8 @@ void ParseNapiGroReceiveEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t s
     msg->set_gso_size(eventData.gso_size);
     msg->set_gso_type(eventData.gso_type);
 }
-void ParseNapiGroReceiveEntryEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    NapiGroReceiveEntryData eventData {};
-    ParseNapiGroReceiveEntryData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_napi_gro_receive_entry_format();
-    msg->set_name(eventData.name);
-    msg->set_napi_id(eventData.napi_id);
-    msg->set_queue_mapping(eventData.queue_mapping);
-    msg->set_skbaddr(eventData.skbaddr);
-    msg->set_vlan_tagged(eventData.vlan_tagged);
-    msg->set_vlan_proto(eventData.vlan_proto);
-    msg->set_vlan_tci(eventData.vlan_tci);
-    msg->set_protocol(eventData.protocol);
-    msg->set_ip_summed(eventData.ip_summed);
-    msg->set_hash(eventData.hash);
-    msg->set_l4_hash(eventData.l4_hash);
-    msg->set_len(eventData.len);
-    msg->set_data_len(eventData.data_len);
-    msg->set_truesize(eventData.truesize);
-    msg->set_mac_header_valid(eventData.mac_header_valid);
-    msg->set_mac_header(eventData.mac_header);
-    msg->set_nr_frags(eventData.nr_frags);
-    msg->set_gso_size(eventData.gso_size);
-    msg->set_gso_type(eventData.gso_type);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(napi_gro_receive_entry, ParseNapiGroReceiveEntry);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(napi_gro_receive_entry, ParseNapiGroReceiveEntryEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(napi_gro_receive_entry, ParseNapiGroReceiveEntry<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(napi_gro_receive_entry, ParseNapiGroReceiveEntry<ProtoEncoder::FtraceEvent>);
 
 struct NetDevQueueData {
     uint64_t skbaddr {};
@@ -233,7 +183,8 @@ __attribute__((noinline)) void ParseNetDevQueueData(NetDevQueueData& eventData, 
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseNetDevQueue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseNetDevQueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     NetDevQueueData eventData {};
@@ -243,18 +194,8 @@ void ParseNetDevQueue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_len(eventData.len);
     msg->set_name(eventData.name);
 }
-void ParseNetDevQueueEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    NetDevQueueData eventData {};
-    ParseNetDevQueueData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_net_dev_queue_format();
-    msg->set_skbaddr(eventData.skbaddr);
-    msg->set_len(eventData.len);
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(net_dev_queue, ParseNetDevQueue);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(net_dev_queue, ParseNetDevQueueEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(net_dev_queue, ParseNetDevQueue<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(net_dev_queue, ParseNetDevQueue<ProtoEncoder::FtraceEvent>);
 
 struct NetDevStartXmitData {
     std::string name {};
@@ -297,7 +238,8 @@ __attribute__((noinline)) void ParseNetDevStartXmitData(NetDevStartXmitData& eve
     eventData.gso_segs = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.gso_type = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseNetDevStartXmit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseNetDevStartXmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     NetDevStartXmitData eventData {};
@@ -321,32 +263,8 @@ void ParseNetDevStartXmit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_gso_segs(eventData.gso_segs);
     msg->set_gso_type(eventData.gso_type);
 }
-void ParseNetDevStartXmitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    NetDevStartXmitData eventData {};
-    ParseNetDevStartXmitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_net_dev_start_xmit_format();
-    msg->set_name(eventData.name);
-    msg->set_queue_mapping(eventData.queue_mapping);
-    msg->set_skbaddr(eventData.skbaddr);
-    msg->set_vlan_tagged(eventData.vlan_tagged);
-    msg->set_vlan_proto(eventData.vlan_proto);
-    msg->set_vlan_tci(eventData.vlan_tci);
-    msg->set_protocol(eventData.protocol);
-    msg->set_ip_summed(eventData.ip_summed);
-    msg->set_len(eventData.len);
-    msg->set_data_len(eventData.data_len);
-    msg->set_network_offset(eventData.network_offset);
-    msg->set_transport_offset_valid(eventData.transport_offset_valid);
-    msg->set_transport_offset(eventData.transport_offset);
-    msg->set_tx_flags(eventData.tx_flags);
-    msg->set_gso_size(eventData.gso_size);
-    msg->set_gso_segs(eventData.gso_segs);
-    msg->set_gso_type(eventData.gso_type);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(net_dev_start_xmit, ParseNetDevStartXmit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(net_dev_start_xmit, ParseNetDevStartXmitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(net_dev_start_xmit, ParseNetDevStartXmit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(net_dev_start_xmit, ParseNetDevStartXmit<ProtoEncoder::FtraceEvent>);
 
 struct NetDevXmitData {
     uint64_t skbaddr {};
@@ -363,7 +281,8 @@ __attribute__((noinline)) void ParseNetDevXmitData(NetDevXmitData& eventData, ui
     eventData.rc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseNetDevXmit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseNetDevXmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     NetDevXmitData eventData {};
@@ -374,19 +293,8 @@ void ParseNetDevXmit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_rc(eventData.rc);
     msg->set_name(eventData.name);
 }
-void ParseNetDevXmitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    NetDevXmitData eventData {};
-    ParseNetDevXmitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_net_dev_xmit_format();
-    msg->set_skbaddr(eventData.skbaddr);
-    msg->set_len(eventData.len);
-    msg->set_rc(eventData.rc);
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(net_dev_xmit, ParseNetDevXmit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(net_dev_xmit, ParseNetDevXmitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(net_dev_xmit, ParseNetDevXmit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(net_dev_xmit, ParseNetDevXmit<ProtoEncoder::FtraceEvent>);
 
 struct NetifReceiveSkbData {
     uint64_t skbaddr {};
@@ -401,7 +309,8 @@ __attribute__((noinline)) void ParseNetifReceiveSkbData(NetifReceiveSkbData& eve
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseNetifReceiveSkb(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseNetifReceiveSkb(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     NetifReceiveSkbData eventData {};
@@ -411,18 +320,8 @@ void ParseNetifReceiveSkb(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_len(eventData.len);
     msg->set_name(eventData.name);
 }
-void ParseNetifReceiveSkbEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    NetifReceiveSkbData eventData {};
-    ParseNetifReceiveSkbData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_netif_receive_skb_format();
-    msg->set_skbaddr(eventData.skbaddr);
-    msg->set_len(eventData.len);
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_receive_skb, ParseNetifReceiveSkb);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_receive_skb, ParseNetifReceiveSkbEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_receive_skb, ParseNetifReceiveSkb<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_receive_skb, ParseNetifReceiveSkb<ProtoEncoder::FtraceEvent>);
 
 struct NetifReceiveSkbEntryData {
     std::string name {};
@@ -469,7 +368,8 @@ __attribute__((noinline)) void ParseNetifReceiveSkbEntryData(NetifReceiveSkbEntr
     eventData.gso_size = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.gso_type = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseNetifReceiveSkbEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseNetifReceiveSkbEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     NetifReceiveSkbEntryData eventData {};
@@ -495,34 +395,8 @@ void ParseNetifReceiveSkbEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_gso_size(eventData.gso_size);
     msg->set_gso_type(eventData.gso_type);
 }
-void ParseNetifReceiveSkbEntryEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    NetifReceiveSkbEntryData eventData {};
-    ParseNetifReceiveSkbEntryData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_netif_receive_skb_entry_format();
-    msg->set_name(eventData.name);
-    msg->set_napi_id(eventData.napi_id);
-    msg->set_queue_mapping(eventData.queue_mapping);
-    msg->set_skbaddr(eventData.skbaddr);
-    msg->set_vlan_tagged(eventData.vlan_tagged);
-    msg->set_vlan_proto(eventData.vlan_proto);
-    msg->set_vlan_tci(eventData.vlan_tci);
-    msg->set_protocol(eventData.protocol);
-    msg->set_ip_summed(eventData.ip_summed);
-    msg->set_hash(eventData.hash);
-    msg->set_l4_hash(eventData.l4_hash);
-    msg->set_len(eventData.len);
-    msg->set_data_len(eventData.data_len);
-    msg->set_truesize(eventData.truesize);
-    msg->set_mac_header_valid(eventData.mac_header_valid);
-    msg->set_mac_header(eventData.mac_header);
-    msg->set_nr_frags(eventData.nr_frags);
-    msg->set_gso_size(eventData.gso_size);
-    msg->set_gso_type(eventData.gso_type);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_receive_skb_entry, ParseNetifReceiveSkbEntry);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_receive_skb_entry, ParseNetifReceiveSkbEntryEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_receive_skb_entry, ParseNetifReceiveSkbEntry<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_receive_skb_entry, ParseNetifReceiveSkbEntry<ProtoEncoder::FtraceEvent>);
 
 struct NetifRxData {
     uint64_t skbaddr {};
@@ -537,7 +411,8 @@ __attribute__((noinline)) void ParseNetifRxData(NetifRxData& eventData, uint8_t 
     eventData.len = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseNetifRx(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseNetifRx(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     NetifRxData eventData {};
@@ -547,18 +422,8 @@ void ParseNetifRx(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_len(eventData.len);
     msg->set_name(eventData.name);
 }
-void ParseNetifRxEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    NetifRxData eventData {};
-    ParseNetifRxData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_netif_rx_format();
-    msg->set_skbaddr(eventData.skbaddr);
-    msg->set_len(eventData.len);
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_rx, ParseNetifRx);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_rx, ParseNetifRxEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_rx, ParseNetifRx<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_rx, ParseNetifRx<ProtoEncoder::FtraceEvent>);
 
 struct NetifRxEntryData {
     std::string name {};
@@ -605,7 +470,8 @@ __attribute__((noinline)) void ParseNetifRxEntryData(NetifRxEntryData& eventData
     eventData.gso_size = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.gso_type = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseNetifRxEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseNetifRxEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     NetifRxEntryData eventData {};
@@ -631,34 +497,8 @@ void ParseNetifRxEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_gso_size(eventData.gso_size);
     msg->set_gso_type(eventData.gso_type);
 }
-void ParseNetifRxEntryEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    NetifRxEntryData eventData {};
-    ParseNetifRxEntryData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_netif_rx_entry_format();
-    msg->set_name(eventData.name);
-    msg->set_napi_id(eventData.napi_id);
-    msg->set_queue_mapping(eventData.queue_mapping);
-    msg->set_skbaddr(eventData.skbaddr);
-    msg->set_vlan_tagged(eventData.vlan_tagged);
-    msg->set_vlan_proto(eventData.vlan_proto);
-    msg->set_vlan_tci(eventData.vlan_tci);
-    msg->set_protocol(eventData.protocol);
-    msg->set_ip_summed(eventData.ip_summed);
-    msg->set_hash(eventData.hash);
-    msg->set_l4_hash(eventData.l4_hash);
-    msg->set_len(eventData.len);
-    msg->set_data_len(eventData.data_len);
-    msg->set_truesize(eventData.truesize);
-    msg->set_mac_header_valid(eventData.mac_header_valid);
-    msg->set_mac_header(eventData.mac_header);
-    msg->set_nr_frags(eventData.nr_frags);
-    msg->set_gso_size(eventData.gso_size);
-    msg->set_gso_type(eventData.gso_type);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_rx_entry, ParseNetifRxEntry);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_rx_entry, ParseNetifRxEntryEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_rx_entry, ParseNetifRxEntry<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_rx_entry, ParseNetifRxEntry<ProtoEncoder::FtraceEvent>);
 
 struct NetifRxNiEntryData {
     std::string name {};
@@ -705,7 +545,8 @@ __attribute__((noinline)) void ParseNetifRxNiEntryData(NetifRxNiEntryData& event
     eventData.gso_size = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.gso_type = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseNetifRxNiEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseNetifRxNiEntry(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     NetifRxNiEntryData eventData {};
@@ -731,33 +572,7 @@ void ParseNetifRxNiEntry(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_gso_size(eventData.gso_size);
     msg->set_gso_type(eventData.gso_type);
 }
-void ParseNetifRxNiEntryEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    NetifRxNiEntryData eventData {};
-    ParseNetifRxNiEntryData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_netif_rx_ni_entry_format();
-    msg->set_name(eventData.name);
-    msg->set_napi_id(eventData.napi_id);
-    msg->set_queue_mapping(eventData.queue_mapping);
-    msg->set_skbaddr(eventData.skbaddr);
-    msg->set_vlan_tagged(eventData.vlan_tagged);
-    msg->set_vlan_proto(eventData.vlan_proto);
-    msg->set_vlan_tci(eventData.vlan_tci);
-    msg->set_protocol(eventData.protocol);
-    msg->set_ip_summed(eventData.ip_summed);
-    msg->set_hash(eventData.hash);
-    msg->set_l4_hash(eventData.l4_hash);
-    msg->set_len(eventData.len);
-    msg->set_data_len(eventData.data_len);
-    msg->set_truesize(eventData.truesize);
-    msg->set_mac_header_valid(eventData.mac_header_valid);
-    msg->set_mac_header(eventData.mac_header);
-    msg->set_nr_frags(eventData.nr_frags);
-    msg->set_gso_size(eventData.gso_size);
-    msg->set_gso_type(eventData.gso_type);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_rx_ni_entry, ParseNetifRxNiEntry);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_rx_ni_entry, ParseNetifRxNiEntryEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_rx_ni_entry, ParseNetifRxNiEntry<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_rx_ni_entry, ParseNetifRxNiEntry<ProtoEncoder::FtraceEvent>);
 } // namespace
 FTRACE_NS_END

@@ -37,7 +37,8 @@ __attribute__((noinline)) void ParseSignalDeliverData(SignalDeliverData& eventDa
     eventData.sig_handler = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.sig_flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseSignalDeliver(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSignalDeliver(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SignalDeliverData eventData {};
@@ -49,20 +50,8 @@ void ParseSignalDeliver(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_sig_handler(eventData.sig_handler);
     msg->set_sig_flags(eventData.sig_flags);
 }
-void ParseSignalDeliverEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SignalDeliverData eventData {};
-    ParseSignalDeliverData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_signal_deliver_format();
-    msg->set_sig(eventData.sig);
-    msg->set_error_code(eventData.error_code);
-    msg->set_code(eventData.code);
-    msg->set_sig_handler(eventData.sig_handler);
-    msg->set_sig_flags(eventData.sig_flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(signal_deliver, ParseSignalDeliver);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(signal_deliver, ParseSignalDeliverEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(signal_deliver, ParseSignalDeliver<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(signal_deliver, ParseSignalDeliver<ProtoEncoder::FtraceEvent>);
 
 struct SignalGenerateData {
     int32_t sig {};
@@ -85,7 +74,8 @@ __attribute__((noinline)) void ParseSignalGenerateData(SignalGenerateData& event
     eventData.group = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.result = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseSignalGenerate(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSignalGenerate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     SignalGenerateData eventData {};
@@ -99,21 +89,7 @@ void ParseSignalGenerate(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_group(eventData.group);
     msg->set_result(eventData.result);
 }
-void ParseSignalGenerateEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SignalGenerateData eventData {};
-    ParseSignalGenerateData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_signal_generate_format();
-    msg->set_sig(eventData.sig);
-    msg->set_error_code(eventData.error_code);
-    msg->set_code(eventData.code);
-    msg->set_comm(eventData.comm);
-    msg->set_pid(eventData.pid);
-    msg->set_group(eventData.group);
-    msg->set_result(eventData.result);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(signal_generate, ParseSignalGenerate);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(signal_generate, ParseSignalGenerateEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(signal_generate, ParseSignalGenerate<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(signal_generate, ParseSignalGenerate<ProtoEncoder::FtraceEvent>);
 } // namespace
 FTRACE_NS_END

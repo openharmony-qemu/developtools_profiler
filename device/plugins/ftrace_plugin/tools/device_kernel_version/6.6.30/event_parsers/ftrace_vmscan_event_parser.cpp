@@ -41,7 +41,8 @@ __attribute__((noinline)) void ParseMmShrinkSlabEndData(MmShrinkSlabEndData& eve
     eventData.retval = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.total_scan = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseMmShrinkSlabEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmShrinkSlabEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmShrinkSlabEndData eventData {};
@@ -55,22 +56,8 @@ void ParseMmShrinkSlabEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_retval(eventData.retval);
     msg->set_total_scan(eventData.total_scan);
 }
-void ParseMmShrinkSlabEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmShrinkSlabEndData eventData {};
-    ParseMmShrinkSlabEndData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_shrink_slab_end_format();
-    msg->set_shr(eventData.shr);
-    msg->set_nid(eventData.nid);
-    msg->set_shrink(eventData.shrink);
-    msg->set_unused_scan(eventData.unused_scan);
-    msg->set_new_scan(eventData.new_scan);
-    msg->set_retval(eventData.retval);
-    msg->set_total_scan(eventData.total_scan);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_shrink_slab_end, ParseMmShrinkSlabEnd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_shrink_slab_end, ParseMmShrinkSlabEndEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_shrink_slab_end, ParseMmShrinkSlabEnd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_shrink_slab_end, ParseMmShrinkSlabEnd<ProtoEncoder::FtraceEvent>);
 
 struct MmShrinkSlabStartData {
     uint64_t shr {};
@@ -97,7 +84,8 @@ __attribute__((noinline)) void ParseMmShrinkSlabStartData(MmShrinkSlabStartData&
     eventData.total_scan = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.priority = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseMmShrinkSlabStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmShrinkSlabStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmShrinkSlabStartData eventData {};
@@ -113,24 +101,8 @@ void ParseMmShrinkSlabStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_total_scan(eventData.total_scan);
     msg->set_priority(eventData.priority);
 }
-void ParseMmShrinkSlabStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmShrinkSlabStartData eventData {};
-    ParseMmShrinkSlabStartData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_shrink_slab_start_format();
-    msg->set_shr(eventData.shr);
-    msg->set_shrink(eventData.shrink);
-    msg->set_nid(eventData.nid);
-    msg->set_nr_objects_to_shrink(eventData.nr_objects_to_shrink);
-    msg->set_gfp_flags(eventData.gfp_flags);
-    msg->set_cache_items(eventData.cache_items);
-    msg->set_delta(eventData.delta);
-    msg->set_total_scan(eventData.total_scan);
-    msg->set_priority(eventData.priority);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_shrink_slab_start, ParseMmShrinkSlabStart);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_shrink_slab_start, ParseMmShrinkSlabStartEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_shrink_slab_start, ParseMmShrinkSlabStart<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_shrink_slab_start, ParseMmShrinkSlabStart<ProtoEncoder::FtraceEvent>);
 
 struct MmVmscanDirectReclaimBeginData {
     int32_t order {};
@@ -143,7 +115,8 @@ __attribute__((noinline)) void ParseMmVmscanDirectReclaimBeginData(MmVmscanDirec
     eventData.order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.gfp_flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseMmVmscanDirectReclaimBegin(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmVmscanDirectReclaimBegin(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmVmscanDirectReclaimBeginData eventData {};
@@ -152,17 +125,8 @@ void ParseMmVmscanDirectReclaimBegin(FtraceEvent& ftraceEvent, uint8_t data[], s
     msg->set_order(eventData.order);
     msg->set_gfp_flags(eventData.gfp_flags);
 }
-void ParseMmVmscanDirectReclaimBeginEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmVmscanDirectReclaimBeginData eventData {};
-    ParseMmVmscanDirectReclaimBeginData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_vmscan_direct_reclaim_begin_format();
-    msg->set_order(eventData.order);
-    msg->set_gfp_flags(eventData.gfp_flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_direct_reclaim_begin, ParseMmVmscanDirectReclaimBegin);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_direct_reclaim_begin, ParseMmVmscanDirectReclaimBeginEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_direct_reclaim_begin, ParseMmVmscanDirectReclaimBegin<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_direct_reclaim_begin, ParseMmVmscanDirectReclaimBegin<ProtoEncoder::FtraceEvent>);
 
 struct MmVmscanDirectReclaimEndData {
     uint64_t nr_reclaimed {};
@@ -173,7 +137,8 @@ __attribute__((noinline)) void ParseMmVmscanDirectReclaimEndData(MmVmscanDirectR
     int i = 0;
     eventData.nr_reclaimed = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseMmVmscanDirectReclaimEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmVmscanDirectReclaimEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmVmscanDirectReclaimEndData eventData {};
@@ -181,16 +146,8 @@ void ParseMmVmscanDirectReclaimEnd(FtraceEvent& ftraceEvent, uint8_t data[], siz
     auto msg = ftraceEvent.mutable_mm_vmscan_direct_reclaim_end_format();
     msg->set_nr_reclaimed(eventData.nr_reclaimed);
 }
-void ParseMmVmscanDirectReclaimEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmVmscanDirectReclaimEndData eventData {};
-    ParseMmVmscanDirectReclaimEndData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_vmscan_direct_reclaim_end_format();
-    msg->set_nr_reclaimed(eventData.nr_reclaimed);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_direct_reclaim_end, ParseMmVmscanDirectReclaimEnd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_direct_reclaim_end, ParseMmVmscanDirectReclaimEndEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_direct_reclaim_end, ParseMmVmscanDirectReclaimEnd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_direct_reclaim_end, ParseMmVmscanDirectReclaimEnd<ProtoEncoder::FtraceEvent>);
 
 struct MmVmscanKswapdSleepData {
     int32_t nid {};
@@ -201,7 +158,8 @@ __attribute__((noinline)) void ParseMmVmscanKswapdSleepData(MmVmscanKswapdSleepD
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseMmVmscanKswapdSleep(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmVmscanKswapdSleep(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmVmscanKswapdSleepData eventData {};
@@ -209,16 +167,8 @@ void ParseMmVmscanKswapdSleep(FtraceEvent& ftraceEvent, uint8_t data[], size_t s
     auto msg = ftraceEvent.mutable_mm_vmscan_kswapd_sleep_format();
     msg->set_nid(eventData.nid);
 }
-void ParseMmVmscanKswapdSleepEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmVmscanKswapdSleepData eventData {};
-    ParseMmVmscanKswapdSleepData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_vmscan_kswapd_sleep_format();
-    msg->set_nid(eventData.nid);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_kswapd_sleep, ParseMmVmscanKswapdSleep);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_kswapd_sleep, ParseMmVmscanKswapdSleepEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_kswapd_sleep, ParseMmVmscanKswapdSleep<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_kswapd_sleep, ParseMmVmscanKswapdSleep<ProtoEncoder::FtraceEvent>);
 
 struct MmVmscanKswapdWakeData {
     int32_t nid {};
@@ -233,7 +183,8 @@ __attribute__((noinline)) void ParseMmVmscanKswapdWakeData(MmVmscanKswapdWakeDat
     eventData.zid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseMmVmscanKswapdWake(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmVmscanKswapdWake(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmVmscanKswapdWakeData eventData {};
@@ -243,18 +194,8 @@ void ParseMmVmscanKswapdWake(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_zid(eventData.zid);
     msg->set_order(eventData.order);
 }
-void ParseMmVmscanKswapdWakeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmVmscanKswapdWakeData eventData {};
-    ParseMmVmscanKswapdWakeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_vmscan_kswapd_wake_format();
-    msg->set_nid(eventData.nid);
-    msg->set_zid(eventData.zid);
-    msg->set_order(eventData.order);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_kswapd_wake, ParseMmVmscanKswapdWake);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_kswapd_wake, ParseMmVmscanKswapdWakeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_kswapd_wake, ParseMmVmscanKswapdWake<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_kswapd_wake, ParseMmVmscanKswapdWake<ProtoEncoder::FtraceEvent>);
 
 struct MmVmscanLruIsolateData {
     int32_t highest_zoneidx {};
@@ -279,7 +220,8 @@ __attribute__((noinline)) void ParseMmVmscanLruIsolateData(MmVmscanLruIsolateDat
     eventData.isolate_mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.lru = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseMmVmscanLruIsolate(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmVmscanLruIsolate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmVmscanLruIsolateData eventData {};
@@ -294,23 +236,8 @@ void ParseMmVmscanLruIsolate(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_isolate_mode(eventData.isolate_mode);
     msg->set_lru(eventData.lru);
 }
-void ParseMmVmscanLruIsolateEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmVmscanLruIsolateData eventData {};
-    ParseMmVmscanLruIsolateData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_vmscan_lru_isolate_format();
-    msg->set_highest_zoneidx(eventData.highest_zoneidx);
-    msg->set_order(eventData.order);
-    msg->set_nr_requested(eventData.nr_requested);
-    msg->set_nr_scanned(eventData.nr_scanned);
-    msg->set_nr_skipped(eventData.nr_skipped);
-    msg->set_nr_taken(eventData.nr_taken);
-    msg->set_isolate_mode(eventData.isolate_mode);
-    msg->set_lru(eventData.lru);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_lru_isolate, ParseMmVmscanLruIsolate);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_lru_isolate, ParseMmVmscanLruIsolateEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_lru_isolate, ParseMmVmscanLruIsolate<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_lru_isolate, ParseMmVmscanLruIsolate<ProtoEncoder::FtraceEvent>);
 
 struct MmVmscanLruShrinkInactiveData {
     int32_t nid {};
@@ -345,7 +272,8 @@ __attribute__((noinline)) void ParseMmVmscanLruShrinkInactiveData(MmVmscanLruShr
     eventData.priority = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.reclaim_flags = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseMmVmscanLruShrinkInactive(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmVmscanLruShrinkInactive(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmVmscanLruShrinkInactiveData eventData {};
@@ -365,28 +293,8 @@ void ParseMmVmscanLruShrinkInactive(FtraceEvent& ftraceEvent, uint8_t data[], si
     msg->set_priority(eventData.priority);
     msg->set_reclaim_flags(eventData.reclaim_flags);
 }
-void ParseMmVmscanLruShrinkInactiveEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmVmscanLruShrinkInactiveData eventData {};
-    ParseMmVmscanLruShrinkInactiveData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_vmscan_lru_shrink_inactive_format();
-    msg->set_nid(eventData.nid);
-    msg->set_nr_scanned(eventData.nr_scanned);
-    msg->set_nr_reclaimed(eventData.nr_reclaimed);
-    msg->set_nr_dirty(eventData.nr_dirty);
-    msg->set_nr_writeback(eventData.nr_writeback);
-    msg->set_nr_congested(eventData.nr_congested);
-    msg->set_nr_immediate(eventData.nr_immediate);
-    msg->set_nr_activate0(eventData.nr_activate0);
-    msg->set_nr_activate1(eventData.nr_activate1);
-    msg->set_nr_ref_keep(eventData.nr_ref_keep);
-    msg->set_nr_unmap_fail(eventData.nr_unmap_fail);
-    msg->set_priority(eventData.priority);
-    msg->set_reclaim_flags(eventData.reclaim_flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_lru_shrink_inactive, ParseMmVmscanLruShrinkInactive);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_lru_shrink_inactive, ParseMmVmscanLruShrinkInactiveEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_lru_shrink_inactive, ParseMmVmscanLruShrinkInactive<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_lru_shrink_inactive, ParseMmVmscanLruShrinkInactive<ProtoEncoder::FtraceEvent>);
 
 struct MmVmscanWakeupKswapdData {
     int32_t nid {};
@@ -403,7 +311,8 @@ __attribute__((noinline)) void ParseMmVmscanWakeupKswapdData(MmVmscanWakeupKswap
     eventData.order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.gfp_flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseMmVmscanWakeupKswapd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmVmscanWakeupKswapd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     MmVmscanWakeupKswapdData eventData {};
@@ -414,18 +323,7 @@ void ParseMmVmscanWakeupKswapd(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_order(eventData.order);
     msg->set_gfp_flags(eventData.gfp_flags);
 }
-void ParseMmVmscanWakeupKswapdEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmVmscanWakeupKswapdData eventData {};
-    ParseMmVmscanWakeupKswapdData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_vmscan_wakeup_kswapd_format();
-    msg->set_nid(eventData.nid);
-    msg->set_zid(eventData.zid);
-    msg->set_order(eventData.order);
-    msg->set_gfp_flags(eventData.gfp_flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_wakeup_kswapd, ParseMmVmscanWakeupKswapd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_wakeup_kswapd, ParseMmVmscanWakeupKswapdEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_wakeup_kswapd, ParseMmVmscanWakeupKswapd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_wakeup_kswapd, ParseMmVmscanWakeupKswapd<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

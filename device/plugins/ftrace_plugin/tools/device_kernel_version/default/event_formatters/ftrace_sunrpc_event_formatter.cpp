@@ -228,12 +228,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.rpc_task_begin_format();
         char buffer[BUFFER_SIZE];
         int len = 0;
-        std::string functionStr = "";
+        std::string functionStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.action()) > 0) {
             functionStr = kernelSymbols[msg.action()];
         }
-        if (functionStr != "") {
+        if (!functionStr.empty()) {
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                 "rpc_task_begin: task:%u@%d flags=%s runstate=%s status=%d action=%s", msg.task_id(), msg.client_id(),
                 __print_flags(msg.flags(), "|", {0x0001, "ASYNC"}, {0x0002, "SWAPPER"}, {0x0010, "NULLCREDS"},
@@ -274,12 +274,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.rpc_task_complete_format();
         char buffer[BUFFER_SIZE];
         int len = 0;
-        std::string functionStr = "";
+        std::string functionStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.action()) > 0) {
             functionStr = kernelSymbols[msg.action()];
         }
-        if (functionStr != "") {
+        if (!functionStr.empty()) {
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                 "rpc_task_complete: task:%u@%d flags=%s runstate=%s status=%d action=%s", msg.task_id(),
                 msg.client_id(),
@@ -322,12 +322,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.rpc_task_run_action_format();
         char buffer[BUFFER_SIZE];
         int len = 0;
-        std::string functionStr = "";
+        std::string functionStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.action()) > 0) {
             functionStr = kernelSymbols[msg.action()];
         }
-        if (functionStr != "") {
+        if (!functionStr.empty()) {
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                 "rpc_task_run_action: task:%u@%d flags=%s runstate=%s status=%d action=%s", msg.task_id(),
                 msg.client_id(),

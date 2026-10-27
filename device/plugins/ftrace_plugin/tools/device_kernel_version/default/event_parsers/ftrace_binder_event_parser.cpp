@@ -31,7 +31,8 @@ __attribute__((noinline)) void ParseBinderAllocLruEndData(BinderAllocLruEndData&
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderAllocLruEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderAllocLruEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderAllocLruEndData eventData {};
@@ -43,20 +44,8 @@ void ParseBinderAllocLruEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
-void ParseBinderAllocLruEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderAllocLruEndData eventData {};
-    ParseBinderAllocLruEndData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_alloc_lru_end_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_proc(eventData.proc);
-    msg->set_page_index(eventData.page_index);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_alloc_lru_end, ParseBinderAllocLruEnd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_alloc_lru_end, ParseBinderAllocLruEndEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_alloc_lru_end, ParseBinderAllocLruEnd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_alloc_lru_end, ParseBinderAllocLruEnd<ProtoEncoder::FtraceEvent>);
 
 struct BinderAllocLruStartData {
     int32_t proc {};
@@ -69,7 +58,8 @@ __attribute__((noinline)) void ParseBinderAllocLruStartData(BinderAllocLruStartD
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderAllocLruStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderAllocLruStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderAllocLruStartData eventData {};
@@ -81,20 +71,8 @@ void ParseBinderAllocLruStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t s
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
-void ParseBinderAllocLruStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderAllocLruStartData eventData {};
-    ParseBinderAllocLruStartData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_alloc_lru_start_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_proc(eventData.proc);
-    msg->set_page_index(eventData.page_index);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_alloc_lru_start, ParseBinderAllocLruStart);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_alloc_lru_start, ParseBinderAllocLruStartEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_alloc_lru_start, ParseBinderAllocLruStart<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_alloc_lru_start, ParseBinderAllocLruStart<ProtoEncoder::FtraceEvent>);
 
 struct BinderAllocPageEndData {
     int32_t proc {};
@@ -107,7 +85,8 @@ __attribute__((noinline)) void ParseBinderAllocPageEndData(BinderAllocPageEndDat
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderAllocPageEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderAllocPageEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderAllocPageEndData eventData {};
@@ -119,20 +98,8 @@ void ParseBinderAllocPageEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
-void ParseBinderAllocPageEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderAllocPageEndData eventData {};
-    ParseBinderAllocPageEndData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_alloc_page_end_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_proc(eventData.proc);
-    msg->set_page_index(eventData.page_index);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_alloc_page_end, ParseBinderAllocPageEnd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_alloc_page_end, ParseBinderAllocPageEndEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_alloc_page_end, ParseBinderAllocPageEnd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_alloc_page_end, ParseBinderAllocPageEnd<ProtoEncoder::FtraceEvent>);
 
 struct BinderAllocPageStartData {
     int32_t proc {};
@@ -145,7 +112,8 @@ __attribute__((noinline)) void ParseBinderAllocPageStartData(BinderAllocPageStar
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderAllocPageStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderAllocPageStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderAllocPageStartData eventData {};
@@ -157,20 +125,8 @@ void ParseBinderAllocPageStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
-void ParseBinderAllocPageStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderAllocPageStartData eventData {};
-    ParseBinderAllocPageStartData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_alloc_page_start_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_proc(eventData.proc);
-    msg->set_page_index(eventData.page_index);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_alloc_page_start, ParseBinderAllocPageStart);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_alloc_page_start, ParseBinderAllocPageStartEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_alloc_page_start, ParseBinderAllocPageStart<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_alloc_page_start, ParseBinderAllocPageStart<ProtoEncoder::FtraceEvent>);
 
 struct BinderCommandData {
     uint32_t cmd {};
@@ -181,7 +137,8 @@ __attribute__((noinline)) void ParseBinderCommandData(BinderCommandData& eventDa
     int i = 0;
     eventData.cmd = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseBinderCommand(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderCommand(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderCommandData eventData {};
@@ -192,19 +149,8 @@ void ParseBinderCommand(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     }
     msg->set_cmd(eventData.cmd);
 }
-void ParseBinderCommandEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderCommandData eventData {};
-    ParseBinderCommandData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_command_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_cmd(eventData.cmd);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_command, ParseBinderCommand);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_command, ParseBinderCommandEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_command, ParseBinderCommand<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_command, ParseBinderCommand<ProtoEncoder::FtraceEvent>);
 
 struct BinderFreeLruEndData {
     int32_t proc {};
@@ -217,7 +163,8 @@ __attribute__((noinline)) void ParseBinderFreeLruEndData(BinderFreeLruEndData& e
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderFreeLruEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderFreeLruEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderFreeLruEndData eventData {};
@@ -229,20 +176,8 @@ void ParseBinderFreeLruEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
-void ParseBinderFreeLruEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderFreeLruEndData eventData {};
-    ParseBinderFreeLruEndData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_free_lru_end_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_proc(eventData.proc);
-    msg->set_page_index(eventData.page_index);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_free_lru_end, ParseBinderFreeLruEnd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_free_lru_end, ParseBinderFreeLruEndEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_free_lru_end, ParseBinderFreeLruEnd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_free_lru_end, ParseBinderFreeLruEnd<ProtoEncoder::FtraceEvent>);
 
 struct BinderFreeLruStartData {
     int32_t proc {};
@@ -255,7 +190,8 @@ __attribute__((noinline)) void ParseBinderFreeLruStartData(BinderFreeLruStartDat
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderFreeLruStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderFreeLruStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderFreeLruStartData eventData {};
@@ -267,20 +203,8 @@ void ParseBinderFreeLruStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
-void ParseBinderFreeLruStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderFreeLruStartData eventData {};
-    ParseBinderFreeLruStartData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_free_lru_start_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_proc(eventData.proc);
-    msg->set_page_index(eventData.page_index);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_free_lru_start, ParseBinderFreeLruStart);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_free_lru_start, ParseBinderFreeLruStartEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_free_lru_start, ParseBinderFreeLruStart<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_free_lru_start, ParseBinderFreeLruStart<ProtoEncoder::FtraceEvent>);
 
 struct BinderIoctlData {
     uint32_t cmd {};
@@ -293,7 +217,8 @@ __attribute__((noinline)) void ParseBinderIoctlData(BinderIoctlData& eventData, 
     eventData.cmd = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.arg = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderIoctl(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderIoctl(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderIoctlData eventData {};
@@ -305,20 +230,8 @@ void ParseBinderIoctl(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_cmd(eventData.cmd);
     msg->set_arg(eventData.arg);
 }
-void ParseBinderIoctlEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderIoctlData eventData {};
-    ParseBinderIoctlData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_ioctl_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_cmd(eventData.cmd);
-    msg->set_arg(eventData.arg);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_ioctl, ParseBinderIoctl);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_ioctl, ParseBinderIoctlEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_ioctl, ParseBinderIoctl<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_ioctl, ParseBinderIoctl<ProtoEncoder::FtraceEvent>);
 
 struct BinderIoctlDoneData {
     int32_t ret {};
@@ -329,7 +242,8 @@ __attribute__((noinline)) void ParseBinderIoctlDoneData(BinderIoctlDoneData& eve
     int i = 0;
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseBinderIoctlDone(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderIoctlDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderIoctlDoneData eventData {};
@@ -340,19 +254,8 @@ void ParseBinderIoctlDone(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     }
     msg->set_ret(eventData.ret);
 }
-void ParseBinderIoctlDoneEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderIoctlDoneData eventData {};
-    ParseBinderIoctlDoneData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_ioctl_done_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_ret(eventData.ret);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_ioctl_done, ParseBinderIoctlDone);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_ioctl_done, ParseBinderIoctlDoneEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_ioctl_done, ParseBinderIoctlDone<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_ioctl_done, ParseBinderIoctlDone<ProtoEncoder::FtraceEvent>);
 
 struct BinderLockData {
     std::string tag {};
@@ -363,7 +266,8 @@ __attribute__((noinline)) void ParseBinderLockData(BinderLockData& eventData, ui
     int i = 0;
     eventData.tag = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseBinderLock(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderLock(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderLockData eventData {};
@@ -374,19 +278,8 @@ void ParseBinderLock(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     }
     msg->set_tag(eventData.tag);
 }
-void ParseBinderLockEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderLockData eventData {};
-    ParseBinderLockData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_lock_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_tag(eventData.tag);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_lock, ParseBinderLock);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_lock, ParseBinderLockEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_lock, ParseBinderLock<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_lock, ParseBinderLock<ProtoEncoder::FtraceEvent>);
 
 struct BinderLockedData {
     std::string tag {};
@@ -397,7 +290,8 @@ __attribute__((noinline)) void ParseBinderLockedData(BinderLockedData& eventData
     int i = 0;
     eventData.tag = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseBinderLocked(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderLocked(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderLockedData eventData {};
@@ -408,19 +302,8 @@ void ParseBinderLocked(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     }
     msg->set_tag(eventData.tag);
 }
-void ParseBinderLockedEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderLockedData eventData {};
-    ParseBinderLockedData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_locked_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_tag(eventData.tag);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_locked, ParseBinderLocked);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_locked, ParseBinderLockedEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_locked, ParseBinderLocked<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_locked, ParseBinderLocked<ProtoEncoder::FtraceEvent>);
 
 struct BinderReadDoneData {
     int32_t ret {};
@@ -431,7 +314,8 @@ __attribute__((noinline)) void ParseBinderReadDoneData(BinderReadDoneData& event
     int i = 0;
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseBinderReadDone(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderReadDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderReadDoneData eventData {};
@@ -442,19 +326,8 @@ void ParseBinderReadDone(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     }
     msg->set_ret(eventData.ret);
 }
-void ParseBinderReadDoneEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderReadDoneData eventData {};
-    ParseBinderReadDoneData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_read_done_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_ret(eventData.ret);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_read_done, ParseBinderReadDone);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_read_done, ParseBinderReadDoneEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_read_done, ParseBinderReadDone<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_read_done, ParseBinderReadDone<ProtoEncoder::FtraceEvent>);
 
 struct BinderReturnData {
     uint32_t cmd {};
@@ -465,7 +338,8 @@ __attribute__((noinline)) void ParseBinderReturnData(BinderReturnData& eventData
     int i = 0;
     eventData.cmd = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseBinderReturn(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderReturn(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderReturnData eventData {};
@@ -476,19 +350,8 @@ void ParseBinderReturn(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     }
     msg->set_cmd(eventData.cmd);
 }
-void ParseBinderReturnEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderReturnData eventData {};
-    ParseBinderReturnData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_return_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_cmd(eventData.cmd);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_return, ParseBinderReturn);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_return, ParseBinderReturnEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_return, ParseBinderReturn<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_return, ParseBinderReturn<ProtoEncoder::FtraceEvent>);
 
 struct BinderTransactionData {
     int32_t debug_id {};
@@ -512,7 +375,8 @@ __attribute__((noinline)) void ParseBinderTransactionData(BinderTransactionData&
     eventData.code = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseBinderTransaction(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderTransaction(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderTransactionData eventData {};
@@ -529,25 +393,8 @@ void ParseBinderTransaction(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_code(eventData.code);
     msg->set_flags(eventData.flags);
 }
-void ParseBinderTransactionEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderTransactionData eventData {};
-    ParseBinderTransactionData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_transaction_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_debug_id(eventData.debug_id);
-    msg->set_target_node(eventData.target_node);
-    msg->set_to_proc(eventData.to_proc);
-    msg->set_to_thread(eventData.to_thread);
-    msg->set_reply(eventData.reply);
-    msg->set_code(eventData.code);
-    msg->set_flags(eventData.flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction, ParseBinderTransaction);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction, ParseBinderTransactionEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction, ParseBinderTransaction<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction, ParseBinderTransaction<ProtoEncoder::FtraceEvent>);
 
 struct BinderTransactionAllocBufData {
     int32_t debug_id {};
@@ -564,7 +411,8 @@ __attribute__((noinline)) void ParseBinderTransactionAllocBufData(BinderTransact
     eventData.offsets_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.extra_buffers_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderTransactionAllocBuf(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderTransactionAllocBuf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderTransactionAllocBufData eventData {};
@@ -578,22 +426,8 @@ void ParseBinderTransactionAllocBuf(FtraceEvent& ftraceEvent, uint8_t data[], si
     msg->set_offsets_size(eventData.offsets_size);
     msg->set_extra_buffers_size(eventData.extra_buffers_size);
 }
-void ParseBinderTransactionAllocBufEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderTransactionAllocBufData eventData {};
-    ParseBinderTransactionAllocBufData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_transaction_alloc_buf_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_debug_id(eventData.debug_id);
-    msg->set_data_size(eventData.data_size);
-    msg->set_offsets_size(eventData.offsets_size);
-    msg->set_extra_buffers_size(eventData.extra_buffers_size);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_alloc_buf, ParseBinderTransactionAllocBuf);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_alloc_buf, ParseBinderTransactionAllocBufEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_alloc_buf, ParseBinderTransactionAllocBuf<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_alloc_buf, ParseBinderTransactionAllocBuf<ProtoEncoder::FtraceEvent>);
 
 struct BinderTransactionBufferReleaseData {
     int32_t debug_id {};
@@ -610,7 +444,8 @@ __attribute__((noinline)) void ParseBinderTransactionBufferReleaseData(BinderTra
     eventData.offsets_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.extra_buffers_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderTransactionBufferRelease(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderTransactionBufferRelease(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderTransactionBufferReleaseData eventData {};
@@ -624,22 +459,8 @@ void ParseBinderTransactionBufferRelease(FtraceEvent& ftraceEvent, uint8_t data[
     msg->set_offsets_size(eventData.offsets_size);
     msg->set_extra_buffers_size(eventData.extra_buffers_size);
 }
-void ParseBinderTransactionBufferReleaseEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderTransactionBufferReleaseData eventData {};
-    ParseBinderTransactionBufferReleaseData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_transaction_buffer_release_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_debug_id(eventData.debug_id);
-    msg->set_data_size(eventData.data_size);
-    msg->set_offsets_size(eventData.offsets_size);
-    msg->set_extra_buffers_size(eventData.extra_buffers_size);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_buffer_release, ParseBinderTransactionBufferRelease);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_buffer_release, ParseBinderTransactionBufferReleaseEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_buffer_release, ParseBinderTransactionBufferRelease<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_buffer_release, ParseBinderTransactionBufferRelease<ProtoEncoder::FtraceEvent>);
 
 struct BinderTransactionFailedBufferReleaseData {
     int32_t debug_id {};
@@ -656,7 +477,8 @@ __attribute__((noinline)) void ParseBinderTransactionFailedBufferReleaseData(Bin
     eventData.offsets_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.extra_buffers_size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderTransactionFailedBufferRelease(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderTransactionFailedBufferRelease(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderTransactionFailedBufferReleaseData eventData {};
@@ -670,22 +492,8 @@ void ParseBinderTransactionFailedBufferRelease(FtraceEvent& ftraceEvent, uint8_t
     msg->set_offsets_size(eventData.offsets_size);
     msg->set_extra_buffers_size(eventData.extra_buffers_size);
 }
-void ParseBinderTransactionFailedBufferReleaseEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderTransactionFailedBufferReleaseData eventData {};
-    ParseBinderTransactionFailedBufferReleaseData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_transaction_failed_buffer_release_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_debug_id(eventData.debug_id);
-    msg->set_data_size(eventData.data_size);
-    msg->set_offsets_size(eventData.offsets_size);
-    msg->set_extra_buffers_size(eventData.extra_buffers_size);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_failed_buffer_release, ParseBinderTransactionFailedBufferRelease);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_failed_buffer_release, ParseBinderTransactionFailedBufferReleaseEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_failed_buffer_release, ParseBinderTransactionFailedBufferRelease<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_failed_buffer_release, ParseBinderTransactionFailedBufferRelease<ProtoEncoder::FtraceEvent>);
 
 struct BinderTransactionFdData {
     int32_t debug_id {};
@@ -700,7 +508,8 @@ __attribute__((noinline)) void ParseBinderTransactionFdData(BinderTransactionFdD
     eventData.src_fd = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.dest_fd = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseBinderTransactionFd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderTransactionFd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderTransactionFdData eventData {};
@@ -713,21 +522,8 @@ void ParseBinderTransactionFd(FtraceEvent& ftraceEvent, uint8_t data[], size_t s
     msg->set_src_fd(eventData.src_fd);
     msg->set_dest_fd(eventData.dest_fd);
 }
-void ParseBinderTransactionFdEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderTransactionFdData eventData {};
-    ParseBinderTransactionFdData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_transaction_fd_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_debug_id(eventData.debug_id);
-    msg->set_src_fd(eventData.src_fd);
-    msg->set_dest_fd(eventData.dest_fd);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_fd, ParseBinderTransactionFd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_fd, ParseBinderTransactionFdEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_fd, ParseBinderTransactionFd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_fd, ParseBinderTransactionFd<ProtoEncoder::FtraceEvent>);
 
 struct BinderTransactionNodeToRefData {
     int32_t debug_id {};
@@ -746,7 +542,8 @@ __attribute__((noinline)) void ParseBinderTransactionNodeToRefData(BinderTransac
     eventData.ref_debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.ref_desc = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseBinderTransactionNodeToRef(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderTransactionNodeToRef(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderTransactionNodeToRefData eventData {};
@@ -761,23 +558,8 @@ void ParseBinderTransactionNodeToRef(FtraceEvent& ftraceEvent, uint8_t data[], s
     msg->set_ref_debug_id(eventData.ref_debug_id);
     msg->set_ref_desc(eventData.ref_desc);
 }
-void ParseBinderTransactionNodeToRefEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderTransactionNodeToRefData eventData {};
-    ParseBinderTransactionNodeToRefData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_transaction_node_to_ref_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_debug_id(eventData.debug_id);
-    msg->set_node_debug_id(eventData.node_debug_id);
-    msg->set_node_ptr(eventData.node_ptr);
-    msg->set_ref_debug_id(eventData.ref_debug_id);
-    msg->set_ref_desc(eventData.ref_desc);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_node_to_ref, ParseBinderTransactionNodeToRef);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_node_to_ref, ParseBinderTransactionNodeToRefEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_node_to_ref, ParseBinderTransactionNodeToRef<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_node_to_ref, ParseBinderTransactionNodeToRef<ProtoEncoder::FtraceEvent>);
 
 struct BinderTransactionReceivedData {
     int32_t debug_id {};
@@ -788,7 +570,8 @@ __attribute__((noinline)) void ParseBinderTransactionReceivedData(BinderTransact
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseBinderTransactionReceived(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderTransactionReceived(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderTransactionReceivedData eventData {};
@@ -799,19 +582,8 @@ void ParseBinderTransactionReceived(FtraceEvent& ftraceEvent, uint8_t data[], si
     }
     msg->set_debug_id(eventData.debug_id);
 }
-void ParseBinderTransactionReceivedEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderTransactionReceivedData eventData {};
-    ParseBinderTransactionReceivedData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_transaction_received_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_debug_id(eventData.debug_id);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_received, ParseBinderTransactionReceived);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_received, ParseBinderTransactionReceivedEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_received, ParseBinderTransactionReceived<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_received, ParseBinderTransactionReceived<ProtoEncoder::FtraceEvent>);
 
 struct BinderTransactionRefToNodeData {
     int32_t debug_id {};
@@ -830,7 +602,8 @@ __attribute__((noinline)) void ParseBinderTransactionRefToNodeData(BinderTransac
     eventData.node_debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.node_ptr = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderTransactionRefToNode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderTransactionRefToNode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderTransactionRefToNodeData eventData {};
@@ -845,23 +618,8 @@ void ParseBinderTransactionRefToNode(FtraceEvent& ftraceEvent, uint8_t data[], s
     msg->set_node_debug_id(eventData.node_debug_id);
     msg->set_node_ptr(eventData.node_ptr);
 }
-void ParseBinderTransactionRefToNodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderTransactionRefToNodeData eventData {};
-    ParseBinderTransactionRefToNodeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_transaction_ref_to_node_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_debug_id(eventData.debug_id);
-    msg->set_ref_debug_id(eventData.ref_debug_id);
-    msg->set_ref_desc(eventData.ref_desc);
-    msg->set_node_debug_id(eventData.node_debug_id);
-    msg->set_node_ptr(eventData.node_ptr);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_ref_to_node, ParseBinderTransactionRefToNode);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_ref_to_node, ParseBinderTransactionRefToNodeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_ref_to_node, ParseBinderTransactionRefToNode<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_ref_to_node, ParseBinderTransactionRefToNode<ProtoEncoder::FtraceEvent>);
 
 struct BinderTransactionRefToRefData {
     int32_t debug_id {};
@@ -882,7 +640,8 @@ __attribute__((noinline)) void ParseBinderTransactionRefToRefData(BinderTransact
     eventData.dest_ref_debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.dest_ref_desc = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseBinderTransactionRefToRef(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderTransactionRefToRef(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderTransactionRefToRefData eventData {};
@@ -898,24 +657,8 @@ void ParseBinderTransactionRefToRef(FtraceEvent& ftraceEvent, uint8_t data[], si
     msg->set_dest_ref_debug_id(eventData.dest_ref_debug_id);
     msg->set_dest_ref_desc(eventData.dest_ref_desc);
 }
-void ParseBinderTransactionRefToRefEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderTransactionRefToRefData eventData {};
-    ParseBinderTransactionRefToRefData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_transaction_ref_to_ref_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_debug_id(eventData.debug_id);
-    msg->set_node_debug_id(eventData.node_debug_id);
-    msg->set_src_ref_debug_id(eventData.src_ref_debug_id);
-    msg->set_src_ref_desc(eventData.src_ref_desc);
-    msg->set_dest_ref_debug_id(eventData.dest_ref_debug_id);
-    msg->set_dest_ref_desc(eventData.dest_ref_desc);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_ref_to_ref, ParseBinderTransactionRefToRef);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_ref_to_ref, ParseBinderTransactionRefToRefEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_transaction_ref_to_ref, ParseBinderTransactionRefToRef<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_transaction_ref_to_ref, ParseBinderTransactionRefToRef<ProtoEncoder::FtraceEvent>);
 
 struct BinderUnlockData {
     std::string tag {};
@@ -926,7 +669,8 @@ __attribute__((noinline)) void ParseBinderUnlockData(BinderUnlockData& eventData
     int i = 0;
     eventData.tag = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseBinderUnlock(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderUnlock(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderUnlockData eventData {};
@@ -937,19 +681,8 @@ void ParseBinderUnlock(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     }
     msg->set_tag(eventData.tag);
 }
-void ParseBinderUnlockEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderUnlockData eventData {};
-    ParseBinderUnlockData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_unlock_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_tag(eventData.tag);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_unlock, ParseBinderUnlock);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_unlock, ParseBinderUnlockEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_unlock, ParseBinderUnlock<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_unlock, ParseBinderUnlock<ProtoEncoder::FtraceEvent>);
 
 struct BinderUnmapKernelEndData {
     int32_t proc {};
@@ -962,7 +695,8 @@ __attribute__((noinline)) void ParseBinderUnmapKernelEndData(BinderUnmapKernelEn
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderUnmapKernelEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderUnmapKernelEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderUnmapKernelEndData eventData {};
@@ -974,20 +708,8 @@ void ParseBinderUnmapKernelEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
-void ParseBinderUnmapKernelEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderUnmapKernelEndData eventData {};
-    ParseBinderUnmapKernelEndData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_unmap_kernel_end_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_proc(eventData.proc);
-    msg->set_page_index(eventData.page_index);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_unmap_kernel_end, ParseBinderUnmapKernelEnd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_unmap_kernel_end, ParseBinderUnmapKernelEndEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_unmap_kernel_end, ParseBinderUnmapKernelEnd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_unmap_kernel_end, ParseBinderUnmapKernelEnd<ProtoEncoder::FtraceEvent>);
 
 struct BinderUnmapKernelStartData {
     int32_t proc {};
@@ -1000,7 +722,8 @@ __attribute__((noinline)) void ParseBinderUnmapKernelStartData(BinderUnmapKernel
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderUnmapKernelStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderUnmapKernelStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderUnmapKernelStartData eventData {};
@@ -1012,20 +735,8 @@ void ParseBinderUnmapKernelStart(FtraceEvent& ftraceEvent, uint8_t data[], size_
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
-void ParseBinderUnmapKernelStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderUnmapKernelStartData eventData {};
-    ParseBinderUnmapKernelStartData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_unmap_kernel_start_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_proc(eventData.proc);
-    msg->set_page_index(eventData.page_index);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_unmap_kernel_start, ParseBinderUnmapKernelStart);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_unmap_kernel_start, ParseBinderUnmapKernelStartEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_unmap_kernel_start, ParseBinderUnmapKernelStart<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_unmap_kernel_start, ParseBinderUnmapKernelStart<ProtoEncoder::FtraceEvent>);
 
 struct BinderUnmapUserEndData {
     int32_t proc {};
@@ -1038,7 +749,8 @@ __attribute__((noinline)) void ParseBinderUnmapUserEndData(BinderUnmapUserEndDat
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderUnmapUserEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderUnmapUserEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderUnmapUserEndData eventData {};
@@ -1050,20 +762,8 @@ void ParseBinderUnmapUserEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t si
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
-void ParseBinderUnmapUserEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderUnmapUserEndData eventData {};
-    ParseBinderUnmapUserEndData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_unmap_user_end_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_proc(eventData.proc);
-    msg->set_page_index(eventData.page_index);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_unmap_user_end, ParseBinderUnmapUserEnd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_unmap_user_end, ParseBinderUnmapUserEndEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_unmap_user_end, ParseBinderUnmapUserEnd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_unmap_user_end, ParseBinderUnmapUserEnd<ProtoEncoder::FtraceEvent>);
 
 struct BinderUnmapUserStartData {
     int32_t proc {};
@@ -1076,7 +776,8 @@ __attribute__((noinline)) void ParseBinderUnmapUserStartData(BinderUnmapUserStar
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.page_index = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderUnmapUserStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderUnmapUserStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderUnmapUserStartData eventData {};
@@ -1088,20 +789,8 @@ void ParseBinderUnmapUserStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_proc(eventData.proc);
     msg->set_page_index(eventData.page_index);
 }
-void ParseBinderUnmapUserStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderUnmapUserStartData eventData {};
-    ParseBinderUnmapUserStartData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_unmap_user_start_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_proc(eventData.proc);
-    msg->set_page_index(eventData.page_index);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_unmap_user_start, ParseBinderUnmapUserStart);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_unmap_user_start, ParseBinderUnmapUserStartEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_unmap_user_start, ParseBinderUnmapUserStart<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_unmap_user_start, ParseBinderUnmapUserStart<ProtoEncoder::FtraceEvent>);
 
 struct BinderUpdatePageRangeData {
     int32_t proc {};
@@ -1118,7 +807,8 @@ __attribute__((noinline)) void ParseBinderUpdatePageRangeData(BinderUpdatePageRa
     eventData.offset = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBinderUpdatePageRange(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderUpdatePageRange(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderUpdatePageRangeData eventData {};
@@ -1132,22 +822,8 @@ void ParseBinderUpdatePageRange(FtraceEvent& ftraceEvent, uint8_t data[], size_t
     msg->set_offset(eventData.offset);
     msg->set_size(eventData.size);
 }
-void ParseBinderUpdatePageRangeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderUpdatePageRangeData eventData {};
-    ParseBinderUpdatePageRangeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_update_page_range_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_proc(eventData.proc);
-    msg->set_allocate(eventData.allocate);
-    msg->set_offset(eventData.offset);
-    msg->set_size(eventData.size);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_update_page_range, ParseBinderUpdatePageRange);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_update_page_range, ParseBinderUpdatePageRangeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_update_page_range, ParseBinderUpdatePageRange<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_update_page_range, ParseBinderUpdatePageRange<ProtoEncoder::FtraceEvent>);
 
 struct BinderWaitForWorkData {
     uint32_t proc_work {};
@@ -1162,7 +838,8 @@ __attribute__((noinline)) void ParseBinderWaitForWorkData(BinderWaitForWorkData&
     eventData.transaction_stack = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.thread_todo = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseBinderWaitForWork(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderWaitForWork(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderWaitForWorkData eventData {};
@@ -1175,21 +852,8 @@ void ParseBinderWaitForWork(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_transaction_stack(eventData.transaction_stack);
     msg->set_thread_todo(eventData.thread_todo);
 }
-void ParseBinderWaitForWorkEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderWaitForWorkData eventData {};
-    ParseBinderWaitForWorkData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_wait_for_work_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_proc_work(eventData.proc_work);
-    msg->set_transaction_stack(eventData.transaction_stack);
-    msg->set_thread_todo(eventData.thread_todo);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_wait_for_work, ParseBinderWaitForWork);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_wait_for_work, ParseBinderWaitForWorkEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_wait_for_work, ParseBinderWaitForWork<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_wait_for_work, ParseBinderWaitForWork<ProtoEncoder::FtraceEvent>);
 
 struct BinderWriteDoneData {
     int32_t ret {};
@@ -1200,7 +864,8 @@ __attribute__((noinline)) void ParseBinderWriteDoneData(BinderWriteDoneData& eve
     int i = 0;
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseBinderWriteDone(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBinderWriteDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     BinderWriteDoneData eventData {};
@@ -1211,18 +876,7 @@ void ParseBinderWriteDone(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     }
     msg->set_ret(eventData.ret);
 }
-void ParseBinderWriteDoneEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BinderWriteDoneData eventData {};
-    ParseBinderWriteDoneData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_binder_write_done_format();
-    if (msg == nullptr) {
-        return;
-    }
-    msg->set_ret(eventData.ret);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_write_done, ParseBinderWriteDone);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_write_done, ParseBinderWriteDoneEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(binder_write_done, ParseBinderWriteDone<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(binder_write_done, ParseBinderWriteDone<ProtoEncoder::FtraceEvent>);
 } // namespace
 FTRACE_NS_END

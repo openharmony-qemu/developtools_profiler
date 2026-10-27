@@ -35,7 +35,8 @@ __attribute__((noinline)) void ParseTaskNewtaskData(TaskNewtaskData& eventData, 
     eventData.clone_flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.oom_score_adj = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseTaskNewtask(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseTaskNewtask(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     TaskNewtaskData eventData {};
@@ -46,19 +47,8 @@ void ParseTaskNewtask(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_clone_flags(eventData.clone_flags);
     msg->set_oom_score_adj(eventData.oom_score_adj);
 }
-void ParseTaskNewtaskEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    TaskNewtaskData eventData {};
-    ParseTaskNewtaskData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_task_newtask_format();
-    msg->set_pid(eventData.pid);
-    msg->set_comm(eventData.comm);
-    msg->set_clone_flags(eventData.clone_flags);
-    msg->set_oom_score_adj(eventData.oom_score_adj);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(task_newtask, ParseTaskNewtask);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(task_newtask, ParseTaskNewtaskEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(task_newtask, ParseTaskNewtask<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(task_newtask, ParseTaskNewtask<ProtoEncoder::FtraceEvent>);
 
 struct TaskRenameData {
     int32_t pid {};
@@ -75,7 +65,8 @@ __attribute__((noinline)) void ParseTaskRenameData(TaskRenameData& eventData, ui
     eventData.newcomm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.oom_score_adj = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseTaskRename(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseTaskRename(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     TaskRenameData eventData {};
@@ -86,18 +77,7 @@ void ParseTaskRename(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_newcomm(eventData.newcomm);
     msg->set_oom_score_adj(eventData.oom_score_adj);
 }
-void ParseTaskRenameEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    TaskRenameData eventData {};
-    ParseTaskRenameData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_task_rename_format();
-    msg->set_pid(eventData.pid);
-    msg->set_oldcomm(eventData.oldcomm);
-    msg->set_newcomm(eventData.newcomm);
-    msg->set_oom_score_adj(eventData.oom_score_adj);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(task_rename, ParseTaskRename);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(task_rename, ParseTaskRenameEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(task_rename, ParseTaskRename<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(task_rename, ParseTaskRename<ProtoEncoder::FtraceEvent>);
 } // namespace
 FTRACE_NS_END

@@ -29,7 +29,8 @@ __attribute__((noinline)) void ParseRcuUtilizationData(RcuUtilizationData& event
     int i = 0;
     eventData.s = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRcuUtilization(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRcuUtilization(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     RcuUtilizationData eventData {};
@@ -37,15 +38,7 @@ void ParseRcuUtilization(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     auto msg = ftraceEvent.mutable_rcu_utilization_format();
     msg->set_s(eventData.s);
 }
-void ParseRcuUtilizationEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RcuUtilizationData eventData {};
-    ParseRcuUtilizationData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_rcu_utilization_format();
-    msg->set_s(eventData.s);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rcu_utilization, ParseRcuUtilization);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rcu_utilization, ParseRcuUtilizationEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rcu_utilization, ParseRcuUtilization<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rcu_utilization, ParseRcuUtilization<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

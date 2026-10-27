@@ -33,7 +33,8 @@ __attribute__((noinline)) void ParseGpioDirectionData(GpioDirectionData& eventDa
     eventData.in = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.err = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseGpioDirection(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseGpioDirection(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     GpioDirectionData eventData {};
@@ -43,18 +44,8 @@ void ParseGpioDirection(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_in(eventData.in);
     msg->set_err(eventData.err);
 }
-void ParseGpioDirectionEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    GpioDirectionData eventData {};
-    ParseGpioDirectionData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_gpio_direction_format();
-    msg->set_gpio(eventData.gpio);
-    msg->set_in(eventData.in);
-    msg->set_err(eventData.err);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(gpio_direction, ParseGpioDirection);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(gpio_direction, ParseGpioDirectionEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(gpio_direction, ParseGpioDirection<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(gpio_direction, ParseGpioDirection<ProtoEncoder::FtraceEvent>);
 
 struct GpioValueData {
     uint32_t gpio {};
@@ -69,7 +60,8 @@ __attribute__((noinline)) void ParseGpioValueData(GpioValueData& eventData, uint
     eventData.get = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseGpioValue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseGpioValue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     GpioValueData eventData {};
@@ -79,17 +71,7 @@ void ParseGpioValue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_get(eventData.get);
     msg->set_value(eventData.value);
 }
-void ParseGpioValueEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    GpioValueData eventData {};
-    ParseGpioValueData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_gpio_value_format();
-    msg->set_gpio(eventData.gpio);
-    msg->set_get(eventData.get);
-    msg->set_value(eventData.value);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(gpio_value, ParseGpioValue);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(gpio_value, ParseGpioValueEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(gpio_value, ParseGpioValue<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(gpio_value, ParseGpioValue<ProtoEncoder::FtraceEvent>);
 } // namespace
 FTRACE_NS_END

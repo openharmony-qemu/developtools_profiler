@@ -33,7 +33,8 @@ __attribute__((noinline)) void ParseOomScoreAdjUpdateData(OomScoreAdjUpdateData&
     eventData.comm = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.oom_score_adj = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseOomScoreAdjUpdate(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseOomScoreAdjUpdate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     OomScoreAdjUpdateData eventData {};
@@ -43,17 +44,7 @@ void ParseOomScoreAdjUpdate(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_comm(eventData.comm);
     msg->set_oom_score_adj(eventData.oom_score_adj);
 }
-void ParseOomScoreAdjUpdateEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    OomScoreAdjUpdateData eventData {};
-    ParseOomScoreAdjUpdateData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_oom_score_adj_update_format();
-    msg->set_pid(eventData.pid);
-    msg->set_comm(eventData.comm);
-    msg->set_oom_score_adj(eventData.oom_score_adj);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(oom_score_adj_update, ParseOomScoreAdjUpdate);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(oom_score_adj_update, ParseOomScoreAdjUpdateEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(oom_score_adj_update, ParseOomScoreAdjUpdate<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(oom_score_adj_update, ParseOomScoreAdjUpdate<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

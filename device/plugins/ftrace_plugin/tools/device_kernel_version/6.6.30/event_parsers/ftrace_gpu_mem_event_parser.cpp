@@ -33,7 +33,8 @@ __attribute__((noinline)) void ParseGpuMemTotalData(GpuMemTotalData& eventData, 
     eventData.pid = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.size = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseGpuMemTotal(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseGpuMemTotal(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
     GpuMemTotalData eventData {};
@@ -43,17 +44,7 @@ void ParseGpuMemTotal(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_pid(eventData.pid);
     msg->set_size(eventData.size);
 }
-void ParseGpuMemTotalEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    GpuMemTotalData eventData {};
-    ParseGpuMemTotalData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_gpu_mem_total_format();
-    msg->set_gpu_id(eventData.gpu_id);
-    msg->set_pid(eventData.pid);
-    msg->set_size(eventData.size);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(gpu_mem_total, ParseGpuMemTotal);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(gpu_mem_total, ParseGpuMemTotalEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(gpu_mem_total, ParseGpuMemTotal<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(gpu_mem_total, ParseGpuMemTotal<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END
