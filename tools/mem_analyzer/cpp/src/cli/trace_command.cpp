@@ -45,15 +45,11 @@ public:
     void Bind(CliParser& sub, GlobalOptions& g) override
     {
         BindCommonOptions(sub, g);
-        sub.AddOption("-s,--scope", opt_.scope,
-            "Analysis scope: app-only, system-only, app-and-system, mixed")
+        sub.AddOption("-s,--scope", opt_.scope, "Analysis scope: app-only, system-only, app-and-system, mixed")
             .AddOption("-n,--top-n", opt_.topN, "Number of top symbols to output")
-            .AddOption("-c,--category", opt_.category,
-                "Resource category: nativeheap, mmap, dma, ashmem, fd, thread")
-            .AddOption("-S,--so-dir", opt_.soDir,
-                "Directory of native .so symbol files for offline symbolization")
-            .AddOption("-l,--leaklist", opt_.leakListFile,
-                "Native Leaks unreachable-memory leak file")
+            .AddOption("-c,--category", opt_.category, "Resource category: nativeheap, mmap, dma, ashmem, fd, thread")
+            .AddOption("-S,--so-dir", opt_.soDir, "Directory of native .so symbol files for offline symbolization")
+            .AddOption("-l,--leaklist", opt_.leakListFile, "Native Leaks unreachable-memory leak file")
             .AddPositional("files", opt_.files, "Htrace files to process");
     }
 

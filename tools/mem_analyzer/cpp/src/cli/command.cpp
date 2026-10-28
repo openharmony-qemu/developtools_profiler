@@ -74,8 +74,7 @@ void BindGlobalOptions(CliParser& app, GlobalOptions& g)
         .AddSwitch("-v,--version", g.showVersion, "Print version information");
     BindDebugOptions(app, g);
     app.AddOption("-f,--format", g.format, "Output format (json/html)")
-        .AddPositional("files", g.files,
-            "Files to analyze (auto-detect: htrace, tshandle zip, heapsnapshot, rawheap)");
+        .AddPositional("files", g.files, "Files to analyze (auto-detect: htrace, tshandle zip, heapsnapshot, rawheap)");
 }
 
 void BindCommonOptions(CliParser& sub, GlobalOptions& g)

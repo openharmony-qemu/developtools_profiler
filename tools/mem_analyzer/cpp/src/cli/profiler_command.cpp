@@ -47,8 +47,7 @@ public:
     {
         sub.SetUsage("[options] [<bundle>]")
             .AddPositional("bundle", opt_.bundle,
-                "Target bundle name (required for capture, not needed with "
-                "--list-apps)")
+                "Target bundle name (required for capture, not needed with --list-apps)")
             .AddOption("-c,--category", opt_.category,
                 "Capture type: nativeheap/nh/native, snapshot/snap, globalhandle/global/gh, "
                 "allhandle/handle/ah, nativeleaks/nl, fd, dma, thread, ashmem")
@@ -60,18 +59,13 @@ public:
                 &opt_.connectKeyProvided)
             .AddOption("-d,--out-dir", g.outDir, "Output directory")
             .AddOption("-S,--so-dir", opt_.soDir,
-                "Directory of native .so symbol files for offline symbolization (ignored "
-                "for snapshot capture)")
+                "Directory of native .so symbol files for offline symbolization (ignored for snapshot capture)")
             .AddOption("--sourcemap", opt_.sourcemapDir,
-                "Source map file or directory (sourceMaps.map / *.map) to deobfuscate "
-                "heapsnapshot paths")
+                "Source map file or directory (sourceMaps.map / *.map) to deobfuscate heapsnapshot paths")
             .AddOption("--namecache", opt_.nameCacheDir,
-                "nameCache file or directory (nameCache.json) to deobfuscate heapsnapshot "
-                "names")
-            .AddSwitch("-o,--auto-open", g.autoOpen,
-                "Generate HTML analysis report and open it in browser")
-            .AddSwitch("--list-apps", opt_.listApps,
-                "List installed apps on device and exit");
+                "nameCache file or directory (nameCache.json) to deobfuscate heapsnapshot names")
+            .AddSwitch("-o,--auto-open", g.autoOpen, "Generate HTML analysis report and open it in browser")
+            .AddSwitch("--list-apps", opt_.listApps, "List installed apps on device and exit");
         BindDebugOptions(sub, g);
     }
 

@@ -49,25 +49,19 @@ public:
         // 因此这里不用 bind_common_options。
         sub.SetUsage("[options] <snapshot>")
             .AddPositional("files", opt_.inputFile, "Path to .heapsnapshot/.rawheap file")
-            .AddOption("-b,--baseline", opt_.baselineFile,
-                "Baseline snapshot for comparison",
-                &opt_.baselineProvided)
+            .AddOption("-b,--baseline", opt_.baselineFile, "Baseline snapshot for comparison", &opt_.baselineProvided)
             .AddOption("-d,--out-dir", g.outDir, "Output result directory")
             .AddSwitch("-o,--auto-open", g.autoOpen, "Open result file after processing");
         // 诊断三件套（--verbose/--keep-temp/--debug）：与 trace 一致，效果由 main 统一处理。
         BindDebugOptions(sub, g);
         sub.AddOption("-f,--format", g.format, "Output format (json/html)")
             .AddOption("-n,--top-n", opt_.topN, "Number of top reference chains to output")
-            .AddOption("-l,--leaklist", opt_.listFile, "Path to .jsleaklist file",
-                &opt_.listFileProvided)
-            .AddOption("-m,--mode", opt_.mode,
-                "Analysis mode: all, property-tag/pt, top-chain/tc")
+            .AddOption("-l,--leaklist", opt_.listFile, "Path to .jsleaklist file", &opt_.listFileProvided)
+            .AddOption("-m,--mode", opt_.mode, "Analysis mode: all, property-tag/pt, top-chain/tc")
             .AddOption("--sourcemap", opt_.sourcemapDir,
-                "Source map file or directory (sourceMaps.map / *.map) to deobfuscate "
-                "heapsnapshot paths")
+                "Source map file or directory (sourceMaps.map / *.map) to deobfuscate heapsnapshot paths")
             .AddOption("--namecache", opt_.nameCacheDir,
-                "nameCache file or directory (nameCache.json) to deobfuscate heapsnapshot "
-                "names");
+                "nameCache file or directory (nameCache.json) to deobfuscate heapsnapshot names");
     }
 
     int Run(const GlobalOptions& g) override

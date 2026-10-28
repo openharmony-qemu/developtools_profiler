@@ -43,14 +43,11 @@ public:
     {
         BindCommonOptions(sub, g);
         sub.AddOption("-n,--top-n", opt_.topN, "Number of top symbols to output")
-            .AddOption("-S,--so-dir", opt_.soDir,
-                "Directory of native .so symbol files for offline symbolization")
+            .AddOption("-S,--so-dir", opt_.soDir, "Directory of native .so symbol files for offline symbolization")
             .AddOption("--sourcemap", opt_.sourcemapDir,
-                "Source map file or directory (sourceMaps.map / *.map) to deobfuscate "
-                "heapsnapshot paths")
+                "Source map file or directory (sourceMaps.map / *.map) to deobfuscate heapsnapshot paths")
             .AddOption("--namecache", opt_.nameCacheDir,
-                "nameCache file or directory (nameCache.json) to deobfuscate heapsnapshot "
-                "names")
+                "nameCache file or directory (nameCache.json) to deobfuscate heapsnapshot names")
             .AddPositional("files", opt_.files, "Zip files to process");
     }
 
