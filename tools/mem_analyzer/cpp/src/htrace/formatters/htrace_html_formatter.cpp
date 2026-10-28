@@ -345,22 +345,22 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
         o += anonMixed.size();
 
         size_t fpAppStart = o;
-        streamGroups.push_back({"appMmapFilepage",    filepageLabel, appFilepageEntries,    fpAppStart});
+        streamGroups.push_back({"appMmapFilepage", filepageLabel, appFilepageEntries, fpAppStart});
         size_t fpSystemStart = fpAppStart + appFilepageEntries.size();
         streamGroups.push_back({"systemMmapFilepage", filepageLabel, systemFilepageEntries, fpSystemStart});
         size_t fpMixedStart = fpSystemStart + systemFilepageEntries.size();
-        streamGroups.push_back({"mixedMmapFilepage",  filepageLabel, mixedFilepageEntries,  fpMixedStart});
+        streamGroups.push_back({"mixedMmapFilepage", filepageLabel, mixedFilepageEntries, fpMixedStart});
 
         filepageLists.push_back(appFp);
         filepageLists.push_back(systemFp);
         filepageLists.push_back(mixedFp);
 
-        streamMeta.push_back({TrackRender::Symbol,   &full.topSymbols.app.sections[0]});
-        streamMeta.push_back({TrackRender::Symbol,   &full.topSymbols.system.sections[0]});
-        streamMeta.push_back({TrackRender::Symbol,   &full.topSymbols.mixed.sections[0]});
-        streamMeta.push_back({TrackRender::Filepage, appFp});
-        streamMeta.push_back({TrackRender::Filepage, systemFp});
-        streamMeta.push_back({TrackRender::Filepage, mixedFp});
+        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.app.sections[0]});
+        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.system.sections[0]});
+        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.mixed.sections[0]});
+        streamMeta.push_back({TrackRender::FILEPAGE, appFp});
+        streamMeta.push_back({TrackRender::FILEPAGE, systemFp});
+        streamMeta.push_back({TrackRender::FILEPAGE, mixedFp});
 
         // mmap：一级 tab 的「是否有数据」判断要同时反映 anon（groups）和 filepage（filepageLists）。
         // 但只对当前 scope 模式的活动 scope 生效——AppAndSystem 时 mixed 非活动（不能因为
@@ -368,11 +368,15 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
         // 只有当活动 scope 的 anon 为空、但其 filepage 有数据时，塞一个占位 entry 保住该 tab。
         auto scopeActive = [&](size_t idx) -> bool {
             switch (ctx.htrace.scope) {
-                case Scope::AppOnly:    return idx == 0;
-                case Scope::SystemOnly: return idx == 1;
-                case Scope::Mixed:      return idx == 2;
-                case Scope::AppAndSystem:
-                default:                return idx == 0 || idx == 1;
+                case Scope::APP_ONLY:
+                    return idx == 0;
+                case Scope::SYSTEM_ONLY:
+                    return idx == 1;
+                case Scope::MIXED:
+                    return idx == 2;
+                case Scope::APP_AND_SYSTEM:
+                default:
+                    return idx == 0 || idx == 1;
             }
         };
         for (size_t scope = 0; scope < 3 && scope < groups.size(); ++scope) {
@@ -384,9 +388,9 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
         }
     } else {
         // 单轨：流式组 = groups 本身（3 个 scope，各一条 Symbol 轨）
-        streamMeta.push_back({TrackRender::Symbol, &full.topSymbols.app.sections[0]});
-        streamMeta.push_back({TrackRender::Symbol, &full.topSymbols.system.sections[0]});
-        streamMeta.push_back({TrackRender::Symbol, &full.topSymbols.mixed.sections[0]});
+        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.app.sections[0]});
+        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.system.sections[0]});
+        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.mixed.sections[0]});
     }
 
     // Build htrace-specific meta items
@@ -454,7 +458,7 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
     FillTreeCallback fillTree;
     fillTree = [&streamMeta, &full](SymbolDataEntry& entry, size_t groupIdx, size_t entryIdx) {
         const StreamGroupMeta& meta = streamMeta[groupIdx];
-        if (meta.render == TrackRender::Filepage) {
+        if (meta.render == TrackRender::FILEPAGE) {
             // 文件轨：文件名为根冰柱图（无调用链列表）
             const auto& fp = std::get<FilepageInfo>(meta.section->rows[entryIdx]);
             StringTable st;

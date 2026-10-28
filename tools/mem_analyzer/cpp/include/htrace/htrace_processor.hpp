@@ -89,15 +89,15 @@ inline bool HtraceIsCountSizeType(HtraceEventType type)
  * Extend to support additional event types (e.g., "MmapEvent" → MMAP_ANON).
  */
 enum class SubTypeCondition {
-    Any,      // match regardless of sub_type_id
-    IsNull,   // match only records where sub_type_id IS NULL (mmap-anon)
-    IsNotNull // match only records where sub_type_id IS NOT NULL (mmap-filepage)
+    ANY,      // match regardless of sub_type_id
+    IS_NULL,   // match only records where sub_type_id IS NULL (mmap-anon)
+    IS_NOT_NULL // match only records where sub_type_id IS NOT NULL (mmap-filepage)
 };
 
 struct EventTypeMapping {
     std::string allocEvent;
     HtraceEventType htraceType;
-    SubTypeCondition subTypeCond = SubTypeCondition::Any;
+    SubTypeCondition subTypeCond = SubTypeCondition::ANY;
 };
 
 /**
@@ -108,9 +108,9 @@ inline std::vector<EventTypeMapping> DefaultEventMappings()
 {
     return {
         {"AllocEvent", HtraceEventType::MALLOC},
-        {"MmapEvent", HtraceEventType::MMAP_ANON, SubTypeCondition::IsNull},      // MAP_ANONYMOUS: sub_type_id IS NULL
+        {"MmapEvent", HtraceEventType::MMAP_ANON, SubTypeCondition::IS_NULL},      // MAP_ANONYMOUS: sub_type_id IS NULL
         // file/page mapping: sub_type_id IS NOT NULL
-        {"MmapEvent", HtraceEventType::FILE_PAGE_MSG, SubTypeCondition::IsNotNull},
+        {"MmapEvent", HtraceEventType::FILE_PAGE_MSG, SubTypeCondition::IS_NOT_NULL},
         {"FD_Open_Event", HtraceEventType::HP_FD},
         {"THREAD_Create_Event", HtraceEventType::HP_THREAD},
         {"ASHMEM_Alloc_Event", HtraceEventType::ASHMEM},

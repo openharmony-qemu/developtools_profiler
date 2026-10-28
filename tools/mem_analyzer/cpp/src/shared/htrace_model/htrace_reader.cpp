@@ -33,9 +33,9 @@ constexpr uint32_t kHeaderSize = 1024;
 constexpr uint64_t kHeaderMagic = 0x464F5250534F484FULL; // 小端 == "OHOSPROF"
 
 enum class HtraceDataType : uint32_t {
-    ProtobufBin = 0,    // HIPROFILER_PROTOBUF_BIN，标准 HiProfiler protobuf 二进制
-    Hiperf      = 1,    // hiperf 采样原始数据
-    Standalone  = 1000, // 独立插件文件
+    PROTOBUF_BIN = 0,    // HIPROFILER_PROTOBUF_BIN，标准 HiProfiler protobuf 二进制
+    HIPERF      = 1,    // hiperf 采样原始数据
+    STANDALONE  = 1000, // 独立插件文件
 };
 
 struct HtraceHeaderInfo {
@@ -156,13 +156,13 @@ std::vector<uint64_t> UnpackPackedVarints(const std::string& raw)
 // NativeHookConfig（native_hook_config.proto）schema
 // ---------------------------------------------------------------------------
 enum class Kind {
-    kBool,
-    kInt,            // int32
-    kUint,           // uint32
-    kString,
-    kRepeatedInt,    // packed repeated int32
-    kRepeatedEnum,   // packed repeated enum
-    kRepeatedString, // repeated string
+    K_BOOL,
+    K_INT,            // int32
+    K_UINT,           // uint32
+    K_STRING,
+    K_REPEATED_INT,    // packed repeated int32
+    K_REPEATED_ENUM,   // packed repeated enum
+    K_REPEATED_STRING, // repeated string
 };
 
 struct SchemaEntry {
@@ -172,51 +172,51 @@ struct SchemaEntry {
 };
 
 const SchemaEntry kConfigSchema[] = {
-    {1,  "pid",                           Kind::kInt},
-    {2,  "save_file",                     Kind::kBool},
-    {3,  "file_name",                     Kind::kString},
-    {4,  "filter_size",                   Kind::kInt},
-    {5,  "smb_pages",                     Kind::kInt},
-    {6,  "max_stack_depth",               Kind::kInt},
-    {7,  "process_name",                  Kind::kString},
-    {8,  "malloc_disable",                Kind::kBool},
-    {9,  "mmap_disable",                  Kind::kBool},
-    {10, "free_stack_report",             Kind::kBool},
-    {11, "munmap_stack_report",           Kind::kBool},
-    {12, "malloc_free_matching_interval", Kind::kUint},
-    {13, "malloc_free_matching_cnt",      Kind::kUint},
-    {14, "string_compressed",             Kind::kBool},
-    {15, "fp_unwind",                     Kind::kBool},
-    {16, "blocked",                       Kind::kBool},
-    {17, "record_accurately",             Kind::kBool},
-    {18, "startup_mode",                  Kind::kBool},
-    {19, "memtrace_enable",               Kind::kBool},
-    {20, "offline_symbolization",         Kind::kBool},
-    {21, "callframe_compress",            Kind::kBool},
-    {22, "statistics_interval",           Kind::kUint},
-    {23, "clock",                         Kind::kString},
-    {24, "sample_interval",               Kind::kUint},
-    {25, "response_library_mode",         Kind::kBool},
-    {26, "expand_pids",                   Kind::kRepeatedInt},
-    {27, "js_stack_report",               Kind::kInt},
-    {28, "max_js_stack_depth",            Kind::kUint},
-    {29, "filter_napi_name",              Kind::kString},
-    {30, "dump_nmd",                      Kind::kBool},
-    {31, "target_so_name",                Kind::kString},
-    {32, "restrace_tag",                  Kind::kRepeatedString},
-    {33, "async_stack_enable",            Kind::kBool},
-    {34, "async_type",                    Kind::kRepeatedEnum},
-    {35, "unique_stack_table_size",       Kind::kUint},
-    {36, "use_file_cache_mode",           Kind::kBool},
-    {37, "file_cache_buffer_size",        Kind::kUint},
-    {38, "allocator_sampling_enable",     Kind::kBool},
-    {39, "native_orphansnapshots_enable", Kind::kBool},
-    {40, "nested_async_stack_enable",     Kind::kBool},
-    {41, "filter_lib_list",               Kind::kRepeatedString},
-    {42, "async_nesting_depth",           Kind::kUint},
-    {43, "async_task_stack_depth",        Kind::kUint},
-    {44, "arkui_mem_trace_enable",        Kind::kBool},
-    {45, "discard_destroyed_traces",      Kind::kBool},
+    {1,  "pid",                           Kind::K_INT},
+    {2,  "save_file",                     Kind::K_BOOL},
+    {3,  "file_name",                     Kind::K_STRING},
+    {4,  "filter_size",                   Kind::K_INT},
+    {5,  "smb_pages",                     Kind::K_INT},
+    {6,  "max_stack_depth",               Kind::K_INT},
+    {7,  "process_name",                  Kind::K_STRING},
+    {8,  "malloc_disable",                Kind::K_BOOL},
+    {9,  "mmap_disable",                  Kind::K_BOOL},
+    {10, "free_stack_report",             Kind::K_BOOL},
+    {11, "munmap_stack_report",           Kind::K_BOOL},
+    {12, "malloc_free_matching_interval", Kind::K_UINT},
+    {13, "malloc_free_matching_cnt",      Kind::K_UINT},
+    {14, "string_compressed",             Kind::K_BOOL},
+    {15, "fp_unwind",                     Kind::K_BOOL},
+    {16, "blocked",                       Kind::K_BOOL},
+    {17, "record_accurately",             Kind::K_BOOL},
+    {18, "startup_mode",                  Kind::K_BOOL},
+    {19, "memtrace_enable",               Kind::K_BOOL},
+    {20, "offline_symbolization",         Kind::K_BOOL},
+    {21, "callframe_compress",            Kind::K_BOOL},
+    {22, "statistics_interval",           Kind::K_UINT},
+    {23, "clock",                         Kind::K_STRING},
+    {24, "sample_interval",               Kind::K_UINT},
+    {25, "response_library_mode",         Kind::K_BOOL},
+    {26, "expand_pids",                   Kind::K_REPEATED_INT},
+    {27, "js_stack_report",               Kind::K_INT},
+    {28, "max_js_stack_depth",            Kind::K_UINT},
+    {29, "filter_napi_name",              Kind::K_STRING},
+    {30, "dump_nmd",                      Kind::K_BOOL},
+    {31, "target_so_name",                Kind::K_STRING},
+    {32, "restrace_tag",                  Kind::K_REPEATED_STRING},
+    {33, "async_stack_enable",            Kind::K_BOOL},
+    {34, "async_type",                    Kind::K_REPEATED_ENUM},
+    {35, "unique_stack_table_size",       Kind::K_UINT},
+    {36, "use_file_cache_mode",           Kind::K_BOOL},
+    {37, "file_cache_buffer_size",        Kind::K_UINT},
+    {38, "allocator_sampling_enable",     Kind::K_BOOL},
+    {39, "native_orphansnapshots_enable", Kind::K_BOOL},
+    {40, "nested_async_stack_enable",     Kind::K_BOOL},
+    {41, "filter_lib_list",               Kind::K_REPEATED_STRING},
+    {42, "async_nesting_depth",           Kind::K_UINT},
+    {43, "async_task_stack_depth",        Kind::K_UINT},
+    {44, "arkui_mem_trace_enable",        Kind::K_BOOL},
+    {45, "discard_destroyed_traces",      Kind::K_BOOL},
 };
 
 Kind SchemaKind(uint32_t number)
@@ -226,7 +226,7 @@ Kind SchemaKind(uint32_t number)
             return e.kind;
         }
     }
-    return Kind::kString; // 占位
+    return Kind::K_STRING; // 占位
 }
 
 bool InSchema(uint32_t number)
@@ -285,9 +285,9 @@ bool DecodeConfig(const std::string& data, HtraceNativeHookConfig& out)
             continue;
         }
         Kind kind = SchemaKind(f.number);
-        if (kind == Kind::kRepeatedString) {
+        if (kind == Kind::K_REPEATED_STRING) {
             repeatedStrs[f.number].push_back(f.bytes);
-        } else if (kind == Kind::kRepeatedInt || kind == Kind::kRepeatedEnum) {
+        } else if (kind == Kind::K_REPEATED_INT || kind == Kind::K_REPEATED_ENUM) {
             repeatedPacked[f.number].push_back(f.bytes);
         } else {
             single[f.number] = &f;
@@ -429,7 +429,7 @@ bool HtraceReader::IsProfilerFile(const std::string& path)
         log::Logd("[htrace] header read failed: ", path);
         return false;
     }
-    const bool ok = h.valid && h.dataType == static_cast<uint32_t>(HtraceDataType::ProtobufBin);
+    const bool ok = h.valid && h.dataType == static_cast<uint32_t>(HtraceDataType::PROTOBUF_BIN);
     log::Logd("[htrace] header: version=", h.version, " data_type=", h.dataType,
         " -> ", (ok ? "profiler" : "non-profiler"));
     return ok;

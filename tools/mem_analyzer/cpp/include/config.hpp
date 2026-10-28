@@ -18,10 +18,10 @@
 namespace mem_analyzer {
 
 enum class Scope {
-    AppOnly,
-    SystemOnly,
-    AppAndSystem,
-    Mixed
+    APP_ONLY,
+    SYSTEM_ONLY,
+    APP_AND_SYSTEM,
+    MIXED
 };
 
 Scope ScopeFromString(const std::string& s);
@@ -30,7 +30,7 @@ std::string ScopeToString(Scope s);
 // Default values for CLI options
 namespace defaults {
     constexpr const char* OUTPUT_DIR = "out";
-    constexpr Scope SCOPE = Scope::AppAndSystem;
+    constexpr Scope SCOPE = Scope::APP_AND_SYSTEM;
     constexpr const char* SCOPE_STR = "app-and-system";
     constexpr int TRACE_TOP_N = 10;
     constexpr int TSHANDLE_TOP_N = 50;

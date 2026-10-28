@@ -30,7 +30,7 @@ namespace log {
 
 namespace {
 
-std::atomic<Level> gLevel{Level::Info};
+std::atomic<Level> gLevel{Level::LOG_INFO};
 std::atomic<unsigned> gPrefix{0};
 std::mutex gMutex;                          // 保护 g_sink 与单条日志的原子输出
 std::shared_ptr<Sink> gSink;                // null = 默认 console（stdout/stderr）
@@ -39,11 +39,11 @@ std::shared_ptr<Sink> gSink;                // null = 默认 console（stdout/st
 const char* tag(Level lv)
 {
     switch (lv) {
-        case Level::Debug:   return "[DEBUG]";
-        case Level::Info:    return "[ INFO]";
-        case Level::Success: return "[  OK ]";
-        case Level::Warn:    return "[ WARN]";
-        case Level::Error:   return "[ERROR]";
+        case Level::LOG_DEBUG:   return "[DEBUG]";
+        case Level::LOG_INFO:    return "[ INFO]";
+        case Level::LOG_SUCCESS: return "[  OK ]";
+        case Level::LOG_WARN:    return "[ WARN]";
+        case Level::LOG_ERROR:   return "[ERROR]";
     }
     return "[     ]";
 }
@@ -52,11 +52,11 @@ const char* tag(Level lv)
 std::string paint(Level lv, bool dim, const std::string& text)
 {
     switch (lv) {
-        case Level::Debug:   return style::dim(text);
-        case Level::Info:    return dim ? style::dim(text) : text;
-        case Level::Success: return style::green(text);
-        case Level::Warn:    return style::yellow(text);
-        case Level::Error:   return style::red(text);
+        case Level::LOG_DEBUG:   return style::dim(text);
+        case Level::LOG_INFO:    return dim ? style::dim(text) : text;
+        case Level::LOG_SUCCESS: return style::green(text);
+        case Level::LOG_WARN:    return style::yellow(text);
+        case Level::LOG_ERROR:   return style::red(text);
     }
     return text;
 }
@@ -65,11 +65,11 @@ std::string paint(Level lv, bool dim, const std::string& text)
 std::string PaintTag(Level lv, bool dim, const std::string& text)
 {
     switch (lv) {
-        case Level::Debug:   return style::bold(style::dim(text));
-        case Level::Info:    return dim ? style::bold(style::dim(text)) : style::bold(text);
-        case Level::Success: return style::bold(style::green(text));
-        case Level::Warn:    return style::bold(style::yellow(text));
-        case Level::Error:   return style::bold(style::red(text));
+        case Level::LOG_DEBUG:   return style::bold(style::dim(text));
+        case Level::LOG_INFO:    return dim ? style::bold(style::dim(text)) : style::bold(text);
+        case Level::LOG_SUCCESS: return style::bold(style::green(text));
+        case Level::LOG_WARN:    return style::bold(style::yellow(text));
+        case Level::LOG_ERROR:   return style::bold(style::red(text));
     }
     return text;
 }
@@ -120,10 +120,10 @@ void WriteLine(Level lv, bool dim, const std::string& msg)
     const unsigned prefixFlags = gPrefix.load();
 
     std::string prefix;
-    if (prefixFlags & static_cast<unsigned>(Prefix::Timestamp)) {
+    if (prefixFlags & static_cast<unsigned>(Prefix::TIMESTAMP)) {
         prefix += "[" + TimestampNow() + "]";
     }
-    if (prefixFlags & static_cast<unsigned>(Prefix::ThreadId)) {
+    if (prefixFlags & static_cast<unsigned>(Prefix::THREAD_ID)) {
         std::ostringstream oss;
         oss << '[' << ThreadIdShort() << ']';
         prefix += oss.str();

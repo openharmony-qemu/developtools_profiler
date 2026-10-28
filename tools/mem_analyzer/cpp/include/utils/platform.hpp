@@ -20,7 +20,7 @@ struct sqlite3;
 
 namespace mem_analyzer {
 
-enum class Platform { Windows, Linux, Mac };
+enum class Platform { WINDOWS, LINUX, MAC };
 
 Platform CurrentPlatform();
 

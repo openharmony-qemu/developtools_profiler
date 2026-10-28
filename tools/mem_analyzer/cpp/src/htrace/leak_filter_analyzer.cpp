@@ -157,7 +157,7 @@ HtraceAnalysisOutput HtraceLeakAnalyze(TraceDB& db, const RunContext& ctx)
 
     // L3: 栈分 app/system（mixed 不分，直接用全部栈）
     std::vector<CompressedCallStack> appStacks, systemStacks;
-    if (scope != Scope::Mixed) {
+    if (scope != Scope::MIXED) {
         for (auto& cs : clist->stacks) {
             if (HasAppSoFrame(cs, clist->dict)) {
                 appStacks.push_back(std::move(cs));
@@ -170,18 +170,18 @@ HtraceAnalysisOutput HtraceLeakAnalyze(TraceDB& db, const RunContext& ctx)
 
     HtraceAnalysisOutput output;
     if (scopeStr == "app-only") {
-        acfg.forceScope = Scope::AppOnly;
+        acfg.forceScope = Scope::APP_ONLY;
         output = AnalyzeCallStacks(appStacks, clist->dict, acfg);
     } else if (scopeStr == "system-only") {
-        acfg.forceScope = Scope::SystemOnly;
+        acfg.forceScope = Scope::SYSTEM_ONLY;
         output = AnalyzeCallStacks(systemStacks, clist->dict, acfg);
     } else if (scopeStr == "mixed") {
-        acfg.forceScope = Scope::Mixed;
+        acfg.forceScope = Scope::MIXED;
         output = AnalyzeCallStacks(clist->stacks, clist->dict, acfg);
     } else {  // app-and-system（默认）：走两遍
-        acfg.forceScope = Scope::AppOnly;
+        acfg.forceScope = Scope::APP_ONLY;
         auto appOut = AnalyzeCallStacks(appStacks, clist->dict, acfg);
-        acfg.forceScope = Scope::SystemOnly;
+        acfg.forceScope = Scope::SYSTEM_ONLY;
         auto sysOut = AnalyzeCallStacks(systemStacks, clist->dict, acfg);
         output.topSymbols.mode = "app-and-system";
         output.topSymbols.app = std::move(appOut.topSymbols.app);

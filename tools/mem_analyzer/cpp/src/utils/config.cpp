@@ -18,17 +18,17 @@
 namespace mem_analyzer {
 
 static const std::unordered_map<std::string, Scope> strToScope = {
-    {"app-only", Scope::AppOnly},
-    {"system-only", Scope::SystemOnly},
-    {"app-and-system", Scope::AppAndSystem},
-    {"mixed", Scope::Mixed},
+    {"app-only", Scope::APP_ONLY},
+    {"system-only", Scope::SYSTEM_ONLY},
+    {"app-and-system", Scope::APP_AND_SYSTEM},
+    {"mixed", Scope::MIXED},
 };
 
 static const std::unordered_map<Scope, std::string> scopeToStr = {
-    {Scope::AppOnly, "app-only"},
-    {Scope::SystemOnly, "system-only"},
-    {Scope::AppAndSystem, "app-and-system"},
-    {Scope::Mixed, "mixed"},
+    {Scope::APP_ONLY, "app-only"},
+    {Scope::SYSTEM_ONLY, "system-only"},
+    {Scope::APP_AND_SYSTEM, "app-and-system"},
+    {Scope::MIXED, "mixed"},
 };
 
 Scope ScopeFromString(const std::string& s)
@@ -37,7 +37,7 @@ Scope ScopeFromString(const std::string& s)
     if (it != strToScope.end()) {
         return it->second;
     }
-    return Scope::AppAndSystem;
+    return Scope::APP_AND_SYSTEM;
 }
 
 std::string ScopeToString(Scope s)

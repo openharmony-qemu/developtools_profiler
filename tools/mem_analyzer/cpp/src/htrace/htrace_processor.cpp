@@ -330,13 +330,13 @@ void LoadDetailStacks(HtraceParseContext& ctx,
                 const auto& c = configs[ci];
                 bool match = false;
                 switch (c.subTypeCond) {
-                    case SubTypeCondition::Any:
+                    case SubTypeCondition::ANY:
                         match = true;
                         break;
-                    case SubTypeCondition::IsNull:
+                    case SubTypeCondition::IS_NULL:
                         match = (subTypeId == -1);
                         break;
-                    case SubTypeCondition::IsNotNull:
+                    case SubTypeCondition::IS_NOT_NULL:
                         match = (subTypeId != -1);
                         break;
                 }

@@ -343,10 +343,10 @@ bool HtraceConfigMgr::MatchFilterRule(const SymbolFilterRule& rule,
     Scope scope) const
 {
     if (rule.scope == "app") {
-        if (scope != Scope::AppOnly && scope != Scope::AppAndSystem && scope != Scope::Mixed)
+        if (scope != Scope::APP_ONLY && scope != Scope::APP_AND_SYSTEM && scope != Scope::MIXED)
             return false;
     } else if (rule.scope == "system") {
-        if (scope != Scope::SystemOnly && scope != Scope::AppAndSystem && scope != Scope::Mixed)
+        if (scope != Scope::SYSTEM_ONLY && scope != Scope::APP_AND_SYSTEM && scope != Scope::MIXED)
             return false;
     }
 

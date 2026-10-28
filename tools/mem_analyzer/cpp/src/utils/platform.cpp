@@ -57,11 +57,11 @@ static std::string GetBasePath()
 Platform CurrentPlatform()
 {
 #if defined(_WIN32)
-    return Platform::Windows;
+    return Platform::WINDOWS;
 #elif defined(__APPLE__)
-    return Platform::Mac;
+    return Platform::MAC;
 #else
-    return Platform::Linux;
+    return Platform::LINUX;
 #endif
 }
 

@@ -137,12 +137,12 @@ struct AnalysisConfig {
     long long orphanRelCap = 10LL * 1024 * 1024;      // 阈值封顶（10MB）
     int topN = 10;
     // 以下两项为运行参数（原先由全局 Config 单例提供，现由调用方显式传入）
-    Scope scope = Scope::AppAndSystem;    // 分析范围
+    Scope scope = Scope::APP_AND_SYSTEM;    // 分析范围
     std::string category = "nativeheap";  // 资源类型
     // ── -l 分析模式扩展 ──
     bool leakMode = false;            // -l: 跳过 is_app 符号过滤（L3 已分栈，整组符号定性）+ 收集 other
     bool useForceScope = false;     // 用 force_scope 覆盖 config.scope
-    Scope forceScope = Scope::AppAndSystem;
+    Scope forceScope = Scope::APP_AND_SYSTEM;
 };
 
 HtraceAnalysisOutput AnalyzeCallStacks(

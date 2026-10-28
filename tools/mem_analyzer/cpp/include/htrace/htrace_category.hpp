@@ -47,8 +47,8 @@ namespace mem_analyzer {
 // 它与「轨数」正交：轨数是运行时数量（vector，开放），行种是编译期封闭枚举（HtraceRow variant 的 tag）。
 // 当前只有两种；将来若出现第三种（如「句柄行」），走上面维度 3 的扩展路径。
 enum class TrackRender {
-    Symbol,   // 符号行：按符号聚合（对应 HtraceRow 里的 TopSymbolInfo），HTML 走 symbol-type-* 表格
-    Filepage, // 文件行：按文件聚合（对应 HtraceRow 里的 FilepageInfo），HTML 走 file-page 表格
+    SYMBOL,   // 符号行：按符号聚合（对应 HtraceRow 里的 TopSymbolInfo），HTML 走 symbol-type-* 表格
+    FILEPAGE, // 文件行：按文件聚合（对应 HtraceRow 里的 FilepageInfo），HTML 走 file-page 表格
 };
 
 // 单条轨道声明：一段「并列输出块」的静态描述。

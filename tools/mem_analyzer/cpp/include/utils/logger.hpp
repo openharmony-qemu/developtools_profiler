@@ -22,13 +22,13 @@ namespace mem_analyzer {
 namespace log {
 
 // 日志级别（数值即输出阈值，低于当前 level 的日志被丢弃）。
-enum class Level { Debug = 0, Info = 1, Success = 2, Warn = 3, Error = 4 };
+enum class Level { LOG_DEBUG = 0, LOG_INFO = 1, LOG_SUCCESS = 2, LOG_WARN = 3, LOG_ERROR = 4 };
 
 // 可选前缀组件（位掩码）。
 enum class Prefix : unsigned {
-    None      = 0,
-    Timestamp = 1u << 0,   // [HH:MM:SS.mmm]
-    ThreadId  = 1u << 1,   // [tid]
+    NONE      = 0,
+    TIMESTAMP = 1u << 0,   // [HH:MM:SS.mmm]
+    THREAD_ID  = 1u << 1,   // [tid]
 };
 
 // ── 全局状态 ──
@@ -50,27 +50,27 @@ void WriteLine(Level lv, bool dim, const std::string& msg);
 // ── 六个等级入口（整条同色）──
 template <typename... Args> void Logd(Args&&... a)
 {
-    Emit(Level::Debug, true, std::forward<Args>(a)...);  // 灰
+    Emit(Level::LOG_DEBUG, true, std::forward<Args>(a)...);  // 灰
 }
 template <typename... Args> void Logi(Args&&... a)
 {
-    Emit(Level::Info, false, std::forward<Args>(a)...);  // 正色
+    Emit(Level::LOG_INFO, false, std::forward<Args>(a)...);  // 正色
 }
 template <typename... Args> void LogiMinor(Args&&... a)
 {
-    Emit(Level::Info, true, std::forward<Args>(a)...);  // 灰（次要提示）
+    Emit(Level::LOG_INFO, true, std::forward<Args>(a)...);  // 灰（次要提示）
 }
 template <typename... Args> void Logok(Args&&... a)
 {
-    Emit(Level::Success, false, std::forward<Args>(a)...);  // 绿
+    Emit(Level::LOG_SUCCESS, false, std::forward<Args>(a)...);  // 绿
 }
 template <typename... Args> void Logw(Args&&... a)
 {
-    Emit(Level::Warn, false, std::forward<Args>(a)...);  // 黄
+    Emit(Level::LOG_WARN, false, std::forward<Args>(a)...);  // 黄
 }
 template <typename... Args> void Loge(Args&&... a)
 {
-    Emit(Level::Error, false, std::forward<Args>(a)...);  // 红
+    Emit(Level::LOG_ERROR, false, std::forward<Args>(a)...);  // 红
 }
 
 // ── 核心实现（inline）──

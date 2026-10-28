@@ -144,10 +144,10 @@ std::string ConsoleStartLine(const std::string& line)
     if (line.find("Use 'hiprofiler_cmd stop'") != std::string::npos) {
         const char* key = nullptr;
         switch (CurrentPlatform()) {
-            case Platform::Mac:
+            case Platform::MAC:
                 key = "Control+C";
                 break;
-            case Platform::Windows:
+            case Platform::WINDOWS:
                 key = "Ctrl+C";
                 break;
             default:

@@ -796,10 +796,10 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
             if (config.leakMode) {
                 return true;
             }// -l: L3 已分栈，整组符号定性，跳过 is_app 过滤
-            if (filterScope == Scope::AppOnly && !sd.isApp) {
+            if (filterScope == Scope::APP_ONLY && !sd.isApp) {
                 return false;
             }
-            if (filterScope == Scope::SystemOnly && sd.isApp) {
+            if (filterScope == Scope::SYSTEM_ONLY && sd.isApp) {
                 return false;
             }
             return true;
@@ -984,7 +984,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     };
 
     if (scopeStr == "app-only") {
-        auto [appFiltered, appOrg] = buildFiltered(Scope::AppOnly);
+        auto [appFiltered, appOrg] = buildFiltered(Scope::APP_ONLY);
         auto result = RunAlgorithm(appFiltered, callStacks, config);
         output.topSymbols.mode = "app-only";
         auto appSyms = buildAndEnrich(result.finalSymbols, callStacks, dataDict, topN);
@@ -994,7 +994,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         output.stats.orgSetSize = appOrg;
     }
     else if (scopeStr == "system-only") {
-        auto [sysFiltered, sysOrg] = buildFiltered(Scope::SystemOnly);
+        auto [sysFiltered, sysOrg] = buildFiltered(Scope::SYSTEM_ONLY);
         auto result = RunAlgorithm(sysFiltered, callStacks, config);
         output.topSymbols.mode = "system-only";
         auto sysSyms = buildAndEnrich(result.finalSymbols, callStacks, dataDict, topN);
@@ -1004,7 +1004,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         output.stats.orgSetSize = sysOrg;
     }
     else if (scopeStr == "mixed") {
-        auto [mixedFiltered, mixedOrg] = buildFiltered(Scope::Mixed);
+        auto [mixedFiltered, mixedOrg] = buildFiltered(Scope::MIXED);
         auto result = RunAlgorithm(mixedFiltered, callStacks, config);
         output.topSymbols.mode = "mixed";
         auto mixedSyms = buildAndEnrich(result.finalSymbols, callStacks, dataDict, topN);
@@ -1015,8 +1015,8 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     }
     else {
         // app-and-system (default)
-        auto [appFiltered, appOrg] = buildFiltered(Scope::AppOnly);
-        auto [sysFiltered, sysOrg] = buildFiltered(Scope::SystemOnly);
+        auto [appFiltered, appOrg] = buildFiltered(Scope::APP_ONLY);
+        auto [sysFiltered, sysOrg] = buildFiltered(Scope::SYSTEM_ONLY);
         auto appResult = RunAlgorithm(appFiltered, callStacks, config);
         auto sysResult = RunAlgorithm(sysFiltered, callStacks, config);
         output.topSymbols.mode = "app-and-system";
@@ -1156,7 +1156,7 @@ HtraceAnalysisOutput AnalyzeCallStacks(
 
     // mmap-filepage 走旁路（按文件聚合 + app/system 分类）；mixed 仅在 --scope mixed 时计算。
     FilepageSplit fpSplit = AnalyzeFilepages(filepageStacks, dataDict, output.totalLeakSize,
-        mode, scope == Scope::Mixed);
+        mode, scope == Scope::MIXED);
 
     // 每个 scope 恒为双轨：[Symbol 轨, Filepage 轨]（空也写，保持 JSON 键结构字节一致）。
     // 三个 scope 一律挂 filepage 轨（非活动 scope 是空轨），保证不变式「mmap ⇒ 每 scope
