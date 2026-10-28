@@ -153,13 +153,15 @@ SpawnedProc SpawnPiped(const std::string& cmd)
     }
     pid_t pid = fork();
     if (pid < 0) {
-        close(fds[0]); close(fds[1]);
+        close(fds[0]);
+        close(fds[1]);
         return {};
     }
     if (pid == 0) {
         dup2(fds[1], STDOUT_FILENO);
         dup2(fds[1], STDERR_FILENO);
-        close(fds[0]); close(fds[1]);
+        close(fds[0]);
+        close(fds[1]);
         execl("/bin/sh", "sh", "-c", cmd.c_str(), (char*)nullptr);
         _exit(127);
     }

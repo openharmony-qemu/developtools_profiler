@@ -88,7 +88,11 @@ struct orderedSet {
 
     std::size_t size() const { return items.size(); }
     bool empty() const { return items.empty(); }
-    void clear() { items.clear(); set.clear(); }
+    void clear()
+    {
+        items.clear();
+        set.clear();
+    }
 
     // Range-based for support (iterate in insertion order)
     auto begin() const { return items.begin(); }
@@ -127,9 +131,15 @@ inline uint64_t MakeUid(int symbolId, int fileId)
 // Looks up the lib path via data_dict and delegates to is_app_symbol().
 static void CheckAppSymbol(SymbolData& sd, const std::unordered_map<int, std::string>& dataDict)
 {
-    if (sd.libIdNull) { sd.isApp = false; return; }
+    if (sd.libIdNull) {
+        sd.isApp = false;
+        return;
+    }
     auto it = dataDict.find(sd.libId);
-    if (it == dataDict.end()) { sd.isApp = false; return; }
+    if (it == dataDict.end()) {
+        sd.isApp = false;
+        return;
+    }
     sd.isApp = HtraceConfigMgr::instance().IsAppSymbol(it->second, sd.vaddrNull);
 }
 
@@ -590,12 +600,22 @@ static AlgorithmResult RunAlgorithm(
         bool inSurviving = false;
         auto uIt = approx.upIdx.find(s->uid);
         if (uIt != approx.upIdx.end() && uIt->second < approx.upApprox.size()) {
-            for (auto& u : approx.upApprox[uIt->second].second) { if (!removedUids.count(u)) { inSurviving = true; break; } }
+            for (auto& u : approx.upApprox[uIt->second].second) {
+                if (!removedUids.count(u)) {
+                    inSurviving = true;
+                    break;
+                }
+            }
         }
         if (!inSurviving) {
             auto dIt = approx.downIdx.find(s->uid);
             if (dIt != approx.downIdx.end() && dIt->second < approx.downApprox.size()) {
-                for (auto& d : approx.downApprox[dIt->second].second) { if (!removedUids.count(d)) { inSurviving = true; break; } }
+                for (auto& d : approx.downApprox[dIt->second].second) {
+                    if (!removedUids.count(d)) {
+                        inSurviving = true;
+                        break;
+                    }
+                }
             }
         }
         if (!inSurviving) {
@@ -856,7 +876,10 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
                 }
                 const SymbolData& sd = it->second;
                 // 幸存者看整条链：任何 scope 的非噪声符号都意味着泄漏未丢失
-                if (!isNoise(sd)) { hasSurvivor = true; break; }
+                if (!isNoise(sd)) {
+                    hasSurvivor = true;
+                    break;
+                }
                 // 只有当前 scope 的符号才计入 has_scope_sym（决定恢复归属）
                 if (scopeOk(sd)) {
                     hasScopeSym = true;
@@ -1068,7 +1091,10 @@ static FilepageSplit AnalyzeFilepages(
         // 文件级分类：任意栈的任意帧是应用符号 → app 类；否则 system 类
         bool isApp = false;
         for (const auto& cs : info.callStacks) {
-            if (FilepageHasAppSymbol(cs, dataDict)) { isApp = true; break; }
+            if (FilepageHasAppSymbol(cs, dataDict)) {
+                isApp = true;
+                break;
+            }
         }
         if (isApp) {
             split.app.push_back(std::move(info));

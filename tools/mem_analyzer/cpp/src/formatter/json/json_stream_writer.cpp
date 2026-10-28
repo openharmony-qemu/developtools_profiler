@@ -63,13 +63,27 @@ void JsonStreamWriter::WriteEscapedString(const std::string& s)
     for (std::size_t i = 0; i < s.size(); ++i) {
         unsigned char c = static_cast<unsigned char>(s[i]);
         switch (c) {
-            case '"':  file_ << "\\\""; break;
-            case '\\': file_ << "\\\\"; break;
-            case '\n': file_ << "\\n";  break;
-            case '\t': file_ << "\\t";  break;
-            case '\r': file_ << "\\r";  break;
-            case '\b': file_ << "\\b";  break;
-            case '\f': file_ << "\\f";  break;
+            case '"':
+                file_ << "\\\"";
+                break;
+            case '\\':
+                file_ << "\\\\";
+                break;
+            case '\n':
+                file_ << "\\n";
+                break;
+            case '\t':
+                file_ << "\\t";
+                break;
+            case '\r':
+                file_ << "\\r";
+                break;
+            case '\b':
+                file_ << "\\b";
+                break;
+            case '\f':
+                file_ << "\\f";
+                break;
             default:
                 if (c < 0x20) {
                     // Control character: write as \uXXXX

@@ -179,11 +179,21 @@ std::string EscapeHtml(const std::string& str)
     result.reserve(str.size() * 11 / 10);  // ~10% headroom for escape expansion
     for (char c : str) {
         switch (c) {
-            case '&': result += "&amp;";  break;
-            case '<': result += "&lt;";   break;
-            case '>': result += "&gt;";   break;
-            case '"': result += "&quot;"; break;
-            case '\'': result += "&#39;"; break;
+            case '&':
+                result += "&amp;";
+                break;
+            case '<':
+                result += "&lt;";
+                break;
+            case '>':
+                result += "&gt;";
+                break;
+            case '"':
+                result += "&quot;";
+                break;
+            case '\'':
+                result += "&#39;";
+                break;
             default:  result += c;
         }
     }

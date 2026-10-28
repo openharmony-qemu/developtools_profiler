@@ -735,7 +735,10 @@ static size_t FindMatchingCloseBracket(const std::string& text, size_t start)
             // Skip string literal — handle escape sequences
             pos++;
             while (pos < text.size()) {
-                if (text[pos] == '\\') { pos += 2; continue; }  // skip escaped char
+                if (text[pos] == '\\') {
+                    pos += 2;
+                    continue;
+                }  // skip escaped char
                 if (text[pos] == '"') {
                     break; // end of string
                 }
@@ -785,7 +788,10 @@ static std::string SanitizeJsonStringArray(const std::string& strBuf)
                     }
                     sanitized += sc;
                     i++;
-                    if (i < strBuf.size()) { sanitized += strBuf[i]; i++; }
+                    if (i < strBuf.size()) {
+                        sanitized += strBuf[i];
+                        i++;
+                    }
                     continue;
                 }
                 if (sc == '"') {

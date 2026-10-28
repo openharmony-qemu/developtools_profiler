@@ -738,7 +738,11 @@ json BuildChangedLeakObjects(const json& baselineLeaks, const json& targetLeaks,
         if (positive ? positiveCount >= topN : negativeCount >= topN) {
             continue;
         }
-        if (positive) ++positiveCount; else ++negativeCount;
+        if (positive) {
+            ++positiveCount;
+        } else {
+            ++negativeCount;
+        }
         result[delta.name] = std::move(delta.entry);
     }
     return result;

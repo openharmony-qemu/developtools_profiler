@@ -354,7 +354,10 @@ bool HtraceConfigMgr::MatchFilterRule(const SymbolFilterRule& rule,
     if (!rule.lib.empty()) {
         bool libMatched = false;
         for (const auto& l : rule.lib) {
-            if (libFile == l) { libMatched = true; break; }
+            if (libFile == l) {
+                libMatched = true;
+                break;
+            }
         }
         if (!libMatched) {
             return false;

@@ -330,9 +330,15 @@ void LoadDetailStacks(HtraceParseContext& ctx,
                 const auto& c = configs[ci];
                 bool match = false;
                 switch (c.subTypeCond) {
-                    case SubTypeCondition::Any:      match = true; break;
-                    case SubTypeCondition::IsNull:   match = (subTypeId == -1); break;
-                    case SubTypeCondition::IsNotNull: match = (subTypeId != -1); break;
+                    case SubTypeCondition::Any:
+                        match = true;
+                        break;
+                    case SubTypeCondition::IsNull:
+                        match = (subTypeId == -1);
+                        break;
+                    case SubTypeCondition::IsNotNull:
+                        match = (subTypeId != -1);
+                        break;
                 }
                 if (match) {
                     auto key = std::make_pair(ccid, subTypeId);

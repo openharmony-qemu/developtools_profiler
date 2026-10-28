@@ -296,16 +296,20 @@ bool DecodeConfig(const std::string& data, HtraceNativeHookConfig& out)
     }
 
     auto asBool = [&](uint32_t n) {
-        auto it = single.find(n); return it != single.end() && it->second->varint != 0;
+        auto it = single.find(n);
+        return it != single.end() && it->second->varint != 0;
     };
     auto asInt = [&](uint32_t n) {
-        auto it = single.find(n); return it != single.end() ? AsInt32(it->second->varint) : 0;
+        auto it = single.find(n);
+        return it != single.end() ? AsInt32(it->second->varint) : 0;
     };
     auto asUint = [&](uint32_t n) {
-        auto it = single.find(n); return it != single.end() ? static_cast<uint32_t>(it->second->varint) : 0u;
+        auto it = single.find(n);
+        return it != single.end() ? static_cast<uint32_t>(it->second->varint) : 0u;
     };
     auto asStr = [&](uint32_t n) {
-        auto it = single.find(n); return it != single.end() ? it->second->bytes : std::string();
+        auto it = single.find(n);
+        return it != single.end() ? it->second->bytes : std::string();
     };
     auto asRepeatedInt = [&](uint32_t n) {
         std::vector<int32_t> r;

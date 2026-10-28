@@ -58,7 +58,9 @@ int RunCommandStreaming(const std::string& cmd)
         return -1;
     }
     if (!SetHandleInformation(hRead, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
-        CloseHandle(hRead); CloseHandle(hWrite); return -1;
+        CloseHandle(hRead);
+        CloseHandle(hWrite);
+        return -1;
     }
 
     STARTUPINFOW si{ sizeof(STARTUPINFOW) };
@@ -82,7 +84,8 @@ int RunCommandStreaming(const std::string& cmd)
     if (!CreateProcessW(nullptr, wcmdline.data(),
         nullptr, nullptr, TRUE, 0, nullptr, nullptr,
         &si, &pi)) {
-        CloseHandle(hRead); CloseHandle(hWrite);
+        CloseHandle(hRead);
+        CloseHandle(hWrite);
         return -1;
     }
     CloseHandle(hWrite);
@@ -321,9 +324,17 @@ static bool ResolveDeviceTarget(const std::string& rawKey, bool keyProvided, std
     //     names an unplugged / unauthorized device is caught here rather than later.
     if (keyProvided) {
         auto t = HdcListTargets();
-        if (t.spawnFailed) { msg = kHdcMissingMsg; return false; }
+        if (t.spawnFailed) {
+            msg = kHdcMissingMsg;
+            return false;
+        }
         bool found = false;
-        for (const auto& k : t.keys) { if (k == key) { found = true; break; } }
+        for (const auto& k : t.keys) {
+            if (k == key) {
+                found = true;
+                break;
+            }
+        }
         if (!found) {
             // fail-open: an incomplete parse means the candidate list may be wrong, so
             // let hdc decide instead of rejecting a possibly valid target locally.
@@ -919,7 +930,10 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
     // 3.5 Handle --list-apps early (before capture type validation).
     if (flagListApps) {
         auto q = QueryDeviceApps();
-        if (q.deviceFailed) { log::Loge(q.deviceErr); return 2; }
+        if (q.deviceFailed) {
+            log::Loge(q.deviceErr);
+            return 2;
+        }
         const auto& apps = q.apps;
         if (apps.empty()) {
             log::Loge("No apps found or unable to query device.");
@@ -1167,8 +1181,14 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
                     if (ec) {
                         continue;
                     }
-                    if (t < minTime) { minTime = t; earliest = f; }
-                    if (t > maxTime) { maxTime = t; latest = f; }
+                    if (t < minTime) {
+                        minTime = t;
+                        earliest = f;
+                    }
+                    if (t > maxTime) {
+                        maxTime = t;
+                        latest = f;
+                    }
                 }
                 if (baselineFile.empty()) {
                     baselineFile = earliest;

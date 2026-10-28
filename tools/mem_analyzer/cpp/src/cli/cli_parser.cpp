@@ -441,7 +441,10 @@ void CliParser::PrintHelp(std::ostream& os) const
         // Subcommand forms
         bool hasVisibleSub = false;
         for (const auto& [name, entry] : subcommands_) {
-            if (!entry.hidden) { hasVisibleSub = true; break; }
+            if (!entry.hidden) {
+                hasVisibleSub = true;
+                break;
+            }
         }
         if (hasVisibleSub) {
             for (const auto& [name, entry] : subcommands_) {
@@ -493,9 +496,15 @@ void CliParser::PrintHelp(std::ostream& os) const
                 // Type indicator
                 std::string typeStr;
                 switch (opt->type) {
-                    case Option::STRING: typeStr = " TEXT"; break;
-                    case Option::INT:    typeStr = " INT";  break;
-                    case Option::BOOL:   typeStr = "";      break;
+                    case Option::STRING:
+                        typeStr = " TEXT";
+                        break;
+                    case Option::INT:
+                        typeStr = " INT";
+                        break;
+                    case Option::BOOL:
+                        typeStr = "";
+                        break;
                 }
 
                 std::string optLine = "  " + display + typeStr;
@@ -543,7 +552,10 @@ void CliParser::PrintHelp(std::ostream& os) const
     // Subcommands
     bool hasVisibleSub = false;
     for (const auto& [name, entry] : subcommands_) {
-        if (!entry.hidden) { hasVisibleSub = true; break; }
+        if (!entry.hidden) {
+            hasVisibleSub = true;
+            break;
+        }
     }
     if (hasVisibleSub) {
         os << "SUBCOMMANDS:\n";

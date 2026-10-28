@@ -144,9 +144,15 @@ std::string ConsoleStartLine(const std::string& line)
     if (line.find("Use 'hiprofiler_cmd stop'") != std::string::npos) {
         const char* key = nullptr;
         switch (CurrentPlatform()) {
-            case Platform::Mac:     key = "Control+C"; break;
-            case Platform::Windows: key = "Ctrl+C";    break;
-            default:                key = "Ctrl+C";    break;  // Linux
+            case Platform::Mac:
+                key = "Control+C";
+                break;
+            case Platform::Windows:
+                key = "Ctrl+C";
+                break;
+            default:
+                key = "Ctrl+C";
+                break;  // Linux
         }
         return std::string("Capture stops when the countdown ends, or press ") +
                key + " to stop early.\n";
@@ -349,7 +355,10 @@ std::string DetectPermissionError(const std::string& output)
     for (size_t i = 0; i < lines.size(); ++i) {
         bool hit = false;
         for (const char* m : kMarkers) {
-            if (ContainsCi(lines[i], m)) { hit = true; break; }
+            if (ContainsCi(lines[i], m)) {
+                hit = true;
+                break;
+            }
         }
         if (!hit) {
             continue;
@@ -1316,7 +1325,10 @@ std::string GetProcessPid(const std::string& processName)
             std::istringstream lss(line);
             std::string pid, tok;
             for (int col = 0; col < 7; ++col) {
-                if (!(lss >> tok)) { pid.clear(); break; }
+                if (!(lss >> tok)) {
+                    pid.clear();
+                    break;
+                }
                 if (col == 1) {
                     pid = tok;
                 }
@@ -1603,11 +1615,16 @@ std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::s
         SECURITY_ATTRIBUTES sa{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
         HANDLE hRead = nullptr, hWrite = nullptr;
         if (!CreatePipe(&hRead, &hWrite, &sa, 0)) {
-            state->spawnFailed = true; state->done = true; return;
+            state->spawnFailed = true;
+            state->done = true;
+            return;
         }
         if (!SetHandleInformation(hRead, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
-            CloseHandle(hRead); CloseHandle(hWrite);
-            state->spawnFailed = true; state->done = true; return;
+            CloseHandle(hRead);
+            CloseHandle(hWrite);
+            state->spawnFailed = true;
+            state->done = true;
+            return;
         }
         STARTUPINFOW si{ sizeof(STARTUPINFOW) };
         si.dwFlags = STARTF_USESTDHANDLES;
@@ -1624,8 +1641,11 @@ std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::s
         std::wstring wcmdline = WidenPath(cleanCmd);
         if (!CreateProcessW(nullptr, wcmdline.data(), nullptr, nullptr, TRUE, 0,
                             nullptr, nullptr, &si, &pi)) {
-            CloseHandle(hRead); CloseHandle(hWrite);
-            state->spawnFailed = true; state->done = true; return;
+            CloseHandle(hRead);
+            CloseHandle(hWrite);
+            state->spawnFailed = true;
+            state->done = true;
+            return;
         }
         CloseHandle(hWrite);
 
@@ -1633,12 +1653,16 @@ std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::s
         int fd = _open_osfhandle(reinterpret_cast<intptr_t>(hRead), _O_RDONLY);
         if (fd == -1) {
             CloseHandle(hRead);
-            state->spawnFailed = true; state->done = true; return;
+            state->spawnFailed = true;
+            state->done = true;
+            return;
         }
         FILE* fp = _fdopen(fd, "r");
         if (!fp) {
             _close(fd);
-            state->spawnFailed = true; state->done = true; return;
+            state->spawnFailed = true;
+            state->done = true;
+            return;
         }
 
         consumeStream(fp);
@@ -1653,12 +1677,16 @@ std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::s
 #else
         auto sp = proc::SpawnPiped(cmd);
         if (!sp.ok()) {
-            state->spawnFailed = true; state->done = true; return;
+            state->spawnFailed = true;
+            state->done = true;
+            return;
         }
         FILE* fp = fdopen(sp.readFd, "r");
         if (!fp) {
             close(sp.readFd);
-            state->spawnFailed = true; state->done = true; return;
+            state->spawnFailed = true;
+            state->done = true;
+            return;
         }
         consumeStream(fp);
         fclose(fp);
@@ -1781,7 +1809,10 @@ std::thread SpawnFreshRestart(const std::shared_ptr<CaptureState>& state, const 
                 failed = state->output.find("Failed to start profiling session") != std::string::npos ||
                          state->output.find("MakeCreateRequest failed") != std::string::npos;
             }
-            if (marker) { sessionUp = true; break; }
+            if (marker) {
+                sessionUp = true;
+                break;
+            }
             if (failed) {
                 break;
             }

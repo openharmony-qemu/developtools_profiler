@@ -337,9 +337,12 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
         const std::string& filepageLabel = appFp->label;
 
         size_t o = 0;
-        streamGroups.push_back({"appMmapAnon",    anonLabel, anonApp,    o}); o += anonApp.size();
-        streamGroups.push_back({"systemMmapAnon", anonLabel, anonSystem, o}); o += anonSystem.size();
-        streamGroups.push_back({"mixedMmapAnon",  anonLabel, anonMixed,  o}); o += anonMixed.size();
+        streamGroups.push_back({"appMmapAnon", anonLabel, anonApp, o});
+        o += anonApp.size();
+        streamGroups.push_back({"systemMmapAnon", anonLabel, anonSystem, o});
+        o += anonSystem.size();
+        streamGroups.push_back({"mixedMmapAnon", anonLabel, anonMixed, o});
+        o += anonMixed.size();
 
         size_t fpAppStart = o;
         streamGroups.push_back({"appMmapFilepage",    filepageLabel, appFilepageEntries,    fpAppStart});
