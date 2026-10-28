@@ -178,7 +178,8 @@ struct CgroupNotifyFrozenData {
     std::string path {};
     int32_t val {};
 };
-__attribute__((noinline)) void ParseCgroupNotifyFrozenData(CgroupNotifyFrozenData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseCgroupNotifyFrozenData(
+    CgroupNotifyFrozenData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -218,7 +219,8 @@ struct CgroupNotifyPopulatedData {
     std::string path {};
     int32_t val {};
 };
-__attribute__((noinline)) void ParseCgroupNotifyPopulatedData(CgroupNotifyPopulatedData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseCgroupNotifyPopulatedData(
+    CgroupNotifyPopulatedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -249,7 +251,8 @@ void ParseCgroupNotifyPopulated(FtraceEventType& ftraceEvent, uint8_t data[], si
     msg->set_val(eventData.val);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_notify_populated, ParseCgroupNotifyPopulated<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_notify_populated, ParseCgroupNotifyPopulated<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_notify_populated,
+    ParseCgroupNotifyPopulated<ProtoEncoder::FtraceEvent>);
 
 struct CgroupReleaseData {
     int32_t root {};
@@ -438,7 +441,8 @@ struct CgroupTransferTasksData {
     std::string dst_path {};
     std::string comm {};
 };
-__attribute__((noinline)) void ParseCgroupTransferTasksData(CgroupTransferTasksData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseCgroupTransferTasksData(
+    CgroupTransferTasksData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -471,7 +475,8 @@ void ParseCgroupTransferTasks(FtraceEventType& ftraceEvent, uint8_t data[], size
     msg->set_comm(eventData.comm);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(cgroup_transfer_tasks, ParseCgroupTransferTasks<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_transfer_tasks, ParseCgroupTransferTasks<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(cgroup_transfer_tasks,
+    ParseCgroupTransferTasks<ProtoEncoder::FtraceEvent>);
 
 struct CgroupUnfreezeData {
     int32_t root {};

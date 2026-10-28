@@ -27,7 +27,8 @@ struct FileCheckAndAdvanceWbErrData {
     uint32_t old {};
     uint32_t seq_new {};
 };
-__attribute__((noinline)) void ParseFileCheckAndAdvanceWbErrData(FileCheckAndAdvanceWbErrData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseFileCheckAndAdvanceWbErrData(
+    FileCheckAndAdvanceWbErrData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -58,7 +59,8 @@ void ParseFileCheckAndAdvanceWbErr(FtraceEventType& ftraceEvent, uint8_t data[],
     msg->set_seq_new(eventData.seq_new);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(file_check_and_advance_wb_err, ParseFileCheckAndAdvanceWbErr<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(file_check_and_advance_wb_err, ParseFileCheckAndAdvanceWbErr<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(file_check_and_advance_wb_err,
+    ParseFileCheckAndAdvanceWbErr<ProtoEncoder::FtraceEvent>);
 
 struct FilemapSetWbErrData {
     uint64_t i_ino {};
@@ -101,7 +103,8 @@ struct MmFilemapAddToPageCacheData {
     uint64_t s_dev {};
     uint32_t order {};
 };
-__attribute__((noinline)) void ParseMmFilemapAddToPageCacheData(MmFilemapAddToPageCacheData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmFilemapAddToPageCacheData(
+    MmFilemapAddToPageCacheData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -132,7 +135,8 @@ void ParseMmFilemapAddToPageCache(FtraceEventType& ftraceEvent, uint8_t data[], 
     msg->set_order(eventData.order);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_filemap_add_to_page_cache, ParseMmFilemapAddToPageCache<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_filemap_add_to_page_cache, ParseMmFilemapAddToPageCache<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_filemap_add_to_page_cache,
+    ParseMmFilemapAddToPageCache<ProtoEncoder::FtraceEvent>);
 
 struct MmFilemapDeleteFromPageCacheData {
     uint64_t pfn {};
@@ -141,7 +145,8 @@ struct MmFilemapDeleteFromPageCacheData {
     uint64_t s_dev {};
     uint32_t order {};
 };
-__attribute__((noinline)) void ParseMmFilemapDeleteFromPageCacheData(MmFilemapDeleteFromPageCacheData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmFilemapDeleteFromPageCacheData(
+    MmFilemapDeleteFromPageCacheData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -172,6 +177,7 @@ void ParseMmFilemapDeleteFromPageCache(FtraceEventType& ftraceEvent, uint8_t dat
     msg->set_order(eventData.order);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_filemap_delete_from_page_cache, ParseMmFilemapDeleteFromPageCache<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_filemap_delete_from_page_cache, ParseMmFilemapDeleteFromPageCache<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_filemap_delete_from_page_cache,
+    ParseMmFilemapDeleteFromPageCache<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

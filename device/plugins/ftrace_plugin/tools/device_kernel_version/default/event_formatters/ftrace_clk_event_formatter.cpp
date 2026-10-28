@@ -182,7 +182,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.clk_set_phase_format();
         char buffer[BUFFER_SIZE];
         int len = snprintf_s(
-            buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "clk_set_phase: %s %d", msg.name().c_str(), static_cast<int>(msg.phase()));
+            buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "clk_set_phase: %s %d", msg.name().c_str(),
+                static_cast<int>(msg.phase())););
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(clk_set_phase) msg had be cut off in outfile");

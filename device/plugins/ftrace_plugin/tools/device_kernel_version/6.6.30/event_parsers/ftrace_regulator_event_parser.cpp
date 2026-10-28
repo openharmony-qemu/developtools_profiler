@@ -23,7 +23,8 @@ using namespace OHOS::Developtools::Profiler;
 struct RegulatorBypassDisableData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseRegulatorBypassDisableData(RegulatorBypassDisableData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseRegulatorBypassDisableData(
+    RegulatorBypassDisableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -46,12 +47,14 @@ void ParseRegulatorBypassDisable(FtraceEventType& ftraceEvent, uint8_t data[], s
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_disable, ParseRegulatorBypassDisable<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_disable, ParseRegulatorBypassDisable<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_disable,
+    ParseRegulatorBypassDisable<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorBypassDisableCompleteData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseRegulatorBypassDisableCompleteData(RegulatorBypassDisableCompleteData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseRegulatorBypassDisableCompleteData(
+    RegulatorBypassDisableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -73,13 +76,16 @@ void ParseRegulatorBypassDisableComplete(FtraceEventType& ftraceEvent, uint8_t d
     }
     msg->set_name(eventData.name);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_disable_complete, ParseRegulatorBypassDisableComplete<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_disable_complete, ParseRegulatorBypassDisableComplete<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_disable_complete,
+    ParseRegulatorBypassDisableComplete<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_disable_complete,
+    ParseRegulatorBypassDisableComplete<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorBypassEnableData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseRegulatorBypassEnableData(RegulatorBypassEnableData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseRegulatorBypassEnableData(
+    RegulatorBypassEnableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -102,12 +108,14 @@ void ParseRegulatorBypassEnable(FtraceEventType& ftraceEvent, uint8_t data[], si
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_enable, ParseRegulatorBypassEnable<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_enable, ParseRegulatorBypassEnable<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_enable,
+    ParseRegulatorBypassEnable<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorBypassEnableCompleteData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseRegulatorBypassEnableCompleteData(RegulatorBypassEnableCompleteData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseRegulatorBypassEnableCompleteData(
+    RegulatorBypassEnableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -130,7 +138,8 @@ void ParseRegulatorBypassEnableComplete(FtraceEventType& ftraceEvent, uint8_t da
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_enable_complete, ParseRegulatorBypassEnableComplete<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_enable_complete, ParseRegulatorBypassEnableComplete<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_enable_complete,
+    ParseRegulatorBypassEnableComplete<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorDisableData {
     std::string name {};
@@ -163,7 +172,8 @@ REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_disable, ParseRegulatorDi
 struct RegulatorDisableCompleteData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseRegulatorDisableCompleteData(RegulatorDisableCompleteData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseRegulatorDisableCompleteData(
+    RegulatorDisableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -186,7 +196,8 @@ void ParseRegulatorDisableComplete(FtraceEventType& ftraceEvent, uint8_t data[],
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_disable_complete, ParseRegulatorDisableComplete<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_disable_complete, ParseRegulatorDisableComplete<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_disable_complete,
+    ParseRegulatorDisableComplete<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorEnableData {
     std::string name {};
@@ -219,7 +230,8 @@ REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_enable, ParseRegulatorEna
 struct RegulatorEnableCompleteData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseRegulatorEnableCompleteData(RegulatorEnableCompleteData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseRegulatorEnableCompleteData(
+    RegulatorEnableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -242,12 +254,14 @@ void ParseRegulatorEnableComplete(FtraceEventType& ftraceEvent, uint8_t data[], 
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_enable_complete, ParseRegulatorEnableComplete<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_enable_complete, ParseRegulatorEnableComplete<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_enable_complete,
+    ParseRegulatorEnableComplete<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorEnableDelayData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseRegulatorEnableDelayData(RegulatorEnableDelayData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseRegulatorEnableDelayData(
+    RegulatorEnableDelayData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -270,14 +284,16 @@ void ParseRegulatorEnableDelay(FtraceEventType& ftraceEvent, uint8_t data[], siz
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_enable_delay, ParseRegulatorEnableDelay<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_enable_delay, ParseRegulatorEnableDelay<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_enable_delay,
+    ParseRegulatorEnableDelay<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorSetVoltageData {
     std::string name {};
     int32_t min {};
     int32_t max {};
 };
-__attribute__((noinline)) void ParseRegulatorSetVoltageData(RegulatorSetVoltageData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseRegulatorSetVoltageData(
+    RegulatorSetVoltageData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -304,13 +320,15 @@ void ParseRegulatorSetVoltage(FtraceEventType& ftraceEvent, uint8_t data[], size
     msg->set_max(eventData.max);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_set_voltage, ParseRegulatorSetVoltage<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_set_voltage, ParseRegulatorSetVoltage<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_set_voltage,
+    ParseRegulatorSetVoltage<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorSetVoltageCompleteData {
     std::string name {};
     uint32_t val {};
 };
-__attribute__((noinline)) void ParseRegulatorSetVoltageCompleteData(RegulatorSetVoltageCompleteData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseRegulatorSetVoltageCompleteData(
+    RegulatorSetVoltageCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -335,6 +353,7 @@ void ParseRegulatorSetVoltageComplete(FtraceEventType& ftraceEvent, uint8_t data
     msg->set_val(eventData.val);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_set_voltage_complete, ParseRegulatorSetVoltageComplete<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_set_voltage_complete, ParseRegulatorSetVoltageComplete<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_set_voltage_complete,
+    ParseRegulatorSetVoltageComplete<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

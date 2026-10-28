@@ -54,7 +54,8 @@ REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_kthread_stop, ParseSchedKthre
 struct SchedKthreadStopRetData {
     int32_t ret {};
 };
-__attribute__((noinline)) void ParseSchedKthreadStopRetData(SchedKthreadStopRetData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseSchedKthreadStopRetData(
+    SchedKthreadStopRetData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -77,7 +78,8 @@ void ParseSchedKthreadStopRet(FtraceEventType& ftraceEvent, uint8_t data[], size
     msg->set_ret(eventData.ret);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_kthread_stop_ret, ParseSchedKthreadStopRet<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_kthread_stop_ret, ParseSchedKthreadStopRet<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_kthread_stop_ret,
+    ParseSchedKthreadStopRet<ProtoEncoder::FtraceEvent>);
 
 struct SchedMigrateTaskData {
     std::string comm {};
@@ -747,7 +749,8 @@ REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_wait_task, ParseSchedWaitTask
 struct SchedWakeIdleWithoutIpiData {
     int32_t cpu {};
 };
-__attribute__((noinline)) void ParseSchedWakeIdleWithoutIpiData(SchedWakeIdleWithoutIpiData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseSchedWakeIdleWithoutIpiData(
+    SchedWakeIdleWithoutIpiData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -770,7 +773,8 @@ void ParseSchedWakeIdleWithoutIpi(FtraceEventType& ftraceEvent, uint8_t data[], 
     msg->set_cpu(eventData.cpu);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_wake_idle_without_ipi, ParseSchedWakeIdleWithoutIpi<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_wake_idle_without_ipi, ParseSchedWakeIdleWithoutIpi<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sched_wake_idle_without_ipi,
+    ParseSchedWakeIdleWithoutIpi<ProtoEncoder::FtraceEvent>);
 
 struct SchedWakeupData {
     std::string comm {};

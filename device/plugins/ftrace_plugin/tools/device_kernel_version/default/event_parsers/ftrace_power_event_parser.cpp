@@ -158,7 +158,8 @@ struct CpuFrequencyLimitsData {
     uint32_t max_freq {};
     uint32_t cpu_id {};
 };
-__attribute__((noinline)) void ParseCpuFrequencyLimitsData(CpuFrequencyLimitsData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseCpuFrequencyLimitsData(
+    CpuFrequencyLimitsData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -223,7 +224,8 @@ struct DevPmQosAddRequestData {
     uint32_t type {};
     int32_t new_value {};
 };
-__attribute__((noinline)) void ParseDevPmQosAddRequestData(DevPmQosAddRequestData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseDevPmQosAddRequestData(
+    DevPmQosAddRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -250,14 +252,16 @@ void ParseDevPmQosAddRequest(FtraceEventType& ftraceEvent, uint8_t data[], size_
     msg->set_new_value(eventData.new_value);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dev_pm_qos_add_request, ParseDevPmQosAddRequest<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dev_pm_qos_add_request, ParseDevPmQosAddRequest<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dev_pm_qos_add_request,
+    ParseDevPmQosAddRequest<ProtoEncoder::FtraceEvent>);
 
 struct DevPmQosRemoveRequestData {
     std::string name {};
     uint32_t type {};
     int32_t new_value {};
 };
-__attribute__((noinline)) void ParseDevPmQosRemoveRequestData(DevPmQosRemoveRequestData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseDevPmQosRemoveRequestData(
+    DevPmQosRemoveRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -284,14 +288,16 @@ void ParseDevPmQosRemoveRequest(FtraceEventType& ftraceEvent, uint8_t data[], si
     msg->set_new_value(eventData.new_value);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dev_pm_qos_remove_request, ParseDevPmQosRemoveRequest<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dev_pm_qos_remove_request, ParseDevPmQosRemoveRequest<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dev_pm_qos_remove_request,
+    ParseDevPmQosRemoveRequest<ProtoEncoder::FtraceEvent>);
 
 struct DevPmQosUpdateRequestData {
     std::string name {};
     uint32_t type {};
     int32_t new_value {};
 };
-__attribute__((noinline)) void ParseDevPmQosUpdateRequestData(DevPmQosUpdateRequestData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseDevPmQosUpdateRequestData(
+    DevPmQosUpdateRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -318,14 +324,16 @@ void ParseDevPmQosUpdateRequest(FtraceEventType& ftraceEvent, uint8_t data[], si
     msg->set_new_value(eventData.new_value);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dev_pm_qos_update_request, ParseDevPmQosUpdateRequest<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dev_pm_qos_update_request, ParseDevPmQosUpdateRequest<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dev_pm_qos_update_request,
+    ParseDevPmQosUpdateRequest<ProtoEncoder::FtraceEvent>);
 
 struct DevicePmCallbackEndData {
     std::string device {};
     std::string driver {};
     int32_t error {};
 };
-__attribute__((noinline)) void ParseDevicePmCallbackEndData(DevicePmCallbackEndData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseDevicePmCallbackEndData(
+    DevicePmCallbackEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -352,7 +360,8 @@ void ParseDevicePmCallbackEnd(FtraceEventType& ftraceEvent, uint8_t data[], size
     msg->set_error(eventData.error);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(device_pm_callback_end, ParseDevicePmCallbackEnd<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(device_pm_callback_end, ParseDevicePmCallbackEnd<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(device_pm_callback_end,
+    ParseDevicePmCallbackEnd<ProtoEncoder::FtraceEvent>);
 
 struct DevicePmCallbackStartData {
     std::string device {};
@@ -361,7 +370,8 @@ struct DevicePmCallbackStartData {
     std::string pm_ops {};
     int32_t event {};
 };
-__attribute__((noinline)) void ParseDevicePmCallbackStartData(DevicePmCallbackStartData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseDevicePmCallbackStartData(
+    DevicePmCallbackStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -392,7 +402,8 @@ void ParseDevicePmCallbackStart(FtraceEventType& ftraceEvent, uint8_t data[], si
     msg->set_event(eventData.event);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(device_pm_callback_start, ParseDevicePmCallbackStart<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(device_pm_callback_start, ParseDevicePmCallbackStart<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(device_pm_callback_start,
+    ParseDevicePmCallbackStart<ProtoEncoder::FtraceEvent>);
 
 struct PmQosAddRequestData {
     int32_t pm_qos_class {};
@@ -429,7 +440,8 @@ struct PmQosRemoveRequestData {
     int32_t pm_qos_class {};
     int32_t value {};
 };
-__attribute__((noinline)) void ParsePmQosRemoveRequestData(PmQosRemoveRequestData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParsePmQosRemoveRequestData(
+    PmQosRemoveRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -494,7 +506,8 @@ struct PmQosUpdateRequestData {
     int32_t pm_qos_class {};
     int32_t value {};
 };
-__attribute__((noinline)) void ParsePmQosUpdateRequestData(PmQosUpdateRequestData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParsePmQosUpdateRequestData(
+    PmQosUpdateRequestData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -526,7 +539,8 @@ struct PmQosUpdateRequestTimeoutData {
     int32_t value {};
     uint64_t timeout_us {};
 };
-__attribute__((noinline)) void ParsePmQosUpdateRequestTimeoutData(PmQosUpdateRequestTimeoutData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParsePmQosUpdateRequestTimeoutData(
+    PmQosUpdateRequestTimeoutData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -553,7 +567,8 @@ void ParsePmQosUpdateRequestTimeout(FtraceEventType& ftraceEvent, uint8_t data[]
     msg->set_timeout_us(eventData.timeout_us);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(pm_qos_update_request_timeout, ParsePmQosUpdateRequestTimeout<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(pm_qos_update_request_timeout, ParsePmQosUpdateRequestTimeout<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(pm_qos_update_request_timeout,
+    ParsePmQosUpdateRequestTimeout<ProtoEncoder::FtraceEvent>);
 
 struct PmQosUpdateTargetData {
     uint32_t action {};
@@ -713,7 +728,8 @@ struct WakeupSourceActivateData {
     std::string name {};
     uint64_t state {};
 };
-__attribute__((noinline)) void ParseWakeupSourceActivateData(WakeupSourceActivateData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWakeupSourceActivateData(
+    WakeupSourceActivateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -738,13 +754,15 @@ void ParseWakeupSourceActivate(FtraceEventType& ftraceEvent, uint8_t data[], siz
     msg->set_state(eventData.state);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(wakeup_source_activate, ParseWakeupSourceActivate<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(wakeup_source_activate, ParseWakeupSourceActivate<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(wakeup_source_activate,
+    ParseWakeupSourceActivate<ProtoEncoder::FtraceEvent>);
 
 struct WakeupSourceDeactivateData {
     std::string name {};
     uint64_t state {};
 };
-__attribute__((noinline)) void ParseWakeupSourceDeactivateData(WakeupSourceDeactivateData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWakeupSourceDeactivateData(
+    WakeupSourceDeactivateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -769,6 +787,7 @@ void ParseWakeupSourceDeactivate(FtraceEventType& ftraceEvent, uint8_t data[], s
     msg->set_state(eventData.state);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(wakeup_source_deactivate, ParseWakeupSourceDeactivate<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(wakeup_source_deactivate, ParseWakeupSourceDeactivate<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(wakeup_source_deactivate,
+    ParseWakeupSourceDeactivate<ProtoEncoder::FtraceEvent>);
 } // namespace
 FTRACE_NS_END

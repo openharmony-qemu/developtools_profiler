@@ -182,7 +182,8 @@ struct KmemCacheAllocNodeData {
     uint32_t gfp_flags {};
     int32_t node {};
 };
-__attribute__((noinline)) void ParseKmemCacheAllocNodeData(KmemCacheAllocNodeData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseKmemCacheAllocNodeData(
+    KmemCacheAllocNodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -293,7 +294,8 @@ struct MmPageAllocExtfragData {
     int32_t fallback_migratetype {};
     int32_t change_ownership {};
 };
-__attribute__((noinline)) void ParseMmPageAllocExtfragData(MmPageAllocExtfragData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmPageAllocExtfragData(
+    MmPageAllocExtfragData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -333,7 +335,8 @@ struct MmPageAllocZoneLockedData {
     uint32_t order {};
     int32_t migratetype {};
 };
-__attribute__((noinline)) void ParseMmPageAllocZoneLockedData(MmPageAllocZoneLockedData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmPageAllocZoneLockedData(
+    MmPageAllocZoneLockedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -360,7 +363,8 @@ void ParseMmPageAllocZoneLocked(FtraceEventType& ftraceEvent, uint8_t data[], si
     msg->set_migratetype(eventData.migratetype);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_page_alloc_zone_locked, ParseMmPageAllocZoneLocked<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_page_alloc_zone_locked, ParseMmPageAllocZoneLocked<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_page_alloc_zone_locked,
+    ParseMmPageAllocZoneLocked<ProtoEncoder::FtraceEvent>);
 
 struct MmPageFreeData {
     uint64_t pfn {};

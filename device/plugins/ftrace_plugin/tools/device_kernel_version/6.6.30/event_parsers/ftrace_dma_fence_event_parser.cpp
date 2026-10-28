@@ -100,7 +100,8 @@ struct DmaFenceEnableSignalData {
     uint32_t context {};
     uint32_t seqno {};
 };
-__attribute__((noinline)) void ParseDmaFenceEnableSignalData(DmaFenceEnableSignalData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseDmaFenceEnableSignalData(
+    DmaFenceEnableSignalData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -129,7 +130,8 @@ void ParseDmaFenceEnableSignal(FtraceEventType& ftraceEvent, uint8_t data[], siz
     msg->set_seqno(eventData.seqno);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_enable_signal, ParseDmaFenceEnableSignal<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_enable_signal, ParseDmaFenceEnableSignal<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_enable_signal,
+    ParseDmaFenceEnableSignal<ProtoEncoder::FtraceEvent>);
 
 struct DmaFenceInitData {
     std::string driver {};

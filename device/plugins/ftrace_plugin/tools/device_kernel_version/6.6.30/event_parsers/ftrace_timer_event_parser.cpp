@@ -53,7 +53,8 @@ struct HrtimerExpireEntryData {
     int64_t now {};
     uint64_t function {};
 };
-__attribute__((noinline)) void ParseHrtimerExpireEntryData(HrtimerExpireEntryData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseHrtimerExpireEntryData(
+    HrtimerExpireEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;

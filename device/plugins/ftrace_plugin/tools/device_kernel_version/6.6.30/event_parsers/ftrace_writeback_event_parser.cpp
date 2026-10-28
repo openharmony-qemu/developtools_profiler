@@ -246,7 +246,8 @@ REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(wbc_writepage, ParseWbcWritepage<Pr
 struct WritebackBdiRegisterData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseWritebackBdiRegisterData(WritebackBdiRegisterData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWritebackBdiRegisterData(
+    WritebackBdiRegisterData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -269,7 +270,8 @@ void ParseWritebackBdiRegister(FtraceEventType& ftraceEvent, uint8_t data[], siz
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_bdi_register, ParseWritebackBdiRegister<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_bdi_register, ParseWritebackBdiRegister<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_bdi_register,
+    ParseWritebackBdiRegister<ProtoEncoder::FtraceEvent>);
 
 struct WritebackDirtyInodeData {
     std::string name {};
@@ -277,7 +279,8 @@ struct WritebackDirtyInodeData {
     uint64_t state {};
     uint64_t flags {};
 };
-__attribute__((noinline)) void ParseWritebackDirtyInodeData(WritebackDirtyInodeData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWritebackDirtyInodeData(
+    WritebackDirtyInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -306,7 +309,8 @@ void ParseWritebackDirtyInode(FtraceEventType& ftraceEvent, uint8_t data[], size
     msg->set_flags(eventData.flags);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode, ParseWritebackDirtyInode<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode, ParseWritebackDirtyInode<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode,
+    ParseWritebackDirtyInode<ProtoEncoder::FtraceEvent>);
 
 struct WritebackDirtyInodeEnqueueData {
     uint64_t dev {};
@@ -315,7 +319,8 @@ struct WritebackDirtyInodeEnqueueData {
     uint32_t mode {};
     uint64_t dirtied_when {};
 };
-__attribute__((noinline)) void ParseWritebackDirtyInodeEnqueueData(WritebackDirtyInodeEnqueueData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWritebackDirtyInodeEnqueueData(
+    WritebackDirtyInodeEnqueueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -346,7 +351,8 @@ void ParseWritebackDirtyInodeEnqueue(FtraceEventType& ftraceEvent, uint8_t data[
     msg->set_dirtied_when(eventData.dirtied_when);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode_enqueue, ParseWritebackDirtyInodeEnqueue<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode_enqueue, ParseWritebackDirtyInodeEnqueue<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode_enqueue,
+    ParseWritebackDirtyInodeEnqueue<ProtoEncoder::FtraceEvent>);
 
 struct WritebackDirtyInodeStartData {
     std::string name {};
@@ -354,7 +360,8 @@ struct WritebackDirtyInodeStartData {
     uint64_t state {};
     uint64_t flags {};
 };
-__attribute__((noinline)) void ParseWritebackDirtyInodeStartData(WritebackDirtyInodeStartData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWritebackDirtyInodeStartData(
+    WritebackDirtyInodeStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -383,7 +390,8 @@ void ParseWritebackDirtyInodeStart(FtraceEventType& ftraceEvent, uint8_t data[],
     msg->set_flags(eventData.flags);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode_start, ParseWritebackDirtyInodeStart<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode_start, ParseWritebackDirtyInodeStart<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode_start,
+    ParseWritebackDirtyInodeStart<ProtoEncoder::FtraceEvent>);
 
 struct WritebackExecData {
     std::string name {};
@@ -484,7 +492,8 @@ struct WritebackLazytimeIputData {
     uint32_t mode {};
     uint64_t dirtied_when {};
 };
-__attribute__((noinline)) void ParseWritebackLazytimeIputData(WritebackLazytimeIputData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWritebackLazytimeIputData(
+    WritebackLazytimeIputData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -515,7 +524,8 @@ void ParseWritebackLazytimeIput(FtraceEventType& ftraceEvent, uint8_t data[], si
     msg->set_dirtied_when(eventData.dirtied_when);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_lazytime_iput, ParseWritebackLazytimeIput<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_lazytime_iput, ParseWritebackLazytimeIput<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_lazytime_iput,
+    ParseWritebackLazytimeIput<ProtoEncoder::FtraceEvent>);
 
 struct WritebackMarkInodeDirtyData {
     std::string name {};
@@ -523,7 +533,8 @@ struct WritebackMarkInodeDirtyData {
     uint64_t state {};
     uint64_t flags {};
 };
-__attribute__((noinline)) void ParseWritebackMarkInodeDirtyData(WritebackMarkInodeDirtyData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWritebackMarkInodeDirtyData(
+    WritebackMarkInodeDirtyData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -552,12 +563,14 @@ void ParseWritebackMarkInodeDirty(FtraceEventType& ftraceEvent, uint8_t data[], 
     msg->set_flags(eventData.flags);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_mark_inode_dirty, ParseWritebackMarkInodeDirty<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_mark_inode_dirty, ParseWritebackMarkInodeDirty<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_mark_inode_dirty,
+    ParseWritebackMarkInodeDirty<ProtoEncoder::FtraceEvent>);
 
 struct WritebackPagesWrittenData {
     uint64_t pages {};
 };
-__attribute__((noinline)) void ParseWritebackPagesWrittenData(WritebackPagesWrittenData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWritebackPagesWrittenData(
+    WritebackPagesWrittenData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -580,7 +593,8 @@ void ParseWritebackPagesWritten(FtraceEventType& ftraceEvent, uint8_t data[], si
     msg->set_pages(eventData.pages);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_pages_written, ParseWritebackPagesWritten<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_pages_written, ParseWritebackPagesWritten<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_pages_written,
+    ParseWritebackPagesWritten<ProtoEncoder::FtraceEvent>);
 
 struct WritebackQueueData {
     std::string name {};
@@ -684,7 +698,8 @@ struct WritebackSbInodesRequeueData {
     uint64_t dirtied_when {};
     uint64_t cgroup_ino {};
 };
-__attribute__((noinline)) void ParseWritebackSbInodesRequeueData(WritebackSbInodesRequeueData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWritebackSbInodesRequeueData(
+    WritebackSbInodesRequeueData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -715,7 +730,8 @@ void ParseWritebackSbInodesRequeue(FtraceEventType& ftraceEvent, uint8_t data[],
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_sb_inodes_requeue, ParseWritebackSbInodesRequeue<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_sb_inodes_requeue, ParseWritebackSbInodesRequeue<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_sb_inodes_requeue,
+    ParseWritebackSbInodesRequeue<ProtoEncoder::FtraceEvent>);
 
 struct WritebackSingleInodeData {
     std::string name {};
@@ -727,7 +743,8 @@ struct WritebackSingleInodeData {
     uint64_t wrote {};
     uint64_t cgroup_ino {};
 };
-__attribute__((noinline)) void ParseWritebackSingleInodeData(WritebackSingleInodeData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWritebackSingleInodeData(
+    WritebackSingleInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -764,7 +781,8 @@ void ParseWritebackSingleInode(FtraceEventType& ftraceEvent, uint8_t data[], siz
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_single_inode, ParseWritebackSingleInode<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_single_inode, ParseWritebackSingleInode<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_single_inode,
+    ParseWritebackSingleInode<ProtoEncoder::FtraceEvent>);
 
 struct WritebackSingleInodeStartData {
     std::string name {};
@@ -776,7 +794,8 @@ struct WritebackSingleInodeStartData {
     uint64_t wrote {};
     uint64_t cgroup_ino {};
 };
-__attribute__((noinline)) void ParseWritebackSingleInodeStartData(WritebackSingleInodeStartData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWritebackSingleInodeStartData(
+    WritebackSingleInodeStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -813,7 +832,8 @@ void ParseWritebackSingleInodeStart(FtraceEventType& ftraceEvent, uint8_t data[]
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_single_inode_start, ParseWritebackSingleInodeStart<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_single_inode_start, ParseWritebackSingleInodeStart<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_single_inode_start,
+    ParseWritebackSingleInodeStart<ProtoEncoder::FtraceEvent>);
 
 struct WritebackStartData {
     std::string name {};
@@ -923,7 +943,8 @@ struct WritebackWakeBackgroundData {
     std::string name {};
     uint64_t cgroup_ino {};
 };
-__attribute__((noinline)) void ParseWritebackWakeBackgroundData(WritebackWakeBackgroundData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWritebackWakeBackgroundData(
+    WritebackWakeBackgroundData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -948,7 +969,8 @@ void ParseWritebackWakeBackground(FtraceEventType& ftraceEvent, uint8_t data[], 
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_wake_background, ParseWritebackWakeBackground<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_wake_background, ParseWritebackWakeBackground<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_wake_background,
+    ParseWritebackWakeBackground<ProtoEncoder::FtraceEvent>);
 
 struct WritebackWriteInodeData {
     std::string name {};
@@ -956,7 +978,8 @@ struct WritebackWriteInodeData {
     int32_t sync_mode {};
     uint64_t cgroup_ino {};
 };
-__attribute__((noinline)) void ParseWritebackWriteInodeData(WritebackWriteInodeData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWritebackWriteInodeData(
+    WritebackWriteInodeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -985,7 +1008,8 @@ void ParseWritebackWriteInode(FtraceEventType& ftraceEvent, uint8_t data[], size
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_write_inode, ParseWritebackWriteInode<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_write_inode, ParseWritebackWriteInode<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_write_inode,
+    ParseWritebackWriteInode<ProtoEncoder::FtraceEvent>);
 
 struct WritebackWriteInodeStartData {
     std::string name {};
@@ -993,7 +1017,8 @@ struct WritebackWriteInodeStartData {
     int32_t sync_mode {};
     uint64_t cgroup_ino {};
 };
-__attribute__((noinline)) void ParseWritebackWriteInodeStartData(WritebackWriteInodeStartData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWritebackWriteInodeStartData(
+    WritebackWriteInodeStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -1022,7 +1047,8 @@ void ParseWritebackWriteInodeStart(FtraceEventType& ftraceEvent, uint8_t data[],
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_write_inode_start, ParseWritebackWriteInodeStart<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_write_inode_start, ParseWritebackWriteInodeStart<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_write_inode_start,
+    ParseWritebackWriteInodeStart<ProtoEncoder::FtraceEvent>);
 
 struct WritebackWrittenData {
     std::string name {};

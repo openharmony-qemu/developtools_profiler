@@ -147,7 +147,8 @@ struct BlockBioFrontmergeData {
     std::string rwbs {};
     std::string comm {};
 };
-__attribute__((noinline)) void ParseBlockBioFrontmergeData(BlockBioFrontmergeData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseBlockBioFrontmergeData(
+    BlockBioFrontmergeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;

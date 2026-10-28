@@ -123,7 +123,8 @@ struct NapiGroReceiveEntryData {
     uint32_t gso_size {};
     uint32_t gso_type {};
 };
-__attribute__((noinline)) void ParseNapiGroReceiveEntryData(NapiGroReceiveEntryData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseNapiGroReceiveEntryData(
+    NapiGroReceiveEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -182,7 +183,8 @@ void ParseNapiGroReceiveEntry(FtraceEventType& ftraceEvent, uint8_t data[], size
     msg->set_gso_type(eventData.gso_type);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(napi_gro_receive_entry, ParseNapiGroReceiveEntry<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(napi_gro_receive_entry, ParseNapiGroReceiveEntry<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(napi_gro_receive_entry,
+    ParseNapiGroReceiveEntry<ProtoEncoder::FtraceEvent>);
 
 struct NetDevQueueData {
     uint64_t skbaddr {};
@@ -386,7 +388,8 @@ struct NetifReceiveSkbEntryData {
     uint32_t gso_size {};
     uint32_t gso_type {};
 };
-__attribute__((noinline)) void ParseNetifReceiveSkbEntryData(NetifReceiveSkbEntryData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseNetifReceiveSkbEntryData(
+    NetifReceiveSkbEntryData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -445,7 +448,8 @@ void ParseNetifReceiveSkbEntry(FtraceEventType& ftraceEvent, uint8_t data[], siz
     msg->set_gso_type(eventData.gso_type);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(netif_receive_skb_entry, ParseNetifReceiveSkbEntry<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_receive_skb_entry, ParseNetifReceiveSkbEntry<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(netif_receive_skb_entry,
+    ParseNetifReceiveSkbEntry<ProtoEncoder::FtraceEvent>);
 
 struct NetifRxData {
     uint64_t skbaddr {};

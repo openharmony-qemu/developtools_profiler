@@ -23,7 +23,8 @@ using namespace OHOS::Developtools::Profiler;
 struct WorkqueueActivateWorkData {
     uint64_t work {};
 };
-__attribute__((noinline)) void ParseWorkqueueActivateWorkData(WorkqueueActivateWorkData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWorkqueueActivateWorkData(
+    WorkqueueActivateWorkData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -46,12 +47,14 @@ void ParseWorkqueueActivateWork(FtraceEventType& ftraceEvent, uint8_t data[], si
     msg->set_work(eventData.work);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(workqueue_activate_work, ParseWorkqueueActivateWork<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(workqueue_activate_work, ParseWorkqueueActivateWork<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(workqueue_activate_work,
+    ParseWorkqueueActivateWork<ProtoEncoder::FtraceEvent>);
 
 struct WorkqueueExecuteEndData {
     uint64_t work {};
 };
-__attribute__((noinline)) void ParseWorkqueueExecuteEndData(WorkqueueExecuteEndData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWorkqueueExecuteEndData(
+    WorkqueueExecuteEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -74,13 +77,15 @@ void ParseWorkqueueExecuteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size
     msg->set_work(eventData.work);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(workqueue_execute_end, ParseWorkqueueExecuteEnd<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(workqueue_execute_end, ParseWorkqueueExecuteEnd<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(workqueue_execute_end,
+    ParseWorkqueueExecuteEnd<ProtoEncoder::FtraceEvent>);
 
 struct WorkqueueExecuteStartData {
     uint64_t work {};
     uint64_t function {};
 };
-__attribute__((noinline)) void ParseWorkqueueExecuteStartData(WorkqueueExecuteStartData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWorkqueueExecuteStartData(
+    WorkqueueExecuteStartData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -105,7 +110,8 @@ void ParseWorkqueueExecuteStart(FtraceEventType& ftraceEvent, uint8_t data[], si
     msg->set_function(eventData.function);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(workqueue_execute_start, ParseWorkqueueExecuteStart<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(workqueue_execute_start, ParseWorkqueueExecuteStart<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(workqueue_execute_start,
+    ParseWorkqueueExecuteStart<ProtoEncoder::FtraceEvent>);
 
 struct WorkqueueQueueWorkData {
     uint64_t work {};
@@ -114,7 +120,8 @@ struct WorkqueueQueueWorkData {
     uint32_t req_cpu {};
     uint32_t cpu {};
 };
-__attribute__((noinline)) void ParseWorkqueueQueueWorkData(WorkqueueQueueWorkData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseWorkqueueQueueWorkData(
+    WorkqueueQueueWorkData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;

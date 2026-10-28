@@ -222,7 +222,8 @@ struct RpcSocketResetConnectionData {
     std::string saddr {};
     std::string daddr {};
 };
-__attribute__((noinline)) void ParseRpcSocketResetConnectionData(RpcSocketResetConnectionData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseRpcSocketResetConnectionData(
+    RpcSocketResetConnectionData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -255,7 +256,8 @@ void ParseRpcSocketResetConnection(FtraceEventType& ftraceEvent, uint8_t data[],
     msg->set_daddr(eventData.daddr);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_socket_reset_connection, ParseRpcSocketResetConnection<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_reset_connection, ParseRpcSocketResetConnection<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_reset_connection,
+    ParseRpcSocketResetConnection<ProtoEncoder::FtraceEvent>);
 
 struct RpcSocketShutdownData {
     uint32_t socket_state {};
@@ -304,7 +306,8 @@ struct RpcSocketStateChangeData {
     std::string saddr {};
     std::string daddr {};
 };
-__attribute__((noinline)) void ParseRpcSocketStateChangeData(RpcSocketStateChangeData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseRpcSocketStateChangeData(
+    RpcSocketStateChangeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -335,7 +338,8 @@ void ParseRpcSocketStateChange(FtraceEventType& ftraceEvent, uint8_t data[], siz
     msg->set_daddr(eventData.daddr);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(rpc_socket_state_change, ParseRpcSocketStateChange<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_state_change, ParseRpcSocketStateChange<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(rpc_socket_state_change,
+    ParseRpcSocketStateChange<ProtoEncoder::FtraceEvent>);
 
 struct RpcTaskBeginData {
     uint32_t task_id {};

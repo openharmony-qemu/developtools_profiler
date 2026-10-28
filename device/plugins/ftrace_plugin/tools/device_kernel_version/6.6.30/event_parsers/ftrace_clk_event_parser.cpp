@@ -51,7 +51,8 @@ REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_disable, ParseClkDisable<ProtoE
 struct ClkDisableCompleteData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseClkDisableCompleteData(ClkDisableCompleteData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseClkDisableCompleteData(
+    ClkDisableCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -163,7 +164,8 @@ REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_prepare, ParseClkPrepare<ProtoE
 struct ClkPrepareCompleteData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseClkPrepareCompleteData(ClkPrepareCompleteData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseClkPrepareCompleteData(
+    ClkPrepareCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -223,7 +225,8 @@ struct ClkSetParentCompleteData {
     std::string name {};
     std::string pname {};
 };
-__attribute__((noinline)) void ParseClkSetParentCompleteData(ClkSetParentCompleteData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseClkSetParentCompleteData(
+    ClkSetParentCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -248,7 +251,8 @@ void ParseClkSetParentComplete(FtraceEventType& ftraceEvent, uint8_t data[], siz
     msg->set_pname(eventData.pname);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_parent_complete, ParseClkSetParentComplete<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_parent_complete, ParseClkSetParentComplete<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_parent_complete,
+    ParseClkSetParentComplete<ProtoEncoder::FtraceEvent>);
 
 struct ClkSetPhaseData {
     std::string name {};
@@ -285,7 +289,8 @@ struct ClkSetPhaseCompleteData {
     std::string name {};
     int32_t phase {};
 };
-__attribute__((noinline)) void ParseClkSetPhaseCompleteData(ClkSetPhaseCompleteData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseClkSetPhaseCompleteData(
+    ClkSetPhaseCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -310,7 +315,8 @@ void ParseClkSetPhaseComplete(FtraceEventType& ftraceEvent, uint8_t data[], size
     msg->set_phase(eventData.phase);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_phase_complete, ParseClkSetPhaseComplete<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_phase_complete, ParseClkSetPhaseComplete<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_phase_complete,
+    ParseClkSetPhaseComplete<ProtoEncoder::FtraceEvent>);
 
 struct ClkSetRateData {
     std::string name {};
@@ -347,7 +353,8 @@ struct ClkSetRateCompleteData {
     std::string name {};
     uint64_t rate {};
 };
-__attribute__((noinline)) void ParseClkSetRateCompleteData(ClkSetRateCompleteData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseClkSetRateCompleteData(
+    ClkSetRateCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -405,7 +412,8 @@ REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_unprepare, ParseClkUnprepare<Pr
 struct ClkUnprepareCompleteData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseClkUnprepareCompleteData(ClkUnprepareCompleteData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseClkUnprepareCompleteData(
+    ClkUnprepareCompleteData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -428,6 +436,7 @@ void ParseClkUnprepareComplete(FtraceEventType& ftraceEvent, uint8_t data[], siz
     msg->set_name(eventData.name);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_unprepare_complete, ParseClkUnprepareComplete<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_unprepare_complete, ParseClkUnprepareComplete<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_unprepare_complete,
+    ParseClkUnprepareComplete<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

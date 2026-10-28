@@ -193,25 +193,6 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
         if field_type is not None:
             f.write("    {} {} {{}};\n".format(field_type, field_name))
 
-    def generate_parse_wrapper_template(self, event, f, data_type):
-        function_name = "Parse{}".format(to_camel_case(event.name))
-        f.write("template <typename FtraceEventType>\n")
-        f.write("void {}(FtraceEventType& ftraceEvent, {}\n".format(function_name, Common.parse_function_args))
-        f.write("{\n")
-        f.write("    if (data == nullptr || size == 0) {\n")
-        f.write("        PROFILER_LOG_WARN(LOG_CORE, \"%s: invalid input data or size\", __func__);\n")
-        f.write("        return;\n")
-        f.write("    }\n")
-        f.write("    {} eventData {{}};\n".format(data_type))
-        f.write("    Parse{}(eventData, data, size, format);\n".format(data_type))
-        f.write("    auto msg = ftraceEvent.mutable_{}_format();\n".format(str.lower(event.name)))
-        f.write("    if (msg == nullptr) {\n")
-        f.write("        return;\n")
-        f.write("    }\n")
-        for i in range(len(event.remain_fields)):
-            self.generate_write_field_lines(event, f, i)
-        f.write("}\n")
-
     @staticmethod
     def generate_parse_field_lines(event, f, i):
         field_name, field_type, parse_func, is_array = EventParserCodeGenerator.get_field_parser_info(event, i)
@@ -232,6 +213,25 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
             f.write("    }\n")
             return
         f.write("    msg->set_{}(eventData.{});\n".format(field_name, field_name))
+
+    def generate_parse_wrapper_template(self, event, f, data_type):
+        function_name = "Parse{}".format(to_camel_case(event.name))
+        f.write("template <typename FtraceEventType>\n")
+        f.write("void {}(FtraceEventType& ftraceEvent, {}\n".format(function_name, Common.parse_function_args))
+        f.write("{\n")
+        f.write("    if (data == nullptr || size == 0) {\n")
+        f.write("        PROFILER_LOG_WARN(LOG_CORE, \"%s: invalid input data or size\", __func__);\n")
+        f.write("        return;\n")
+        f.write("    }\n")
+        f.write("    {} eventData {{}};\n".format(data_type))
+        f.write("    Parse{}(eventData, data, size, format);\n".format(data_type))
+        f.write("    auto msg = ftraceEvent.mutable_{}_format();\n".format(str.lower(event.name)))
+        f.write("    if (msg == nullptr) {\n")
+        f.write("        return;\n")
+        f.write("    }\n")
+        for i in range(len(event.remain_fields)):
+            self.generate_write_field_lines(event, f, i)
+        f.write("}\n")
 
 
 class EventFormatterCodeGenerator(FtraceEventCodeGenerator):

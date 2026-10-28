@@ -124,7 +124,8 @@ struct MmVmscanDirectReclaimBeginData {
     uint32_t gfp_flags {};
     int32_t classzone_idx {};
 };
-__attribute__((noinline)) void ParseMmVmscanDirectReclaimBeginData(MmVmscanDirectReclaimBeginData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmVmscanDirectReclaimBeginData(
+    MmVmscanDirectReclaimBeginData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -153,12 +154,14 @@ void ParseMmVmscanDirectReclaimBegin(FtraceEventType& ftraceEvent, uint8_t data[
     msg->set_classzone_idx(eventData.classzone_idx);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_direct_reclaim_begin, ParseMmVmscanDirectReclaimBegin<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_direct_reclaim_begin, ParseMmVmscanDirectReclaimBegin<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_direct_reclaim_begin,
+    ParseMmVmscanDirectReclaimBegin<ProtoEncoder::FtraceEvent>);
 
 struct MmVmscanDirectReclaimEndData {
     uint64_t nr_reclaimed {};
 };
-__attribute__((noinline)) void ParseMmVmscanDirectReclaimEndData(MmVmscanDirectReclaimEndData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmVmscanDirectReclaimEndData(
+    MmVmscanDirectReclaimEndData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -181,12 +184,14 @@ void ParseMmVmscanDirectReclaimEnd(FtraceEventType& ftraceEvent, uint8_t data[],
     msg->set_nr_reclaimed(eventData.nr_reclaimed);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_direct_reclaim_end, ParseMmVmscanDirectReclaimEnd<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_direct_reclaim_end, ParseMmVmscanDirectReclaimEnd<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_direct_reclaim_end,
+    ParseMmVmscanDirectReclaimEnd<ProtoEncoder::FtraceEvent>);
 
 struct MmVmscanKswapdSleepData {
     int32_t nid {};
 };
-__attribute__((noinline)) void ParseMmVmscanKswapdSleepData(MmVmscanKswapdSleepData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmVmscanKswapdSleepData(
+    MmVmscanKswapdSleepData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -209,14 +214,16 @@ void ParseMmVmscanKswapdSleep(FtraceEventType& ftraceEvent, uint8_t data[], size
     msg->set_nid(eventData.nid);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_kswapd_sleep, ParseMmVmscanKswapdSleep<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_kswapd_sleep, ParseMmVmscanKswapdSleep<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_kswapd_sleep,
+    ParseMmVmscanKswapdSleep<ProtoEncoder::FtraceEvent>);
 
 struct MmVmscanKswapdWakeData {
     int32_t nid {};
     int32_t zid {};
     int32_t order {};
 };
-__attribute__((noinline)) void ParseMmVmscanKswapdWakeData(MmVmscanKswapdWakeData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmVmscanKswapdWakeData(
+    MmVmscanKswapdWakeData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -255,7 +262,8 @@ struct MmVmscanLruIsolateData {
     uint32_t isolate_mode {};
     int32_t lru {};
 };
-__attribute__((noinline)) void ParseMmVmscanLruIsolateData(MmVmscanLruIsolateData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmVmscanLruIsolateData(
+    MmVmscanLruIsolateData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -308,7 +316,8 @@ struct MmVmscanLruShrinkInactiveData {
     int32_t priority {};
     int32_t reclaim_flags {};
 };
-__attribute__((noinline)) void ParseMmVmscanLruShrinkInactiveData(MmVmscanLruShrinkInactiveData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmVmscanLruShrinkInactiveData(
+    MmVmscanLruShrinkInactiveData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -353,7 +362,8 @@ void ParseMmVmscanLruShrinkInactive(FtraceEventType& ftraceEvent, uint8_t data[]
     msg->set_reclaim_flags(eventData.reclaim_flags);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_lru_shrink_inactive, ParseMmVmscanLruShrinkInactive<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_lru_shrink_inactive, ParseMmVmscanLruShrinkInactive<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_lru_shrink_inactive,
+    ParseMmVmscanLruShrinkInactive<ProtoEncoder::FtraceEvent>);
 
 struct MmVmscanWakeupKswapdData {
     int32_t nid {};
@@ -361,7 +371,8 @@ struct MmVmscanWakeupKswapdData {
     int32_t order {};
     uint32_t gfp_flags {};
 };
-__attribute__((noinline)) void ParseMmVmscanWakeupKswapdData(MmVmscanWakeupKswapdData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmVmscanWakeupKswapdData(
+    MmVmscanWakeupKswapdData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -390,7 +401,8 @@ void ParseMmVmscanWakeupKswapd(FtraceEventType& ftraceEvent, uint8_t data[], siz
     msg->set_gfp_flags(eventData.gfp_flags);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_vmscan_wakeup_kswapd, ParseMmVmscanWakeupKswapd<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_wakeup_kswapd, ParseMmVmscanWakeupKswapd<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_vmscan_wakeup_kswapd,
+    ParseMmVmscanWakeupKswapd<ProtoEncoder::FtraceEvent>);
 
 struct MmVmscanWritepageData {
     uint64_t pfn {};

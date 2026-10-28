@@ -68,7 +68,8 @@ struct MmCompactionDeferCompactionData {
     uint32_t defer_shift {};
     int32_t order_failed {};
 };
-__attribute__((noinline)) void ParseMmCompactionDeferCompactionData(MmCompactionDeferCompactionData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmCompactionDeferCompactionData(
+    MmCompactionDeferCompactionData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -101,7 +102,8 @@ void ParseMmCompactionDeferCompaction(FtraceEventType& ftraceEvent, uint8_t data
     msg->set_order_failed(eventData.order_failed);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_defer_compaction, ParseMmCompactionDeferCompaction<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_defer_compaction, ParseMmCompactionDeferCompaction<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_defer_compaction,
+    ParseMmCompactionDeferCompaction<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionDeferResetData {
     int32_t nid {};
@@ -111,7 +113,8 @@ struct MmCompactionDeferResetData {
     uint32_t defer_shift {};
     int32_t order_failed {};
 };
-__attribute__((noinline)) void ParseMmCompactionDeferResetData(MmCompactionDeferResetData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmCompactionDeferResetData(
+    MmCompactionDeferResetData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -144,7 +147,8 @@ void ParseMmCompactionDeferReset(FtraceEventType& ftraceEvent, uint8_t data[], s
     msg->set_order_failed(eventData.order_failed);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_defer_reset, ParseMmCompactionDeferReset<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_defer_reset, ParseMmCompactionDeferReset<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_defer_reset,
+    ParseMmCompactionDeferReset<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionDeferredData {
     int32_t nid {};
@@ -154,7 +158,8 @@ struct MmCompactionDeferredData {
     uint32_t defer_shift {};
     int32_t order_failed {};
 };
-__attribute__((noinline)) void ParseMmCompactionDeferredData(MmCompactionDeferredData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmCompactionDeferredData(
+    MmCompactionDeferredData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -187,7 +192,8 @@ void ParseMmCompactionDeferred(FtraceEventType& ftraceEvent, uint8_t data[], siz
     msg->set_order_failed(eventData.order_failed);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_deferred, ParseMmCompactionDeferred<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_deferred, ParseMmCompactionDeferred<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_deferred,
+    ParseMmCompactionDeferred<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionEndData {
     uint64_t zone_start {};
@@ -238,7 +244,8 @@ struct MmCompactionFinishedData {
     int32_t order {};
     int32_t ret {};
 };
-__attribute__((noinline)) void ParseMmCompactionFinishedData(MmCompactionFinishedData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmCompactionFinishedData(
+    MmCompactionFinishedData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -267,7 +274,8 @@ void ParseMmCompactionFinished(FtraceEventType& ftraceEvent, uint8_t data[], siz
     msg->set_ret(eventData.ret);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_finished, ParseMmCompactionFinished<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_finished, ParseMmCompactionFinished<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_finished,
+    ParseMmCompactionFinished<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionIsolateFreepagesData {
     uint64_t start_pfn {};
@@ -275,7 +283,8 @@ struct MmCompactionIsolateFreepagesData {
     uint64_t nr_scanned {};
     uint64_t nr_taken {};
 };
-__attribute__((noinline)) void ParseMmCompactionIsolateFreepagesData(MmCompactionIsolateFreepagesData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmCompactionIsolateFreepagesData(
+    MmCompactionIsolateFreepagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -304,7 +313,8 @@ void ParseMmCompactionIsolateFreepages(FtraceEventType& ftraceEvent, uint8_t dat
     msg->set_nr_taken(eventData.nr_taken);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_freepages, ParseMmCompactionIsolateFreepages<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_freepages, ParseMmCompactionIsolateFreepages<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_freepages,
+    ParseMmCompactionIsolateFreepages<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionIsolateMigratepagesData {
     uint64_t start_pfn {};
@@ -312,7 +322,8 @@ struct MmCompactionIsolateMigratepagesData {
     uint64_t nr_scanned {};
     uint64_t nr_taken {};
 };
-__attribute__((noinline)) void ParseMmCompactionIsolateMigratepagesData(MmCompactionIsolateMigratepagesData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmCompactionIsolateMigratepagesData(
+    MmCompactionIsolateMigratepagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -340,14 +351,17 @@ void ParseMmCompactionIsolateMigratepages(FtraceEventType& ftraceEvent, uint8_t 
     msg->set_nr_scanned(eventData.nr_scanned);
     msg->set_nr_taken(eventData.nr_taken);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_migratepages, ParseMmCompactionIsolateMigratepages<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_migratepages, ParseMmCompactionIsolateMigratepages<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_migratepages,
+    ParseMmCompactionIsolateMigratepages<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_migratepages,
+    ParseMmCompactionIsolateMigratepages<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionMigratepagesData {
     uint64_t nr_migrated {};
     uint64_t nr_failed {};
 };
-__attribute__((noinline)) void ParseMmCompactionMigratepagesData(MmCompactionMigratepagesData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmCompactionMigratepagesData(
+    MmCompactionMigratepagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -372,7 +386,8 @@ void ParseMmCompactionMigratepages(FtraceEventType& ftraceEvent, uint8_t data[],
     msg->set_nr_failed(eventData.nr_failed);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_migratepages, ParseMmCompactionMigratepages<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_migratepages, ParseMmCompactionMigratepages<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_migratepages,
+    ParseMmCompactionMigratepages<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionSuitableData {
     int32_t nid {};
@@ -380,7 +395,8 @@ struct MmCompactionSuitableData {
     int32_t order {};
     int32_t ret {};
 };
-__attribute__((noinline)) void ParseMmCompactionSuitableData(MmCompactionSuitableData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmCompactionSuitableData(
+    MmCompactionSuitableData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -409,14 +425,16 @@ void ParseMmCompactionSuitable(FtraceEventType& ftraceEvent, uint8_t data[], siz
     msg->set_ret(eventData.ret);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_suitable, ParseMmCompactionSuitable<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_suitable, ParseMmCompactionSuitable<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_suitable,
+    ParseMmCompactionSuitable<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionTryToCompactPagesData {
     int32_t order {};
     uint32_t gfp_mask {};
     int32_t prio {};
 };
-__attribute__((noinline)) void ParseMmCompactionTryToCompactPagesData(MmCompactionTryToCompactPagesData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmCompactionTryToCompactPagesData(
+    MmCompactionTryToCompactPagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -442,7 +460,9 @@ void ParseMmCompactionTryToCompactPages(FtraceEventType& ftraceEvent, uint8_t da
     msg->set_gfp_mask(eventData.gfp_mask);
     msg->set_prio(eventData.prio);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_try_to_compact_pages, ParseMmCompactionTryToCompactPages<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_try_to_compact_pages, ParseMmCompactionTryToCompactPages<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_try_to_compact_pages,
+    ParseMmCompactionTryToCompactPages<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_try_to_compact_pages,
+    ParseMmCompactionTryToCompactPages<ProtoEncoder::FtraceEvent>);
 } // namespace
 FTRACE_NS_END

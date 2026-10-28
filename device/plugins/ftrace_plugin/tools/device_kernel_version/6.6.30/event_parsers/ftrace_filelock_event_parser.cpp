@@ -236,7 +236,8 @@ struct GenericDeleteLeaseData {
     uint64_t fl_break_time {};
     uint64_t fl_downgrade_time {};
 };
-__attribute__((noinline)) void ParseGenericDeleteLeaseData(GenericDeleteLeaseData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseGenericDeleteLeaseData(
+    GenericDeleteLeaseData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;

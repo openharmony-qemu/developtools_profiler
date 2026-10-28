@@ -26,7 +26,8 @@ struct MmCompactionIsolateFreepagesData {
     uint64_t nr_scanned {};
     uint64_t nr_taken {};
 };
-__attribute__((noinline)) void ParseMmCompactionIsolateFreepagesData(MmCompactionIsolateFreepagesData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmCompactionIsolateFreepagesData(
+    MmCompactionIsolateFreepagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -55,7 +56,8 @@ void ParseMmCompactionIsolateFreepages(FtraceEventType& ftraceEvent, uint8_t dat
     msg->set_nr_taken(eventData.nr_taken);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_freepages, ParseMmCompactionIsolateFreepages<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_freepages, ParseMmCompactionIsolateFreepages<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_freepages,
+    ParseMmCompactionIsolateFreepages<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionIsolateMigratepagesData {
     uint64_t start_pfn {};
@@ -63,7 +65,8 @@ struct MmCompactionIsolateMigratepagesData {
     uint64_t nr_scanned {};
     uint64_t nr_taken {};
 };
-__attribute__((noinline)) void ParseMmCompactionIsolateMigratepagesData(MmCompactionIsolateMigratepagesData& eventData, uint8_t data[], size_t size,
+__attribute__((noinline)) void ParseMmCompactionIsolateMigratepagesData(
+    MmCompactionIsolateMigratepagesData& eventData, uint8_t data[], size_t size,
                                              const EventFormat& format)
 {
     int i = 0;
@@ -91,7 +94,9 @@ void ParseMmCompactionIsolateMigratepages(FtraceEventType& ftraceEvent, uint8_t 
     msg->set_nr_scanned(eventData.nr_scanned);
     msg->set_nr_taken(eventData.nr_taken);
 }
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_migratepages, ParseMmCompactionIsolateMigratepages<FtraceEvent>);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_migratepages, ParseMmCompactionIsolateMigratepages<ProtoEncoder::FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_migratepages,
+    ParseMmCompactionIsolateMigratepages<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_migratepages,
+    ParseMmCompactionIsolateMigratepages<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END
