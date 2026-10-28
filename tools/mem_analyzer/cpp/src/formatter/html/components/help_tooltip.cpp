@@ -90,8 +90,7 @@ std::string HelpTooltipJs()
     var margin = 12;
     var gap = 8;
 
-    function position(el)
-    {
+    function position(el) {
       var text = el.getAttribute('data-tooltip');
       if (!text) { return; }
       tip.textContent = text;
@@ -123,28 +122,23 @@ std::string HelpTooltipJs()
       tip.style.setProperty('--arrow-x', arrowX + 'px');
     }
 
-    function hide()
-    {
+    function hide() {
       tip.classList.remove('show');
       currentEl = null;
     }
 
-    document.addEventListener('mouseover', function(e)
-    {
+    document.addEventListener('mouseover', function(e) {
       var el = e.target && e.target.closest ? e.target.closest('.help-icon') : null;
       if (el) { currentEl = el; position(el); }
     });
-    document.addEventListener('mouseout', function(e)
-    {
+    document.addEventListener('mouseout', function(e) {
       var el = e.target && e.target.closest ? e.target.closest('.help-icon') : null;
       if (el) { hide(); }
     });
-    window.addEventListener('resize', function()
-    {
+    window.addEventListener('resize', function() {
       if (currentEl) { position(currentEl); }
     });
-    window.addEventListener('scroll', function()
-    {
+    window.addEventListener('scroll', function() {
       if (currentEl) { position(currentEl); }
     }, true);
   }
@@ -152,3 +146,4 @@ std::string HelpTooltipJs()
 }
 
 }
+
