@@ -24,7 +24,7 @@
 namespace mem_analyzer {
 
 /// 全局选项：真正跨子命令共享的开关。
-/// 各子命令自己的参数不放这里，由命令自身持有（见 ICommand::bind）。
+/// 各子命令自己的参数不放这里，由命令自身持有（见 ICommand::Bind）。
 struct GlobalOptions {
     std::string outDir = defaults::OUTPUT_DIR;  // -d/--out-dir
     std::string format;                          // -f/--format（空 = 用该命令的默认格式）
@@ -45,7 +45,7 @@ void BindGlobalOptions(CliParser& app, GlobalOptions& g);
 void BindCommonOptions(CliParser& sub, GlobalOptions& g);
 
 /// 诊断/排障三件套：--verbose/--keep-temp/--debug。
-/// 效果由 main 统一生效（--debug ⇒ --verbose --keep-temp），各子命令在 bind() 中调用即可。
+/// 效果由 main 统一生效（--debug ⇒ --verbose --keep-temp），各子命令在 Bind() 中调用即可。
 void BindDebugOptions(CliParser& sub, GlobalOptions& g);
 
 /// 从全局选项构造 RunContext 的基础部分（output + command_line）。
@@ -66,29 +66,29 @@ public:
     virtual ~ICommand() = default;
 
     /// 子命令主名（用于分发），如 "trace"
-    virtual std::string name() const = 0;
+    virtual std::string Name() const = 0;
     /// 别名，如 "tr"；无别名为空串
-    virtual std::string alias() const { return {}; }
+    virtual std::string Alias() const { return {}; }
     /// --help 中的一行描述
-    virtual std::string description() const = 0;
+    virtual std::string Description() const = 0;
     /// 隐藏子命令不出现在 --help 中（仍可被解析与分发）
-    virtual bool hidden() const { return false; }
+    virtual bool Hidden() const { return false; }
     /// help 排序权重：静态注册顺序不可控，必须显式指定以保证 --help 输出稳定
-    virtual int order() const = 0;
+    virtual int Order() const = 0;
     /// 声明本命令的参数（绑定到命令自身的 options）
-    virtual void bind(CliParser& sub, GlobalOptions& g) = 0;
+    virtual void Bind(CliParser& sub, GlobalOptions& g) = 0;
     /// 执行本命令，返回进程退出码
-    virtual int run(const GlobalOptions& g) = 0;
+    virtual int Run(const GlobalOptions& g) = 0;
 };
 
 /// 子命令注册表（与 Parser/Analyzer/Formatter 相同的静态注册模式）
 class CommandRegistry {
 public:
-    static void add(std::shared_ptr<ICommand> cmd);
-    /// 按 order() 稳定排序返回，保证 --help 输出不受链接顺序影响
-    static std::vector<std::shared_ptr<ICommand>> all();
+    static void Add(std::shared_ptr<ICommand> cmd);
+    /// 按 Order() 稳定排序返回，保证 --help 输出不受链接顺序影响
+    static std::vector<std::shared_ptr<ICommand>> All();
     /// 按主名或别名查找；未找到返回 nullptr
-    static std::shared_ptr<ICommand> find(const std::string& nameOrAlias);
+    static std::shared_ptr<ICommand> Find(const std::string& nameOrAlias);
 };
 
 } // namespace mem_analyzer

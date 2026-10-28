@@ -29,7 +29,7 @@
 
 namespace mem_analyzer {
 
-ModuleCapability JsleakModule::capability() const
+ModuleCapability JsleakModule::Capability() const
 {
     // parse 侧全空 = 该域明确不支持 parse-only（`-p` 会被拒绝）
     ModuleCapability cap;
@@ -38,9 +38,9 @@ ModuleCapability JsleakModule::capability() const
     return cap;
 }
 
-std::string JsleakModule::run(const ModuleRequest& req, const RunContext& ctx) const
+std::string JsleakModule::Run(const ModuleRequest& req, const RunContext& ctx) const
 {
-    FormatKeyword kw = ResolveFormatKeyword(name(), capability(), req.format, req.parseOnly);
+    FormatKeyword kw = ResolveFormatKeyword(Name(), Capability(), req.format, req.parseOnly);
     if (!kw.error.empty()) {
         log::Loge("Error: ", kw.error);
         return {};

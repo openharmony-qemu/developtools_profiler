@@ -30,13 +30,13 @@ class TshandleModule final : public AnalysisModule {
 public:
     /// 该域的 parser 名历史上是 "zip"，`process_file()` 会打印 `Using parser: <name>`。
     /// 保持该名以免改变既有输出（域目录已按数据域归入 `tshandle/`）。
-    std::string name() const override { return "zip"; }
+    std::string Name() const override { return "zip"; }
     bool SupportsExtension(const std::string& ext) const override
     {
         return ext == "zip" || ext == "tshandle";
     }
-    ModuleCapability capability() const override;
-    std::string run(const ModuleRequest& req, const RunContext& ctx) const override;
+    ModuleCapability Capability() const override;
+    std::string Run(const ModuleRequest& req, const RunContext& ctx) const override;
 };
 
 } // namespace mem_analyzer

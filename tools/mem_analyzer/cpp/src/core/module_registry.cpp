@@ -44,7 +44,7 @@ void ModuleRegistry::add(std::shared_ptr<AnalysisModule> module)
 AnalysisModule* ModuleRegistry::find(const std::string& name)
 {
     for (auto& m : modules()) {
-        if (m->name() == name) {
+        if (m->Name() == name) {
             return m.get();
         }
     }
@@ -92,8 +92,8 @@ std::vector<std::string> ModuleRegistry::SelfCheck()
     std::vector<std::string> issues;
 
     for (auto* module : all()) {
-        const ModuleCapability cap = module->capability();
-        const std::string name = module->name();
+        const ModuleCapability cap = module->Capability();
+        const std::string name = module->Name();
 
         auto checkMode = [&](const char* mode, const ModeCapability& mc) {
             if (!mc.supported()) {

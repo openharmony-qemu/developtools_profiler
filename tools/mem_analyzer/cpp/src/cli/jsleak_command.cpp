@@ -38,12 +38,12 @@ class JsleakCommand final : public ICommand {
     JsleakOptions opt_;
 
 public:
-    std::string name() const override { return "jsleak"; }
-    std::string alias() const override { return "jl"; }
-    std::string description() const override { return "Process heapsnapshot/rawheap files"; }
-    int order() const override { return 30; }
+    std::string Name() const override { return "jsleak"; }
+    std::string Alias() const override { return "jl"; }
+    std::string Description() const override { return "Process heapsnapshot/rawheap files"; }
+    int Order() const override { return 30; }
 
-    void bind(CliParser& sub, GlobalOptions& g) override
+    void Bind(CliParser& sub, GlobalOptions& g) override
     {
         // 注意：jsleak 不注册 -p/--parse-only（保持既有 CLI 契约不变），
         // 因此这里不用 bind_common_options。
@@ -70,7 +70,7 @@ public:
                 "names");
     }
 
-    int run(const GlobalOptions& g) override
+    int Run(const GlobalOptions& g) override
     {
         // Validate mode（缩写归一化与历史 Config 行为一致）
         if (opt_.mode != "all" && opt_.mode != "property-tag" && opt_.mode != "pt" &&
@@ -168,7 +168,7 @@ private:
 };
 
 const bool registered = []() {
-    CommandRegistry::add(std::make_shared<JsleakCommand>());
+    CommandRegistry::Add(std::make_shared<JsleakCommand>());
     return true;
 }();
 

@@ -27,20 +27,20 @@ class PreviewCommand final : public ICommand {
     std::string action_;
 
 public:
-    std::string name() const override { return "preview"; }
-    std::string description() const override
+    std::string Name() const override { return "preview"; }
+    std::string Description() const override
     {
         return "Enable/disable preview features (internal)";
     }
-    bool hidden() const override { return true; }
-    int order() const override { return 90; }
+    bool Hidden() const override { return true; }
+    int Order() const override { return 90; }
 
-    void bind(CliParser& sub, GlobalOptions&) override
+    void Bind(CliParser& sub, GlobalOptions&) override
     {
         sub.AddPositional("action", action_, "enable | disable | status (default: status)");
     }
 
-    int run(const GlobalOptions&) override
+    int Run(const GlobalOptions&) override
     {
         auto& mgr = PreviewFeaturesMgr::instance();
 
@@ -69,7 +69,7 @@ public:
 };
 
 const bool registered = []() {
-    CommandRegistry::add(std::make_shared<PreviewCommand>());
+    CommandRegistry::Add(std::make_shared<PreviewCommand>());
     return true;
 }();
 

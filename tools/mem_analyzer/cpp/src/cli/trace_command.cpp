@@ -37,12 +37,12 @@ class TraceCommand final : public ICommand {
     TraceOptions opt_;
 
 public:
-    std::string name() const override { return "trace"; }
-    std::string alias() const override { return "tr"; }
-    std::string description() const override { return "Process htrace files"; }
-    int order() const override { return 10; }
+    std::string Name() const override { return "trace"; }
+    std::string Alias() const override { return "tr"; }
+    std::string Description() const override { return "Process htrace files"; }
+    int Order() const override { return 10; }
 
-    void bind(CliParser& sub, GlobalOptions& g) override
+    void Bind(CliParser& sub, GlobalOptions& g) override
     {
         BindCommonOptions(sub, g);
         sub.AddOption("-s,--scope", opt_.scope,
@@ -57,7 +57,7 @@ public:
             .AddPositional("files", opt_.files, "Htrace files to process");
     }
 
-    int run(const GlobalOptions& g) override
+    int Run(const GlobalOptions& g) override
     {
         if (!HtraceFindCategory(opt_.category)) {
             std::string valid;
@@ -115,7 +115,7 @@ public:
 };
 
 const bool registered = []() {
-    CommandRegistry::add(std::make_shared<TraceCommand>());
+    CommandRegistry::Add(std::make_shared<TraceCommand>());
     return true;
 }();
 

@@ -34,12 +34,12 @@ class TshandleCommand final : public ICommand {
     TshandleOptions opt_;
 
 public:
-    std::string name() const override { return "tshandle"; }
-    std::string alias() const override { return "th"; }
-    std::string description() const override { return "Process tshandle zip files"; }
-    int order() const override { return 20; }
+    std::string Name() const override { return "tshandle"; }
+    std::string Alias() const override { return "th"; }
+    std::string Description() const override { return "Process tshandle zip files"; }
+    int Order() const override { return 20; }
 
-    void bind(CliParser& sub, GlobalOptions& g) override
+    void Bind(CliParser& sub, GlobalOptions& g) override
     {
         BindCommonOptions(sub, g);
         sub.AddOption("-n,--top-n", opt_.topN, "Number of top symbols to output")
@@ -54,7 +54,7 @@ public:
             .AddPositional("files", opt_.files, "Zip files to process");
     }
 
-    int run(const GlobalOptions& g) override
+    int Run(const GlobalOptions& g) override
     {
         log::Logi(style::bold("=== Tshandle Command ==="));
 
@@ -84,7 +84,7 @@ public:
 };
 
 const bool registered = []() {
-    CommandRegistry::add(std::make_shared<TshandleCommand>());
+    CommandRegistry::Add(std::make_shared<TshandleCommand>());
     return true;
 }();
 

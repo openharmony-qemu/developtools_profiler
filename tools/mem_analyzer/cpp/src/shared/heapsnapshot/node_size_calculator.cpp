@@ -1093,7 +1093,9 @@ static void RunLayeredBfs(
                     const std::string& childName = ctx.GetNodeName(child);
                     if (childName == "system / NativeContext" ||
                         childName == "system / SourcePositionTableWithFrameCache" ||
-                        childName == "(map descriptors)") continue;
+                        childName == "(map descriptors)") {
+                        continue;
+                    }
                     if (ctx.getNodeType(child) == "code") {
                         continue;
                     }

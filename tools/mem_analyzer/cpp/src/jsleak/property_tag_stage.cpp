@@ -230,7 +230,7 @@ void PropertyTagStage::LoadJsleakListFile(const std::string& filePath)
 {
     // open_ifstream 打不开时会抛 std::system_error，不会返回未打开的流。
     // 必须在这里捕获：-l 是可选参数，路径不可读不应终止整轮分析
-    // （此前 Windows 上该异常会一路逃到 JsleakModule::run，直接丢整份报告）。
+    // （此前 Windows 上该异常会一路逃到 JsleakModule::Run，直接丢整份报告）。
     std::ifstream file;
     try {
         file = OpenIfstream(filePath);

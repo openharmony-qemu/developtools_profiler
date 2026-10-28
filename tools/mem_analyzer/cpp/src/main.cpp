@@ -71,7 +71,7 @@ static int RunAutoDetect(const mem_analyzer::GlobalOptions& g)
             allOk = false;
             continue;
         }
-        mem_analyzer::log::Logd("auto-detect: ", f, " -> module '", module->name(), "'");
+        mem_analyzer::log::Logd("auto-detect: ", f, " -> module '", module->Name(), "'");
         if (!mem_analyzer::ProcessFile(f, *module, ctx)) {
             allOk = false;
         }
@@ -113,10 +113,10 @@ int main(int argc, char** argv)
     mem_analyzer::BindGlobalOptions(app, global);
 
     // 子命令全部来自注册表：新增子命令无需改动本文件。
-    // bind 由 add_subcommand 同步调用，故 lambda 捕获引用是安全的。
-    for (const auto& cmd : mem_analyzer::CommandRegistry::all()) {
-        app.AddSubcommand(cmd->name(), cmd->description(), cmd->alias(), cmd->hidden(),
-            [&](mem_analyzer::CliParser& sub) { cmd->bind(sub, global); });
+    // Bind 由 add_subcommand 同步调用，故 lambda 捕获引用是安全的。
+    for (const auto& cmd : mem_analyzer::CommandRegistry::All()) {
+        app.AddSubcommand(cmd->Name(), cmd->Description(), cmd->Alias(), cmd->Hidden(),
+            [&](mem_analyzer::CliParser& sub) { cmd->Bind(sub, global); });
     }
 
     try {
@@ -159,8 +159,8 @@ int main(int argc, char** argv)
     }
 
     int ret = 0;
-    if (auto cmd = mem_analyzer::CommandRegistry::find(app.MatchedSubcommand())) {
-        ret = cmd->run(global);
+    if (auto cmd = mem_analyzer::CommandRegistry::Find(app.MatchedSubcommand())) {
+        ret = cmd->Run(global);
     } else {
         if (global.files.empty()) {
             app.PrintHelp();

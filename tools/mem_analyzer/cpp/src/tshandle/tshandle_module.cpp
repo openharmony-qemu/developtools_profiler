@@ -28,7 +28,7 @@
 
 namespace mem_analyzer {
 
-ModuleCapability TshandleModule::capability() const
+ModuleCapability TshandleModule::Capability() const
 {
     ModuleCapability cap;
     cap.parse.formats = {"json"};
@@ -38,9 +38,9 @@ ModuleCapability TshandleModule::capability() const
     return cap;
 }
 
-std::string TshandleModule::run(const ModuleRequest& req, const RunContext& ctx) const
+std::string TshandleModule::Run(const ModuleRequest& req, const RunContext& ctx) const
 {
-    FormatKeyword kw = ResolveFormatKeyword(name(), capability(), req.format, req.parseOnly);
+    FormatKeyword kw = ResolveFormatKeyword(Name(), Capability(), req.format, req.parseOnly);
     if (!kw.error.empty()) {
         log::Loge("Error: ", kw.error);
         return {};

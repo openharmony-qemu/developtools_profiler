@@ -56,7 +56,7 @@ static bool CheckPathLength(const std::string& filePath, const std::string& outp
 bool ProcessFile(const std::string& filePath, AnalysisModule& module, const RunContext& baseCtx)
 {
     log::Logi("Processing file: ", filePath);
-    log::Logi("Using parser: ", module.name());
+    log::Logi("Using parser: ", module.Name());
 
     // 派生当前文件的运行参数：输出目录嵌套一层 source stem（与 zip/tshandle 行为一致）。
     // 不再改写任何全局状态。
@@ -75,7 +75,7 @@ bool ProcessFile(const std::string& filePath, AnalysisModule& module, const RunC
     req.parseOnly = ctx.output.parseOnly;
     req.format = ctx.output.format;
 
-    const std::string outFile = module.run(req, ctx);
+    const std::string outFile = module.Run(req, ctx);
     if (outFile.empty()) {
         return false;
     }

@@ -24,13 +24,13 @@ namespace mem_analyzer {
 /// `ProcessData` / `std::any` / `from` 字符串协议；输出由域内 writer 直写文件。
 class HtraceModule final : public AnalysisModule {
 public:
-    std::string name() const override { return "htrace"; }
+    std::string Name() const override { return "htrace"; }
     bool SupportsExtension(const std::string& ext) const override
     {
         return ext == "htrace" || ext == "htrce";
     }
-    ModuleCapability capability() const override;
-    std::string run(const ModuleRequest& req, const RunContext& ctx) const override;
+    ModuleCapability Capability() const override;
+    std::string Run(const ModuleRequest& req, const RunContext& ctx) const override;
 };
 
 } // namespace mem_analyzer

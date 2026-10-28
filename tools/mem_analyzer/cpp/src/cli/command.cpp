@@ -25,7 +25,7 @@ std::vector<std::shared_ptr<ICommand>>& registry()
 }
 } // namespace
 
-void CommandRegistry::add(std::shared_ptr<ICommand> cmd)
+void CommandRegistry::Add(std::shared_ptr<ICommand> cmd)
 {
     if (!cmd) {
         return;
@@ -33,26 +33,26 @@ void CommandRegistry::add(std::shared_ptr<ICommand> cmd)
     registry().push_back(std::move(cmd));
 }
 
-std::vector<std::shared_ptr<ICommand>> CommandRegistry::all()
+std::vector<std::shared_ptr<ICommand>> CommandRegistry::All()
 {
     auto cmds = registry();
     std::stable_sort(cmds.begin(), cmds.end(),
                         [](const std::shared_ptr<ICommand>& a, const std::shared_ptr<ICommand>& b) {
-                            return a->order() < b->order();
+                            return a->Order() < b->Order();
                         });
     return cmds;
 }
 
-std::shared_ptr<ICommand> CommandRegistry::find(const std::string& nameOrAlias)
+std::shared_ptr<ICommand> CommandRegistry::Find(const std::string& nameOrAlias)
 {
     if (nameOrAlias.empty()) {
         return nullptr;
     }
     for (const auto& cmd : registry()) {
-        if (cmd->name() == nameOrAlias) {
+        if (cmd->Name() == nameOrAlias) {
             return cmd;
         }
-        if (!cmd->alias().empty() && cmd->alias() == nameOrAlias) {
+        if (!cmd->Alias().empty() && cmd->Alias() == nameOrAlias) {
             return cmd;
         }
     }

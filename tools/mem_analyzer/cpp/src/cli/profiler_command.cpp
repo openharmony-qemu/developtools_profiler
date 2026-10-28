@@ -35,15 +35,15 @@ class ProfilerCommand final : public ICommand {
     ProfilerOptions opt_;
 
 public:
-    std::string name() const override { return "profiler"; }
-    std::string alias() const override { return "prof"; }
-    std::string description() const override
+    std::string Name() const override { return "profiler"; }
+    std::string Alias() const override { return "prof"; }
+    std::string Description() const override
     {
         return "Collect snapshot, htrace, Global/Local handle log";
     }
-    int order() const override { return 40; }
+    int Order() const override { return 40; }
 
-    void bind(CliParser& sub, GlobalOptions& g) override
+    void Bind(CliParser& sub, GlobalOptions& g) override
     {
         sub.SetUsage("[options] [<bundle>]")
             .AddPositional("bundle", opt_.bundle,
@@ -75,7 +75,7 @@ public:
         BindDebugOptions(sub, g);
     }
 
-    int run(const GlobalOptions& g) override
+    int Run(const GlobalOptions& g) override
     {
         ProfilerCliOptions profOpt;
         profOpt.processName = opt_.bundle;
@@ -99,7 +99,7 @@ public:
 };
 
 const bool registered = []() {
-    CommandRegistry::add(std::make_shared<ProfilerCommand>());
+    CommandRegistry::Add(std::make_shared<ProfilerCommand>());
     return true;
 }();
 
