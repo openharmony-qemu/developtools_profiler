@@ -642,7 +642,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                        "ext4_ext_handle_unwritten_extents: dev %d,%d ino %" PRIu64 " m_lblk %u m_pblk %" PRIu64
                     " m_len %u flags %s allocated %d newblock %" PRIu64 "",
                        ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.ino(),
-                       (unsigned)msg.lblk(), msg.pblk(), msg.len(),
+                       static_cast<unsigned>(msg.lblk()), msg.pblk(), msg.len(),
                        __print_flags(msg.flags(), "|", {0x0001, "CREATE"}, {0x0002, "UNWRIT"}, {0x0004, "DELALLOC"},
                                      {0x0008, "PRE_IO"}, {0x0010, "CONVERT"}, {0x0020, "METADATA_NOFAIL"},
                                      {0x0040, "NO_NORMALIZE"}, {0x0100, "CONVERT_UNWRITTEN"}, {0x0200, "ZERO"},
@@ -749,7 +749,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "ext4_ext_remove_space: dev %d,%d ino %" PRIu64 " since %u end %u depth %d",
                              ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
-                             msg.ino(), (unsigned)msg.start(), (unsigned)msg.end(), msg.depth());
+                             msg.ino(), static_cast<unsigned>(msg.start()), static_cast<unsigned>(msg.end()), msg.depth());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(ext4_ext_remove_space) msg had be cut off in outfile");
@@ -771,8 +771,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                              "ext4_ext_remove_space_done: dev %d,%d ino %" PRIu64
                         " since %u end %u depth %d partial%" PRIu64 " remaining_entries %u",
                              ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
-                             msg.ino(), (unsigned)msg.start(), (unsigned)msg.end(), msg.depth(), msg.partial(),
-                             (unsigned short)msg.eh_entries());
+                             msg.ino(), static_cast<unsigned>(msg.start()), static_cast<unsigned>(msg.end()), msg.depth(), msg.partial(),
+                             static_cast<unsigned short>(msg.eh_entries()));
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE,
@@ -815,8 +815,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                              "ext4_ext_rm_leaf: dev %d,%d ino %" PRIu64 " start_lblk %u last_extent [%u(%" PRIu64
                              "), %u]partial%" PRIu64 "",
                              ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
-                             msg.ino(), (unsigned)msg.start(), (unsigned)msg.ee_lblk(), msg.ee_pblk(),
-                             (unsigned short)msg.ee_len(), msg.partial());
+                             msg.ino(), static_cast<unsigned>(msg.start()), static_cast<unsigned>(msg.ee_lblk()), msg.ee_pblk(),
+                             static_cast<unsigned short>(msg.ee_len()), msg.partial());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(ext4_ext_rm_leaf) msg had be cut off in outfile");
@@ -837,7 +837,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "ext4_ext_show_extent: dev %d,%d ino %" PRIu64 " lblk %u pblk %" PRIu64 " len %u",
                              ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
-                             msg.ino(), (unsigned)msg.lblk(), msg.pblk(), (unsigned short)msg.len());
+                             msg.ino(), static_cast<unsigned>(msg.lblk()), msg.pblk(), static_cast<unsigned short>(msg.len()));
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(ext4_ext_show_extent) msg had be cut off in outfile");
@@ -1496,8 +1496,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                              "ext4_remove_blocks: dev %d,%d ino %" PRIu64 " extent [%u(%" PRIu64
                              "), %u]from %u to %u partial%" PRIu64 "",
                              ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
-                             msg.ino(), (unsigned)msg.ee_lblk(), msg.ee_pblk(), (unsigned short)msg.ee_len(),
-                             (unsigned)msg.from(), (unsigned)msg.to(), msg.partial());
+                             msg.ino(), static_cast<unsigned>(msg.ee_lblk()), msg.ee_pblk(), static_cast<unsigned short>(msg.ee_len()),
+                             static_cast<unsigned>(msg.from()), static_cast<unsigned>(msg.to()), msg.partial());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(ext4_remove_blocks) msg had be cut off in outfile");
