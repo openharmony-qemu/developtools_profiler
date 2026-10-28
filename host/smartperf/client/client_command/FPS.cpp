@@ -453,8 +453,10 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
         });
         calcDrawFrameThread.join();
         calcScanoutThread.join();
-        fpsInfo.avgDrawCall = static_cast<double>(totalDrawCal) / fpsInfo.flushTimeStamps.size();
-        fpsInfo.avgScanout = static_cast<double>(totalScanout) / fpsInfo.flushTimeStamps.size();
+        if (!fpsInfo.flushTimeStamps.empty()) {
+            fpsInfo.avgDrawCall = static_cast<double>(totalDrawCal) / fpsInfo.flushTimeStamps.size();
+            fpsInfo.avgScanout = static_cast<double>(totalScanout) / fpsInfo.flushTimeStamps.size();
+        }
         totalDrawCal = 0;
         totalScanout = 0;
     } else {
@@ -816,6 +818,9 @@ void FPS::GetTimeDiff()
         std::string line(buf);
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
+        if (params.size() < 3) {
+            continue;
+        }
         if (params[0].find("CLOCK_REALTIME") != std::string::npos && clockRealTime == 0) {
             strRealTime = params[two];
             strRealTime.erase(strRealTime.find('.'), 1);
@@ -1018,7 +1023,9 @@ void FPS::GetDistr()
         }
         GetDistrTimes(line, tamps);
     }
-    avgDistr = totalDistr / distrNum;
+    if (distrNum > 0) {
+        avgDistr = totalDistr / distrNum;
+    }
 }
 
 void FPS::GetDistrTimes(std::string &line, long long &tamps)
@@ -1031,6 +1038,9 @@ void FPS::GetDistrTimes(std::string &line, long long &tamps)
         long long diStr = 0;
         while (iss >> token) {
             tokens.push_back(token);
+        }
+        if (tokens.size() < 6) {
+            return;
         }
         std::string tokensOne = tokens[1];
         if (SPUtilesTye::StringToSometype<long long>(tokensOne) / mod == tamps) {

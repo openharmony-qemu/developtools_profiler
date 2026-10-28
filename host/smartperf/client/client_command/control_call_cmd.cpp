@@ -35,6 +35,9 @@ namespace OHOS {
 namespace SmartPerf {
 std::string ControlCallCmd::GetResult(const std::vector<std::string>& v)
 {
+    if (v.size() <= typeName) {
+        return result;
+    }
     IsohTest(v);
     if (v[typeName] == "responseTime") {
         time = SmartPerf::ControlCallCmd::ResponseTime();
@@ -264,6 +267,9 @@ std::string ControlCallCmd::GetAppStartTime()
 }
 void ControlCallCmd::IsohTest(const std::vector<std::string>& v)
 {
+    if (v.size() <= ohType) {
+        return;
+    }
     if (v[ohType] == "ohtest") {
         isOhTest = true;
     }

@@ -15,6 +15,7 @@
 
 #include <string>
 #include <sstream>
+#include <cstdint>
 #include "include/sp_log.h"
 #include "include/sp_utils.h"
 #include "include/GpuCounter.h"
@@ -181,12 +182,12 @@ namespace OHOS {
                 return;
             }
 
-            JoinSocketData(newData);
             if ((realtimeGpuPerfInfoData.duration == 0) || (newData->duration == 0)) {
                 LOGE("Invalid duration found: realtime = %d, newData = %d",
                     realtimeGpuPerfInfoData.duration, newData->duration);
                 return;
             }
+            JoinSocketData(newData);
             while (realtimeGpuPerfInfoData.duration >= maxDuration) {
                 SplitSocketData();
             }
@@ -249,7 +250,12 @@ namespace OHOS {
                     gpuCounter.pop_back();
                     continue;
                 }
-                backData->duration = durationTime;
+                if (durationTime > INT32_MAX) {
+                    LOGE("Duration time(%lld) exceeds int32 range, skip", durationTime);
+                    gpuCounter.pop_back();
+                    continue;
+                }
+                backData->duration = static_cast<int32_t>(durationTime);
                 std::string gpuPerfInfoItemStr = GetGpuPerfInfoItem(backData);
                 gpuCounterInstance.GetGpuCounterData().push_back(gpuPerfInfoItemStr);
                 gpuCounterInstance.GetGpuCounterSaveReportData().push_back(gpuPerfInfoItemStr);
