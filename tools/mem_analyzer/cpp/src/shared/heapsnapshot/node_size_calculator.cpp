@@ -1052,8 +1052,7 @@ static void RunLayeredBfs(
                             uint32_t keyId = 0xFFFFFFFFu;
                             try {
                                 keyId = static_cast<uint32_t>(std::stoul(match[1].str()));
-                            } catch (const std::exception&)
-                            {
+                            } catch (const std::exception&) {
                                 // 越界/非法 key id：不当作 WeakMap key 匹配
                             }
                             uint32_t childId = ctx.nodes[static_cast<size_t>(child) * static_cast<size_t>(ctx.nodeFieldsCount) +

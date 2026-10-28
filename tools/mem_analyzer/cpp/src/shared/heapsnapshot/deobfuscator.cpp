@@ -448,8 +448,7 @@ std::string DeobfuscateOneString(const std::string& value,
                             // 快照损坏时可能为超长数字串，stoi 抛异常则跳过行号映射
                             try {
                                 genLine = std::stoi(numStr);
-                            } catch (const std::exception&)
-                            {
+                            } catch (const std::exception&) {
                                 genLine = -1;
                             }
                             if (genLine > 0) {
@@ -539,13 +538,11 @@ bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& ou
     try {
         stringsArr = json::parse(arrText);
         parsed = true;
-    } catch (const std::exception&)
-    {
+    } catch (const std::exception&) {
         try {
             stringsArr = json::parse(SanitizeControlChars(arrText));
             parsed = true;
-        } catch (const std::exception& e)
-        {
+        } catch (const std::exception& e) {
             log::Loge("Error: Failed to parse \"strings\" array in ", inputPath, " as JSON: ", e.what());
         }
     }

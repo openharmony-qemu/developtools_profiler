@@ -50,8 +50,7 @@ std::unordered_set<uint64_t> ReadLeakFile(const std::string& path)
     std::ifstream f;
     try {
         f = OpenIfstream(path, std::ios::binary);
-    } catch (const std::exception&)
-    {
+    } catch (const std::exception&) {
         throw std::runtime_error("Cannot open leak file: " + path);
     }
     if (!f) {

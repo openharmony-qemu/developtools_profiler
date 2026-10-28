@@ -234,8 +234,7 @@ void PropertyTagStage::LoadJsleakListFile(const std::string& filePath)
     std::ifstream file;
     try {
         file = OpenIfstream(filePath);
-    } catch (const std::exception&)
-    {
+    } catch (const std::exception&) {
         log::Logw("Warning: Cannot open jsleaklist file: ", filePath);
         return;
     }

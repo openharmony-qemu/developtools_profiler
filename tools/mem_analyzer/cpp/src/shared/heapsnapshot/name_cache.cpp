@@ -62,8 +62,7 @@ bool ParseLineSuffix(const std::string& key, std::string& name, int& startLine, 
     try {
         startLine = std::stoi(key.substr(startColon + 1, endColon - startColon - 1));
         endLine = std::stoi(key.substr(endColon + 1));
-    } catch (const std::exception&)
-    {
+    } catch (const std::exception&) {
         startLine = -1;
         endLine = -1;
         return false;

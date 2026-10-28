@@ -858,14 +858,12 @@ static std::vector<std::string> readStringsArray(std::ifstream& file, size_t bra
     // First attempt: direct JSON parse
     try {
         return json::parse(strBuf).get<std::vector<std::string>>();
-    } catch (const std::exception&)
-    {
+    } catch (const std::exception&) {
         // Second attempt: sanitize and retry
         std::string sanitized = SanitizeJsonStringArray(strBuf);
         try {
             return json::parse(sanitized).get<std::vector<std::string>>();
-        } catch (const std::exception&)
-        {
+        } catch (const std::exception&) {
             // 不再静默回退成空表：空 strings 会让所有节点名/分类/引用链/总量
             // 静默失效，报告"看起来成功"却毫无分析价值。宁可显式失败。
             throw std::runtime_error("failed to parse snapshot strings table");
@@ -1369,8 +1367,7 @@ uint32_t HeapSnapshot::GetNodeInternalHash(uint32_t nodeIndex) const
                 if (std::regex_search(targetNodeName, matches, pattern)) {
                     try {
                         hash = std::stoi(matches[1].str());
-                    } catch (const std::exception&)
-                    {
+                    } catch (const std::exception&) {
                         hash = 0;  // 越界/非法 ArkInternalHash 值按 0 处理
                     }
                 }
