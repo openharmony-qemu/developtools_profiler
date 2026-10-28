@@ -807,6 +807,7 @@ void FPS::GetTimeDiff()
     long long clockRealTime = 0;
     long long clockMonotonicRaw = 0;
     const int two = 2;
+    const int minParamSize = 3;
     std::string strRealTime;
     const std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::TIMESTAMPS);
     FILE *fd = popen(cmd.c_str(), "r");
@@ -818,7 +819,7 @@ void FPS::GetTimeDiff()
         std::string line(buf);
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
-        if (params.size() < 3) {
+        if (params.size() < static_cast<size_t>(minParamSize)) {
             continue;
         }
         if (params[0].find("CLOCK_REALTIME") != std::string::npos && clockRealTime == 0) {
@@ -1032,6 +1033,7 @@ void FPS::GetDistrTimes(std::string &line, long long &tamps)
 {
     if (line.find(" ns") != std::string::npos) {
         int inDex = 5;
+        const int minTokenSize = inDex + 1;
         std::istringstream iss(line);
         std::vector<std::string> tokens;
         std::string token;
@@ -1039,7 +1041,7 @@ void FPS::GetDistrTimes(std::string &line, long long &tamps)
         while (iss >> token) {
             tokens.push_back(token);
         }
-        if (tokens.size() < 6) {
+        if (tokens.size() < static_cast<size_t>(minTokenSize)) {
             return;
         }
         std::string tokensOne = tokens[1];

@@ -520,6 +520,13 @@ void RAM::FillPssRamInfo(size_t index, std::string pid,
     }
 }
 
+static void SafeEraseLastChar(std::string& s)
+{
+    if (!s.empty()) {
+        s.erase(s.size() - 1);
+    }
+}
+
 std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string>& paramsInfo,
     const std::string& pid, size_t index) const
 {
@@ -542,9 +549,7 @@ std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string>&
     if (index == 0) {
         for (size_t i = 0; i < paramsInfo.size() - 1 && i < sumRamKeys.size(); i++) {
             if (i == RAM_NINTH) {
-                if (!paramsInfo[RAM_TENTH].empty()) {
-                    paramsInfo[RAM_TENTH].erase(paramsInfo[RAM_TENTH].size() - 1);
-                }
+                SafeEraseLastChar(paramsInfo[RAM_TENTH]);
                 sumRamInfo["heapFree"] = paramsInfo[RAM_TENTH];
                 break;
             }
@@ -553,9 +558,7 @@ std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string>&
     } else {
         for (size_t i = 0; i < paramsInfo.size() - 1 && i < childSumRamKeys.size(); i++) {
             if (i == RAM_NINTH) {
-                if (!paramsInfo[RAM_TENTH].empty()) {
-                    paramsInfo[RAM_TENTH].erase(paramsInfo[RAM_TENTH].size() - 1);
-                }
+                SafeEraseLastChar(paramsInfo[RAM_TENTH]);
                 sumRamInfo["childHeapFree"] = pid + ":" + paramsInfo[RAM_TENTH].append("|");
                 break;
             }

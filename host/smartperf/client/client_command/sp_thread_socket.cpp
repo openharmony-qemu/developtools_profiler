@@ -52,7 +52,7 @@
 #define SMARTPERF "smartperf"
 namespace OHOS {
 namespace SmartPerf {
-static inline std::string LogSanitize(const std::string& s)
+static std::string LogSanitize(const std::string& s)
 {
     std::string result;
     result.reserve(s.size());
