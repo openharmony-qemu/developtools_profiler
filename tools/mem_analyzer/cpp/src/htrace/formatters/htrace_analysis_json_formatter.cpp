@@ -58,7 +58,7 @@ json BuildSummary(const HtraceAnalysisOutput& full, const RunContext& ctx)
             v += getTypeSize(tn);
         }
         if (v > 0) {
-            summary[e.JsonKey] = std::to_string(v);
+            summary[e.jsonKey] = std::to_string(v);
         }
     }
 
@@ -159,7 +159,7 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
 
         writer.WriteKey("callStacks");
         writer.BeginArray();
-        for (const auto& cs : fp.CallStacks) {
+        for (const auto& cs : fp.callStacks) {
             writer.BeginObject();
             writer.WriteKeyValue("id", std::to_string(cs.id));
             writer.WriteKeyValue("existingSize", std::to_string(cs.existingSize));

@@ -56,7 +56,7 @@ json BuildSummary(const TraceDB& db)
                 v += getTypeSize(tn);
             }
             if (v > 0) {
-                summary[e.JsonKey] = std::to_string(v);
+                summary[e.jsonKey] = std::to_string(v);
             }
         }
     }

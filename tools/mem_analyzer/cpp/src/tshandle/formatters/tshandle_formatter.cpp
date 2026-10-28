@@ -36,7 +36,7 @@ static double round2(double v)
     return std::round(v * 100.0) / 100.0;
 }
 
-json BuildSummary(const std::vector<ResolvedCallStack>& CallStacks, const std::vector<ArkTsClass>& arktsClasses)
+json BuildSummary(const std::vector<ResolvedCallStack>& callStacks, const std::vector<ArkTsClass>& arktsClasses)
 {
     struct Totals {
         long long count = 0;
@@ -49,7 +49,7 @@ json BuildSummary(const std::vector<ResolvedCallStack>& CallStacks, const std::v
         {HtraceEventType::ARK_LOCAL_HANDLE, {}}
     };
 
-    for (const auto& stack : CallStacks) {
+    for (const auto& stack : callStacks) {
         const auto found = byType.find(stack.type);
         if (found == byType.end()) {
             continue;

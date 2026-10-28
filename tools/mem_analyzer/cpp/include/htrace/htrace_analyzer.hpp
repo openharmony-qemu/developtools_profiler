@@ -64,7 +64,7 @@ struct FilepageInfo {
     long long size = 0;          // Σ existing_size
     long long count = 0;         // Σ existing_count
     double percentage = 0.0;     // size / mmap 总大小（anon + filepage）
-    std::vector<CompressedCallStack> CallStacks;  // 该文件所有调用栈（完整帧，自包含供冰柱图 + 展开 callStacks）
+    std::vector<CompressedCallStack> callStacks;  // 该文件所有调用栈（完整帧，自包含供冰柱图 + 展开 callStacks）
 };
 
 // N 轨行模型：一行 = 符号分析单元 | 文件页单元（未来可扩展第 3 种行）
@@ -146,7 +146,7 @@ struct AnalysisConfig {
 };
 
 HtraceAnalysisOutput AnalyzeCallStacks(
-    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<CompressedCallStack>& callStacks,
     const std::unordered_map<int, std::string>& dataDict,
     AnalysisConfig config = AnalysisConfig{},
     const std::string& mode = ""

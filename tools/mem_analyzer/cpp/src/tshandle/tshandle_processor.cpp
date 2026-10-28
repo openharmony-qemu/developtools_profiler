@@ -61,7 +61,7 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
         StageTimer timer("TS DB");
         TraceDB result;
         result.stacks = ResolvedCallStackList{};
-        auto& CallStacks = std::get<ResolvedCallStackList>(result.stacks).stacks;
+        auto& callStacks = std::get<ResolvedCallStackList>(result.stacks).stacks;
         auto& meta = result.meta;
         bool isStatistics = false;
 
@@ -245,11 +245,11 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
                 }
             }
 
-            CallStacks.push_back(std::move(cs));
+            callStacks.push_back(std::move(cs));
         }
 
         sqlite3_close(db);
-        timer.tick("build_entries", std::to_string(CallStacks.size()) + " stacks");
+        timer.tick("build_entries", std::to_string(callStacks.size()) + " stacks");
         timer.done();
         return result;
     } catch (...)

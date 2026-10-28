@@ -127,11 +127,11 @@ int RunCommandStreaming(const std::string& cmd)
     }
     char buf[4096];
     ssize_t n = 0;
-    while ((n = read(sp.ReadFd, buf, sizeof(buf))) > 0) {
+    while ((n = read(sp.readFd, buf, sizeof(buf))) > 0) {
         std::cout.write(buf, n);
         std::cout.flush();
     }
-    close(sp.ReadFd);
+    close(sp.readFd);
     int st = 0;
     waitpid(sp.pid, &st, 0);
     if (WIFEXITED(st)) {
@@ -873,10 +873,10 @@ void FlattenReportDir(const std::string& dir, const std::string& stem)
 int RunProfilerCmd(const ProfilerCliOptions& opt)
 {
     // 1. Determine config path and load config.
-    std::string ConfigPath = ResolveConfigPath();
+    std::string configPath = ResolveConfigPath();
     CmdConfig cfg;
     std::string err;
-    if (!LoadCmdConfig(ConfigPath, cfg, err)) {
+    if (!LoadCmdConfig(configPath, cfg, err)) {
         log::Loge("Failed to load config: ", err);
         return 2;
     }

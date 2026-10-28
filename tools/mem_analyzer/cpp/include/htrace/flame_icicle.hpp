@@ -71,7 +71,7 @@ struct FlameNode {
 
 FlameNode BuildFlameGraph(
     const std::string& targetSymbol,
-    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<CompressedCallStack>& callStacks,
     const std::vector<int>& chainIds,
     const std::unordered_map<int, int>& depthPerChain,
     const std::unordered_map<int, std::string>& dataDict
@@ -79,7 +79,7 @@ FlameNode BuildFlameGraph(
 
 FlameNode BuildIcicleGraph(
     const std::string& targetSymbol,
-    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<CompressedCallStack>& callStacks,
     const std::vector<int>& chainIds,
     const std::unordered_map<int, int>& depthPerChain,
     const std::unordered_map<int, std::string>& dataDict
@@ -87,7 +87,7 @@ FlameNode BuildIcicleGraph(
 
 // 整栈合并火焰图（无根符号，所有栈整帧序列合并到一个 trie）；用于 other
 FlameNode BuildMergedIcicle(
-    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<CompressedCallStack>& callStacks,
     const std::vector<int>& chainIds,
     const std::unordered_map<int, std::string>& dataDict
     );

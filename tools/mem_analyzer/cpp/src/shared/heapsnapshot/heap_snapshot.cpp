@@ -75,7 +75,7 @@ inline bool IsNumericString(const std::string& s)
 } // anonymous namespace
 
 // 获取 JSObject 扩展名
-std::string HeapSnapshot::GetJsObjectExtName(uint32_t NodeIndex) const
+std::string HeapSnapshot::GetJsObjectExtName(uint32_t nodeIndex) const
 {
     uint32_t ctorNode = 0xFFFFFFFF;
     std::string ctorName;
@@ -84,8 +84,8 @@ std::string HeapSnapshot::GetJsObjectExtName(uint32_t NodeIndex) const
     std::unordered_set<std::string> added;
     added.reserve(16);
 
-    size_t begin = firstEdgePointers[NodeIndex];
-    size_t end = firstEdgePointers[NodeIndex + 1];
+    size_t begin = firstEdgePointers[nodeIndex];
+    size_t end = firstEdgePointers[nodeIndex + 1];
     for (size_t ptr = begin; ptr < end; ptr += edgeFieldsCount) {
         uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
         if (nameIdx >= strings.size()) {
@@ -126,7 +126,7 @@ std::string HeapSnapshot::GetJsObjectExtName(uint32_t NodeIndex) const
     } else {
         oss << "JSObject(";
     }
-    uint32_t edgeCount = GetNodeEdgeCount(NodeIndex);
+    uint32_t edgeCount = GetNodeEdgeCount(nodeIndex);
     oss << "len=" << edgeCount;
     if (!propNames.empty()) { 
          oss << ", prop="; 
@@ -142,14 +142,14 @@ std::string HeapSnapshot::GetJsObjectExtName(uint32_t NodeIndex) const
 }
 
 // 获取 String 扩展名
-std::string HeapSnapshot::GetStringExtName(uint32_t NodeIndex) const
+std::string HeapSnapshot::GetStringExtName(uint32_t nodeIndex) const
 {
     static constexpr uint32_t kStringSize10KB = 10 * 1024;
     static constexpr uint32_t kStringSize1MB = 1024 * 1024;
 
-    uint32_t base = NodeIndex * nodeFieldsCount;
+    uint32_t base = nodeIndex * nodeFieldsCount;
     uint32_t size = nodes[base + nodeSelfSizeOffset];
-    std::string content = GetNodeName(NodeIndex);
+    std::string content = GetNodeName(nodeIndex);
     if (content.length() > 20) {
         content = content.substr(0, 20);
     }
@@ -171,11 +171,11 @@ std::string HeapSnapshot::GetStringExtName(uint32_t NodeIndex) const
 // skip_markers：原型名命中其中任一子串即视为「仍是包装层」，跳过并继续上溯。
 // 返回被包装的类名；返回空表示链上未找到可用类名。
 std::string HeapSnapshot::ResolveStateMgmtWrappedClass(
-    uint32_t NodeIndex, const std::vector<std::string>& skipMarkers) const
+    uint32_t nodeIndex, const std::vector<std::string>& skipMarkers) const
 {
     std::unordered_set<uint32_t> visited;
     visited.reserve(16);
-    uint32_t cur = NodeIndex;
+    uint32_t cur = nodeIndex;
     std::string resultProto;
     bool lookingForHclass = true;
 
@@ -234,16 +234,16 @@ std::string HeapSnapshot::ResolveStateMgmtWrappedClass(
 }
 
 // 获取 stateMgmt.js#observedClass 全局对象的扩展名（沿原型链提取 ArkTS 类名）
-std::string HeapSnapshot::GetObservedClassExtName(uint32_t NodeIndex) const
+std::string HeapSnapshot::GetObservedClassExtName(uint32_t nodeIndex) const
 {
     std::string resultProto =
-        ResolveStateMgmtWrappedClass(NodeIndex, {"stateMgmt.js#observedClass"});
+        ResolveStateMgmtWrappedClass(nodeIndex, {"stateMgmt.js#observedClass"});
 
     if (!resultProto.empty()) {
         return "stateMgmt.js#observedClass(" + resultProto + ")";
     }
 
-    std::string nodeName = GetNodeName(NodeIndex);
+    std::string nodeName = GetNodeName(nodeIndex);
     if (nodeName.find('#') != std::string::npos && nodeName.find(".js") != std::string::npos) {
         size_t hash = nodeName.find('#');
         if (hash != std::string::npos && hash + 1 < nodeName.size()) {
@@ -256,10 +256,10 @@ std::string HeapSnapshot::GetObservedClassExtName(uint32_t NodeIndex) const
 // 获取 declarative_frontend/stateMgmt.js#JSObject 的扩展名：与 observedClass 同一套路，
 // 沿 hclass → Proto → hclass → Proto 交替上溯，用被包装的 ArkTS 类名替换掉 JSObject 本身。
 // 链上找不到可用类名时，退回到「去掉 declarative_frontend/ 前缀」的旧行为。
-std::string HeapSnapshot::GetStateMgmtJsObjectExtName(uint32_t NodeIndex, const std::string& nodeName) const
+std::string HeapSnapshot::GetStateMgmtJsObjectExtName(uint32_t nodeIndex, const std::string& nodeName) const
 {
     const std::string wrapped = ResolveStateMgmtWrappedClass(
-        NodeIndex, {"stateMgmt.js#JSObject", "stateMgmt.js#observedClass"});
+        nodeIndex, {"stateMgmt.js#JSObject", "stateMgmt.js#observedClass"});
     if (!wrapped.empty()) {
         return "stateMgmt.js#JSObject(" + wrapped + ")";
     }
@@ -269,13 +269,13 @@ std::string HeapSnapshot::GetStateMgmtJsObjectExtName(uint32_t NodeIndex, const 
 
 // declarative_frontend/stateMgmt.js 对象扩展名的统一入口：
 // observedClass 沿原型链取 ArkTS 类名，JSObject 展开被包装的类，其余对象只去掉前缀。
-std::string HeapSnapshot::GetStateMgmtExtName(uint32_t NodeIndex, const std::string& nodeName) const
+std::string HeapSnapshot::GetStateMgmtExtName(uint32_t nodeIndex, const std::string& nodeName) const
 {
     if (nodeName.find("stateMgmt.js#observedClass") != std::string::npos) {
-        return GetObservedClassExtName(NodeIndex);
+        return GetObservedClassExtName(nodeIndex);
     }
     if (nodeName.find("stateMgmt.js#JSObject") != std::string::npos) {
-        return GetStateMgmtJsObjectExtName(NodeIndex, nodeName);
+        return GetStateMgmtJsObjectExtName(nodeIndex, nodeName);
     }
     // 其余 stateMgmt 对象：去掉 declarative_frontend/ 前缀，保留 stateMgmt.js#后面的字符串
     size_t pos = nodeName.find("stateMgmt.js");
@@ -283,13 +283,13 @@ std::string HeapSnapshot::GetStateMgmtExtName(uint32_t NodeIndex, const std::str
 }
 
 // 获取 SourceTextModule 扩展名
-std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t NodeIndex) const
+std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t nodeIndex) const
 {
     uint32_t localExportEntriesNode = 0xFFFFFFFF;
     uint32_t nameDictNode = 0xFFFFFFFF;
 
-    size_t begin = firstEdgePointers[NodeIndex];
-    size_t end = firstEdgePointers[NodeIndex + 1];
+    size_t begin = firstEdgePointers[nodeIndex];
+    size_t end = firstEdgePointers[nodeIndex + 1];
     for (size_t ptr = begin; ptr < end; ptr += edgeFieldsCount) {
         uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
         if (nameIdx >= strings.size()) {
@@ -406,26 +406,26 @@ std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t NodeIndex) const
 
 // 获取节点的扩展名称
 // 计算单个节点的扩展名（不查缓存、不递归调用 get_extended_node_name）。
-std::string HeapSnapshot::ComputeExtendedName(uint32_t NodeIndex) const
+std::string HeapSnapshot::ComputeExtendedName(uint32_t nodeIndex) const
 {
     std::string result;
-    std::string nodeName = GetNodeName(NodeIndex);
-    std::string nodeType = GetNodeTypeName(NodeIndex);
+    std::string nodeName = GetNodeName(nodeIndex);
+    std::string nodeType = GetNodeTypeName(nodeIndex);
 
     // 先按类型分流：string 节点的 node_name 就是字符串内容本身，若内容恰好含
     // "declarative_frontend/stateMgmt.js"（例如堆里保存的模块 URL），会被误判成
     // stateMgmt 对象，进而改变 property-tag / compare / 引用链的分组键。
     if (nodeType != "string" &&
         nodeName.find("declarative_frontend/stateMgmt.js") != std::string::npos) {
-        result = GetStateMgmtExtName(NodeIndex, nodeName);
+        result = GetStateMgmtExtName(nodeIndex, nodeName);
     } else if (nodeType == "string") {
-        result = GetStringExtName(NodeIndex);
+        result = GetStringExtName(nodeIndex);
     } else if (nodeType == "object" &&
                (nodeName == "JSObject" || nodeName == "JSSharedObject" || nodeName == "js_shared_object")) {
-        result = GetJsObjectExtName(NodeIndex);
+        result = GetJsObjectExtName(nodeIndex);
     } else if (nodeType == "native" &&
                (nodeName == "source_text_module_record" || nodeName == "SourceTextModule")) {
-        result = GetSourceTextModuleExtName(NodeIndex);
+        result = GetSourceTextModuleExtName(nodeIndex);
     } else {
         result = nodeName;
     }
@@ -433,15 +433,15 @@ std::string HeapSnapshot::ComputeExtendedName(uint32_t NodeIndex) const
 }
 
 // 获取节点的扩展名称
-const std::string& HeapSnapshot::GetExtendedNodeName(uint32_t NodeIndex) const
+const std::string& HeapSnapshot::GetExtendedNodeName(uint32_t nodeIndex) const
 {
-    if (NodeIndex >= static_cast<uint32_t>(nodeCount)) {
+    if (nodeIndex >= static_cast<uint32_t>(nodeCount)) {
         static const std::string empty;
         return empty;
     }
 
     // 一次性并行预构建全量扩展名，之后并行阶段无锁只读。
-    std::call_once(*ExtNamesOnce_, [this]()
+    std::call_once(*extNamesOnce_, [this]()
     {
         const auto t0 = std::chrono::steady_clock::now();
         log::Logd("[ref_chain] build ext_names start node_count=", nodeCount);
@@ -471,7 +471,7 @@ const std::string& HeapSnapshot::GetExtendedNodeName(uint32_t NodeIndex) const
                             .count();
         log::Logd("[ref_chain] build ext_names done (", ms, "ms)");
     });
-    return extNames_[NodeIndex];
+    return extNames_[nodeIndex];
 }
 
 // ============================================================================
@@ -1303,58 +1303,58 @@ HeapSnapshot::NodeView HeapSnapshot::GetNodeById(uint32_t id) const
     if (it == nodeIdToIdx.end()) {
         return {0xFFFFFFFF, 0, "", 0};  // sentinel: not found
     }
-    uint32_t NodeIndex = it->second;
-    uint32_t base = NodeIndex * nodeFieldsCount;
+    uint32_t nodeIndex = it->second;
+    uint32_t base = nodeIndex * nodeFieldsCount;
     uint32_t nameIdx = nodes[base + nodeNameOffset];
     std::string name = (nameIdx < strings.size()) ? strings[nameIdx] : "";
-    return {NodeIndex, id, std::move(name), nodes[base + nodeSelfSizeOffset]};
+    return {nodeIndex, id, std::move(name), nodes[base + nodeSelfSizeOffset]};
 }
 
-std::string HeapSnapshot::GetNodeName(uint32_t NodeIndex) const
+std::string HeapSnapshot::GetNodeName(uint32_t nodeIndex) const
 {
-    if (NodeIndex >= static_cast<uint32_t>(nodeCount)) {
+    if (nodeIndex >= static_cast<uint32_t>(nodeCount)) {
         return "";
     }
-    uint32_t base = NodeIndex * static_cast<uint32_t>(nodeFieldsCount);
+    uint32_t base = nodeIndex * static_cast<uint32_t>(nodeFieldsCount);
     uint32_t nameIdx = nodes[base + static_cast<size_t>(nodeNameOffset)];
     return (nameIdx < strings.size()) ? strings[nameIdx] : "";
 }
 
-std::string HeapSnapshot::GetNodeTypeName(uint32_t NodeIndex) const
+std::string HeapSnapshot::GetNodeTypeName(uint32_t nodeIndex) const
 {
-    if (NodeIndex >= static_cast<uint32_t>(nodeCount)) {
+    if (nodeIndex >= static_cast<uint32_t>(nodeCount)) {
         return "";
     }
     if (nodeTypeNames.empty()) {
         return "";
     }
-    uint32_t base = NodeIndex * static_cast<uint32_t>(nodeFieldsCount);
+    uint32_t base = nodeIndex * static_cast<uint32_t>(nodeFieldsCount);
     uint32_t typeIdx = nodes[base + static_cast<size_t>(nodeTypeOffset)];
     return (typeIdx < nodeTypeNames.size()) ? nodeTypeNames[typeIdx] : "";
 }
 
-uint32_t HeapSnapshot::GetNodeEdgeCount(uint32_t NodeIndex) const
+uint32_t HeapSnapshot::GetNodeEdgeCount(uint32_t nodeIndex) const
 {
-    if (NodeIndex >= static_cast<uint32_t>(nodeCount)) {
+    if (nodeIndex >= static_cast<uint32_t>(nodeCount)) {
         return 0;
     }
-    uint32_t base = NodeIndex * static_cast<uint32_t>(nodeFieldsCount);
+    uint32_t base = nodeIndex * static_cast<uint32_t>(nodeFieldsCount);
     return nodes[base + static_cast<size_t>(nodeEdgeCountOffset)];
 }
 
 /// Extract the ArkInternalHash value from a node's edges.
 /// ArkTS (HarmonyOS) stores internal hash values in edge names matching
 /// "ArkInternalHash", with the target node name containing "Int: <hash>".
-uint32_t HeapSnapshot::GetNodeInternalHash(uint32_t NodeIndex) const
+uint32_t HeapSnapshot::GetNodeInternalHash(uint32_t nodeIndex) const
 {
-    if (NodeIndex >= static_cast<uint32_t>(nodeCount)) {
+    if (nodeIndex >= static_cast<uint32_t>(nodeCount)) {
         return 0;
     }
     uint32_t hash = 0;
     static const std::regex pattern(R"(Int:\s*(\d+))");
     std::smatch matches;
 
-    ForEachEdge(NodeIndex, [&](const EdgeInfo &edge, size_t)
+    ForEachEdge(nodeIndex, [&](const EdgeInfo &edge, size_t)
     {
         if (edge.nameOrIndex < static_cast<uint32_t>(strings.size())) {
             std::string edgeName = strings[edge.nameOrIndex];
@@ -1379,7 +1379,7 @@ uint32_t HeapSnapshot::GetNodeInternalHash(uint32_t NodeIndex) const
 /// Root nodes have path_parent_index[root] == root (self-reference).
 /// Unreachable nodes have path_parent_index == INVALID.
 /// Format: "RootNode -> ChildNode -> TargetNode"
-std::string HeapSnapshot::FormatRefChain(uint32_t NodeIndex) const
+std::string HeapSnapshot::FormatRefChain(uint32_t nodeIndex) const
 {
     constexpr uint32_t INVALID = 0xFFFFFFFF;
     
@@ -1387,11 +1387,11 @@ std::string HeapSnapshot::FormatRefChain(uint32_t NodeIndex) const
     std::vector<uint32_t> indices;
     indices.reserve(32); // 预留常见链长度
     
-    uint32_t cur = NodeIndex;
+    uint32_t cur = nodeIndex;
     uint32_t guard = 0;
     while (cur < static_cast<uint32_t>(nodeCount)) {
         if (++guard > static_cast<uint32_t>(nodeCount)) {
-            log::Logw("[ref_chain] WARN cycle in path_parent_index at node_index=", NodeIndex);
+            log::Logw("[ref_chain] WARN cycle in path_parent_index at node_index=", nodeIndex);
             return "";
         }
         uint32_t parent = pathParentIndex[cur];
@@ -1434,18 +1434,18 @@ std::string HeapSnapshot::FormatRefChain(uint32_t NodeIndex) const
     return result;
 }
 
-std::vector<std::string> HeapSnapshot::FormatRefChainFrames(uint32_t NodeIndex) const
+std::vector<std::string> HeapSnapshot::FormatRefChainFrames(uint32_t nodeIndex) const
 {
     constexpr uint32_t INVALID = 0xFFFFFFFF;
 
     std::vector<uint32_t> indices;
     indices.reserve(32);
 
-    uint32_t cur = NodeIndex;
+    uint32_t cur = nodeIndex;
     uint32_t guard = 0;
     while (cur < static_cast<uint32_t>(nodeCount)) {
         if (++guard > static_cast<uint32_t>(nodeCount)) {
-            log::Logw("[ref_chain] WARN cycle in path_parent_index at node_index=", NodeIndex);
+            log::Logw("[ref_chain] WARN cycle in path_parent_index at node_index=", nodeIndex);
             return {};
         }
         uint32_t parent = pathParentIndex[cur];
@@ -1513,15 +1513,15 @@ RefChainKey FnvContinue(const RefChainKey& prev, const std::string& name)
 }
 } // anonymous namespace
 
-RefChainKey HeapSnapshot::RefChainHash(uint32_t NodeIndex) const
+RefChainKey HeapSnapshot::RefChainHash(uint32_t nodeIndex) const
 {
     constexpr uint32_t INVALID = 0xFFFFFFFF;
-    if (NodeIndex >= static_cast<uint32_t>(nodeCount)) {
+    if (nodeIndex >= static_cast<uint32_t>(nodeCount)) {
         return RefChainKey{};
     }
 
     // 一次性预构建「正向链 hash」表（root → node），之后 O(1) 查表。
-    std::call_once(*ChainHashOnce_, [this]()
+    std::call_once(*chainHashOnce_, [this]()
     {
         const auto t0 = std::chrono::steady_clock::now();
         log::Logd("[ref_chain] build chain_hash start node_count=", nodeCount);
@@ -1581,7 +1581,7 @@ RefChainKey HeapSnapshot::RefChainHash(uint32_t NodeIndex) const
         log::Logd("[ref_chain] build chain_hash done (", ms, "ms)");
     });
 
-    return chainHash_[NodeIndex];
+    return chainHash_[nodeIndex];
 }
 
 } // namespace mem_analyzer

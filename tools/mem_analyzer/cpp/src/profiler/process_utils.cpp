@@ -332,10 +332,10 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
     char buf[4096];
     if (timeoutMs <= 0) {
         ssize_t n = 0;
-        while ((n = read(sp.ReadFd, buf, sizeof(buf))) > 0) {
+        while ((n = read(sp.readFd, buf, sizeof(buf))) > 0) {
             output.append(buf, static_cast<size_t>(n));
         }
-        close(sp.ReadFd);
+        close(sp.readFd);
         int st = 0;
         waitpid(sp.pid, &st, 0);
         cap.output = std::move(output);
@@ -355,7 +355,7 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
         }
         const long long remainMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             deadline - now).count();
-        struct pollfd pfd{ sp.ReadFd, POLLIN, 0 };
+        struct pollfd pfd{ sp.readFd, POLLIN, 0 };
         const int pr = poll(&pfd, 1, static_cast<int>(remainMs));
         if (pr == 0) {
             timedOut = true;
@@ -368,7 +368,7 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
             break;
         }
         if (pfd.revents & (POLLIN | POLLHUP)) {
-            const ssize_t n = read(sp.ReadFd, buf, sizeof(buf));
+            const ssize_t n = read(sp.readFd, buf, sizeof(buf));
             if (n > 0) {
                 output.append(buf, static_cast<size_t>(n));
             } else {
@@ -378,7 +378,7 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
             break;
         }
     }
-    close(sp.ReadFd);
+    close(sp.readFd);
 
     if (timedOut) {
         cap.timedOut = true;

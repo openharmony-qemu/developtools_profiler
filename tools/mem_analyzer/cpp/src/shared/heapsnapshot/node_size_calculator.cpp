@@ -67,9 +67,9 @@ inline uint32_t TargetIndexOf(const std::vector<uint32_t>& edges, size_t ptr, in
 
 /// Read self_size for a node from the flat nodes array.
 /// node_index * node_fields_count + self_size_off
-inline uint32_t SelfSizeOf(const std::vector<uint32_t>& nodes, uint32_t NodeIndex, int nodeFieldsCount, int selfSizeOff)
+inline uint32_t SelfSizeOf(const std::vector<uint32_t>& nodes, uint32_t nodeIndex, int nodeFieldsCount, int selfSizeOff)
 {
-    return nodes[static_cast<size_t>(NodeIndex) * static_cast<size_t>(nodeFieldsCount) +
+    return nodes[static_cast<size_t>(nodeIndex) * static_cast<size_t>(nodeFieldsCount) +
                  static_cast<size_t>(selfSizeOff)];
 }
 
@@ -717,10 +717,10 @@ static void ComputeRetainedSizes(
     // Since we process in post-order, a node's retained size is fully
     // computed (all descendants already added) before it's propagated.
     for (uint32_t i = 0; i < po.rootPo; i++) {
-        uint32_t NodeIndex = po.postOrder[i];
-        uint32_t domNodeIndex = dominators[NodeIndex];
+        uint32_t nodeIndex = po.postOrder[i];
+        uint32_t domNodeIndex = dominators[nodeIndex];
         if (domNodeIndex != UNREACHABLE) {
-            retainedSizes[domNodeIndex] += retainedSizes[NodeIndex];
+            retainedSizes[domNodeIndex] += retainedSizes[nodeIndex];
         }
     }
 

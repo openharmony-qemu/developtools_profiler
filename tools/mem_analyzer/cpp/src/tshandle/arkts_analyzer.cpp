@@ -99,7 +99,7 @@ struct BuildNativeRefResult {
  * Reference: TS buildNativeRefFromCallStacks
  */
 static BuildNativeRefResult BuildNativeRef(
-    const std::vector<mem_analyzer::ResolvedCallStack>& CallStacks,
+    const std::vector<mem_analyzer::ResolvedCallStack>& callStacks,
     const std::unordered_map<std::string, uint32_t>& addrToNodeId)
 {
     BuildNativeRefResult result;
@@ -108,7 +108,7 @@ static BuildNativeRefResult BuildNativeRef(
     // normalized addr -> first callStackId that claimed it
     std::unordered_map<std::string, long long> addrFirstCs;
 
-    for (const auto& cs : CallStacks) {
+    for (const auto& cs : callStacks) {
         if (!cs.existingAddrs) {
             continue;
         }
@@ -182,7 +182,7 @@ namespace mem_analyzer {
 ArkTsAnalyzeResult AnalyzeArktsClasses(
     const std::string& heapsnapshotPath,
     const std::string& addrFilePath,
-    std::vector<ResolvedCallStack>& CallStacks)
+    std::vector<ResolvedCallStack>& callStacks)
 {
     ArkTsAnalyzeResult result;
 
@@ -200,7 +200,7 @@ ArkTsAnalyzeResult AnalyzeArktsClasses(
 
     // ---- 5. Build nativeRef from callStacks ----
     timer.stage("Building nativeRef");
-    auto nativeResult = BuildNativeRef(CallStacks, parseResult.addrToNodeId);
+    auto nativeResult = BuildNativeRef(callStacks, parseResult.addrToNodeId);
     timer.tick("build_native_ref");
 
     // ---- 6. Aggregate by class name ----
@@ -213,23 +213,23 @@ ArkTsAnalyzeResult AnalyzeArktsClasses(
 
     for (const auto& [nodeId, nativeRef] : nativeResult.nodeNativeRef) {
         auto node = heap.GetNodeById(nodeId);
-        if (node.NodeIndex == 0xFFFFFFFF) {
+        if (node.nodeIndex == 0xFFFFFFFF) {
             missingNodeCount++;
             missingNodeIds.push_back(nodeId);
             continue;
         }
 
         std::string name;
-        std::string typeName = heap.GetNodeTypeName(node.NodeIndex);
+        std::string typeName = heap.GetNodeTypeName(node.nodeIndex);
         if (typeName == "string" || node.name == "JSObject" || node.name == "JSSharedObject") {
             // 字符串命名与快照分析保持一致：string(size: <区间>, content=xx)，
             // 最终由 formatter 按 size 区间聚合，避免条目过于分散
-            name = heap.GetExtendedNodeName(node.NodeIndex);
+            name = heap.GetExtendedNodeName(node.nodeIndex);
         } else {
             name = node.name.empty() ? "(unknown)" : node.name;
         }
         long long shallowSize = node.selfSize;
-        long long retainedSize = static_cast<long long>(heap.GetRetainedSize(node.NodeIndex));
+        long long retainedSize = static_cast<long long>(heap.GetRetainedSize(node.nodeIndex));
 
         std::vector<TshandleRetainedShare> shares;
         shares.reserve(nativeRef.size());
@@ -263,7 +263,7 @@ ArkTsAnalyzeResult AnalyzeArktsClasses(
     timer.tick("aggregate", std::to_string(classMap.size()) + " classes, " +
               std::to_string(instanceCount) + " instances");
 
-    ApplyTshandleRetainedSizes(CallStacks, localRetainedSizeByCallStack);
+    ApplyTshandleRetainedSizes(callStacks, localRetainedSizeByCallStack);
 
     // ---- 7. Build anomaly report data ----
 

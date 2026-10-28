@@ -395,7 +395,7 @@ bool CliParser::IsSubcommand(const std::string& name) const
 int CliParser::exit(const std::exception& e) const
 {
     const auto* ce = dynamic_cast<const CliError*>(&e);
-    if (ce && ce->IsHelp) {
+    if (ce && ce->isHelp) {
         // For subcommand help, print subcommand help
         if (!matchedSubcommand_.empty()) {
             const SubcommandEntry* entry = FindSubcommand(matchedSubcommand_);

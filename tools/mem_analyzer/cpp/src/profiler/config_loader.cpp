@@ -56,11 +56,11 @@ std::string ResolveConfigPath()
 // relative to the json file's directory (lexical normalization only, no
 // fs::absolute() to avoid getcwd()). Returns false and sets `err` on any
 // open / parse / structural error rather than throwing.
-bool LoadCmdConfig(const std::string& ConfigPath, CmdConfig& out, std::string& err)
+bool LoadCmdConfig(const std::string& configPath, CmdConfig& out, std::string& err)
 {
     // Use config_path as-is (lexical operations only; no fs::absolute — see
     // getcwd caveat). Relative paths resolve against CWD at file-access time.
-    const fs::path configFp = PathFromUtf8(ConfigPath);
+    const fs::path configFp = PathFromUtf8(configPath);
 
     // Open the file. We use a non-throwing open so we can produce a friendly
     // error message instead of letting an exception escape.

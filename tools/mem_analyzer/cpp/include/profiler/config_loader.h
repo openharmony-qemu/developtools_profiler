@@ -42,6 +42,6 @@ std::string ResolveConfigPath();
 
 // Load and parse a CmdConfig from the JSON file at `config_path`.
 // Populates config_dir so template paths can be resolved.
-bool LoadCmdConfig(const std::string& ConfigPath, CmdConfig& cfg, std::string& error);
+bool LoadCmdConfig(const std::string& configPath, CmdConfig& cfg, std::string& error);
 
 } // namespace mem_analyzer

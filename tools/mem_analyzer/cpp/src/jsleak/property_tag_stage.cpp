@@ -271,13 +271,13 @@ void PropertyTagStage::LoadPropertyTagConfig()
     const std::string rel = "config/jsleak/jsleak_config.json";
 
     // 固定目录：可执行文件同级的 config/jsleak/jsleak_config.json
-    std::string ConfigPath;
+    std::string configPath;
     const std::string exeDir = platform::GetExecutableDir();
     if (!exeDir.empty()) {
-        ConfigPath = platform::JoinPath(exeDir, rel);
+        configPath = platform::JoinPath(exeDir, rel);
     }
 
-    if (ConfigPath.empty() || !platform::FileExists(ConfigPath)) {
+    if (configPath.empty() || !platform::FileExists(configPath)) {
         propertyTagBaseClasses = kDefaults;
         defaultDisplayType = kDefaultDisplayType;
         return;
@@ -286,7 +286,7 @@ void PropertyTagStage::LoadPropertyTagConfig()
     try {
         json j;
         {
-            auto ifs = OpenIfstream(ConfigPath);
+            auto ifs = OpenIfstream(configPath);
             ifs >> j;
         }
 

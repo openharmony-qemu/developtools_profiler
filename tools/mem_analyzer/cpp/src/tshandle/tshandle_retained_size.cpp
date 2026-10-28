@@ -43,10 +43,10 @@ void DistributeTshandleRetainedSize(
 }
 
 void ApplyTshandleRetainedSizes(
-    std::vector<ResolvedCallStack>& CallStacks,
+    std::vector<ResolvedCallStack>& callStacks,
     const std::unordered_map<long long, double>& retainedSizes)
 {
-    for (auto& callStack : CallStacks) {
+    for (auto& callStack : callStacks) {
         double total = static_cast<double>(callStack.existingSize);
         const auto retained = retainedSizes.find(callStack.id);
         if (retained != retainedSizes.end() && std::isfinite(retained->second) &&

@@ -58,8 +58,8 @@ class HeapSnapshot {
 public:
     // once_flag 不可拷贝/移动，故用 unique_ptr 持有，保持 HeapSnapshot 可移动
     //（from_file 需按值返回）。
-    HeapSnapshot() : ExtNamesOnce_(std::make_unique<std::once_flag>()),
-                     ChainHashOnce_(std::make_unique<std::once_flag>()) {}
+    HeapSnapshot() : extNamesOnce_(std::make_unique<std::once_flag>()),
+                     chainHashOnce_(std::make_unique<std::once_flag>()) {}
 
     /// Node field offsets (discovered from meta.node_fields)
     int nodeTypeOffset = -1;        // type field index within node record
@@ -118,52 +118,52 @@ public:
     std::vector<uint8_t> reachable;
 
     /// Get retained size for a node (dominator-based; self_size only, native_size excluded).
-    double GetRetainedSize(uint32_t NodeIndex) const
+    double GetRetainedSize(uint32_t nodeIndex) const
     {
-        if (NodeIndex < retainedSizes.size()) {
-            return retainedSizes[NodeIndex];
+        if (nodeIndex < retainedSizes.size()) {
+            return retainedSizes[nodeIndex];
         }
         return 0.0;
     }
 
     /// Get the shallow/self size stored on a node.
-    uint32_t GetNodeSelfSize(uint32_t NodeIndex) const
+    uint32_t GetNodeSelfSize(uint32_t nodeIndex) const
     {
-        if (nodeSelfSizeOffset < 0 || NodeIndex >= static_cast<uint32_t>(nodeCount)) {
+        if (nodeSelfSizeOffset < 0 || nodeIndex >= static_cast<uint32_t>(nodeCount)) {
             return 0;
         }
-        return nodes[static_cast<size_t>(NodeIndex) * static_cast<size_t>(nodeFieldsCount) +
+        return nodes[static_cast<size_t>(nodeIndex) * static_cast<size_t>(nodeFieldsCount) +
                      static_cast<size_t>(nodeSelfSizeOffset)];
     }
 
     /// Get numeric id for a node.
-    uint32_t GetNodeId(uint32_t NodeIndex) const
+    uint32_t GetNodeId(uint32_t nodeIndex) const
     {
-        if (nodeIdOffset < 0 || NodeIndex >= static_cast<uint32_t>(nodeCount)) {
+        if (nodeIdOffset < 0 || nodeIndex >= static_cast<uint32_t>(nodeCount)) {
             return UINT32_MAX;
         }
-        return nodes[static_cast<size_t>(NodeIndex) * static_cast<size_t>(nodeFieldsCount) +
+        return nodes[static_cast<size_t>(nodeIndex) * static_cast<size_t>(nodeFieldsCount) +
                      static_cast<size_t>(nodeIdOffset)];
     }
 
     /// Format shortest reference chain as "RootNode -> NodeA -> TargetNode"
     /// matching TS's getSimpleRefChain() format.
-    std::string FormatRefChain(uint32_t NodeIndex) const;
+    std::string FormatRefChain(uint32_t nodeIndex) const;
 
     /// Return the shortest reference chain frame names (root -> target) as a list.
     /// Shares the same path collection as format_ref_chain, but emits structured
     /// frame names instead of a joined " -> " string.
-    std::vector<std::string> FormatRefChainFrames(uint32_t NodeIndex) const;
+    std::vector<std::string> FormatRefChainFrames(uint32_t nodeIndex) const;
 
     /// 计算最短引用链的 128-bit 稳定标识（对 target->root 的扩展名序列做双路
     /// FNV hash），不可达返回 {0,0}。作为引用链聚合的分组 key。
     /// 注意：必须 hash 扩展名（名字/类型）序列，而非 node_index（具体对象）序列，
     /// 否则会把「走同一类型路径的多个对象」错误拆成多条单节点链。
-    RefChainKey RefChainHash(uint32_t NodeIndex) const;
+    RefChainKey RefChainHash(uint32_t nodeIndex) const;
 
     /// Result of getNodeById
     struct NodeView {
-        uint32_t NodeIndex;
+        uint32_t nodeIndex;
         uint32_t id;
         std::string name;
         uint32_t selfSize;
@@ -173,22 +173,22 @@ public:
     NodeView GetNodeById(uint32_t id) const;
 
     /// Get node name from strings table
-    std::string GetNodeName(uint32_t NodeIndex) const;
+    std::string GetNodeName(uint32_t nodeIndex) const;
 
     // Get ArkInternalHash value from node's edge (returns 0 if not found)
-    uint32_t GetNodeInternalHash(uint32_t NodeIndex) const;
+    uint32_t GetNodeInternalHash(uint32_t nodeIndex) const;
 
     /// Build HeapSnapshot from a .heapsnapshot file
     static HeapSnapshot FromFile(const std::string& path);
 
     /// Get type name for node at node_index (e.g. "object", "string", "number")
-    std::string GetNodeTypeName(uint32_t NodeIndex) const;
+    std::string GetNodeTypeName(uint32_t nodeIndex) const;
 
     /// Number of outgoing edges for a given node
-    uint32_t GetNodeEdgeCount(uint32_t NodeIndex) const;
+    uint32_t GetNodeEdgeCount(uint32_t nodeIndex) const;
 
     // 获取节点的扩展名称
-    const std::string& GetExtendedNodeName(uint32_t NodeIndex) const;
+    const std::string& GetExtendedNodeName(uint32_t nodeIndex) const;
 
     /// Per-edge info exposed via for_each_edge callback
     struct EdgeInfo {
@@ -201,10 +201,10 @@ public:
     /// Iterate outgoing edges of node at node_index.
     /// Callback receives (const EdgeInfo&, size_t local_edge_index).
     template<typename Fn>
-    void ForEachEdge(uint32_t NodeIndex, Fn&& fn) const
+    void ForEachEdge(uint32_t nodeIndex, Fn&& fn) const
     {
-        size_t begin = firstEdgePointers[NodeIndex];
-        size_t end = firstEdgePointers[static_cast<size_t>(NodeIndex) + 1];
+        size_t begin = firstEdgePointers[nodeIndex];
+        size_t end = firstEdgePointers[static_cast<size_t>(nodeIndex) + 1];
         const size_t edgesSize = edges.size();
         const size_t nodesSize = nodes.size();
         size_t localIdx = 0;
@@ -237,40 +237,40 @@ public:
 
 private:
     // 获取 JSObject 扩展名
-    std::string GetJsObjectExtName(uint32_t NodeIndex) const;
+    std::string GetJsObjectExtName(uint32_t nodeIndex) const;
 
     // 获取 String 扩展名
-    std::string GetStringExtName(uint32_t NodeIndex) const;
+    std::string GetStringExtName(uint32_t nodeIndex) const;
 
     // 获取 stateMgmt.js#observedClass 全局对象的扩展名（沿原型链提取 ArkTS 类名）
-    std::string GetObservedClassExtName(uint32_t NodeIndex) const;
+    std::string GetObservedClassExtName(uint32_t nodeIndex) const;
 
     // 沿 hclass → Proto 交替上溯，提取 stateMgmt 包装对象背后被包装的类名。
     // skip_markers 中的名字视为「仍是包装层」，跳过并继续上溯。返回空 = 未命中。
-    std::string ResolveStateMgmtWrappedClass(uint32_t NodeIndex, const std::vector<std::string>& skipMarkers) const;
+    std::string ResolveStateMgmtWrappedClass(uint32_t nodeIndex, const std::vector<std::string>& skipMarkers) const;
 
     // 获取 stateMgmt.js#JSObject 的扩展名（同 observedClass 的套路，展开被包装的 ArkTS 类）
-    std::string GetStateMgmtJsObjectExtName(uint32_t NodeIndex, const std::string& nodeName) const;
+    std::string GetStateMgmtJsObjectExtName(uint32_t nodeIndex, const std::string& nodeName) const;
 
     // declarative_frontend/stateMgmt.js 对象扩展名的统一入口
     // （observedClass 展开 / JSObject 展开 / 其余去前缀）
-    std::string GetStateMgmtExtName(uint32_t NodeIndex, const std::string& nodeName) const;
+    std::string GetStateMgmtExtName(uint32_t nodeIndex, const std::string& nodeName) const;
 
     // 获取 SourceTextModule 扩展名
-    std::string GetSourceTextModuleExtName(uint32_t NodeIndex) const;
+    std::string GetSourceTextModuleExtName(uint32_t nodeIndex) const;
 
     // 计算单个节点的扩展名（不查缓存、不递归调用 get_extended_node_name）。
     // 由 get_extended_node_name 在预构建阶段串行调用。
-    std::string ComputeExtendedName(uint32_t NodeIndex) const;
+    std::string ComputeExtendedName(uint32_t nodeIndex) const;
 
     // 一次性预构建的扩展名表（按 node_index 索引）。并行阶段只读、无锁。
     // once_flag 用 unique_ptr 持有（once_flag 不可拷贝/移动）。
-    mutable std::unique_ptr<std::once_flag> ExtNamesOnce_;
+    mutable std::unique_ptr<std::once_flag> extNamesOnce_;
     mutable std::vector<std::string> extNames_;
 
     // 一次性预构建的「正向链 hash」表（按 node_index 索引，存 root→node 的扩展名序列
     // 的 FNV 指纹）。ref_chain_hash 直接查表返回 O(1)；方向为正向才能前缀增量递推。
-    mutable std::unique_ptr<std::once_flag> ChainHashOnce_;
+    mutable std::unique_ptr<std::once_flag> chainHashOnce_;
     mutable std::vector<RefChainKey> chainHash_;
     mutable std::vector<uint8_t> chainHashComputed_;
 };

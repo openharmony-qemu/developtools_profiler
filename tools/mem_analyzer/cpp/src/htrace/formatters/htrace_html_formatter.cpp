@@ -455,11 +455,11 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
             // 文件轨：文件名为根冰柱图（无调用链列表）
             const auto& fp = std::get<FilepageInfo>(meta.section->rows[entryIdx]);
             StringTable st;
-            std::vector<int> ids(fp.CallStacks.size());
+            std::vector<int> ids(fp.callStacks.size());
             for (size_t k = 0; k < ids.size(); ++k) {
                 ids[k] = static_cast<int>(k);
             }
-            FlameNode merged = BuildMergedIcicle(fp.CallStacks, ids, full.dataDict);
+            FlameNode merged = BuildMergedIcicle(fp.callStacks, ids, full.dataDict);
             entry.icicleTree = BuildIcicleTreeJsonFromFlameNode(merged, fp.filename, "", "", full.dataDict, st);
             entry.names = st.toArray();
             return;

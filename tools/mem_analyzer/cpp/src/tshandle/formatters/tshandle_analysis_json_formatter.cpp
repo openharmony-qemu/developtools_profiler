@@ -57,7 +57,7 @@ json TraceMetaToJson(const TshandleAnalysisOutput& analysis)
     };
     Totals globalTotals, localTotals;
 
-    for (const auto& stack : analysis.CallStacks) {
+    for (const auto& stack : analysis.callStacks) {
         if (stack.type == HtraceEventType::ARK_GLOBAL_HANDLE) {
             ++globalTotals.count;
             globalTotals.memory += stack.existingSize;

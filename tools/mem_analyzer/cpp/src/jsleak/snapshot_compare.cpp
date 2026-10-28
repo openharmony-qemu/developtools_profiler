@@ -809,14 +809,14 @@ json JsleakCompareAnalyzeImpl(const HeapSnapshot& baseline,
         // both sides, matching the object-diff scope above.
         PropertyTagStage LeakProcessor("");
         const json baselineLeakObjects = LeakProcessor.analyze(
-            baseline, [&](uint32_t NodeIndex) {
-                const uint32_t nodeId = baseline.GetNodeId(NodeIndex);
+            baseline, [&](uint32_t nodeIndex) {
+                const uint32_t nodeId = baseline.GetNodeId(nodeIndex);
                 return nodeId != UINT32_MAX &&
                     target.nodeIdToIdx.find(nodeId) == target.nodeIdToIdx.end();
             });
         const json targetLeakObjects = LeakProcessor.analyze(
-            target, [&](uint32_t NodeIndex) {
-                const uint32_t nodeId = target.GetNodeId(NodeIndex);
+            target, [&](uint32_t nodeIndex) {
+                const uint32_t nodeId = target.GetNodeId(nodeIndex);
                 return nodeId != UINT32_MAX &&
                     baseline.nodeIdToIdx.find(nodeId) == baseline.nodeIdToIdx.end();
             });

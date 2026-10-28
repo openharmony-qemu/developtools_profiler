@@ -45,7 +45,7 @@ struct ArkTsAnalyzeResult {
 ArkTsAnalyzeResult AnalyzeArktsClasses(
     const std::string& heapsnapshotPath,
     const std::string& addrFilePath,
-    std::vector<ResolvedCallStack>& CallStacks
+    std::vector<ResolvedCallStack>& callStacks
     );
 
 /**

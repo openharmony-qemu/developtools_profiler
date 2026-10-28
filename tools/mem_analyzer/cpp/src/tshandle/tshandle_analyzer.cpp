@@ -232,7 +232,7 @@ json TshandleAnalysisOutput::ToJson() const
 }
 
 TshandleAnalysisOutput AnalyzeTshandleData(
-    const std::vector<ResolvedCallStack>& CallStacks,
+    const std::vector<ResolvedCallStack>& callStacks,
     const std::vector<ArkTsClass>& arktsClasses,
     int topN)
 {
@@ -243,7 +243,7 @@ TshandleAnalysisOutput AnalyzeTshandleData(
     }
 
     std::unordered_map<long long, const ResolvedCallStack*> stacksById;
-    for (const auto& stack : CallStacks) {
+    for (const auto& stack : callStacks) {
         if (stack.id != 0) {
             stacksById[stack.id] = &stack;
         }
@@ -294,7 +294,7 @@ TshandleAnalysisOutput TshandleAnalyze(TshandleParseResult& parseResult, const R
     // Carry parse-level data needed by formatters
     analysis.traceMeta = std::move(parseResult.db.meta);
     analysis.parsedAt = std::move(parseResult.parsedAt);
-    analysis.CallStacks = std::move(parseResult.CallStacks());
+    analysis.callStacks = std::move(parseResult.CallStacks());
     analysis.arktsClasses = std::move(parseResult.arktsClasses);
 
     log::Logok("  Analysis completed. Global(app): ", analysis.global.app.totalObjects, " objects, ",

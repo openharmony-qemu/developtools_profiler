@@ -27,9 +27,9 @@ namespace mem_analyzer {
 /// Exception thrown by CliParser on parse errors or --help request.
 class CliError : public std::runtime_error {
 public:
-    bool IsHelp;
+    bool isHelp;
     CliError(const std::string& msg, bool help = false) :
-        std::runtime_error(msg), IsHelp(help) {}
+        std::runtime_error(msg), isHelp(help) {}
 };
 
 /**

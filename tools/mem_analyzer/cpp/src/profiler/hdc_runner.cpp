@@ -1655,9 +1655,9 @@ std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::s
         if (!sp.ok()) {
             state->spawnFailed = true; state->done = true; return;
         }
-        FILE* fp = fdopen(sp.ReadFd, "r");
+        FILE* fp = fdopen(sp.readFd, "r");
         if (!fp) {
-            close(sp.ReadFd);
+            close(sp.readFd);
             state->spawnFailed = true; state->done = true; return;
         }
         consumeStream(fp);

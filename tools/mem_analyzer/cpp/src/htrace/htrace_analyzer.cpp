@@ -135,15 +135,15 @@ static void CheckAppSymbol(SymbolData& sd, const std::unordered_map<int, std::st
 
 // ===== Build initial symbol data from call stacks =====
 static void BuildSymbolData(
-    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<CompressedCallStack>& callStacks,
     std::unordered_map<uint64_t, SymbolData>& symbols,
     const std::unordered_map<int, std::string>& dataDict,
     long long& totalLeakSize)
 {
     totalLeakSize = 0;
 
-    for (int ci = 0; ci < (int)CallStacks.size(); ci++) {
-        auto& chain = CallStacks[ci];
+    for (int ci = 0; ci < (int)callStacks.size(); ci++) {
+        auto& chain = callStacks[ci];
         long long size = chain.existingSize;
         if (size <= 0) {
             continue;
@@ -332,7 +332,7 @@ static bool CanApproximate(long long value,
 
 static ApproxResult CalcApproximations(
     const std::vector<SymbolData*>& filtered,
-    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<CompressedCallStack>& callStacks,
     const AnalysisConfig& config)
 {
     int N = (int)filtered.size();
@@ -385,10 +385,10 @@ static ApproxResult CalcApproximations(
                 return filtered[a.first]->uid < filtered[b.first]->uid;
             });
 
-        if (ci < 0 || ci >= (int)CallStacks.size()) {
+        if (ci < 0 || ci >= (int)callStacks.size()) {
             continue;
         }
-        long long leak = CallStacks[ci].existingSize;
+        long long leak = callStacks[ci].existingSize;
         if (leak <= 0) {
             continue;
         }
@@ -505,7 +505,7 @@ struct AlgorithmResult {
 
 static AlgorithmResult RunAlgorithm(
     const std::vector<SymbolData*>& filtered,
-    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<CompressedCallStack>& callStacks,
     const AnalysisConfig& config)
 {
     StageTimer timer("Algo");
@@ -544,7 +544,7 @@ static AlgorithmResult RunAlgorithm(
 
     // 4.5: Calculate approximations on filtered set
     timer.stage("Calculating approximations");
-    auto approx = CalcApproximations(filtered, CallStacks, config);
+    auto approx = CalcApproximations(filtered, callStacks, config);
     timer.tick("approx");
 
     // 4.6: Filter using approximations (order-independent fixed-point iteration)
@@ -647,7 +647,7 @@ static AlgorithmResult RunAlgorithm(
 // ===== Build flame/icicle graphs and call chains for top-N symbols only =====
 static std::vector<TopSymbolInfo> buildAndEnrich(
     const std::vector<SymbolData>& finalSymbols,
-    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<CompressedCallStack>& callStacks,
     const std::unordered_map<int, std::string>& dataDict,
     int topN)
 {
@@ -684,8 +684,8 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
         // Sum existing_count over all chains that contain this symbol (one contribution per chain)
         ts.totalExistingCount = 0;
         for (int ci : s.chainIds) {
-            if (ci >= 0 && ci < (int)CallStacks.size())
-                ts.totalExistingCount += CallStacks[ci].existingCount;
+            if (ci >= 0 && ci < (int)callStacks.size())
+                ts.totalExistingCount += callStacks[ci].existingCount;
         }
         ts.isApp = s.isApp;
         ts.buildIdNull = s.buildIdNull;
@@ -694,11 +694,11 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
         }
 
         // Build flame/icicle graphs with data_dict for ID→string resolution
-        ts.flameGraph = BuildFlameGraph(ts.symbol, CallStacks, s.chainIds.vector(), s.depthPerChain, dataDict);
-        ts.icicleGraph = BuildIcicleGraph(ts.symbol, CallStacks, s.chainIds.vector(), s.depthPerChain, dataDict);
+        ts.flameGraph = BuildFlameGraph(ts.symbol, callStacks, s.chainIds.vector(), s.depthPerChain, dataDict);
+        ts.icicleGraph = BuildIcicleGraph(ts.symbol, callStacks, s.chainIds.vector(), s.depthPerChain, dataDict);
         for (int ci : s.chainIds) {
-            if (ci >= 0 && ci < (int)CallStacks.size())
-                ts.callChains.push_back(CallStacks[ci]);
+            if (ci >= 0 && ci < (int)callStacks.size())
+                ts.callChains.push_back(callStacks[ci]);
         }
         result.push_back(std::move(ts));
     }
@@ -710,7 +710,7 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
 
 // ===== Core analysis (no mmap split) =====
 static HtraceAnalysisOutput AnalyzeCallStacksCore(
-    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<CompressedCallStack>& callStacks,
     const std::unordered_map<int, std::string>& dataDict,
     AnalysisConfig config)
 {
@@ -722,7 +722,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
 
     // 单轨 category 的 JSON 嵌套键（来自描述符表 tracks[0].json_key，如 "nativeHeaps"/"dmas"）。
     // 多轨（mmap）已按 is_multipart 分叉、不经过此函数；这里只服务单轨。
-    const std::string& symbolTrackKey = HtraceCategory(config.category).tracks[0].JsonKey;
+    const std::string& symbolTrackKey = HtraceCategory(config.category).tracks[0].jsonKey;
 
     // Lazy-load htrace config
     auto& htraceCfg = HtraceConfigMgr::instance();
@@ -751,7 +751,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     timer.stage("Building symbol data from call stacks");
     std::unordered_map<uint64_t, SymbolData> allSymbols;
     long long totalLeakSize;
-    BuildSymbolData(CallStacks, allSymbols, dataDict, totalLeakSize);
+    BuildSymbolData(callStacks, allSymbols, dataDict, totalLeakSize);
     timer.tick("build_symbols", std::to_string(allSymbols.size()) + " symbols");
 
     HtraceAnalysisOutput output;
@@ -835,8 +835,8 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         // restricted to orphan chains, so its reported size stays accurate.
         std::unordered_map<uint64_t, long long> orphanAgg;         // uid -> 孤儿栈内聚合泄漏量
         std::unordered_map<uint64_t, const SymbolData*> orphanSrc; // uid -> 原始符号（完整范围）
-        for (int ci = 0; ci < (int)CallStacks.size(); ci++) {
-            const auto& chain = CallStacks[ci];
+        for (int ci = 0; ci < (int)callStacks.size(); ci++) {
+            const auto& chain = callStacks[ci];
             long long size = chain.existingSize;
             if (size <= 0) {
                 continue;
@@ -936,16 +936,16 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         std::vector<int> otherIds;
         long long otherLeak = 0;
         long long otherCount = 0;
-        for (int ci = 0; ci < (int)CallStacks.size(); ci++) {
+        for (int ci = 0; ci < (int)callStacks.size(); ci++) {
             if (covered.count(ci)) {
                 continue;
             }
-            if (CallStacks[ci].existingSize <= 0) {
+            if (callStacks[ci].existingSize <= 0) {
                 continue;
             }
             otherIds.push_back(ci);
-            otherLeak += CallStacks[ci].existingSize;
-            otherCount += CallStacks[ci].existingCount;
+            otherLeak += callStacks[ci].existingSize;
+            otherCount += callStacks[ci].existingCount;
         }
         if (otherIds.empty()) {
             return;
@@ -954,15 +954,15 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         ts.symbol = OTHER_SYMBOL;
         ts.totalLeakSize = otherLeak;
         ts.totalExistingCount = otherCount;
-        ts.icicleGraph = BuildMergedIcicle(CallStacks, otherIds, dataDict);
+        ts.icicleGraph = BuildMergedIcicle(callStacks, otherIds, dataDict);
         targetVec.push_back(std::move(ts));
     };
 
     if (scopeStr == "app-only") {
         auto [appFiltered, appOrg] = buildFiltered(Scope::AppOnly);
-        auto result = RunAlgorithm(appFiltered, CallStacks, config);
+        auto result = RunAlgorithm(appFiltered, callStacks, config);
         output.topSymbols.mode = "app-only";
-        auto appSyms = buildAndEnrich(result.finalSymbols, CallStacks, dataDict, topN);
+        auto appSyms = buildAndEnrich(result.finalSymbols, callStacks, dataDict, topN);
         AppendOther(appSyms, result.finalSymbols);
         output.topSymbols.app.sections.push_back(MakeSymbolSection(std::move(appSyms), symbolTrackKey.c_str()));
         output.stats = result.stats;
@@ -970,9 +970,9 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     }
     else if (scopeStr == "system-only") {
         auto [sysFiltered, sysOrg] = buildFiltered(Scope::SystemOnly);
-        auto result = RunAlgorithm(sysFiltered, CallStacks, config);
+        auto result = RunAlgorithm(sysFiltered, callStacks, config);
         output.topSymbols.mode = "system-only";
-        auto sysSyms = buildAndEnrich(result.finalSymbols, CallStacks, dataDict, topN);
+        auto sysSyms = buildAndEnrich(result.finalSymbols, callStacks, dataDict, topN);
         AppendOther(sysSyms, result.finalSymbols);
         output.topSymbols.system.sections.push_back(MakeSymbolSection(std::move(sysSyms), symbolTrackKey.c_str()));
         output.stats = result.stats;
@@ -980,9 +980,9 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     }
     else if (scopeStr == "mixed") {
         auto [mixedFiltered, mixedOrg] = buildFiltered(Scope::Mixed);
-        auto result = RunAlgorithm(mixedFiltered, CallStacks, config);
+        auto result = RunAlgorithm(mixedFiltered, callStacks, config);
         output.topSymbols.mode = "mixed";
-        auto mixedSyms = buildAndEnrich(result.finalSymbols, CallStacks, dataDict, topN);
+        auto mixedSyms = buildAndEnrich(result.finalSymbols, callStacks, dataDict, topN);
         AppendOther(mixedSyms, result.finalSymbols);
         output.topSymbols.mixed.sections.push_back(MakeSymbolSection(std::move(mixedSyms), symbolTrackKey.c_str()));
         output.stats = result.stats;
@@ -992,13 +992,13 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         // app-and-system (default)
         auto [appFiltered, appOrg] = buildFiltered(Scope::AppOnly);
         auto [sysFiltered, sysOrg] = buildFiltered(Scope::SystemOnly);
-        auto appResult = RunAlgorithm(appFiltered, CallStacks, config);
-        auto sysResult = RunAlgorithm(sysFiltered, CallStacks, config);
+        auto appResult = RunAlgorithm(appFiltered, callStacks, config);
+        auto sysResult = RunAlgorithm(sysFiltered, callStacks, config);
         output.topSymbols.mode = "app-and-system";
-        auto appSyms = buildAndEnrich(appResult.finalSymbols, CallStacks, dataDict, topN);
+        auto appSyms = buildAndEnrich(appResult.finalSymbols, callStacks, dataDict, topN);
         AppendOther(appSyms, appResult.finalSymbols);
         output.topSymbols.app.sections.push_back(MakeSymbolSection(std::move(appSyms), symbolTrackKey.c_str()));
-        auto sysSyms = buildAndEnrich(sysResult.finalSymbols, CallStacks, dataDict, topN);
+        auto sysSyms = buildAndEnrich(sysResult.finalSymbols, callStacks, dataDict, topN);
         AppendOther(sysSyms, sysResult.finalSymbols);
         output.topSymbols.system.sections.push_back(MakeSymbolSection(std::move(sysSyms), symbolTrackKey.c_str()));
         output.stats.orgSetSize = appOrg + sysOrg;
@@ -1051,7 +1051,7 @@ static FilepageSplit AnalyzeFilepages(
         auto& info = grouped[cs.subTypeId];
         info.size += cs.existingSize;
         info.count += cs.existingCount;
-        info.CallStacks.push_back(cs);
+        info.callStacks.push_back(cs);
     }
 
     FilepageSplit split;
@@ -1065,7 +1065,7 @@ static FilepageSplit AnalyzeFilepages(
         }
         // 文件级分类：任意栈的任意帧是应用符号 → app 类；否则 system 类
         bool isApp = false;
-        for (const auto& cs : info.CallStacks) {
+        for (const auto& cs : info.callStacks) {
             if (FilepageHasAppSymbol(cs, dataDict)) { isApp = true; break; }
         }
         if (isApp) {
@@ -1091,19 +1091,19 @@ static FilepageSplit AnalyzeFilepages(
 
 // ===== Public API (with mmap split) =====
 HtraceAnalysisOutput AnalyzeCallStacks(
-    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<CompressedCallStack>& callStacks,
     const std::unordered_map<int, std::string>& dataDict,
     AnalysisConfig config,
     const std::string& mode)
 {
     if (!HtraceCategory(config.category).IsMultipart()) {
-        return AnalyzeCallStacksCore(CallStacks, dataDict, config);
+        return AnalyzeCallStacksCore(callStacks, dataDict, config);
     }
 
     // category == "mmap": split into mmap-anon (MMAP_ANON) and mmap-filepage (FILE_PAGE_MSG).
     // anon 走 symbol 管道；filepage 走旁路（按文件聚合 + app/system 分类）。
     std::vector<CompressedCallStack> anonStacks, filepageStacks;
-    for (const auto& cs : CallStacks) {
+    for (const auto& cs : callStacks) {
         if (cs.type == HtraceEventType::MMAP_ANON) {
             anonStacks.push_back(cs);
         } else if (cs.type == HtraceEventType::FILE_PAGE_MSG) {

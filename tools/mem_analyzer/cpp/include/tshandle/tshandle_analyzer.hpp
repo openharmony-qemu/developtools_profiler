@@ -63,7 +63,7 @@ struct TshandleAnalysisOutput {
     // Parse data carried forward for formatters
     TraceMeta traceMeta;
     std::string parsedAt;
-    std::vector<ResolvedCallStack> CallStacks;
+    std::vector<ResolvedCallStack> callStacks;
     std::vector<ArkTsClass> arktsClasses;
 
     // GlobalHandle 按调用链拆分为应用 / 系统两个 section；LocalHandle 不拆分。
@@ -74,7 +74,7 @@ struct TshandleAnalysisOutput {
 };
 
 TshandleAnalysisOutput AnalyzeTshandleData(
-    const std::vector<ResolvedCallStack>& CallStacks,
+    const std::vector<ResolvedCallStack>& callStacks,
     const std::vector<ArkTsClass>& arktsClasses,
     int topN);
 

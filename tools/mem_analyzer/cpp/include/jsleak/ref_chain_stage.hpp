@@ -25,8 +25,8 @@ namespace mem_analyzer {
 class RefChainStage : public JsleakStage {
 public:
     RefChainStage(std::string mode,
-                  const char* PreviewId,
-                  const char* JsonKey,
+                  const char* previewId,
+                  const char* jsonKey,
                   std::optional<std::string> targetClass,   // nullopt=全节点；非空=节点名精确匹配
                   std::optional<size_t> topK,
                   std::unordered_set<std::string> excludeChains);

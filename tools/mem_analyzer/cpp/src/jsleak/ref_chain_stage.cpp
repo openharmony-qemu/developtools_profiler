@@ -163,14 +163,14 @@ collectRefChains(const HeapSnapshot& heap,
 } // namespace
 
 RefChainStage::RefChainStage(std::string mode,
-                             const char* PreviewId,
-                             const char* JsonKey,
+                             const char* previewId,
+                             const char* jsonKey,
                              std::optional<std::string> targetClass,
                              std::optional<size_t> topK,
                              std::unordered_set<std::string> excludeChains)
     : mode_(std::move(mode)),
-      previewId(PreviewId),
-      jsonKey(JsonKey),
+      previewId(previewId),
+      jsonKey(jsonKey),
       targetClass(std::move(targetClass)),
       topK(topK),
       excludeChains(std::move(excludeChains)) {}

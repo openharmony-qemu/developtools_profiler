@@ -104,7 +104,7 @@ static void ClearChildMaps(FlameNode& node)
 
 FlameNode BuildFlameGraph(
     const std::string& /*target_symbol*/,
-    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<CompressedCallStack>& callStacks,
     const std::vector<int>& chainIds,
     const std::unordered_map<int, int>& depthPerChain,
     const std::unordered_map<int, std::string>& /*data_dict*/)
@@ -112,10 +112,10 @@ FlameNode BuildFlameGraph(
     FlameNode root{};
 
     for (int ci : chainIds) {
-        if (ci < 0 || ci >= (int)CallStacks.size()) {
+        if (ci < 0 || ci >= (int)callStacks.size()) {
             continue;
         }
-        auto& chain = CallStacks[ci];
+        auto& chain = callStacks[ci];
         auto depthIt = depthPerChain.find(ci);
         if (depthIt == depthPerChain.end()) {
             continue;
@@ -146,7 +146,7 @@ FlameNode BuildFlameGraph(
 
 FlameNode BuildIcicleGraph(
     const std::string& /*target_symbol*/,
-    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<CompressedCallStack>& callStacks,
     const std::vector<int>& chainIds,
     const std::unordered_map<int, int>& depthPerChain,
     const std::unordered_map<int, std::string>& /*data_dict*/)
@@ -154,10 +154,10 @@ FlameNode BuildIcicleGraph(
     FlameNode root{};
 
     for (int ci : chainIds) {
-        if (ci < 0 || ci >= (int)CallStacks.size()) {
+        if (ci < 0 || ci >= (int)callStacks.size()) {
             continue;
         }
-        auto& chain = CallStacks[ci];
+        auto& chain = callStacks[ci];
         auto depthIt = depthPerChain.find(ci);
         if (depthIt == depthPerChain.end()) {
             continue;
@@ -185,16 +185,16 @@ FlameNode BuildIcicleGraph(
 }
 
 FlameNode BuildMergedIcicle(
-    const std::vector<CompressedCallStack>& CallStacks,
+    const std::vector<CompressedCallStack>& callStacks,
     const std::vector<int>& chainIds,
     const std::unordered_map<int, std::string>& /*data_dict*/)
 {
     FlameNode root{};
     for (int ci : chainIds) {
-        if (ci < 0 || ci >= (int)CallStacks.size()) {
+        if (ci < 0 || ci >= (int)callStacks.size()) {
             continue;
         }
-        auto& chain = CallStacks[ci];
+        auto& chain = callStacks[ci];
         long long leak = chain.existingSize;
         if (leak <= 0) {
             continue;

@@ -58,7 +58,7 @@ struct HtraceTrackSpec {
     // JSON 里该轨道的嵌套键。字节契约（改它 = 回归）：
     //   每个 scope（app/system/mixed）都按 json_key 嵌套成对象；单轨一个 key、多轨多个 key，
     //   且每个键恒写（该轨为空也输出空数组）。
-    std::string JsonKey;
+    std::string jsonKey;
 
     // HTML 二级 tab 的显示名（全名，如 "mmap-anon（匿名映射）"）。
     // 这是 label 的唯一权威来源：分析器把它抄进 HtraceSection.label，HTML 再读 section.label；
@@ -76,7 +76,7 @@ struct HtraceTrackSpec {
 //   parse 模式按固定顺序 emit 全部 category 的条目（顺序由 parse formatter 自己定）。
 struct HtraceSummaryEntry {
     // 输出 JSON 键，如 "existingMmapTotalSize"。
-    const char* JsonKey;
+    const char* jsonKey;
 
     // 参与求和的类型名。注意是可重复列表：mmap 的 Total 条目就把 Anon/Filepage 两个名字放进来，
     // 让 writer 复用「两轨各自求和」的结果，无需对 Total 单独特判。

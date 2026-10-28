@@ -32,7 +32,7 @@ void DistributeTshandleRetainedSize(
     std::unordered_map<long long, double>& totals);
 
 void ApplyTshandleRetainedSizes(
-    std::vector<ResolvedCallStack>& CallStacks,
+    std::vector<ResolvedCallStack>& callStacks,
     const std::unordered_map<long long, double>& retainedSizes);
 
 } // namespace mem_analyzer
