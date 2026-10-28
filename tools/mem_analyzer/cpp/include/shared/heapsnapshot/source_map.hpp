@@ -45,7 +45,7 @@ public:
     bool LoadFromDir(const std::string& dir);
 
     /// 按混淆 key 精确查找，命中返回指向条目的指针（零拷贝），未命中返回 nullptr。
-    const SourceMapEntry* lookup(const std::string& key) const;
+    const SourceMapEntry* Lookup(const std::string& key) const;
 
     /// 按 ArkTS 模块三元组（module / version / 相对路径）查找，适配
     /// heapsnapshot 中形如 "[bundle/]module@version/src/main/ets/xxx.ts[#func...]"
@@ -55,7 +55,7 @@ public:
         const std::string& relPath) const;
 
     /// 索引是否为空（未加载到任何条目）。
-    bool empty() const;
+    bool Empty() const;
 
     /// Base64 VLQ 解码 source map v3 "mappings" 字段（无缓存，供独立解码场景使用）。
     static DecodedMappings DecodeVlqMappings(const std::string& mappings);

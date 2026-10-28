@@ -51,7 +51,7 @@ public:
     bool LookupUnique(const std::string& obf, std::string& original) const;
 
     /// 索引是否为空（未加载到任何条目）。
-    bool empty() const;
+    bool Empty() const;
 
 private:
     /// 加载单个 nameCache.json 文件并合并进索引，成功返回 true。

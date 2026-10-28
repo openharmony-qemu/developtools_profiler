@@ -417,7 +417,7 @@ std::string DeobfuscateOneString(const std::string& value,
     }
     // 2. 混淆编译产物路径 key → 源码路径（sources[0]）
     if (smap) {
-        const SourceMapEntry* entry = smap->lookup(result);
+        const SourceMapEntry* entry = smap->Lookup(result);
         if (entry != nullptr && !entry->sourcePath.empty()) {
             result = entry->sourcePath;
             replaced++;
@@ -637,7 +637,7 @@ bool DeobfuscateWithIndices(const std::string& inputPath, const std::string& out
         }
     }
     // 两者均空 → 警告后降级为原始输入
-    if (smap.empty() && ncache.empty()) {
+    if (smap.Empty() && ncache.Empty()) {
         log::Logw("Warning: No source map / nameCache entries loaded, proceeding with the original snapshot.");
         return false;
     }

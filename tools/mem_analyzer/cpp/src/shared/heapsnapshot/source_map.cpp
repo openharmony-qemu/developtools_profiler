@@ -469,7 +469,7 @@ bool SourceMapIndex::LoadFromDir(const std::string& dir)
     return true;
 }
 
-const SourceMapEntry* SourceMapIndex::lookup(const std::string& key) const
+const SourceMapEntry* SourceMapIndex::Lookup(const std::string& key) const
 {
     auto it = index_.find(key);
     return (it == index_.end()) ? nullptr : &it->second;
@@ -483,7 +483,7 @@ const SourceMapEntry* SourceMapIndex::LookupByModule(const std::string& module, 
     return (it == moduleIndex.end()) ? nullptr : it->second;
 }
 
-bool SourceMapIndex::empty() const
+bool SourceMapIndex::Empty() const
 {
     return index_.empty();
 }

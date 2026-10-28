@@ -268,7 +268,7 @@ bool NameCacheIndex::LookupUnique(const std::string& obf, std::string& original)
     return true;
 }
 
-bool NameCacheIndex::empty() const
+bool NameCacheIndex::Empty() const
 {
     return byObfuscated.empty() && obfNameToPath.empty();
 }
