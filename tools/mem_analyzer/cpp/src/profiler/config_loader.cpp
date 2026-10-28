@@ -76,8 +76,7 @@ bool LoadCmdConfig(const std::string& configPath, CmdConfig& out, std::string& e
     nlohmann::json j;
     try {
         j = nlohmann::json::parse(stream);
-    } catch (const nlohmann::json::parse_error& e)
-    {
+    } catch (const nlohmann::json::parse_error& e) {
         err = "config file JSON parse failed: " + std::string(e.what());
         return false;
     }

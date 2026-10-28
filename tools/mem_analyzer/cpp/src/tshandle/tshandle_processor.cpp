@@ -252,8 +252,7 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
         timer.Tick("build_entries", std::to_string(callStacks.size()) + " stacks");
         timer.Done();
         return result;
-    } catch (...)
-    {
+    } catch (...) {
         sqlite3_close(db);
         throw;
     }

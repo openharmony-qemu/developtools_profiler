@@ -84,8 +84,7 @@ public:
                 auto addrs = mem_analyzer::ReadLeakFile(opt_.leakListFile);
                 log::Logi("Leak file: ", opt_.leakListFile, " (", addrs.size(), " addresses)");
                 ctx.htrace.leakAddrs = std::move(addrs);
-            } catch (const std::exception& e)
-            {
+            } catch (const std::exception& e) {
                 log::Loge("Error: ", e.what());
                 return 1;
             }

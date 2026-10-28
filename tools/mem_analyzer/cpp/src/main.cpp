@@ -121,8 +121,7 @@ int main(int argc, char** argv)
 
     try {
         app.parse(argc, argv);
-    } catch (const mem_analyzer::CliError& e)
-    {
+    } catch (const mem_analyzer::CliError& e) {
         return app.exit(e);
     }
 

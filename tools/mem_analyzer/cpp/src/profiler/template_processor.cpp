@@ -63,8 +63,7 @@ CaptureCommand ProcessTemplate(const std::string& configFilePath, const Profiler
             const std::string def = durMatch[1].str();
             try {
                 duration = std::stoll(def);
-            } catch (...)
-            {
+            } catch (...) {
                 // If it fails to parse, treat as 0.
                 duration = 0;
             }

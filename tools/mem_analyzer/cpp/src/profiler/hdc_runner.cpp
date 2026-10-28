@@ -551,8 +551,7 @@ long long ParseHiprofilerDataTs(const std::string& filename)
     try {
         long long ms = std::stoll(numstr);
         return ms / 1000;  // convert milliseconds -> seconds
-    } catch (...)
-    {
+    } catch (...) {
         return -1;
     }
 }
@@ -658,8 +657,7 @@ std::map<std::string, long long> listDirFileSizes(const std::string& dir,
         long long size = 0;
         try {
             size = std::stoll(sizeStr);
-        } catch (...)
-        {
+        } catch (...) {
             continue;
         }
         // Skip the date/time fields (ISO = 2, traditional = 3; see header).

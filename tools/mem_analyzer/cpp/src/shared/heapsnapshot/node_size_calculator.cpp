@@ -948,10 +948,8 @@ static void CollectShortestPathRoots(
             highPri.push_back(i);
         } else if (typeName == "synthetic" && nodeName == "(GC roots)") {
             highPri.push_back(i);
-        }
-        // Low-priority root check: Blink cross-thread roots, Blink roots, Pending activities
-        else if (typeName == "synthetic" &&
-                 (nodeName == "Blink cross-thread roots" || nodeName == "Blink roots")) {
+        } else if (typeName == "synthetic" && (nodeName == "Blink cross-thread roots" || nodeName == "Blink roots")) {
+            // Low-priority root check: Blink cross-thread roots, Blink roots, Pending activities
             lowPri.push_back(i);
         } else if ((typeName == "synthetic" || typeName == "native") &&
                     nodeName == "Pending activities") {

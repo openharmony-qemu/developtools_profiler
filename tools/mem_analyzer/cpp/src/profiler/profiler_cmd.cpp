@@ -453,8 +453,7 @@ bool CheckApiVersion(int minApiVersion)
     int version = 0;
     try {
         version = std::stoi(numStr);
-    } catch (...)
-    {
+    } catch (...) {
         log::Loge("API version check failed: invalid version number.");
         return false;
     }

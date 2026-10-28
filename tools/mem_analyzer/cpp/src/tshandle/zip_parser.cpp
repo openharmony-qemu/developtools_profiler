@@ -233,8 +233,7 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
             }
         }
         log::Logi("    Found ", parseResult.CallStacks().size(), " call stacks.");
-    } catch (const std::exception& e)
-    {
+    } catch (const std::exception& e) {
         log::Logw("    Warning: ", e.what(), " (returning empty call stacks)");
         parseResult.db.stacks = ResolvedCallStackList{};
     }
@@ -276,8 +275,7 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
                 parseResult.anomalyCounts = arktsResult.anomalyCounts;
                 parseResult.anomalyLines = std::move(arktsResult.anomalyLines);
             }
-        } catch (const std::exception& e)
-        {
+        } catch (const std::exception& e) {
             log::Logw("    Warning: rawheap processing failed: ", e.what());
         }
     } else {

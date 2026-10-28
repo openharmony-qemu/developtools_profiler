@@ -251,8 +251,7 @@ void PropertyTagStage::LoadJsleakListFile(const std::string& filePath)
                 }
             }
         }
-    } catch (const std::exception& e)
-    {
+    } catch (const std::exception& e) {
         log::Logw("Warning: Failed to parse jsleaklist file: ", e.what());
     }
 }
@@ -339,8 +338,7 @@ void PropertyTagStage::LoadPropertyTagConfig()
         } else {
             defaultDisplayType = kDefaultDisplayType;
         }
-    } catch (const std::exception& e)
-    {
+    } catch (const std::exception& e) {
         log::Logw("Warning: Failed to parse property tag config: ", e.what());
         propertyTagBaseClasses = kDefaults;
         defaultDisplayType = kDefaultDisplayType;

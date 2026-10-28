@@ -184,8 +184,7 @@ bool NameCacheIndex::IndexNameCacheFile(const std::string& filePath)
     json root;
     try {
         root = json::parse(ss.str());
-    } catch (const std::exception& e)
-    {
+    } catch (const std::exception& e) {
         log::Logw("Warning: Failed to parse nameCache file ", filePath, ": ", e.what());
         return false;
     }

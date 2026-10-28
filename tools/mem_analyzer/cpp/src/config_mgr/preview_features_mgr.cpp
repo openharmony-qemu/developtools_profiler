@@ -112,8 +112,7 @@ bool PreviewFeaturesMgr::load(std::string& err)
                 }
             }
         }
-    } catch (const std::exception& e)
-    {
+    } catch (const std::exception& e) {
         err = "failed to read " + configPath_ + ": " + e.what();
         return false;
     }
@@ -149,8 +148,7 @@ bool PreviewFeaturesMgr::save(std::string& err) const
             err = "failed to write " + configPath_;
             return false;
         }
-    } catch (const std::exception& e)
-    {
+    } catch (const std::exception& e) {
         err = "failed to write " + configPath_ + ": " + e.what();
         return false;
     }

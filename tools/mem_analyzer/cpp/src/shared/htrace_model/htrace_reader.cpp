@@ -253,15 +253,15 @@ bool DecodePlugin(const uint8_t* buf, size_t size, PluginData& out)
     std::vector<Field> fields;
     try {
         fields = ParseFields(buf, size);
-    } catch (...)
-    {
+    } catch (...) {
         return false;
     }
     for (const auto& f : fields) {
         if (f.number == 1) {
             out.name = f.bytes;
+        } else if (f.number == 3) {
+            out.data = f.bytes;
         }
-        else if (f.number == 3) out.data = f.bytes;
     }
     return true;
 }
@@ -272,8 +272,7 @@ bool DecodeConfig(const std::string& data, HtraceNativeHookConfig& out)
     std::vector<Field> fields;
     try {
         fields = ParseFields(reinterpret_cast<const uint8_t*>(data.data()), data.size());
-    } catch (...)
-    {
+    } catch (...) {
         return false;
     }
 
@@ -393,8 +392,7 @@ bool ReadHeader(const std::string& path, HtraceHeaderInfo& out)
     std::ifstream ifs;
     try {
         ifs = OpenIfstream(path, std::ios::binary);
-    } catch (...)
-    {
+    } catch (...) {
         return false;
     }
     if (!ifs) {
@@ -449,8 +447,7 @@ bool HtraceReader::ReadNativehookConfig(const std::string& path, HtraceNativeHoo
     std::ifstream ifs;
     try {
         ifs = OpenIfstream(path, std::ios::binary);
-    } catch (...)
-    {
+    } catch (...) {
         return false;
     }
     if (!ifs) {

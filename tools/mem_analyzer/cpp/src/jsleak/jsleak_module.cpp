@@ -99,8 +99,7 @@ std::string JsleakModule::run(const ModuleRequest& req, const RunContext& ctx) c
         timer.Tick("write");
         timer.Done();
         return out;
-    } catch (const std::exception& e)
-    {
+    } catch (const std::exception& e) {
         log::Loge("Error: ", e.what());
         return {};
     }

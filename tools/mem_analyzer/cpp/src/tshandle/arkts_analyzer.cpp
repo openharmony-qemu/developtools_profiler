@@ -69,8 +69,7 @@ static std::string NormalizeAddr(const std::string& raw)
         std::ostringstream oss;
         oss << std::hex << val;
         return oss.str();
-    } catch (...)
-    {
+    } catch (...) {
         return "";
     }
 }

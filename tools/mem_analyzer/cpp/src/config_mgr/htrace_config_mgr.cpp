@@ -84,8 +84,7 @@ bool HtraceConfigMgr::load(const std::string& path, std::string& err)
     json root;
     try {
         root = json::parse(content);
-    } catch (const json::parse_error& e)
-    {
+    } catch (const json::parse_error& e) {
         err = std::string("JSON parse error: ") + e.what();
         return false;
     }

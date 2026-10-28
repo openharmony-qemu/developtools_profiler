@@ -911,8 +911,7 @@ static void ParseSnapshotMeta(HeapSnapshot& snapshot,
     json snapshotMeta;
     try {
         snapshotMeta = json::parse(snapshotJsonStr);
-    } catch (const std::exception& e)
-    {
+    } catch (const std::exception& e) {
         throw std::runtime_error(std::string("failed to parse snapshot metadata: ") + e.what());
     }
 
