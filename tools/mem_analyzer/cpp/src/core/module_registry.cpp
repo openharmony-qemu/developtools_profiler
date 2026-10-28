@@ -123,7 +123,7 @@ std::vector<std::string> ModuleRegistry::SelfCheck()
 
 namespace {
 // 数据域注册。新增一个域 = 建目录 + 在这里加一行 + CMakeLists 登记源文件。
-const bool registered = []() {
+const bool REGISTERED = []() {
     ModuleRegistry::add(std::make_shared<HtraceModule>());
     ModuleRegistry::add(std::make_shared<TshandleModule>());
     ModuleRegistry::add(std::make_shared<JsleakModule>());

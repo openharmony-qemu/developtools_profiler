@@ -520,7 +520,7 @@ struct TshandleAnalysisOutput {
 3. 在 `src/core/module_registry.cpp` 的注册块里加一行：
 
 ```cpp
-const bool registered = []() {
+const bool REGISTERED = []() {
     ModuleRegistry::add(std::make_shared<HtraceModule>());
     ModuleRegistry::add(std::make_shared<TshandleModule>());
     ModuleRegistry::add(std::make_shared<JsleakModule>());

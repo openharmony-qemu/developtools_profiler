@@ -68,7 +68,7 @@ public:
     }
 };
 
-const bool registered = []() {
+const bool REGISTERED = []() {
     CommandRegistry::Add(std::make_shared<PreviewCommand>());
     return true;
 }();

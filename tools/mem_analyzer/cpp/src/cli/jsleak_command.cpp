@@ -167,7 +167,7 @@ private:
     }
 };
 
-const bool registered = []() {
+const bool REGISTERED = []() {
     CommandRegistry::Add(std::make_shared<JsleakCommand>());
     return true;
 }();
