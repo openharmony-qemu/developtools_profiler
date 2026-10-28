@@ -91,21 +91,21 @@ std::string GenerateSnapshotHTML(const json& data, const std::string& sourceFile
     // 无泄漏、但有最短引用链时补一个空 tab 作为入口（此时非激活）。
     if (hasPropertyTag || showTopTab) {
         tabs.push_back({"tabPropertyTag",
-                        "ArkUI组件/ArkTS对象泄漏分析报告",
-                        BuildPropertyTagTabHtml(hasPropertyTag ? data["propertyTagObjects"] : json::object(),
-                                                hasPropertyTag ? (hasTop ? "lc" : "") : "",
-                                                "tabPropertyTag", hasPropertyTag, icicleCharts),
-                        hasPropertyTag,
-                        "若ArkUI组件/ArkTS对象的生命周期已结束（已执行aboutToDisappear、dispose、destroy等函数），无法且不应该被复用；但在快照导出触发GC后仍未被回收，则认为大概率存在泄露。\n对此类对象进行引用链聚类分析，得到的每条引用链通常对应一条泄露路径。此类泄露分析准确率高达90%+。"});
+            "ArkUI组件/ArkTS对象泄漏分析报告",
+            BuildPropertyTagTabHtml(hasPropertyTag ? data["propertyTagObjects"] : json::object(),
+                hasPropertyTag ? (hasTop ? "lc" : "") : "",
+                "tabPropertyTag", hasPropertyTag, icicleCharts),
+            hasPropertyTag,
+            "若ArkUI组件/ArkTS对象的生命周期已结束（已执行aboutToDisappear、dispose、destroy等函数），无法且不应该被复用；但在快照导出触发GC后仍未被回收，则认为大概率存在泄露。\n对此类对象进行引用链聚类分析，得到的每条引用链通常对应一条泄露路径。此类泄露分析准确率高达90%+。"});
     }
     // 快照最短引用链报告
     if (showTopTab) {
         tabs.push_back({"tabTopchain",
-                        "快照最短引用链分析报告",
-                        BuildTopChainTabHtml(data["topRefChains"],
-                                             (hasPropertyTag && hasTop) ? "tc" : "",
-                                             "tabTopchain", !hasPropertyTag, icicleCharts, true),
-                        !hasPropertyTag});
+            "快照最短引用链分析报告",
+            BuildTopChainTabHtml(data["topRefChains"],
+                (hasPropertyTag && hasTop) ? "tc" : "",
+                "tabTopchain", !hasPropertyTag, icicleCharts, true),
+            !hasPropertyTag});
     }
     // JSWrappedNapiObject 节点引用链 tab（仅 -m all 且开启 napi_wrap 预览时产出）
     if (hasNapiWrap) {
@@ -113,10 +113,10 @@ std::string GenerateSnapshotHTML(const json& data, const std::string& sourceFile
         // 该 tab 的引用链都以 JSWrappedNapiObject 结尾，行级搜索词只能命中同一个名字，
         // 因此「查看」不带搜索词，直接跳到完整总览图（见 buildTopChainTableRow）
         tabs.push_back({"tabNapiWrap",
-                        "绑定了Native内存的ArkTS对象引用链分析报告",
-                        BuildTopChainTabHtml(data["napiWrapRefChains"], "np", "tabNapiWrap", active,
-                                             icicleCharts, false),
-                        active});
+            "绑定了Native内存的ArkTS对象引用链分析报告",
+            BuildTopChainTabHtml(data["napiWrapRefChains"], "np", "tabNapiWrap", active,
+                icicleCharts, false),
+            active});
     }
 
     std::string tabItems;

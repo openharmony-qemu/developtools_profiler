@@ -326,14 +326,14 @@ void FormatWithStream(std::ostream& out, const TshandleAnalysisOutput& analysis,
 
     const double globalTotal = analysis.global.app.totalSize + analysis.global.sys.totalSize;
     sections.push_back(BuildSection("tabGlobalApp", "TOP GlobalHandle（应用栈）引用ArkTS对象分析报告",
-                                     HtraceEventType::ARK_GLOBAL_HANDLE, analysis.global.app,
-                                     globalTotal, allData, graphIndex));
+        HtraceEventType::ARK_GLOBAL_HANDLE, analysis.global.app,
+        globalTotal, allData, graphIndex));
     sections.push_back(BuildSection("tabGlobalSys", "TOP GlobalHandle（系统栈）引用ArkTS对象分析报告",
-                                     HtraceEventType::ARK_GLOBAL_HANDLE, analysis.global.sys,
-                                     globalTotal, allData, graphIndex));
+        HtraceEventType::ARK_GLOBAL_HANDLE, analysis.global.sys,
+        globalTotal, allData, graphIndex));
     sections.push_back(BuildSection("tabLocal", "TOP LocalHandle 引用 ArkTS 对象分析报告",
-                                     HtraceEventType::ARK_LOCAL_HANDLE, analysis.local,
-                                     analysis.local.totalSize, allData, graphIndex));
+        HtraceEventType::ARK_LOCAL_HANDLE, analysis.local,
+        analysis.local.totalSize, allData, graphIndex));
 
     const double totalSize = analysis.global.app.totalSize + analysis.global.sys.totalSize +
                             analysis.local.totalSize;
