@@ -44,8 +44,7 @@ $('#heapSizeDelta').textContent = bytes(D.summary.deltaHeapSize);
 let mode = 'positive';
 const paths = D.pathDeltas;
 
-function renderPaths()
-{
+function renderPaths() {
   const list = paths.filter(x => mode === 'positive'
     ? (x.change === 'new' || x.change === 'growth' || x.change === 'replaced')
     : (x.change === 'removed' || x.change === 'shrink'));
@@ -53,11 +52,11 @@ function renderPaths()
     $('#paths').innerHTML = '<div class="empty-msg">当前筛选下没有差异。</div>';
     return;
   }
-  const rows = list.map((x, i) => `<tr><td><a href="#pathDetail_${i}" onclick="ShowDetail('path',${i});return false" class="detail-link">详情</a></td><td><a href="#" data-chart-subtab="subtabChart_pathDeltas" data-keyword="${esc(x.objectName)}" onclick="ShowInOverview(this);return false" class="detail-link">查看</a></td><td class="${x.retainedSizeDelta>=0?'positive':'negative'}"><b>${bytes(x.retainedSizeDelta)}</b></td><td>${delta(x.nodeCountDelta)} 个</td><td><b>${chainHtml(x.path)}</b></td></tr>`).join('');
+  const rows = list.map((x, i) => `<tr><td><a href="#pathDetail_${i}" onclick="showDetail('path',${i});return false" class="detail-link">详情</a></td><td><a href="#" data-chart-subtab="subtabChart_pathDeltas" data-keyword="${esc(x.objectName)}" onclick="showInOverview(this);return false" class="detail-link">查看</a></td><td class="${x.retainedSizeDelta>=0?'positive':'negative'}"><b>${bytes(x.retainedSizeDelta)}</b></td><td>${delta(x.nodeCountDelta)} 个</td><td><b>${chainHtml(x.path)}</b></td></tr>`).join('');
   const details = list.map((x, i) => {
     const source = x.pathSnapshot || (x.change === 'removed' || x.change === 'shrink' ? 'A' : 'B');
     const nodeLabel = source === 'A' ? '消失节点 ID' : '新增节点 ID';
-    return `<div class="top-item" id="pathDetail_${i}"><div class="top-item-header expanded" id="pathHeader_${i}" onclick="ToggleDetail('path',${i})"><span class="arrow">▶</span><span class="header-rank">TOP${i+1}引用链：</span><span class="header-func">${chainHtml(x.path)}</span><div class="header-stats">总大小 <span class="${x.retainedSizeDelta>=0?'positive':'negative'}">${bytes(x.retainedSizeDelta)}</span>，节点数 ${delta(x.nodeCountDelta)}</div></div><div class="top-item-body expanded" id="pathBody_${i}"><div class="call-chains-section"><div class="call-chain-line">引用链: ${chainHtml(x.path)}</div>${nodeIdsHtml(x.deltaNodeIds||[],`pathNodeIds_${i}`,nodeLabel)}</div></div></div>`;
+    return `<div class="top-item" id="pathDetail_${i}"><div class="top-item-header expanded" id="pathHeader_${i}" onclick="toggleDetail('path',${i})"><span class="arrow">▶</span><span class="header-rank">TOP${i+1}引用链：</span><span class="header-func">${chainHtml(x.path)}</span><div class="header-stats">总大小 <span class="${x.retainedSizeDelta>=0?'positive':'negative'}">${bytes(x.retainedSizeDelta)}</span>，节点数 ${delta(x.nodeCountDelta)}</div></div><div class="top-item-body expanded" id="pathBody_${i}"><div class="call-chains-section"><div class="call-chain-line">引用链: ${chainHtml(x.path)}</div>${nodeIdsHtml(x.deltaNodeIds||[],`pathNodeIds_${i}`,nodeLabel)}</div></div></div>`;
   }).join('');
   $('#paths').innerHTML = `<div class="table-wrap"><table class="top-table path-table"><thead><tr><th>详情</th><th>总览图</th><th>总大小</th><th>节点数</th><th>引用链名称</th></tr></thead><tbody>${rows}</tbody></table></div>${details}`;
 }
@@ -81,20 +80,18 @@ document.querySelectorAll('.analysis-tab').forEach(tab => {
     tab.classList.add('active');
     tab.setAttribute('aria-selected', 'true');
     document.getElementById(tab.dataset.panel).classList.add('active');
-    if (window.icicleRedrawAll) {
-        window.icicleRedrawAll();
-    }
+    if (window.icicleRedrawAll) window.icicleRedrawAll();
   };
 });
 window.ICICLE_CHARTS_DATA = D.icicleCharts || [];
 
 const leakEntries = Object.entries(D.leakObjInfo || {}).sort((a, b) =>
   Math.abs(b[1].retainedSizeDelta || 0) - Math.abs(a[1].retainedSizeDelta || 0));
-const leakRows = leakEntries.map(([name, x], i) => `<tr><td><a href="#leakDetail_${i}" onclick="ShowDetail('leak',${i});return false" class="detail-link">详情</a></td><td><a href="#" data-chart-subtab="subtabChart_leakObj" data-keyword="${esc(name)}" onclick="ShowInOverview(this);return false" class="detail-link">查看</a></td><td class="${x.retainedSizeDelta>=0?'positive':'negative'}"><b>${bytes(x.retainedSizeDelta)}</b></td><td>${delta(x.nodeCountDelta)} 个</td><td>${esc((x.hashValues||[]).join(', ')||'NA')}</td><td>${esc(x.propertyName||'NA')}</td><td>${esc(x.displayType||'NA')}</td><td><b>${esc(name)}</b></td></tr>`).join('');
+const leakRows = leakEntries.map(([name, x], i) => `<tr><td><a href="#leakDetail_${i}" onclick="showDetail('leak',${i});return false" class="detail-link">详情</a></td><td><a href="#" data-chart-subtab="subtabChart_leakObj" data-keyword="${esc(name)}" onclick="showInOverview(this);return false" class="detail-link">查看</a></td><td class="${x.retainedSizeDelta>=0?'positive':'negative'}"><b>${bytes(x.retainedSizeDelta)}</b></td><td>${delta(x.nodeCountDelta)} 个</td><td>${esc((x.hashValues||[]).join(', ')||'NA')}</td><td>${esc(x.propertyName||'NA')}</td><td>${esc(x.displayType||'NA')}</td><td><b>${esc(name)}</b></td></tr>`).join('');
 const leakDetails = leakEntries.map(([name, x], i) => {
   const source = x.detailsSnapshot || 'B';
   const nodeLabel = source === 'A' ? '消失节点 ID' : '新增节点 ID';
-  return `<div class="top-item" id="leakDetail_${i}"><div class="top-item-header expanded" id="leakHeader_${i}" onclick="ToggleDetail('leak',${i})"><span class="arrow">▶</span><span class="header-rank">泄漏对象${i+1}：</span><span class="header-func">${esc(name)}</span><div class="header-stats">总大小 <span class="${x.retainedSizeDelta>=0?'positive':'negative'}">${bytes(x.retainedSizeDelta)}</span>，节点数 ${delta(x.nodeCountDelta)}</div></div><div class="top-item-body expanded" id="leakBody_${i}"><div class="call-chains-section">${(x.referenceChains||[]).map((c,j)=>`<div class="chain-detail-section"><div class="call-chain-line">引用链: ${chainHtml((c.chain||[]).join(' -> '))}</div>${nodeIdsHtml(c.nodeIds,`leakNodeIds_${i}_${j}`,nodeLabel)}</div>`).join('')||'<div class="call-chain-line" style="color:#a0a0b0">无引用链数据</div>'}</div></div></div>`;
+  return `<div class="top-item" id="leakDetail_${i}"><div class="top-item-header expanded" id="leakHeader_${i}" onclick="toggleDetail('leak',${i})"><span class="arrow">▶</span><span class="header-rank">泄漏对象${i+1}：</span><span class="header-func">${esc(name)}</span><div class="header-stats">总大小 <span class="${x.retainedSizeDelta>=0?'positive':'negative'}">${bytes(x.retainedSizeDelta)}</span>，节点数 ${delta(x.nodeCountDelta)}</div></div><div class="top-item-body expanded" id="leakBody_${i}"><div class="call-chains-section">${(x.referenceChains||[]).map((c,j)=>`<div class="chain-detail-section"><div class="call-chain-line">引用链: ${chainHtml((c.chain||[]).join(' -> '))}</div>${nodeIdsHtml(c.nodeIds,`leakNodeIds_${i}_${j}`,nodeLabel)}</div>`).join('')||'<div class="call-chain-line" style="color:#a0a0b0">无引用链数据</div>'}</div></div></div>`;
 }).join('');
 $('#leaks').innerHTML = leakEntries.length
   ? `<div class="table-wrap"><table class="top-table leak-table"><thead><tr><th>详情</th><th>总览图</th><th>总大小</th><th>节点数</th><th>hash值<span class="help-icon" data-tooltip="JSLeakWatcher工具检测泄漏生成的泄漏对象hash值">?</span></th><th>属性名称<span class="help-icon" data-tooltip="ArkUI组件生命周期结束后，其对象上特定名称的属性会被置为TRUE，用来标记此状态。属性名和组件类型的对应关系为：\nisDeleting_对应Component类组件；_isDisposed对应NodeContainer和XComponent类组件；isDestroyed对应Ability和Window类组件。">?</span></th><th>类型<span class="help-icon" data-tooltip="检测到的有属性标签的组件或者对象类型。\n如果值为Others，说明该对象非泄漏标签方案命中的组件或者对象，可能是开发者自行添加的属性。">?</span></th><th>对象名称</th></tr></thead><tbody>${leakRows}</tbody></table></div>${leakDetails}`
@@ -158,10 +155,10 @@ std::string JsleakRenderCompareHtml(const json& report)
     const std::string pathChartHtml = GetChartHtml(report, "pathDeltas");
 
     html << R"HTML(<section class="report-section"><div class="analysis-tabs" role="tablist"><button class="analysis-tab active" role="tab" aria-selected="true" data-panel="leaksPanel">ArkUI组件/ArkTS对象泄漏分析报告</button><button class="analysis-tab" role="tab" aria-selected="false" data-panel="objectsPanel">快照最短引用链分析报告</button></div>
-<div id="leaksPanel" class="analysis-panel active" role="tabpanel"><div class="sub-tab-bar"><span class="sub-tab-item active" data-subtab="subtabLeakDetail" onclick="SwitchSubTab('subtabLeakDetail')">详情列表</span><span class="sub-tab-item" data-subtab="subtabChart_leakObj" onclick="SwitchSubTab('subtabChart_leakObj')">引用链总览图</span></div><div class="sub-tab-content active" id="subtabLeakDetail" data-subtab="subtabLeakDetail"><div id="leaks"></div></div><div class="sub-tab-content" id="subtabChart_leakObj" data-subtab="subtabChart_leakObj">)HTML";
+<div id="leaksPanel" class="analysis-panel active" role="tabpanel"><div class="sub-tab-bar"><span class="sub-tab-item active" data-subtab="subtabLeakDetail" onclick="switchSubTab('subtabLeakDetail')">详情列表</span><span class="sub-tab-item" data-subtab="subtabChart_leakObj" onclick="switchSubTab('subtabChart_leakObj')">引用链总览图</span></div><div class="sub-tab-content active" id="subtabLeakDetail" data-subtab="subtabLeakDetail"><div id="leaks"></div></div><div class="sub-tab-content" id="subtabChart_leakObj" data-subtab="subtabChart_leakObj">)HTML";
     html << leakChartHtml;
     html << R"HTML(</div></div>
-<div id="objectsPanel" class="analysis-panel" role="tabpanel"><div class="sub-tab-bar"><span class="sub-tab-item active" data-subtab="subtabPathDetail" onclick="SwitchSubTab('subtabPathDetail')">详情列表</span><span class="sub-tab-item" data-subtab="subtabChart_pathDeltas" onclick="SwitchSubTab('subtabChart_pathDeltas')">引用链总览图</span></div><div class="sub-tab-content active" id="subtabPathDetail" data-subtab="subtabPathDetail"><div class="tab-bar"><button class="filter active" data-kind="positive">当前快照中内存占用增长对象分析</button><button class="filter" data-kind="negative">当前快照中内存占用缩减对象分析</button></div><div id="paths"></div></div><div class="sub-tab-content" id="subtabChart_pathDeltas" data-subtab="subtabChart_pathDeltas">)HTML";
+<div id="objectsPanel" class="analysis-panel" role="tabpanel"><div class="sub-tab-bar"><span class="sub-tab-item active" data-subtab="subtabPathDetail" onclick="switchSubTab('subtabPathDetail')">详情列表</span><span class="sub-tab-item" data-subtab="subtabChart_pathDeltas" onclick="switchSubTab('subtabChart_pathDeltas')">引用链总览图</span></div><div class="sub-tab-content active" id="subtabPathDetail" data-subtab="subtabPathDetail"><div class="tab-bar"><button class="filter active" data-kind="positive">当前快照中内存占用增长对象分析</button><button class="filter" data-kind="negative">当前快照中内存占用缩减对象分析</button></div><div id="paths"></div></div><div class="sub-tab-content" id="subtabChart_pathDeltas" data-subtab="subtabChart_pathDeltas">)HTML";
     html << pathChartHtml;
     html << R"HTML(</div></div></section>
 )HTML";
