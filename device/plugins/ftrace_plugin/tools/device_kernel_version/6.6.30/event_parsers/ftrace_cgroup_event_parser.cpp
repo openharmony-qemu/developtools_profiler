@@ -180,7 +180,7 @@ struct CgroupNotifyFrozenData {
 };
 __attribute__((noinline)) void ParseCgroupNotifyFrozenData(
     CgroupNotifyFrozenData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -221,7 +221,7 @@ struct CgroupNotifyPopulatedData {
 };
 __attribute__((noinline)) void ParseCgroupNotifyPopulatedData(
     CgroupNotifyPopulatedData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -443,7 +443,7 @@ struct CgroupTransferTasksData {
 };
 __attribute__((noinline)) void ParseCgroupTransferTasksData(
     CgroupTransferTasksData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dst_root = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);

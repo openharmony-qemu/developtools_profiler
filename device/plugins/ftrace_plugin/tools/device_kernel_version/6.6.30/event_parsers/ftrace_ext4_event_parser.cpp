@@ -69,7 +69,7 @@ struct Ext4AllocateBlocksData {
 };
 __attribute__((noinline)) void ParseExt4AllocateBlocksData(
     Ext4AllocateBlocksData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -157,7 +157,7 @@ struct Ext4BeginOrderedTruncateData {
 };
 __attribute__((noinline)) void ParseExt4BeginOrderedTruncateData(
     Ext4BeginOrderedTruncateData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -233,7 +233,7 @@ struct Ext4DaReleaseSpaceData {
 };
 __attribute__((noinline)) void ParseExt4DaReleaseSpaceData(
     Ext4DaReleaseSpaceData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -276,7 +276,7 @@ struct Ext4DaReserveSpaceData {
 };
 __attribute__((noinline)) void ParseExt4DaReserveSpaceData(
     Ext4DaReserveSpaceData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -319,7 +319,7 @@ struct Ext4DaUpdateReserveSpaceData {
 };
 __attribute__((noinline)) void ParseExt4DaUpdateReserveSpaceData(
     Ext4DaUpdateReserveSpaceData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -482,7 +482,7 @@ struct Ext4DaWritePagesExtentData {
 };
 __attribute__((noinline)) void ParseExt4DaWritePagesExtentData(
     Ext4DaWritePagesExtentData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -557,7 +557,7 @@ struct Ext4DiscardPreallocationsData {
 };
 __attribute__((noinline)) void ParseExt4DiscardPreallocationsData(
     Ext4DiscardPreallocationsData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -675,7 +675,7 @@ struct Ext4EsInsertExtentData {
 };
 __attribute__((noinline)) void ParseExt4EsInsertExtentData(
     Ext4EsInsertExtentData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -716,7 +716,7 @@ struct Ext4EsLookupExtentEnterData {
 };
 __attribute__((noinline)) void ParseExt4EsLookupExtentEnterData(
     Ext4EsLookupExtentEnterData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -756,7 +756,7 @@ struct Ext4EsLookupExtentExitData {
 };
 __attribute__((noinline)) void ParseExt4EsLookupExtentExitData(
     Ext4EsLookupExtentExitData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -801,7 +801,7 @@ struct Ext4EsRemoveExtentData {
 };
 __attribute__((noinline)) void ParseExt4EsRemoveExtentData(
     Ext4EsRemoveExtentData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -912,7 +912,7 @@ struct Ext4EsShrinkScanEnterData {
 };
 __attribute__((noinline)) void ParseExt4EsShrinkScanEnterData(
     Ext4EsShrinkScanEnterData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -948,7 +948,7 @@ struct Ext4EsShrinkScanExitData {
 };
 __attribute__((noinline)) void ParseExt4EsShrinkScanExitData(
     Ext4EsShrinkScanExitData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1022,7 +1022,7 @@ struct Ext4ExtConvertToInitializedEnterData {
 };
 __attribute__((noinline)) void ParseExt4ExtConvertToInitializedEnterData(
     Ext4ExtConvertToInitializedEnterData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1074,7 +1074,7 @@ struct Ext4ExtConvertToInitializedFastpathData {
 };
 __attribute__((noinline)) void ParseExt4ExtConvertToInitializedFastpathData(
     Ext4ExtConvertToInitializedFastpathData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1130,7 +1130,7 @@ struct Ext4ExtHandleUnwrittenExtentsData {
 };
 __attribute__((noinline)) void ParseExt4ExtHandleUnwrittenExtentsData(
     Ext4ExtHandleUnwrittenExtentsData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1216,7 +1216,7 @@ struct Ext4ExtMapBlocksEnterData {
 };
 __attribute__((noinline)) void ParseExt4ExtMapBlocksEnterData(
     Ext4ExtMapBlocksEnterData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1261,7 +1261,7 @@ struct Ext4ExtMapBlocksExitData {
 };
 __attribute__((noinline)) void ParseExt4ExtMapBlocksExitData(
     Ext4ExtMapBlocksExitData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1309,7 +1309,7 @@ struct Ext4ExtRemoveSpaceData {
 };
 __attribute__((noinline)) void ParseExt4ExtRemoveSpaceData(
     Ext4ExtRemoveSpaceData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1354,7 +1354,7 @@ struct Ext4ExtRemoveSpaceDoneData {
 };
 __attribute__((noinline)) void ParseExt4ExtRemoveSpaceDoneData(
     Ext4ExtRemoveSpaceDoneData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1530,7 +1530,7 @@ struct Ext4FallocateEnterData {
 };
 __attribute__((noinline)) void ParseExt4FallocateEnterData(
     Ext4FallocateEnterData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1738,7 +1738,7 @@ struct Ext4GetImpliedClusterAllocExitData {
 };
 __attribute__((noinline)) void ParseExt4GetImpliedClusterAllocExitData(
     Ext4GetImpliedClusterAllocExitData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1783,7 +1783,7 @@ struct Ext4IndMapBlocksEnterData {
 };
 __attribute__((noinline)) void ParseExt4IndMapBlocksEnterData(
     Ext4IndMapBlocksEnterData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1828,7 +1828,7 @@ struct Ext4IndMapBlocksExitData {
 };
 __attribute__((noinline)) void ParseExt4IndMapBlocksExitData(
     Ext4IndMapBlocksExitData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1911,7 +1911,7 @@ struct Ext4JournalStartReservedData {
 };
 __attribute__((noinline)) void ParseExt4JournalStartReservedData(
     Ext4JournalStartReservedData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -1949,7 +1949,7 @@ struct Ext4JournalledWriteEndData {
 };
 __attribute__((noinline)) void ParseExt4JournalledWriteEndData(
     Ext4JournalledWriteEndData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2019,7 +2019,7 @@ struct Ext4LoadInodeBitmapData {
 };
 __attribute__((noinline)) void ParseExt4LoadInodeBitmapData(
     Ext4LoadInodeBitmapData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2053,7 +2053,7 @@ struct Ext4MarkInodeDirtyData {
 };
 __attribute__((noinline)) void ParseExt4MarkInodeDirtyData(
     Ext4MarkInodeDirtyData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2118,7 +2118,7 @@ struct Ext4MbBuddyBitmapLoadData {
 };
 __attribute__((noinline)) void ParseExt4MbBuddyBitmapLoadData(
     Ext4MbBuddyBitmapLoadData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2151,7 +2151,7 @@ struct Ext4MbDiscardPreallocationsData {
 };
 __attribute__((noinline)) void ParseExt4MbDiscardPreallocationsData(
     Ext4MbDiscardPreallocationsData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2265,7 +2265,7 @@ struct Ext4MbReleaseGroupPaData {
 };
 __attribute__((noinline)) void ParseExt4MbReleaseGroupPaData(
     Ext4MbReleaseGroupPaData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2302,7 +2302,7 @@ struct Ext4MbReleaseInodePaData {
 };
 __attribute__((noinline)) void ParseExt4MbReleaseInodePaData(
     Ext4MbReleaseInodePaData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2427,7 +2427,7 @@ struct Ext4MballocDiscardData {
 };
 __attribute__((noinline)) void ParseExt4MballocDiscardData(
     Ext4MballocDiscardData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2513,7 +2513,7 @@ struct Ext4MballocPreallocData {
 };
 __attribute__((noinline)) void ParseExt4MballocPreallocData(
     Ext4MballocPreallocData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2566,7 +2566,7 @@ struct Ext4OtherInodeUpdateTimeData {
 };
 __attribute__((noinline)) void ParseExt4OtherInodeUpdateTimeData(
     Ext4OtherInodeUpdateTimeData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -2648,7 +2648,7 @@ struct Ext4ReadBlockBitmapLoadData {
 };
 __attribute__((noinline)) void ParseExt4ReadBlockBitmapLoadData(
     Ext4ReadBlockBitmapLoadData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -3285,7 +3285,7 @@ struct Ext4WritepagesResultData {
 };
 __attribute__((noinline)) void ParseExt4WritepagesResultData(
     Ext4WritepagesResultData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);

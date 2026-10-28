@@ -25,7 +25,7 @@ struct WorkqueueActivateWorkData {
 };
 __attribute__((noinline)) void ParseWorkqueueActivateWorkData(
     WorkqueueActivateWorkData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.work = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -55,7 +55,7 @@ struct WorkqueueExecuteEndData {
 };
 __attribute__((noinline)) void ParseWorkqueueExecuteEndData(
     WorkqueueExecuteEndData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.work = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -86,7 +86,7 @@ struct WorkqueueExecuteStartData {
 };
 __attribute__((noinline)) void ParseWorkqueueExecuteStartData(
     WorkqueueExecuteStartData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.work = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -122,7 +122,7 @@ struct WorkqueueQueueWorkData {
 };
 __attribute__((noinline)) void ParseWorkqueueQueueWorkData(
     WorkqueueQueueWorkData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.work = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);

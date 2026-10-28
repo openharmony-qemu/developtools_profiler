@@ -102,7 +102,7 @@ struct DmaFenceEnableSignalData {
 };
 __attribute__((noinline)) void ParseDmaFenceEnableSignalData(
     DmaFenceEnableSignalData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);

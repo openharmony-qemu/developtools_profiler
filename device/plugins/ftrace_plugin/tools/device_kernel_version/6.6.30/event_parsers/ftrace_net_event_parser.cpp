@@ -125,7 +125,7 @@ struct NapiGroReceiveEntryData {
 };
 __attribute__((noinline)) void ParseNapiGroReceiveEntryData(
     NapiGroReceiveEntryData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -390,7 +390,7 @@ struct NetifReceiveSkbEntryData {
 };
 __attribute__((noinline)) void ParseNetifReceiveSkbEntryData(
     NetifReceiveSkbEntryData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);

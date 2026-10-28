@@ -28,7 +28,7 @@ struct MmCompactionIsolateFreepagesData {
 };
 __attribute__((noinline)) void ParseMmCompactionIsolateFreepagesData(
     MmCompactionIsolateFreepagesData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.start_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -67,7 +67,7 @@ struct MmCompactionIsolateMigratepagesData {
 };
 __attribute__((noinline)) void ParseMmCompactionIsolateMigratepagesData(
     MmCompactionIsolateMigratepagesData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.start_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);

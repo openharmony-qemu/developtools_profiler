@@ -160,7 +160,7 @@ struct CpuFrequencyLimitsData {
 };
 __attribute__((noinline)) void ParseCpuFrequencyLimitsData(
     CpuFrequencyLimitsData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.min_freq = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
@@ -226,7 +226,7 @@ struct DevPmQosAddRequestData {
 };
 __attribute__((noinline)) void ParseDevPmQosAddRequestData(
     DevPmQosAddRequestData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -262,7 +262,7 @@ struct DevPmQosRemoveRequestData {
 };
 __attribute__((noinline)) void ParseDevPmQosRemoveRequestData(
     DevPmQosRemoveRequestData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -298,7 +298,7 @@ struct DevPmQosUpdateRequestData {
 };
 __attribute__((noinline)) void ParseDevPmQosUpdateRequestData(
     DevPmQosUpdateRequestData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -334,7 +334,7 @@ struct DevicePmCallbackEndData {
 };
 __attribute__((noinline)) void ParseDevicePmCallbackEndData(
     DevicePmCallbackEndData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.device = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -372,7 +372,7 @@ struct DevicePmCallbackStartData {
 };
 __attribute__((noinline)) void ParseDevicePmCallbackStartData(
     DevicePmCallbackStartData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.device = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -438,7 +438,7 @@ struct PmQosRemoveRequestData {
 };
 __attribute__((noinline)) void ParsePmQosRemoveRequestData(
     PmQosRemoveRequestData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -501,7 +501,7 @@ struct PmQosUpdateRequestData {
 };
 __attribute__((noinline)) void ParsePmQosUpdateRequestData(
     PmQosUpdateRequestData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.value = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -685,7 +685,7 @@ struct WakeupSourceActivateData {
 };
 __attribute__((noinline)) void ParseWakeupSourceActivateData(
     WakeupSourceActivateData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -718,7 +718,7 @@ struct WakeupSourceDeactivateData {
 };
 __attribute__((noinline)) void ParseWakeupSourceDeactivateData(
     WakeupSourceDeactivateData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);

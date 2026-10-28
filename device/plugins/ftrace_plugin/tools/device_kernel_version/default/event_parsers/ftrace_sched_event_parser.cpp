@@ -106,7 +106,7 @@ struct SchedKthreadStopRetData {
 };
 __attribute__((noinline)) void ParseSchedKthreadStopRetData(
     SchedKthreadStopRetData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.ret = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -789,7 +789,7 @@ struct SchedWakeIdleWithoutIpiData {
 };
 __attribute__((noinline)) void ParseSchedWakeIdleWithoutIpiData(
     SchedWakeIdleWithoutIpiData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.cpu = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);

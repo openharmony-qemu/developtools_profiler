@@ -53,7 +53,7 @@ struct ClkDisableCompleteData {
 };
 __attribute__((noinline)) void ParseClkDisableCompleteData(
     ClkDisableCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -166,7 +166,7 @@ struct ClkPrepareCompleteData {
 };
 __attribute__((noinline)) void ParseClkPrepareCompleteData(
     ClkPrepareCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -227,7 +227,7 @@ struct ClkSetParentCompleteData {
 };
 __attribute__((noinline)) void ParseClkSetParentCompleteData(
     ClkSetParentCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -291,7 +291,7 @@ struct ClkSetPhaseCompleteData {
 };
 __attribute__((noinline)) void ParseClkSetPhaseCompleteData(
     ClkSetPhaseCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -355,7 +355,7 @@ struct ClkSetRateCompleteData {
 };
 __attribute__((noinline)) void ParseClkSetRateCompleteData(
     ClkSetRateCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -414,7 +414,7 @@ struct ClkUnprepareCompleteData {
 };
 __attribute__((noinline)) void ParseClkUnprepareCompleteData(
     ClkUnprepareCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);

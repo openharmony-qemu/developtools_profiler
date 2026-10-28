@@ -55,7 +55,7 @@ struct HrtimerExpireEntryData {
 };
 __attribute__((noinline)) void ParseHrtimerExpireEntryData(
     HrtimerExpireEntryData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.hrtimer = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);

@@ -70,7 +70,7 @@ struct MmCompactionDeferCompactionData {
 };
 __attribute__((noinline)) void ParseMmCompactionDeferCompactionData(
     MmCompactionDeferCompactionData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -115,7 +115,7 @@ struct MmCompactionDeferResetData {
 };
 __attribute__((noinline)) void ParseMmCompactionDeferResetData(
     MmCompactionDeferResetData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -160,7 +160,7 @@ struct MmCompactionDeferredData {
 };
 __attribute__((noinline)) void ParseMmCompactionDeferredData(
     MmCompactionDeferredData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -246,7 +246,7 @@ struct MmCompactionFinishedData {
 };
 __attribute__((noinline)) void ParseMmCompactionFinishedData(
     MmCompactionFinishedData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -285,7 +285,7 @@ struct MmCompactionIsolateFreepagesData {
 };
 __attribute__((noinline)) void ParseMmCompactionIsolateFreepagesData(
     MmCompactionIsolateFreepagesData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.start_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -324,7 +324,7 @@ struct MmCompactionIsolateMigratepagesData {
 };
 __attribute__((noinline)) void ParseMmCompactionIsolateMigratepagesData(
     MmCompactionIsolateMigratepagesData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.start_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -362,7 +362,7 @@ struct MmCompactionMigratepagesData {
 };
 __attribute__((noinline)) void ParseMmCompactionMigratepagesData(
     MmCompactionMigratepagesData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.nr_migrated = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -397,7 +397,7 @@ struct MmCompactionSuitableData {
 };
 __attribute__((noinline)) void ParseMmCompactionSuitableData(
     MmCompactionSuitableData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -435,7 +435,7 @@ struct MmCompactionTryToCompactPagesData {
 };
 __attribute__((noinline)) void ParseMmCompactionTryToCompactPagesData(
     MmCompactionTryToCompactPagesData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);

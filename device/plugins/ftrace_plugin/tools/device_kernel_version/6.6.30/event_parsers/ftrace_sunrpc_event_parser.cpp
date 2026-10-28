@@ -224,7 +224,7 @@ struct RpcSocketResetConnectionData {
 };
 __attribute__((noinline)) void ParseRpcSocketResetConnectionData(
     RpcSocketResetConnectionData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.error = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -308,7 +308,7 @@ struct RpcSocketStateChangeData {
 };
 __attribute__((noinline)) void ParseRpcSocketStateChangeData(
     RpcSocketStateChangeData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.socket_state = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);

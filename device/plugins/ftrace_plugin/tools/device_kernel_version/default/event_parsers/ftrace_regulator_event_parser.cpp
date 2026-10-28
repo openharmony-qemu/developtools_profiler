@@ -25,7 +25,7 @@ struct RegulatorBypassDisableData {
 };
 __attribute__((noinline)) void ParseRegulatorBypassDisableData(
     RegulatorBypassDisableData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -55,7 +55,7 @@ struct RegulatorBypassDisableCompleteData {
 };
 __attribute__((noinline)) void ParseRegulatorBypassDisableCompleteData(
     RegulatorBypassDisableCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -86,7 +86,7 @@ struct RegulatorBypassEnableData {
 };
 __attribute__((noinline)) void ParseRegulatorBypassEnableData(
     RegulatorBypassEnableData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -116,7 +116,7 @@ struct RegulatorBypassEnableCompleteData {
 };
 __attribute__((noinline)) void ParseRegulatorBypassEnableCompleteData(
     RegulatorBypassEnableCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -174,7 +174,7 @@ struct RegulatorDisableCompleteData {
 };
 __attribute__((noinline)) void ParseRegulatorDisableCompleteData(
     RegulatorDisableCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -232,7 +232,7 @@ struct RegulatorEnableCompleteData {
 };
 __attribute__((noinline)) void ParseRegulatorEnableCompleteData(
     RegulatorEnableCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -262,7 +262,7 @@ struct RegulatorEnableDelayData {
 };
 __attribute__((noinline)) void ParseRegulatorEnableDelayData(
     RegulatorEnableDelayData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -294,7 +294,7 @@ struct RegulatorSetVoltageData {
 };
 __attribute__((noinline)) void ParseRegulatorSetVoltageData(
     RegulatorSetVoltageData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -329,7 +329,7 @@ struct RegulatorSetVoltageCompleteData {
 };
 __attribute__((noinline)) void ParseRegulatorSetVoltageCompleteData(
     RegulatorSetVoltageCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);

@@ -29,7 +29,7 @@ struct FileCheckAndAdvanceWbErrData {
 };
 __attribute__((noinline)) void ParseFileCheckAndAdvanceWbErrData(
     FileCheckAndAdvanceWbErrData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.file = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -105,7 +105,7 @@ struct MmFilemapAddToPageCacheData {
 };
 __attribute__((noinline)) void ParseMmFilemapAddToPageCacheData(
     MmFilemapAddToPageCacheData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -147,7 +147,7 @@ struct MmFilemapDeleteFromPageCacheData {
 };
 __attribute__((noinline)) void ParseMmFilemapDeleteFromPageCacheData(
     MmFilemapDeleteFromPageCacheData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);

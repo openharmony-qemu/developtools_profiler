@@ -248,7 +248,7 @@ struct WritebackBdiRegisterData {
 };
 __attribute__((noinline)) void ParseWritebackBdiRegisterData(
     WritebackBdiRegisterData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -281,7 +281,7 @@ struct WritebackDirtyInodeData {
 };
 __attribute__((noinline)) void ParseWritebackDirtyInodeData(
     WritebackDirtyInodeData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -321,7 +321,7 @@ struct WritebackDirtyInodeEnqueueData {
 };
 __attribute__((noinline)) void ParseWritebackDirtyInodeEnqueueData(
     WritebackDirtyInodeEnqueueData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -362,7 +362,7 @@ struct WritebackDirtyInodeStartData {
 };
 __attribute__((noinline)) void ParseWritebackDirtyInodeStartData(
     WritebackDirtyInodeStartData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -494,7 +494,7 @@ struct WritebackLazytimeIputData {
 };
 __attribute__((noinline)) void ParseWritebackLazytimeIputData(
     WritebackLazytimeIputData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -535,7 +535,7 @@ struct WritebackMarkInodeDirtyData {
 };
 __attribute__((noinline)) void ParseWritebackMarkInodeDirtyData(
     WritebackMarkInodeDirtyData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -571,7 +571,7 @@ struct WritebackPagesWrittenData {
 };
 __attribute__((noinline)) void ParseWritebackPagesWrittenData(
     WritebackPagesWrittenData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -700,7 +700,7 @@ struct WritebackSbInodesRequeueData {
 };
 __attribute__((noinline)) void ParseWritebackSbInodesRequeueData(
     WritebackSbInodesRequeueData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -745,7 +745,7 @@ struct WritebackSingleInodeData {
 };
 __attribute__((noinline)) void ParseWritebackSingleInodeData(
     WritebackSingleInodeData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -796,7 +796,7 @@ struct WritebackSingleInodeStartData {
 };
 __attribute__((noinline)) void ParseWritebackSingleInodeStartData(
     WritebackSingleInodeStartData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -945,7 +945,7 @@ struct WritebackWakeBackgroundData {
 };
 __attribute__((noinline)) void ParseWritebackWakeBackgroundData(
     WritebackWakeBackgroundData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -980,7 +980,7 @@ struct WritebackWriteInodeData {
 };
 __attribute__((noinline)) void ParseWritebackWriteInodeData(
     WritebackWriteInodeData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -1019,7 +1019,7 @@ struct WritebackWriteInodeStartData {
 };
 __attribute__((noinline)) void ParseWritebackWriteInodeStartData(
     WritebackWriteInodeStartData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);

@@ -184,7 +184,7 @@ struct KmemCacheAllocNodeData {
 };
 __attribute__((noinline)) void ParseKmemCacheAllocNodeData(
     KmemCacheAllocNodeData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.call_site = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -296,7 +296,7 @@ struct MmPageAllocExtfragData {
 };
 __attribute__((noinline)) void ParseMmPageAllocExtfragData(
     MmPageAllocExtfragData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -337,7 +337,7 @@ struct MmPageAllocZoneLockedData {
 };
 __attribute__((noinline)) void ParseMmPageAllocZoneLockedData(
     MmPageAllocZoneLockedData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);

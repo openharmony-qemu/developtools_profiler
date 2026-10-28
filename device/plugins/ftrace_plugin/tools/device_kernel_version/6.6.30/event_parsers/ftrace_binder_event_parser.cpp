@@ -57,7 +57,7 @@ struct BinderAllocLruStartData {
 };
 __attribute__((noinline)) void ParseBinderAllocLruStartData(
     BinderAllocLruStartData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -90,7 +90,7 @@ struct BinderAllocPageEndData {
 };
 __attribute__((noinline)) void ParseBinderAllocPageEndData(
     BinderAllocPageEndData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -122,7 +122,7 @@ struct BinderAllocPageStartData {
 };
 __attribute__((noinline)) void ParseBinderAllocPageStartData(
     BinderAllocPageStartData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -214,7 +214,7 @@ struct BinderFreeLruStartData {
 };
 __attribute__((noinline)) void ParseBinderFreeLruStartData(
     BinderFreeLruStartData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -465,7 +465,7 @@ struct BinderTransactionAllocBufData {
 };
 __attribute__((noinline)) void ParseBinderTransactionAllocBufData(
     BinderTransactionAllocBufData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -504,7 +504,7 @@ struct BinderTransactionBufferReleaseData {
 };
 __attribute__((noinline)) void ParseBinderTransactionBufferReleaseData(
     BinderTransactionBufferReleaseData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -544,7 +544,7 @@ struct BinderTransactionFailedBufferReleaseData {
 };
 __attribute__((noinline)) void ParseBinderTransactionFailedBufferReleaseData(
     BinderTransactionFailedBufferReleaseData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -585,7 +585,7 @@ struct BinderTransactionNodeToRefData {
 };
 __attribute__((noinline)) void ParseBinderTransactionNodeToRefData(
     BinderTransactionNodeToRefData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -623,7 +623,7 @@ struct BinderTransactionReceivedData {
 };
 __attribute__((noinline)) void ParseBinderTransactionReceivedData(
     BinderTransactionReceivedData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -657,7 +657,7 @@ struct BinderTransactionRefToNodeData {
 };
 __attribute__((noinline)) void ParseBinderTransactionRefToNodeData(
     BinderTransactionRefToNodeData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -700,7 +700,7 @@ struct BinderTransactionRefToRefData {
 };
 __attribute__((noinline)) void ParseBinderTransactionRefToRefData(
     BinderTransactionRefToRefData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.debug_id = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -769,7 +769,7 @@ struct BinderUnmapKernelEndData {
 };
 __attribute__((noinline)) void ParseBinderUnmapKernelEndData(
     BinderUnmapKernelEndData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -802,7 +802,7 @@ struct BinderUnmapKernelStartData {
 };
 __attribute__((noinline)) void ParseBinderUnmapKernelStartData(
     BinderUnmapKernelStartData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -835,7 +835,7 @@ struct BinderUnmapUserEndData {
 };
 __attribute__((noinline)) void ParseBinderUnmapUserEndData(
     BinderUnmapUserEndData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -867,7 +867,7 @@ struct BinderUnmapUserStartData {
 };
 __attribute__((noinline)) void ParseBinderUnmapUserStartData(
     BinderUnmapUserStartData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -902,7 +902,7 @@ struct BinderUpdatePageRangeData {
 };
 __attribute__((noinline)) void ParseBinderUpdatePageRangeData(
     BinderUpdatePageRangeData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.proc = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);

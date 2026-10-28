@@ -124,7 +124,7 @@ struct MmVmscanDirectReclaimBeginData {
 };
 __attribute__((noinline)) void ParseMmVmscanDirectReclaimBeginData(
     MmVmscanDirectReclaimBeginData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.order = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -156,7 +156,7 @@ struct MmVmscanDirectReclaimEndData {
 };
 __attribute__((noinline)) void ParseMmVmscanDirectReclaimEndData(
     MmVmscanDirectReclaimEndData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.nr_reclaimed = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -186,7 +186,7 @@ struct MmVmscanKswapdSleepData {
 };
 __attribute__((noinline)) void ParseMmVmscanKswapdSleepData(
     MmVmscanKswapdSleepData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -218,7 +218,7 @@ struct MmVmscanKswapdWakeData {
 };
 __attribute__((noinline)) void ParseMmVmscanKswapdWakeData(
     MmVmscanKswapdWakeData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -258,7 +258,7 @@ struct MmVmscanLruIsolateData {
 };
 __attribute__((noinline)) void ParseMmVmscanLruIsolateData(
     MmVmscanLruIsolateData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.highest_zoneidx = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -313,7 +313,7 @@ struct MmVmscanLruShrinkInactiveData {
 };
 __attribute__((noinline)) void ParseMmVmscanLruShrinkInactiveData(
     MmVmscanLruShrinkInactiveData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
@@ -370,7 +370,7 @@ struct MmVmscanWakeupKswapdData {
 };
 __attribute__((noinline)) void ParseMmVmscanWakeupKswapdData(
     MmVmscanWakeupKswapdData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+    const EventFormat& format)
 {
     int i = 0;
     eventData.nid = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
