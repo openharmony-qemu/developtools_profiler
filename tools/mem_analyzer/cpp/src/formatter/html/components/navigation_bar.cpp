@@ -376,8 +376,7 @@ std::string NavBarHelpCenterContent()
 std::string NavBarSwitchNavFunc()
 {
     return R"HTML(
-    window.switchNav = function(navId, el)
-    {
+    window.switchNav = function(navId, el) {
     var target = document.getElementById(navId);
     if (!target) {
       console.error('Nav content not found:', navId);

@@ -597,20 +597,16 @@ var allData = __DATA_JSON__;
 __CHART_MODULE_JS__
 </script>
 <script>
-(function()
-{
+(function() {
   var autoExpand = __AUTO_EXPAND__;
 
 __NAV_BAR_SWITCH_NAV_FUNC__
 
   // ===== 手风琴：展开/收起 =====
-  function toggleDetail(idx)
-  {
+  function toggleDetail(idx) {
     var body = document.getElementById('topItemBody' + idx);
     var header = document.getElementById('topItemHeader' + idx);
-    if (!body) {
-        return;
-    }
+    if (!body) return;
 
     if (body.classList.contains('expanded')) {
       body.classList.remove('expanded');
@@ -621,13 +617,10 @@ __NAV_BAR_SWITCH_NAV_FUNC__
     }
   }
 
-  function showDetail(idx)
-  {
+  function showDetail(idx) {
     var body = document.getElementById('topItemBody' + idx);
     var header = document.getElementById('topItemHeader' + idx);
-    if (!body) {
-        return;
-    }
+    if (!body) return;
 
     body.classList.add('expanded');
     header.classList.remove('collapsed');
@@ -637,9 +630,7 @@ __NAV_BAR_SWITCH_NAV_FUNC__
     setTimeout(function() { MemChart.redraw(idx); }, 50);
 
     var item = document.getElementById('topItem' + idx);
-    if (item) {
-        item.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    if (item) item.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   // Expose to HTML onclick handlers
@@ -647,40 +638,25 @@ __NAV_BAR_SWITCH_NAV_FUNC__
   window.showDetail = showDetail;
 
   // ===== Tab switching =====
-  function switchTab(tabId, tabEl)
-  {
+  function switchTab(tabId, tabEl) {
     var tabs = document.querySelectorAll('.tab-item');
-    for (var i = 0; i < tabs.length; i++) {
-        tabs[i].classList.remove('active');
-    }
-    if (tabEl) {
-        tabEl.classList.add('active');
-    }
+    for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+    if (tabEl) tabEl.classList.add('active');
     var contents = document.querySelectorAll('.tab-content');
-    for (var i = 0; i < contents.length; i++) {
-        contents[i].classList.remove('active');
-    }
+    for (var i = 0; i < contents.length; i++) contents[i].classList.remove('active');
     var content = document.getElementById(tabId);
-    if (content) {
-        content.classList.add('active');
-    }
+    if (content) content.classList.add('active');
     MemChart.redrawAll();
   }
   window.switchTab = switchTab;
 
   // Copy chain button click
-  document.addEventListener('click', function(e)
-  {
+  document.addEventListener('click', function(e) {
     var btn = e.target.closest('.copy-chain-btn');
-    if (!btn) {
-        return;
-    }
+    if (!btn) return;
     var text = btn.getAttribute('data-copy-chain');
-    if (!text) {
-        return;
-    }
-    navigator.clipboard.writeText(text).then(function()
-    {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(function() {
       btn.textContent = '已拷贝';
       btn.classList.add('copied');
       setTimeout(function() { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
@@ -692,9 +668,7 @@ __NAV_BAR_SWITCH_NAV_FUNC__
   // 必须同步激活，否则首屏正文空白，且图表在隐藏容器里量不到画布尺寸。
   var firstTabItem = document.querySelector('.tab-item.active');
   var firstTabContent = firstTabItem ? document.getElementById(firstTabItem.getAttribute('data-tab')) : null;
-  if (firstTabContent) {
-      firstTabContent.classList.add('active');
-  }
+  if (firstTabContent) firstTabContent.classList.add('active');
 
   // ===== 初始化图表（共享图表模块） =====
   MemChart.init({ entries: allData, unitCountMode: __UNIT_COUNT_MODE__ });
@@ -703,18 +677,13 @@ __NAV_BAR_SWITCH_NAV_FUNC__
   var allHeaders = document.querySelectorAll('.top-item-header.expanded');
   for (var h = 0; h < allHeaders.length; h++) {
     var arr = allHeaders[h].querySelector('.arrow');
-    if (arr) {
-        arr.textContent = '\u25BC';
-    }
+    if (arr) arr.textContent = '\u25BC';
   }
 
   // Auto-expand all details
   if (autoExpand) {
-    function expandNextAuto(idx)
-    {
-      if (idx >= allData.length) {
-          return;
-      }
+    function expandNextAuto(idx) {
+      if (idx >= allData.length) return;
       var body = document.getElementById('topItemBody' + idx);
       var header = document.getElementById('topItemHeader' + idx);
       if (!body || !header) { expandNextAuto(idx + 1); return; }
@@ -723,8 +692,7 @@ __NAV_BAR_SWITCH_NAV_FUNC__
       header.classList.remove('collapsed');
       header.classList.add('expanded');
 
-      setTimeout(function()
-      {
+      setTimeout(function() {
         MemChart.redraw(idx);
         expandNextAuto(idx + 1);
       }, 50);
