@@ -1106,8 +1106,7 @@ HtraceAnalysisOutput AnalyzeCallStacks(
     for (const auto& cs : CallStacks) {
         if (cs.type == HtraceEventType::MMAP_ANON) {
             anonStacks.push_back(cs);
-        } else if (cs.type == HtraceEventType::FILE_PAGE_MSG)
-        {
+        } else if (cs.type == HtraceEventType::FILE_PAGE_MSG) {
             filepageStacks.push_back(cs);
         }
     }
@@ -1241,9 +1240,9 @@ HtraceAnalysisOutput HtraceAnalyze(TraceDB& db, const RunContext& ctx)
     analysis.typeSizes = std::move(db.meta.typeSizes);
     analysis.traceMeta = std::move(db.meta);
 
-    int totalTop = (int)(analysis.topSymbols.app.SymbolCount()
-                        + analysis.topSymbols.system.SymbolCount()
-                        + analysis.topSymbols.mixed.SymbolCount());
+    int totalTop = (int)(analysis.topSymbols.app.SymbolCount() +
+                        analysis.topSymbols.system.SymbolCount() +
+                        analysis.topSymbols.mixed.SymbolCount());
     log::Logok("  Analysis completed. ", totalTop, " top symbols.");
 
     return analysis;

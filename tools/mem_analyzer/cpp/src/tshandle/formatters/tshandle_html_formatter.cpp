@@ -255,10 +255,10 @@ std::string BuildTabBar(const std::vector<SectionResult>& sections)
         if (section.content.empty()) {
             continue;
         }
-        output += "  <div class=\"tab-item" + std::string(first ? " active" : "")
-            + "\" data-tab=\"" + section.tabId
-            + "\" onclick=\"switchTab('" + section.tabId + "', this)\">"
-            + section.tabLabel + "</div>\n";
+        output += "  <div class=\"tab-item" + std::string(first ? " active" : "") +
+            "\" data-tab=\"" + section.tabId +
+            "\" onclick=\"switchTab('" + section.tabId + "', this)\">" +
+            section.tabLabel + "</div>\n";
         first = false;
     }
     output += "</div>";
@@ -302,9 +302,9 @@ std::string BuildTabContent(const std::vector<SectionResult>& sections)
         if (section.content.empty()) {
             continue;
         }
-        output += "<div class=\"tab-content" + std::string(first ? " active" : "")
-            + "\" id=\"" + section.tabId + "\">\n"
-            + section.content + "\n</div>\n";
+        output += "<div class=\"tab-content" + std::string(first ? " active" : "") +
+            "\" id=\"" + section.tabId + "\">\n" +
+            section.content + "\n</div>\n";
         first = false;
     }
     return output;
@@ -333,8 +333,8 @@ void FormatWithStream(std::ostream& out, const TshandleAnalysisOutput& analysis,
                                      HtraceEventType::ARK_LOCAL_HANDLE, analysis.local,
                                      analysis.local.totalSize, allData, graphIndex));
 
-    const double totalSize = analysis.global.app.totalSize + analysis.global.sys.totalSize
-                            + analysis.local.totalSize;
+    const double totalSize = analysis.global.app.totalSize + analysis.global.sys.totalSize +
+                            analysis.local.totalSize;
     const long long totalForTemplate = totalSize <= static_cast<double>(std::numeric_limits<long long>::max()) ?
         static_cast<long long>(totalSize) : 0;
 

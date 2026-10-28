@@ -120,8 +120,7 @@ TraceMeta QueryTraceMeta(sqlite3* db)
     if (statCount > 0 && detailCount == 0) {
         meta.mode = "statistic";
         hookTable = "native_hook_statistic";
-    } else if (detailCount > 0 && statCount == 0)
-    {
+    } else if (detailCount > 0 && statCount == 0) {
         meta.mode = "detail";
         hookTable = "native_hook";
     } else {

@@ -202,8 +202,7 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
             cs.id = g.callchainId;
             if (g.type == 17) {
                 cs.type = HtraceEventType::ARK_GLOBAL_HANDLE;
-            } else if (g.type == 18)
-            {
+            } else if (g.type == 18) {
                 cs.type = HtraceEventType::ARK_LOCAL_HANDLE;
             } else {
                 cs.type = HtraceEventType::UNKNOWN;

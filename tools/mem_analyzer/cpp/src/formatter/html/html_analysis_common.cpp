@@ -49,8 +49,7 @@ std::string FormatFuncName(const std::string& symbol, const std::string& lib, co
     if (!lib.empty()) {
         if (isUnresolved) {
             return libOffset.empty() ? lib : (lib + "+" + libOffset);
-        } else if (!symbol.empty())
-        {
+        } else if (!symbol.empty()) {
             return libOffset.empty() ? (lib + " (" + symbol + ")") : (lib + "+" + libOffset + " (" + symbol + ")");
         } else {
             return libOffset.empty() ? lib : (lib + "+" + libOffset);
@@ -283,9 +282,9 @@ std::string BuildCallChainHTML(
             bool isFirst = (fi == 0);
             std::string cls = isFirst ? "frame target" : "frame";
             std::string frameName = FormatShortFuncName(frames[fi].name, frames[fi].lib, frames[fi].libOffset);
-            parts.push_back("<span class=\"" + cls + "\">"
-                    + EscapeHtml(frameName)
-                    + "</span>");
+            parts.push_back("<span class=\"" + cls + "\">" +
+                    EscapeHtml(frameName) +
+                    "</span>");
         }
 
         std::string joinedParts;
@@ -307,16 +306,16 @@ std::string BuildCallChainHTML(
         }
         plainText += std::string("\n") + (countMode ? "\u6b21\u6570" : "\u5927\u5c0f") + " " + FormatSizeText(chainSize, countMode) + "\n\u5360\u6bd4" + ToFixed(pct, 2) + "%";
 
-        result += "<div class=\"call-chain-line\">\u8c03\u7528\u94fe"
-            + std::to_string(ci + 1)
-            + "\uff1a"
-            + joinedParts
-            + ", " + (countMode ? "\u6b21\u6570" : "\u5927\u5c0f") + " <span class=\"chain-size\">"
-            + FormatSizeText(chainSize, countMode)
-            + "</span>, \u5360\u6bd4<span class=\"chain-pct\">"
-            + ToFixed(pct, 2) + "%</span>"
-            + "<span class=\"copy-chain-btn\" data-copy-chain=\"" + EscapeHtml(plainText) + "\" title=\"\u590d\u5236\u5b8c\u6574\u8c03\u7528\u94fe\">\u590d\u5236</span>"
-            + "</div>";
+        result += "<div class=\"call-chain-line\">\u8c03\u7528\u94fe" +
+            std::to_string(ci + 1) +
+            "\uff1a" +
+            joinedParts +
+            ", " + (countMode ? "\u6b21\u6570" : "\u5927\u5c0f") + " <span class=\"chain-size\">" +
+            FormatSizeText(chainSize, countMode) +
+            "</span>, \u5360\u6bd4<span class=\"chain-pct\">" +
+            ToFixed(pct, 2) + "%</span>" +
+            "<span class=\"copy-chain-btn\" data-copy-chain=\"" + EscapeHtml(plainText) + "\" title=\"\u590d\u5236\u5b8c\u6574\u8c03\u7528\u94fe\">\u590d\u5236</span>" +
+            "</div>";
     }
     return result;
 }
@@ -345,9 +344,9 @@ std::string BuildTopTableRows(const std::vector<SymbolDataEntry>& symbols,
         std::string pctStr = pctSS.str();
 
         rowStrs.push_back("<tr>\n"
-            "  <td><a onclick=\"showDetail(" + std::to_string(idx) + "); return false;\" class=\"detail-link\">\u8be6\u60c5</a></td>\n"
-            + std::string(countMode ? "" : "  <td class=\"top-size-val\">" + FormatSizeText((double)existingSize, false) + "</td>\n")
-            + "  <td class=\"top-count-val\">" + std::to_string(existingCount) + "</td>\n"
+            "  <td><a onclick=\"showDetail(" + std::to_string(idx) + "); return false;\" class=\"detail-link\">\u8be6\u60c5</a></td>\n" +
+            std::string(countMode ? "" : "  <td class=\"top-size-val\">" + FormatSizeText((double)existingSize, false) + "</td>\n") +
+            "  <td class=\"top-count-val\">" + std::to_string(existingCount) + "</td>\n"
             "  <td class=\"top-pct-val\">" + pctStr + "%</td>\n"
             "  <td class=\"top-func\"><b>" + EscapeHtml(shortFuncName) + "</b></td>\n"
             "  <td class=\"top-lib\">" + EscapeHtml(libDisplay) + "</td>\n"

@@ -288,8 +288,7 @@ bool DecodeConfig(const std::string& data, HtraceNativeHookConfig& out)
         Kind kind = SchemaKind(f.number);
         if (kind == Kind::kRepeatedString) {
             repeatedStrs[f.number].push_back(f.bytes);
-        } else if (kind == Kind::kRepeatedInt || kind == Kind::kRepeatedEnum)
-        {
+        } else if (kind == Kind::kRepeatedInt || kind == Kind::kRepeatedEnum) {
             repeatedPacked[f.number].push_back(f.bytes);
         } else {
             single[f.number] = &f;

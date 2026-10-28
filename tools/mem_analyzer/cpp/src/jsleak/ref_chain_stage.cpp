@@ -104,8 +104,7 @@ collectRefChains(const HeapSnapshot& heap,
         for (const auto& entry : sizeMap) {
             if (minHeap.size() < K) {
                 minHeap.push(entry);
-            } else if (!minHeap.empty() && entry.second > minHeap.top().second)
-            {
+            } else if (!minHeap.empty() && entry.second > minHeap.top().second) {
                 minHeap.pop();
                 minHeap.push(entry);
             }

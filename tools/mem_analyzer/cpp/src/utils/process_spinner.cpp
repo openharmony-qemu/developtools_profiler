@@ -25,8 +25,8 @@ static constexpr int FRAME_COUNT = 10;
 static constexpr int INTERVAL_MS  = 100;
 
 ProcessSpinner::ProcessSpinner(const std::string& description)
-    : description_(description)
-    , start_(std::chrono::steady_clock::now())
+    : description_(description),
+      start_(std::chrono::steady_clock::now())
 {
     if (style::IsTty()) {
         thread_ = std::thread(&ProcessSpinner::run, this);

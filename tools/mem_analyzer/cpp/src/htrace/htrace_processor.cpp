@@ -425,8 +425,7 @@ TraceDB ProcessHtraceDb(const std::string& dbPath, const std::string& category,
 
     if (ctx.meta.mode == "statistic") {
         LoadStatisticStacks(ctx, allowedTypes, needAddrs, stacks);
-    } else if (ctx.meta.mode == "detail")
-    {
+    } else if (ctx.meta.mode == "detail") {
         LoadDetailStacks(ctx, allowedTypes, needAddrs, stacks);
     } else {
         throw std::runtime_error(

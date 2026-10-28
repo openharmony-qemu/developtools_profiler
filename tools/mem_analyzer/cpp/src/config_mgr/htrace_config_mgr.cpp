@@ -260,8 +260,7 @@ bool HtraceConfigMgr::MatchTsPattern(const std::string& lib, const std::string& 
                 return ValidLineCol(dot + 3);
             }
         }
-    } else if (ext == ".ets")
-    {
+    } else if (ext == ".ets") {
         if (dot + 5 <= lib.size()) {
             if (lib[dot + 1] == 'e' && lib[dot + 2] == 't' && lib[dot + 3] == 's' && lib[dot + 4] == ':') {
                 return ValidLineCol(dot + 4);
@@ -347,8 +346,7 @@ bool HtraceConfigMgr::MatchFilterRule(const SymbolFilterRule& rule,
     if (rule.scope == "app") {
         if (scope != Scope::AppOnly && scope != Scope::AppAndSystem && scope != Scope::Mixed)
             return false;
-    } else if (rule.scope == "system")
-    {
+    } else if (rule.scope == "system") {
         if (scope != Scope::SystemOnly && scope != Scope::AppAndSystem && scope != Scope::Mixed)
             return false;
     }

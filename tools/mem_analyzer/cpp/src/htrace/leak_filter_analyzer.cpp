@@ -173,12 +173,10 @@ HtraceAnalysisOutput HtraceLeakAnalyze(TraceDB& db, const RunContext& ctx)
     if (scopeStr == "app-only") {
         acfg.forceScope = Scope::AppOnly;
         output = AnalyzeCallStacks(appStacks, clist->dict, acfg);
-    } else if (scopeStr == "system-only")
-    {
+    } else if (scopeStr == "system-only") {
         acfg.forceScope = Scope::SystemOnly;
         output = AnalyzeCallStacks(systemStacks, clist->dict, acfg);
-    } else if (scopeStr == "mixed")
-    {
+    } else if (scopeStr == "mixed") {
         acfg.forceScope = Scope::Mixed;
         output = AnalyzeCallStacks(clist->stacks, clist->dict, acfg);
     } else {  // app-and-system（默认）：走两遍
@@ -206,9 +204,9 @@ HtraceAnalysisOutput HtraceLeakAnalyze(TraceDB& db, const RunContext& ctx)
     output.typeSizes = std::move(db.meta.typeSizes);
     output.traceMeta = std::move(db.meta);
 
-    int totalTop = (int)(output.topSymbols.app.SymbolCount()
-                        + output.topSymbols.system.SymbolCount()
-                        + output.topSymbols.mixed.SymbolCount());
+    int totalTop = (int)(output.topSymbols.app.SymbolCount() +
+                        output.topSymbols.system.SymbolCount() +
+                        output.topSymbols.mixed.SymbolCount());
     log::Logok("  Leak analysis: ", totalTop, " top symbols (incl other).");
 
     return output;

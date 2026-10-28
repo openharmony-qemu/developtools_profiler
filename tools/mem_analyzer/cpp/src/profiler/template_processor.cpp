@@ -102,11 +102,9 @@ CaptureCommand ProcessTemplate(const std::string& configFilePath, const Profiler
             // device for it during the countdown. All $(p:...) occurrences
             // resolve to the same value, so overwriting is harmless.
             result.processName = replacement;
-        } else if (letter == "t")
-        {
+        } else if (letter == "t") {
             replacement = opts.t.has_value() ? std::to_string(opts.t.value()) : def;
-        } else if (letter == "ts")
-        {
+        } else if (letter == "ts") {
             replacement = CurrentTimestamp();
         }
 

@@ -82,16 +82,16 @@ std::unordered_set<uint64_t> ReadLeakFile(const std::string& path)
     auto filesize = f.tellg();
     f.seekg(16, std::ios::beg);  // 回到数据起始（magic 8 + count 8）
     if (filesize < 16 || count > (static_cast<uint64_t>(filesize) - 16ULL) / 16ULL) {
-        throw std::runtime_error("Leak file truncated: declared count "
-            + std::to_string(count) + " exceeds file capacity ("
-            + std::to_string(static_cast<uint64_t>(filesize)) + " bytes): " + path);
+        throw std::runtime_error("Leak file truncated: declared count " +
+            std::to_string(count) + " exceeds file capacity (" +
+            std::to_string(static_cast<uint64_t>(filesize)) + " bytes): " + path);
     }
 
     // 防超大文件本身触发 OOM：即使 count 合法，超大文件也会导致 reserve 海量内存
     constexpr uint64_t kMaxLeakFileBytes = 4ULL * 1024 * 1024 * 1024;  // 4 GiB
     if (static_cast<uint64_t>(filesize) > kMaxLeakFileBytes) {
-        throw std::runtime_error("Leak file too large ("
-            + std::to_string(static_cast<uint64_t>(filesize)) + " bytes): " + path);
+        throw std::runtime_error("Leak file too large (" +
+            std::to_string(static_cast<uint64_t>(filesize)) + " bytes): " + path);
     }
 
     addrs.reserve(static_cast<size_t>(count));
@@ -99,8 +99,8 @@ std::unordered_set<uint64_t> ReadLeakFile(const std::string& path)
         uint64_t addr = 0;
         uint64_t size = 0;  // 大小暂不使用，仅消费 8 字节
         if (!ReadU64Le(f, addr) || !ReadU64Le(f, size)) {
-            throw std::runtime_error("Leak file truncated at entry " + std::to_string(i)
-                                     + " (expected " + std::to_string(count) + ")");
+            throw std::runtime_error("Leak file truncated at entry " + std::to_string(i) +
+                                     " (expected " + std::to_string(count) + ")");
         }
         addrs.insert(addr);
     }

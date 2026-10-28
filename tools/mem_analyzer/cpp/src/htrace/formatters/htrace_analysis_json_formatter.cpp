@@ -184,8 +184,7 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
         for (const auto& row : sec.rows) {
             if (const auto* ts = std::get_if<TopSymbolInfo>(&row)) {
                 writeSymbol(*ts, rank);
-            } else if (const auto* fp = std::get_if<FilepageInfo>(&row))
-            {
+            } else if (const auto* fp = std::get_if<FilepageInfo>(&row)) {
                 writeFilepage(*fp);
             }
         }

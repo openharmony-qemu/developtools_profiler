@@ -158,8 +158,7 @@ std::string HeapSnapshot::GetStringExtName(uint32_t NodeIndex) const
     const char* sizeRange = "<10KB";
     if (size >= kStringSize1MB) {
         sizeRange = ">=1MB";
-    } else if (size >= kStringSize10KB)
-    {
+    } else if (size >= kStringSize10KB) {
         sizeRange = ">=10KB && <1MB";
     }
 
@@ -216,8 +215,7 @@ std::string HeapSnapshot::ResolveStateMgmtWrappedClass(
                     }
                     if (isWrapper) {
                         resultProto.clear();
-                    } else if (resultProto.empty())
-                    {
+                    } else if (resultProto.empty()) {
                         resultProto = protoName;
                     }
                     cur = proto;
@@ -299,8 +297,7 @@ std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t NodeIndex) const
         const std::string& en = strings[nameIdx];
         if (en == "LocalExportEntries") {
             localExportEntriesNode = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
-        } else if (en == "NameDictionary")
-        {
+        } else if (en == "NameDictionary") {
             nameDictNode = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
         }
         if (localExportEntriesNode != 0xFFFFFFFF && nameDictNode != 0xFFFFFFFF) {
@@ -421,8 +418,7 @@ std::string HeapSnapshot::ComputeExtendedName(uint32_t NodeIndex) const
         nodeName.find("declarative_frontend/stateMgmt.js") != std::string::npos)
         {
         result = GetStateMgmtExtName(NodeIndex, nodeName);
-    } else if (nodeType == "string")
-    {
+    } else if (nodeType == "string") {
         result = GetStringExtName(NodeIndex);
     } else if (nodeType == "object" &&
                (nodeName == "JSObject" || nodeName == "JSSharedObject" || nodeName == "js_shared_object")) {
@@ -572,8 +568,7 @@ private:
                 }
                 num = num * 10 + digit;
                 inNum = true;
-            } else if (inNum)
-            {
+            } else if (inNum) {
                 out.push_back(num);
                 num = 0;
                 inNum = false;
@@ -750,8 +745,7 @@ static size_t FindMatchingCloseBracket(const std::string& text, size_t start)
                 return std::string::npos;
             }// unterminated string
             pos++;
-        } else if (c == ']')
-        {
+        } else if (c == ']') {
             return pos;  // found matching bracket
         } else {
             pos++;
@@ -840,8 +834,7 @@ static std::vector<std::string> readStringsArray(std::ifstream& file, size_t bra
     size_t closeBracket = FindMatchingCloseBracket(strBuf, 0);
     if (closeBracket != std::string::npos && closeBracket + 1 < strBuf.size()) {
         strBuf.resize(closeBracket + 1);
-    } else if (closeBracket == std::string::npos && bytesRead == readSize && readSize < remaining)
-    {
+    } else if (closeBracket == std::string::npos && bytesRead == readSize && readSize < remaining) {
         // Strings array is larger than 1 MB — read the entire rest of the file
         std::string restBuf(remaining, '\0');
         file.clear();
@@ -1568,11 +1561,9 @@ RefChainKey HeapSnapshot::RefChainHash(uint32_t NodeIndex) const
                 const uint32_t p = pathParentIndex[u];
                 if (p == INVALID || p >= static_cast<uint32_t>(N)) {
                     chainHash_[u] = RefChainKey{};  // 不可达 => {0,0}
-                } else if (p == u)
-                {
+                } else if (p == u) {
                     chainHash_[u] = FnvSeed(extNames_[u]);  // root：种子
-                } else if (chainHashComputed_[p])
-                {
+                } else if (chainHashComputed_[p]) {
                     chainHash_[u] = FnvContinue(chainHash_[p], extNames_[u]);
                 } else {
                     chainHash_[u] = RefChainKey{};  // p 未算（环/异常）兜底

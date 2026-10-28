@@ -195,8 +195,8 @@ ArkTsAnalyzeResult AnalyzeArktsClasses(
     // ---- 3. Load heapsnapshot (retained sizes computed inside from_file) ----
     timer.stage("Loading heap snapshot");
     auto heap = HeapSnapshot::FromFile(heapsnapshotPath);
-    timer.tick("load_heap", std::to_string(heap.nodeCount) + " nodes, "
-              + std::to_string(heap.edgeCount) + " edges");
+    timer.tick("load_heap", std::to_string(heap.nodeCount) + " nodes, " +
+              std::to_string(heap.edgeCount) + " edges");
 
     // ---- 5. Build nativeRef from callStacks ----
     timer.stage("Building nativeRef");
@@ -260,8 +260,8 @@ ArkTsAnalyzeResult AnalyzeArktsClasses(
             clsIt->second.retainedSize += retainedSize;
         }
     }
-    timer.tick("aggregate", std::to_string(classMap.size()) + " classes, "
-              + std::to_string(instanceCount) + " instances");
+    timer.tick("aggregate", std::to_string(classMap.size()) + " classes, " +
+              std::to_string(instanceCount) + " instances");
 
     ApplyTshandleRetainedSizes(CallStacks, localRetainedSizeByCallStack);
 

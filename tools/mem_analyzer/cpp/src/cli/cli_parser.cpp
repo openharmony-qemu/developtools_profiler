@@ -75,8 +75,7 @@ static void ParseOptionNames(const std::string& names, std::string& shortName,
             if (longName.empty()) {
                 longName = tok;
             }
-        } else if (tok.size() >= 1 && tok[0] == '-')
-        {
+        } else if (tok.size() >= 1 && tok[0] == '-') {
             if (shortName.empty()) {
                 shortName = tok;
             }

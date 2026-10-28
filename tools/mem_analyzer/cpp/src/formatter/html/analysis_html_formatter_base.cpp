@@ -41,9 +41,9 @@ std::string AnalysisHtmlFormatterBase::buildTabBarHTML(const std::vector<TabGrou
         std::string cls = firstActiveSet ? "" : " active";
         firstActiveSet = true;
         tabItems.push_back(
-            "<div class=\"tab-item" + cls + "\" data-tab=\"" + group.tabId
-            + "\" onclick=\"switchTab('" + group.tabId + "', this)\">"
-            + group.tabLabel + "</div>");
+            "<div class=\"tab-item" + cls + "\" data-tab=\"" + group.tabId +
+            "\" onclick=\"switchTab('" + group.tabId + "', this)\">" +
+            group.tabLabel + "</div>");
     }
 
     if (!tabItems.empty()) {

@@ -130,8 +130,7 @@ static ParseAddrResult ParseProtobufAddrToNodeId(const uint8_t* data, size_t siz
                     handleAddress = val;
                     hasHandle = true;
                     offset += 8;
-                } else if (fn == 2 && wt == 0)
-                {
+                } else if (fn == 2 && wt == 0) {
                     if (!ReadVarint(data, entryEnd, offset, nodeId)) {
                         break;
                     }
@@ -291,8 +290,8 @@ ParseAddrResult ParseAddrFile(const std::string& filePath)
 
     constexpr size_t kMaxAddrFileBytes = 4ULL * 1024 * 1024 * 1024;  // 4 GiB，防恶意超大 addr 文件 OOM
     if (file_size > kMaxAddrFileBytes) {
-        throw std::runtime_error("addr file too large (" + std::to_string(file_size)
-                                 + " bytes): " + filePath);
+        throw std::runtime_error("addr file too large (" + std::to_string(file_size) +
+                                 " bytes): " + filePath);
     }
 
     std::vector<uint8_t> data(file_size);

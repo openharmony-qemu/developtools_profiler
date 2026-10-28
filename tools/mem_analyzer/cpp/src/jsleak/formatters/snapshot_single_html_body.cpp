@@ -223,8 +223,7 @@ std::string BuildPropertyTagTableRow(const std::string& objName,
         auto &hashArr = objData["hashValues"];
         if (hashArr.size() == 1) {
             hashValue = std::to_string(hashArr[0].get<uint32_t>());
-        } else if (hashArr.size() > 1)
-        {
+        } else if (hashArr.size() > 1) {
             hashValue = std::to_string(hashArr[0].get<uint32_t>()) + ", ......";
         }
     }

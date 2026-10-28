@@ -69,8 +69,8 @@ inline uint32_t TargetIndexOf(const std::vector<uint32_t>& edges, size_t ptr,
 /// node_index * node_fields_count + self_size_off
 inline uint32_t SelfSizeOf(const std::vector<uint32_t>& nodes, uint32_t NodeIndex,
                               int nodeFieldsCount, int selfSizeOff) {
-    return nodes[static_cast<size_t>(NodeIndex) * static_cast<size_t>(nodeFieldsCount)
-                 + static_cast<size_t>(selfSizeOff)];
+    return nodes[static_cast<size_t>(NodeIndex) * static_cast<size_t>(nodeFieldsCount) +
+                 static_cast<size_t>(selfSizeOff)];
 }
 
 // ============================================================================
@@ -937,8 +937,8 @@ static void CollectShortestPathRoots(
     highPri.push_back(0);
 
     for (uint32_t i = 1; i < ctx.nodeCount; i++) {
-        uint32_t nid = ctx.nodes[i * static_cast<size_t>(ctx.nodeFieldsCount)
-                               + static_cast<size_t>(ctx.idOff)];
+        uint32_t nid = ctx.nodes[i * static_cast<size_t>(ctx.nodeFieldsCount) +
+                               static_cast<size_t>(ctx.idOff)];
 
         std::string typeName = ctx.getNodeType(i);
         std::string nodeName = ctx.GetNodeName(i);
@@ -946,11 +946,9 @@ static void CollectShortestPathRoots(
         // High-priority root check (excludeBlinkRoot=true, excludePendingActivity=true)
         if (nid == 0 || nid == 1) {
             highPri.push_back(i);
-        } else if (typeName == "native" && nodeName.find("Window") == 0)
-        {
+        } else if (typeName == "native" && nodeName.find("Window") == 0) {
             highPri.push_back(i);
-        } else if (typeName == "synthetic" && nodeName == "(GC roots)")
-        {
+        } else if (typeName == "synthetic" && nodeName == "(GC roots)") {
             highPri.push_back(i);
         }
         // Low-priority root check: Blink cross-thread roots, Blink roots, Pending activities
@@ -1060,8 +1058,8 @@ static void RunLayeredBfs(
                             {
                                 // 越界/非法 key id：不当作 WeakMap key 匹配
                             }
-                            uint32_t childId = ctx.nodes[static_cast<size_t>(child) * static_cast<size_t>(ctx.nodeFieldsCount)
-                                                       + static_cast<size_t>(ctx.idOff)];
+                            uint32_t childId = ctx.nodes[static_cast<size_t>(child) * static_cast<size_t>(ctx.nodeFieldsCount) +
+                                                       static_cast<size_t>(ctx.idOff)];
                             if (keyId == childId) {
                                 continue;
                             }

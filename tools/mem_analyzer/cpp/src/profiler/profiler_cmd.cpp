@@ -682,8 +682,7 @@ static AppQueryResult QueryDeviceApps()
                 apps.push_back(std::move(current));
             }
             current.package = val;
-        } else if (key == "name" || key == "appName")
-        {
+        } else if (key == "name" || key == "appName") {
             current.appName = val;
         }
     }
@@ -1097,8 +1096,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
         for (const auto& f : rr.snapshotPulledFiles) {
             log::Logok("Snapshot file exported: ", f);
         }
-    } else if (rr.pullAttempted)
-    {
+    } else if (rr.pullAttempted) {
         if (rr.pullOk) {
             log::Logok("Result file exported: ", rr.pulledFile);
         } else {
@@ -1210,8 +1208,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
             int rc = RunCommandStreaming(cmd + " 2>&1");
             if (rc < 0) {
                 log::Loge("Comparison report generation failed: unable to launch ", binary);
-            } else if (rc != 0)
-            {
+            } else if (rc != 0) {
                 log::Loge("Comparison report generation failed: exited with code ", rc);
             } else {
                 // The jsleak compare subcommand nests its output under
@@ -1241,8 +1238,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
         std::vector<std::string> reportFiles;
         if (rr.snapshotAttempted) {
             reportFiles = rr.snapshotPulledFiles;
-        } else if (rr.pullAttempted && rr.pullOk && !rr.pulledFile.empty())
-        {
+        } else if (rr.pullAttempted && rr.pullOk && !rr.pulledFile.empty()) {
             reportFiles.push_back(rr.pulledFile);
         }
 
@@ -1295,8 +1291,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
                 int rc = RunCommandStreaming(cmd + " 2>&1");
                 if (rc < 0) {
                     log::Loge("Report generation failed: unable to launch ", binary);
-                } else if (rc != 0)
-                {
+                } else if (rc != 0) {
                     log::Loge("Report generation failed: exited with code ", rc);
                 } else {
                     // The analysis subcommand nests its output under

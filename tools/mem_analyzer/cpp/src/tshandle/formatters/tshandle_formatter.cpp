@@ -142,11 +142,9 @@ static json ArktsClassesToJson(const std::vector<ArkTsClass>& classes)
         std::string jsonName = cls.name;
         if (jsonName.find("JSSharedObject(") == 0) {
             jsonName = "JSSharedObject";
-        } else if (jsonName.find("JSObject(") == 0)
-        {
+        } else if (jsonName.find("JSObject(") == 0) {
             jsonName = "JSObject";
-        } else if (jsonName.find("string(size:") == 0)
-        {
+        } else if (jsonName.find("string(size:") == 0) {
             jsonName = "(unknown)";
         }
         

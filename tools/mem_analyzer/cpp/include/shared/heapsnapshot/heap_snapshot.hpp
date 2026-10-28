@@ -132,8 +132,8 @@ public:
         if (nodeSelfSizeOffset < 0 || NodeIndex >= static_cast<uint32_t>(nodeCount)) {
             return 0;
         }
-        return nodes[static_cast<size_t>(NodeIndex) * static_cast<size_t>(nodeFieldsCount)
-                     + static_cast<size_t>(nodeSelfSizeOffset)];
+        return nodes[static_cast<size_t>(NodeIndex) * static_cast<size_t>(nodeFieldsCount) +
+                     static_cast<size_t>(nodeSelfSizeOffset)];
     }
 
     /// Get numeric id for a node.
@@ -142,8 +142,8 @@ public:
         if (nodeIdOffset < 0 || NodeIndex >= static_cast<uint32_t>(nodeCount)) {
             return UINT32_MAX;
         }
-        return nodes[static_cast<size_t>(NodeIndex) * static_cast<size_t>(nodeFieldsCount)
-                     + static_cast<size_t>(nodeIdOffset)];
+        return nodes[static_cast<size_t>(NodeIndex) * static_cast<size_t>(nodeFieldsCount) +
+                     static_cast<size_t>(nodeIdOffset)];
     }
 
     /// Format shortest reference chain as "RootNode -> NodeA -> TargetNode"
@@ -219,8 +219,8 @@ public:
                            / static_cast<uint32_t>(nodeFieldsCount);
             if (edge.toNode < static_cast<uint32_t>(nodeCount) &&
                 edge.toNode * static_cast<uint32_t>(nodeFieldsCount) + static_cast<size_t>(nodeIdOffset) < nodesSize) {
-                edge.toNodeId = nodes[edge.toNode * static_cast<uint32_t>(nodeFieldsCount)
-                                        + static_cast<size_t>(nodeIdOffset)];
+                edge.toNodeId = nodes[edge.toNode * static_cast<uint32_t>(nodeFieldsCount) +
+                                        static_cast<size_t>(nodeIdOffset)];
                 fn(edge, localIdx);
             }
             localIdx++;

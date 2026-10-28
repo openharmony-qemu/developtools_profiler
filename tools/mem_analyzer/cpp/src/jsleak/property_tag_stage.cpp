@@ -174,8 +174,7 @@ void PropertyTagStage::AssemblePropertyTagObj(uint32_t uNi, const HeapSnapshot& 
     if (!baseClass.name.empty() && objInfo.concernType.empty()) {
         objInfo.concernType = baseClass.name;
         objInfo.concernDisplayType = baseClass.displayType.empty() ? baseClass.name : baseClass.displayType;
-    } else if (objInfo.concernDisplayType.empty())
-    {
+    } else if (objInfo.concernDisplayType.empty()) {
         objInfo.concernDisplayType = defaultDisplayType;
     }
     if (hashValue != 0) {
@@ -318,8 +317,7 @@ void PropertyTagStage::LoadPropertyTagConfig()
                         BaseClassInfo info;
                         if (b.is_string()) {
                             info.name = b.get<std::string>();
-                        } else if (b.is_object() && b.contains("name") && b["name"].is_string())
-                        {
+                        } else if (b.is_object() && b.contains("name") && b["name"].is_string()) {
                             info.name = b["name"].get<std::string>();
                             if (b.contains("displayType") && b["displayType"].is_string()) {
                                 info.displayType = b["displayType"].get<std::string>();

@@ -61,8 +61,7 @@ json TraceMetaToJson(const TshandleAnalysisOutput& analysis)
         if (stack.type == HtraceEventType::ARK_GLOBAL_HANDLE) {
             ++globalTotals.count;
             globalTotals.memory += stack.existingSize;
-        } else if (stack.type == HtraceEventType::ARK_LOCAL_HANDLE)
-        {
+        } else if (stack.type == HtraceEventType::ARK_LOCAL_HANDLE) {
             ++localTotals.count;
             localTotals.memory += stack.existingSize;
         }
@@ -78,8 +77,7 @@ json TraceMetaToJson(const TshandleAnalysisOutput& analysis)
                 if (type == HtraceEventType::ARK_GLOBAL_HANDLE) {
                     globalTotals.shallow += instance.shallowSize;
                     globalTotals.retained += instance.retainedSize;
-                } else if (type == HtraceEventType::ARK_LOCAL_HANDLE)
-                {
+                } else if (type == HtraceEventType::ARK_LOCAL_HANDLE) {
                     localTotals.shallow += instance.shallowSize;
                     localTotals.retained += instance.retainedSize;
                 }

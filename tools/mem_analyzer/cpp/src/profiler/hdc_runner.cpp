@@ -148,8 +148,8 @@ std::string ConsoleStartLine(const std::string& line)
             case Platform::Windows: key = "Ctrl+C";    break;
             default:                key = "Ctrl+C";    break;  // Linux
         }
-        return std::string("Capture stops when the countdown ends, or press ")
-               + key + " to stop early.\n";
+        return std::string("Capture stops when the countdown ends, or press ") +
+               key + " to stop early.\n";
     }
     return line;
 }
@@ -868,8 +868,8 @@ bool StartDeviceApp(const std::string& packageName)
     abilities.push_back("MainAbility");
 
     for (const auto& ability : abilities) {
-        const std::string deviceCmd = "aa start -a " + proc::ShellQuoteDevice(ability)
-                                     + " -b " + proc::ShellQuoteDevice(packageName);
+        const std::string deviceCmd = "aa start -a " + proc::ShellQuoteDevice(ability) +
+                                     " -b " + proc::ShellQuoteDevice(packageName);
         CapturedCmd cap = CaptureCommand(
             HdcShell(deviceCmd) + " 2>&1", 15000);
         if (!cap.spawned) {
@@ -1541,8 +1541,7 @@ bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode,
             // System process: never auto-launch; keep the original hint.
             log::Logi("Please start it as soon as possible.");
         }
-    } else if (opts.requireFreshStart)
-    {
+    } else if (opts.requireFreshStart) {
         log::Logi("This capture type requires a FRESH START: the app will be force-stopped "
                   "and relaunched automatically once the capture session is ready.");
     }
@@ -1714,8 +1713,7 @@ std::thread SpawnPidChecker(const std::shared_ptr<CaptureState>& state,
                         state->pidChanged = true;
                     }
                     state->latestPid = pid;
-                } else if (reliable || state->latestPid.empty())
-                {
+                } else if (reliable || state->latestPid.empty()) {
                     // pidof confirmed the process is gone, or we never
                     // knew a PID: publish the empty result.
                     if (!state->latestPid.empty()) {
@@ -1889,8 +1887,7 @@ void maybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
                 state->permissionErrorMsg = perr;
             }
             state->permissionFailed = true;
-        } else if (!path.empty())
-        {
+        } else if (!path.empty()) {
             {
                 std::lock_guard<std::mutex> lock(state->mtx);
                 result.smapsExportedFiles.push_back(path);
@@ -2098,8 +2095,7 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
                 log::Logw("Interrupted; stopping hiprofiler and saving data...");
                 exportEndSnapshotBeforeStop();
                 StopHiprofiler();
-            } else if (CaptureStartFailed(state))
-            {
+            } else if (CaptureStartFailed(state)) {
                 // The device reported a start failure (its exit code is
                 // useless — it returns 0 even on failure); the error
                 // transcript was already streamed above. Nothing to stop.
@@ -2260,8 +2256,7 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
                                    result.snapshotStatus);
             result.elapsed = ElapsedSince(start);
         }
-    } else if (result.ok && !opts.remoteOutputPath.empty())
-    {
+    } else if (result.ok && !opts.remoteOutputPath.empty()) {
         // hiprofiler export flow.
         //
         // wait_for_zip (only -g / -l): The hiprofiler_cmd process on the

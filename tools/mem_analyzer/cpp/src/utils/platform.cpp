@@ -270,8 +270,7 @@ int RunProcess(const std::string& exe,
     if (redirect) {
         if (outputFd == 1) {
             hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-        } else if (outputFd == 2)
-        {
+        } else if (outputFd == 2) {
             hOut = GetStdHandle(STD_ERROR_HANDLE);
         } else {
             hOut = reinterpret_cast<HANDLE>(_get_osfhandle(outputFd));
@@ -411,8 +410,7 @@ std::string SanitizeUtf8(const std::string& input)
                 result += input[i];
             }
             i++;
-        } else if ((c & 0xE0) == 0xC0)
-        {
+        } else if ((c & 0xE0) == 0xC0) {
             // Two-byte sequence (110xxxxx 10xxxxxx)
             if (i + 1 >= input.size()) { result += '?'; i++; continue; }
             unsigned char c2 = (unsigned char)input[i+1];
@@ -421,8 +419,7 @@ std::string SanitizeUtf8(const std::string& input)
             if ((c & 0x1E) == 0) { result += '?'; i++; continue; }
             result += input[i]; result += input[i+1];
             i += 2;
-        } else if ((c & 0xF0) == 0xE0)
-        {
+        } else if ((c & 0xF0) == 0xE0) {
             // Three-byte sequence (1110xxxx 10xxxxxx 10xxxxxx)
             if (i + 2 >= input.size()) { result += '?'; i++; continue; }
             unsigned char c2 = (unsigned char)input[i+1];
@@ -433,8 +430,7 @@ std::string SanitizeUtf8(const std::string& input)
             if (cp >= 0xD800 && cp <= 0xDFFF) { result += '?'; i++; continue; }
             result += input[i]; result += input[i+1]; result += input[i+2];
             i += 3;
-        } else if ((c & 0xF8) == 0xF0)
-        {
+        } else if ((c & 0xF8) == 0xF0) {
             // Four-byte sequence (11110xxx 10xxxxxx 10xxxxxx 10xxxxxx)
             if (i + 3 >= input.size()) { result += '?'; i++; continue; }
             unsigned char c2 = (unsigned char)input[i+1];

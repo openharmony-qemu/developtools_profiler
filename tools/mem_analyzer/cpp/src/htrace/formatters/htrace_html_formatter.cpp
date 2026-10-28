@@ -82,9 +82,9 @@ std::string BuildFilepageTableRows(const HtraceSection& section, size_t startInd
         std::ostringstream pctSS;
         pctSS << std::fixed << std::setprecision(2) << fp->percentage;
         rows.push_back("<tr>\n"
-            "  <td><a onclick=\"showDetail(" + std::to_string(idx) + "); return false;\" class=\"detail-link\">\u8be6\u60c5</a></td>\n"
-            + std::string(countMode ? "" : "  <td class=\"top-size-val\">" + FormatSizeText((double)fp->size, false) + "</td>\n")
-            + "  <td class=\"top-count-val\">" + std::to_string(fp->count) + "</td>\n"
+            "  <td><a onclick=\"showDetail(" + std::to_string(idx) + "); return false;\" class=\"detail-link\">\u8be6\u60c5</a></td>\n" +
+            std::string(countMode ? "" : "  <td class=\"top-size-val\">" + FormatSizeText((double)fp->size, false) + "</td>\n") +
+            "  <td class=\"top-count-val\">" + std::to_string(fp->count) + "</td>\n"
             "  <td class=\"top-pct-val\">" + pctSS.str() + "%</td>\n"
             "  <td class=\"top-func\"><b>" + EscapeHtml(fp->filename) + "</b></td>\n"
             "</tr>");
@@ -189,16 +189,16 @@ std::string BuildMmapTabContentHTML(const std::vector<TabGroup>& groups,
         bool fpActive = anonEmpty && !fpEmpty;
 
         result += "  <div class=\"sub-tab-bar\">\n";
-        result += "    <div class=\"sub-tab-item" + std::string(anonActive ? " active" : "")
-               + "\" onclick=\"switchSubTab('" + anonG.tabId + "', this, '" + g.tabId + "')\">" + anonG.tabLabel + "</div>\n";
-        result += "    <div class=\"sub-tab-item" + std::string(fpActive ? " active" : "")
-               + "\" onclick=\"switchSubTab('" + filepageG.tabId + "', this, '" + g.tabId + "')\">" + filepageG.tabLabel
-               + "<span class=\"help-icon\" data-tooltip=\"当前将部分内核节点也认为是文件，例如 anon_inode:dmabuf节点、 ashmem节点和hvgr0节点。\">?</span></div>\n";
+        result += "    <div class=\"sub-tab-item" + std::string(anonActive ? " active" : "") +
+               "\" onclick=\"switchSubTab('" + anonG.tabId + "', this, '" + g.tabId + "')\">" + anonG.tabLabel + "</div>\n";
+        result += "    <div class=\"sub-tab-item" + std::string(fpActive ? " active" : "") +
+               "\" onclick=\"switchSubTab('" + filepageG.tabId + "', this, '" + g.tabId + "')\">" + filepageG.tabLabel +
+               "<span class=\"help-icon\" data-tooltip=\"当前将部分内核节点也认为是文件，例如 anon_inode:dmabuf节点、 ashmem节点和hvgr0节点。\">?</span></div>\n";
         result += "  </div>\n";
 
         // anon 子 tab：symbol 表格 + 详情
-        result += "  <div class=\"sub-tab-content\" id=\"" + anonG.tabId + "\""
-            + std::string(anonActive ? " style=\"display:block;\"" : " style=\"display:none;\"") + ">\n";
+        result += "  <div class=\"sub-tab-content\" id=\"" + anonG.tabId + "\"" +
+            std::string(anonActive ? " style=\"display:block;\"" : " style=\"display:none;\"") + ">\n";
         if (anonEmpty) {
             result += "    <div class=\"empty-msg\">\u65e0\u76f8\u5173\u6570\u636e</div>\n";
         } else {
@@ -214,8 +214,8 @@ std::string BuildMmapTabContentHTML(const std::vector<TabGroup>& groups,
 
         // filepage 子 tab：文件表格 + 详情（按 app/system/mixed 分类）
         size_t fpStart = filepageG.startIndex;
-        result += "  <div class=\"sub-tab-content\" id=\"" + filepageG.tabId + "\""
-            + std::string(fpActive ? " style=\"display:block;\"" : " style=\"display:none;\"") + ">\n";
+        result += "  <div class=\"sub-tab-content\" id=\"" + filepageG.tabId + "\"" +
+            std::string(fpActive ? " style=\"display:block;\"" : " style=\"display:none;\"") + ">\n";
         if (fpEmpty) {
             result += "    <div class=\"empty-msg\">\u65e0\u76f8\u5173\u6570\u636e</div>\n";
         } else {

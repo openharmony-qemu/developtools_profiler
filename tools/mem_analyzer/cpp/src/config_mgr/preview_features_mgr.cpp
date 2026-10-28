@@ -100,8 +100,7 @@ bool PreviewFeaturesMgr::load(std::string& err)
                     enabledFeatures_.insert(f.name);
                 }
             }
-        } else if (enabled.is_array())
-        {
+        } else if (enabled.is_array()) {
             // 仅保留 registry 中登记过的 id，避免配置残留导致误判
             for (const auto& item : enabled) {
                 if (!item.is_string()) {

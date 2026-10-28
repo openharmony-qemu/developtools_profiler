@@ -345,8 +345,7 @@ bool IndexMapFile(const std::string& path, std::unordered_map<std::string, Sourc
                 if (!entry.sources.empty()) {
                     entry.sourcePath = entry.sources.front();
                 }
-            } else if (sources.is_string())
-            {
+            } else if (sources.is_string()) {
                 entry.sources.push_back(sources.get<std::string>());
                 entry.sourcePath = entry.sources.front();
             }

@@ -115,19 +115,15 @@ size_t FindMatchingCloseBracket(std::ifstream& file, size_t openPos, size_t file
             if (inString) {
                 if (escaped) {
                     escaped = false;
-                } else if (c == '\\')
-                {
+                } else if (c == '\\') {
                     escaped = true;
-                } else if (c == '"')
-                {
+                } else if (c == '"') {
                     inString = false;
                 }
-            } else if (c == '"')
-            {
+            } else if (c == '"') {
                 inString = true;
                 escaped = false;
-            } else if (c == ']')
-            {
+            } else if (c == ']') {
                 return pos + i;
             }
         }
@@ -220,8 +216,7 @@ bool ParseArktsModulePath(const std::string& pathPart, std::string& module,
     std::string extractedModule;
     if (lastSlash == std::string::npos) {
         extractedModule = modulePart;
-    } else if (lastSlash == 0)
-    {
+    } else if (lastSlash == 0) {
         // 路径以 '/' 开头（如 "/entry@1.0.0/..."），无 scope 前缀，取 '/' 之后的部分
         extractedModule = modulePart.substr(1);
     } else {
@@ -324,13 +319,11 @@ bool RefineLineByNameCache(const NameCacheIndex* ncache, const std::string& sour
         }
         if (fallback == nullptr) {
             fallback = &cand;
-        } else if (cand.startLine <= origLine)
-        {
+        } else if (cand.startLine <= origLine) {
             if (fallback->startLine > origLine || cand.startLine > fallback->startLine) {
                 fallback = &cand;
             }
-        } else if (fallback->startLine > origLine && cand.startLine < fallback->startLine)
-        {
+        } else if (fallback->startLine > origLine && cand.startLine < fallback->startLine) {
             fallback = &cand;
         }
     }
@@ -395,8 +388,7 @@ bool RestoreFunctionNameInSuffix(const NameCacheIndex* ncache, std::string& valu
         }
         if (original.empty()) {
             original = name;
-        } else if (original != name)
-        {
+        } else if (original != name) {
             return false;  // 同一文件下候选原始名不一致，无法唯一还原
         }
     }
