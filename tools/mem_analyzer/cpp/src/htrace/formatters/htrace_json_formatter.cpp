@@ -35,7 +35,8 @@ json HtraceBuildMeta(const std::string& filePath, const RunContext& ctx)
 }
 
 json HtraceBuildSummaryCommon(const std::string& mode, long long durationNs, long long startMs,
-                                 long long endMs, const std::string& processName) {
+    long long endMs, const std::string& processName)
+{
     json summary;
     summary["isStatistics"] = (mode == "detail") ? "0" : "1";
 
@@ -62,9 +63,8 @@ long long HtraceSummaryTotalForType(const json& htraceSummary, const std::string
     return 0;
 }
 
-void HtraceWriteCallstackFrame(JsonStreamWriter& writer,
-                                  const CompressedStackFrame& frame,
-                                  const DataDict& dict) {
+void HtraceWriteCallstackFrame(JsonStreamWriter& writer, const CompressedStackFrame& frame, const DataDict& dict)
+{
     writer.BeginObject();
 
     writer.WriteKeyValue("depth", std::to_string(frame.depth));

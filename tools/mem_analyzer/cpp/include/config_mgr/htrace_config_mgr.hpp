@@ -58,12 +58,8 @@ public:
 
     bool IsAppSymbol(const std::string& lib, bool vaddrNull) const;
     bool IsTsSymbol(const std::string& lib, bool vaddrNull) const;
-    bool ShouldFilter(const std::string& libFile,
-                       const std::string& symName,
-                       Scope scope) const;
-    bool IsOrphanRecoverable(const std::string& libFile,
-                               const std::string& symName,
-                               Scope scope) const;
+    bool ShouldFilter(const std::string& libFile, const std::string& symName, Scope scope) const;
+    bool IsOrphanRecoverable(const std::string& libFile, const std::string& symName, Scope scope) const;
 
 private:
     HtraceConfigMgr() = default;
@@ -78,11 +74,10 @@ private:
     static std::vector<ClassificationRule> DefaultClassificationRules();
     static std::vector<SymbolFilterRule> DefaultFilterRules();
 
-    bool MatchClassificationRule(const ClassificationRule& rule,
-                                    const std::string& lib, bool vaddrNull) const;
+    bool MatchClassificationRule(const ClassificationRule& rule, const std::string& lib, bool vaddrNull) const;
     bool MatchFilterRule(const SymbolFilterRule& rule,
-                           const std::string& libFile, const std::string& symName,
-                           Scope scope) const;
+        const std::string& libFile, const std::string& symName,
+        Scope scope) const;
     static bool MatchTsPattern(const std::string& lib, const std::string& ext);
 };
 

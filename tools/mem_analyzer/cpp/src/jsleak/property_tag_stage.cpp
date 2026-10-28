@@ -55,9 +55,7 @@ void PropertyTagStage::run(const HeapSnapshot& heap)
                " suspicious object types.");
 }
 
-json PropertyTagStage::analyze(
-        const HeapSnapshot& heap,
-        const std::function<bool(uint32_t)>& includeNode)
+json PropertyTagStage::analyze(const HeapSnapshot& heap, const std::function<bool(uint32_t)>& includeNode)
         {
     propertyTagObjs.clear();
     GeneratePropertyTagObjs(heap, includeNode);
@@ -160,7 +158,8 @@ BaseClassInfo PropertyTagStage::FindConcernType(uint32_t uNi, const std::vector<
 }
 
 void PropertyTagStage::AssemblePropertyTagObj(uint32_t uNi, const HeapSnapshot& heap,
-        const std::string& propertyName, const BaseClassInfo& baseClass, uint32_t hashValue) {
+    const std::string& propertyName, const BaseClassInfo& baseClass, uint32_t hashValue)
+{
     std::string refChain = heap.FormatRefChain(uNi);
     uint64_t retainedSize = static_cast<uint64_t>(heap.GetRetainedSize(uNi));
 
@@ -189,8 +188,8 @@ void PropertyTagStage::AssemblePropertyTagObj(uint32_t uNi, const HeapSnapshot& 
 }
 
 void PropertyTagStage::GeneratePropertyTagObjs(
-        const HeapSnapshot& heap,
-        const std::function<bool(uint32_t)>& includeNode)
+    const HeapSnapshot& heap,
+    const std::function<bool(uint32_t)>& includeNode)
         {
     for (int ni = 0; ni < heap.nodeCount; ni++) {
         uint32_t uNi = static_cast<uint32_t>(ni);

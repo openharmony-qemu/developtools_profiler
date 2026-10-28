@@ -23,7 +23,8 @@
 namespace mem_analyzer {
 
 // ── StmtGuard ──────────────────────────────────────────────────────
-StmtGuard& StmtGuard::operator=(StmtGuard&& o) noexcept {
+StmtGuard& StmtGuard::operator=(StmtGuard&& o) noexcept
+{
     if (this != &o) {
         reset(nullptr);
         stmt_ = o.stmt_;
@@ -42,8 +43,7 @@ void StmtGuard::reset(sqlite3_stmt* s)
 
 // ── Scalar query ──────────────────────────────────────────────────
 namespace {
-bool QueryScalar(sqlite3* db, const char* sql,
-                  void (*read)(sqlite3_stmt*, void*), void* out)
+bool QueryScalar(sqlite3* db, const char* sql, void (*read)(sqlite3_stmt*, void*), void* out)
                   {
     if (!db || !sql) {
         return false;
@@ -86,8 +86,7 @@ TraceMeta QueryTraceMeta(sqlite3* db)
         StmtGuard guard(stmt);
         if (sqlite3_step(stmt) == SQLITE_ROW &&
             sqlite3_column_type(stmt, 0) != SQLITE_NULL &&
-            sqlite3_column_type(stmt, 1) != SQLITE_NULL)
-            {
+            sqlite3_column_type(stmt, 1) != SQLITE_NULL) {
             const long long startTs = sqlite3_column_int64(stmt, 0);
             const long long endTs = sqlite3_column_int64(stmt, 1);
             if (startTs >= 0 && endTs >= startTs) {
@@ -157,8 +156,8 @@ TraceMeta QueryTraceMeta(sqlite3* db)
 // ── read_frames ───────────────────────────────────────────────────
 namespace {
 
-void QueryFrames(sqlite3* db, const std::string& chainSelect,
-                  std::unordered_map<int, std::vector<FrameRow>>& out) {
+void QueryFrames(sqlite3* db, const std::string& chainSelect, std::unordered_map<int, std::vector<FrameRow>>& out)
+{
     const std::string sql =
         "SELECT depth, symbol_id, file_id, callchain_id, vaddr, build_id "
         "FROM native_hook_frame "
@@ -197,8 +196,8 @@ void QueryFrames(sqlite3* db, const std::string& chainSelect,
 
 } // namespace
 
-std::unordered_map<int, std::vector<FrameRow>> ReadFrames(
-        sqlite3* db, const std::string& chainSelect) {
+std::unordered_map<int, std::vector<FrameRow>> ReadFrames(sqlite3* db, const std::string& chainSelect)
+{
     std::unordered_map<int, std::vector<FrameRow>> result;
     if (!db || chainSelect.empty()) {
         return result;
@@ -207,8 +206,8 @@ std::unordered_map<int, std::vector<FrameRow>> ReadFrames(
     return result;
 }
 
-std::unordered_map<int, std::vector<std::string>> ReadCallchainAddrs(
-        sqlite3* db, const std::string& chainSelect) {
+std::unordered_map<int, std::vector<std::string>> ReadCallchainAddrs(sqlite3* db, const std::string& chainSelect)
+{
     std::unordered_map<int, std::vector<std::string>> result;
     if (!db || chainSelect.empty()) {
         return result;

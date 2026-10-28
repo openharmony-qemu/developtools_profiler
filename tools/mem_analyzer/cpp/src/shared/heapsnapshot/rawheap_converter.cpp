@@ -25,9 +25,8 @@ namespace fs = std::filesystem;
 
 namespace mem_analyzer {
 
-bool RawheapToHeapsnapshot(const std::string& rawheapPath,
-                             const std::string& outputHeapsnapshot,
-                             std::string* error) {
+bool RawheapToHeapsnapshot(const std::string& rawheapPath, const std::string& outputHeapsnapshot, std::string* error)
+{
     const std::string translator = platform::GetRawheapTranslatorPath();
     if (translator.empty() || !platform::FileExists(translator)) {
         if (error) {

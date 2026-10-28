@@ -19,7 +19,8 @@ namespace mem_analyzer {
 void DistributeTshandleRetainedSize(
     double retainedSize,
     const std::vector<TshandleRetainedShare>& shares,
-    std::unordered_map<long long, double>& totals) {
+    std::unordered_map<long long, double>& totals)
+{
     if (!std::isfinite(retainedSize) || retainedSize < 0.0) {
         return;
     }
@@ -43,7 +44,8 @@ void DistributeTshandleRetainedSize(
 
 void ApplyTshandleRetainedSizes(
     std::vector<ResolvedCallStack>& CallStacks,
-    const std::unordered_map<long long, double>& retainedSizes) {
+    const std::unordered_map<long long, double>& retainedSizes)
+{
     for (auto& callStack : CallStacks) {
         double total = static_cast<double>(callStack.existingSize);
         const auto retained = retainedSizes.find(callStack.id);

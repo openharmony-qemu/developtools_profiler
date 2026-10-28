@@ -62,8 +62,8 @@ static int ParseInt(const std::string& s)
 /// 短名（-x）存入 short_name，长名（--xxx）存入 long_name；
 /// 同名 token 重复出现时只保留第一个。实际注册最多一个短名加一个长名，
 /// 因此无需额外的多别名（extra_names）与去重收集逻辑。
-static void ParseOptionNames(const std::string& names, std::string& shortName,
-                               std::string& longName) {
+static void ParseOptionNames(const std::string& names, std::string& shortName, std::string& longName)
+{
     size_t start = 0;
     while (start <= names.size()) {
         size_t end = names.find_first_of(", ", start);
@@ -98,8 +98,8 @@ CliParser::CliParser(const std::string& description)
 // Option registration
 // ═══════════════════════════════════════════════════════════════
 
-CliParser& CliParser::AddOption(const std::string& names, std::string& target, const std::string& desc,
-                                 bool* provided) {
+CliParser& CliParser::AddOption(const std::string& names, std::string& target, const std::string& desc, bool* provided)
+{
     Option opt;
     opt.shortName = "";
     opt.longName = "";
@@ -136,8 +136,8 @@ CliParser& CliParser::AddSwitch(const std::string& names, bool& target, const st
     return *this;
 }
 
-CliParser& CliParser::AddOption(const std::string& names, int& target, const std::string& desc,
-                                 bool* provided) {
+CliParser& CliParser::AddOption(const std::string& names, int& target, const std::string& desc, bool* provided)
+{
     Option opt;
     opt.shortName = "";
     opt.longName = "";
@@ -198,7 +198,8 @@ CliParser& CliParser::AddPositional(const std::string& name, std::string& target
 // ═══════════════════════════════════════════════════════════════
 
 CliParser& CliParser::AddSubcommand(const std::string& name, const std::string& desc,
-                                     const std::string& alias, bool hidden) {
+    const std::string& alias, bool hidden)
+{
     SubcommandEntry entry;
     entry.parser = std::make_unique<CliParser>(desc);
     entry.alias = alias;

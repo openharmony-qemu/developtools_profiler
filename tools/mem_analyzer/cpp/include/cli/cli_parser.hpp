@@ -58,10 +58,9 @@ public:
     /// `provided`（可选）：命中该选项时被置为 true，用于区分「用户显式传入」与
     /// 「使用默认值」，无需在解析后再反查 parser。
     CliParser& AddOption(const std::string& names, std::string& target, const std::string& desc,
-                          bool* provided = nullptr);
+        bool* provided = nullptr);
     CliParser& AddSwitch(const std::string& names, bool& target, const std::string& desc);
-    CliParser& AddOption(const std::string& names, int& target, const std::string& desc,
-                          bool* provided = nullptr);
+    CliParser& AddOption(const std::string& names, int& target, const std::string& desc, bool* provided = nullptr);
 
     /// Group options registered afterwards under `group` for help output.
     /// An empty group restores the default "OPTIONS" section. Options are
@@ -84,11 +83,12 @@ public:
     /// `hidden=true` 时该子命令仍可被解析与分发，但不出现在 --help 的
     /// USAGE / SUBCOMMANDS 中。
     CliParser& AddSubcommand(const std::string& name, const std::string& desc,
-                              const std::string& alias = "", bool hidden = false);
+        const std::string& alias = "", bool hidden = false);
     /// Add subcommand with setup callback, return parent for chaining
     template<typename Fn>
     CliParser& AddSubcommand(const std::string& name, const std::string& desc,
-                              const std::string& alias, bool hidden, Fn setup) {
+        const std::string& alias, bool hidden, Fn setup)
+    {
         auto& sub = AddSubcommand(name, desc, alias, hidden);
         setup(sub);
         return *this;

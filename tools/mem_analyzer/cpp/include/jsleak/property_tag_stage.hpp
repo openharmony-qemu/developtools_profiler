@@ -43,18 +43,16 @@ public:
     json ToJson() const override;
 
     /// Run the property/hash leak rules for a caller-defined subset of nodes.
-    json analyze(const HeapSnapshot& heap,
-                 const std::function<bool(uint32_t)>& includeNode = {});
+    json analyze(const HeapSnapshot& heap, const std::function<bool(uint32_t)>& includeNode = {});
 
 private:
     std::string CheckDestoryedTag(uint32_t uNi, const HeapSnapshot& heap);
     BaseClassInfo FindConcernType(uint32_t uNi, const std::vector<BaseClassInfo>& baseClasses,
         const HeapSnapshot& heap);
     void AssemblePropertyTagObj(uint32_t uNi, const HeapSnapshot& heap,
-                                   const std::string& propertyName, const BaseClassInfo& baseClass,
-                                   uint32_t hashValue);
-    void GeneratePropertyTagObjs(const HeapSnapshot& heap,
-                                    const std::function<bool(uint32_t)>& includeNode = {});
+        const std::string& propertyName, const BaseClassInfo& baseClass,
+        uint32_t hashValue);
+    void GeneratePropertyTagObjs(const HeapSnapshot& heap, const std::function<bool(uint32_t)>& includeNode = {});
 
     void LoadJsleakListFile(const std::string& filePath);
     void LoadPropertyTagConfig();

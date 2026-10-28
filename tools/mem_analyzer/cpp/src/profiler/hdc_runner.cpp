@@ -292,8 +292,8 @@ int CountLsofFds(const std::string& output)
 // Sample the live memory/fd metrics of one process: `hidumper --mem <pid>`
 // (Pss / native heap / arkts heap / dma / ...) and `lsof -p <pid>` (fd count).
 // An empty pid, or queries that yield nothing, produce an invalid sample.
-ProcessMetrics SampleProcessMetrics(const std::string& pid,
-                                      long long timeoutMs = 8000) {
+ProcessMetrics SampleProcessMetrics(const std::string& pid, long long timeoutMs = 8000)
+{
     ProcessMetrics metrics;
     if (pid.empty()) {
         return metrics;
@@ -364,16 +364,14 @@ std::string DetectPermissionError(const std::string& output)
             std::string blk = lines[j];
             // Strip trailing \r (hdc pty output may be \r\n) and whitespace.
             while (!blk.empty() &&
-                   (blk.back() == '\r' || blk.back() == ' ' || blk.back() == '\t'))
-                   {
+                   (blk.back() == '\r' || blk.back() == ' ' || blk.back() == '\t')) {
                 blk.pop_back();
             }
             block += blk;
             block += '\n';
         }
         while (!block.empty() &&
-               (block.back() == '\n' || block.back() == ' ' || block.back() == '\t'))
-               {
+               (block.back() == '\n' || block.back() == ' ' || block.back() == '\t')) {
             block.pop_back();
         }
         if (!block.empty()) {
@@ -389,9 +387,10 @@ std::string DetectPermissionError(const std::string& output)
 // (binary mode). Returns the local path on success, or an empty string on
 // failure (unable to launch hdc / empty output / cannot open the file).
 std::string ExportProcessFile(const std::string& pid,
-                                const std::string& outputDir,
-                                const std::string& prefix,
-                                std::string* permissionError = nullptr) {
+    const std::string& outputDir,
+    const std::string& prefix,
+    std::string* permissionError = nullptr)
+{
     const std::string deviceCmd =
         (prefix == "fds") ? ("lsof -p " + proc::ShellQuoteDevice(pid)) : ("hidumper --mem-smaps " + proc::ShellQuoteDevice(pid));
     // Timeout so a stalled device query cannot leave the export thread (and
@@ -426,8 +425,8 @@ std::string ExportProcessFile(const std::string& pid,
 
 // Local path a `hdc file recv <remote> <output_dir>` writes to:
 // <output_dir>/<basename(remote)>, lexically normalized.
-std::string LocalRecvPath(const std::string& outputDir,
-                            const std::string& remote) {
+std::string LocalRecvPath(const std::string& outputDir, const std::string& remote)
+{
     return PathToUtf8(
         (PathFromUtf8(outputDir) / PathFromUtf8(remote).filename())
             .lexically_normal());
@@ -619,8 +618,9 @@ std::string MakeDevicePath(const std::string& dir, const std::string& name)
 // traditional 3-field form follows. Only the 5 leading fields (perm, links,
 // owner, group, size) are structurally required.
 std::map<std::string, long long> listDirFileSizes(const std::string& dir,
-                                                     const std::string& namePrefix,
-                                                     const std::string& nameSuffix = "") {
+    const std::string& namePrefix,
+    const std::string& nameSuffix = "")
+{
     std::map<std::string, long long> files;
     std::string cmd = HdcShell("ls -l " + proc::ShellQuoteDevice(dir)) + " 2>&1";
     CapturedCmd cap = CaptureCommand(cmd);
@@ -701,12 +701,13 @@ std::map<std::string, long long> listDirFileSizes(const std::string& dir,
 // (per "pull only after completion"). The local paths of the pulled files are
 // appended to `files` and a human-readable outcome is written to `status`.
 void pollAndPullSnapshot(const std::string& resultDir,
-                            const std::string& targetDir,
-                            const std::map<std::string, long long>& baseline,
-                            long long timeoutS,
-                            std::vector<std::string>& files,
-                            std::string& status,
-                            const std::string& role = "") {
+    const std::string& targetDir,
+    const std::map<std::string, long long>& baseline,
+    long long timeoutS,
+    std::vector<std::string>& files,
+    std::string& status,
+    const std::string& role = "")
+{
     const int intervalS = 2;
     auto start = clockType::now();
 
@@ -945,8 +946,8 @@ bool DetectAsyncStartMode(const std::string& content)
 // `local_config_file` holds the temp path (used later for the log entry and
 // cleanup). Returns false and sets result.ok=false with a description on any
 // failure.
-bool PushDeviceConfig(const std::string& deviceConfigContent,
-                        std::string& localConfigFile, RunResult& result) {
+bool PushDeviceConfig(const std::string& deviceConfigContent, std::string& localConfigFile, RunResult& result)
+{
     if (deviceConfigContent.empty()) {
         return true;
     }
@@ -1023,7 +1024,8 @@ void StopHiprofiler()
 // the full device path of the detected zip, or an empty string when none was
 // found (the caller then falls back to the -o file).
 std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baseline,
-                                    const std::string& dir, long long timeoutS) {
+    const std::string& dir, long long timeoutS)
+{
     std::cout << "Waiting for hiprofiler_data zip (up to " << timeoutS << "s)...\n" <<
               std::flush;
 
@@ -1108,8 +1110,8 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
 // other pids, are both handled correctly because we only ever look at the exact
 // file this run produced. Returns the full device path, or empty string when
 // the file never appeared (or `pid` is empty).
-std::string WaitForNativeleaksFile(const std::string& pid,
-                                      const std::string& dir, long long timeoutS) {
+std::string WaitForNativeleaksFile(const std::string& pid, const std::string& dir, long long timeoutS)
+{
     if (pid.empty()) {
         return "";
     }
@@ -1173,8 +1175,8 @@ std::string WaitForNativeleaksFile(const std::string& pid,
 
 // Record an exported per-process snapshot file (hidumper --mem-smaps / lsof)
 // in `result` and report it on the console.
-void RecordExportedFile(const std::string& path, const std::string& smapsPrefix,
-                          RunResult& result) {
+void RecordExportedFile(const std::string& path, const std::string& smapsPrefix, RunResult& result)
+{
     result.smapsExportedFiles.push_back(path);
     log::Logok(smapsPrefix == "fds" ? "FD snapshot exported" : "Smaps exported", ": ", path);
 }
@@ -1183,7 +1185,8 @@ void RecordExportedFile(const std::string& path, const std::string& smapsPrefix,
 // be diffed against the start-of-capture export. Called only when the capture
 // actually ran (not aborted for lack of permission / failed to start).
 void ExportEndSnapshot(const std::string& pid, const std::string& outputDir,
-                         const std::string& smapsPrefix, RunResult& result) {
+    const std::string& smapsPrefix, RunResult& result)
+{
     if (pid.empty()) {
         log::Logw("Warning: target process exited; skipping end-of-capture ", smapsPrefix, " export");
         return;
@@ -1339,8 +1342,7 @@ std::string GetProcessPid(const std::string& processName)
             if (suffixPid.empty() &&
                 cmdField.size() > processName.size() &&
                 cmdField.compare(0, processName.size(), processName) == 0 &&
-                cmdField[processName.size()] == ':')
-                {
+                cmdField[processName.size()] == ':') {
                 suffixPid = pid;
             }
         }
@@ -1348,8 +1350,7 @@ std::string GetProcessPid(const std::string& processName)
     }
 }
 
-std::string GetProcessPidFast(const std::string& processName, long long timeoutMs,
-                                 bool* reliable) {
+std::string GetProcessPidFast(const std::string& processName, long long timeoutMs, bool* reliable) {
     if (reliable) {
         *reliable = false;
     }
@@ -1470,8 +1471,8 @@ struct PreCaptureState {
 // can later identify the files this run generated (new / size-changed).
 // Returns false when the capture must abort (e.g. snapshot target not
 // running); the error is written into `result`.
-bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode,
-                           PreCaptureState& pre, RunResult& result) {
+bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode, PreCaptureState& pre, RunResult& result)
+{
     if (snapshotMode) {
         if (!opts.processName.empty()) {
             const std::string pid = GetProcessPid(opts.processName);
@@ -1574,8 +1575,8 @@ bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode,
 // start` transcript in real time. In async start mode the foregrounded
 // command stays attached until `stop` runs, so this thread only finishes
 // after the countdown's stop releases it.
-std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state,
-                         const std::string& cmd, bool asyncStartMode) {
+std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::string& cmd, bool asyncStartMode)
+{
     return std::thread([state, cmd, asyncStartMode]() {
         // 逐行消费子进程输出：写入共享缓冲，async 模式下即时回显到控制台。
         auto consumeStream = [&](FILE* fp) {
@@ -1677,10 +1678,11 @@ std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state,
 // known pid. The thread is joined after worker.join() (when hdc is freed), so
 // any blocked call completes quickly at that point.
 std::thread SpawnPidChecker(const std::shared_ptr<CaptureState>& state,
-                              const std::string& processName,
-                              const std::string& initialPid,
-                              const ProcessMetrics& initialMetrics,
-                              bool ignoreDone) {
+    const std::string& processName,
+    const std::string& initialPid,
+    const ProcessMetrics& initialMetrics,
+    bool ignoreDone)
+{
     // Seed the shared pid/metrics state with the pre-countdown sample so the
     // first countdown tick can display it immediately (before the background
     // checker's first hdc round-trip lands).
@@ -1689,8 +1691,7 @@ std::thread SpawnPidChecker(const std::shared_ptr<CaptureState>& state,
     return std::thread([state, processName, ignoreDone]() {
         while (!state->stopPidCheck.load() &&
                !DeviceLost() &&
-               (!state->done.load() || ignoreDone))
-               {
+               (!state->done.load() || ignoreDone)) {
             // Use pidof (get_process_pid_fast), NOT ps -ef: the full ps
             // output stalls (no EOF) on a second hdc connection while the
             // foregrounded hiprofiler_cmd capture is running, leaving the
@@ -1757,8 +1758,8 @@ std::thread SpawnPidChecker(const std::shared_ptr<CaptureState>& state,
 // captured (nativehook with startup_mode hooks the process at startup).
 // Runs in a background thread with a bounded wait so a stalled device query
 // cannot freeze the countdown.
-std::thread SpawnFreshRestart(const std::shared_ptr<CaptureState>& state,
-                                const std::string& processName) {
+std::thread SpawnFreshRestart(const std::shared_ptr<CaptureState>& state, const std::string& processName)
+{
     // The countdown must not nag about a manual fresh start — the automation
     // below handles it.
     state->freshRestartTriggered = true;
@@ -1858,13 +1859,14 @@ void PrintMetricsLine(const ProcessMetrics& metrics)
 // / pid by value; it only references `result` (alive until the caller joins
 // the thread) and the heap-allocated `state`.
 void maybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
-                                 const std::string& outputDir,
-                                 const std::string& smapsPrefix,
-                                 bool requireFreshStart,
-                                 const std::string& pid,
-                                 bool& startExported,
-                                 std::thread& startExportThread,
-                                 RunResult& result) {
+    const std::string& outputDir,
+    const std::string& smapsPrefix,
+    bool requireFreshStart,
+    const std::string& pid,
+    bool& startExported,
+    std::thread& startExportThread,
+    RunResult& result)
+{
     if (startExported) {
         return;
     }
@@ -1910,15 +1912,15 @@ void maybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
 //     Process status comes from the background pid_checker thread
 //     (non-blocking read of shared state).
 void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
-                      clockType::time_point start, const PreCaptureState& pre,
-                      bool asyncStartMode, bool snapshotMode,
-                      bool& startExported, std::thread& startExportThread,
-                      RunResult& result) {
+    clockType::time_point start, const PreCaptureState& pre,
+    bool asyncStartMode, bool snapshotMode,
+    bool& startExported, std::thread& startExportThread,
+    RunResult& result)
+{
     if (snapshotMode) {
         log::Logi("Running snapshot export command...");
         while (!state->done.load() && !gInterruptRequested &&
-               !DeviceLost())
-               {
+               !DeviceLost()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         return;
@@ -1961,8 +1963,7 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
         // its transcript reports failure, abort the countdown instead of
         // waiting out the full duration.
         if (asyncStartMode &&
-            (state->spawnFailed || (state->done.load() && CaptureStartFailed(state))))
-            {
+            (state->spawnFailed || (state->done.load() && CaptureStartFailed(state)))) {
             break;
         }
         // The first smaps/lsof export found a permission problem: abort the
@@ -1988,8 +1989,7 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
             const bool running = !pid.empty();
 
             if (running && opts.requireFreshStart && pre.wasRunningAtStart &&
-                !state->pidChanged.load() && !state->freshRestartTriggered.load())
-                {
+                !state->pidChanged.load() && !state->freshRestartTriggered.load()) {
                 std::cout << "[" << ++roundNo << "] Remaining " << remain << "s, " <<
                           "WARNING: target process '" << opts.processName << "' is already running!" <<
                           " pid:" << pid << "\n" <<
@@ -2048,10 +2048,11 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
 // instead — the background threads are detached and finish on their own (they
 // only reference the heap-allocated shared state, so this is safe).
 void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
-                           clockType::time_point start, bool asyncStartMode,
-                           std::thread& worker, std::thread& pidChecker,
-                           std::thread& freshRestartThread,
-                           std::thread& startExportThread, RunResult& result) {
+    clockType::time_point start, bool asyncStartMode,
+    std::thread& worker, std::thread& pidChecker,
+    std::thread& freshRestartThread,
+    std::thread& startExportThread, RunResult& result)
+{
     // Signal the background pid checker and fresh-start automation to stop.
     state->stopPidCheck = true;
     state->stopFreshRestart = true;
@@ -2149,8 +2150,7 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
     // so there is nothing to finalize and we must not idle until the
     // device-side command runs out.
     if (!state->done.load() && !gInterruptRequested &&
-        !state->permissionFailed.load())
-        {
+        !state->permissionFailed.load()) {
         log::Logi("Capture duration finished; hiprofiler is finalizing output "
                   "(stopping session, flushing data)...");
         int finalizeWait = 0;
@@ -2200,12 +2200,13 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
 // temp config file. The end-of-capture smaps/lsof snapshot is exported in
 // stop_and_join_threads, before `hiprofiler_cmd stop` runs.
 void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
-                      clockType::time_point start, bool snapshotMode,
-                      bool asyncStartMode,
-                      const std::map<std::string, long long>& resultBaseline,
-                      const std::map<std::string, long long>& hiprofilerZipBaseline,
-                      const std::string& nativeleaksPid,
-                      const std::string& localConfigFile, RunResult& result) {
+    clockType::time_point start, bool snapshotMode,
+    bool asyncStartMode,
+    const std::map<std::string, long long>& resultBaseline,
+    const std::map<std::string, long long>& hiprofilerZipBaseline,
+    const std::string& nativeleaksPid,
+    const std::string& localConfigFile, RunResult& result)
+{
     result.elapsed = ElapsedSince(start);
 
     // fork/pipe failed to spawn hdc — report without writing a log.
@@ -2364,12 +2365,13 @@ constexpr long long kSnapshotPollTimeoutS = 120;
 // always carries a human-readable outcome and `output` the device-side command
 // transcript.
 bool exportSnapshotOnce(const HdcRunOptions& opts,
-                          const std::string& command,
-                          const std::string& role,
-                          std::vector<std::string>& files,
-                          std::string& status,
-                          std::string& output,
-                          std::string& err) {
+    const std::string& command,
+    const std::string& role,
+    std::vector<std::string>& files,
+    std::string& status,
+    std::string& output,
+    std::string& err)
+{
     files.clear();
     status.clear();
     err.clear();
@@ -2429,10 +2431,11 @@ void RemoveSnapshotArtifacts(const std::vector<std::string>& files)
 // snapshot that is kept is always the one holding the session's highest ArkTS
 // heap.
 void RunContinuousSnapshot(const HdcRunOptions& opts,
-                             const std::string& command,
-                             const PreCaptureState& pre,
-                             clockType::time_point start,
-                             RunResult& result) {
+    const std::string& command,
+    const PreCaptureState& pre,
+    clockType::time_point start,
+    RunResult& result)
+{
     result.snapshotAttempted = true;
 
     std::string pid = pre.initialPid;

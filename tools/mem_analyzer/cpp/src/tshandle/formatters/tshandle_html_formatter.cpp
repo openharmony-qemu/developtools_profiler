@@ -97,8 +97,8 @@ json ChainJson(const TshandleCallChain& chain)
             {"frames", std::move(frames)}};
 }
 
-std::vector<CallChainResult> displayChains(
-    const std::vector<TshandleCallChain>& chains) {
+std::vector<CallChainResult> displayChains(const std::vector<TshandleCallChain>& chains)
+{
     std::vector<CallChainResult> output;
     output.reserve(chains.size());
     for (const auto& chain : chains) {
@@ -114,8 +114,9 @@ std::vector<CallChainResult> displayChains(
 }
 
 std::string BuildMetaHtml(const std::string& sourceFile, const std::string& parsedAt,
-                            const TraceMeta& traceMeta,
-                            const TshandleHandleSections& global, const TshandleTypeSection& local) {
+    const TraceMeta& traceMeta,
+    const TshandleHandleSections& global, const TshandleTypeSection& local)
+{
     std::string name = platform::basename(sourceFile);
     if (name.empty()) {
         name = "-";
@@ -145,9 +146,10 @@ struct SectionResult {
 };
 
 SectionResult BuildSection(const char* tabId, const char* label,
-                            HtraceEventType handleType, const TshandleTypeSection& section,
-                            double denominator,
-                            json& allData, size_t& graphIndex) {
+    HtraceEventType handleType, const TshandleTypeSection& section,
+    double denominator,
+    json& allData, size_t& graphIndex)
+{
     SectionResult result{tabId, label, handleType, ""};
     
     const auto& objects = section.topObjects;
@@ -310,8 +312,8 @@ std::string BuildTabContent(const std::vector<SectionResult>& sections)
     return output;
 }
 
-void FormatWithStream(std::ostream& out, const TshandleAnalysisOutput& analysis,
-                        const std::string& filePath) {
+void FormatWithStream(std::ostream& out, const TshandleAnalysisOutput& analysis, const std::string& filePath)
+{
     auto& htraceCfg = HtraceConfigMgr::instance();
     if (!htraceCfg.IsLoaded()) {
         std::string cfgErr;
@@ -369,8 +371,9 @@ void FormatWithStream(std::ostream& out, const TshandleAnalysisOutput& analysis,
 } // namespace
 
 std::string TshandleWriteAnalysisHtml(const TshandleAnalysisOutput& analysis,
-                                         const std::string& filePath, const RunContext& ctx,
-                                         const std::string& outDir) {
+    const std::string& filePath, const RunContext& ctx,
+    const std::string& outDir)
+{
     (void)ctx;  // 当前 tshandle HTML 不使用运行参数
     StageTimer timer("HTML write");
 

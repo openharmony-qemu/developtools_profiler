@@ -84,8 +84,7 @@ TshandleTypeSection buildSectionWithStacks(
             for (const auto& ref : instance.nativeRef) {
                 if (ref.handleType != handleType||
                     ref.callStackId == 0 ||
-                    validStackIds.find(ref.callStackId) == validStackIds.end())
-                    {
+                    validStackIds.find(ref.callStackId) == validStackIds.end()) {
                     continue;
                 }
                 long long id = ref.callStackId;

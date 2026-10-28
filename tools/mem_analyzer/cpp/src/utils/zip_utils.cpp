@@ -73,8 +73,8 @@ constexpr uint64_t kMaxTotalUncompressedBytes = 4ULL * 1024 * 1024 * 1024;
 
 } // namespace
 
-bool ExtractZip(const std::string& zipPath, const std::string& destDir,
-                 std::string& error) {
+bool ExtractZip(const std::string& zipPath, const std::string& destDir, std::string& error)
+{
     unzFile uf = nullptr;
 #if defined(_WIN32)
     // Windows：宽字符文件函数 + UTF-8→wstring，正确处理中文路径。

@@ -127,6 +127,6 @@ inline std::vector<EventTypeMapping> DefaultEventMappings()
  * `filter_category` 为 false 时（parse-only 模式）不做类型过滤，全部启用的类型都纳入。
  */
 TraceDB ProcessHtraceDb(const std::string& dbPath, const std::string& category,
-                          bool filterCategory, bool needAddrs = false);
+    bool filterCategory, bool needAddrs = false);
 
 } // namespace mem_analyzer

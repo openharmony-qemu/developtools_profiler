@@ -102,9 +102,7 @@ std::string GetProcessPid(const std::string& processName);
 // When `reliable` is non-null it reports whether the query actually succeeded
 // (true even when the process is simply not running) — a failed/stalled
 // query sets it to false so callers can avoid misreporting a process as gone.
-std::string GetProcessPidFast(const std::string& processName,
-                                 long long timeoutMs,
-                                 bool* reliable = nullptr);
+std::string GetProcessPidFast(const std::string& processName, long long timeoutMs, bool* reliable = nullptr);
 
 RunResult RunHdc(const HdcRunOptions& opts);
 

@@ -26,7 +26,8 @@
 namespace mem_analyzer {
 
 std::string JsleakWriteAnalysisJson(const json& data, const std::string& filePath,
-                                       const RunContext& ctx, const std::string& outDir) {
+    const RunContext& ctx, const std::string& outDir)
+{
     StageTimer timer("JSON write");
 
     auto base = platform::stem(filePath);

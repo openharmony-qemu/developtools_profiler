@@ -38,8 +38,8 @@ struct RetainedSizeResult {
  * exclude_shortcut_edges: if true, skip 'shortcut' edges from non-root nodes (matching Chrome devtools).
  */
 RetainedSizeResult ComputeNodeSizes(const HeapSnapshot& snapshot,
-                                         bool excludeWeakEdges = true,
-                                         bool excludeShortcutEdges = true);
+    bool excludeWeakEdges = true,
+    bool excludeShortcutEdges = true);
 
 /// One step in the shortest reference chain from GC root to a node.
 struct PathEdgeRecord {

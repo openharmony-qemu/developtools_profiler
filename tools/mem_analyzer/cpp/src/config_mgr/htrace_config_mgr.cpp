@@ -271,7 +271,8 @@ bool HtraceConfigMgr::MatchTsPattern(const std::string& lib, const std::string& 
 }
 
 bool HtraceConfigMgr::MatchClassificationRule(const ClassificationRule& rule,
-                                                  const std::string& lib, bool vaddrNull) const {
+    const std::string& lib, bool vaddrNull) const
+{
     if (rule.requireNoVaddr && !vaddrNull) {
         return false;
     }
@@ -286,8 +287,7 @@ bool HtraceConfigMgr::MatchClassificationRule(const ClassificationRule& rule,
     // lib_ends_with: OR
     for (const auto& suffix : rule.libEndsWith) {
         if (lib.size() >= suffix.size() &&
-            lib.compare(lib.size() - suffix.size(), suffix.size(), suffix) == 0)
-            {
+            lib.compare(lib.size() - suffix.size(), suffix.size(), suffix) == 0) {
             return true;
         }
     }
@@ -328,8 +328,7 @@ bool HtraceConfigMgr::IsTsSymbol(const std::string& lib, bool vaddrNull) const
         }
         for (const auto& suffix : rule.libEndsWith) {
             if (lib.size() >= suffix.size() &&
-                lib.compare(lib.size() - suffix.size(), suffix.size(), suffix) == 0)
-                {
+                lib.compare(lib.size() - suffix.size(), suffix.size(), suffix) == 0) {
                 return true;
             }
         }
@@ -340,9 +339,10 @@ bool HtraceConfigMgr::IsTsSymbol(const std::string& lib, bool vaddrNull) const
 // ===== Filtering =====
 
 bool HtraceConfigMgr::MatchFilterRule(const SymbolFilterRule& rule,
-                                         const std::string& libFile,
-                                         const std::string& symName,
-                                         Scope scope) const {
+    const std::string& libFile,
+    const std::string& symName,
+    Scope scope) const
+{
     if (rule.scope == "app") {
         if (scope != Scope::AppOnly && scope != Scope::AppAndSystem && scope != Scope::Mixed)
             return false;
@@ -379,9 +379,8 @@ bool HtraceConfigMgr::MatchFilterRule(const SymbolFilterRule& rule,
     return false;
 }
 
-bool HtraceConfigMgr::ShouldFilter(const std::string& libFile,
-                                     const std::string& symName,
-                                     Scope scope) const {
+bool HtraceConfigMgr::ShouldFilter(const std::string& libFile, const std::string& symName, Scope scope) const
+{
     for (const auto& rule : filterRules_) {
         if (MatchFilterRule(rule, libFile, symName, scope))
             return true;
@@ -389,9 +388,8 @@ bool HtraceConfigMgr::ShouldFilter(const std::string& libFile,
     return false;
 }
 
-bool HtraceConfigMgr::IsOrphanRecoverable(const std::string& libFile,
-                                            const std::string& symName,
-                                            Scope scope) const {
+bool HtraceConfigMgr::IsOrphanRecoverable(const std::string& libFile, const std::string& symName, Scope scope) const
+{
     // 仅在符号命中至少一条噪声规则时才可能回收；若同时命中任意一条
     // orphan_recoverable=false 的规则，则孤儿栈兜底时也不回收它。
     bool matched = false;

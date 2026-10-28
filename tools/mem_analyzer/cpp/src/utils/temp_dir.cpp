@@ -86,7 +86,8 @@ TempDir::~TempDir()
     cleanup();
 }
 
-TempDir& TempDir::operator=(TempDir&& other) noexcept {
+TempDir& TempDir::operator=(TempDir&& other) noexcept
+{
     if (this != &other) {
         cleanup();
         path_ = std::move(other.path_);

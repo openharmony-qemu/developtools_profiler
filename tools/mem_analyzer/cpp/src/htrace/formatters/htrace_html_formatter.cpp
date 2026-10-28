@@ -156,9 +156,10 @@ std::string BuildFilepageDetailSections(const HtraceSection& section, size_t sta
 }
 
 std::string BuildMmapTabContentHTML(const std::vector<TabGroup>& groups,
-                                    const std::vector<TabGroup>& streamGroups,
-                                    const std::vector<const HtraceSection*>& filepageLists,
-                                    long long totalSize, bool countMode) {
+    const std::vector<TabGroup>& streamGroups,
+    const std::vector<const HtraceSection*>& filepageLists,
+    long long totalSize, bool countMode)
+{
     std::string result;
     result += "<style>\n"
         ".sub-tab-bar { display: flex; margin: 20px 0 0; border-bottom: 1px solid #dee2e6; }\n"
@@ -259,7 +260,8 @@ struct StreamGroupMeta {
 };
 
 void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
-                        const std::string& filePath, const RunContext& ctx) {
+    const std::string& filePath, const RunContext& ctx)
+{
     StageTimer timer("HTML gen");
 
     std::string processName = full.processName;
@@ -492,8 +494,9 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
 } // namespace
 
 std::string HtraceWriteAnalysisHtml(const HtraceAnalysisOutput& full,
-                                       const std::string& filePath, const RunContext& ctx,
-                                       const std::string& outDir) {
+    const std::string& filePath, const RunContext& ctx,
+    const std::string& outDir)
+{
     StageTimer timer("HTML write");
 
     auto base = platform::stem(filePath);

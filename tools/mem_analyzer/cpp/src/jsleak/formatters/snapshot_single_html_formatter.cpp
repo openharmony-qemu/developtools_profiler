@@ -60,9 +60,8 @@ std::string SnapshotHtmlCss()
 )CSS";
 }
 
-std::string GenerateSnapshotHTML(const json& data,
-                                 const std::string& sourceFile,
-                                 const std::string& jsleakMode) {
+std::string GenerateSnapshotHTML(const json& data, const std::string& sourceFile, const std::string& jsleakMode)
+{
     std::string escapedSourceFile = EscapeHtml(platform::basename(sourceFile));
     std::string fileType = EndsWithIgnoreCase(sourceFile, "rawheap") ? "rawheap" : "heapsnapshot";
     std::string parsedAt = data.value("parsedAt", "");
@@ -180,7 +179,8 @@ std::string GenerateSnapshotHTML(const json& data,
 } // namespace
 
 std::string JsleakWriteAnalysisHtml(const json& data, const std::string& filePath,
-                                       const RunContext& ctx, const std::string& outDir) {
+    const RunContext& ctx, const std::string& outDir)
+{
     StageTimer timer("HTML write");
 
     auto base = platform::stem(filePath);

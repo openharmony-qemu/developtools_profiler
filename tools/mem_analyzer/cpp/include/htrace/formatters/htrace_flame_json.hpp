@@ -33,15 +33,15 @@ namespace mem_analyzer {
 /// 从 FlameNode 直接构建火焰图 JSON 树（跳过 to_json → buildFlameTreeJson 的中间步骤）。
 /// 根节点使用 TopSymbolInfo 的符号信息（FlameNode 根节点是合成节点，symbol_id/file_id 为空）。
 json BuildFlameTreeJsonFromFlameNode(const FlameNode& node, const std::string& rootName,
-                                     const std::string& rootLib, const std::string& rootLibOffset,
-                                     const std::unordered_map<int, std::string>& dataDict,
-                                     htmlAnalysis::StringTable& st);
+    const std::string& rootLib, const std::string& rootLibOffset,
+    const std::unordered_map<int, std::string>& dataDict,
+    htmlAnalysis::StringTable& st);
 
 /// 从 FlameNode 直接构建冰柱图 JSON 树（跳过中间 JSON）。
 json BuildIcicleTreeJsonFromFlameNode(const FlameNode& node, const std::string& rootName,
-                                      const std::string& rootLib, const std::string& rootLibOffset,
-                                      const std::unordered_map<int, std::string>& dataDict,
-                                      htmlAnalysis::StringTable& st);
+    const std::string& rootLib, const std::string& rootLibOffset,
+    const std::unordered_map<int, std::string>& dataDict,
+    htmlAnalysis::StringTable& st);
 
 /// 从 TopSymbolInfo 构建轻量 SymbolDataEntry（仅 info + callChains，不含 flameTree/icicleTree）。
 /// 用于延迟构建模式：flameTree/icicleTree 在流式写入时按需构建，大幅降低峰值内存。

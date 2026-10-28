@@ -48,8 +48,8 @@ constexpr size_t COPY_CHUNK = 4 * 1024 * 1024; // 4 MB — 字节流式拷贝块
 
 /// 在文件中从 start_pos 起流式扫描 marker（如 "\"strings\":"），返回其字节偏移。
 /// 窗口按 (marker.size() - 1) 字节重叠，避免跨块边界遗漏。
-size_t FindMarkerOffset(std::ifstream& file, const std::string& marker,
-                         size_t startPos, size_t file_size) {
+size_t FindMarkerOffset(std::ifstream& file, const std::string& marker, size_t startPos, size_t file_size)
+{
     std::string buf(SCAN_WIN, '\0');
     size_t pos = startPos;
     file.clear();
@@ -196,8 +196,8 @@ std::string SanitizeControlChars(const std::string& text)
 ///    "com.xxx/@douyin/camera_impl@1.0.0/src/main/ets/camera/a.ts"，
 ///    bundle 前缀与 @scope 前缀均可省略）。
 /// 成功时返回 true 并填充 module / version / rel_path。
-bool ParseArktsModulePath(const std::string& pathPart, std::string& module,
-                             std::string& version, std::string& relPath) {
+bool ParseArktsModulePath(const std::string& pathPart, std::string& module, std::string& version, std::string& relPath)
+{
     const size_t atPos = pathPart.rfind('@');
     if (atPos == std::string::npos) {
         return false;
@@ -258,7 +258,8 @@ bool ParseArktsModulePath(const std::string& pathPart, std::string& module,
 /// 修正为定义起始行最贴近还原行号的候选。函数名可能是混淆名（开启属性混淆）
 /// 或原始名（未开启时），两者都查。未修正返回 false（保持 sourceMap 映射结果）。
 bool RefineLineByNameCache(const NameCacheIndex* ncache, const std::string& sourcePath,
-                               const std::string& suffix, int& origLine) {
+    const std::string& suffix, int& origLine)
+{
     if (ncache == nullptr || sourcePath.empty()) {
         return false;
     }
@@ -402,9 +403,10 @@ bool RestoreFunctionNameInSuffix(const NameCacheIndex* ncache, std::string& valu
 /// 对单个 strings 数组元素做反混淆还原（混淆路径→源码路径、混淆名→原始名）。
 /// 返回还原后的字符串；发生替换时递增 replaced。
 std::string DeobfuscateOneString(const std::string& value,
-                                   const SourceMapIndex* smap,
-                                   const NameCacheIndex* ncache,
-                                   size_t& replaced) {
+    const SourceMapIndex* smap,
+    const NameCacheIndex* ncache,
+    size_t& replaced)
+{
     std::string result = value;
     std::string original;
 
@@ -488,7 +490,8 @@ std::string DeobfuscateOneString(const std::string& value,
 //  按原始字节流式拷贝，避免大快照全量 json::parse + dump 导致的内存峰值。
 // ============================================================================
 bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& outputPath,
-                              const SourceMapIndex* smap, const NameCacheIndex* ncache) {
+    const SourceMapIndex* smap, const NameCacheIndex* ncache)
+{
     std::error_code ec;
     if (!fs::is_regular_file(mem_analyzer::PathFromUtf8(inputPath), ec)) {
         log::Loge("Error: Heapsnapshot file not found: ", inputPath);
@@ -600,8 +603,9 @@ bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& ou
 //  （tshandle zip 入口）共用，消除重复逻辑。
 // ============================================================================
 bool DeobfuscateWithIndices(const std::string& inputPath, const std::string& outputPath,
-                              const std::string& sourcemapDir,
-                              const std::string& namecacheDir) {
+    const std::string& sourcemapDir,
+    const std::string& namecacheDir)
+{
     // 两个目录都为空 → 无操作，调用方应直接降级为原始输入
     if (sourcemapDir.empty() && namecacheDir.empty()) {
         return false;

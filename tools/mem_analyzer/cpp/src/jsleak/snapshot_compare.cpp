@@ -98,7 +98,8 @@ bool IsSourceLocatedArktsObject(const std::string& name)
 
 std::vector<std::string> dominatorAncestorKeys(
     const HeapSnapshot& heap, uint32_t node,
-    std::unordered_map<uint32_t, std::pair<std::string, std::string>>& identityCache) {
+    std::unordered_map<uint32_t, std::pair<std::string, std::string>>& identityCache)
+{
     std::vector<std::string> result;
     uint32_t current = node;
     for (size_t depth = 0; depth <= static_cast<size_t>(heap.nodeCount); ++depth) {
@@ -122,11 +123,11 @@ std::vector<std::string> dominatorAncestorKeys(
 
 std::string FormatShortestReferencePath(
     const HeapSnapshot& heap, uint32_t node,
-    std::unordered_map<uint32_t, std::pair<std::string, std::string>>& identityCache) {
+    std::unordered_map<uint32_t, std::pair<std::string, std::string>>& identityCache)
+{
     constexpr uint32_t INVALID = UINT32_MAX;
     if (node >= static_cast<uint32_t>(heap.nodeCount) ||
-        node >= heap.pathParentIndex.size())
-        {
+        node >= heap.pathParentIndex.size()) {
         return {};
     }
     std::vector<uint32_t> indices;
@@ -188,8 +189,7 @@ SnapshotIndex BuildIndex(const HeapSnapshot& heap, const HeapSnapshot& other)
         // or display name changed.
         const uint32_t nodeId = heap.GetNodeId(index);
         if (nodeId != UINT32_MAX &&
-            other.nodeIdToIdx.find(nodeId) != other.nodeIdToIdx.end())
-            {
+            other.nodeIdToIdx.find(nodeId) != other.nodeIdToIdx.end()) {
             continue;
         }
         const std::string type = heap.GetNodeTypeName(index);
@@ -238,8 +238,8 @@ SnapshotIndex BuildIndex(const HeapSnapshot& heap, const HeapSnapshot& other)
     return out;
 }
 
-const Aggregate& findOrEmpty(const std::unordered_map<std::string, Aggregate>& map,
-                               const std::string& key) {
+const Aggregate& findOrEmpty(const std::unordered_map<std::string, Aggregate>& map, const std::string& key)
+{
     static const Aggregate empty;
     const auto it = map.find(key);
     return it == map.end() ? empty : it->second;
@@ -329,7 +329,8 @@ json DeltaRow(const Aggregate& a, const Aggregate& b)
 }
 
 json CompareAggregatesComplete(const std::unordered_map<std::string, Aggregate>& baseline,
-                                 const std::unordered_map<std::string, Aggregate>& target) {
+    const std::unordered_map<std::string, Aggregate>& target)
+{
     std::set<std::string> keys;
     for (const auto& item : baseline) {
         keys.insert(item.first);
@@ -342,8 +343,7 @@ json CompareAggregatesComplete(const std::unordered_map<std::string, Aggregate>&
     for (const auto& key : keys) {
         json row = DeltaRow(findOrEmpty(baseline, key), findOrEmpty(target, key));
         if (row["baseline"]["deltaNodeIds"].empty() &&
-            row["target"]["deltaNodeIds"].empty())
-            {
+            row["target"]["deltaNodeIds"].empty()) {
             continue;
         }
         rows.push_back(std::move(row));
@@ -374,8 +374,8 @@ struct LogicalGrowthResult {
     json groups = json::array();
 };
 
-LogicalGrowthResult BuildLogicalGrowthGroups(
-    json rows, const SnapshotIndex& baseline, const SnapshotIndex& target) {
+LogicalGrowthResult BuildLogicalGrowthGroups(json rows, const SnapshotIndex& baseline, const SnapshotIndex& target)
+{
     std::unordered_map<std::string, size_t> rowByKey;
     rowByKey.reserve(rows.size());
     for (size_t i = 0; i < rows.size(); ++i) {
@@ -623,8 +623,8 @@ std::vector<uint32_t> leakEntryNodeIds(const json& entry)
     return result;
 }
 
-std::vector<uint32_t> nodeIdDifference(const std::vector<uint32_t>& source,
-                                         const std::vector<uint32_t>& other) {
+std::vector<uint32_t> nodeIdDifference(const std::vector<uint32_t>& source, const std::vector<uint32_t>& other)
+{
     const std::unordered_set<uint32_t> otherIds(other.begin(), other.end());
     std::vector<uint32_t> result;
     result.reserve(source.size());
@@ -636,8 +636,8 @@ std::vector<uint32_t> nodeIdDifference(const std::vector<uint32_t>& source,
     return result;
 }
 
-json FilterLeakReferenceChains(const json& chains,
-                                  const std::vector<uint32_t>& deltaNodeIds) {
+json FilterLeakReferenceChains(const json& chains, const std::vector<uint32_t>& deltaNodeIds)
+{
     const std::unordered_set<uint32_t> deltaIds(deltaNodeIds.begin(), deltaNodeIds.end());
     json result = json::array();
     for (const auto& sourceChain : chains) {
@@ -645,8 +645,7 @@ json FilterLeakReferenceChains(const json& chains,
         json filteredIds = json::array();
         for (const auto& nodeId : chain.value("nodeIds", json::array())) {
             if (nodeId.is_number_unsigned() &&
-                deltaIds.find(nodeId.get<uint32_t>()) != deltaIds.end())
-                {
+                deltaIds.find(nodeId.get<uint32_t>()) != deltaIds.end()) {
                 filteredIds.push_back(nodeId);
             }
         }
@@ -659,9 +658,7 @@ json FilterLeakReferenceChains(const json& chains,
     return result;
 }
 
-json BuildChangedLeakObjects(const json& baselineLeaks,
-                                const json& targetLeaks,
-                                size_t topN) {
+json BuildChangedLeakObjects(const json& baselineLeaks, const json& targetLeaks, size_t topN) {
     std::set<std::string> names;
     for (auto it = baselineLeaks.begin(); it != baselineLeaks.end(); ++it) {
         names.insert(it.key());
@@ -754,9 +751,8 @@ json BuildChangedLeakObjects(const json& baselineLeaks,
 
 } // namespace
 
-bool JsleakCompareInputsValid(const std::string& baselineFile,
-                                 const std::string& targetFile,
-                                 std::string& error) {
+bool JsleakCompareInputsValid(const std::string& baselineFile, const std::string& targetFile, std::string& error)
+{
     const std::string baselineFormat = SnapshotInputFormat(baselineFile);
     const std::string targetFormat = SnapshotInputFormat(targetFile);
     if (baselineFormat.empty() || targetFormat.empty()) {
@@ -786,11 +782,12 @@ uint64_t HeapSizeOf(const HeapSnapshot& heap)
 }
 
 json JsleakCompareAnalyzeImpl(const HeapSnapshot& baseline,
-                                 const HeapSnapshot& target,
-                                 const std::string& baselineFile,
-                                 const std::string& targetFile,
-                                 size_t topN,
-                                 const std::string& mode) {
+    const HeapSnapshot& target,
+    const std::string& baselineFile,
+    const std::string& targetFile,
+    size_t topN,
+    const std::string& mode)
+{
     // -m 选择输出维度：property-tag 跳过引用链聚合，top-chain 跳过泄漏规则。
     const bool wantChains = mode != "property-tag";
     const bool wantLeaks = mode != "top-chain";
@@ -938,11 +935,12 @@ json JsleakCompareAnalyzeImpl(const HeapSnapshot& baseline,
 } // namespace
 
 json JsleakCompareAnalyze(const HeapSnapshot& baseline,
-                            const HeapSnapshot& target,
-                            const std::string& baselineFile,
-                            const std::string& targetFile,
-                            int topN,
-                            const std::string& mode) {
+    const HeapSnapshot& target,
+    const std::string& baselineFile,
+    const std::string& targetFile,
+    int topN,
+    const std::string& mode)
+{
     return JsleakCompareAnalyzeImpl(baseline, target, baselineFile, targetFile,
                                        static_cast<size_t>(std::max(1, topN)), mode);
 }

@@ -87,9 +87,10 @@ int64_t IttSubtreeMaxSize(const json& node)
 // anc 为所有祖先行 id 的逗号列表，前端据此判断该行是否应随某个折叠的祖先一起隐藏；
 // anc_collapsed 表示是否存在处于折叠态的祖先（决定本行初始是否隐藏）。
 void EmitIcicleTreeRows(const json& node, const std::string& tableId,
-                           const std::string& path, int depth, const std::string& anc,
-                           bool ancCollapsed,
-                           int64_t rootSize, std::string& out) {
+    const std::string& path, int depth, const std::string& anc,
+    bool ancCollapsed,
+    int64_t rootSize, std::string& out)
+{
     const std::string rowId = tableId + "_r" + (path.empty() ? "root" : path);
     const std::string name = node.value("n", std::string());
     const int64_t size = node.value("t", static_cast<int64_t>(0));

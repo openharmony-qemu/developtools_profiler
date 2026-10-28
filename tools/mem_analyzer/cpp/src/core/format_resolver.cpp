@@ -17,7 +17,8 @@
 namespace mem_analyzer {
 
 FormatKeyword ResolveFormatKeyword(const std::string& moduleName, const ModuleCapability& cap,
-                                     const std::string& explicitFormat, bool parseOnly) {
+    const std::string& explicitFormat, bool parseOnly)
+{
     FormatKeyword out;
     const std::string modeName = parseOnly ? "parse-only" : "analysis";
     const ModeCapability& modeCap = cap.ForMode(parseOnly);

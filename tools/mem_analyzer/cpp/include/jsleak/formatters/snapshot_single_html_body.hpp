@@ -20,12 +20,12 @@ namespace mem_analyzer {
 
 std::string BuildChainPathHtml(const json& chainFrames);
 std::string BuildPropertyTagTabHtml(const json& propertyTagObjects,
-                                        const std::string& prefix,
-                                        const std::string& tabId, bool active,
-                                        json& icicleCharts);
+    const std::string& prefix,
+    const std::string& tabId, bool active,
+    json& icicleCharts);
 std::string BuildTopChainTabHtml(const json& topRefChains,
-                                     const std::string& prefix,
-                                     const std::string& tabId, bool active,
-                                     json& icicleCharts, bool searchOnOverview = false);
+    const std::string& prefix,
+    const std::string& tabId, bool active,
+    json& icicleCharts, bool searchOnOverview = false);
 
 } // namespace mem_analyzer

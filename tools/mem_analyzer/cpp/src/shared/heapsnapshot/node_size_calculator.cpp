@@ -60,15 +60,15 @@ constexpr int EMPTY_SLOT = -1;                // Cooper algorithm sentinel (unus
 
 /// Decode the target node index from an edge field pointer.
 /// V8 stores to_node as (nodeIndex * nodeFieldsCount), so we divide.
-inline uint32_t TargetIndexOf(const std::vector<uint32_t>& edges, size_t ptr,
-                                 int toNodeOff, int nodeFieldsCount) {
+inline uint32_t TargetIndexOf(const std::vector<uint32_t>& edges, size_t ptr, int toNodeOff, int nodeFieldsCount)
+{
     return edges[ptr + static_cast<size_t>(toNodeOff)] / static_cast<uint32_t>(nodeFieldsCount);
 }
 
 /// Read self_size for a node from the flat nodes array.
 /// node_index * node_fields_count + self_size_off
-inline uint32_t SelfSizeOf(const std::vector<uint32_t>& nodes, uint32_t NodeIndex,
-                              int nodeFieldsCount, int selfSizeOff) {
+inline uint32_t SelfSizeOf(const std::vector<uint32_t>& nodes, uint32_t NodeIndex, int nodeFieldsCount, int selfSizeOff)
+{
     return nodes[static_cast<size_t>(NodeIndex) * static_cast<size_t>(nodeFieldsCount) +
                  static_cast<size_t>(selfSizeOff)];
 }
@@ -132,8 +132,8 @@ struct DomContext {
 //    - element edges to (Document DOM trees) synthetic node
 //    - weak edges (in the DFS phase)
 // ============================================================================
-static void ComputePageFlags(DomContext& ctx, std::vector<uint32_t>& pageFlags,
-                                StageTimer& timer) {
+static void ComputePageFlags(DomContext& ctx, std::vector<uint32_t>& pageFlags, StageTimer& timer)
+{
     constexpr uint32_t PAGE_OBJECT_FLAG = 1;  // single bit flag
     pageFlags.assign(ctx.nodeCount, 0);
 
@@ -215,9 +215,8 @@ struct PostOrderResult {
     uint32_t rootPo;                          // post-order index of root (always node_count-1)
 };
 
-static PostOrderResult ComputeDfsPostOrder(DomContext& ctx,
-                                               const std::vector<uint32_t>& pageFlags,
-                                               StageTimer& timer) {
+static PostOrderResult ComputeDfsPostOrder(DomContext& ctx, const std::vector<uint32_t>& pageFlags, StageTimer& timer)
+{
     constexpr uint32_t PAGE_OBJECT_FLAG = 1;
 
     // ---- Edge filter for DFS reachability ----
@@ -749,9 +748,8 @@ static void ComputeRetainedSizes(
 //    4. Retained size propagation (post-order prefix sum)
 // ============================================================================
 
-RetainedSizeResult ComputeNodeSizes(const HeapSnapshot& snapshot,
-                                         bool excludeWeakEdges,
-                                         bool excludeShortcutEdges) {
+RetainedSizeResult ComputeNodeSizes(const HeapSnapshot& snapshot, bool excludeWeakEdges, bool excludeShortcutEdges)
+{
     StageTimer timer("NodeSizes");
 
     // ---- Build the context struct from snapshot data ----
@@ -1183,9 +1181,10 @@ static void RunLayeredBfs(
 // ============================================================================
 
 ShortestPathsResult ComputeShortestPaths(const HeapSnapshot& snapshot,
-                                           bool excludeWeakEdges,
-                                           bool excludeShortcutEdges,
-                                           bool excludeHiddenEdges) {
+    bool excludeWeakEdges,
+    bool excludeShortcutEdges,
+    bool excludeHiddenEdges)
+{
     StageTimer timer("ShortPaths");
 
     BfsContext ctx{

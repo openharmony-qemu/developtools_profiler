@@ -171,7 +171,8 @@ std::string HeapSnapshot::GetStringExtName(uint32_t NodeIndex) const
 // skip_markers：原型名命中其中任一子串即视为「仍是包装层」，跳过并继续上溯。
 // 返回被包装的类名；返回空表示链上未找到可用类名。
 std::string HeapSnapshot::ResolveStateMgmtWrappedClass(
-    uint32_t NodeIndex, const std::vector<std::string>& skipMarkers) const {
+    uint32_t NodeIndex, const std::vector<std::string>& skipMarkers) const
+{
     std::unordered_set<uint32_t> visited;
     visited.reserve(16);
     uint32_t cur = NodeIndex;
@@ -255,8 +256,8 @@ std::string HeapSnapshot::GetObservedClassExtName(uint32_t NodeIndex) const
 // 获取 declarative_frontend/stateMgmt.js#JSObject 的扩展名：与 observedClass 同一套路，
 // 沿 hclass → Proto → hclass → Proto 交替上溯，用被包装的 ArkTS 类名替换掉 JSObject 本身。
 // 链上找不到可用类名时，退回到「去掉 declarative_frontend/ 前缀」的旧行为。
-std::string HeapSnapshot::GetStateMgmtJsObjectExtName(uint32_t NodeIndex,
-                                                           const std::string& nodeName) const {
+std::string HeapSnapshot::GetStateMgmtJsObjectExtName(uint32_t NodeIndex, const std::string& nodeName) const
+{
     const std::string wrapped = ResolveStateMgmtWrappedClass(
         NodeIndex, {"stateMgmt.js#JSObject", "stateMgmt.js#observedClass"});
     if (!wrapped.empty()) {
@@ -268,8 +269,8 @@ std::string HeapSnapshot::GetStateMgmtJsObjectExtName(uint32_t NodeIndex,
 
 // declarative_frontend/stateMgmt.js 对象扩展名的统一入口：
 // observedClass 沿原型链取 ArkTS 类名，JSObject 展开被包装的类，其余对象只去掉前缀。
-std::string HeapSnapshot::GetStateMgmtExtName(uint32_t NodeIndex,
-                                                 const std::string& nodeName) const {
+std::string HeapSnapshot::GetStateMgmtExtName(uint32_t NodeIndex, const std::string& nodeName) const
+{
     if (nodeName.find("stateMgmt.js#observedClass") != std::string::npos) {
         return GetObservedClassExtName(NodeIndex);
     }
@@ -415,8 +416,7 @@ std::string HeapSnapshot::ComputeExtendedName(uint32_t NodeIndex) const
     // "declarative_frontend/stateMgmt.js"（例如堆里保存的模块 URL），会被误判成
     // stateMgmt 对象，进而改变 property-tag / compare / 引用链的分组键。
     if (nodeType != "string" &&
-        nodeName.find("declarative_frontend/stateMgmt.js") != std::string::npos)
-        {
+        nodeName.find("declarative_frontend/stateMgmt.js") != std::string::npos) {
         result = GetStateMgmtExtName(NodeIndex, nodeName);
     } else if (nodeType == "string") {
         result = GetStringExtName(NodeIndex);
@@ -648,8 +648,8 @@ static std::vector<uint32_t> parseArrayChunked(std::ifstream& file, size_t byteO
 /// To avoid missing markers that straddle chunk boundaries, each window
 /// overlaps the previous one by (marker.length() - 1) bytes.
 /// Returns the absolute byte offset of the marker, or std::string::npos.
-static size_t FindMarkerInFile(std::ifstream& file, const std::string& marker,
-                                   size_t startPos, size_t file_size) {
+static size_t FindMarkerInFile(std::ifstream& file, const std::string& marker, size_t startPos, size_t file_size)
+{
     std::string readBuf(META_CHUNK, '\0');
     file.clear();  // ensure stream is in good state before scanning
     size_t pos = startPos;
@@ -685,8 +685,8 @@ static size_t FindMarkerInFile(std::ifstream& file, const std::string& marker,
 /// Find the position of '[' that starts a JSON array after a given marker.
 /// e.g., find_array_bracket_after(file, "\"nodes\":", start_pos, file_size)
 /// returns the byte offset of the '[' after the marker.
-static size_t FindArrayBracketAfter(std::ifstream& file, const std::string& marker,
-                                        size_t startPos, size_t file_size) {
+static size_t FindArrayBracketAfter(std::ifstream& file, const std::string& marker, size_t startPos, size_t file_size)
+{
     size_t markPos = FindMarkerInFile(file, marker, startPos, file_size);
     if (markPos == std::string::npos) {
         return std::string::npos;
@@ -876,9 +876,10 @@ static std::vector<std::string> readStringsArray(std::ifstream& file, size_t bra
 //  Also returns the byte position of the nodes array bracket for Phase 2.
 // ============================================================================
 static void ParseSnapshotMeta(HeapSnapshot& snapshot,
-                                 const std::string& headBuf,
-                                 size_t nodesMarkerPos,
-                                 size_t& nodesArrayBracket) {
+    const std::string& headBuf,
+    size_t nodesMarkerPos,
+    size_t& nodesArrayBracket)
+{
     // Locate the snapshot metadata JSON between "snapshot": and "nodes":
     size_t snapIdx = headBuf.find("\"snapshot\":");
     nodesArrayBracket = headBuf.find('[', nodesMarkerPos + 8);
@@ -1003,8 +1004,8 @@ static void ParseSnapshotMeta(HeapSnapshot& snapshot,
 //  Parsed via ChunkedUintParser to handle large arrays without loading the
 //  entire JSON string into memory.
 // ============================================================================
-static void ParseNodesArray(HeapSnapshot& snapshot, std::ifstream& file,
-                               size_t nodesArrayBracket, size_t file_size) {
+static void ParseNodesArray(HeapSnapshot& snapshot, std::ifstream& file, size_t nodesArrayBracket, size_t file_size)
+{
     snapshot.nodes = parseArrayChunked(file, nodesArrayBracket + 1, file_size);
     size_t nc = snapshot.nodes.size() / snapshot.nodeFieldsCount;
     if (nc > static_cast<size_t>(std::numeric_limits<int>::max()))
@@ -1021,8 +1022,9 @@ static void ParseNodesArray(HeapSnapshot& snapshot, std::ifstream& file,
 //  Returns the bracket position for use in the strings phase.
 // ============================================================================
 static size_t ParseEdgesArray(HeapSnapshot& snapshot, std::ifstream& file,
-                                 const std::string& headBuf,
-                                 size_t nodesArrayBracket, size_t file_size) {
+    const std::string& headBuf,
+    size_t nodesArrayBracket, size_t file_size)
+{
     size_t edgesBracketPos = std::string::npos;
 
     // First try: header buffer (edges may be close to the beginning)
@@ -1062,8 +1064,9 @@ static size_t ParseEdgesArray(HeapSnapshot& snapshot, std::ifstream& file,
 //    Pass 3: forward scan from after edges
 // ============================================================================
 static void ParseStringsTable(HeapSnapshot& snapshot, std::ifstream& file,
-                                 const std::string& headBuf,
-                                 size_t edgesBracketPos, size_t file_size) {
+    const std::string& headBuf,
+    size_t edgesBracketPos, size_t file_size)
+{
     size_t stringsBracketPos = std::string::npos;
 
     // Clear stream state (may have failbit from earlier reads)

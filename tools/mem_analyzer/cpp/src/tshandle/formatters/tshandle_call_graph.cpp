@@ -73,8 +73,9 @@ json TshandleRenderNode::ToJson() const
 }
 
 TshandleRenderNode BuildTshandleDownstreamGraph(const std::string& objectName,
-                                                   const std::vector<TshandleCallChain>& chains,
-                                                   double objectExistingSize) {
+    const std::vector<TshandleCallChain>& chains,
+    double objectExistingSize)
+{
     TshandleRenderNode root{objectName, objectName, objectName, "", "", -1, 0, 0, 0, {}};
     for (const auto& chain : chains) {
         auto frames = chain.frames;

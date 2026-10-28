@@ -56,9 +56,7 @@ constexpr int OUTPUT_FD_INHERIT = -1;
  *                   STDERR_FILENO      → redirect to stderr
  *                   other fd           → redirect to given file descriptor
  */
-int RunProcess(const std::string& exe,
-                const std::vector<std::string>& args,
-                int outputFd = OUTPUT_FD_INHERIT);
+int RunProcess(const std::string& exe, const std::vector<std::string>& args, int outputFd = OUTPUT_FD_INHERIT);
 
 /**
  * Run a process with a spinner indicator.
@@ -66,9 +64,7 @@ int RunProcess(const std::string& exe,
  * replaced by "done" or "failed" on completion. Non-TTY output is plain text.
  * On failure, captured subprocess output is printed to stderr (up to 1MB).
  */
-int RunProcessWithSpinner(const std::string& exe,
-                             const std::vector<std::string>& args,
-                             const std::string& description);
+int RunProcessWithSpinner(const std::string& exe, const std::vector<std::string>& args, const std::string& description);
 
 /** Sanitize UTF-8: replace invalid byte sequences with '?'. */
 std::string SanitizeUtf8(const std::string& input);

@@ -38,7 +38,8 @@ std::vector<RefChainInfo>
 collectRefChains(const HeapSnapshot& heap,
                    Pred&& predicate,
                    const std::optional<size_t>& topK,
-                   const std::unordered_set<std::string>& excludeChains) {
+                   const std::unordered_set<std::string>& excludeChains)
+{
     std::vector<RefChainInfo> result;
 
     // 关键路径耗时 trace

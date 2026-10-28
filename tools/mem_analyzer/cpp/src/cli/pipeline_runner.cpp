@@ -22,8 +22,8 @@
 
 namespace mem_analyzer {
 
-static bool CheckPathLength(const std::string& filePath, const std::string& outputDir,
-                              const std::string& sourceName) {
+static bool CheckPathLength(const std::string& filePath, const std::string& outputDir, const std::string& sourceName)
+{
 #if defined(_WIN32)
     constexpr size_t pathLimit = 260;
     constexpr const char* platformName = "Windows MAX_PATH";
@@ -53,8 +53,8 @@ static bool CheckPathLength(const std::string& filePath, const std::string& outp
     return true;
 }
 
-bool ProcessFile(const std::string& filePath, AnalysisModule& module,
-                  const RunContext& baseCtx) {
+bool ProcessFile(const std::string& filePath, AnalysisModule& module, const RunContext& baseCtx)
+{
     log::Logi("Processing file: ", filePath);
     log::Logi("Using parser: ", module.name());
 

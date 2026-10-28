@@ -36,8 +36,8 @@ static double round2(double v)
     return std::round(v * 100.0) / 100.0;
 }
 
-json BuildSummary(const std::vector<ResolvedCallStack>& CallStacks,
-                  const std::vector<ArkTsClass>& arktsClasses) {
+json BuildSummary(const std::vector<ResolvedCallStack>& CallStacks, const std::vector<ArkTsClass>& arktsClasses)
+{
     struct Totals {
         long long count = 0;
         long long memory = 0;
@@ -214,7 +214,8 @@ static json ArktsClassesToJson(const std::vector<ArkTsClass>& classes)
 } // namespace
 
 std::string TshandleWriteParseJson(const TshandleParseResult& parsed, const std::string& filePath,
-                                      const RunContext& ctx, const std::string& outDir) {
+    const RunContext& ctx, const std::string& outDir)
+{
     StageTimer timer("JSON write");
 
     auto base = platform::stem(filePath);

@@ -67,7 +67,8 @@ json BuildSummary(const TraceDB& db)
 } // namespace
 
 std::string HtraceWriteParseJson(const TraceDB& db, const std::string& filePath,
-                                    const RunContext& ctx, const std::string& outDir) {
+    const RunContext& ctx, const std::string& outDir)
+{
     StageTimer timer("JSON write");
 
     auto base = platform::stem(filePath);

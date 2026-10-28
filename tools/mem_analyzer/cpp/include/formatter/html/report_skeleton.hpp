@@ -67,8 +67,8 @@ std::string HtmlReportData(const std::string& varName, const std::string& jsonTe
 /// 生成数据段（流式版）：write_all 负责写任意 JSON 值（对象或数组），
 /// 骨架只包 <script>const {var}= 前缀与 ;\n</script> 后缀。
 void HtmlReportDataStreamed(std::ostream& out,
-                               const std::string& varName,
-                               const std::function<void(std::ostream&)>& writeAll);
+    const std::string& varName,
+    const std::function<void(std::ostream&)>& writeAll);
 
 /// 生成通用脚本段：<script>\n{js}\n</script>（可多次调用，自由组织多段脚本）。
 std::string HtmlReportScript(const std::string& js);

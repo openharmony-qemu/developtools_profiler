@@ -126,8 +126,8 @@ json BuildRefChainIcicleTree(const json& chainItems, const std::string& rootName
 // 引用链总览图（冰柱图）内容：工具栏（重置按钮/搜索）+ 面包屑 + 画布 + 数据树表，
 // 外层由 build_sub_tabs 包成二级页签；交互能力由共享图表模块（chart_module）提供。
 // 数据树表由 tree_table 组件生成（见 jsleak/formatters/tree_table.hpp）。
-std::string BuildIcicleChartBody(const std::string& canvasId,
-                                    const std::string& treeTableHtml) {
+std::string BuildIcicleChartBody(const std::string& canvasId, const std::string& treeTableHtml)
+{
     const std::string safeId = EscapeHtml(canvasId);
     std::string body;
     body += "<div class=\"graphToolbar\">";

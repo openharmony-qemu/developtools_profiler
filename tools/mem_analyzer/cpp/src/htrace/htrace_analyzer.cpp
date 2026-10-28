@@ -31,8 +31,8 @@
 namespace mem_analyzer {
 
 // ===== N 轨 section 构造（HtraceRow 是 variant，构造时按同质轨装箱）=====
-static HtraceSection MakeSymbolSection(std::vector<TopSymbolInfo> syms,
-                                         const char* key = "", const char* label = "") {
+static HtraceSection MakeSymbolSection(std::vector<TopSymbolInfo> syms, const char* key = "", const char* label = "")
+{
     HtraceSection s;
     s.key = key;
     s.label = label;
@@ -43,8 +43,8 @@ static HtraceSection MakeSymbolSection(std::vector<TopSymbolInfo> syms,
     return s;
 }
 
-static HtraceSection MakeFilepageSection(std::vector<FilepageInfo> fps,
-                                           const char* key, const char* label) {
+static HtraceSection MakeFilepageSection(std::vector<FilepageInfo> fps, const char* key, const char* label)
+{
     HtraceSection s;
     s.key = key;
     s.label = label;
@@ -58,7 +58,8 @@ static HtraceSection MakeFilepageSection(std::vector<FilepageInfo> fps,
 // 将 core 单轨符号结果（key=="" 的 section）改造为双轨：第一轨 = anon 符号，第二轨 = filepage。
 // 三个 scope 恒写两轨（空也写），与旧 has_mmap_split 行为的 JSON 键结构字节一致。
 static void AttachFilepages(ScopeResult& scope, std::vector<FilepageInfo> fps,
-                             const char* anonLabel, const char* fpLabel) {
+    const char* anonLabel, const char* fpLabel)
+{
     if (scope.sections.empty()) {
         scope.sections.push_back(MakeSymbolSection({}, "mmapAnons", anonLabel));
     } else {
@@ -124,8 +125,8 @@ inline uint64_t MakeUid(int symbolId, int fileId)
 
 // ===== Helper: check if a symbol is an app symbol =====
 // Looks up the lib path via data_dict and delegates to is_app_symbol().
-static void CheckAppSymbol(SymbolData& sd,
-                           const std::unordered_map<int, std::string>& dataDict) {
+static void CheckAppSymbol(SymbolData& sd, const std::unordered_map<int, std::string>& dataDict)
+{
     if (sd.libIdNull) { sd.isApp = false; return; }
     auto it = dataDict.find(sd.libId);
     if (it == dataDict.end()) { sd.isApp = false; return; }
@@ -234,8 +235,7 @@ struct BucketKeyHash {
     size_t operator()(const BucketKey& k) const { return k.size ^ (k.hash << 1); }
 };
 
-static std::vector<std::vector<SymbolData*>> findEquivalentGroups(
-    const std::vector<SymbolData*>& symbols)
+static std::vector<std::vector<SymbolData*>> findEquivalentGroups(const std::vector<SymbolData*>& symbols)
 {
     // symbols is already sorted by total_leak_size descending by caller
 
@@ -313,9 +313,10 @@ static long long RelThresholdFor(long long replacedTotal, const AnalysisConfig& 
 }
 
 static bool CanApproximate(long long value,
-                            long long replacedTotal,
-                            long long counterpartTotal,
-                            const AnalysisConfig& config) {
+    long long replacedTotal,
+    long long counterpartTotal,
+    const AnalysisConfig& config)
+{
     if (replacedTotal <= 0) {
         return false;
     }
@@ -920,7 +921,8 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
 
     // leak_mode: 收集非 top N 覆盖的栈 -> other, 追加到对应 top_symbols 分类
     auto AppendOther = [&](std::vector<TopSymbolInfo>& targetVec,
-                            const std::vector<SymbolData>& finalSymbols) {
+                            const std::vector<SymbolData>& finalSymbols)
+    {
         if (!config.leakMode) {
             return;
         }
@@ -1013,9 +1015,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
 
 // ===== mmap-filepage 旁路分析：按文件（sub_type_id）分组聚合，无等价组/近似/scope =====
 // 判定 filepage 调用栈是否含应用符号（任意帧是 app 符号）
-static bool FilepageHasAppSymbol(
-    const CompressedCallStack& cs,
-    const std::unordered_map<int, std::string>& dataDict)
+static bool FilepageHasAppSymbol(const CompressedCallStack& cs, const std::unordered_map<int, std::string>& dataDict)
 {
     for (const auto& f : cs.frames) {
         if (f.fileIdNull) {

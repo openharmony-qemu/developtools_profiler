@@ -29,7 +29,7 @@ namespace mem_analyzer {
 /// @param error               可选，失败原因；成功时保持不变
 /// @return 转换成功返回 true；translator 缺失 / 转换非零退出 / 产物未生成返回 false
 bool RawheapToHeapsnapshot(const std::string& rawheapPath,
-                             const std::string& outputHeapsnapshot,
-                             std::string* error = nullptr);
+    const std::string& outputHeapsnapshot,
+    std::string* error = nullptr);
 
 } // namespace mem_analyzer

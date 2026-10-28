@@ -32,8 +32,8 @@
 namespace mem_analyzer {
 
 // ── Helper: 计算某 category（+是否过滤）下仍启用的 HtraceEventType ──
-static std::vector<HtraceEventType> AllowedEventTypes(
-        const std::string& category, bool filterCategory) {
+static std::vector<HtraceEventType> AllowedEventTypes(const std::string& category, bool filterCategory)
+{
     if (!filterCategory) {
         // parse-only：不按 category 过滤，全部启用的类型纳入，保持升序（与历史一致）。
         std::vector<HtraceEventType> allowed;
@@ -171,9 +171,10 @@ void OpenHtraceContext(HtraceParseContext& ctx, const std::string& dbPath, Stage
 
 // statistic 模式：按 (callchain_id, type) 分区聚合，每条链在每个 type 下取最新一条。
 void LoadStatisticStacks(HtraceParseContext& ctx,
-                           const std::vector<HtraceEventType>& allowedTypes,
-                           bool needAddrs,
-                           CompressedCallStackList& stacks) {
+    const std::vector<HtraceEventType>& allowedTypes,
+    bool needAddrs,
+    CompressedCallStackList& stacks)
+{
     sqlite3* db = ctx.db;
     TraceMeta& meta = ctx.meta;
 
@@ -252,9 +253,10 @@ void LoadStatisticStacks(HtraceParseContext& ctx,
 // detail 模式：AllocEvent 且 end_ts IS NULL/0 为未释放（outstanding）；
 // 已释放(end_ts != 0)整体跳过，FreeEvent 无需处理。
 void LoadDetailStacks(HtraceParseContext& ctx,
-                        const std::vector<HtraceEventType>& allowedTypes,
-                        bool needAddrs,
-                        CompressedCallStackList& stacks) {
+    const std::vector<HtraceEventType>& allowedTypes,
+    bool needAddrs,
+    CompressedCallStackList& stacks)
+{
     sqlite3* db = ctx.db;
     TraceMeta& meta = ctx.meta;
 
@@ -404,8 +406,8 @@ void LoadDetailStacks(HtraceParseContext& ctx,
 } // namespace
 
 // ── Main processor ──────────────────────────────────────────────────
-TraceDB ProcessHtraceDb(const std::string& dbPath, const std::string& category,
-                          bool filterCategory, bool needAddrs) {
+TraceDB ProcessHtraceDb(const std::string& dbPath, const std::string& category, bool filterCategory, bool needAddrs)
+{
     StageTimer timer("DB");
 
     if (!platform::FileExists(dbPath)) {

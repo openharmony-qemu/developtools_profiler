@@ -23,9 +23,10 @@
 namespace mem_analyzer {
 
 bool RunTraceStreamer(const std::string& htracePath,
-                        const std::string& dbPath,
-                        const std::string& soDir,
-                        std::string* error) {
+    const std::string& dbPath,
+    const std::string& soDir,
+    std::string* error)
+{
     const std::string streamer = platform::GetTraceStreamerPath();
     if (streamer.empty() || !platform::FileExists(streamer)) {
         if (error) {

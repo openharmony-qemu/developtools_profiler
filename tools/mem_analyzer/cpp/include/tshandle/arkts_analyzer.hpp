@@ -46,7 +46,7 @@ ArkTsAnalyzeResult AnalyzeArktsClasses(
     const std::string& heapsnapshotPath,
     const std::string& addrFilePath,
     std::vector<ResolvedCallStack>& CallStacks
-);
+    );
 
 /**
  * Write anomaly report to file (if any anomalies).

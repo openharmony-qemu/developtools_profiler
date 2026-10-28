@@ -56,7 +56,6 @@ struct CaptureCommand {
 // Read the file at `config_file_path` and replace $(p:default) / $(t:default)
 // / $(ts:) placeholders: p/t come from `opts`, ts expands to the local time
 // stamp in YYYYMMDD_HHMMSS format.
-CaptureCommand ProcessTemplate(const std::string& configFilePath,
-                                const ProfilerOptions& opts);
+CaptureCommand ProcessTemplate(const std::string& configFilePath, const ProfilerOptions& opts);
 
 } // namespace mem_analyzer

@@ -150,7 +150,7 @@ HtraceAnalysisOutput AnalyzeCallStacks(
     const std::unordered_map<int, std::string>& dataDict,
     AnalysisConfig config = AnalysisConfig{},
     const std::string& mode = ""
-);
+    );
 
 /**
  * Htrace 分析步骤：对解析出的压缩调用栈跑泄漏分析，并把解析期的元信息一并带出。

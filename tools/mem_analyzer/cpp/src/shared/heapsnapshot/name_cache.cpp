@@ -78,8 +78,9 @@ bool ParseLineSuffix(const std::string& key, std::string& name, int& startLine, 
 /// 官方约定：key 中 '#' 代表上下级关系（如 "Class#method#__function"），
 /// 匹配时保留最后一级名称，故额外以最后一级名称建立别名索引。
 void IndexCacheObject(const json& obj, const std::string& filePath,
-                        std::unordered_map<std::string, std::vector<NameCacheCandidate>>& byObfuscated,
-                        std::unordered_map<std::string, std::vector<NameCacheCandidate>>& byOriginal) {
+    std::unordered_map<std::string, std::vector<NameCacheCandidate>>& byObfuscated,
+    std::unordered_map<std::string, std::vector<NameCacheCandidate>>& byOriginal)
+{
     if (!obj.is_object()) {
         return;
     }

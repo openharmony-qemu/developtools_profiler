@@ -41,8 +41,8 @@ namespace mem_analyzer {
  *  extension) starts with it (case-insensitively) are considered — used so the
  *  .txt fallback only picks a js_map*.txt address file, not an arbitrary .txt.
  */
-static std::string FindFileInDir(const std::string& dir, const std::string& ext,
-                                    const std::string& namePrefix = "") {
+static std::string FindFileInDir(const std::string& dir, const std::string& ext, const std::string& namePrefix = "")
+{
     if (!platform::DirectoryExists(dir)) {
         return "";
     }
@@ -111,7 +111,8 @@ static std::string FindFileInDir(const std::string& dir, const std::string& ext,
 }
 
 static std::string FindHtraceFileInDir(
-    const std::string& dir, const std::string& rawheapPath, const std::string& mapPath) {
+    const std::string& dir, const std::string& rawheapPath, const std::string& mapPath)
+{
     if (!platform::DirectoryExists(dir)) {
         return "";
     }
@@ -141,9 +142,10 @@ static std::string FindHtraceFileInDir(
 /// 未配置或还原失败时降级返回原始快照路径。
 /// 反混淆产物与中间 heapsnapshot 均写入 output_dir（系统 TempDir），由调用方清理。
 static std::string DeobfuscateZipSnapshot(const std::string& heapsnapshotPath,
-                                             const std::string& outputDir,
-                                             const std::string& sourcemapDir,
-                                             const std::string& namecacheDir) {
+    const std::string& outputDir,
+    const std::string& sourcemapDir,
+    const std::string& namecacheDir)
+{
     std::string outputPath = platform::JoinPath(
         outputDir, platform::stem(heapsnapshotPath) + "_deobfuscated.heapsnapshot");
     if (!mem_analyzer::DeobfuscateWithIndices(heapsnapshotPath, outputPath,
@@ -158,8 +160,7 @@ static std::string DeobfuscateZipSnapshot(const std::string& heapsnapshotPath,
     return outputPath;
 }
 
-TshandleParseResult TshandleParse(const std::string& filePath, const RunContext& ctx)
-{
+TshandleParseResult TshandleParse(const std::string& filePath, const RunContext& ctx) {
     StageTimer timer("Parse zip");
 
     // Temp directory (in system temp dir, not output dir)

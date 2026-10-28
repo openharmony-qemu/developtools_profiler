@@ -247,12 +247,10 @@ private:
 
     // 沿 hclass → Proto 交替上溯，提取 stateMgmt 包装对象背后被包装的类名。
     // skip_markers 中的名字视为「仍是包装层」，跳过并继续上溯。返回空 = 未命中。
-    std::string ResolveStateMgmtWrappedClass(uint32_t NodeIndex,
-                                                 const std::vector<std::string>& skipMarkers) const;
+    std::string ResolveStateMgmtWrappedClass(uint32_t NodeIndex, const std::vector<std::string>& skipMarkers) const;
 
     // 获取 stateMgmt.js#JSObject 的扩展名（同 observedClass 的套路，展开被包装的 ArkTS 类）
-    std::string GetStateMgmtJsObjectExtName(uint32_t NodeIndex,
-                                                  const std::string& nodeName) const;
+    std::string GetStateMgmtJsObjectExtName(uint32_t NodeIndex, const std::string& nodeName) const;
 
     // declarative_frontend/stateMgmt.js 对象扩展名的统一入口
     // （observedClass 展开 / JSObject 展开 / 其余去前缀）

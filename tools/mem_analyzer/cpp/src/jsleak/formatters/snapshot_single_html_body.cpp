@@ -130,8 +130,8 @@ std::string NormPrefix(const std::string& prefix)
 
 // ========== 构建节点 ID 显示 ==========
 
-std::string BuildNodeIdsHtml(const json& nodeIdsJson,
-                                                             const std::string& containerId) {
+std::string BuildNodeIdsHtml(const json& nodeIdsJson, const std::string& containerId)
+{
     if (!nodeIdsJson.is_array() || nodeIdsJson.empty()) {
         return "<div class=\"chain-node-ids\" id=\"" + containerId +
                "\" data-all-ids=\"\">节点ID: 无</div>";
@@ -168,8 +168,8 @@ std::string BuildNodeIdsHtml(const json& nodeIdsJson,
     return html;
 }
 
-std::string BuildHashValuesHtml(const json &hashValuesJson,
-                                                               const std::string &containerId) {
+std::string BuildHashValuesHtml(const json &hashValuesJson, const std::string &containerId)
+{
     if (!hashValuesJson.is_array() || hashValuesJson.empty()) {
         return "<div class=\"chain-node-ids\" id=\"" + containerId + 
                "\" data-all-hashes=\"\">hash值: 无</div>";
@@ -207,10 +207,11 @@ std::string BuildHashValuesHtml(const json &hashValuesJson,
 // ========== 表格行 ==========
 
 std::string BuildPropertyTagTableRow(const std::string& objName,
-                                                             const json& objData,
-                                                             int idx,
-                                                             const std::string& prefix,
-                                                             const std::string& chartSubTabId) {
+    const json& objData,
+    int idx,
+    const std::string& prefix,
+    const std::string& chartSubTabId)
+{
     int64_t retainedSize = objData.value("totalRetainedSize", 0);
     int nodeCount = objData.value("totalNodeCount", 0);
     std::string propertyName = objData.value("propertyName", "");
@@ -245,10 +246,11 @@ std::string BuildPropertyTagTableRow(const std::string& objName,
 }
 
 std::string BuildTopChainTableRow(const json& chainData,
-                                                                 int idx,
-                                                                 const std::string& prefix,
-                                                                 const std::string& chartSubTabId,
-                                                                 bool searchOnOverview) {
+    int idx,
+    const std::string& prefix,
+    const std::string& chartSubTabId,
+    bool searchOnOverview)
+{
     int64_t retainedSize = chainData.value("totalRetainedSize", 0);
     int nodeCount = chainData.contains("nodeIds") ? (int)chainData["nodeIds"].size() : 0;
     std::string chainPath = BuildChainPathHtmlImpl(chainData["chain"]);
@@ -273,9 +275,10 @@ std::string BuildTopChainTableRow(const json& chainData,
 // ========== 详情条目（头部 + 主体） ==========
 
 std::string BuildPropertyTagEntryHtml(const std::string& objName,
-                                                              const json& objData,
-                                                              int idx,
-                                                              const std::string& prefix) {
+    const json& objData,
+    int idx,
+    const std::string& prefix)
+{
     int64_t retainedSize = objData.value("totalRetainedSize", 0);
     int nodeCount = objData.value("totalNodeCount", 0);
 
@@ -352,9 +355,8 @@ std::string BuildPropertyTagEntryHtml(const std::string& objName,
     return html;
 }
 
-std::string BuildTopChainEntryHtml(const json& chainData,
-                                                                  int idx,
-                                                                  const std::string& prefix) {
+std::string BuildTopChainEntryHtml(const json& chainData, int idx, const std::string& prefix)
+{
     int64_t retainedSize = chainData.value("totalRetainedSize", 0);
     int nodeCount = chainData.contains("nodeIds") ? (int)chainData["nodeIds"].size() : 0;
 
@@ -477,11 +479,12 @@ std::string BuildPropertyTagTabHtmlImpl(const json& propertyTagObjects, const st
 }
 
 std::string BuildTopChainTabHtmlImpl(const json& topRefChains,
-                                                                const std::string& prefix,
-                                                                const std::string& tabId,
-                                                                bool active,
-                                                                json& icicleCharts,
-                                                                bool searchOnOverview) {
+    const std::string& prefix,
+    const std::string& tabId,
+    bool active,
+    json& icicleCharts,
+    bool searchOnOverview)
+{
     std::string tableRows;
     std::string detailSections;
     std::string emptyMsg;
@@ -542,14 +545,16 @@ std::string BuildTopChainTabHtmlImpl(const json& topRefChains,
 std::string BuildChainPathHtml(const json& cf) { return BuildChainPathHtmlImpl(cf); }
 
 std::string BuildPropertyTagTabHtml(const json& objs, const std::string& prefix,
-                                        const std::string& tabId, bool active,
-                                        json& icicleCharts) {
+    const std::string& tabId, bool active,
+    json& icicleCharts)
+{
     return BuildPropertyTagTabHtmlImpl(objs, prefix, tabId, active, icicleCharts);
 }
 
 std::string BuildTopChainTabHtml(const json& chains, const std::string& prefix,
-                                     const std::string& tabId, bool active,
-                                     json& icicleCharts, bool searchOnOverview) {
+    const std::string& tabId, bool active,
+    json& icicleCharts, bool searchOnOverview)
+{
     return BuildTopChainTabHtmlImpl(chains, prefix, tabId, active, icicleCharts, searchOnOverview);
 }
 

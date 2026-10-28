@@ -226,10 +226,7 @@ json BuildSymbolDataEntryJSON(SymbolDataEntry& entry)
     return j;
 }
 
-std::string BuildCallChainHTML(
-    const std::vector<CallChainResult>& callChains,
-    double totalExistingSize,
-    bool countMode)
+std::string BuildCallChainHTML(const std::vector<CallChainResult>& callChains, double totalExistingSize, bool countMode)
 {
     std::string result;
     for (size_t ci = 0; ci < callChains.size(); ci++) {
@@ -320,9 +317,7 @@ std::string BuildCallChainHTML(
     return result;
 }
 
-std::string BuildTopTableRows(const std::vector<SymbolDataEntry>& symbols,
-                                     size_t startIndex,
-                                     bool countMode)
+std::string BuildTopTableRows(const std::vector<SymbolDataEntry>& symbols, size_t startIndex, bool countMode)
 {
     // Build each row as a string, then join with \n to match TS .join('\n') behavior
     std::vector<std::string> rowStrs;
@@ -447,9 +442,9 @@ std::string BuildDetailSectionContent(
 
 
 std::string BuildDetailSections(const std::vector<SymbolDataEntry>& symbols,
-                                       size_t startIndex,
-                                       long long totalExistingSize,
-                                       bool countMode)
+    size_t startIndex,
+    long long totalExistingSize,
+    bool countMode)
 {
     std::vector<std::string> sectionStrs;
     for (size_t i = 0; i < symbols.size(); i++) {

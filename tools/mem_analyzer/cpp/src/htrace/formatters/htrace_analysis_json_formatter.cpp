@@ -68,8 +68,9 @@ json BuildSummary(const HtraceAnalysisOutput& full, const RunContext& ctx)
 } // namespace
 
 std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
-                                       const std::string& filePath, const RunContext& ctx,
-                                       const std::string& outDir) {
+    const std::string& filePath, const RunContext& ctx,
+    const std::string& outDir)
+{
     StageTimer timer("JSON write");
 
     auto base = platform::stem(filePath);

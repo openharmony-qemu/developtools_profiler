@@ -241,8 +241,8 @@ static std::string HdcProbe(const std::string& target)
 }
 
 // Candidate devices + rejected-target note + a copy-paste example.
-static void AppendTargetHints(std::string& out, const std::vector<std::string>& keys,
-                                const std::string& rejectedKey) {
+static void AppendTargetHints(std::string& out, const std::vector<std::string>& keys, const std::string& rejectedKey)
+{
     if (!keys.empty()) {
         out += "Available targets (" + std::to_string(keys.size()) + "):\n";
         for (const auto& k : keys) {
@@ -280,8 +280,9 @@ static void AppendUnparsedLines(std::string& out, const HdcTargets& t)
 // NOTE: only hdc output may be passed in here — the text is filtered down to its
 // "[Fail]" lines, which would swallow a message produced by this tool.
 static std::string DecorateDeviceError(const std::string& hdcText,
-                                        const std::vector<std::string>& keys,
-                                        const std::string& rejectedKey) {
+    const std::vector<std::string>& keys,
+    const std::string& rejectedKey)
+{
     // Keep only the "[Fail]" lines: drops hdc internal log noise such as
     // "[F][2026-09-18 18:10:10] Send isDead channelId:...".
     std::string out = HdcFailureLines(hdcText);
@@ -293,8 +294,8 @@ static std::string DecorateDeviceError(const std::string& hdcText,
 }
 
 // Returns true when we may continue; on false, msg holds the full error message.
-static bool ResolveDeviceTarget(const std::string& rawKey, bool keyProvided,
-                                  std::string& msg) {
+static bool ResolveDeviceTarget(const std::string& rawKey, bool keyProvided, std::string& msg)
+{
     // Both branches below compare against `hdc list targets` verbatim, so normalize the
     // user's value once here. A whitespace-only value thereby becomes empty and lands in
     // branch (1), which is the intended reading of `--device " "`.
@@ -702,8 +703,8 @@ static AppQueryResult QueryDeviceApps()
 // system-process fallback), and sets is_app to whether the resolved target is
 // an installed app. Prints diagnostic info and returns false on unresolvable
 // input.
-static bool ResolveProcessName(const std::string& input, bool requireApp,
-                                 std::string& resolvedPkg, bool& isApp) {
+static bool ResolveProcessName(const std::string& input, bool requireApp, std::string& resolvedPkg, bool& isApp)
+{
     // Any target resolved from the installed-app list is an app; the verbatim
     // system-process fallbacks below override this to false.
     isApp = true;
@@ -1141,8 +1142,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
                 if (baselineFile.empty() &&
                     stem.size() >= startSfx.size() &&
                     stem.compare(stem.size() - startSfx.size(),
-                                 startSfx.size(), startSfx) == 0)
-                                 {
+                                 startSfx.size(), startSfx) == 0) {
                     baselineFile = f;
                 } else if (targetFile.empty() &&
                            stem.size() >= endSfx.size() &&

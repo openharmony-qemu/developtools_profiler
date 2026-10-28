@@ -70,14 +70,12 @@ struct FrameRow {
 // chain_select 是返回单列 callchain_id 的 SELECT（作为 IN 子查询），
 // 过滤逻辑由调用方下推到 SQL，避免 C++ 收集 chain_ids 或拼超长 IN。
 // 返回 map：callchain_id -> (按 depth 升序的帧)。
-std::unordered_map<int, std::vector<FrameRow>> ReadFrames(
-    sqlite3* db, const std::string& chainSelect);
+std::unordered_map<int, std::vector<FrameRow>> ReadFrames(sqlite3* db, const std::string& chainSelect);
 
 // 按 callchain_id 读取分配地址（detail 模式：native_hook.addr，GROUP_CONCAT hex）。
 // chain_select 是返回 callchain_id 的 SELECT（与 read_frames 同源，已含 end_ts IS NULL + event_type 过滤）。
 // 返回 map：callchain_id -> (地址 hex 串列表，如 "0x5c843f8b00")。
 // statistic 模式的地址在主 SQL 里经 addr_id→data_dict JOIN 获取，不走此函数。
-std::unordered_map<int, std::vector<std::string>> ReadCallchainAddrs(
-    sqlite3* db, const std::string& chainSelect);
+std::unordered_map<int, std::vector<std::string>> ReadCallchainAddrs(sqlite3* db, const std::string& chainSelect);
 
 } // namespace mem_analyzer

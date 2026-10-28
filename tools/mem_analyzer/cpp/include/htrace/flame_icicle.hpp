@@ -75,7 +75,7 @@ FlameNode BuildFlameGraph(
     const std::vector<int>& chainIds,
     const std::unordered_map<int, int>& depthPerChain,
     const std::unordered_map<int, std::string>& dataDict
-);
+    );
 
 FlameNode BuildIcicleGraph(
     const std::string& targetSymbol,
@@ -83,14 +83,14 @@ FlameNode BuildIcicleGraph(
     const std::vector<int>& chainIds,
     const std::unordered_map<int, int>& depthPerChain,
     const std::unordered_map<int, std::string>& dataDict
-);
+    );
 
 // 整栈合并火焰图（无根符号，所有栈整帧序列合并到一个 trie）；用于 other
 FlameNode BuildMergedIcicle(
     const std::vector<CompressedCallStack>& CallStacks,
     const std::vector<int>& chainIds,
     const std::unordered_map<int, std::string>& dataDict
-);
+    );
 
 // Helper: resolve int IDs to strings (used by FlameNode serialization and HTML formatter)
 inline const std::string& ResolveStr(int id, const std::unordered_map<int, std::string>& dataDict)

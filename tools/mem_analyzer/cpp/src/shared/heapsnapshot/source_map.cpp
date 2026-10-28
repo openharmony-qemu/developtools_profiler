@@ -232,8 +232,9 @@ bool SourceMapIndex::ResolveOriginalLine(const std::string& mappings, int genera
 }
 
 bool SourceMapIndex::ResolveOriginalPosition(const std::string& mappings, int generatedLine,
-                                               int generatedColumn, int& originalLine,
-                                               int& originalColumn, int* outSourceIndex) const {
+    int generatedColumn, int& originalLine,
+    int& originalColumn, int* outSourceIndex) const
+{
     if (generatedLine < 1 || mappings.empty()) {
         return false;
     }
@@ -375,7 +376,8 @@ namespace {
 /// 混淆 key 格式为 "<bundle>|<module>|<version>|<rel_path>"，
 /// 以第 2 段 module（而非第 1 段 bundle）作为匹配键的一部分。
 void RebuildModuleIndex(const std::unordered_map<std::string, SourceMapEntry>& index,
-                          std::unordered_map<std::string, const SourceMapEntry*>& moduleIndex) {
+    std::unordered_map<std::string, const SourceMapEntry*>& moduleIndex)
+{
     moduleIndex.clear();
     for (const auto& kv : index) {
         const std::string& key = kv.first;
@@ -475,7 +477,8 @@ const SourceMapEntry* SourceMapIndex::lookup(const std::string& key) const
 }
 
 const SourceMapEntry* SourceMapIndex::LookupByModule(const std::string& module, const std::string& version,
-                                                       const std::string& relPath) const {
+    const std::string& relPath) const
+{
     const std::string mkey = module + "|" + version + "|" + relPath;
     auto it = moduleIndex.find(mkey);
     return (it == moduleIndex.end()) ? nullptr : it->second;

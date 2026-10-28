@@ -52,7 +52,7 @@ public:
     /// 的字符串：内部将混淆 key 拆解为 "module|package|version|rel_path" 后
     /// 以 (module, version, rel_path) 匹配。命中返回指向条目的指针，未命中返回 nullptr。
     const SourceMapEntry* LookupByModule(const std::string& module, const std::string& version,
-                                           const std::string& relPath) const;
+        const std::string& relPath) const;
 
     /// 索引是否为空（未加载到任何条目）。
     bool empty() const;
@@ -77,8 +77,8 @@ public:
     /// 命中返回 true 并填充 original_line/original_column；若 out_source_index
     /// 非空且命中段含 sourceIndex，同时填充其指向 sources 数组的索引。
     bool ResolveOriginalPosition(const std::string& mappings, int generatedLine,
-                                   int generatedColumn, int& originalLine,
-                                   int& originalColumn, int* outSourceIndex = nullptr) const;
+        int generatedColumn, int& originalLine,
+        int& originalColumn, int* outSourceIndex = nullptr) const;
 
 private:
     /// 返回 mappings 的解码结果（内部缓存，引用在缓存存续期间稳定）。

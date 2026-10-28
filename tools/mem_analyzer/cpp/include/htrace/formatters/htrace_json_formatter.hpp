@@ -29,16 +29,14 @@ json HtraceBuildMeta(const std::string& filePath, const RunContext& ctx);
 /// htrace summary 的公共字段（isStatistics / duration / 时间戳 / 进程名）。
 /// 各 writer 再补自己的资源类型字段。
 json HtraceBuildSummaryCommon(const std::string& mode, long long durationNs,
-                                 long long startMs, long long endMs,
-                                 const std::string& processName);
+    long long startMs, long long endMs,
+    const std::string& processName);
 
 /// 取指定资源类型对应的 summary 总计值。
 long long HtraceSummaryTotalForType(const json& htraceSummary, const std::string& category);
 
 /// 写单个压缩帧（depth/symbol/lib/libOffset/buildId）。
 /// analysis 与 parse 两个 JSON 写器共用，保证调用栈帧字节一致。
-void HtraceWriteCallstackFrame(JsonStreamWriter& writer,
-                                  const CompressedStackFrame& frame,
-                                  const DataDict& dict);
+void HtraceWriteCallstackFrame(JsonStreamWriter& writer, const CompressedStackFrame& frame, const DataDict& dict);
 
 } // namespace mem_analyzer

@@ -23,6 +23,6 @@ namespace mem_analyzer {
 /// 入参为 `jsleak_analyze()` 产出的结果 json；writer 只做纯重组，不改分析层。
 /// 返回写出的文件路径。
 std::string JsleakWriteAnalysisJson(const json& data, const std::string& filePath,
-                                       const RunContext& ctx, const std::string& outDir);
+    const RunContext& ctx, const std::string& outDir);
 
 } // namespace mem_analyzer

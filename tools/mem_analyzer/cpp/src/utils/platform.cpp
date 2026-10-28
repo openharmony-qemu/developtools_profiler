@@ -246,9 +246,8 @@ static std::string ResolvePathArg(const std::string& arg)
     return ec ? arg : PathToUtf8(ap.lexically_normal());
 }
 
-int RunProcess(const std::string& exe,
-                const std::vector<std::string>& args,
-                int outputFd) {
+int RunProcess(const std::string& exe, const std::vector<std::string>& args, int outputFd)
+{
     // On macOS the child is started from inside its own directory
     // ("cd <exe_dir> && DYLD_LIBRARY_PATH=."), so relative path args must be
     // made absolute or they would resolve against the wrong directory. On
@@ -347,10 +346,7 @@ int RunProcess(const std::string& exe,
 #endif
 }
 
-int RunProcessWithSpinner(
-    const std::string& exe,
-    const std::vector<std::string>& args,
-    const std::string& description)
+int RunProcessWithSpinner(const std::string& exe, const std::vector<std::string>& args, const std::string& description)
 {
     TempDir tmp("spinner", true);
     std::string outName = platform::stem(exe) + "_output.txt";

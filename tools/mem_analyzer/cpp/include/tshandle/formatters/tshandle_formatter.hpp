@@ -23,6 +23,6 @@ namespace mem_analyzer {
 /// 强类型入参：不再经过 ProcessData / std::any。
 /// 返回写出的文件路径。
 std::string TshandleWriteParseJson(const TshandleParseResult& parsed, const std::string& filePath,
-                                      const RunContext& ctx, const std::string& outDir);
+    const RunContext& ctx, const std::string& outDir);
 
 } // namespace mem_analyzer

@@ -35,8 +35,8 @@ uint64_t ParseHexAddr(const std::string& s)
 }
 
 // L1: 调用栈关联的分配地址（existing_addrs，hex 串）与 leaks 集合求交集，非空才留
-bool HasLeakAddr(const CompressedCallStack& cs,
-                   const std::unordered_set<uint64_t>& leaks) {
+bool HasLeakAddr(const CompressedCallStack& cs, const std::unordered_set<uint64_t>& leaks)
+{
     if (leaks.empty()) {
         return false;
     }
@@ -53,8 +53,8 @@ bool HasLeakAddr(const CompressedCallStack& cs,
 
 // L3: 至少一帧 lib 含 data/storage/el 且 .so，且不含 libarkweb_engine.so
 // （arkweb 例外：arkweb 虽在沙箱目录但归 system，不算应用 so 帧）
-bool HasAppSoFrame(const CompressedCallStack& cs,
-                      const std::unordered_map<int, std::string>& dict) {
+bool HasAppSoFrame(const CompressedCallStack& cs, const std::unordered_map<int, std::string>& dict)
+{
     for (const auto& f : cs.frames) {
         if (f.fileIdNull) {
             continue;
@@ -67,8 +67,7 @@ bool HasAppSoFrame(const CompressedCallStack& cs,
         if (lib.find("data/storage/el") != std::string::npos &&
             lib.find("libarkweb_engine.so") == std::string::npos &&
             lib.size() >= 3 &&
-            lib.compare(lib.size() - 3, 3, ".so") == 0)
-            {
+            lib.compare(lib.size() - 3, 3, ".so") == 0) {
             return true;
         }
     }
@@ -76,8 +75,7 @@ bool HasAppSoFrame(const CompressedCallStack& cs,
 }
 
 // L2: 任意帧 symbol 含 "__emutls_get_address" → 该栈排除
-bool HasEmutlsFrame(const CompressedCallStack& cs,
-                      const std::unordered_map<int, std::string>& dict) {
+bool HasEmutlsFrame(const CompressedCallStack& cs, const std::unordered_map<int, std::string>& dict) {
     for (const auto& f : cs.frames) {
         auto it = dict.find(f.symbolId);
         if (it == dict.end()) {

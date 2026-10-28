@@ -29,8 +29,8 @@ namespace mem_analyzer {
 /// @param error       可选，失败原因；成功时保持不变
 /// @return 转换成功返回 true；streamer 缺失 / 转换非零退出返回 false
 bool RunTraceStreamer(const std::string& htracePath,
-                        const std::string& dbPath,
-                        const std::string& soDir,
-                        std::string* error = nullptr);
+    const std::string& dbPath,
+    const std::string& soDir,
+    std::string* error = nullptr);
 
 } // namespace mem_analyzer

@@ -22,7 +22,6 @@ json BuildRefChainIcicleTree(const json& chainItems, const std::string& rootName
 
 // 引用链总览图（冰柱图）骨架：工具栏/面包屑/画布 + 数据树表 HTML。
 // 数据树表本身由 tree_table 组件生成（jsleak/formatters/tree_table.hpp）。
-std::string BuildIcicleChartBody(const std::string& canvasId,
-                                    const std::string& treeTableHtml);
+std::string BuildIcicleChartBody(const std::string& canvasId, const std::string& treeTableHtml);
 
 } // namespace mem_analyzer
