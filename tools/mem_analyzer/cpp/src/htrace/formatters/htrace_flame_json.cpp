@@ -29,7 +29,8 @@ namespace mem_analyzer {
 // ===== Build flame/icicle tree JSON directly from FlameNode (skip intermediate JSON) =====
 
 // Internal: recursive helper for non-root nodes (reads symbol info from FlameNode)
-static json BuildFlameTreeNodeFromFlameNode(const FlameNode& node, const std::unordered_map<int, std::string>& dataDict, StringTable& st)
+static json BuildFlameTreeNodeFromFlameNode(const FlameNode& node,
+    const std::unordered_map<int, std::string>& dataDict, StringTable& st)
 {
     std::string sym = ResolveStr(node.symbolId, dataDict);
     std::string lib = node.fileIdNull ? "unknown" : ResolveStr(node.fileId, dataDict);
@@ -56,7 +57,9 @@ static json BuildFlameTreeNodeFromFlameNode(const FlameNode& node, const std::un
     return j;
 }
 
-json BuildFlameTreeJsonFromFlameNode(const FlameNode& node, const std::string& rootName, const std::string& rootLib, const std::string& rootLibOffset, const std::unordered_map<int, std::string>& dataDict, StringTable& st)
+json BuildFlameTreeJsonFromFlameNode(const FlameNode& node,
+    const std::string& rootName, const std::string& rootLib, const std::string& rootLibOffset,
+    const std::unordered_map<int, std::string>& dataDict, StringTable& st)
 {
     // 根节点使用TopSymbolInfo的符号信息（FlameNode根节点是合成节点，symbol_id/file_id为空）
     json j;
@@ -81,7 +84,8 @@ json BuildFlameTreeJsonFromFlameNode(const FlameNode& node, const std::string& r
 }
 
 // Internal: recursive helper for icicle non-root nodes
-static json BuildIcicleTreeNodeFromFlameNode(const FlameNode& node, const std::unordered_map<int, std::string>& dataDict, StringTable& st)
+static json BuildIcicleTreeNodeFromFlameNode(const FlameNode& node,
+    const std::unordered_map<int, std::string>& dataDict, StringTable& st)
 {
     std::string sym = ResolveStr(node.symbolId, dataDict);
     std::string lib = node.fileIdNull ? "unknown" : ResolveStr(node.fileId, dataDict);
@@ -108,7 +112,9 @@ static json BuildIcicleTreeNodeFromFlameNode(const FlameNode& node, const std::u
     return j;
 }
 
-json BuildIcicleTreeJsonFromFlameNode(const FlameNode& node, const std::string& rootName, const std::string& rootLib, const std::string& rootLibOffset, const std::unordered_map<int, std::string>& dataDict, StringTable& st)
+json BuildIcicleTreeJsonFromFlameNode(const FlameNode& node,
+    const std::string& rootName, const std::string& rootLib, const std::string& rootLibOffset,
+    const std::unordered_map<int, std::string>& dataDict, StringTable& st)
 {
     // 根节点使用TopSymbolInfo的符号信息
     json j;
@@ -216,13 +222,14 @@ static std::vector<CallChainResult> buildCallChainsFromFlameNode(
 
 // 轻量版本：仅构建info+callChains，跳过flameTree/icicleTree
 // 用于延迟构建模式，flameTree/icicleTree在流式写入时按需构建，大幅降低峰值内存
-SymbolDataEntry BuildSymbolDataEntryFromContextLight(const TopSymbolInfo& ts, long long totalExistingSize, const std::unordered_map<int, std::string>& dataDict)
+SymbolDataEntry BuildSymbolDataEntryFromContextLight(const TopSymbolInfo& ts,
+    long long totalExistingSize, const std::unordered_map<int, std::string>& dataDict)
 {
     SymbolDataEntry entry;
 
-    double percentage = totalExistingSize > 0
-        ? std::round((double)ts.totalLeakSize / (double)totalExistingSize * 10000.0) / 100.0
-        : 0.0;
+    double percentage = totalExistingSize > 0 ?
+        std::round((double)ts.totalLeakSize / (double)totalExistingSize * 10000.0) / 100.0 :
+        0.0;
     std::string lib = ts.libs.empty() ? "" : ts.libs[0];
     entry.info = json{
         {"name", ts.symbol},

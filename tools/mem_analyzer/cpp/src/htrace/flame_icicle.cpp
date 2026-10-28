@@ -28,8 +28,8 @@ json FlameNode::ToFlameJson(const std::unordered_map<int, std::string>& dataDict
         {"name", ResolveStr(symbolId, dataDict)},
         {"lib", fileIdNull ? "unknown" : ResolveStr(fileId, dataDict)},
         {"libOffset", ResolveOffsetStr(vaddr, vaddrNull)},
-        {"buildId", (!buildIdNull && buildId != 0)
-            ? json(dataDict.at(buildId)) : ""}
+        {"buildId", (!buildIdNull && buildId != 0) ?
+            json(dataDict.at(buildId)) : ""}
     };
     if (!children.empty()) {
         json arr = json::array();
@@ -50,8 +50,8 @@ json FlameNode::ToIcicleJson(const std::unordered_map<int, std::string>& dataDic
         {"name", ResolveStr(symbolId, dataDict)},
         {"lib", fileIdNull ? "unknown" : ResolveStr(fileId, dataDict)},
         {"libOffset", ResolveOffsetStr(vaddr, vaddrNull)},
-        {"buildId", (!buildIdNull && buildId != 0)
-            ? json(dataDict.at(buildId)) : ""}
+        {"buildId", (!buildIdNull && buildId != 0) ?
+            json(dataDict.at(buildId)) : ""}
     };
     if (!children.empty()) {
         json arr = json::array();

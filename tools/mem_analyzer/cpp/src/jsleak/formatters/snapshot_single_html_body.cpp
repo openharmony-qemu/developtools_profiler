@@ -261,8 +261,8 @@ std::string BuildTopChainTableRow(const json& chainData,
     // 「总览图」列以引用链链尾的帧名作为搜索词；
     // searchOnOverview 为 false 时不带搜索词（空串），点击后直接展示完整总览图
     row += BuildOverviewCell(chartSubTabId,
-                               searchOnOverview ? LastChainFrameName(chainData["chain"])
-                                                : std::string());
+                               searchOnOverview ? LastChainFrameName(chainData["chain"]) :
+                                                std::string());
     row += "<td class=\"top-size-val\">" + FormatBytes(retainedSize) + "</td>";
     row += "<td class=\"top-size-val\">" + std::to_string(nodeCount) + "</td>";
     row += "<td class=\"top-func\"><b>" + chainPath + "</b></td>";
@@ -398,12 +398,9 @@ std::string BuildTopChainEntryHtml(const json& chainData,
 }
 
 // ========== 构建完整 Tab 内容 ==========
-
-std::string BuildPropertyTagTabHtmlImpl(const json& propertyTagObjects,
-                                                                    const std::string& prefix,
-                                                                    const std::string& tabId,
-                                                                    bool active,
-                                                                    json& icicleCharts) {
+std::string BuildPropertyTagTabHtmlImpl(const json& propertyTagObjects, const std::string& prefix,
+    const std::string& tabId, bool active, json& icicleCharts)
+{
     std::string tableRows;
     std::string detailSections;
     std::string emptyMsg;

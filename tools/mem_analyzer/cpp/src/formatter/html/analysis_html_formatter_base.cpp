@@ -60,7 +60,8 @@ std::string AnalysisHtmlFormatterBase::buildTabBarHTML(const std::vector<TabGrou
     return "<div class=\"empty-msg\">无分析数据</div>";
 }
 
-std::string AnalysisHtmlFormatterBase::buildTabContentHTML(const std::vector<TabGroup>& groups, long long totalSize, bool countMode)
+std::string AnalysisHtmlFormatterBase::buildTabContentHTML(const std::vector<TabGroup>& groups,
+    long long totalSize, bool countMode)
 {
     std::string result;
     for (const auto& group : groups) {

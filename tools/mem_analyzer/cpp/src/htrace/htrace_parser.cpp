@@ -55,8 +55,8 @@ TraceDB HtraceParse(const std::string& filePath, const RunContext& ctx)
     // 3. Run trace_streamer
     std::string streamerErr;
     if (!RunTraceStreamer(filePath, dbPath, ctx.resources.soDir, &streamerErr)) {
-        throw std::runtime_error(streamerErr.empty() ? "trace_streamer conversion failed"
-                                                       : streamerErr);
+        throw std::runtime_error(streamerErr.empty() ? "trace_streamer conversion failed" :
+                                                       streamerErr);
     }
     log::Logok("    DB file generated: ", dbPath);
     timer.tick("trace_streamer");

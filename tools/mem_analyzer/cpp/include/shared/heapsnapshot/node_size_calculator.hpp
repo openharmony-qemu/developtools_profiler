@@ -60,6 +60,7 @@ struct ShortestPathsResult {
  *
  * exclude_weak_edges: if true, weak edges are not traversed during BFS.
  */
-ShortestPathsResult ComputeShortestPaths(const HeapSnapshot& snapshot, bool excludeWeakEdges = true, bool excludeShortcutEdges = true, bool excludeHiddenEdges = true);
+ShortestPathsResult ComputeShortestPaths(const HeapSnapshot& snapshot, bool excludeWeakEdges = true,
+    bool excludeShortcutEdges = true, bool excludeHiddenEdges = true);
 
 } // namespace mem_analyzer

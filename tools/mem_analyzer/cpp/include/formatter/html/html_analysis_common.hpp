@@ -110,13 +110,16 @@ double RoundHalfAwayFromZero(double value, int precision);
 // 将SymbolDataEntry序列化为前端data JSON中的单个条目（move语义，避免拷贝flameTree/icicleTree）
 json BuildSymbolDataEntryJSON(SymbolDataEntry& entry);
 // 生成调用链详情的HTML表格
-std::string BuildCallChainHTML(const std::vector<CallChainResult>& callChains, double totalExistingSize, bool countMode = false);
+std::string BuildCallChainHTML(const std::vector<CallChainResult>& callChains, double totalExistingSize,
+    bool countMode = false);
 // 生成Top符号排行表格的行HTML
 std::string BuildTopTableRows(const std::vector<SymbolDataEntry>& symbols, size_t startIndex, bool countMode = false);
 // 生成所有符号的详情区段HTML（含火焰图+冰柱图+调用链）
-std::string BuildDetailSections(const std::vector<SymbolDataEntry>& symbols, size_t startIndex, long long totalExistingSize, bool countMode = false);
+std::string BuildDetailSections(const std::vector<SymbolDataEntry>& symbols, size_t startIndex,
+    long long totalExistingSize, bool countMode = false);
 // 生成单个符号的详情区段内容HTML
-std::string BuildDetailSectionContent(const SymbolDataEntry& entry, size_t idx, long long totalExistingSize, bool addBlankLine, bool countMode = false);
+std::string BuildDetailSectionContent(const SymbolDataEntry& entry, size_t idx, long long totalExistingSize,
+    bool addBlankLine, bool countMode = false);
 
 // ===== HTML模板 =====
 

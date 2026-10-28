@@ -105,9 +105,9 @@ std::string BuildFilepageDetailSectionContent(const FilepageInfo& fp, size_t idx
 {
     std::ostringstream pctSS;
     pctSS << std::fixed << std::setprecision(2) << fp.percentage;
-    std::string stats = countMode
-        ? ("\u6b21\u6570" + std::to_string(fp.count) + "\uff0c\u5360\u6bd4" + pctSS.str() + "%")
-        : ("\u5927\u5c0f " + FormatSizeText((double)fp.size, false) + "\uff0c\u6b21\u6570" + std::to_string(fp.count) + "\uff0c\u5360\u6bd4" + pctSS.str() + "%");
+    std::string stats = countMode ?
+        ("\u6b21\u6570" + std::to_string(fp.count) + "\uff0c\u5360\u6bd4" + pctSS.str() + "%") :
+        ("\u5927\u5c0f " + FormatSizeText((double)fp.size, false) + "\uff0c\u6b21\u6570" + std::to_string(fp.count) + "\uff0c\u5360\u6bd4" + pctSS.str() + "%");
     return "<div class=\"top-item\" id=\"topItem" + std::to_string(idx) + "\">\n"
         "  <div class=\"top-item-header collapsed\" id=\"topItemHeader" + std::to_string(idx) + "\" onclick=\"toggleDetail(" + std::to_string(idx) + ")\">\n"
         "    <span class=\"arrow\" id=\"topItemArrow" + std::to_string(idx) + "\">&#9654;</span>\n"
@@ -440,9 +440,9 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
     // Use direct streaming: outputs each SymbolDataEntry individually and releases
     // flameTree/icicleTree after streaming, reducing peak memory
     std::string tabBarHTML = AnalysisHtmlFormatterBase::buildTabBarHTML(groups);
-    std::string tabContentHTML = multipart
-        ? BuildMmapTabContentHTML(groups, streamGroups, filepageLists, totalExistingSize, countMode)
-        : AnalysisHtmlFormatterBase::buildTabContentHTML(groups, totalExistingSize, countMode);
+    std::string tabContentHTML = multipart ?
+        BuildMmapTabContentHTML(groups, streamGroups, filepageLists, totalExistingSize, countMode) :
+        AnalysisHtmlFormatterBase::buildTabContentHTML(groups, totalExistingSize, countMode);
 
     // 延迟构建回调：在流式写入时按需构建flameTree/icicleTree
     // 避免所有entry的flameTree/icicleTree同时驻留内存，峰值内存从O(N)降至O(1)

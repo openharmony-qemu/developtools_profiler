@@ -173,8 +173,8 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
     {
         std::string zipErr;
         if (!zipUtils::ExtractZip(filePath, unzipDir, zipErr)) {
-            throw std::runtime_error(zipErr.empty() ? "Failed to extract ZIP file: " + filePath
-                                                     : zipErr);
+            throw std::runtime_error(zipErr.empty() ? "Failed to extract ZIP file: " + filePath :
+                                                     zipErr);
         }
         log::Logi("    Extracted to: ", unzipDir);
     }
@@ -209,8 +209,8 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
 
         std::string streamerErr;
         if (!RunTraceStreamer(htracePath, dbPath, ctx.resources.soDir, &streamerErr)) {
-            throw std::runtime_error(streamerErr.empty() ? "trace_streamer conversion failed"
-                                                           : streamerErr);
+            throw std::runtime_error(streamerErr.empty() ? "trace_streamer conversion failed" :
+                                                           streamerErr);
         }
     }
     timer.tick("trace_streamer");

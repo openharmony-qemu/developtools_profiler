@@ -98,10 +98,10 @@ void EmitIcicleTreeRows(const json& node, const std::string& tableId,
     // 默认：占比超过阈值的节点展开（根节点占比恒为 100%，自然也展开），其余有子节点的层级收起；
     // 同时限制默认展开的最大层数，超过 kIttMaxExpandDepth 的节点即使占比达标也收起。
     // 占比按「子树内最大占比」判定，使超过阈值的子孙链不会被未达阈值的父级折叠隐藏。
-    const double pct = rootSize > 0
-                           ? 100.0 * static_cast<double>(IttSubtreeMaxSize(node)) /
-                                 static_cast<double>(rootSize)
-                           : 0.0;
+    const double pct = rootSize > 0 ?
+                           100.0 * static_cast<double>(IttSubtreeMaxSize(node)) /
+                                 static_cast<double>(rootSize) :
+                           0.0;
     const bool collapsed =
         hasChildren && depth >= 1 && (pct <= kIttDefaultExpandPct || depth >= kIttMaxExpandDepth);
 

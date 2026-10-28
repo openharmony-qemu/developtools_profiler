@@ -78,9 +78,9 @@ public:
             log::Loge("Error: invalid mode '", opt_.mode, "'. Valid: all, property-tag/pt, top-chain/tc");
             return 1;
         }
-        const std::string normalizedMode = opt_.mode == "pt"   ? "property-tag"
-                                            : opt_.mode == "tc" ? "top-chain"
-                                                                : opt_.mode;
+        const std::string normalizedMode = opt_.mode == "pt"   ? "property-tag" :
+                                            opt_.mode == "tc" ? "top-chain" :
+                                                                opt_.mode;
         if (opt_.baselineProvided) {
             return RunCompare(g, normalizedMode);
         }

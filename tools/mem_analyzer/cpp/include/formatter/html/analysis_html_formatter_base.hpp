@@ -54,7 +54,8 @@ public:
 
     // 生成Tab内容区HTML（含表格+详情区段+火焰图/冰柱图）
     // countMode: fd/thread 等计数类型时，大小字段直接显示整数个数而非字节
-    static std::string buildTabContentHTML(const std::vector<TabGroup>& groups, long long totalSize, bool countMode = false);
+    static std::string buildTabContentHTML(const std::vector<TabGroup>& groups, long long totalSize,
+        bool countMode = false);
 
     // 流式HTML模板填充：逐个输出SymbolDataEntry，避免构建完整dataJSONArr
     // fillTree回调：在流式写入时按需构建flameTree/icicleTree，避免所有entry同时驻留内存

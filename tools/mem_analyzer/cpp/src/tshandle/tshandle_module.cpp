@@ -62,8 +62,8 @@ std::string TshandleModule::run(const ModuleRequest& req, const RunContext& ctx)
             timer.tick("analysis");
 
             timer.stage("Writing output");
-            std::string out = kw.keyword == "json"
-                       ? TshandleWriteAnalysisJson(analysis, req.filePath, ctx, outDir)
+            std::string out = kw.keyword == "json" ?
+                       TshandleWriteAnalysisJson(analysis, req.filePath, ctx, outDir)
                        : TshandleWriteAnalysisHtml(analysis, req.filePath, ctx, outDir);
             timer.tick("write");
             timer.done();

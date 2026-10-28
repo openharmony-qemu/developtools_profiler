@@ -35,8 +35,8 @@ FormatKeyword ResolveFormatKeyword(const std::string& moduleName, const ModuleCa
     // 默认格式缺失时取声明列表的第一个（formats 为空已在上方报错，此处必非空），
     // 保证选出来的关键词一定落在 formats 内。
     if (explicitFormat.empty()) {
-        out.keyword = modeCap.defaultFormat.empty() ? modeCap.formats.front()
-                                                      : modeCap.defaultFormat;
+        out.keyword = modeCap.defaultFormat.empty() ? modeCap.formats.front() :
+                                                      modeCap.defaultFormat;
     } else {
         out.keyword = explicitFormat;
     }

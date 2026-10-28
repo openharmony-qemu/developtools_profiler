@@ -278,10 +278,10 @@ json AggregateState(const Aggregate& value)
                    {"selfSize", value.selfSize},
                    {"retainedSize", value.retainedSize},
                    {"retainedMax", static_cast<uint64_t>(value.retainedMax)}};
-    result["representativeNodeIndex"] = value.representative == UINT32_MAX
-        ? json(nullptr) : json(value.representative);
-    result["representativeNodeId"] = value.representativeId == UINT32_MAX
-        ? json(nullptr) : json(value.representativeId);
+    result["representativeNodeIndex"] = value.representative == UINT32_MAX ?
+        json(nullptr) : json(value.representative);
+    result["representativeNodeId"] = value.representativeId == UINT32_MAX ?
+        json(nullptr) : json(value.representativeId);
     result["nodeIds"] = value.nodeIds;
     return result;
 }
@@ -684,14 +684,14 @@ json BuildChangedLeakObjects(const json& baselineLeaks,
     for (const auto& name : names) {
         const bool inBaseline = baselineLeaks.contains(name);
         const bool inTarget = targetLeaks.contains(name);
-        const uint64_t baselineSize = inBaseline
-            ? baselineLeaks[name].value("totalRetainedSize", uint64_t{0}) : 0;
-        const uint64_t targetSize = inTarget
-            ? targetLeaks[name].value("totalRetainedSize", uint64_t{0}) : 0;
-        const uint64_t baselineCount = inBaseline
-            ? baselineLeaks[name].value("totalNodeCount", uint64_t{0}) : 0;
-        const uint64_t targetCount = inTarget
-            ? targetLeaks[name].value("totalNodeCount", uint64_t{0}) : 0;
+        const uint64_t baselineSize = inBaseline ?
+            baselineLeaks[name].value("totalRetainedSize", uint64_t{0}) : 0;
+        const uint64_t targetSize = inTarget ?
+            targetLeaks[name].value("totalRetainedSize", uint64_t{0}) : 0;
+        const uint64_t baselineCount = inBaseline ?
+            baselineLeaks[name].value("totalNodeCount", uint64_t{0}) : 0;
+        const uint64_t targetCount = inTarget ?
+            targetLeaks[name].value("totalNodeCount", uint64_t{0}) : 0;
         const int64_t sizeDelta = static_cast<int64_t>(targetSize - baselineSize);
         const int64_t countDelta = static_cast<int64_t>(targetCount - baselineCount);
 
@@ -704,12 +704,12 @@ json BuildChangedLeakObjects(const json& baselineLeaks,
         const bool useBaseline = change == "removed" || change == "shrink";
         json entry = useBaseline ? baselineLeaks[name] : targetLeaks[name];
         const std::string detailsSnapshot = useBaseline ? "A" : "B";
-        const std::vector<uint32_t> baselineNodeIds = inBaseline
-            ? leakEntryNodeIds(baselineLeaks[name]) : std::vector<uint32_t>{};
-        const std::vector<uint32_t> targetNodeIds = inTarget
-            ? leakEntryNodeIds(targetLeaks[name]) : std::vector<uint32_t>{};
-        const std::vector<uint32_t> deltaNodeIds = useBaseline
-            ? nodeIdDifference(baselineNodeIds, targetNodeIds)
+        const std::vector<uint32_t> baselineNodeIds = inBaseline ?
+            leakEntryNodeIds(baselineLeaks[name]) : std::vector<uint32_t>{};
+        const std::vector<uint32_t> targetNodeIds = inTarget ?
+            leakEntryNodeIds(targetLeaks[name]) : std::vector<uint32_t>{};
+        const std::vector<uint32_t> deltaNodeIds = useBaseline ?
+            nodeIdDifference(baselineNodeIds, targetNodeIds)
             : nodeIdDifference(targetNodeIds, baselineNodeIds);
         entry["deltaNodeIds"] = deltaNodeIds;
         entry["referenceChains"] = FilterLeakReferenceChains(
@@ -900,9 +900,9 @@ json JsleakCompareAnalyzeImpl(const HeapSnapshot& baseline,
     }
 
     const std::string interpretation =
-        mode == "property-tag" ? "difference-with-property-tag-leak-analysis"
-        : mode == "top-chain"  ? "difference-with-shortest-reference-chain-analysis"
-                               : "difference-with-changed-object-leak-analysis";
+        mode == "property-tag" ? "difference-with-property-tag-leak-analysis" :
+        mode == "top-chain"  ? "difference-with-shortest-reference-chain-analysis" :
+                               "difference-with-changed-object-leak-analysis";
     return {
         {"schemaVersion", 6},
         {"reportType", "snapshot-difference"},

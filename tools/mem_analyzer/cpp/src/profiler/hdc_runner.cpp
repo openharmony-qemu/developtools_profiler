@@ -1082,8 +1082,8 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
             std::cout << "[hiprofiler wait] #" << i <<
                       " (" << elapsedPoll << "s): new zip candidate " << candidate <<
                       " size=" << (curSize / 1024) << "KB" <<
-                      (stableCount >= 2 ? " stable"
-                          : (stableCount == 1 ? " stabilizing" : " generating")) <<
+                      (stableCount >= 2 ? " stable" :
+                          (stableCount == 1 ? " stabilizing" : " generating")) <<
                       "\n" << std::flush;
 
             if (stableCount >= 2) {
@@ -1155,8 +1155,8 @@ std::string WaitForNativeleaksFile(const std::string& pid,
 
             std::cout << "[nativeleaks wait] #" << i << " (" << elapsedPoll << "s): " <<
                       filename << " size=" << (curSize / 1024) << "KB" <<
-                      (stableCount >= 2 ? " stable"
-                          : (stableCount == 1 ? " stabilizing" : " generating")) <<
+                      (stableCount >= 2 ? " stable" :
+                          (stableCount == 1 ? " stabilizing" : " generating")) <<
                       "\n" << std::flush;
 
             if (stableCount >= 2) {
@@ -2002,10 +2002,10 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
                           std::flush;
             } else {
                 std::cout << "[" << ++roundNo << "] Remaining " << remain << "s, " <<
-                          (running ? "target process is running pid:" + pid
-                                      : (state->freshRestartActive.load()
-                                             ? "target process is being relaunched by the tool"
-                                             : "target process not running, please start it as soon as possible")) <<
+                          (running ? "target process is running pid:" + pid :
+                                      (state->freshRestartActive.load() ?
+                                             "target process is being relaunched by the tool" :
+                                             "target process not running, please start it as soon as possible")) <<
                           "\n" <<
                           std::flush;
                 if (running) {
@@ -2512,9 +2512,9 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
             }
         }
         std::cout << "[" << ++roundNo << "] Remaining " << remain << "s, " <<
-                  (pid.empty()
-                          ? "target process not running, please start it as soon as possible"
-                          : "target process is running pid:" + pid) <<
+                  (pid.empty() ?
+                          "target process not running, please start it as soon as possible" :
+                          "target process is running pid:" + pid) <<
                   "\n" << std::flush;
         if (metrics.valid) {
             PrintMetricsLine(metrics);

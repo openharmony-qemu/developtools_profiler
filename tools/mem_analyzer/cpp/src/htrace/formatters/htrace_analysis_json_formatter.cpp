@@ -113,13 +113,13 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
     // 单个符号（不含数组包裹，供多条流式复用）
     auto writeSymbol = [&](const TopSymbolInfo& ts, int64_t& rank) {
         long long existingSize = ts.totalLeakSize;
-        double percentage = totalExistingSize > 0
-            ? std::round((double)existingSize / (double)totalExistingSize * 10000.0) / 100.0
-            : 0.0;
+        double percentage = totalExistingSize > 0 ?
+            std::round((double)existingSize / (double)totalExistingSize * 10000.0) / 100.0 :
+            0.0;
 
         std::string lib = ts.libs.empty() ? "" : ts.libs[0];
-        std::string buildId = (!ts.buildIdNull && ts.buildId != 0)
-            ? full.dataDict.at(ts.buildId) : "";
+        std::string buildId = (!ts.buildIdNull && ts.buildId != 0) ?
+            full.dataDict.at(ts.buildId) : "";
 
         writer.BeginObject();
         writer.WriteKeyValue("rank", rank++);

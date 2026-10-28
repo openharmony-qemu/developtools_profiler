@@ -64,14 +64,14 @@ std::string HtraceModule::run(const ModuleRequest& req, const RunContext& ctx) c
         if (!req.parseOnly) {
             log::Logi("  Analyzing...");
             timer.stage("Analyzing");
-            HtraceAnalysisOutput full = ctx.htrace.leakAddrs.empty()
-                ? HtraceAnalyze(db, ctx)
+            HtraceAnalysisOutput full = ctx.htrace.leakAddrs.empty() ?
+                HtraceAnalyze(db, ctx)
                 : HtraceLeakAnalyze(db, ctx);
             timer.tick("analysis");
 
             timer.stage("Writing output");
-            std::string out = kw.keyword == "json"
-                       ? HtraceWriteAnalysisJson(full, req.filePath, ctx, outDir)
+            std::string out = kw.keyword == "json" ?
+                       HtraceWriteAnalysisJson(full, req.filePath, ctx, outDir)
                        : HtraceWriteAnalysisHtml(full, req.filePath, ctx, outDir);
             timer.tick("write");
             timer.done();

@@ -393,9 +393,9 @@ std::string BuildDetailSectionContent(
         "  <div class=\"top-item-header collapsed\" id=\"topItemHeader" + std::to_string(idx) + "\" onclick=\"toggleDetail(" + std::to_string(idx) + ")\">\n"
         "    <span class=\"arrow\" id=\"topItemArrow" + std::to_string(idx) + "\">&#9654;</span>\n"
         "    <span class=\"header-rank\">TOP" + std::to_string(rank) + "\u51fd\u6570\uff1a</span><span class=\"header-func\">" + EscapeHtml(shortName) + "</span>\n"
-        "    <div class=\"header-stats\">" + (countMode
-            ? "\u6b21\u6570" + std::to_string(existingCount) + "\uff0c\u5360\u6bd4" + pctStr + "%"
-            : "\u5927\u5c0f " + FormatSizeText((double)existingSize, false) + "\uff0c\u6b21\u6570" + std::to_string(existingCount) + "\uff0c\u5360\u6bd4" + pctStr + "%") + "</div>\n"
+        "    <div class=\"header-stats\">" + (countMode ?
+            "\u6b21\u6570" + std::to_string(existingCount) + "\uff0c\u5360\u6bd4" + pctStr + "%" :
+            "\u5927\u5c0f " + FormatSizeText((double)existingSize, false) + "\uff0c\u6b21\u6570" + std::to_string(existingCount) + "\uff0c\u5360\u6bd4" + pctStr + "%") + "</div>\n"
         "  </div>\n"
         "  <div class=\"top-item-body\" id=\"topItemBody" + std::to_string(idx) + "\">\n"
         "    <div class=\"call-chains-section\">\n"

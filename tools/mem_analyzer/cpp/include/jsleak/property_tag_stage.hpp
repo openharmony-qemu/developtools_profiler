@@ -48,7 +48,8 @@ public:
 
 private:
     std::string CheckDestoryedTag(uint32_t uNi, const HeapSnapshot& heap);
-    BaseClassInfo FindConcernType(uint32_t uNi, const std::vector<BaseClassInfo>& baseClasses, const HeapSnapshot& heap);
+    BaseClassInfo FindConcernType(uint32_t uNi, const std::vector<BaseClassInfo>& baseClasses,
+        const HeapSnapshot& heap);
     void AssemblePropertyTagObj(uint32_t uNi, const HeapSnapshot& heap,
                                    const std::string& propertyName, const BaseClassInfo& baseClass,
                                    uint32_t hashValue);

@@ -48,12 +48,30 @@ void SetSink(std::shared_ptr<Sink> sink);
 void WriteLine(Level lv, bool dim, const std::string& msg);
 
 // ── 六个等级入口（整条同色）──
-template <typename... Args> void Logd(Args&&... a)       { Emit(Level::Debug,   true,  std::forward<Args>(a)...); }  // 灰
-template <typename... Args> void Logi(Args&&... a)       { Emit(Level::Info,    false, std::forward<Args>(a)...); }  // 正色
-template <typename... Args> void LogiMinor(Args&&... a) { Emit(Level::Info,    true,  std::forward<Args>(a)...); }  // 灰（次要提示）
-template <typename... Args> void Logok(Args&&... a)      { Emit(Level::Success, false, std::forward<Args>(a)...); }  // 绿
-template <typename... Args> void Logw(Args&&... a)       { Emit(Level::Warn,    false, std::forward<Args>(a)...); }  // 黄
-template <typename... Args> void Loge(Args&&... a)       { Emit(Level::Error,   false, std::forward<Args>(a)...); }  // 红
+template <typename... Args> void Logd(Args&&... a)
+{
+    Emit(Level::Debug, true, std::forward<Args>(a)...);  // 灰
+}
+template <typename... Args> void Logi(Args&&... a)
+{
+    Emit(Level::Info, false, std::forward<Args>(a)...);  // 正色
+}
+template <typename... Args> void LogiMinor(Args&&... a)
+{
+    Emit(Level::Info, true, std::forward<Args>(a)...);  // 灰（次要提示）
+}
+template <typename... Args> void Logok(Args&&... a)
+{
+    Emit(Level::Success, false, std::forward<Args>(a)...);  // 绿
+}
+template <typename... Args> void Logw(Args&&... a)
+{
+    Emit(Level::Warn, false, std::forward<Args>(a)...);  // 黄
+}
+template <typename... Args> void Loge(Args&&... a)
+{
+    Emit(Level::Error, false, std::forward<Args>(a)...);  // 红
+}
 
 // ── 核心实现（inline）──
 template <typename... Args>

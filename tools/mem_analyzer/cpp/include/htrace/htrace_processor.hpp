@@ -109,7 +109,8 @@ inline std::vector<EventTypeMapping> DefaultEventMappings()
     return {
         {"AllocEvent", HtraceEventType::MALLOC},
         {"MmapEvent", HtraceEventType::MMAP_ANON, SubTypeCondition::IsNull},      // MAP_ANONYMOUS: sub_type_id IS NULL
-        {"MmapEvent", HtraceEventType::FILE_PAGE_MSG, SubTypeCondition::IsNotNull}, // file/page mapping: sub_type_id IS NOT NULL
+        // file/page mapping: sub_type_id IS NOT NULL
+        {"MmapEvent", HtraceEventType::FILE_PAGE_MSG, SubTypeCondition::IsNotNull},
         {"FD_Open_Event", HtraceEventType::HP_FD},
         {"THREAD_Create_Event", HtraceEventType::HP_THREAD},
         {"ASHMEM_Alloc_Event", HtraceEventType::ASHMEM},

@@ -825,8 +825,8 @@ std::string ResolveMemAnalyzerBinary()
     constexpr const char* kBinaryName = "mem-analyzer";
 #endif
     const std::string exeDir = proc::GetExecutableDir();
-    return exeDir.empty() ? kBinaryName
-                           : platform::JoinPath(exeDir, kBinaryName);
+    return exeDir.empty() ? kBinaryName :
+                           platform::JoinPath(exeDir, kBinaryName);
 }
 
 // Undo the nesting the analysis subcommands apply to their output: move
@@ -1038,12 +1038,12 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
         configOption + (continuousSnapshot ? "-session" : "") + "-" +
         AsPathSegment(processName) + "-" + CurrentTimestamp();
     const std::string deviceSegment =
-        (opt.connectKeyProvided && !HdcConnectKey().empty())
-            ? AsPathSegment(HdcConnectKey())
-            : std::string();
+        (opt.connectKeyProvided && !HdcConnectKey().empty()) ?
+            AsPathSegment(HdcConnectKey()) :
+            std::string();
     const std::string sessionPath =
-        deviceSegment.empty() ? sessionName
-                               : platform::JoinPath(deviceSegment, sessionName);
+        deviceSegment.empty() ? sessionName :
+                               platform::JoinPath(deviceSegment, sessionName);
     const std::string outputDir = platform::JoinPath(outputDirVal, sessionPath);
     // create_directories also reports false for an existing directory.
     if (!platform::CreateDirectories(outputDir) && !platform::DirectoryExists(outputDir)) {
@@ -1118,9 +1118,9 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
     // (hidumper --mem-smaps for -n/-g/-l/-d, lsof for -f). The paths were
     // already printed at the moment of export; this consolidates them.
     if (!rr.smapsExportedFiles.empty()) {
-        const char* label = (std::string(capture->snapshotPrefix) == "fds")
-                                ? "FD snapshot exported"
-                                : "Smaps exported";
+        const char* label = (std::string(capture->snapshotPrefix) == "fds") ?
+                                "FD snapshot exported" :
+                                "Smaps exported";
         for (const auto& f : rr.smapsExportedFiles) {
             log::Logi(label, ": ", f);
         }

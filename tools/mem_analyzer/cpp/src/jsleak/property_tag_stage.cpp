@@ -74,9 +74,9 @@ json PropertyTagStage::ToJson() const
         objJson["totalNodeCount"] = objInfo.totalNodeCount;
         // 为空时也始终输出，保持输出结构稳定
         objJson["propertyName"] = objInfo.propertyName;
-        objJson["displayType"] = objInfo.concernDisplayType.empty()
-                                      ? defaultDisplayType
-                                      : objInfo.concernDisplayType;
+        objJson["displayType"] = objInfo.concernDisplayType.empty() ?
+                                      defaultDisplayType :
+                                      objInfo.concernDisplayType;
         objJson["hashValues"] = objInfo.hashValues;
 
         objJson["referenceChains"] = RefChainsToJson(objInfo.referenceChains);

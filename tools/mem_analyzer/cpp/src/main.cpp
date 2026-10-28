@@ -130,8 +130,8 @@ int main(int argc, char** argv)
         global.verbose = true;
         global.keepTemp = true;
     }
-    mem_analyzer::log::SetLevel(global.verbose ? mem_analyzer::log::Level::Debug
-                                                : mem_analyzer::log::Level::Info);
+    mem_analyzer::log::SetLevel(global.verbose ? mem_analyzer::log::Level::Debug :
+                                                mem_analyzer::log::Level::Info);
     mem_analyzer::TempDir::SetKeep(global.keepTemp);
 
     if (global.showVersion) {

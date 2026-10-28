@@ -221,9 +221,9 @@ SectionResult BuildSection(const char* tabId, const char* label,
             "  </div>\n"
             "  <div class=\"top-item-body expanded\" id=\"topItemBody" << graphIndex << "\">\n"
             "    <div class=\"call-chains-section\">\n      " <<
-            (chainHtml.empty()
-                ? "<div class=\"call-chain-line\" style=\"color:#a0a0b0;\">无调用链数据</div>"
-                : chainHtml) <<
+            (chainHtml.empty() ?
+                "<div class=\"call-chain-line\" style=\"color:#a0a0b0;\">无调用链数据</div>" :
+                chainHtml) <<
             "\n    </div>\n"
             "    <div class=\"graphToolbar\">\n"
             "      <button onclick=\"resetZoom(" << graphIndex << ")\" class=\"reset-btn\">Reset Zoom</button>\n"
@@ -335,8 +335,8 @@ void FormatWithStream(std::ostream& out, const TshandleAnalysisOutput& analysis,
 
     const double totalSize = analysis.global.app.totalSize + analysis.global.sys.totalSize
                             + analysis.local.totalSize;
-    const long long totalForTemplate = totalSize <= static_cast<double>(std::numeric_limits<long long>::max())
-        ? static_cast<long long>(totalSize) : 0;
+    const long long totalForTemplate = totalSize <= static_cast<double>(std::numeric_limits<long long>::max()) ?
+        static_cast<long long>(totalSize) : 0;
 
     const std::string title = "资源泄漏日志分析报告";
 

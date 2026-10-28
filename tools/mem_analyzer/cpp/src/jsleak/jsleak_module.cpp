@@ -73,8 +73,8 @@ std::string JsleakModule::run(const ModuleRequest& req, const RunContext& ctx) c
             timer.tick("analysis");
 
             timer.stage("Writing output");
-            std::string out = kw.keyword == "json"
-                       ? JsleakWriteCompareJson(report, outDir)
+            std::string out = kw.keyword == "json" ?
+                       JsleakWriteCompareJson(report, outDir)
                        : JsleakWriteCompareHtml(report, outDir);
             timer.tick("write");
             timer.done();
@@ -93,8 +93,8 @@ std::string JsleakModule::run(const ModuleRequest& req, const RunContext& ctx) c
         timer.tick("analysis");
 
         timer.stage("Writing output");
-        std::string out = kw.keyword == "json"
-                   ? JsleakWriteAnalysisJson(data, req.filePath, ctx, outDir)
+        std::string out = kw.keyword == "json" ?
+                   JsleakWriteAnalysisJson(data, req.filePath, ctx, outDir)
                    : JsleakWriteAnalysisHtml(data, req.filePath, ctx, outDir);
         timer.tick("write");
         timer.done();

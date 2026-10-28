@@ -1155,8 +1155,8 @@ static json TopSymbolInfoToJson(const TopSymbolInfo& ts, const std::unordered_ma
         {"totalLeakSize", ts.totalLeakSize},
         {"totalExistingCount", ts.totalExistingCount},
         {"isApp", ts.isApp},
-        {"buildId", (!ts.buildIdNull && ts.buildId != 0)
-            ? json(dataDict.at(ts.buildId)) : ""}
+        {"buildId", (!ts.buildIdNull && ts.buildId != 0) ?
+            json(dataDict.at(ts.buildId)) : ""}
     };
     // Serialize flame/icicle trees with proper recursive structure
     // Resolve int IDs to strings at output time via data_dict
