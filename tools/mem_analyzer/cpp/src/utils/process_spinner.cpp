@@ -36,7 +36,7 @@ ProcessSpinner::ProcessSpinner(const std::string& description)
 ProcessSpinner::~ProcessSpinner()
 {
     if (running_.load()) {
-        done(false);
+        Done(false);
     }
 }
 

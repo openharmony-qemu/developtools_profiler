@@ -38,7 +38,7 @@ public:
     static PreviewFeaturesMgr& Instance();
 
     /// 加载配置文件（文件不存在时视为全部关闭）。失败时填充 err 并返回 false
-    bool load(std::string& err);
+    bool Load(std::string& err);
 
     /// 指定预览特性是否使能；未登记的 id 恒为 false
     bool Enabled(const std::string& featureId) const;

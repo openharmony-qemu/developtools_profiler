@@ -325,7 +325,7 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
     // POSIX: spawn via fork+pipe+execl (shared helper); bounded read can
     // terminate the child on timeout (unlike pclose which blocks).
     auto sp = SpawnPiped(cmd);
-    if (!sp.ok()) {
+    if (!sp.Ok()) {
         return cap;
     }
     cap.spawned = true;

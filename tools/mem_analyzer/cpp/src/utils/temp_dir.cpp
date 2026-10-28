@@ -83,13 +83,13 @@ TempDir::TempDir(const std::string& prefix, bool quiet) : quiet_(quiet)
 
 TempDir::~TempDir()
 {
-    cleanup();
+    Cleanup();
 }
 
 TempDir& TempDir::operator=(TempDir&& other) noexcept
 {
     if (this != &other) {
-        cleanup();
+        Cleanup();
         path_ = std::move(other.path_);
         released_ = other.released_;
         quiet_ = other.quiet_;

@@ -91,7 +91,7 @@ std::vector<std::string> ModuleRegistry::SelfCheck()
 {
     std::vector<std::string> issues;
 
-    for (auto* module : all()) {
+    for (auto* module : All()) {
         const ModuleCapability cap = module->Capability();
         const std::string name = module->Name();
 

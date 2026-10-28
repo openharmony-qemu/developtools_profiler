@@ -25,7 +25,7 @@ FormatKeyword ResolveFormatKeyword(const std::string& moduleName, const ModuleCa
 
     // 能力表为空 = 该模块明确不支持此模式（如 snapshot 没有 parse 格式）。
     // 提前判定：否则会先兜底出一个关键词，再用它报「格式不支持」，误导用户。
-    if (!modeCap.supported()) {
+    if (!modeCap.Supported()) {
         out.error = "Parser \"" + moduleName + "\" does not support " + modeName +
                     " mode. Skipping.";
         return out;

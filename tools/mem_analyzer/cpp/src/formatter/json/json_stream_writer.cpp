@@ -33,7 +33,7 @@ JsonStreamWriter::JsonStreamWriter(const std::string& filePath)
 
 JsonStreamWriter::~JsonStreamWriter()
 {
-    close();
+    Close();
 }
 
 // -----------------------------------------------------------------------------

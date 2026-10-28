@@ -1675,7 +1675,7 @@ std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::s
         CloseHandle(pi.hThread);
 #else
         auto sp = proc::SpawnPiped(cmd);
-        if (!sp.ok()) {
+        if (!sp.Ok()) {
             state->spawnFailed = true;
             state->done = true;
             return;

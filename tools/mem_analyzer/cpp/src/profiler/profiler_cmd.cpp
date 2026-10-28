@@ -125,7 +125,7 @@ int RunCommandStreaming(const std::string& cmd)
     return static_cast<int>(code);
 #else
     auto sp = proc::SpawnPiped(cmd);
-    if (!sp.ok()) {
+    if (!sp.Ok()) {
         return -1;
     }
     char buf[4096];

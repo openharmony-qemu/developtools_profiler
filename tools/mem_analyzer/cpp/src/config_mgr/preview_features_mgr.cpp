@@ -96,7 +96,7 @@ bool PreviewFeaturesMgr::Load(std::string& err)
         if (enabled.is_boolean()) {
             // 兼容旧格式：布尔值表示「全部预览特性」的总开关
             if (enabled.get<bool>()) {
-                for (const auto& f : registry()) {
+                for (const auto& f : Registry()) {
                     enabledFeatures_.insert(f.name);
                 }
             }
@@ -123,7 +123,7 @@ bool PreviewFeaturesMgr::Save(std::string& err) const
 {
     // 按 registry 顺序输出已使能的特性 id，保证文件内容稳定
     json enabled = json::array();
-    for (const auto& f : registry()) {
+    for (const auto& f : Registry()) {
         if (enabledFeatures_.count(f.name)) {
             enabled.push_back(f.name);
         }
@@ -172,11 +172,11 @@ bool PreviewFeaturesMgr::SetEnabled(bool enabled, std::string& err)
     }
     enabledFeatures_.clear();
     if (enabled) {
-        for (const auto& f : registry()) {
+        for (const auto& f : Registry()) {
             enabledFeatures_.insert(f.name);
         }
     }
-    return save(err);
+    return Save(err);
 }
 
 } // namespace mem_analyzer

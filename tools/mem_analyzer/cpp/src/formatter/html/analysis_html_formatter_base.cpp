@@ -104,8 +104,8 @@ void AnalysisHtmlFormatterBase::ApplyCommonPlaceholders(std::string& htmlFrag, l
     htmlFrag = ReplaceAll(htmlFrag, "__NAV_BAR_HELP_CENTER_CONTENT__", NavBarHelpCenterContent());
     htmlFrag = ReplaceAll(htmlFrag, "__NAV_BAR_SWITCH_NAV_FUNC__", NavBarSwitchNavFunc());
     // 页脚版本
-    htmlFrag = ReplaceAll(htmlFrag, "__VERSION_FORMAT__", setVersionFormat());
-    htmlFrag = ReplaceAll(htmlFrag, "__VERSION_CONTENT__", buildVersionContent());
+    htmlFrag = ReplaceAll(htmlFrag, "__VERSION_FORMAT__", SetVersionFormat());
+    htmlFrag = ReplaceAll(htmlFrag, "__VERSION_CONTENT__", BuildVersionContent());
 }
 
 // Streaming version: outputs each SymbolDataEntry individually to avoid building full dataJSONArr
@@ -134,8 +134,8 @@ void AnalysisHtmlFormatterBase::FillHTMLTemplateStreamedDirect(
     beforeJson = ReplaceAll(beforeJson, "__TAB_CONTENT_HTML__", tabContentHTML);
     beforeJson = ReplaceAll(beforeJson, "__TITLE__", title);
     beforeJson = ReplaceAll(beforeJson, "__META_ITEMS_HTML__", metaDataItemsHTML);
-    applyCommonPlaceholders(beforeJson, totalSize, countMode);
-    applyCommonPlaceholders(afterJson, totalSize, countMode);
+    ApplyCommonPlaceholders(beforeJson, totalSize, countMode);
+    ApplyCommonPlaceholders(afterJson, totalSize, countMode);
 
     // Stream all data inline
     out << beforeJson;
@@ -182,8 +182,8 @@ void AnalysisHtmlFormatterBase::FillHTMLTemplateStreamed(
     beforeJson = ReplaceAll(beforeJson, "__TAB_CONTENT_HTML__", tabContentHTML);
     beforeJson = ReplaceAll(beforeJson, "__TITLE__", title);
     beforeJson = ReplaceAll(beforeJson, "__META_ITEMS_HTML__", metaDataItemsHTML);
-    applyCommonPlaceholders(beforeJson, totalSize, countMode);
-    applyCommonPlaceholders(afterJson, totalSize, countMode);
+    ApplyCommonPlaceholders(beforeJson, totalSize, countMode);
+    ApplyCommonPlaceholders(afterJson, totalSize, countMode);
 
     out << beforeJson;
     out << dataJSONArr;

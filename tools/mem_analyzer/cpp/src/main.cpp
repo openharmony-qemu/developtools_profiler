@@ -141,7 +141,7 @@ int main(int argc, char** argv)
     // Load preview feature switches (all disabled by default); failure is not fatal
     {
         std::string err;
-        if (!mem_analyzer::PreviewFeaturesMgr::Instance().load(err)) {
+        if (!mem_analyzer::PreviewFeaturesMgr::Instance().Load(err)) {
             mem_analyzer::log::Logw("Warning: preview features: ", err);
         }
     }
