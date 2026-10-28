@@ -313,11 +313,11 @@ std::string BuildPropertyTagEntryHtml(const std::string& objName,
             }
         }
         std::sort(sortedChains.begin(), sortedChains.end(),
-                    [](const auto &a, const auto &b) {
-                        int64_t sizeA = a.value("totalRetainedSize", 0);
-                        int64_t sizeB = b.value("totalRetainedSize", 0);
-                        return sizeA > sizeB;
-                    });
+            [](const auto &a, const auto &b) {
+                int64_t sizeA = a.value("totalRetainedSize", 0);
+                int64_t sizeB = b.value("totalRetainedSize", 0);
+                return sizeA > sizeB;
+            });
         int chainIdx = 0;
         bool multipleChains = sortedChains.size() > 1;
         for (const auto &chainData : sortedChains) {
@@ -416,11 +416,11 @@ std::string BuildPropertyTagTabHtmlImpl(const json& propertyTagObjects, const st
             sortedItems.emplace_back(it.key(), it.value());
         }
         std::sort(sortedItems.begin(), sortedItems.end(),
-                  [](const auto& a, const auto& b) {
-                      int64_t sizeA = a.second.value("totalRetainedSize", 0);
-                      int64_t sizeB = b.second.value("totalRetainedSize", 0);
-                      return sizeA > sizeB;
-                  });
+            [](const auto& a, const auto& b) {
+                int64_t sizeA = a.second.value("totalRetainedSize", 0);
+                int64_t sizeB = b.second.value("totalRetainedSize", 0);
+                return sizeA > sizeB;
+            });
 
         int idx = 0;
         for (const auto& item : sortedItems) {

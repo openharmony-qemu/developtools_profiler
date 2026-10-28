@@ -138,7 +138,7 @@ bool NameCacheIndex::LoadFromDir(const std::string& dir)
             }
             std::string lower = filename;
             std::transform(lower.begin(), lower.end(), lower.begin(),
-                           [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
             if (lower.find("namecache") == std::string::npos) {
                 continue;
             }

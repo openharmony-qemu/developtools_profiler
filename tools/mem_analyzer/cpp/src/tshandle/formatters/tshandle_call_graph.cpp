@@ -79,8 +79,7 @@ TshandleRenderNode BuildTshandleDownstreamGraph(const std::string& objectName,
     TshandleRenderNode root{objectName, objectName, objectName, "", "", -1, 0, 0, 0, {}};
     for (const auto& chain : chains) {
         auto frames = chain.frames;
-        std::stable_sort(frames.begin(), frames.end(), [](const ResolvedStackFrame& a, const ResolvedStackFrame& b)
-        {
+        std::stable_sort(frames.begin(), frames.end(), [](const ResolvedStackFrame& a, const ResolvedStackFrame& b) {
             return a.depth < b.depth;
         });
 

@@ -135,8 +135,7 @@ TshandleTypeSection buildSectionWithStacks(
     }
 
     section.totalObjects = static_cast<long long>(objects.size());
-    std::stable_sort(objects.begin(), objects.end(), [](const auto& left, const auto& right)
-    {
+    std::stable_sort(objects.begin(), objects.end(), [](const auto& left, const auto& right) {
         return left.existingSize > right.existingSize;
     });
 

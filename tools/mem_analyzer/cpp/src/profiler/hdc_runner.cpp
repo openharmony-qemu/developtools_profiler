@@ -2565,8 +2565,7 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
 
         // Also wake up when the device is lost, so the check above runs at the
         // next tick instead of sleeping out the remaining interval (pinned target).
-        SleepTicks(kSnapshotSampleIntervalS * 10,
-                    []() { return gInterruptRequested != 0 || DeviceLost(); });
+        SleepTicks(kSnapshotSampleIntervalS * 10, []() { return gInterruptRequested != 0 || DeviceLost(); });
     }
 
     // ── end-of-session snapshot ─────────────────────────────────────────────

@@ -153,8 +153,7 @@ collectRefChains(const HeapSnapshot& heap,
         timer.tick("pass2");
     }
 
-    std::sort(result.begin(), result.end(), [](const RefChainInfo& a, const RefChainInfo& b)
-    {
+    std::sort(result.begin(), result.end(), [](const RefChainInfo& a, const RefChainInfo& b) {
         return a.totalRetainedSize > b.totalRetainedSize;
     });
     return result;

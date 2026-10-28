@@ -41,9 +41,9 @@ static std::vector<HtraceEventType> AllowedEventTypes(const std::string& categor
             allowed.push_back(et);
         }
         std::sort(allowed.begin(), allowed.end(),
-                  [](HtraceEventType a, HtraceEventType b) {
-                      return static_cast<int>(a) < static_cast<int>(b);
-                  });
+            [](HtraceEventType a, HtraceEventType b) {
+                return static_cast<int>(a) < static_cast<int>(b);
+            });
         return allowed;
     }
     return HtraceCategory(category).eventTypes;  // 描述符表内已升序

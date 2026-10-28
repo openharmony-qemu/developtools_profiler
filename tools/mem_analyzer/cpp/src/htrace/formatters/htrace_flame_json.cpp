@@ -205,8 +205,7 @@ static std::vector<CallChainResult> buildCallChainsFromFlameNode(
 
     std::sort(candidates.begin(), candidates.end(),
         [](const std::pair<double, std::vector<CallChainFrame>>& a,
-           const std::pair<double, std::vector<CallChainFrame>>& b)
-        {
+            const std::pair<double, std::vector<CallChainFrame>>& b) {
             return a.first > b.first;
         });
 

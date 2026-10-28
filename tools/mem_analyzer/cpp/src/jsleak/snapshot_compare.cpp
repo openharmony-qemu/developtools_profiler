@@ -348,8 +348,7 @@ json CompareAggregatesComplete(const std::unordered_map<std::string, Aggregate>&
         }
         rows.push_back(std::move(row));
     }
-    std::sort(rows.begin(), rows.end(), [](const json& lhs, const json& rhs)
-    {
+    std::sort(rows.begin(), rows.end(), [](const json& lhs, const json& rhs) {
         const int64_t lr = std::abs(lhs["delta"]["retainedSize"].get<int64_t>());
         const int64_t rr = std::abs(rhs["delta"]["retainedSize"].get<int64_t>());
         if (lr != rr) {
@@ -524,8 +523,7 @@ LogicalGrowthResult BuildLogicalGrowthGroups(json rows, const SnapshotIndex& bas
     }
     for (auto& group : result.groups) {
         auto& components = group["components"];
-        std::sort(components.begin(), components.end(), [](const json& lhs, const json& rhs)
-        {
+        std::sort(components.begin(), components.end(), [](const json& lhs, const json& rhs) {
             return std::abs(lhs["delta"]["selfSize"].get<int64_t>()) >
                    std::abs(rhs["delta"]["selfSize"].get<int64_t>());
         });
@@ -537,8 +535,7 @@ LogicalGrowthResult BuildLogicalGrowthGroups(json rows, const SnapshotIndex& bas
         if (lr != rr) {
             return lr > rr;
         }
-        return lhs["delta"]["selfSize"].get<int64_t>() >
-               rhs["delta"]["selfSize"].get<int64_t>();
+        return lhs["delta"]["selfSize"].get<int64_t>() > rhs["delta"]["selfSize"].get<int64_t>();
     });
     return result;
 }
@@ -591,8 +588,7 @@ json CompactPathDeltas(const json& rows)
 std::string SnapshotInputFormat(const std::string& path)
 {
     std::string ext = PathToUtf8(PathFromUtf8(path).extension());
-    std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char ch)
-    {
+    std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char ch) {
         return static_cast<char>(std::tolower(ch));
     });
     if (ext == ".heapsnapshot") {
@@ -723,8 +719,7 @@ json BuildChangedLeakObjects(const json& baselineLeaks, const json& targetLeaks,
     }
 
     // Same per-direction budget as the object path: top_n positive + top_n negative.
-    std::sort(deltas.begin(), deltas.end(), [](const LeakDelta& lhs, const LeakDelta& rhs)
-    {
+    std::sort(deltas.begin(), deltas.end(), [](const LeakDelta& lhs, const LeakDelta& rhs) {
         const int64_t ls = std::abs(lhs.sizeDelta);
         const int64_t rs = std::abs(rhs.sizeDelta);
         if (ls != rs) {

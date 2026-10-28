@@ -617,8 +617,9 @@ static AlgorithmResult RunAlgorithm(
     }
     std::stable_sort(algResult.finalSymbols.begin(), algResult.finalSymbols.end(),
         [](const auto& a, const auto& b) {
-            if (a.totalLeakSize != b.totalLeakSize)
+            if (a.totalLeakSize != b.totalLeakSize) {
                 return a.totalLeakSize > b.totalLeakSize;
+            }
             return a.uid < b.uid;
         });
     timer.tick("filter",
@@ -912,8 +913,9 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
 
         std::stable_sort(filtered.begin(), filtered.end(),
             [](const auto* a, const auto* b) {
-                if (a->totalLeakSize != b->totalLeakSize)
+                if (a->totalLeakSize != b->totalLeakSize) {
                     return a->totalLeakSize > b->totalLeakSize;
+                }
                 return a->uid < b->uid;
             });
         return {filtered, orgCount};
