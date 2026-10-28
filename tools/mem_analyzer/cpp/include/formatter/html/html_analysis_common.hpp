@@ -36,7 +36,7 @@ class StringTable {
     std::vector<std::string> strings_;
     std::unordered_map<std::string, int> indexMap_;
 public:
-    int intern(const std::string& s)
+    int Intern(const std::string& s)
     {
         auto it = indexMap_.find(s);
         if (it != indexMap_.end()) {
@@ -47,7 +47,7 @@ public:
         indexMap_[s] = idx;
         return idx;
     }
-    json toArray() const
+    json ToArray() const
     {
         json arr = json::array();
         for (const auto& s : strings_) {

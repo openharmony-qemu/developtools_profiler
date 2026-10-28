@@ -30,7 +30,7 @@ namespace {
 bool CallStackIsApp(const ResolvedCallStack& stack)
 {
     for (const auto& frame : stack.frames) {
-        if (HtraceConfigMgr::instance().IsAppSymbol(frame.lib, true)) {
+        if (HtraceConfigMgr::Instance().IsAppSymbol(frame.lib, true)) {
             return true;
         }
     }
@@ -235,7 +235,7 @@ TshandleAnalysisOutput AnalyzeTshandleData(
     const std::vector<ArkTsClass>& arktsClasses,
     int topN)
 {
-    auto& cfg = HtraceConfigMgr::instance();
+    auto& cfg = HtraceConfigMgr::Instance();
     if (!cfg.IsLoaded()) {
         std::string err;
         cfg.LoadDefault(err);

@@ -50,7 +50,7 @@ TraceDB HtraceParse(const std::string& filePath, const RunContext& ctx)
     TempDir tempDir("htrace");
     auto sourceName = platform::stem(filePath);
 
-    auto dbPath = platform::JoinPath(tempDir.path(), sourceName + "_trace_streamer.db");
+    auto dbPath = platform::JoinPath(tempDir.Path(), sourceName + "_trace_streamer.db");
 
     // 3. Run trace_streamer
     std::string streamerErr;

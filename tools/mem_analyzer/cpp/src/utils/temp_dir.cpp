@@ -100,7 +100,7 @@ TempDir& TempDir::operator=(TempDir&& other) noexcept
     return *this;
 }
 
-void TempDir::cleanup()
+void TempDir::Cleanup()
 {
     if (path_.empty() || released_) {
         return;

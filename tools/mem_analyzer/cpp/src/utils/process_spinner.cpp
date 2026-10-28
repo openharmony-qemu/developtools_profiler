@@ -29,7 +29,7 @@ ProcessSpinner::ProcessSpinner(const std::string& description)
       start_(std::chrono::steady_clock::now())
 {
     if (style::IsTty()) {
-        thread_ = std::thread(&ProcessSpinner::run, this);
+        thread_ = std::thread(&ProcessSpinner::Run, this);
     }
 }
 
@@ -40,7 +40,7 @@ ProcessSpinner::~ProcessSpinner()
     }
 }
 
-void ProcessSpinner::done(bool success)
+void ProcessSpinner::Done(bool success)
 {
     running_.store(false);
     if (thread_.joinable()) {
@@ -67,7 +67,7 @@ void ProcessSpinner::done(bool success)
     }
 }
 
-void ProcessSpinner::run()
+void ProcessSpinner::Run()
 {
     int frame = 0;
     while (running_.load()) {

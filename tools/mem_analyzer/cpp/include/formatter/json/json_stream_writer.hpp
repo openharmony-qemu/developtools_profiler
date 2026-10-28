@@ -61,8 +61,8 @@ public:
     // (first line inline, subsequent lines get current depth indent).
     void WriteRaw(const std::string& raw);
 
-    void close();
-    void flush();
+    void Close();
+    void Flush();
 
 private:
     void WriteIndent();

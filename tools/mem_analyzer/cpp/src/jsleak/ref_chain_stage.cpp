@@ -174,7 +174,7 @@ RefChainStage::RefChainStage(std::string mode,
       topK(topK),
       excludeChains(std::move(excludeChains)) {}
 
-const std::string& RefChainStage::mode() const
+const std::string& RefChainStage::Mode() const
 {
     return mode_;
 }
@@ -189,7 +189,7 @@ const char* RefChainStage::JsonKey() const
     return jsonKey;
 }
 
-void RefChainStage::run(const HeapSnapshot& heap)
+void RefChainStage::Run(const HeapSnapshot& heap)
 {
     refChainInfos = collectRefChains(
         heap,

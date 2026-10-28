@@ -260,10 +260,10 @@ std::string BuildCallChainHTML(const std::vector<CallChainResult>& callChains, d
             // 2. 底层函数
             keptIndices.push_back((int)frames.size() - 1);
             for (int fi = 1; fi < (int)frames.size() - 1; fi++) {
-                bool curIsTs = HtraceConfigMgr::instance().IsTsSymbol(frames[fi].lib, true);
-                bool nextIsTs = (fi + 1 < (int)frames.size()) && HtraceConfigMgr::instance().IsTsSymbol(frames[fi + 1].lib, true);
-                bool curIsApp = HtraceConfigMgr::instance().IsAppSymbol(frames[fi].lib, true);
-                bool nextIsApp = (fi + 1 < (int)frames.size()) && HtraceConfigMgr::instance().IsAppSymbol(frames[fi + 1].lib, true);
+                bool curIsTs = HtraceConfigMgr::Instance().IsTsSymbol(frames[fi].lib, true);
+                bool nextIsTs = (fi + 1 < (int)frames.size()) && HtraceConfigMgr::Instance().IsTsSymbol(frames[fi + 1].lib, true);
+                bool curIsApp = HtraceConfigMgr::Instance().IsAppSymbol(frames[fi].lib, true);
+                bool nextIsApp = (fi + 1 < (int)frames.size()) && HtraceConfigMgr::Instance().IsAppSymbol(frames[fi + 1].lib, true);
                 // 3. JS函数调用Native函数时的JS函数
                 if (curIsTs && !nextIsTs) {
                     keptIndices.push_back(fi);

@@ -95,7 +95,7 @@ public:
     }
 
     // ── Parse ────────────────────────────────────────────────
-    void parse(int argc, char** argv);
+    void Parse(int argc, char** argv);
 
     // ── Query ────────────────────────────────────────────────
     bool IsSubcommand(const std::string& name) const;

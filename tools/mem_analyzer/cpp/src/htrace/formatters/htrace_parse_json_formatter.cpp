@@ -132,7 +132,7 @@ std::string HtraceWriteParseJson(const TraceDB& db, const std::string& filePath,
     writer.EndObject();
     writer.EndObject();
 
-    writer.close();
+    writer.Close();
 
     timer.Tick("total");
     log::Logok("Output written to: ", outPath);

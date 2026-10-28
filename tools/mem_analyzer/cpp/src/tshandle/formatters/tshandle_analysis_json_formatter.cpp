@@ -192,7 +192,7 @@ std::string TshandleWriteAnalysisJson(const TshandleAnalysisOutput& analysis,
     writer.WriteRaw(content.dump(4));
     writer.EndObject();
 
-    writer.close();
+    writer.Close();
 
     timer.Tick("total");
     log::Logok("Output written to: ", outPath);

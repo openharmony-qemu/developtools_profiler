@@ -20,7 +20,7 @@ namespace mem_analyzer {
 //  CompressedStackFrame → ResolvedStackFrame
 // ============================================================================
 
-ResolvedStackFrame CompressedStackFrame::resolve(const DataDict& dict) const
+ResolvedStackFrame CompressedStackFrame::Resolve(const DataDict& dict) const
 {
     ResolvedStackFrame r;
     r.depth = depth;
@@ -59,7 +59,7 @@ ResolvedStackFrame CompressedStackFrame::resolve(const DataDict& dict) const
 //  CompressedCallStack → ResolvedCallStack
 // ============================================================================
 
-ResolvedCallStack CompressedCallStack::resolve(const DataDict& dict) const
+ResolvedCallStack CompressedCallStack::Resolve(const DataDict& dict) const
 {
     ResolvedCallStack r;
     r.id = id;
@@ -69,7 +69,7 @@ ResolvedCallStack CompressedCallStack::resolve(const DataDict& dict) const
     r.subTypeId = subTypeId;
     r.frames.reserve(frames.size());
     for (const auto& f : frames) {
-        r.frames.push_back(f.resolve(dict));
+        r.frames.push_back(f.Resolve(dict));
     }
     return r;
 }
@@ -78,12 +78,12 @@ ResolvedCallStack CompressedCallStack::resolve(const DataDict& dict) const
 //  CompressedCallStackList → ResolvedCallStackList
 // ============================================================================
 
-ResolvedCallStackList CompressedCallStackList::resolve() const
+ResolvedCallStackList CompressedCallStackList::Resolve() const
 {
     ResolvedCallStackList result;
     result.stacks.reserve(stacks.size());
     for (const auto& cs : stacks) {
-        result.stacks.push_back(cs.resolve(dict));
+        result.stacks.push_back(cs.Resolve(dict));
     }
     return result;
 }
@@ -115,7 +115,7 @@ void TraceDB::ResolveStacks()
         return;
     }// already resolved, no-op
 
-    stacks = compressed->resolve();
+    stacks = compressed->Resolve();
 }
 
 } // namespace mem_analyzer

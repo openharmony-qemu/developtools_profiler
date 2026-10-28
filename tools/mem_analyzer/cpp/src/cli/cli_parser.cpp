@@ -336,7 +336,7 @@ void CliParser::ConsumeArgs(const std::vector<std::string>& args, size_t start)
 // parse()
 // ═══════════════════════════════════════════════════════════════
 
-void CliParser::parse(int argc, char** argv)
+void CliParser::Parse(int argc, char** argv)
 {
     programName_ = (argc > 0) ? ExtractProgramName(argv[0]) : "mem-analyzer";
 

@@ -40,10 +40,10 @@ HeapSnapshot JsleakParse(const std::string& filePath, const RunContext& ctx)
     if (fromRawheap || needDeobfuscate) {
         // rawheap 转换和/或反混淆：中间产物放入系统 TempDir（RAII 自动清理），
         // 反混淆产物保持原始 stem 名，使下游无需感知反混淆。
-        if (!tempDir.valid()) {
+        if (!tempDir.Valid()) {
             tempDir = TempDir("snapshot");
         }
-        const std::string& tempBase = tempDir.valid() ? tempDir.path() : ctx.output.outDir;
+        const std::string& tempBase = tempDir.Valid() ? tempDir.Path() : ctx.output.outDir;
         std::string source = filePath;
 
         // Step 1: rawheap → heapsnapshot（输出到 convert 子目录，父目录由转换函数创建）

@@ -33,7 +33,7 @@ std::vector<std::shared_ptr<AnalysisModule>>& modules()
 
 } // namespace
 
-void ModuleRegistry::add(std::shared_ptr<AnalysisModule> module)
+void ModuleRegistry::Add(std::shared_ptr<AnalysisModule> module)
 {
     if (!module) {
         return;
@@ -69,7 +69,7 @@ AnalysisModule* ModuleRegistry::FindByExtension(const std::string& ext)
     return nullptr;
 }
 
-AnalysisModule* ModuleRegistry::detect(const std::string& filePath)
+AnalysisModule* ModuleRegistry::Detect(const std::string& filePath)
 {
     auto pos = filePath.find_last_of('.');
     if (pos == std::string::npos) {
@@ -78,7 +78,7 @@ AnalysisModule* ModuleRegistry::detect(const std::string& filePath)
     return FindByExtension(filePath.substr(pos + 1));
 }
 
-std::vector<AnalysisModule*> ModuleRegistry::all()
+std::vector<AnalysisModule*> ModuleRegistry::All()
 {
     std::vector<AnalysisModule*> result;
     for (auto& m : modules()) {
@@ -96,7 +96,7 @@ std::vector<std::string> ModuleRegistry::SelfCheck()
         const std::string name = module->Name();
 
         auto checkMode = [&](const char* mode, const ModeCapability& mc) {
-            if (!mc.supported()) {
+            if (!mc.Supported()) {
                 // 明确不支持该模式：此时默认格式是死数据，留着会误导下一个改的人
                 if (!mc.defaultFormat.empty()) {
                     issues.push_back(name + ": " + mode + " declares no formats but has default '" +
@@ -124,9 +124,9 @@ std::vector<std::string> ModuleRegistry::SelfCheck()
 namespace {
 // 数据域注册。新增一个域 = 建目录 + 在这里加一行 + CMakeLists 登记源文件。
 const bool REGISTERED = []() {
-    ModuleRegistry::add(std::make_shared<HtraceModule>());
-    ModuleRegistry::add(std::make_shared<TshandleModule>());
-    ModuleRegistry::add(std::make_shared<JsleakModule>());
+    ModuleRegistry::Add(std::make_shared<HtraceModule>());
+    ModuleRegistry::Add(std::make_shared<TshandleModule>());
+    ModuleRegistry::Add(std::make_shared<JsleakModule>());
     return true;
 }();
 } // namespace

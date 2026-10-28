@@ -448,10 +448,10 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
 
     // Use direct streaming: outputs each SymbolDataEntry individually and releases
     // flameTree/icicleTree after streaming, reducing peak memory
-    std::string tabBarHTML = AnalysisHtmlFormatterBase::buildTabBarHTML(groups);
+    std::string tabBarHTML = AnalysisHtmlFormatterBase::BuildTabBarHTML(groups);
     std::string tabContentHTML = multipart ?
         BuildMmapTabContentHTML(groups, streamGroups, filepageLists, totalExistingSize, countMode) :
-        AnalysisHtmlFormatterBase::buildTabContentHTML(groups, totalExistingSize, countMode);
+        AnalysisHtmlFormatterBase::BuildTabContentHTML(groups, totalExistingSize, countMode);
 
     // 延迟构建回调：在流式写入时按需构建flameTree/icicleTree
     // 避免所有entry的flameTree/icicleTree同时驻留内存，峰值内存从O(N)降至O(1)
@@ -468,7 +468,7 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
             }
             FlameNode merged = BuildMergedIcicle(fp.callStacks, ids, full.dataDict);
             entry.icicleTree = BuildIcicleTreeJsonFromFlameNode(merged, fp.filename, "", "", full.dataDict, st);
-            entry.names = st.toArray();
+            entry.names = st.ToArray();
             return;
         }
         // 符号轨
@@ -487,12 +487,12 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
                 entry.flameTree = BuildFlameTreeJsonFromFlameNode(ts.flameGraph, ts.symbol, lib, ts.libOffset, full.dataDict, st);
                 entry.icicleTree = BuildIcicleTreeJsonFromFlameNode(ts.icicleGraph, ts.symbol, lib, ts.libOffset, full.dataDict, st);
             }
-            entry.names = st.toArray();
+            entry.names = st.ToArray();
         }
     };
 
     std::vector<TabGroup>& streamTarget = multipart ? streamGroups : groups;
-    AnalysisHtmlFormatterBase::fillHTMLTemplateStreamedDirect(
+    AnalysisHtmlFormatterBase::FillHTMLTemplateStreamedDirect(
         out, streamTarget, totalExistingSize, tabBarHTML, tabContentHTML, metaDataItemsHTML, title, fillTree, countMode);
 
     timer.Tick("total");

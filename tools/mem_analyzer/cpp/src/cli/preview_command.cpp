@@ -42,12 +42,12 @@ public:
 
     int Run(const GlobalOptions&) override
     {
-        auto& mgr = PreviewFeaturesMgr::instance();
+        auto& mgr = PreviewFeaturesMgr::Instance();
 
         if (action_.empty() || action_ == "status") {
             std::cout << "Preview features:" << std::endl;
-            for (const auto& f : PreviewFeaturesMgr::registry()) {
-                std::cout << "  " << f.name << ": " << (mgr.enabled(f.name) ? "enabled" : "disabled") <<
+            for (const auto& f : PreviewFeaturesMgr::Registry()) {
+                std::cout << "  " << f.name << ": " << (mgr.Enabled(f.name) ? "enabled" : "disabled") <<
                           " - " << f.description << std::endl;
             }
             return 0;

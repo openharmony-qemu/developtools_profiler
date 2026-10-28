@@ -314,7 +314,7 @@ std::string BuildTabContent(const std::vector<SectionResult>& sections)
 
 void FormatWithStream(std::ostream& out, const TshandleAnalysisOutput& analysis, const std::string& filePath)
 {
-    auto& htraceCfg = HtraceConfigMgr::instance();
+    auto& htraceCfg = HtraceConfigMgr::Instance();
     if (!htraceCfg.IsLoaded()) {
         std::string cfgErr;
         htraceCfg.LoadDefault(cfgErr);
@@ -343,7 +343,7 @@ void FormatWithStream(std::ostream& out, const TshandleAnalysisOutput& analysis,
     const std::string title = "资源泄漏日志分析报告";
 
     std::ostringstream page;
-    AnalysisHtmlFormatterBase::fillHTMLTemplateStreamed(
+    AnalysisHtmlFormatterBase::FillHTMLTemplateStreamed(
         page, allData, totalForTemplate, BuildTabBar(sections), BuildTabContent(sections),
         BuildMetaHtml(filePath, analysis.parsedAt, analysis.traceMeta, analysis.global,
                         analysis.local),

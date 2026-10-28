@@ -35,7 +35,7 @@ TshandleRenderNode MakeNode(const ResolvedStackFrame& f, int depth)
     const auto libname = slash == std::string::npos ? f.lib : f.lib.substr(slash + 1);
     const auto display = unresolved ? libname + (f.libOffset.empty() ? "" : "+" + f.libOffset) : f.symbol;
     const auto name = location.empty() ? (f.symbol.empty() ? "unknown" : f.symbol) : (unresolved ? location : location + " (" + f.symbol + ")");
-    const bool isTs = HtraceConfigMgr::instance().IsTsSymbol(f.lib, f.libOffset.empty());
+    const bool isTs = HtraceConfigMgr::Instance().IsTsSymbol(f.lib, f.libOffset.empty());
     return {name, display, f.symbol, f.lib, f.libOffset, depth, 0, 0, 0, {}, isTs, f.buildId};
 }
 

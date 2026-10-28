@@ -27,7 +27,7 @@ namespace mem_analyzer {
 
 // ===== Singleton =====
 
-HtraceConfigMgr& HtraceConfigMgr::instance()
+HtraceConfigMgr& HtraceConfigMgr::Instance()
 {
     static HtraceConfigMgr inst;
     return inst;
@@ -215,7 +215,7 @@ bool HtraceConfigMgr::IsLoaded() const
 
 // ===== Accessors =====
 
-const HtraceAlgorithmConfig& HtraceConfigMgr::algorithm() const
+const HtraceAlgorithmConfig& HtraceConfigMgr::Algorithm() const
 {
     return algo_;
 }

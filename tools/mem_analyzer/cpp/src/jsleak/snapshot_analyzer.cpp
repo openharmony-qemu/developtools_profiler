@@ -87,13 +87,13 @@ json JsleakAnalyze(const HeapSnapshot& heap, const std::string& filePath, const 
     for (auto& stage : stages) {
         // 唯一过滤点：① 预览特性未使能则跳过；② 分析模式不匹配则跳过。
         if (stage->PreviewId() &&
-            !PreviewFeaturesMgr::instance().enabled(stage->PreviewId())) {
+            !PreviewFeaturesMgr::Instance().enabled(stage->PreviewId())) {
             continue;
         }
-        if (mode != "all" && mode != stage->mode()) {
+        if (mode != "all" && mode != stage->Mode()) {
             continue;
         }
-        stage->run(heap);
+        stage->Run(heap);
         data[stage->JsonKey()] = stage->ToJson();
     }
 

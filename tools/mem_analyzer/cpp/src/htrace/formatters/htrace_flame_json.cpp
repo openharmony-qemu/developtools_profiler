@@ -37,11 +37,11 @@ static json BuildFlameTreeNodeFromFlameNode(const FlameNode& node,
     std::string libOffset = ResolveOffsetStr(node.vaddr, node.vaddrNull);
 
     json j;
-    j["n"] = st.intern(FormatFuncName(sym, lib, libOffset));
+    j["n"] = st.Intern(FormatFuncName(sym, lib, libOffset));
     j["t"] = node.leakSize;
     j["d"] = node.depth;
     j["cnt"] = node.existingCount;
-    j["ts"] = HtraceConfigMgr::instance().IsTsSymbol(lib, node.vaddrNull);
+    j["ts"] = HtraceConfigMgr::Instance().IsTsSymbol(lib, node.vaddrNull);
 
     long long childrenTotal = 0;
     json childrenArr = json::array();
@@ -63,11 +63,11 @@ json BuildFlameTreeJsonFromFlameNode(const FlameNode& node,
 {
     // 根节点使用TopSymbolInfo的符号信息（FlameNode根节点是合成节点，symbol_id/file_id为空）
     json j;
-    j["n"] = st.intern(FormatFuncName(rootName, rootLib, rootLibOffset));
+    j["n"] = st.Intern(FormatFuncName(rootName, rootLib, rootLibOffset));
     j["t"] = node.leakSize;
     j["d"] = 0;
     j["cnt"] = node.existingCount;
-    j["ts"] = HtraceConfigMgr::instance().IsTsSymbol(rootLib, rootLibOffset.empty());
+    j["ts"] = HtraceConfigMgr::Instance().IsTsSymbol(rootLib, rootLibOffset.empty());
 
     long long childrenTotal = 0;
     json childrenArr = json::array();
@@ -92,11 +92,11 @@ static json BuildIcicleTreeNodeFromFlameNode(const FlameNode& node,
     std::string libOffset = ResolveOffsetStr(node.vaddr, node.vaddrNull);
 
     json j;
-    j["n"] = st.intern(FormatFuncName(sym, lib, libOffset));
+    j["n"] = st.Intern(FormatFuncName(sym, lib, libOffset));
     j["t"] = node.leakSize;
     j["d"] = node.depth;
     j["cnt"] = node.existingCount;
-    j["ts"] = HtraceConfigMgr::instance().IsTsSymbol(lib, node.vaddrNull);
+    j["ts"] = HtraceConfigMgr::Instance().IsTsSymbol(lib, node.vaddrNull);
 
     long long childrenTotal = 0;
     json childrenArr = json::array();
@@ -118,11 +118,11 @@ json BuildIcicleTreeJsonFromFlameNode(const FlameNode& node,
 {
     // 根节点使用TopSymbolInfo的符号信息
     json j;
-    j["n"] = st.intern(FormatFuncName(rootName, rootLib, rootLibOffset));
+    j["n"] = st.Intern(FormatFuncName(rootName, rootLib, rootLibOffset));
     j["t"] = node.leakSize;
     j["d"] = 0;
     j["cnt"] = node.existingCount;
-    j["ts"] = HtraceConfigMgr::instance().IsTsSymbol(rootLib, rootLibOffset.empty());
+    j["ts"] = HtraceConfigMgr::Instance().IsTsSymbol(rootLib, rootLibOffset.empty());
 
     long long childrenTotal = 0;
     json childrenArr = json::array();

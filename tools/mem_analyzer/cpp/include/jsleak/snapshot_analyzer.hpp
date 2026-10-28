@@ -48,10 +48,10 @@ json RefChainsToJson(const std::unordered_map<std::string, RefChainInfo>& chains
 /// mode/preview 过滤并调用，阶段本身不感知开关。
 struct JsleakStage {
     virtual ~JsleakStage() = default;
-    virtual const std::string& mode() const = 0;   // "property-tag" / "top-chain"；"all" 表示仅 -m all 运行
+    virtual const std::string& Mode() const = 0;   // "property-tag" / "top-chain"；"all" 表示仅 -m all 运行
     virtual const char* PreviewId() const = 0;    // 非空表示受预览开关管控
     virtual const char* JsonKey() const = 0;      // 输出到结果 json 的 key
-    virtual void run(const HeapSnapshot& heap) = 0;
+    virtual void Run(const HeapSnapshot& heap) = 0;
     virtual json ToJson() const = 0;
 };
 

@@ -25,13 +25,13 @@ class ProcessSpinner {
 public:
     explicit ProcessSpinner(const std::string& description);
     ~ProcessSpinner();
-    void done(bool success = true);
+    void Done(bool success = true);
 
     ProcessSpinner(const ProcessSpinner&) = delete;
     ProcessSpinner& operator=(const ProcessSpinner&) = delete;
 
 private:
-    void run();
+    void Run();
 
     std::string description_;
     std::atomic<bool> running_{true};

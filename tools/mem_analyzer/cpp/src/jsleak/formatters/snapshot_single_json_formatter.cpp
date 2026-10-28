@@ -74,7 +74,7 @@ std::string JsleakWriteAnalysisJson(const json& data, const std::string& filePat
     writer.WriteRaw(content.dump(4));
     writer.EndObject();
 
-    writer.close();
+    writer.Close();
 
     timer.Tick("total");
     log::Logok("Output written to: ", outPath);

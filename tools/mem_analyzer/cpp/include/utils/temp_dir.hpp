@@ -29,9 +29,9 @@ namespace mem_analyzer {
  *
  * Usage:
  *   TempDir tmp("htrace");
- *   create_directories(tmp.path() + "/subdir");
+ *   create_directories(tmp.Path() + "/subdir");
  *   // ... work ...
- *   tmp.cleanup();           // explicit cleanup before TempDir goes out of scope
+ *   tmp.Cleanup();           // explicit cleanup before TempDir goes out of scope
  *   // Or let the destructor handle it automatically.
  */
 class TempDir {
@@ -53,13 +53,13 @@ public:
     TempDir& operator=(TempDir&& other) noexcept;
 
     /// Full path to the temp directory.
-    const std::string& path() const { return path_; }
+    const std::string& Path() const { return path_; }
 
     /// Whether the directory still exists (not yet cleaned up).
-    bool valid() const { return !path_.empty(); }
+    bool Valid() const { return !path_.empty(); }
 
     /// Explicitly remove the directory. Safe to call multiple times.
-    void cleanup();
+    void Cleanup();
 
     /// Release ownership so the destructor does NOT remove the directory.
     void release() { released_ = true; }

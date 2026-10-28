@@ -170,7 +170,7 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
     // ── Step 1: Extract ZIP into hiprofiler/ subdir ──────────────
     log::Logi("  [1/4] Extracting ZIP: ", filePath);
     timer.Stage("Extracting ZIP");
-    auto unzipDir = platform::JoinPath(tempDir.path(), "hiprofiler");
+    auto unzipDir = platform::JoinPath(tempDir.Path(), "hiprofiler");
     platform::CreateDirectories(unzipDir);
     {
         std::string zipErr;
@@ -207,7 +207,7 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
     std::string dbPath;
     {
         auto htraceName = platform::stem(htracePath);
-        dbPath = platform::JoinPath(tempDir.path(), htraceName + "_trace_streamer.db");
+        dbPath = platform::JoinPath(tempDir.Path(), htraceName + "_trace_streamer.db");
 
         std::string streamerErr;
         if (!RunTraceStreamer(htracePath, dbPath, ctx.resources.soDir, &streamerErr)) {
@@ -244,7 +244,7 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
         try {
             auto rawheapName = platform::stem(rawheapPath);
             // rawheap→heapsnapshot 中间产物放入系统 TempDir（RAII 自动清理），不再落 out 目录
-            auto heapsnapshotPath = platform::JoinPath(tempDir.path(), rawheapName + ".heapsnapshot");
+            auto heapsnapshotPath = platform::JoinPath(tempDir.Path(), rawheapName + ".heapsnapshot");
 
             std::string convertErr;
             if (!RawheapToHeapsnapshot(rawheapPath, heapsnapshotPath, &convertErr)) {
@@ -254,7 +254,7 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
 
                 // 指定了 --sourcemap 或 --namecache 时，先还原快照（源码路径/行号）再做类分析
                 std::string analyzeSnapshot =
-                    DeobfuscateZipSnapshot(heapsnapshotPath, tempDir.path(),
+                    DeobfuscateZipSnapshot(heapsnapshotPath, tempDir.Path(),
                         ctx.resources.sourcemapDir,
                         ctx.resources.nameCacheDir);
 

@@ -31,7 +31,7 @@ constexpr const char* kConfigFileName = "preview_features.json";
 
 bool IsRegistered(const std::string& featureId)
 {
-    for (const auto& f : PreviewFeaturesMgr::registry()) {
+    for (const auto& f : PreviewFeaturesMgr::Registry()) {
         if (f.name == featureId) {
             return true;
         }
@@ -42,7 +42,7 @@ bool IsRegistered(const std::string& featureId)
 
 // ===== Singleton =====
 
-PreviewFeaturesMgr& PreviewFeaturesMgr::instance()
+PreviewFeaturesMgr& PreviewFeaturesMgr::Instance()
 {
     static PreviewFeaturesMgr inst;
     return inst;
@@ -50,7 +50,7 @@ PreviewFeaturesMgr& PreviewFeaturesMgr::instance()
 
 // ===== 特性注册表 =====
 
-const std::vector<PreviewFeatureInfo>& PreviewFeaturesMgr::registry()
+const std::vector<PreviewFeatureInfo>& PreviewFeaturesMgr::Registry()
 {
     // 受预览特性开关逐项管控的功能清单，新增预览特性时在此登记
     static const std::vector<PreviewFeatureInfo> kFeatures = {
@@ -75,7 +75,7 @@ std::string PreviewFeaturesMgr::ResolveConfigPath()
 
 // ===== 加载 / 保存 =====
 
-bool PreviewFeaturesMgr::load(std::string& err)
+bool PreviewFeaturesMgr::Load(std::string& err)
 {
     configPath_ = ResolveConfigPath();
     enabledFeatures_.clear();  // 默认全部关闭
@@ -119,7 +119,7 @@ bool PreviewFeaturesMgr::load(std::string& err)
     return true;
 }
 
-bool PreviewFeaturesMgr::save(std::string& err) const
+bool PreviewFeaturesMgr::Save(std::string& err) const
 {
     // 按 registry 顺序输出已使能的特性 id，保证文件内容稳定
     json enabled = json::array();
@@ -157,7 +157,7 @@ bool PreviewFeaturesMgr::save(std::string& err) const
 
 // ===== 查询 / 修改 =====
 
-bool PreviewFeaturesMgr::enabled(const std::string& featureId) const
+bool PreviewFeaturesMgr::Enabled(const std::string& featureId) const
 {
     if (!IsRegistered(featureId)) {
         return false;

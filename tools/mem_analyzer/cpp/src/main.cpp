@@ -65,7 +65,7 @@ static int RunAutoDetect(const mem_analyzer::GlobalOptions& g)
     const mem_analyzer::RunContext ctx = mem_analyzer::MakeBaseRunContext(g);
     bool allOk = true;
     for (auto& f : g.files) {
-        auto* module = mem_analyzer::ModuleRegistry::detect(f);
+        auto* module = mem_analyzer::ModuleRegistry::Detect(f);
         if (!module) {
             mem_analyzer::log::Loge("Error: No parser found for file \"", f, "\"");
             allOk = false;
@@ -120,7 +120,7 @@ int main(int argc, char** argv)
     }
 
     try {
-        app.parse(argc, argv);
+        app.Parse(argc, argv);
     } catch (const mem_analyzer::CliError& e) {
         return app.exit(e);
     }
@@ -141,7 +141,7 @@ int main(int argc, char** argv)
     // Load preview feature switches (all disabled by default); failure is not fatal
     {
         std::string err;
-        if (!mem_analyzer::PreviewFeaturesMgr::instance().load(err)) {
+        if (!mem_analyzer::PreviewFeaturesMgr::Instance().load(err)) {
             mem_analyzer::log::Logw("Warning: preview features: ", err);
         }
     }

@@ -26,7 +26,7 @@ struct ModeCapability {
     /// 未显式给 `-f` 时使用的格式；`formats` 为空时必须留空。
     std::string defaultFormat;
 
-    bool supported() const { return !formats.empty(); }
+    bool Supported() const { return !formats.empty(); }
 };
 
 /// 一个模块对外声明的能力：各模式支持哪些格式、默认用哪个。

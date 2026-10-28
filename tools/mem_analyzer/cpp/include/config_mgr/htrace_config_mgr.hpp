@@ -46,13 +46,13 @@ struct SymbolFilterRule {
 
 class HtraceConfigMgr {
 public:
-    static HtraceConfigMgr& instance();
+    static HtraceConfigMgr& Instance();
 
     bool load(const std::string& path, std::string& err);
     bool LoadDefault(std::string& err);
     bool IsLoaded() const;
 
-    const HtraceAlgorithmConfig& algorithm() const;
+    const HtraceAlgorithmConfig& Algorithm() const;
     const std::vector<ClassificationRule>& ClassificationRules() const;
     const std::vector<SymbolFilterRule>& FilterRules() const;
 

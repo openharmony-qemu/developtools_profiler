@@ -218,7 +218,7 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
 
     writer.EndObject();
 
-    writer.close();
+    writer.Close();
 
     timer.Tick("total");
     log::Logok("Output written to: ", outPath);

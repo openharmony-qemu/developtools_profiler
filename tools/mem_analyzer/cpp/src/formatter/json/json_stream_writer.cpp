@@ -346,12 +346,12 @@ void JsonStreamWriter::WriteRaw(const std::string& raw)
     needsComma_.back() = true;
 }
 
-void JsonStreamWriter::flush()
+void JsonStreamWriter::Flush()
 {
     file_.flush();
 }
 
-void JsonStreamWriter::close()
+void JsonStreamWriter::Close()
 {
     if (closed_) {
         return;

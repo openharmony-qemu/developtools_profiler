@@ -32,7 +32,7 @@ PropertyTagStage::PropertyTagStage(const std::string& jsleakListFile)
     }
 }
 
-const std::string& PropertyTagStage::mode() const
+const std::string& PropertyTagStage::Mode() const
 {
     static const std::string kMode = "property-tag";
     return kMode;
@@ -48,14 +48,14 @@ const char* PropertyTagStage::JsonKey() const
     return "propertyTagObjects";
 }
 
-void PropertyTagStage::run(const HeapSnapshot& heap)
+void PropertyTagStage::Run(const HeapSnapshot& heap)
 {
     GeneratePropertyTagObjs(heap);
     log::Logok("  Analysis completed. Found ", propertyTagObjs.size(),
         " suspicious object types.");
 }
 
-json PropertyTagStage::analyze(const HeapSnapshot& heap, const std::function<bool(uint32_t)>& includeNode)
+json PropertyTagStage::Analyze(const HeapSnapshot& heap, const std::function<bool(uint32_t)>& includeNode)
         {
     propertyTagObjs.clear();
     GeneratePropertyTagObjs(heap, includeNode);

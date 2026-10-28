@@ -36,14 +36,14 @@ class PropertyTagStage : public JsleakStage {
 public:
     explicit PropertyTagStage(const std::string& jsleakListFile);
 
-    const std::string& mode() const override;   // "property-tag"
+    const std::string& Mode() const override;   // "property-tag"
     const char* PreviewId() const override;    // nullptr（不受预览开关管控）
     const char* JsonKey() const override;      // "propertyTagObjects"
-    void run(const HeapSnapshot& heap) override;
+    void Run(const HeapSnapshot& heap) override;
     json ToJson() const override;
 
     /// Run the property/hash leak rules for a caller-defined subset of nodes.
-    json analyze(const HeapSnapshot& heap, const std::function<bool(uint32_t)>& includeNode = {});
+    json Analyze(const HeapSnapshot& heap, const std::function<bool(uint32_t)>& includeNode = {});
 
 private:
     std::string CheckDestoryedTag(uint32_t uNi, const HeapSnapshot& heap);

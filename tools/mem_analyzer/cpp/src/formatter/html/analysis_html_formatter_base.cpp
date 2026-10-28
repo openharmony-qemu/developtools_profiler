@@ -29,7 +29,7 @@ namespace {
 constexpr size_t kDataJsonPlaceholderLen = sizeof("__DATA_JSON__") - 1;
 }  // namespace
 
-std::string AnalysisHtmlFormatterBase::buildTabBarHTML(const std::vector<TabGroup>& groups)
+std::string AnalysisHtmlFormatterBase::BuildTabBarHTML(const std::vector<TabGroup>& groups)
 {
     std::vector<std::string> tabItems;
     bool firstActiveSet = false;
@@ -60,7 +60,7 @@ std::string AnalysisHtmlFormatterBase::buildTabBarHTML(const std::vector<TabGrou
     return "<div class=\"empty-msg\">无分析数据</div>";
 }
 
-std::string AnalysisHtmlFormatterBase::buildTabContentHTML(const std::vector<TabGroup>& groups,
+std::string AnalysisHtmlFormatterBase::BuildTabContentHTML(const std::vector<TabGroup>& groups,
     long long totalSize, bool countMode)
 {
     std::string result;
@@ -88,7 +88,7 @@ std::string AnalysisHtmlFormatterBase::buildTabContentHTML(const std::vector<Tab
 // 原先各写一遍，新增占位符极易漏改其中一处，这里收敛为唯一入口。
 // 各占位符只出现在模板的固定片段（如 __CHART_MODULE_CSS__ 只在头部、__CHART_MODULE_JS__
 // 只在尾部），对不含该占位符的片段替换是空操作，故可对任意片段统一调用。
-void AnalysisHtmlFormatterBase::applyCommonPlaceholders(std::string& htmlFrag, long long totalSize, bool countMode)
+void AnalysisHtmlFormatterBase::ApplyCommonPlaceholders(std::string& htmlFrag, long long totalSize, bool countMode)
 {
     // 共享图表模块（chart_module）
     htmlFrag = ReplaceAll(htmlFrag, "__CHART_MODULE_CSS__", ChartModuleCss());
@@ -110,7 +110,7 @@ void AnalysisHtmlFormatterBase::applyCommonPlaceholders(std::string& htmlFrag, l
 
 // Streaming version: outputs each SymbolDataEntry individually to avoid building full dataJSONArr
 // fillTree callback: lazily builds flameTree/icicleTree during streaming, avoiding all entries in memory at once
-void AnalysisHtmlFormatterBase::fillHTMLTemplateStreamedDirect(
+void AnalysisHtmlFormatterBase::FillHTMLTemplateStreamedDirect(
     std::ostream& out,
     std::vector<TabGroup>& groups,
     long long totalSize,
@@ -163,7 +163,7 @@ void AnalysisHtmlFormatterBase::fillHTMLTemplateStreamedDirect(
 }
 
 // 通用版：直接流式输出JSON数据数组（适用于tshandle等非TabGroup模型）
-void AnalysisHtmlFormatterBase::fillHTMLTemplateStreamed(
+void AnalysisHtmlFormatterBase::FillHTMLTemplateStreamed(
     std::ostream& out,
     const json& dataJSONArr,
     long long totalSize,
@@ -191,13 +191,13 @@ void AnalysisHtmlFormatterBase::fillHTMLTemplateStreamed(
 }
 
 // 设置格式（转发到 version 组件）
-std::string AnalysisHtmlFormatterBase::setVersionFormat()
+std::string AnalysisHtmlFormatterBase::SetVersionFormat()
 {
     return VersionFormat();
 }
 
 // 构建内容（转发到 version 组件）
-std::string AnalysisHtmlFormatterBase::buildVersionContent()
+std::string AnalysisHtmlFormatterBase::BuildVersionContent()
 {
     return VersionContent();
 }

@@ -56,7 +56,7 @@ std::string GetExecutableDir();
 struct SpawnedProc {
     pid_t pid = -1;
     int readFd = -1;
-    bool ok() const { return pid > 0; }
+    bool Ok() const { return pid > 0; }
 };
 
 // POSIX only: fork + execl("/bin/sh","-c",cmd) with stdout+stderr piped.

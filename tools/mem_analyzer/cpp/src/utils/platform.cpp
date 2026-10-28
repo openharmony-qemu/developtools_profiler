@@ -350,7 +350,7 @@ int RunProcessWithSpinner(const std::string& exe, const std::vector<std::string>
 {
     TempDir tmp("spinner", true);
     std::string outName = platform::stem(exe) + "_output.txt";
-    std::string outFile = platform::JoinPath(tmp.path(), outName);
+    std::string outFile = platform::JoinPath(tmp.Path(), outName);
 
 #if defined(_WIN32)
     std::wstring wout = WidenPath(outFile);
@@ -364,7 +364,7 @@ int RunProcessWithSpinner(const std::string& exe, const std::vector<std::string>
 
     ProcessSpinner spinner(description);
     int ret = platform::RunProcess(exe, args, fd);
-    spinner.done(ret == 0);
+    spinner.Done(ret == 0);
 
 #if defined(_WIN32)
     _close(fd);  // also closes the underlying HANDLE

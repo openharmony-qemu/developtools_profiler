@@ -140,7 +140,7 @@ static void CheckAppSymbol(SymbolData& sd, const std::unordered_map<int, std::st
         sd.isApp = false;
         return;
     }
-    sd.isApp = HtraceConfigMgr::instance().IsAppSymbol(it->second, sd.vaddrNull);
+    sd.isApp = HtraceConfigMgr::Instance().IsAppSymbol(it->second, sd.vaddrNull);
 }
 
 // ===== Build initial symbol data from call stacks =====
@@ -746,7 +746,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     const std::string& symbolTrackKey = HtraceCategory(config.category).tracks[0].jsonKey;
 
     // Lazy-load htrace config
-    auto& htraceCfg = HtraceConfigMgr::instance();
+    auto& htraceCfg = HtraceConfigMgr::Instance();
     if (!htraceCfg.IsLoaded()) {
         std::string err;
         if (!htraceCfg.LoadDefault(err)) {
@@ -755,12 +755,12 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     }
 
     // Apply algorithm parameters from config
-    config.lowThreshold = htraceCfg.algorithm().lowThreshold;
-    config.approRelRatio = htraceCfg.algorithm().approRelRatio;
-    config.approRelCap = htraceCfg.algorithm().approRelCap;
-    config.approRatioThreshold = htraceCfg.algorithm().approRatioThreshold;
-    config.orphanRelRatio = htraceCfg.algorithm().orphanRelRatio;
-    config.orphanRelCap = htraceCfg.algorithm().orphanRelCap;
+    config.lowThreshold = htraceCfg.Algorithm().lowThreshold;
+    config.approRelRatio = htraceCfg.Algorithm().approRelRatio;
+    config.approRelCap = htraceCfg.Algorithm().approRelCap;
+    config.approRatioThreshold = htraceCfg.Algorithm().approRatioThreshold;
+    config.orphanRelRatio = htraceCfg.Algorithm().orphanRelRatio;
+    config.orphanRelCap = htraceCfg.Algorithm().orphanRelCap;
 
     // fd/thread sizes are counts (not bytes); the byte-based low threshold
     // would wrongly filter them out, so disable it for these types.
@@ -822,12 +822,12 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         auto isNoise = [&](const SymbolData& sd) {
             std::string libFile, symName;
             ResolveNames(sd, libFile, symName);
-            return HtraceConfigMgr::instance().ShouldFilter(libFile, symName, filterScope);
+            return HtraceConfigMgr::Instance().ShouldFilter(libFile, symName, filterScope);
         };
         auto IsOrphanRecoverable = [&](const SymbolData& sd) {
             std::string libFile, symName;
             ResolveNames(sd, libFile, symName);
-            return HtraceConfigMgr::instance().IsOrphanRecoverable(libFile, symName, filterScope);
+            return HtraceConfigMgr::Instance().IsOrphanRecoverable(libFile, symName, filterScope);
         };
 
         // Pass 1: symbol-level scope + noise + low_threshold filtering.
@@ -1050,7 +1050,7 @@ static bool FilepageHasAppSymbol(const CompressedCallStack& cs, const std::unord
         if (it == dataDict.end()) {
             continue;
         }
-        if (HtraceConfigMgr::instance().IsAppSymbol(it->second, f.vaddrNull)) {
+        if (HtraceConfigMgr::Instance().IsAppSymbol(it->second, f.vaddrNull)) {
             return true;
         }
     }

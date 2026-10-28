@@ -31,10 +31,10 @@ public:
         std::optional<size_t> topK,
         std::unordered_set<std::string> excludeChains);
 
-    const std::string& mode() const override;
+    const std::string& Mode() const override;
     const char* PreviewId() const override;
     const char* JsonKey() const override;
-    void run(const HeapSnapshot& heap) override;
+    void Run(const HeapSnapshot& heap) override;
     json ToJson() const override;
 
 private:

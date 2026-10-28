@@ -44,11 +44,9 @@ std::string ChartModuleCss()
 
 // 图表模块 JS：布局 / 尺寸刻度 / 缩放平移 / 悬停 tooltip / 右键菜单 / 搜索高亮 /
 // 下钻与祖先链 / 重置 / resize 自适应。对外暴露 window.MemChart。
-std::string ChartModuleJs()
-{
-    return R"CHARTJS(
-(function ()
-{
+std::string ChartModuleJs() {
+  return R"CHARTJS(
+(function () {
   'use strict';
 
   var ROW_HEIGHT = 20;
@@ -77,31 +75,21 @@ std::string ChartModuleJs()
   var envelopeLayout = false;
 
   // ===== 格式化与命名 =====
-  function fmtBytes(bytes)
-  {
-    if (UNIT_COUNT_MODE) {
-        return String(Math.round(bytes));
-    }
-    if (bytes === 0) {
-        return '0 B';
-    }
+  function fmtBytes(bytes) {
+    if (UNIT_COUNT_MODE) return String(Math.round(bytes));
+    if (bytes === 0) return '0 B';
     var units = ['B', 'KB', 'MB', 'GB'];
     var k = 1024;
     var i = Math.floor(Math.log(bytes) / Math.log(k));
-    if (i > 3) {
-        i = 3;
-    }
+    if (i > 3) i = 3;
     return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + units[i];
   }
 
   // Extract display name from full name (n) field
   // name format: "lib+libOffset (symbol)" or "lib (symbol)" or "lib+libOffset" or "symbol"
-  function getDisplayName(name)
-  {
+  function getDisplayName(name) {
     var urlIdx = name.indexOf(':[url:');
-    if (urlIdx >= 0) {
-        return name;
-    }
+    if (urlIdx >= 0) return name;
     var tsParenMatch = name.match(/\((\S+)\)$/);
     if (tsParenMatch) {
       var funcName = tsParenMatch[1];
@@ -113,9 +101,7 @@ std::string ChartModuleJs()
       }
     }
     var parenIdx = name.indexOf(' (');
-    if (parenIdx >= 0) {
-        return name.substring(parenIdx + 2, name.length - 1);
-    }
+    if (parenIdx >= 0) return name.substring(parenIdx + 2, name.length - 1);
     var plusIdx = name.indexOf('+');
     if (plusIdx >= 0) {
       var lib = name.substring(0, plusIdx);
@@ -129,45 +115,33 @@ std::string ChartModuleJs()
     return name;
   }
 
-  function nameOf(chart, name)
-  {
+  function nameOf(chart, name) {
     return chart && chart.useDisplayName === false ? name : getDisplayName(name);
   }
 
   // Resolve name indices in tree nodes to actual strings using the names string table
-  function resolveNames(node, names)
-  {
-    if (!node || !names || !names.length) {
-        return;
-    }
-    if (typeof node.n === 'number') {
-        node.n = names[node.n];
-    }
+  function resolveNames(node, names) {
+    if (!node || !names || !names.length) return;
+    if (typeof node.n === 'number') node.n = names[node.n];
     if (node.c) {
-      for (var i = 0; i < node.c.length; i++) {
-          resolveNames(node.c[i], names);
-      }
+      for (var i = 0; i < node.c.length; i++) resolveNames(node.c[i], names);
     }
   }
 
   // Use opaque RGB for crisper canvas rendering
-  function getFlameColor(widthPct)
-  {
+  function getFlameColor(widthPct) {
     var pct = typeof widthPct === 'number' && widthPct >= 0 && widthPct <= 1 ? widthPct : 0.5;
     var r = Math.floor(245 + 10 * (1 - pct));
     var g = Math.floor(110 + 105 * (1 - pct));
     return 'rgb(' + r + ',' + g + ',100)';
   }
 
-  function getGrayLevel(colorStr)
-  {
+  function getGrayLevel(colorStr) {
     var prefix = colorStr.indexOf('rgba') !== -1 ? 'rgba' : colorStr.indexOf('rgb') !== -1 ? 'rgb' : '';
     if (!prefix) {
       if (colorStr.charAt(0) === '#') {
         var hex = colorStr.substring(1);
-        if (hex.length === 3) {
-            hex = hex.charAt(0) + hex.charAt(0) + hex.charAt(1) + hex.charAt(1) + hex.charAt(2) + hex.charAt(2);
-        }
+        if (hex.length === 3) hex = hex.charAt(0) + hex.charAt(0) + hex.charAt(1) + hex.charAt(1) + hex.charAt(2) + hex.charAt(2);
         var hr = parseInt(hex.substring(0, 2), 16), hg = parseInt(hex.substring(2, 4), 16), hb = parseInt(hex.substring(4, 6), 16);
         return hr * 0.299 + hg * 0.587 + hb * 0.114;
       }
@@ -175,17 +149,14 @@ std::string ChartModuleJs()
     }
     var open = colorStr.indexOf('(');
     var close = colorStr.indexOf(')');
-    if (open < 0 || close < 0) {
-        return 128;
-    }
+    if (open < 0 || close < 0) return 128;
     var nums = colorStr.substring(open + 1, close).split(',');
     var r = parseInt(nums[0]), g = parseInt(nums[1]), b = parseInt(nums[2]);
     return r * 0.299 + g * 0.587 + b * 0.114;
   }
 
   // ===== 搜索匹配 =====
-  function matchesSearchTerm(chart, name, term)
-  {
+  function matchesSearchTerm(chart, name, term) {
     var names = [nameOf(chart, name), name];
     for (var ni = 0; ni < names.length; ni++) {
       var displayName = names[ni];
@@ -195,45 +166,26 @@ std::string ChartModuleJs()
       if (plusOfsIdx >= 0) {
         var ofsStart = plusOfsIdx + 1;
         for (var i = 0; i <= lower.length - termLen; i++) {
-          if (lower.substring(i, i + termLen) !== term) {
-              continue;
-          }
-          if (i >= ofsStart - 1 || i + termLen > ofsStart) {
-              return true;
-          }
+          if (lower.substring(i, i + termLen) !== term) continue;
+          if (i >= ofsStart - 1 || i + termLen > ofsStart) return true;
         }
       }
       for (var j = 0; j <= lower.length - termLen; j++) {
-        if (lower.substring(j, j + termLen) !== term) {
-            continue;
-        }
-        if (j === 0) {
-            return true;
-        }
+        if (lower.substring(j, j + termLen) !== term) continue;
+        if (j === 0) return true;
         var prevCh = displayName[j - 1];
-        if (!/[a-zA-Z0-9]/.test(prevCh)) {
-            return true;
-        }
-        if (/[a-z]/.test(prevCh) && /[A-Z]/.test(displayName[j])) {
-            return true;
-        }
+        if (!/[a-zA-Z0-9]/.test(prevCh)) return true;
+        if (/[a-z]/.test(prevCh) && /[A-Z]/.test(displayName[j])) return true;
       }
     }
     return false;
   }
 
-  function buildSearchSet(chart, node, term, matchSet)
-  {
-    if (!node) {
-        return;
-    }
-    if (matchesSearchTerm(chart, node.n, term)) {
-        matchSet.add(node.n);
-    }
+  function buildSearchSet(chart, node, term, matchSet) {
+    if (!node) return;
+    if (matchesSearchTerm(chart, node.n, term)) matchSet.add(node.n);
     if (node.c) {
-      for (var i = 0; i < node.c.length; i++) {
-          buildSearchSet(chart, node.c[i], term, matchSet);
-      }
+      for (var i = 0; i < node.c.length; i++) buildSearchSet(chart, node.c[i], term, matchSet);
     }
   }
 
@@ -251,23 +203,16 @@ std::string ChartModuleJs()
   // 按真实比例铺开。只影响宽度分配，展示值（node.t / 悬停提示 / 表格）仍是真实
   // retained size。对 trace 报告（子之和恒 ≤ 父自身）结果与 node.t 相同，行为不变。
   // 结果缓存在 node._lt 上：只依赖自身子树，下钻/重绘都安全。
-  function layoutTotalVal(node)
-  {
+  function layoutTotalVal(node) {
     var cs = node.c || [];
     if (!envelopeLayout) {
       var childSum = 0;
-      for (var i = 0; i < cs.length; i++) {
-          childSum += cs[i].t;
-      }
+      for (var i = 0; i < cs.length; i++) childSum += cs[i].t;
       return Math.max(node.t, childSum);
     }
-    if (node._lt !== undefined) {
-        return node._lt;
-    }
+    if (node._lt !== undefined) return node._lt;
     var envSum = 0;
-    for (var j = 0; j < cs.length; j++) {
-        envSum += layoutTotalVal(cs[j]);
-    }
+    for (var j = 0; j < cs.length; j++) envSum += layoutTotalVal(cs[j]);
     node._lt = Math.max(node.t, envSum);
     return node._lt;
   }
@@ -275,94 +220,64 @@ std::string ChartModuleJs()
   // 分配子条带宽度时用的"大小值"：必须与 layoutTotalVal 的口径一致。
   // 包络模式下要把子节点的包络放进分子（否则 Σ子宽 << 父宽，条带右侧大片留白）；
   // 默认模式仍是节点自身值，与旧行为逐像素一致。
-  function layoutChildVal(node)
-  {
+  function layoutChildVal(node) {
     return envelopeLayout ? layoutTotalVal(node) : node.t;
   }
 
-  function visibleMaxDepth(node, width)
-  {
-    if (width < MIN_WIDTH) {
-        return 0;
-    }
-    if (!node.c || node.c.length === 0) {
-        return 1;
-    }
+  function visibleMaxDepth(node, width) {
+    if (width < MIN_WIDTH) return 0;
+    if (!node.c || node.c.length === 0) return 1;
     var totalVal = layoutTotalVal(node);
     var maxChild = 0;
     for (var i = 0; i < node.c.length; i++) {
       var child = node.c[i];
       var childW = totalVal > 0 ? (layoutChildVal(child) / totalVal) * width : 0;
       var d = visibleMaxDepth(child, childW);
-      if (d > maxChild) {
-          maxChild = d;
-      }
+      if (d > maxChild) maxChild = d;
     }
     return maxChild > 0 ? 1 + maxChild : 1;
   }
 
-  function findPathFromRoot(root, target)
-  {
-    if (!root) {
-        return null;
-    }
-    if (root === target) {
-        return [root];
-    }
-    if (!root.c) {
-        return null;
-    }
+  function findPathFromRoot(root, target) {
+    if (!root) return null;
+    if (root === target) return [root];
+    if (!root.c) return null;
     for (var i = 0; i < root.c.length; i++) {
       var subPath = findPathFromRoot(root.c[i], target);
       if (subPath) {
         var result = [root];
-        for (var j = 0; j < subPath.length; j++) {
-            result.push(subPath[j]);
-        }
+        for (var j = 0; j < subPath.length; j++) result.push(subPath[j]);
         return result;
       }
     }
     return null;
   }
 
-  function searchNode(node, mx, my)
-  {
-    if (!node || node._width === undefined || node._width < MIN_WIDTH) {
-        return null;
-    }
+  function searchNode(node, mx, my) {
+    if (!node || node._width === undefined || node._width < MIN_WIDTH) return null;
     if (mx >= node._x && mx <= node._x + node._width) {
       if (node.c) {
         for (var i = 0; i < node.c.length; i++) {
           var child = node.c[i];
           if (child._width !== undefined && child._width >= MIN_WIDTH && mx >= child._x && mx <= child._x + child._width) {
             var found = searchNode(child, mx, my);
-            if (found) {
-                return found;
-            }
+            if (found) return found;
           }
         }
       }
-      if (my >= node._y && my <= node._y + ROW_HEIGHT - 1) {
-          return node;
-      }
+      if (my >= node._y && my <= node._y + ROW_HEIGHT - 1) return node;
     }
     return null;
   }
 
-  function findNodeAt(root, mx, my)
-  {
-    if (!root) {
-        return null;
-    }
+  function findNodeAt(root, mx, my) {
+    if (!root) return null;
     return searchNode(root, mx, my);
   }
 
   // 命中已下钻路径上的祖先链条带（绘制在根节点上方/下方）
-  function findChainNode(chain, mx, my)
-  {
-    if (!chain) {
-        return null;
-    }
+  function findChainNode(chain, mx, my) {
+    if (!chain) return null;
     for (var ci = 0; ci < chain.length; ci++) {
       var cn = chain[ci];
       if (cn._x !== undefined && cn._width !== undefined &&
@@ -375,8 +290,7 @@ std::string ChartModuleJs()
   }
 
   // ===== 布局 =====
-  function layoutFlame(node, x, width, depth, canvasHeight, calleeShift)
-  {
+  function layoutFlame(node, x, width, depth, canvasHeight, calleeShift) {
     node._x = x;
     node._width = width;
     node._y = canvasHeight - PADDING_BOTTOM - calleeShift - (depth + 1) * ROW_HEIGHT;
@@ -386,15 +300,12 @@ std::string ChartModuleJs()
     for (var i = 0; i < sorted.length; i++) {
       var child = sorted[i];
       var childWidth = totalVal > 0 ? (layoutChildVal(child) / totalVal) * width : 0;
-      if (childWidth >= MIN_WIDTH) {
-          layoutFlame(child, childX, childWidth, depth + 1, canvasHeight, calleeShift);
-      }
+      if (childWidth >= MIN_WIDTH) layoutFlame(child, childX, childWidth, depth + 1, canvasHeight, calleeShift);
       childX += childWidth;
     }
   }
 
-  function layoutIcicle(node, x, width, depth, callerShift)
-  {
+  function layoutIcicle(node, x, width, depth, callerShift) {
     node._x = x;
     node._width = width;
     node._y = SCALE_HEIGHT + callerShift + depth * ROW_HEIGHT;
@@ -404,25 +315,18 @@ std::string ChartModuleJs()
     for (var i = 0; i < sorted.length; i++) {
       var child = sorted[i];
       var childWidth = totalVal > 0 ? (layoutChildVal(child) / totalVal) * width : 0;
-      if (childWidth >= MIN_WIDTH) {
-          layoutIcicle(child, childX, childWidth, depth + 1, callerShift);
-      }
+      if (childWidth >= MIN_WIDTH) layoutIcicle(child, childX, childWidth, depth + 1, callerShift);
       childX += childWidth;
     }
   }
 
   // ===== 尺寸刻度 =====
-  function drawRuler(ctx, canvasW, rectWidth, canvasH, xPoint, root)
-  {
-    if (!root) {
-        return;
-    }
+  function drawRuler(ctx, canvasW, rectWidth, canvasH, xPoint, root) {
+    if (!root) return;
     var rulerLeft = PADDING_SIDE + xPoint;
     var rulerRight = rulerLeft + rectWidth - 2 * PADDING_SIDE;
     var rulerWidth = rulerRight - rulerLeft;
-    if (rulerWidth <= 0) {
-        return;
-    }
+    if (rulerWidth <= 0) return;
 
     var chartBottom = canvasH - PADDING_BOTTOM;
     // 标尺基数必须与条带宽度分配用的总量一致（见 layoutTotalVal），否则刻度与条宽对不上
@@ -439,14 +343,10 @@ std::string ChartModuleJs()
 
     for (var i = 0; i <= 10; i++) {
       var startX = Math.floor((rulerWidth / 10) * i) + rulerLeft;
-      if (startX < -10 || startX > canvasW + 10) {
-          continue;
-      }
+      if (startX < -10 || startX > canvasW + 10) continue;
       for (var j = 0; j < 10 && i < 10; j++) {
         var startItemX = startX + Math.floor((rulerWidth / 100) * j);
-        if (startItemX < 0 || startItemX > canvasW) {
-            continue;
-        }
+        if (startItemX < 0 || startItemX > canvasW) continue;
         ctx.lineWidth = 0.5;
         ctx.strokeStyle = '#ccc';
         ctx.beginPath();
@@ -454,9 +354,7 @@ std::string ChartModuleJs()
         ctx.lineTo(startItemX, 10);
         ctx.stroke();
       }
-      if (i === 0) {
-          continue;
-      }
+      if (i === 0) continue;
       ctx.lineWidth = 1;
       ctx.strokeStyle = '#e8e8e8';
       ctx.beginPath();
@@ -476,16 +374,11 @@ std::string ChartModuleJs()
   }
 
   // ===== 绘制节点 =====
-  function drawNode(ctx, node, state, canvasW, panelType)
-  {
+  function drawNode(ctx, node, state, canvasW, panelType) {
     var chart = state.chart;
     var x = node._x, y = node._y, w = node._width;
-    if (w === undefined || w < MIN_WIDTH) {
-        return;
-    }
-    if (x + w < 0 || x >= canvasW) {
-        return;
-    }
+    if (w === undefined || w < MIN_WIDTH) return;
+    if (x + w < 0 || x >= canvasW) return;
     x = Math.round(x * 2) / 2;
     w = Math.round(w * 2) / 2;
     var yBar = Math.round((y + 1) * 2) / 2;
@@ -494,37 +387,23 @@ std::string ChartModuleJs()
     var isHovered = hoveredNode === node;
     var isMatch = state.searchTerm && state.searchMatchSet.has(node.n);
     var isDimmed = state.searchTerm && !isMatch;
-    if (isDimmed) {
-        ctx.fillStyle = '#e0e0e0';
-    }
+    if (isDimmed) ctx.fillStyle = '#e0e0e0';
     else if (isMatch) ctx.fillStyle = '#5290ff';
     else if (chart.greyDepth !== null && node.d === chart.greyDepth) ctx.fillStyle = '#919191';
     else if (node.ts) ctx.fillStyle = 'rgb(132,200,112)';
-    else {
-        ctx.fillStyle = getFlameColor(node.t / currentRoot.t);
-    }
+    else ctx.fillStyle = getFlameColor(node.t / currentRoot.t);
     ctx.fillRect(x, yBar, w, BAR_HEIGHT);
     ctx.lineWidth = 0.5;
-    if (isHovered) {
-        ctx.strokeStyle = '#000';
-    }
-    else {
-        ctx.strokeStyle = '#fff';
-    }
+    if (isHovered) ctx.strokeStyle = '#000';
+    else ctx.strokeStyle = '#fff';
     ctx.strokeRect(x, yBar, w, BAR_HEIGHT);
     if (isHovered) { ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.strokeRect(x + 0.5, yBar + 0.5, w - 1, BAR_HEIGHT - 1); }
     if (w > 10) {
-      if (isDimmed) {
-          ctx.fillStyle = '#aaa';
-      }
+      if (isDimmed) ctx.fillStyle = '#aaa';
       else {
         var grayLevel = getGrayLevel(ctx.fillStyle);
-        if (grayLevel >= 100) {
-            ctx.fillStyle = '#000';
-        }
-        else {
-            ctx.fillStyle = '#fff';
-        }
+        if (grayLevel >= 100) ctx.fillStyle = '#000';
+        else ctx.fillStyle = '#fff';
       }
       ctx.font = '12px bold sans-serif';
       ctx.textBaseline = 'middle';
@@ -536,8 +415,7 @@ std::string ChartModuleJs()
       if (textW < fillTextW) {
         var textX = Math.floor(w / 2 - textW / 2 + x + textPadding);
         ctx.fillText(text, textX, textY);
-      } else if (fillTextW >= ctx.measureText('A').width)
-      {
+      } else if (fillTextW >= ctx.measureText('A').width) {
         var charW = Math.round(textW / text.length);
         var charNum = fillTextW / charW;
         if (charNum < 2) {
@@ -547,33 +425,24 @@ std::string ChartModuleJs()
         }
       }
     }
-    if (!node.c) {
-        return;
-    }
+    if (!node.c) return;
     for (var i = 0; i < node.c.length; i++) {
       var child = node.c[i];
-      if (child._width !== undefined && child._width >= MIN_WIDTH) {
-          drawNode(ctx, child, state, canvasW, panelType);
-      }
+      if (child._width !== undefined && child._width >= MIN_WIDTH) drawNode(ctx, child, state, canvasW, panelType);
     }
   }
 
   // ===== 绘制祖先链条带 =====
-  function drawChainNodes(ctx, idx, canvasW, panelType)
-  {
+  function drawChainNodes(ctx, idx, canvasW, panelType) {
     var state = states[idx];
     var chart = state.chart;
     var chain = panelType === 'flame' ? state.calleeChain : state.callerChain;
-    if (!chain || chain.length === 0) {
-        return;
-    }
+    if (!chain || chain.length === 0) return;
     var hoveredNode = panelType === 'flame' ? state.flameHoveredNode : state.icicleHoveredNode;
     for (var ci = 0; ci < chain.length; ci++) {
       var node = chain[ci];
       var x = node._x, y = node._y, w = node._width;
-      if (w === undefined || w < MIN_WIDTH || x + w < 0 || x >= canvasW) {
-          continue;
-      }
+      if (w === undefined || w < MIN_WIDTH || x + w < 0 || x >= canvasW) continue;
       x = Math.round(x * 2) / 2;
       w = Math.round(w * 2) / 2;
       var yBar = Math.round((y + 1) * 2) / 2;
@@ -581,38 +450,24 @@ std::string ChartModuleJs()
       var isMatch = state.searchTerm && state.searchMatchSet.has(node.n);
       var isDimmed = state.searchTerm && !isMatch;
 
-      if (isDimmed) {
-          ctx.fillStyle = '#e0e0e0';
-      }
+      if (isDimmed) ctx.fillStyle = '#e0e0e0';
       else if (isMatch) ctx.fillStyle = '#5290ff';
       else if (node.ts) ctx.fillStyle = 'rgb(132,200,112)';
-      else {
-          ctx.fillStyle = '#919191';
-      }
+      else ctx.fillStyle = '#919191';
 
       ctx.fillRect(x, yBar, w, BAR_HEIGHT);
       ctx.lineWidth = 0.5;
-      if (isHovered) {
-          ctx.strokeStyle = '#000';
-      }
-      else {
-          ctx.strokeStyle = '#fff';
-      }
+      if (isHovered) ctx.strokeStyle = '#000';
+      else ctx.strokeStyle = '#fff';
       ctx.strokeRect(x, yBar, w, BAR_HEIGHT);
       if (isHovered) { ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.strokeRect(x + 0.5, yBar + 0.5, w - 1, BAR_HEIGHT - 1); }
 
       if (w > 10) {
-        if (isDimmed) {
-            ctx.fillStyle = '#aaa';
-        }
+        if (isDimmed) ctx.fillStyle = '#aaa';
         else {
           var grayLevel = getGrayLevel(ctx.fillStyle);
-          if (grayLevel >= 100) {
-              ctx.fillStyle = '#000';
-          }
-          else {
-              ctx.fillStyle = '#fff';
-          }
+          if (grayLevel >= 100) ctx.fillStyle = '#000';
+          else ctx.fillStyle = '#fff';
         }
         ctx.font = '12px bold sans-serif';
         ctx.textBaseline = 'middle';
@@ -624,8 +479,7 @@ std::string ChartModuleJs()
         if (textW < fillTextW) {
           var textX = Math.floor(w / 2 - textW / 2 + x + textPadding);
           ctx.fillText(text, textX, textY);
-        } else if (fillTextW >= ctx.measureText('A').width)
-        {
+        } else if (fillTextW >= ctx.measureText('A').width) {
           var charW = Math.round(textW / text.length);
           var charNum = fillTextW / charW;
           if (charNum < 2) {
@@ -639,46 +493,31 @@ std::string ChartModuleJs()
   }
 
   // ===== 绘制单个面板 =====
-  function drawPanel(idx, panelType)
-  {
+  function drawPanel(idx, panelType) {
     var state = states[idx];
-    if (!state) {
-        return;
-    }
+    if (!state) return;
     var chart = state.chart;
     // 宽度分配口径随图表切换（引用链冰柱图用子树上包络，trace 报告用原口径）
     envelopeLayout = !!chart.envelopeLayout;
     var isFlame = panelType === 'flame';
     var canvas = isFlame ? state.flameCanvas : state.icicleCanvas;
     var ctx = isFlame ? state.flameCtx : state.icicleCtx;
-    if (!canvas || !ctx) {
-        return;
-    }
+    if (!canvas || !ctx) return;
     if (chart.gateId) {
       var gate = document.getElementById(chart.gateId);
-      if (gate && !gate.classList.contains('expanded')) {
-          return;
-      }
+      if (gate && !gate.classList.contains('expanded')) return;
     }
 
     var currentRoot = isFlame ? state.flameRoot : state.icicleRoot;
-    if (!currentRoot) {
-        return;
-    }
+    if (!currentRoot) return;
 
     var canvasW = Math.round(canvas.parentElement.getBoundingClientRect().width);
-    if (canvasW <= 0) {
-        return;
-    }
+    if (canvasW <= 0) return;
 
     if (isFlame) {
-      if (state.flameRectWidth === 0) {
-          state.flameRectWidth = canvasW;
-      }
+      if (state.flameRectWidth === 0) state.flameRectWidth = canvasW;
     } else {
-      if (state.icicleRectWidth === 0) {
-          state.icicleRectWidth = canvasW;
-      }
+      if (state.icicleRectWidth === 0) state.icicleRectWidth = canvasW;
     }
     var rectWidth = isFlame ? state.flameRectWidth : state.icicleRectWidth;
     var xPoint = isFlame ? state.flameXPoint : state.icicleXPoint;
@@ -722,12 +561,9 @@ std::string ChartModuleJs()
     drawChainNodes(ctx, idx, canvasW, panelType);
   }
 
-  function drawChart(idx)
-  {
+  function drawChart(idx) {
     var state = states[idx];
-    if (!state) {
-        return;
-    }
+    if (!state) return;
     if (state.icicleOnly) {
       drawPanel(idx, 'icicle');
     } else {
@@ -736,46 +572,31 @@ std::string ChartModuleJs()
     }
   }
 
-  function drawAllVisible()
-  {
-    for (var i = 0; i < states.length; i++) {
-        drawChart(i);
-    }
+  function drawAllVisible() {
+    for (var i = 0; i < states.length; i++) drawChart(i);
   }
 
-  function scheduleRedraw()
-  {
+  function scheduleRedraw() {
     if (!pendingZoom) {
       pendingZoom = true;
-      requestAnimationFrame(function ()
-      {
+      requestAnimationFrame(function () {
         pendingZoom = false;
-        if (activeIdx >= 0) {
-            drawChart(activeIdx);
-        }
+        if (activeIdx >= 0) drawChart(activeIdx);
       });
     }
   }
 
   // ===== 面包屑 =====
-  function updateCrumb(state)
-  {
-    if (!state.chart.crumbId) {
-        return;
-    }
+  function updateCrumb(state) {
+    if (!state.chart.crumbId) return;
     var el = document.getElementById(state.chart.crumbId);
-    if (!el) {
-        return;
-    }
+    if (!el) return;
     el.textContent = state.crumbPath.length ? ('当前层级：' + state.crumbPath.join(' \u2192 ')) : '';
   }
 
   // ===== 悬停 tooltip =====
-  function showTooltip(e, node, root)
-  {
-    if (!tooltip) {
-        return;
-    }
+  function showTooltip(e, node, root) {
+    if (!tooltip) return;
     var pct = ((node.t / root.t) * 100).toFixed(2);
     var selfPct = ((node.v / root.t) * 100).toFixed(2);
     tooltip.innerHTML = '<div class="fn">' + node.n + '</div><div class="detail">' +
@@ -786,49 +607,35 @@ std::string ChartModuleJs()
     tooltip.style.display = 'block';
     var left = e.clientX + 15, top = e.clientY + 15;
     var tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
-    if (left + tw > window.innerWidth - 10) {
-        left = e.clientX - tw - 10;
-    }
-    if (top + th > window.innerHeight - 10) {
-        top = e.clientY - th - 10;
-    }
+    if (left + tw > window.innerWidth - 10) left = e.clientX - tw - 10;
+    if (top + th > window.innerHeight - 10) top = e.clientY - th - 10;
     tooltip.style.left = left + 'px';
     tooltip.style.top = top + 'px';
   }
 
-  function hideTooltip()
-  {
-    if (tooltip) {
-        tooltip.style.display = 'none';
-    }
+  function hideTooltip() {
+    if (tooltip) tooltip.style.display = 'none';
   }
 
   // ===== 节点命中 =====
-  function hitTest(idx, panelType, clientX, clientY)
-  {
+  function hitTest(idx, panelType, clientX, clientY) {
     var state = states[idx];
     var canvas = panelType === 'flame' ? state.flameCanvas : state.icicleCanvas;
-    if (!canvas) {
-        return null;
-    }
+    if (!canvas) return null;
     var rect = canvas.getBoundingClientRect();
     var mx = clientX - rect.left;
     var my = clientY - rect.top;
     var currentRoot = panelType === 'flame' ? state.flameRoot : state.icicleRoot;
     var node = findNodeAt(currentRoot, mx, my);
-    if (node) {
-        return node;
-    }
+    if (node) return node;
     return findChainNode(panelType === 'flame' ? state.calleeChain : state.callerChain, mx, my);
   }
 
   // ===== 画布事件 =====
-  function setupCanvasEvents(idx, canvasEl, panelType)
-  {
+  function setupCanvasEvents(idx, canvasEl, panelType) {
     var state = states[idx];
 
-    canvasEl.addEventListener('mousemove', function (e)
-    {
+    canvasEl.addEventListener('mousemove', function (e) {
       activeIdx = idx;
       state.activePanel = panelType;
       mouseClientX = e.clientX;
@@ -839,16 +646,11 @@ std::string ChartModuleJs()
         drawPanel(idx, panelType);
       }
       var currentRoot = panelType === 'flame' ? state.flameRoot : state.icicleRoot;
-      if (node && currentRoot) {
-          showTooltip(e, node, currentRoot);
-      }
-      else {
-          hideTooltip();
-      }
+      if (node && currentRoot) showTooltip(e, node, currentRoot);
+      else hideTooltip();
     });
 
-    canvasEl.addEventListener('mouseleave', function ()
-    {
+    canvasEl.addEventListener('mouseleave', function () {
       hideTooltip();
       var hoveredKey = panelType === 'flame' ? 'flameHoveredNode' : 'icicleHoveredNode';
       if (state[hoveredKey]) {
@@ -857,27 +659,19 @@ std::string ChartModuleJs()
       }
     });
 
-    canvasEl.addEventListener('click', function (e)
-    {
+    canvasEl.addEventListener('click', function (e) {
       activeIdx = idx;
-      if (ctxMenu) {
-          ctxMenu.style.display = 'none';
-      }
+      if (ctxMenu) ctxMenu.style.display = 'none';
       var node = hitTest(idx, panelType, e.clientX, e.clientY);
-      if (node) {
-          handleNodeClick(idx, node, panelType);
-      }
+      if (node) handleNodeClick(idx, node, panelType);
     });
 
     // 右键菜单
-    canvasEl.addEventListener('contextmenu', function (e)
-    {
+    canvasEl.addEventListener('contextmenu', function (e) {
       e.preventDefault();
       activeIdx = idx;
       state.activePanel = panelType;
-      if (!ctxMenu) {
-          return;
-      }
+      if (!ctxMenu) return;
       var node = hitTest(idx, panelType, e.clientX, e.clientY);
       var currentRoot = panelType === 'flame' ? state.flameRoot : state.icicleRoot;
       if (!node || !currentRoot) {
@@ -901,30 +695,19 @@ std::string ChartModuleJs()
         '<div class="ctx-item" data-copy-chain-largest>' + labelChain + '</div>';
       ctxMenu.style.display = 'block';
       var left = e.clientX, top = e.clientY;
-      if (left + 160 > window.innerWidth) {
-          left = e.clientX - 160;
-      }
-      if (top + 130 > window.innerHeight) {
-          top = e.clientY - 130;
-      }
+      if (left + 160 > window.innerWidth) left = e.clientX - 160;
+      if (top + 130 > window.innerHeight) top = e.clientY - 130;
       ctxMenu.style.left = left + 'px';
       ctxMenu.style.top = top + 'px';
     });
   }
 
   // ===== 点击下钻（双视图联动） =====
-  function handleNodeClick(idx, node, panelType)
-  {
+  function handleNodeClick(idx, node, panelType) {
     var state = states[idx];
-    if (!node) {
-        return;
-    }
-    if (panelType === 'flame' && node === state.flameRoot) {
-        return;
-    }
-    if (panelType === 'icicle' && node === state.icicleRoot) {
-        return;
-    }
+    if (!node) return;
+    if (panelType === 'flame' && node === state.flameRoot) return;
+    if (panelType === 'icicle' && node === state.icicleRoot) return;
 
     if (state.icicleOnly) {
       var path = findPathFromRoot(state.originalIcicleRoot, node);
@@ -957,21 +740,16 @@ std::string ChartModuleJs()
       }
     }
 
-    if (state.chart.crumbId && panelType === 'icicle') {
-        state.crumbPath.push(node.n);
-    }
+    if (state.chart.crumbId && panelType === 'icicle') state.crumbPath.push(node.n);
     updateCrumb(state);
     hideTooltip();
     drawChart(idx);
   }
 
   // ===== 重置 =====
-  function resetZoom(idx)
-  {
+  function resetZoom(idx) {
     var state = states[idx];
-    if (!state) {
-        return;
-    }
+    if (!state) return;
     state.flameRoot = state.originalFlameRoot;
     state.flameZoomStack = [];
     state.flameRectWidth = 0;
@@ -989,34 +767,23 @@ std::string ChartModuleJs()
     state.searchMatchSet.clear();
     state.objectMatches = false;
     var searchInput = state.chart.searchInputId ? document.getElementById(state.chart.searchInputId) : null;
-    if (searchInput) {
-        searchInput.value = '';
-    }
+    if (searchInput) searchInput.value = '';
     var countEl = state.chart.searchCountId ? document.getElementById(state.chart.searchCountId) : null;
-    if (countEl) {
-        countEl.textContent = '0个匹配';
-    }
+    if (countEl) countEl.textContent = '0个匹配';
     updateCrumb(state);
     hideTooltip();
     drawChart(idx);
   }
 
   // ===== 缩放/平移（WASD） =====
-  function execWASD(key)
-  {
-    if (activeIdx < 0 || activeIdx >= states.length) {
-        return;
-    }
+  function execWASD(key) {
+    if (activeIdx < 0 || activeIdx >= states.length) return;
     var state = states[activeIdx];
-    if (!state) {
-        return;
-    }
+    if (!state) return;
 
     var isFlame = state.activePanel === 'flame';
     var canvasEl = isFlame ? state.flameCanvas : state.icicleCanvas;
-    if (!canvasEl) {
-        return;
-    }
+    if (!canvasEl) return;
     var rectWidth = isFlame ? state.flameRectWidth : state.icicleRectWidth;
     var xPoint = isFlame ? state.flameXPoint : state.icicleXPoint;
 
@@ -1026,20 +793,15 @@ std::string ChartModuleJs()
     var canvasX = mouseClientX - parentRect.left;
     var deltaWidth, translationValue, offset;
 
-    if (rectWidth <= 0) {
-        return;
-    }
+    if (rectWidth <= 0) return;
 
     if (key === 'w') {
       deltaWidth = rectWidth * scaleRatio;
       translationValue = deltaWidth * (canvasX - xPoint) / rectWidth;
       xPoint -= translationValue;
       rectWidth += deltaWidth;
-      if (xPoint > 0) {
-          xPoint = 0;
-      }
-    } else if (key === 's')
-    {
+      if (xPoint > 0) xPoint = 0;
+    } else if (key === 's') {
       deltaWidth = rectWidth * scaleRatio;
       var newWidth = rectWidth - deltaWidth;
       if (newWidth < canvasW) {
@@ -1049,27 +811,17 @@ std::string ChartModuleJs()
         translationValue = deltaWidth * (canvasX - xPoint) / rectWidth;
         xPoint += translationValue;
         rectWidth = newWidth;
-        if (xPoint > 0) {
-            xPoint = 0;
-        }
-        if (rectWidth + xPoint < canvasW) {
-            xPoint = canvasW - rectWidth;
-        }
+        if (xPoint > 0) xPoint = 0;
+        if (rectWidth + xPoint < canvasW) xPoint = canvasW - rectWidth;
       }
-    } else if (key === 'a')
-    {
+    } else if (key === 'a') {
       offset = canvasW / 10;
       xPoint += offset;
-      if (xPoint > 0) {
-          xPoint = 0;
-      }
-    } else if (key === 'd')
-    {
+      if (xPoint > 0) xPoint = 0;
+    } else if (key === 'd') {
       offset = canvasW / 10;
       xPoint -= offset;
-      if (rectWidth + xPoint < canvasW) {
-          xPoint = canvasW - rectWidth;
-      }
+      if (rectWidth + xPoint < canvasW) xPoint = canvasW - rectWidth;
     } else {
       return;
     }
@@ -1084,8 +836,7 @@ std::string ChartModuleJs()
     scheduleRedraw();
   }
 
-  function startKeyLoop(key)
-  {
+  function startKeyLoop(key) {
     lastKeyExec[key] = performance.now();
     if (!keyLoopRunning) {
       keyLoopRunning = true;
@@ -1093,8 +844,7 @@ std::string ChartModuleJs()
     }
   }
 
-  function keyLoopTick(now)
-  {
+  function keyLoopTick(now) {
     var anyHeld = false;
     for (var key in heldKeys) {
       if (heldKeys[key]) {
@@ -1106,29 +856,19 @@ std::string ChartModuleJs()
         }
       }
     }
-    if (anyHeld) {
-        requestAnimationFrame(keyLoopTick);
-    }
-    else {
-        keyLoopRunning = false;
-    }
+    if (anyHeld) requestAnimationFrame(keyLoopTick);
+    else keyLoopRunning = false;
   }
 
   // ===== 右键菜单：拷贝最大链（htrace 调用图=最大调用链，快照引用链图=最大引用链） =====
-  function findLargestCallChain(root, targetNode)
-  {
+  function findLargestCallChain(root, targetNode) {
     var pathToTarget = [];
-    function findPath(node, target, path)
-    {
+    function findPath(node, target, path) {
       path.push(node);
-      if (node === target) {
-          return true;
-      }
+      if (node === target) return true;
       if (node.c) {
         for (var i = 0; i < node.c.length; i++) {
-          if (findPath(node.c[i], target, path)) {
-              return true;
-          }
+          if (findPath(node.c[i], target, path)) return true;
         }
       }
       path.pop();
@@ -1139,8 +879,7 @@ std::string ChartModuleJs()
     var bestLeaf = null;
     var bestTotalSize = 0;
     var bestPathFromTarget = [];
-    function findLeaves(node, pathFromTarget)
-    {
+    function findLeaves(node, pathFromTarget) {
       pathFromTarget.push(node);
       var isLeaf = !node.c || node.c.length === 0;
       if (isLeaf && node.t > bestTotalSize) {
@@ -1149,9 +888,7 @@ std::string ChartModuleJs()
         bestPathFromTarget = pathFromTarget.slice();
       }
       if (node.c) {
-        for (var i = 0; i < node.c.length; i++) {
-            findLeaves(node.c[i], pathFromTarget);
-        }
+        for (var i = 0; i < node.c.length; i++) findLeaves(node.c[i], pathFromTarget);
       }
       pathFromTarget.pop();
     }
@@ -1164,14 +901,10 @@ std::string ChartModuleJs()
 
     var fullPath = pathToTarget.slice(0, -1);
     fullPath = fullPath.concat(bestPathFromTarget);
-    if (ctxPanel === 'flame') {
-        fullPath.reverse();
-    }
+    if (ctxPanel === 'flame') fullPath.reverse();
 
     var parts = [];
-    for (var i = 0; i < fullPath.length; i++) {
-        parts.push(fullPath[i].n);
-    }
+    for (var i = 0; i < fullPath.length; i++) parts.push(fullPath[i].n);
     var chainText = parts.join('\n');
     if (bestTotalSize > 0) {
       chainText += '\n' + (UNIT_COUNT_MODE ? '次数' : '大小') + ' ' + fmtBytes(bestTotalSize) +
@@ -1181,19 +914,13 @@ std::string ChartModuleJs()
   }
 
   // ===== 搜索绑定 =====
-  function bindSearch(idx)
-  {
+  function bindSearch(idx) {
     var state = states[idx];
     var chart = state.chart;
-    if (!chart.searchInputId) {
-        return;
-    }
+    if (!chart.searchInputId) return;
     var input = document.getElementById(chart.searchInputId);
-    if (!input) {
-        return;
-    }
-    input.addEventListener('input', function ()
-    {
+    if (!input) return;
+    input.addEventListener('input', function () {
       var term = this.value.trim().toLowerCase();
       state.searchTerm = term;
       state.searchMatchSet.clear();
@@ -1202,21 +929,16 @@ std::string ChartModuleJs()
         var objectName = String(chart.objectName || '').toLowerCase();
         state.objectMatches = !!objectName && objectName.indexOf(term) >= 0;
         buildSearchSet(chart, state.icicleRoot, term, state.searchMatchSet);
-        if (!state.icicleOnly) {
-            buildSearchSet(chart, state.flameRoot, term, state.searchMatchSet);
-        }
+        if (!state.icicleOnly) buildSearchSet(chart, state.flameRoot, term, state.searchMatchSet);
       }
       var countEl = chart.searchCountId ? document.getElementById(chart.searchCountId) : null;
-      if (countEl) {
-          countEl.textContent = (state.searchMatchSet.size + (state.objectMatches ? 1 : 0)) + '个匹配';
-      }
+      if (countEl) countEl.textContent = (state.searchMatchSet.size + (state.objectMatches ? 1 : 0)) + '个匹配';
       drawChart(idx);
     });
   }
 
   // ===== 初始化 =====
-  function ensureOverlays()
-  {
+  function ensureOverlays() {
     tooltip = document.getElementById('memChartTooltip');
     if (!tooltip) {
       tooltip = document.createElement('div');
@@ -1236,8 +958,7 @@ std::string ChartModuleJs()
   // 兼容 htrace：由数据条目（模板中固定名为 allData 的那个 JSON 数组）推导出图表描述，
   // 沿用既有 DOM id 约定（flameCanvasN / icicleCanvasN / downstreamCanvasN / searchInputN ...）。
   // 注意：这里不要写出数据占位符的字面量，否则会被模板注入的字符串替换误伤。
-  function deriveCharts(entries)
-  {
+  function deriveCharts(entries) {
     var result = [];
     for (var i = 0; i < entries.length; i++) {
       var e = entries[i];
@@ -1260,8 +981,7 @@ std::string ChartModuleJs()
     return result;
   }
 
-  function initChart(chart, i)
-  {
+  function initChart(chart, i) {
     if (chart.names) {
       resolveNames(chart.flameTree, chart.names);
       resolveNames(chart.icicleTree, chart.names);
@@ -1271,9 +991,7 @@ std::string ChartModuleJs()
     if (chart.greyDepth === undefined || chart.greyDepth === null) {
       chart.greyDepth = chart.downstreamTree ? -1 : 0;
     }
-    if (chart.useDisplayName === undefined) {
-        chart.useDisplayName = true;
-    }
+    if (chart.useDisplayName === undefined) chart.useDisplayName = true;
 
     var flameTree = chart.flameTree || null;
     var icicleTree = chart.icicleTree || chart.downstreamTree || null;
@@ -1329,16 +1047,14 @@ std::string ChartModuleJs()
     if (chart.resetBtnId) {
       var resetBtn = document.getElementById(chart.resetBtnId);
       if (resetBtn) {
-        resetBtn.addEventListener('click', (function (index)
-        {
+        resetBtn.addEventListener('click', (function (index) {
           return function () { resetZoom(index); };
         })(i));
       }
     }
   }
 
-  function init(config)
-  {
+  function init(config) {
     config = config || {};
     UNIT_COUNT_MODE = !!config.unitCountMode;
     charts = config.charts ? config.charts.slice() : deriveCharts(config.entries || []);
@@ -1346,26 +1062,19 @@ std::string ChartModuleJs()
 
     ensureOverlays();
 
-    document.addEventListener('click', function ()
-    {
-      if (ctxMenu) {
-          ctxMenu.style.display = 'none';
-      }
+    document.addEventListener('click', function () {
+      if (ctxMenu) ctxMenu.style.display = 'none';
     });
 
-    ctxMenu.addEventListener('click', function (e)
-    {
+    ctxMenu.addEventListener('click', function (e) {
       var item = e.target.closest('.ctx-item');
-      if (!item) {
-          return;
-      }
+      if (!item) return;
       if (item.hasAttribute('data-copy-chain-largest')) {
         if (ctxNode && ctxRoot) {
           var chainText = findLargestCallChain(ctxRoot, ctxNode);
           // 恢复文案取点击时的原文，随图表业务可能是「拷贝最大引用链」或「拷贝最大调用链」
           var chainLabel = item.textContent;
-          navigator.clipboard.writeText(chainText).then(function ()
-          {
+          navigator.clipboard.writeText(chainText).then(function () {
             item.textContent = '已拷贝!';
             setTimeout(function () { item.textContent = chainLabel; }, 1000);
           });
@@ -1375,49 +1084,35 @@ std::string ChartModuleJs()
       }
       var text = decodeURIComponent(item.getAttribute('data-copy') || '');
       var originalText = item.textContent;
-      navigator.clipboard.writeText(text).then(function ()
-      {
+      navigator.clipboard.writeText(text).then(function () {
         item.textContent = '已复制!';
         setTimeout(function () { item.textContent = originalText; }, 1000);
       });
       ctxMenu.style.display = 'none';
     });
 
-    document.addEventListener('keydown', function (e)
-    {
-      if (document.activeElement && document.activeElement.classList.contains('graph-search-input')) {
-          return;
-      }
+    document.addEventListener('keydown', function (e) {
+      if (document.activeElement && document.activeElement.classList.contains('graph-search-input')) return;
       var key = e.key.toLowerCase();
-      if (key !== 'w' && key !== 's' && key !== 'a' && key !== 'd') {
-          return;
-      }
+      if (key !== 'w' && key !== 's' && key !== 'a' && key !== 'd') return;
       e.preventDefault();
-      if (heldKeys[key]) {
-          return;
-      }
+      if (heldKeys[key]) return;
       heldKeys[key] = true;
       execWASD(key);
       startKeyLoop(key);
     });
 
-    document.addEventListener('keyup', function (e)
-    {
+    document.addEventListener('keyup', function (e) {
       var key = e.key.toLowerCase();
-      if (!heldKeys[key]) {
-          return;
-      }
+      if (!heldKeys[key]) return;
       heldKeys[key] = false;
     });
 
     window.addEventListener('resize', function () { drawAllVisible(); });
 
-    for (var i = 0; i < charts.length; i++) {
-        initChart(charts[i], i);
-    }
+    for (var i = 0; i < charts.length; i++) initChart(charts[i], i);
 
-    requestAnimationFrame(function ()
-    {
+    requestAnimationFrame(function () {
       requestAnimationFrame(function () { drawAllVisible(); });
     });
   }
@@ -1428,7 +1123,7 @@ std::string ChartModuleJs()
     redraw: drawChart,
     reset: resetZoom
   };
-  // 保留给内联 onclick="ResetZoom(N)" 使用
+  // 保留给内联 onclick="resetZoom(N)" 使用
   window.resetZoom = resetZoom;
 })();
 )CHARTJS";

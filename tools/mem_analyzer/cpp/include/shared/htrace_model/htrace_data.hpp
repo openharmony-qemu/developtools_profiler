@@ -179,7 +179,7 @@ struct CompressedStackFrame : StackFrame {
     CompressedStackFrame() { resolved = false; }
 
     /// Convert this frame to resolved form using a DataDict.
-    ResolvedStackFrame resolve(const DataDict& dict) const;
+    ResolvedStackFrame Resolve(const DataDict& dict) const;
 };
 
 // ============================================================================
@@ -209,7 +209,7 @@ struct CompressedCallStack : CallStack {
     std::vector<CompressedStackFrame> frames;
 
     /// Convert all frames to resolved form using a DataDict.
-    ResolvedCallStack resolve(const DataDict& dict) const;
+    ResolvedCallStack Resolve(const DataDict& dict) const;
 };
 
 // ============================================================================
@@ -243,7 +243,7 @@ struct CompressedCallStackList {
     std::vector<CompressedCallStack> stacks;
 
     /// Resolve all stacks to resolved form using the embedded DataDict.
-    struct ResolvedCallStackList resolve() const;
+    struct ResolvedCallStackList Resolve() const;
 };
 
 /// Resolved call stacks — strings are already populated, no DataDict needed.

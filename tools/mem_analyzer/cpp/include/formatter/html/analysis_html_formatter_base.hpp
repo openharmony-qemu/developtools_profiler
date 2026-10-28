@@ -50,16 +50,16 @@ public:
     // 故这些工具对外可见，避免为了访问权限而保留一层空继承。
 
     // 生成Tab导航栏HTML（含各Tab的按钮）
-    static std::string buildTabBarHTML(const std::vector<TabGroup>& groups);
+    static std::string BuildTabBarHTML(const std::vector<TabGroup>& groups);
 
     // 生成Tab内容区HTML（含表格+详情区段+火焰图/冰柱图）
     // countMode: fd/thread 等计数类型时，大小字段直接显示整数个数而非字节
-    static std::string buildTabContentHTML(const std::vector<TabGroup>& groups, long long totalSize,
+    static std::string BuildTabContentHTML(const std::vector<TabGroup>& groups, long long totalSize,
         bool countMode = false);
 
     // 流式HTML模板填充：逐个输出SymbolDataEntry，避免构建完整dataJSONArr
     // fillTree回调：在流式写入时按需构建flameTree/icicleTree，避免所有entry同时驻留内存
-    static void fillHTMLTemplateStreamedDirect(
+    static void FillHTMLTemplateStreamedDirect(
         std::ostream& out,
         std::vector<TabGroup>& groups,
         long long totalSize,
@@ -72,7 +72,7 @@ public:
 
     // 流式HTML模板填充（通用版）：直接流式输出JSON数据数组
     // 适用于tshandle等非TabGroup模型的数据
-    static void fillHTMLTemplateStreamed(
+    static void FillHTMLTemplateStreamed(
         std::ostream& out,
         const json& dataJSONArr,
         long long totalSize,
@@ -86,11 +86,11 @@ public:
     // 统一在此替换。模板被 __DATA_JSON__ 切成 before/after 两段，且存在 TabGroup / 通用
     // 两条注入路径，同一批占位符原先要在 4 处各写一遍；集中后新增占位符只需改这一处。
     // 各占位符只出现在固定片段，替换到不含它的片段上是空操作。
-    static void applyCommonPlaceholders(std::string& htmlFrag, long long totalSize, bool countMode);
+    static void ApplyCommonPlaceholders(std::string& htmlFrag, long long totalSize, bool countMode);
 
     // 页脚版本号片段（__VERSION_FORMAT__ / __VERSION_CONTENT__）
-    static std::string setVersionFormat();
-    static std::string buildVersionContent();
+    static std::string SetVersionFormat();
+    static std::string BuildVersionContent();
 };
 
 } // namespace mem_analyzer
