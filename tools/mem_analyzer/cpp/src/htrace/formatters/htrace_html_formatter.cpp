@@ -488,7 +488,7 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
     AnalysisHtmlFormatterBase::fillHTMLTemplateStreamedDirect(
         out, streamTarget, totalExistingSize, tabBarHTML, tabContentHTML, metaDataItemsHTML, title, fillTree, countMode);
 
-    timer.tick("total");
+    timer.Tick("total");
 }
 
 } // namespace
@@ -515,7 +515,7 @@ std::string HtraceWriteAnalysisHtml(const HtraceAnalysisOutput& full,
     FormatWithStream(ofs, full, filePath, ctx);
 
     ofs.close();
-    timer.tick("total");
+    timer.Tick("total");
     log::Logok("Output written to: ", outPath);
     return outPath;
 }

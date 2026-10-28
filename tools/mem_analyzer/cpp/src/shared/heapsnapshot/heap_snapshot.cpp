@@ -1237,38 +1237,38 @@ HeapSnapshot HeapSnapshot::FromFile(const std::string& path)
     HeapSnapshot snapshot;
 
     // ---- Phase 1: metadata ----
-    timer.stage("Reading header");
+    timer.Stage("Reading header");
     auto header = ReadHeader(file, file_size);
     size_t nodesArrayBracket = 0;
     ParseSnapshotMeta(snapshot, header.buf, header.nodesMarkerPos, nodesArrayBracket);
-    timer.tick("meta_parsed");
+    timer.Tick("meta_parsed");
 
     // ---- Phase 2: nodes ----
-    timer.stage("Parsing nodes array");
+    timer.Stage("Parsing nodes array");
     ParseNodesArray(snapshot, file, nodesArrayBracket, file_size);
-    timer.tick("nodes", std::to_string(snapshot.nodeCount) + " nodes");
+    timer.Tick("nodes", std::to_string(snapshot.nodeCount) + " nodes");
     // 空 nodes 数组会让下游 compute_shortest_paths 对空 vector 执行 path_edges[0] = ...
     if (snapshot.nodeCount <= 0) {
         throw std::runtime_error("invalid snapshot: nodes array is empty");
     }
 
     // ---- Phase 3: edges ----
-    timer.stage("Parsing edges array");
+    timer.Stage("Parsing edges array");
     size_t edgesBracketPos = ParseEdgesArray(snapshot, file, header.buf,
         nodesArrayBracket, file_size);
-    timer.tick("edges", std::to_string(snapshot.edgeCount) + " edges");
+    timer.Tick("edges", std::to_string(snapshot.edgeCount) + " edges");
 
     // ---- Phase 4: strings ----
-    timer.stage("Parsing strings table");
+    timer.Stage("Parsing strings table");
     ParseStringsTable(snapshot, file, header.buf, edgesBracketPos, file_size);
-    timer.tick("strings", std::to_string(snapshot.strings.size()) + " strings");
+    timer.Tick("strings", std::to_string(snapshot.strings.size()) + " strings");
 
     // ---- Phase 5: CSR + node_id_to_idx ----
-    timer.stage("Building CSR indices");
+    timer.Stage("Building CSR indices");
     BuildCsrAndIdMap(snapshot);
-    timer.tick("csr");
-    timer.stage("Building node_id_to_idx");
-    timer.tick("node_id_map", std::to_string(snapshot.nodeIdToIdx.size()) + " entries");
+    timer.Tick("csr");
+    timer.Stage("Building node_id_to_idx");
+    timer.Tick("node_id_map", std::to_string(snapshot.nodeIdToIdx.size()) + " entries");
 
     // ---- Phase 5.5: locate SyntheticRoot once for O(1) get_total_heap_size (#27) ----
     snapshot.syntheticRootIndex = UINT32_MAX;
@@ -1281,13 +1281,13 @@ HeapSnapshot HeapSnapshot::FromFile(const std::string& path)
     }
 
     // ---- Phase 6: shortest paths + retained sizes ----
-    timer.stage("Computing shortest paths");
+    timer.Stage("Computing shortest paths");
     ComputePathsAndRetained(snapshot);
-    timer.tick("shortest_paths");
-    timer.stage("Computing retained sizes");
-    timer.tick("retained_sizes");
+    timer.Tick("shortest_paths");
+    timer.Stage("Computing retained sizes");
+    timer.Tick("retained_sizes");
 
-    timer.done();
+    timer.Done();
     log::Logok("  Heap snapshot loaded: ", snapshot.nodeCount, " nodes, ",
         snapshot.edgeCount, " edges, ", snapshot.strings.size(), " strings.");
     return snapshot;

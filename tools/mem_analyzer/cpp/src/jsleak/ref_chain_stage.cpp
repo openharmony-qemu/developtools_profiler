@@ -44,7 +44,7 @@ collectRefChains(const HeapSnapshot& heap,
 
     // 关键路径耗时 trace
     StageTimer timer("ref_chain");
-    timer.stage("start node_count=" + std::to_string(heap.nodeCount) +
+    timer.Stage("start node_count=" + std::to_string(heap.nodeCount) +
                 " top_k=" + (topK ? std::to_string(*topK) : "all"));
 
     // exclude 语义：排除「目标节点名」在 exclude_chains 中的链。
@@ -74,7 +74,7 @@ collectRefChains(const HeapSnapshot& heap,
             info.nodeIds.push_back(heap.GetNodeId(uNi));
             info.totalRetainedSize += static_cast<uint64_t>(heap.GetRetainedSize(uNi));
         }
-        timer.tick("pass1", "entries=" + std::to_string(chainMap.size()));
+        timer.Tick("pass1", "entries=" + std::to_string(chainMap.size()));
 
         result.reserve(chainMap.size());
         for (auto& kv : chainMap) {
@@ -96,7 +96,7 @@ collectRefChains(const HeapSnapshot& heap,
             }
             sizeMap[h] += static_cast<uint64_t>(heap.GetRetainedSize(uNi));
         }
-        timer.tick("pass1", "entries=" + std::to_string(sizeMap.size()));
+        timer.Tick("pass1", "entries=" + std::to_string(sizeMap.size()));
 
         // 用最小堆选出累计 retained size 最大的前 K 条（堆顶最小）
         using Pair = std::pair<RefChainKey, uint64_t>;  // (key, retained_size)
@@ -120,7 +120,7 @@ collectRefChains(const HeapSnapshot& heap,
         if (topPairs.empty()) {
             return result;
         }
-        timer.tick("topK", "K=" + std::to_string(topPairs.size()));
+        timer.Tick("topK", "K=" + std::to_string(topPairs.size()));
 
         // 第二遍：只收集 top K 引用链的节点 ID
         std::unordered_map<RefChainKey, size_t, RefChainKeyHash> hashToIndex;
@@ -150,7 +150,7 @@ collectRefChains(const HeapSnapshot& heap,
                 info.nodeIds.push_back(heap.GetNodeId(uNi));
             }
         }
-        timer.tick("pass2");
+        timer.Tick("pass2");
     }
 
     std::sort(result.begin(), result.end(), [](const RefChainInfo& a, const RefChainInfo& b) {

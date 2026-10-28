@@ -25,12 +25,12 @@ namespace mem_analyzer {
  *
  * Usage:
  *   StageTimer timer("DB");
- *   timer.stage("Loading data_dict");     // prints:   [DB] ── Loading data_dict
+ *   timer.Stage("Loading data_dict");     // prints:   [DB] ── Loading data_dict
  *   // ... work ...
- *   timer.tick("data_dict");              // prints:   [DB] data_dict: 123ms
- *   timer.stage("Building call stacks");  // prints:   [DB] ── Building call stacks
+ *   timer.Tick("data_dict");              // prints:   [DB] data_dict: 123ms
+ *   timer.Stage("Building call stacks");  // prints:   [DB] ── Building call stacks
  *   // ... work ...
- *   timer.tick("call_stacks", "1000 st"); // prints:   [DB] call_stacks: 456ms (1000 st)
+ *   timer.Tick("call_stacks", "1000 st"); // prints:   [DB] call_stacks: 456ms (1000 st)
  */
 class StageTimer {
 public:
@@ -40,14 +40,14 @@ public:
     explicit StageTimer(const std::string& tag) : tag_(tag), start_(clock::now()), last_(start_) {}
 
     /// Print a stage entry marker and start timing for it
-    void stage(const std::string& msg)
+    void Stage(const std::string& msg)
     {
         log::LogiMinor("  [", tag_, "] -- ", msg);
         last_ = clock::now();
     }
 
     /// Print elapsed since last tick/stage (or start), and update last_
-    void tick(const std::string& label, const std::string& extra = "")
+    void Tick(const std::string& label, const std::string& extra = "")
     {
         auto now = clock::now();
         auto elapsed = std::chrono::duration_cast<ms>(now - last_).count();
@@ -60,7 +60,7 @@ public:
     }
 
     /// Print total since start, no extra label needed
-    void done()
+    void Done()
     {
         auto now = clock::now();
         auto elapsed = std::chrono::duration_cast<ms>(now - start_).count();

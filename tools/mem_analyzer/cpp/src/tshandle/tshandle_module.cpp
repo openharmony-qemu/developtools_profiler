@@ -51,31 +51,31 @@ std::string TshandleModule::run(const ModuleRequest& req, const RunContext& ctx)
     try {
         log::Logi("  Parsing...");
         StageTimer timer("process_file");
-        timer.stage("Parsing");
+        timer.Stage("Parsing");
         TshandleParseResult parsed = TshandleParse(req.filePath, ctx);
-        timer.tick("parse");
+        timer.Tick("parse");
 
         if (!req.parseOnly) {
             log::Logi("  Analyzing...");
-            timer.stage("Analyzing");
+            timer.Stage("Analyzing");
             TshandleAnalysisOutput analysis = TshandleAnalyze(parsed, ctx);
-            timer.tick("analysis");
+            timer.Tick("analysis");
 
-            timer.stage("Writing output");
+            timer.Stage("Writing output");
             std::string out = kw.keyword == "json" ?
                        TshandleWriteAnalysisJson(analysis, req.filePath, ctx, outDir)
                        : TshandleWriteAnalysisHtml(analysis, req.filePath, ctx, outDir);
-            timer.tick("write");
-            timer.done();
+            timer.Tick("write");
+            timer.Done();
             return out;
         }
 
         // parse-only：产物仍含 ArkTS 类（见头文件约定）
         log::LogiMinor("  Parse-only mode: skipping analysis.");
-        timer.stage("Writing output");
+        timer.Stage("Writing output");
         std::string out = TshandleWriteParseJson(parsed, req.filePath, ctx, outDir);
-        timer.tick("write");
-        timer.done();
+        timer.Tick("write");
+        timer.Done();
         return out;
     } catch (const std::exception& e)
     {

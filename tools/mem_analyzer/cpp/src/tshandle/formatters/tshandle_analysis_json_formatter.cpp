@@ -194,7 +194,7 @@ std::string TshandleWriteAnalysisJson(const TshandleAnalysisOutput& analysis,
 
     writer.close();
 
-    timer.tick("total");
+    timer.Tick("total");
     log::Logok("Output written to: ", outPath);
     return outPath;
 }

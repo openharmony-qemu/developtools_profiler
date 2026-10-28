@@ -59,45 +59,45 @@ std::string JsleakModule::run(const ModuleRequest& req, const RunContext& ctx) c
                 return {};
             }
             StageTimer timer("process_file");
-            timer.stage("Parsing baseline");
+            timer.Stage("Parsing baseline");
             HeapSnapshot baseline = JsleakParse(ctx.snapshot.compare.baselineFile, ctx);
-            timer.tick("parse_baseline");
-            timer.stage("Parsing target");
+            timer.Tick("parse_baseline");
+            timer.Stage("Parsing target");
             HeapSnapshot target = JsleakParse(req.filePath, ctx);
-            timer.tick("parse_target");
+            timer.Tick("parse_target");
 
-            timer.stage("Analyzing comparison");
+            timer.Stage("Analyzing comparison");
             json report = JsleakCompareAnalyze(
                 baseline, target, ctx.snapshot.compare.baselineFile, req.filePath,
                 ctx.snapshot.topN, ctx.snapshot.mode);
-            timer.tick("analysis");
+            timer.Tick("analysis");
 
-            timer.stage("Writing output");
+            timer.Stage("Writing output");
             std::string out = kw.keyword == "json" ?
                        JsleakWriteCompareJson(report, outDir)
                        : JsleakWriteCompareHtml(report, outDir);
-            timer.tick("write");
-            timer.done();
+            timer.Tick("write");
+            timer.Done();
             return out;
         }
 
         log::Logi("  Parsing...");
         StageTimer timer("process_file");
-        timer.stage("Parsing");
+        timer.Stage("Parsing");
         HeapSnapshot heap = JsleakParse(req.filePath, ctx);
-        timer.tick("parse");
+        timer.Tick("parse");
 
         log::Logi("  Analyzing...");
-        timer.stage("Analyzing");
+        timer.Stage("Analyzing");
         json data = JsleakAnalyze(heap, req.filePath, ctx);
-        timer.tick("analysis");
+        timer.Tick("analysis");
 
-        timer.stage("Writing output");
+        timer.Stage("Writing output");
         std::string out = kw.keyword == "json" ?
                    JsleakWriteAnalysisJson(data, req.filePath, ctx, outDir)
                    : JsleakWriteAnalysisHtml(data, req.filePath, ctx, outDir);
-        timer.tick("write");
-        timer.done();
+        timer.Tick("write");
+        timer.Done();
         return out;
     } catch (const std::exception& e)
     {

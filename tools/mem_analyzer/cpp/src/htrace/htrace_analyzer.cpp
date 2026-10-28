@@ -518,7 +518,7 @@ static AlgorithmResult RunAlgorithm(
     std::unordered_set<uint64_t> removedUids;
 
     // 4.3: Equivalent symbols
-    timer.stage("Finding equivalent groups");
+    timer.Stage("Finding equivalent groups");
     auto equivGroups = findEquivalentGroups(filtered);
     std::unordered_map<uint64_t, uint64_t> equivRefMap;
     int removedEquiv = 0;
@@ -540,12 +540,12 @@ static AlgorithmResult RunAlgorithm(
             }
         }
     }
-    timer.tick("equiv");
+    timer.Tick("equiv");
 
     // 4.5: Calculate approximations on filtered set
-    timer.stage("Calculating approximations");
+    timer.Stage("Calculating approximations");
     auto approx = CalcApproximations(filtered, callStacks, config);
-    timer.tick("approx");
+    timer.Tick("approx");
 
     // 4.6: Filter using approximations (order-independent fixed-point iteration)
     int downRemoved = 0;
@@ -622,7 +622,7 @@ static AlgorithmResult RunAlgorithm(
             }
             return a.uid < b.uid;
         });
-    timer.tick("filter",
+    timer.Tick("filter",
         std::to_string(filteredSetSize) + " in, " + std::to_string(algResult.finalSymbols.size()) + " out");
 
     int equivGroupCount = 0;
@@ -654,7 +654,7 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
 {
     StageTimer timer("Analysis");
 
-    timer.stage("Building flame/icicle graphs for top symbols");
+    timer.Stage("Building flame/icicle graphs for top symbols");
     std::vector<TopSymbolInfo> result;
     int limit = std::min((int)finalSymbols.size(), topN);
     result.reserve(limit);
@@ -704,7 +704,7 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
         result.push_back(std::move(ts));
     }
 
-    timer.tick("build_graphs", std::to_string(limit) + " top symbols");
+    timer.Tick("build_graphs", std::to_string(limit) + " top symbols");
 
     return result;
 }
@@ -749,11 +749,11 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     }
 
     // Build symbol data
-    timer.stage("Building symbol data from call stacks");
+    timer.Stage("Building symbol data from call stacks");
     std::unordered_map<uint64_t, SymbolData> allSymbols;
     long long totalLeakSize;
     BuildSymbolData(callStacks, allSymbols, dataDict, totalLeakSize);
-    timer.tick("build_symbols", std::to_string(allSymbols.size()) + " symbols");
+    timer.Tick("build_symbols", std::to_string(allSymbols.size()) + " symbols");
 
     HtraceAnalysisOutput output;
     output.totalLeakSize = totalLeakSize;

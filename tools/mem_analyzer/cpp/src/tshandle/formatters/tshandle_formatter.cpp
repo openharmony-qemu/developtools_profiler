@@ -256,7 +256,7 @@ std::string TshandleWriteParseJson(const TshandleParseResult& parsed, const std:
 
     writer.close();
 
-    timer.tick("total");
+    timer.Tick("total");
     log::Logok("Output written to: ", outPath);
     return outPath;
 }

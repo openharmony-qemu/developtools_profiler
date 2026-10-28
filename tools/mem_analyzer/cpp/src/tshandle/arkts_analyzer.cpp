@@ -190,21 +190,21 @@ ArkTsAnalyzeResult AnalyzeArktsClasses(
 
     // ---- 1. Read addr file (auto-detect text / protobuf format) ----
     auto parseResult = ParseAddrFile(addrFilePath);
-    timer.tick("parse_addr");
+    timer.Tick("parse_addr");
 
     // ---- 3. Load heapsnapshot (retained sizes computed inside from_file) ----
-    timer.stage("Loading heap snapshot");
+    timer.Stage("Loading heap snapshot");
     auto heap = HeapSnapshot::FromFile(heapsnapshotPath);
-    timer.tick("load_heap", std::to_string(heap.nodeCount) + " nodes, " +
+    timer.Tick("load_heap", std::to_string(heap.nodeCount) + " nodes, " +
               std::to_string(heap.edgeCount) + " edges");
 
     // ---- 5. Build nativeRef from callStacks ----
-    timer.stage("Building nativeRef");
+    timer.Stage("Building nativeRef");
     auto nativeResult = BuildNativeRef(callStacks, parseResult.addrToNodeId);
-    timer.tick("build_native_ref");
+    timer.Tick("build_native_ref");
 
     // ---- 6. Aggregate by class name ----
-    timer.stage("Aggregating by class name");
+    timer.Stage("Aggregating by class name");
     std::map<std::string, ArkTsClass> classMap;
     int instanceCount = 0;
     int missingNodeCount = 0;
@@ -260,7 +260,7 @@ ArkTsAnalyzeResult AnalyzeArktsClasses(
             clsIt->second.retainedSize += retainedSize;
         }
     }
-    timer.tick("aggregate", std::to_string(classMap.size()) + " classes, " +
+    timer.Tick("aggregate", std::to_string(classMap.size()) + " classes, " +
               std::to_string(instanceCount) + " instances");
 
     ApplyTshandleRetainedSizes(callStacks, localRetainedSizeByCallStack);
@@ -381,9 +381,9 @@ ArkTsAnalyzeResult AnalyzeArktsClasses(
            result.anomalyCounts.invalidAddr << " invalid, " <<
            result.anomalyCounts.duplicate << " dup, " <<
            result.anomalyCounts.addrFileInvalid << " addrInvalid";
-        timer.tick("anomaly_report", ss.str());
+        timer.Tick("anomaly_report", ss.str());
     }
-    timer.done();
+    timer.Done();
 
     return result;
 }

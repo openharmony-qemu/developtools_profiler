@@ -142,7 +142,7 @@ void OpenHtraceContext(HtraceParseContext& ctx, const std::string& dbPath, Stage
     ctx.meta = QueryTraceMeta(ctx.db);
 
     // Load data_dict
-    timer.stage("Loading data_dict");
+    timer.Stage("Loading data_dict");
     std::string dsql = "SELECT id, data FROM data_dict";
     sqlite3_stmt* stmt = nullptr;
     if (sqlite3_prepare_v2(ctx.db, dsql.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
@@ -166,7 +166,7 @@ void OpenHtraceContext(HtraceParseContext& ctx, const std::string& dbPath, Stage
             }
         }
     }
-    timer.tick("data_dict");
+    timer.Tick("data_dict");
 }
 
 // statistic 模式：按 (callchain_id, type) 分区聚合，每条链在每个 type 下取最新一条。
@@ -436,7 +436,7 @@ TraceDB ProcessHtraceDb(const std::string& dbPath, const std::string& category, 
 
     stacks.dict = std::move(ctx.dataDict);
     result.meta = std::move(ctx.meta);
-    timer.tick("call_stacks", std::to_string(stacks.stacks.size()) + " stacks");
+    timer.Tick("call_stacks", std::to_string(stacks.stacks.size()) + " stacks");
     return result;
 }
 

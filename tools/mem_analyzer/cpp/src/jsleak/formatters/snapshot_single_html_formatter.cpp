@@ -199,7 +199,7 @@ std::string JsleakWriteAnalysisHtml(const json& data, const std::string& filePat
     ofs << GenerateSnapshotHTML(data, filePath, ctx.snapshot.mode);
 
     ofs.close();
-    timer.tick("total");
+    timer.Tick("total");
     log::Logok("Output written to: ", outPath);
     return outPath;
 }

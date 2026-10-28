@@ -66,13 +66,13 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
         bool isStatistics = false;
 
         // 1. Detect mode + meta（时间/模式/进程名）由 query_trace_meta 统一读取
-        timer.stage("Detecting meta");
+        timer.Stage("Detecting meta");
         meta = QueryTraceMeta(db);
         isStatistics = (meta.mode == "statistic");
-        timer.tick("detect_meta", meta.mode);
+        timer.Tick("detect_meta", meta.mode);
 
         // 2. Load data_dict for symbol/file resolution
-        timer.stage("Loading data_dict");
+        timer.Stage("Loading data_dict");
         std::unordered_map<int, std::string> dataDict;
         {
             sqlite3_stmt* stmt = nullptr;
@@ -90,10 +90,10 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
                 log::Loge("Error: prepare data dict failed:sql=", sql, ", err=", sqlite3_errmsg(db));
             }
         }
-        timer.tick("data_dict", std::to_string(dataDict.size()) + " entries");
+        timer.Tick("data_dict", std::to_string(dataDict.size()) + " entries");
 
         // 3. Query call stacks
-        timer.stage("Querying call stacks");
+        timer.Stage("Querying call stacks");
         struct ChainGroup {
             int callchainId;
             int type;                // 17 or 18
@@ -174,10 +174,10 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
         if (groups.empty()) {
             throw std::runtime_error("No ARK handle call stacks found");
         }
-        timer.tick("call_stacks", std::to_string(groups.size()) + " groups");
+        timer.Tick("call_stacks", std::to_string(groups.size()) + " groups");
 
         // 4. Query frames (shared reader; chain filter pushed down via subquery)
-        timer.stage("Querying frames");
+        timer.Stage("Querying frames");
         std::string chainSelect;
         if (isStatistics) {
             chainSelect =
@@ -193,10 +193,10 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
         if (framesByChain.empty()) {
             throw std::runtime_error("Failed to query frames");
         }
-        timer.tick("frames", std::to_string(framesByChain.size()) + " chains");
+        timer.Tick("frames", std::to_string(framesByChain.size()) + " chains");
 
         // 5. Build call stack entries
-        timer.stage("Building call stack entries");
+        timer.Stage("Building call stack entries");
         for (const auto& g : groups) {
             ResolvedCallStack cs;
             cs.id = g.callchainId;
@@ -249,8 +249,8 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
         }
 
         sqlite3_close(db);
-        timer.tick("build_entries", std::to_string(callStacks.size()) + " stacks");
-        timer.done();
+        timer.Tick("build_entries", std::to_string(callStacks.size()) + " stacks");
+        timer.Done();
         return result;
     } catch (...)
     {

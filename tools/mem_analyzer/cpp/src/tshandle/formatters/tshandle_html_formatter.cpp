@@ -393,7 +393,7 @@ std::string TshandleWriteAnalysisHtml(const TshandleAnalysisOutput& analysis,
     FormatWithStream(ofs, analysis, filePath);
 
     ofs.close();
-    timer.tick("total");
+    timer.Tick("total");
     log::Logok("Output written to: ", outPath);
     return outPath;
 }

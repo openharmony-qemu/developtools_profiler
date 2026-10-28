@@ -168,7 +168,7 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
 
     // ── Step 1: Extract ZIP into hiprofiler/ subdir ──────────────
     log::Logi("  [1/4] Extracting ZIP: ", filePath);
-    timer.stage("Extracting ZIP");
+    timer.Stage("Extracting ZIP");
     auto unzipDir = platform::JoinPath(tempDir.path(), "hiprofiler");
     platform::CreateDirectories(unzipDir);
     {
@@ -179,7 +179,7 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
         }
         log::Logi("    Extracted to: ", unzipDir);
     }
-    timer.tick("extract");
+    timer.Tick("extract");
 
     // ── Step 2: Locate .htrace, .rawheap, js_map files ────────────
     std::string rawheapPath = FindFileInDir(unzipDir, ".rawheap");
@@ -214,7 +214,7 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
                                                            streamerErr);
         }
     }
-    timer.tick("trace_streamer");
+    timer.Tick("trace_streamer");
 
     // ── Step 4: Process DB → callStacks (ARK handle events) ─────
     log::Logi("  [3/4] Extracting ARK handle call stacks from DB...");
@@ -282,8 +282,8 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
     } else {
         log::LogiMinor("    No rawheap file, skipping.");
     }
-    timer.tick("rawheap");
-    timer.done();
+    timer.Tick("rawheap");
+    timer.Done();
 
     return parseResult;
 }

@@ -192,7 +192,7 @@ static void ComputePageFlags(DomContext& ctx, std::vector<uint32_t>& pageFlags, 
             }
         }
     }
-    timer.tick("page_flags");
+    timer.Tick("page_flags");
 }
 
 // ============================================================================
@@ -335,7 +335,7 @@ static PostOrderResult ComputeDfsPostOrder(DomContext& ctx, const std::vector<ui
 
     po.reachableCount = reachableCount;
     po.rootPo = ctx.nodeCount - 1;  // root is always at the highest PO index
-    timer.tick("dfs_po", std::to_string(reachableCount) + " reachable");
+    timer.Tick("dfs_po", std::to_string(reachableCount) + " reachable");
     return po;
 }
 
@@ -403,7 +403,7 @@ static ReverseCSR BuildReverseCsr(DomContext& ctx, StageTimer& timer)
             revEdgePtr[slot] = static_cast<uint32_t>(ptr);
         }
     }
-    timer.tick("rev_csr", std::to_string(revTotal) + " edges");
+    timer.Tick("rev_csr", std::to_string(revTotal) + " edges");
     return {std::move(revStart), std::move(revAdj), std::move(revEdgePtr), revTotal};
 }
 
@@ -674,7 +674,7 @@ static std::vector<uint32_t> computeLtDominators(
         }
     }
     dominators[ROOT] = ROOT;
-    timer.tick("lt_dominator", std::to_string(ltDfnCount) + " dfn");
+    timer.Tick("lt_dominator", std::to_string(ltDfnCount) + " dfn");
     return dominators;
 }
 
@@ -793,7 +793,7 @@ RetainedSizeResult ComputeNodeSizes(const HeapSnapshot& snapshot, bool excludeWe
 
     ComputeRetainedSizes(ctx, po, dominators, result);
 
-    timer.done();
+    timer.Done();
     return result;
 }
 
@@ -1223,8 +1223,8 @@ ShortestPathsResult ComputeShortestPaths(const HeapSnapshot& snapshot,
 
     RunLayeredBfs(ctx, highPriRoots, lowPriRoots, result);
 
-    timer.tick("bfs", std::to_string(result.reachableCount) + " reachable");
-    timer.done();
+    timer.Tick("bfs", std::to_string(result.reachableCount) + " reachable");
+    timer.Done();
     return result;
 }
 

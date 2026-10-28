@@ -52,9 +52,9 @@ std::string HtraceModule::run(const ModuleRequest& req, const RunContext& ctx) c
     try {
         log::Logi("  Parsing...");
         StageTimer timer("process_file");
-        timer.stage("Parsing");
+        timer.Stage("Parsing");
         TraceDB db = HtraceParse(req.filePath, ctx);
-        timer.tick("parse");
+        timer.Tick("parse");
 
         // -l: L1 泄漏地址过滤（parse 后，解析/分析模式均执行）
         if (!ctx.htrace.leakAddrs.empty()) {
@@ -63,26 +63,26 @@ std::string HtraceModule::run(const ModuleRequest& req, const RunContext& ctx) c
 
         if (!req.parseOnly) {
             log::Logi("  Analyzing...");
-            timer.stage("Analyzing");
+            timer.Stage("Analyzing");
             HtraceAnalysisOutput full = ctx.htrace.leakAddrs.empty() ?
                 HtraceAnalyze(db, ctx)
                 : HtraceLeakAnalyze(db, ctx);
-            timer.tick("analysis");
+            timer.Tick("analysis");
 
-            timer.stage("Writing output");
+            timer.Stage("Writing output");
             std::string out = kw.keyword == "json" ?
                        HtraceWriteAnalysisJson(full, req.filePath, ctx, outDir)
                        : HtraceWriteAnalysisHtml(full, req.filePath, ctx, outDir);
-            timer.tick("write");
-            timer.done();
+            timer.Tick("write");
+            timer.Done();
             return out;
         }
 
         log::LogiMinor("  Parse-only mode: skipping analysis.");
-        timer.stage("Writing output");
+        timer.Stage("Writing output");
         std::string out = HtraceWriteParseJson(db, req.filePath, ctx, outDir);
-        timer.tick("write");
-        timer.done();
+        timer.Tick("write");
+        timer.Done();
         return out;
     } catch (const std::exception& e)
     {

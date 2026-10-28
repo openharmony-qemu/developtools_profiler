@@ -39,11 +39,11 @@ TraceDB HtraceParse(const std::string& filePath, const RunContext& ctx)
     StageTimer timer("Parse");
 
     // 1. Validate magic number + dataType (profiler file)
-    timer.stage("Validating file magic number");
+    timer.Stage("Validating file magic number");
     if (!HtraceReader::IsProfilerFile(filePath)) {
         throw std::runtime_error("Invalid file signature");
     }
-    timer.tick("validate");
+    timer.Tick("validate");
 
     // 2. Create temp directory (in system temp dir, not output dir).
     //    RAII：DB 文件在函数返回前已被消费完，故可随作用域自动清理。
@@ -59,10 +59,10 @@ TraceDB HtraceParse(const std::string& filePath, const RunContext& ctx)
                                                        streamerErr);
     }
     log::Logok("    DB file generated: ", dbPath);
-    timer.tick("trace_streamer");
+    timer.Tick("trace_streamer");
 
     // 4. Process DB into TraceDB with compressed stacks + metadata
-    timer.stage("Processing DB into call stacks");
+    timer.Stage("Processing DB into call stacks");
     auto db = ProcessHtraceDb(dbPath, ctx.htrace.category, !ctx.output.parseOnly, !ctx.htrace.leakAddrs.empty());
     if (db.meta.processName.empty()) {
         std::string nm = HtraceReader::ReadProcessName(filePath);
@@ -71,9 +71,9 @@ TraceDB HtraceParse(const std::string& filePath, const RunContext& ctx)
         }
     }
     auto* clist = std::get_if<CompressedCallStackList>(&db.stacks);
-    timer.tick("db_process", std::to_string(clist ? clist->stacks.size() : 0) + " call stacks");
+    timer.Tick("db_process", std::to_string(clist ? clist->stacks.size() : 0) + " call stacks");
 
-    timer.done();
+    timer.Done();
     return db;
 }
 
