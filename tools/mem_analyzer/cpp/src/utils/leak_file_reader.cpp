@@ -29,14 +29,14 @@ bool ReadU64Le(std::ifstream& f, uint64_t& out)
     if (!f.read(reinterpret_cast<char*>(b), 8)) {
         return false;
     }
-    out =  static_cast<uint64_t>(b[0])
-        | (static_cast<uint64_t>(b[1]) << 8)
-        | (static_cast<uint64_t>(b[2]) << 16)
-        | (static_cast<uint64_t>(b[3]) << 24)
-        | (static_cast<uint64_t>(b[4]) << 32)
-        | (static_cast<uint64_t>(b[5]) << 40)
-        | (static_cast<uint64_t>(b[6]) << 48)
-        | (static_cast<uint64_t>(b[7]) << 56);
+    out = static_cast<uint64_t>(b[0]) |
+        (static_cast<uint64_t>(b[1]) << 8) |
+        (static_cast<uint64_t>(b[2]) << 16) |
+        (static_cast<uint64_t>(b[3]) << 24) |
+        (static_cast<uint64_t>(b[4]) << 32) |
+        (static_cast<uint64_t>(b[5]) << 40) |
+        (static_cast<uint64_t>(b[6]) << 48) |
+        (static_cast<uint64_t>(b[7]) << 56);
     return true;
 }
 

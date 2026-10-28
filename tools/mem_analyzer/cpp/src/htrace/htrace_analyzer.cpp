@@ -1130,7 +1130,7 @@ HtraceAnalysisOutput AnalyzeCallStacks(
 
     // mmap-filepage 走旁路（按文件聚合 + app/system 分类）；mixed 仅在 --scope mixed 时计算。
     FilepageSplit fpSplit = AnalyzeFilepages(filepageStacks, dataDict, output.totalLeakSize,
-                                               mode, scope == Scope::Mixed);
+        mode, scope == Scope::Mixed);
 
     // 每个 scope 恒为双轨：[Symbol 轨, Filepage 轨]（空也写，保持 JSON 键结构字节一致）。
     // 三个 scope 一律挂 filepage 轨（非活动 scope 是空轨），保证不变式「mmap ⇒ 每 scope

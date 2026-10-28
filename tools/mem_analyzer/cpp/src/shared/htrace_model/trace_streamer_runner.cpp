@@ -44,8 +44,8 @@ bool RunTraceStreamer(const std::string& htracePath,
     }
 
     log::Logd("[trace_streamer] ", streamer, " ", platform::AbsolutePath(dbPath), " ",
-              platform::AbsolutePath(htracePath),
-              (soDir.empty() ? std::string() : " --So_dir " + platform::AbsolutePath(soDir)));
+        platform::AbsolutePath(htracePath),
+        (soDir.empty() ? std::string() : " --So_dir " + platform::AbsolutePath(soDir)));
 
     const int result = platform::RunProcessWithSpinner(streamer, args, "Running trace_streamer");
     if (result != 0) {

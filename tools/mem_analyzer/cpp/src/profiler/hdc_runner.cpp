@@ -412,7 +412,7 @@ std::string ExportProcessFile(const std::string& pid,
     }
     const std::string localPath = PathToUtf8(
         (PathFromUtf8(outputDir) /
-         (prefix + "_" + CurrentTimestamp() + ".txt"))
+        (prefix + "_" + CurrentTimestamp() + ".txt"))
             .lexically_normal());
     // UTF-8 path -> wide path on Windows (path_from_utf8 is a no-op elsewhere).
     std::ofstream ofs(PathFromUtf8(localPath), std::ios::binary);
@@ -490,9 +490,9 @@ PullOutcome PullFile(const std::string& remote, const std::string& localDir)
     // decides success — a failure marker in the output, or a missing/empty
     // local result file, marks the pull as failed.
     const bool failedMsg = po.output.find("[Fail]") != std::string::npos ||
-                            po.output.find("Error opening file") != std::string::npos ||
-                            po.output.find("no such file") != std::string::npos ||
-                            po.output.find("No such file") != std::string::npos;
+        po.output.find("Error opening file") != std::string::npos ||
+        po.output.find("no such file") != std::string::npos ||
+        po.output.find("No such file") != std::string::npos;
     bool fileOk = false;
     {
         const std::string local = LocalRecvPath(localDir, remote);
@@ -679,8 +679,8 @@ std::map<std::string, long long> listDirFileSizes(const std::string& dir,
         }
         if (!nameSuffix.empty() &&
             (name.size() < nameSuffix.size() ||
-             name.compare(name.size() - nameSuffix.size(), nameSuffix.size(),
-                          nameSuffix) != 0)) {
+                name.compare(name.size() - nameSuffix.size(), nameSuffix.size(),
+                    nameSuffix) != 0)) {
             continue;
         }
         files[name] = size;
@@ -1793,7 +1793,7 @@ std::thread SpawnFreshRestart(const std::shared_ptr<CaptureState>& state, const 
         }
         state->freshRestartActive = true;
         log::Logi("Capture session ready; force-stopping and relaunching '",
-                  processName, "' for a fresh start...");
+            processName, "' for a fresh start...");
         ForceStopDeviceApp(processName);
         // Wait for the process to actually exit before relaunching.
         for (int i = 0; i < 20; ++i) {  // up to 10s
@@ -1895,7 +1895,7 @@ void maybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
                 result.smapsExportedFiles.push_back(path);
             }
             log::Logok(smapsPrefix == "fds" ? "FD snapshot exported" : "Smaps exported",
-                       ": ", path);
+                ": ", path);
         } else {
             log::Logw("Warning: failed to export ", smapsPrefix, " at capture start");
         }
@@ -2253,8 +2253,8 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
             const long long pollTimeout = (opts.duration > 0) ? opts.duration : 120;
             result.snapshotAttempted = true;
             pollAndPullSnapshot(opts.resultDir, opts.outputDir, resultBaseline,
-                                   pollTimeout, result.snapshotPulledFiles,
-                                   result.snapshotStatus);
+                pollTimeout, result.snapshotPulledFiles,
+                result.snapshotStatus);
             result.elapsed = ElapsedSince(start);
         }
     } else if (result.ok && !opts.remoteOutputPath.empty()) {
@@ -2322,7 +2322,7 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
                     log::Logok("Nativeleaks file exported: ", result.pulledLeaksFile);
                 } else {
                     log::Loge("Nativeleaks file export failed: ", leaksRemote,
-                              " (exit code ", lpo.exitCode, ")\n", lpo.output);
+                        " (exit code ", lpo.exitCode, ")\n", lpo.output);
                 }
             } else {
                 std::string msg = "No new nativeleaks orphan-snapshot file detected within " +
@@ -2399,7 +2399,7 @@ bool exportSnapshotOnce(const HdcRunOptions& opts,
         return false;
     }
     pollAndPullSnapshot(opts.resultDir, opts.outputDir, baseline,
-                           kSnapshotPollTimeoutS, files, status, role);
+        kSnapshotPollTimeoutS, files, status, role);
     return !files.empty();
 }
 
@@ -2536,9 +2536,9 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
                 ++samplesAbovePeak;
                 if (samplesAbovePeak >= kSnapshotPeakTrigger) {
                     log::Logi("ArkTS heap stayed above the recorded peak by more than ",
-                              (kSnapshotPeakGrowthKb / 1024), " MB for ",
-                              samplesAbovePeak,
-                              " consecutive samples; exporting a snapshot...");
+                        (kSnapshotPeakGrowthKb / 1024), " MB for ",
+                        samplesAbovePeak,
+                        " consecutive samples; exporting a snapshot...");
                     // The peak is lifted as soon as the export is decided, so
                     // that later samples are compared against this new value
                     // even if the export itself fails.
@@ -2546,7 +2546,7 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
                     std::vector<std::string> newPeak;
                     std::string peakStatus, peakOutput, peakErr;
                     if (exportSnapshotOnce(opts, command, "peak", newPeak, peakStatus,
-                                             peakOutput, peakErr)) {
+                        peakOutput, peakErr)) {
                         // Only one peak snapshot is kept: the new export is
                         // complete, so the previous one can be dropped now.
                         RemoveSnapshotArtifacts(peakFiles);
@@ -2661,22 +2661,22 @@ RunResult RunHdc(const HdcRunOptions& opts)
     bool startExported = false;
     std::thread startExportThread;
     WaitForCapture(opts, state, start, pre, setup.asyncStartMode, snapshotMode,
-                     startExported, startExportThread, result);
+        startExported, startExportThread, result);
 
     // Signal the background threads, stop hiprofiler (async mode), wait out the
     // post-capture finalization and join/detach the threads.
     StopAndJoinThreads(opts, state, start, setup.asyncStartMode, worker,
-                          pidChecker, freshRestartThread, startExportThread,
-                          result);
+        pidChecker, freshRestartThread, startExportThread,
+        result);
 
     result.elapsed = ElapsedSince(start);
 
     // Assemble the result, export the end-of-capture snapshot, pull the result
     // file(s) and clean up the temp config.
     finalizeResults(opts, state, start, snapshotMode, setup.asyncStartMode,
-                     pre.resultBaseline, pre.hiprofilerZipBaseline,
-                     pre.initialPid,
-                     setup.localConfigFile, result);
+        pre.resultBaseline, pre.hiprofilerZipBaseline,
+        pre.initialPid,
+        setup.localConfigFile, result);
 
     return result;
 }

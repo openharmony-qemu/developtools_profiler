@@ -54,7 +54,7 @@ std::string JsleakModule::run(const ModuleRequest& req, const RunContext& ctx) c
         if (!ctx.snapshot.compare.baselineFile.empty()) {
             std::string error;
             if (!JsleakCompareInputsValid(ctx.snapshot.compare.baselineFile,
-                                             req.filePath, error)) {
+                req.filePath, error)) {
                 log::Loge("Error: ", error);
                 return {};
             }

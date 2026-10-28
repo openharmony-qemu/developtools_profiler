@@ -42,8 +42,8 @@ json BuildSummary(const TraceDB& db)
     };
 
     json summary = HtraceBuildSummaryCommon(db.meta.mode, db.meta.durationNs,
-                                               db.meta.startTimeMs, db.meta.endTimeMs,
-                                               db.meta.processName);
+        db.meta.startTimeMs, db.meta.endTimeMs,
+        db.meta.processName);
 
     // Parse mode: output all resource types（summary_entries 表驱动，顺序=历史字节序）
     static const char* const kParseSummaryOrder[] = {

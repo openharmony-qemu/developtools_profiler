@@ -113,7 +113,7 @@ void ApplyLeakAddrFilter(TraceDB& db, const std::unordered_set<uint64_t>& leaks)
     clist->stacks = std::move(kept);
 
     log::Logok("  Leak L1: kept ", clist->stacks.size(),
-              " / ", total, " stacks (", removed, " filtered by addr).");
+        " / ", total, " stacks (", removed, " filtered by addr).");
 }
 
 // -l 分析模式（不带 -p）：
@@ -152,7 +152,7 @@ HtraceAnalysisOutput HtraceLeakAnalyze(TraceDB& db, const RunContext& ctx)
     size_t l2Removed = total - kept.size();
     clist->stacks = std::move(kept);
     log::Logok("  Leak L2: kept ", clist->stacks.size(),
-              " / ", total, " stacks (", l2Removed, " filtered by emutls).");
+        " / ", total, " stacks (", l2Removed, " filtered by emutls).");
 
     // L3: 栈分 app/system（mixed 不分，直接用全部栈）
     std::vector<CompressedCallStack> appStacks, systemStacks;

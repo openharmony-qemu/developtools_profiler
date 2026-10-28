@@ -62,27 +62,27 @@ std::shared_ptr<ICommand> CommandRegistry::find(const std::string& nameOrAlias)
 void BindDebugOptions(CliParser& sub, GlobalOptions& g)
 {
     sub.AddSwitch("--verbose", g.verbose, "Enable debug-level logging")
-       .AddSwitch("--keep-temp", g.keepTemp, "Keep temporary directories after processing")
-       .AddSwitch("--debug", g.debug, "Troubleshooting mode (implies --verbose and --keep-temp)");
+        .AddSwitch("--keep-temp", g.keepTemp, "Keep temporary directories after processing")
+        .AddSwitch("--debug", g.debug, "Troubleshooting mode (implies --verbose and --keep-temp)");
 }
 
 void BindGlobalOptions(CliParser& app, GlobalOptions& g)
 {
     app.AddOption("-d,--out-dir", g.outDir, "Output result directory")
-       .AddSwitch("-p,--parse-only", g.parseOnly, "Only parse, skip analysis")
-       .AddSwitch("-o,--auto-open", g.autoOpen, "Open result file after processing")
-       .AddSwitch("-v,--version", g.showVersion, "Print version information");
+        .AddSwitch("-p,--parse-only", g.parseOnly, "Only parse, skip analysis")
+        .AddSwitch("-o,--auto-open", g.autoOpen, "Open result file after processing")
+        .AddSwitch("-v,--version", g.showVersion, "Print version information");
     BindDebugOptions(app, g);
     app.AddOption("-f,--format", g.format, "Output format (json/html)")
-       .AddPositional("files", g.files,
-                       "Files to analyze (auto-detect: htrace, tshandle zip, heapsnapshot, rawheap)");
+        .AddPositional("files", g.files,
+            "Files to analyze (auto-detect: htrace, tshandle zip, heapsnapshot, rawheap)");
 }
 
 void BindCommonOptions(CliParser& sub, GlobalOptions& g)
 {
     sub.AddOption("-d,--out-dir", g.outDir, "Output result directory")
-       .AddSwitch("-p,--parse-only", g.parseOnly, "Only parse, skip analysis")
-       .AddSwitch("-o,--auto-open", g.autoOpen, "Open result file after processing");
+        .AddSwitch("-p,--parse-only", g.parseOnly, "Only parse, skip analysis")
+        .AddSwitch("-o,--auto-open", g.autoOpen, "Open result file after processing");
     BindDebugOptions(sub, g);
     sub.AddOption("-f,--format", g.format, "Output format (json/html)");
 }

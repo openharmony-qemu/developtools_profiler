@@ -457,7 +457,7 @@ std::string DeobfuscateOneString(const std::string& value,
                                 smap->ResolveOriginalLine(entry->mappings, genLine, origLine);
                                 RefineLineByNameCache(ncache, entry->sourcePath, suffix, origLine);
                                 suffix.replace(lp, numEnd - lp + 1,
-                                               "(line:" + std::to_string(origLine) + ")");
+                                    "(line:" + std::to_string(origLine) + ")");
                             }
                         }
                     }

@@ -356,7 +356,7 @@ int RunProcessWithSpinner(const std::string& exe, const std::vector<std::string>
     std::wstring wout = WidenPath(outFile);
     SECURITY_ATTRIBUTES sa = {sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
     HANDLE h = CreateFileW(wout.c_str(), GENERIC_WRITE, FILE_SHARE_READ,
-                           &sa, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+        &sa, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
     int fd = _open_osfhandle(reinterpret_cast<intptr_t>(h), 0);
 #else
     int fd = ::open(outFile.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -456,7 +456,7 @@ sqlite3* OpenSqlite3Db(const std::string& dbPath)
     if (sqlite3_open16(wdbPath.c_str(), &db) != SQLITE_OK) {
 #else
     if (sqlite3_open_v2(dbPath.c_str(),
-                         &db, SQLITE_OPEN_READWRITE, nullptr) != SQLITE_OK) {
+        &db, SQLITE_OPEN_READWRITE, nullptr) != SQLITE_OK) {
 #endif
         std::string err = db ? sqlite3_errmsg(db) : "unknown";
         if (db) {

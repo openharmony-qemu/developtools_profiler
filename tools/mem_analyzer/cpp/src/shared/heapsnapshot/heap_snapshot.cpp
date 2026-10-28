@@ -467,8 +467,8 @@ const std::string& HeapSnapshot::GetExtendedNodeName(uint32_t nodeIndex) const
         }
 
         const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                            std::chrono::steady_clock::now() - t0)
-                            .count();
+            std::chrono::steady_clock::now() - t0)
+            .count();
         log::Logd("[ref_chain] build ext_names done (", ms, "ms)");
     });
     return extNames_[nodeIndex];
@@ -1255,7 +1255,7 @@ HeapSnapshot HeapSnapshot::FromFile(const std::string& path)
     // ---- Phase 3: edges ----
     timer.stage("Parsing edges array");
     size_t edgesBracketPos = ParseEdgesArray(snapshot, file, header.buf,
-                                                  nodesArrayBracket, file_size);
+        nodesArrayBracket, file_size);
     timer.tick("edges", std::to_string(snapshot.edgeCount) + " edges");
 
     // ---- Phase 4: strings ----
@@ -1289,7 +1289,7 @@ HeapSnapshot HeapSnapshot::FromFile(const std::string& path)
 
     timer.done();
     log::Logok("  Heap snapshot loaded: ", snapshot.nodeCount, " nodes, ",
-               snapshot.edgeCount, " edges, ", snapshot.strings.size(), " strings.");
+        snapshot.edgeCount, " edges, ", snapshot.strings.size(), " strings.");
     return snapshot;
 }
 
@@ -1576,8 +1576,8 @@ RefChainKey HeapSnapshot::RefChainHash(uint32_t nodeIndex) const
         }
 
         const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                            std::chrono::steady_clock::now() - t0)
-                            .count();
+            std::chrono::steady_clock::now() - t0)
+            .count();
         log::Logd("[ref_chain] build chain_hash done (", ms, "ms)");
     });
 

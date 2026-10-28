@@ -429,7 +429,7 @@ bool HtraceReader::IsProfilerFile(const std::string& path)
     }
     const bool ok = h.valid && h.dataType == static_cast<uint32_t>(HtraceDataType::ProtobufBin);
     log::Logd("[htrace] header: version=", h.version, " data_type=", h.dataType,
-              " -> ", (ok ? "profiler" : "non-profiler"));
+        " -> ", (ok ? "profiler" : "non-profiler"));
     return ok;
 }
 

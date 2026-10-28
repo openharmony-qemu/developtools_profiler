@@ -167,7 +167,7 @@ void EmitIcicleTreeRows(const json& node, const std::string& tableId,
             const std::string childPath =
                 path.empty() ? std::to_string(k) : path + "-" + std::to_string(k);
             EmitIcicleTreeRows(children[order[k]], tableId, childPath, depth + 1, childAnc,
-                                  ancCollapsed || collapsed, rootSize, out);
+                ancCollapsed || collapsed, rootSize, out);
         }
     }
 }
@@ -241,7 +241,7 @@ std::string TreeTableHtml(const json& tree, const std::string& canvasId)
     const std::string tableId = "treeTable_" + canvasId;
     std::string rows;
     EmitIcicleTreeRows(tree, tableId, "", 0, "", false,
-                          tree.value("t", static_cast<int64_t>(0)), rows);
+        tree.value("t", static_cast<int64_t>(0)), rows);
     std::string html;
     html += "<div class=\"itt-actions\">";
     html += "<button class=\"itt-btn\" onclick=\"toggleIcicleTreeAll('" + EscapeHtml(tableId) +

@@ -64,7 +64,7 @@ bool ProcessFile(const std::string& filePath, AnalysisModule& module, const RunC
     auto sourceName = platform::stem(filePath);
     ctx.output.outDir = platform::JoinPath(ctx.output.outDir, sourceName);
     log::Logd("output_dir: ", ctx.output.outDir, " (parse_only=", ctx.output.parseOnly,
-              ", format=", (ctx.output.format.empty() ? "<default>" : ctx.output.format), ")");
+        ", format=", (ctx.output.format.empty() ? "<default>" : ctx.output.format), ")");
 
     if (!CheckPathLength(filePath, ctx.output.outDir, sourceName)) {
         return false;

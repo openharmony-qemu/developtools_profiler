@@ -461,7 +461,7 @@ LogicalGrowthResult BuildLogicalGrowthGroups(json rows, const SnapshotIndex& bas
                 continue;
             }
             const int64_t explained = std::min(std::abs(candidateRetained),
-                                               std::abs(carrierRetained));
+                std::abs(carrierRetained));
             if (explained > bestExplained) {
                 bestExplained = explained;
                 bestDescendant = rows[ci]["key"].get<std::string>();
@@ -937,7 +937,7 @@ json JsleakCompareAnalyze(const HeapSnapshot& baseline,
     const std::string& mode)
 {
     return JsleakCompareAnalyzeImpl(baseline, target, baselineFile, targetFile,
-                                       static_cast<size_t>(std::max(1, topN)), mode);
+        static_cast<size_t>(std::max(1, topN)), mode);
 }
 
 } // namespace mem_analyzer

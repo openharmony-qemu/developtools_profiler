@@ -88,7 +88,7 @@ json ChainJson(const TshandleCallChain& chain)
     json frames = json::array();
     for (const auto& frame : chain.frames) {
         frames.push_back({{"depth", frame.depth}, {"symbol", frame.symbol}, {"buildId", frame.buildId},
-                          {"lib", frame.lib}, {"libOffset", frame.libOffset}});
+            {"lib", frame.lib}, {"libOffset", frame.libOffset}});
     }
     return {{"callStackId", chain.callStackId},
             {"existingSize", chain.existingSize},

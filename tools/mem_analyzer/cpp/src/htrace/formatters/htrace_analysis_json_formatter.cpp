@@ -45,10 +45,10 @@ json BuildSummary(const HtraceAnalysisOutput& full, const RunContext& ctx)
     };
 
     json summary = HtraceBuildSummaryCommon(full.mode,
-                                               full.traceMeta.durationNs,
-                                               full.traceMeta.startTimeMs,
-                                               full.traceMeta.endTimeMs,
-                                               full.processName);
+        full.traceMeta.durationNs,
+        full.traceMeta.startTimeMs,
+        full.traceMeta.endTimeMs,
+        full.processName);
 
     // Analysis mode: output only the selected resource type（summary_entries 表驱动）
     const auto& spec = HtraceCategory(ctx.htrace.category);

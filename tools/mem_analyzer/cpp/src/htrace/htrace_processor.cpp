@@ -358,7 +358,7 @@ void LoadDetailStacks(HtraceParseContext& ctx,
         for (auto& [key, entry] : allocMaps[pi]) {
             if (entry.heapSize != 0) {
                 allGroups.push_back({key.first, entry.heapSize, entry.count,
-                                      configs[pi].htraceType, entry.subTypeId});
+                    configs[pi].htraceType, entry.subTypeId});
             }
         }
     }

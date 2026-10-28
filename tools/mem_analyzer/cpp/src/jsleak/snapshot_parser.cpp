@@ -71,8 +71,8 @@ HeapSnapshot JsleakParse(const std::string& filePath, const RunContext& ctx)
             std::string deobPath = platform::JoinPath(
                 deobDir, platform::stem(filePath) + ".heapsnapshot");
             if (DeobfuscateWithIndices(source, deobPath,
-                                          ctx.resources.sourcemapDir,
-                                          ctx.resources.nameCacheDir)) {
+                ctx.resources.sourcemapDir,
+                ctx.resources.nameCacheDir)) {
                 heapsnapshotFile = deobPath;
             }
             // 反混淆失败时 heapsnapshot_file 保持为 Step 1 的转换结果（或原始输入）

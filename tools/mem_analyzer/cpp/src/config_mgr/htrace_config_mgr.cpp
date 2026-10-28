@@ -78,7 +78,7 @@ bool HtraceConfigMgr::load(const std::string& path, std::string& err)
     }
 
     std::string content((std::istreambuf_iterator<char>(ifs)),
-                         std::istreambuf_iterator<char>());
+        std::istreambuf_iterator<char>());
     ifs.close();
 
     json root;

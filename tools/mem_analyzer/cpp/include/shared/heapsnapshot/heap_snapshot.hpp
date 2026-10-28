@@ -59,7 +59,7 @@ public:
     // once_flag 不可拷贝/移动，故用 unique_ptr 持有，保持 HeapSnapshot 可移动
     //（from_file 需按值返回）。
     HeapSnapshot() : extNamesOnce_(std::make_unique<std::once_flag>()),
-                     chainHashOnce_(std::make_unique<std::once_flag>()) {}
+        chainHashOnce_(std::make_unique<std::once_flag>()) {}
 
     /// Node field offsets (discovered from meta.node_fields)
     int nodeTypeOffset = -1;        // type field index within node record

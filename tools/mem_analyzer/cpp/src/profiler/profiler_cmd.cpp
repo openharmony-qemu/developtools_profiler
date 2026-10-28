@@ -80,8 +80,8 @@ int RunCommandStreaming(const std::string& cmd)
     std::string cmdline = cleanCmd;
     std::wstring wcmdline = WidenPath(cmdline);
     if (!CreateProcessW(nullptr, wcmdline.data(),
-                        nullptr, nullptr, TRUE, 0, nullptr, nullptr,
-                        &si, &pi)) {
+        nullptr, nullptr, TRUE, 0, nullptr, nullptr,
+        &si, &pi)) {
         CloseHandle(hRead); CloseHandle(hWrite);
         return -1;
     }
@@ -99,7 +99,7 @@ int RunCommandStreaming(const std::string& cmd)
             char buf[4096];
             DWORD n = 0;
             if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
-                          &n, nullptr) || n == 0) break;
+                &n, nullptr) || n == 0) break;
             std::cout.write(buf, n);
             std::cout.flush();
         }
@@ -450,7 +450,7 @@ bool CheckApiVersion(int minApiVersion)
 
     if (version < minApiVersion) {
         log::Loge("API version check failed: device API version is ", version,
-                  ", but this capture type requires >= ", minApiVersion, ".");
+            ", but this capture type requires >= ", minApiVersion, ".");
         return false;
     }
 
@@ -721,11 +721,11 @@ static bool ResolveProcessName(const std::string& input, bool requireApp, std::s
             resolvedPkg = input;
             isApp = false;
             log::Logi("Resolved: ", input, " -> package: ", resolvedPkg,
-                      " (unable to query apps; treated as a system process)");
+                " (unable to query apps; treated as a system process)");
             return true;
         }
         log::Loge("Error: unable to query device apps via 'bm dump -a -l'.\n"
-                  "Please ensure a device is connected and try again.");
+            "Please ensure a device is connected and try again.");
         return false;
     }
 
@@ -735,7 +735,7 @@ static bool ResolveProcessName(const std::string& input, bool requireApp, std::s
             // If multiple exact matches on different fields, still prefer package exact
             resolvedPkg = a.package;
             log::Logi("Resolved: ", input, " -> package: ", resolvedPkg,
-                      (!a.appName.empty() ? (" (" + a.appName + ")") : std::string()));
+                (!a.appName.empty() ? (" (" + a.appName + ")") : std::string()));
             return true;
         }
     }
@@ -743,7 +743,7 @@ static bool ResolveProcessName(const std::string& input, bool requireApp, std::s
         if (ContainsCi(a.appName, input) && a.appName.size() == input.size()) {
             resolvedPkg = a.package;
             log::Logi("Resolved: ", input, " -> package: ", resolvedPkg,
-                      (!a.appName.empty() ? (" (" + a.appName + ")") : std::string()));
+                (!a.appName.empty() ? (" (" + a.appName + ")") : std::string()));
             return true;
         }
     }
@@ -764,19 +764,19 @@ static bool ResolveProcessName(const std::string& input, bool requireApp, std::s
             resolvedPkg = input;
             isApp = false;
             log::Logi("Resolved: ", input, " -> package: ", resolvedPkg,
-                      " (not an installed app; treated as a system process)");
+                " (not an installed app; treated as a system process)");
             return true;
         }
         log::Loge("Error: no app matches '", input, "'.\n"
-                  "Use 'mem-analyzer prof --list-apps' to see available apps,\n"
-                  "or provide an exact package name or a partial app name.");
+            "Use 'mem-analyzer prof --list-apps' to see available apps,\n"
+            "or provide an exact package name or a partial app name.");
         return false;
     }
 
     if (matches.size() == 1) {
         resolvedPkg = matches[0]->package;
         log::Logi("Resolved: ", input, " -> package: ", resolvedPkg,
-                  (!matches[0]->appName.empty() ? (" (" + matches[0]->appName + ")") : std::string()));
+            (!matches[0]->appName.empty() ? (" (" + matches[0]->appName + ")") : std::string()));
         return true;
     }
 
@@ -856,7 +856,7 @@ void FlattenReportDir(const std::string& dir, const std::string& stem)
         fs::rename(entry.path(), PathFromUtf8(dest), moveEc);
         if (moveEc) {
             log::Loge("Report: unable to move ", PathToUtf8(entry.path()),
-                      " into ", dir, " (", moveEc.message(), ")");
+                " into ", dir, " (", moveEc.message(), ")");
         }
     }
 
@@ -1142,13 +1142,12 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
                 if (baselineFile.empty() &&
                     stem.size() >= startSfx.size() &&
                     stem.compare(stem.size() - startSfx.size(),
-                                 startSfx.size(), startSfx) == 0) {
+                        startSfx.size(), startSfx) == 0) {
                     baselineFile = f;
                 } else if (targetFile.empty() &&
-                           stem.size() >= endSfx.size() &&
-                           stem.compare(stem.size() - endSfx.size(),
-                                        endSfx.size(), endSfx) == 0)
-                                        {
+                    stem.size() >= endSfx.size() &&
+                    stem.compare(stem.size() - endSfx.size(),
+                        endSfx.size(), endSfx) == 0) {
                     targetFile = f;
                 }
             }
@@ -1158,7 +1157,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
             // latest = end (target).
             if (baselineFile.empty() || targetFile.empty()) {
                 log::Logi("Role suffix not found on all snapshots; "
-                          "falling back to file modification timestamps.");
+                    "falling back to file modification timestamps.");
                 fs::file_time_type minTime = fs::file_time_type::max();
                 fs::file_time_type maxTime = fs::file_time_type::min();
                 std::string earliest, latest;
@@ -1182,8 +1181,8 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
             if (baselineFile.empty() || targetFile.empty() ||
                 baselineFile == targetFile) {
                 log::Loge("Comparison report: could not locate start/end snapshots ",
-                          "(baseline=", baselineFile.empty() ? "<missing>" : baselineFile,
-                          ", target=", targetFile.empty() ? "<missing>" : targetFile, ").");
+                    "(baseline=", baselineFile.empty() ? "<missing>" : baselineFile,
+                    ", target=", targetFile.empty() ? "<missing>" : targetFile, ").");
                 return rr.exitCode;
             }
 
@@ -1228,7 +1227,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
                     platform::OpenWithDefaultApp(htmlPath);
                 } else {
                     log::Loge("Comparison report HTML not found at: ", htmlPath,
-                              " (the capture may have contained no data).");
+                        " (the capture may have contained no data).");
                 }
             }
             return rr.exitCode;
@@ -1313,7 +1312,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
                         platform::OpenWithDefaultApp(htmlPath);
                     } else {
                         log::Loge("Report HTML not found at: ", htmlPath,
-                                  " (the capture may have contained no data).");
+                            " (the capture may have contained no data).");
                     }
                 }
             }

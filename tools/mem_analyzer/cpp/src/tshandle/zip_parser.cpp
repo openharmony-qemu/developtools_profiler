@@ -149,7 +149,7 @@ static std::string DeobfuscateZipSnapshot(const std::string& heapsnapshotPath,
     std::string outputPath = platform::JoinPath(
         outputDir, platform::stem(heapsnapshotPath) + "_deobfuscated.heapsnapshot");
     if (!mem_analyzer::DeobfuscateWithIndices(heapsnapshotPath, outputPath,
-                                                 sourcemapDir, namecacheDir)) {
+        sourcemapDir, namecacheDir)) {
         // 未配置反混淆目录，或索引加载为空，或还原失败 → 降级为原始快照
         if (!sourcemapDir.empty() || !namecacheDir.empty()) {
             log::Logw("  Warning: Failed to deobfuscate snapshot, proceeding with the original.");
@@ -198,8 +198,8 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
         log::Logw("  Warning: No js_map file (.binpb/.txt) found in ZIP");
     }
     log::Logi("    Found: ", platform::basename(htracePath),
-              (!rawheapPath.empty() ? ", " + platform::basename(rawheapPath) : ""),
-              (!addrPath.empty() ? ", " + platform::basename(addrPath) : ""));
+        (!rawheapPath.empty() ? ", " + platform::basename(rawheapPath) : ""),
+        (!addrPath.empty() ? ", " + platform::basename(addrPath) : ""));
 
     // ── Step 3: Run trace_streamer → DB ─────────────────────────
     log::Logi("  [2/4] Converting htrace to DB using trace_streamer...");
@@ -255,8 +255,8 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
                 // 指定了 --sourcemap 或 --namecache 时，先还原快照（源码路径/行号）再做类分析
                 std::string analyzeSnapshot =
                     DeobfuscateZipSnapshot(heapsnapshotPath, tempDir.path(),
-                                              ctx.resources.sourcemapDir,
-                                              ctx.resources.nameCacheDir);
+                        ctx.resources.sourcemapDir,
+                        ctx.resources.nameCacheDir);
 
                 auto tArktsStart = std::chrono::steady_clock::now();
                 ArkTsAnalyzeResult arktsResult = AnalyzeArktsClasses(

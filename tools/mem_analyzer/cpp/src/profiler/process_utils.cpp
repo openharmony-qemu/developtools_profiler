@@ -224,7 +224,7 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
     if (!resolvedLine.empty()) {
         std::wstring wresolved = WidenPath(resolvedLine);
         started = CreateProcessW(nullptr, wresolved.data(), nullptr,
-                                 nullptr, TRUE, 0, nullptr, nullptr, &si, &pi) != 0;
+            nullptr, TRUE, 0, nullptr, nullptr, &si, &pi) != 0;
     }
     if (!started) {
         CloseHandle(hRead);
@@ -247,7 +247,7 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
             char buf[4096];
             DWORD n = 0;
             if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
-                          &n, nullptr) || n == 0) {
+                &n, nullptr) || n == 0) {
                 break;
             }
             output.append(buf, n);
@@ -271,7 +271,7 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
             char buf[4096];
             DWORD n = 0;
             if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
-                          &n, nullptr) || n == 0) {
+                &n, nullptr) || n == 0) {
                 break;
             }
             output.append(buf, n);

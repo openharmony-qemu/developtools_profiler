@@ -288,7 +288,7 @@ TshandleAnalysisOutput AnalyzeTshandleData(
 TshandleAnalysisOutput TshandleAnalyze(TshandleParseResult& parseResult, const RunContext& ctx)
 {
     auto analysis = AnalyzeTshandleData(parseResult.CallStacks(), parseResult.arktsClasses,
-                                          ctx.tshandle.topN);
+        ctx.tshandle.topN);
 
     // Carry parse-level data needed by formatters
     analysis.traceMeta = std::move(parseResult.db.meta);
@@ -297,11 +297,11 @@ TshandleAnalysisOutput TshandleAnalyze(TshandleParseResult& parseResult, const R
     analysis.arktsClasses = std::move(parseResult.arktsClasses);
 
     log::Logok("  Analysis completed. Global(app): ", analysis.global.app.totalObjects, " objects, ",
-              analysis.global.app.totalCount, " instances | Global(sys): ",
-              analysis.global.sys.totalObjects, " objects, ",
-              analysis.global.sys.totalCount, " instances | Local: ",
-              analysis.local.totalObjects, " objects, ",
-              analysis.local.totalCount, " instances.");
+        analysis.global.app.totalCount, " instances | Global(sys): ",
+        analysis.global.sys.totalObjects, " objects, ",
+        analysis.global.sys.totalCount, " instances | Local: ",
+        analysis.local.totalObjects, " objects, ",
+        analysis.local.totalCount, " instances.");
 
     return analysis;
 }

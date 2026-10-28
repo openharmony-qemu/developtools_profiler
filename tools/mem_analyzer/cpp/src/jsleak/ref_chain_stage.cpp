@@ -36,9 +36,9 @@ namespace {
 template <typename Pred>
 std::vector<RefChainInfo>
 collectRefChains(const HeapSnapshot& heap,
-                   Pred&& predicate,
-                   const std::optional<size_t>& topK,
-                   const std::unordered_set<std::string>& excludeChains)
+    Pred&& predicate,
+    const std::optional<size_t>& topK,
+    const std::unordered_set<std::string>& excludeChains)
 {
     std::vector<RefChainInfo> result;
 
@@ -162,11 +162,11 @@ collectRefChains(const HeapSnapshot& heap,
 } // namespace
 
 RefChainStage::RefChainStage(std::string mode,
-                             const char* previewId,
-                             const char* jsonKey,
-                             std::optional<std::string> targetClass,
-                             std::optional<size_t> topK,
-                             std::unordered_set<std::string> excludeChains)
+    const char* previewId,
+    const char* jsonKey,
+    std::optional<std::string> targetClass,
+    std::optional<size_t> topK,
+    std::unordered_set<std::string> excludeChains)
     : mode_(std::move(mode)),
       previewId(previewId),
       jsonKey(jsonKey),
@@ -208,10 +208,10 @@ void RefChainStage::run(const HeapSnapshot& heap)
             nodeCount += chain.nodeIds.size();
         }
         log::Logok("  Analysis completed. Found ", nodeCount, " ", *targetClass,
-                   " nodes across ", refChainInfos.size(), " reference chains.");
+            " nodes across ", refChainInfos.size(), " reference chains.");
     } else {
         log::Logok("  Analysis completed. Found ", refChainInfos.size(),
-                   " top reference chains.");
+            " top reference chains.");
     }
 }
 

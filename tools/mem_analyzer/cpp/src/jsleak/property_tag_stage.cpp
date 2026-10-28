@@ -52,7 +52,7 @@ void PropertyTagStage::run(const HeapSnapshot& heap)
 {
     GeneratePropertyTagObjs(heap);
     log::Logok("  Analysis completed. Found ", propertyTagObjs.size(),
-               " suspicious object types.");
+        " suspicious object types.");
 }
 
 json PropertyTagStage::analyze(const HeapSnapshot& heap, const std::function<bool(uint32_t)>& includeNode)

@@ -134,8 +134,8 @@ FlameNode BuildFlameGraph(
                 continue;
             }
             path.push_back({frame.symbolId, frame.fileId, frame.fileIdNull,
-                           frame.vaddr, frame.vaddrNull, frame.buildId, frame.buildIdNull,
-                           fd - targetDepth, 0, 0, {}});
+                frame.vaddr, frame.vaddrNull, frame.buildId, frame.buildIdNull,
+                fd - targetDepth, 0, 0, {}});
         }
         std::reverse(path.begin(), path.end());
         InsertPath(root, path, leak, chain.existingCount);
@@ -175,8 +175,8 @@ FlameNode BuildIcicleGraph(
                 continue;
             }
             path.push_back({frame.symbolId, frame.fileId, frame.fileIdNull,
-                           frame.vaddr, frame.vaddrNull, frame.buildId, frame.buildIdNull,
-                           fd - targetDepth, 0, 0, {}});
+                frame.vaddr, frame.vaddrNull, frame.buildId, frame.buildIdNull,
+                fd - targetDepth, 0, 0, {}});
         }
         InsertPath(root, path, leak, chain.existingCount);
     }

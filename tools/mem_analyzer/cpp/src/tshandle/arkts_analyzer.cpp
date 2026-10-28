@@ -416,11 +416,11 @@ std::string WriteAnomalyReport(const std::string& outputDir, const ArkTsAnalyzeR
     outFile.close();
 
     log::Logi("  addr anomaly report: ", outPath,
-              " (multi=", c.multi, " noNode=", c.noNode,
-              " missingNode=", c.missingNode,
-              " invalid=", c.invalidAddr,
-              " duplicate=", c.duplicate,
-              " addrFileInvalid=", c.addrFileInvalid, ")");
+        " (multi=", c.multi, " noNode=", c.noNode,
+        " missingNode=", c.missingNode,
+        " invalid=", c.invalidAddr,
+        " duplicate=", c.duplicate,
+        " addrFileInvalid=", c.addrFileInvalid, ")");
 
     return outPath;
 }

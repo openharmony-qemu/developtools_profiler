@@ -167,7 +167,7 @@ bool NameCacheIndex::LoadFromDir(const std::string& dir)
     }
 
     log::Logi("  Loaded ", byObfuscated.size(), " obfuscated names, ", obfNameToPath.size(),
-              " obfuscated paths from ", loaded, " nameCache file(s) in: ", dir);
+        " obfuscated paths from ", loaded, " nameCache file(s) in: ", dir);
     return true;
 }
 

@@ -40,7 +40,7 @@ bool RawheapToHeapsnapshot(const std::string& rawheapPath, const std::string& ou
     fs::create_directories(PathFromUtf8(outputHeapsnapshot).parent_path(), ec);
 
     log::Logd("[rawheap_translator] ", translator, " ", platform::AbsolutePath(rawheapPath),
-              " ", platform::AbsolutePath(outputHeapsnapshot));
+        " ", platform::AbsolutePath(outputHeapsnapshot));
 
     const int result = platform::RunProcessWithSpinner(
         translator,
