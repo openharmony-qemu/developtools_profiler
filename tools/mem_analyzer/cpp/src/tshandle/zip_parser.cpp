@@ -160,7 +160,8 @@ static std::string DeobfuscateZipSnapshot(const std::string& heapsnapshotPath,
     return outputPath;
 }
 
-TshandleParseResult TshandleParse(const std::string& filePath, const RunContext& ctx) {
+TshandleParseResult TshandleParse(const std::string& filePath, const RunContext& ctx)
+{
     StageTimer timer("Parse zip");
 
     // Temp directory (in system temp dir, not output dir)

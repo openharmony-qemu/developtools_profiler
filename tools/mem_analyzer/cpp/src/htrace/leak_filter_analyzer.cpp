@@ -75,7 +75,8 @@ bool HasAppSoFrame(const CompressedCallStack& cs, const std::unordered_map<int, 
 }
 
 // L2: 任意帧 symbol 含 "__emutls_get_address" → 该栈排除
-bool HasEmutlsFrame(const CompressedCallStack& cs, const std::unordered_map<int, std::string>& dict) {
+bool HasEmutlsFrame(const CompressedCallStack& cs, const std::unordered_map<int, std::string>& dict)
+{
     for (const auto& f : cs.frames) {
         auto it = dict.find(f.symbolId);
         if (it == dict.end()) {

@@ -30,7 +30,8 @@ struct RetainedSizeResult;
 struct RefChainKey {
     uint64_t lo = 0;
     uint64_t hi = 0;
-    bool operator==(const RefChainKey& o) const {
+    bool operator==(const RefChainKey& o) const
+    {
         return lo == o.lo && hi == o.hi;
     }
 };

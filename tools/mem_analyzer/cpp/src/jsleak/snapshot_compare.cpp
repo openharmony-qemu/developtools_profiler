@@ -654,7 +654,8 @@ json FilterLeakReferenceChains(const json& chains, const std::vector<uint32_t>& 
     return result;
 }
 
-json BuildChangedLeakObjects(const json& baselineLeaks, const json& targetLeaks, size_t topN) {
+json BuildChangedLeakObjects(const json& baselineLeaks, const json& targetLeaks, size_t topN)
+{
     std::set<std::string> names;
     for (auto it = baselineLeaks.begin(); it != baselineLeaks.end(); ++it) {
         names.insert(it.key());

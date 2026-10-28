@@ -32,7 +32,8 @@ struct FlameKey {
     bool fileIdNull = false;
     int depth = 0;
 
-    bool operator==(const FlameKey& o) const {
+    bool operator==(const FlameKey& o) const
+    {
         return symbolId == o.symbolId && fileId == o.fileId &&
                fileIdNull == o.fileIdNull && depth == o.depth;
     }

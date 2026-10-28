@@ -1362,7 +1362,8 @@ std::string GetProcessPid(const std::string& processName)
     }
 }
 
-std::string GetProcessPidFast(const std::string& processName, long long timeoutMs, bool* reliable) {
+std::string GetProcessPidFast(const std::string& processName, long long timeoutMs, bool* reliable)
+{
     if (reliable) {
         *reliable = false;
     }
