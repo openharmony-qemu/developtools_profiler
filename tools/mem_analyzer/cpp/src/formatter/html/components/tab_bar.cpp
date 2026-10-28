@@ -57,26 +57,15 @@ std::string TabContentClose()
 std::string TabBarJs()
 {
     return R"JS(
-function switchTab(tabId, tabEl)
-{
+function switchTab(tabId, tabEl) {
   var tabs = document.querySelectorAll('.tab-item');
-  for (var i = 0; i < tabs.length; i++) {
-      tabs[i].classList.remove('active');
-  }
-  if (tabEl) {
-      tabEl.classList.add('active');
-  }
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+  if (tabEl) tabEl.classList.add('active');
   var contents = document.querySelectorAll('.tab-content');
-  for (var i = 0; i < contents.length; i++) {
-      contents[i].classList.remove('active');
-  }
+  for (var i = 0; i < contents.length; i++) contents[i].classList.remove('active');
   var content = document.getElementById(tabId);
-  if (content) {
-      content.classList.add('active');
-  }
-  if (window.MemChart) {
-      MemChart.redrawAll();
-  }
+  if (content) content.classList.add('active');
+  if (window.MemChart) MemChart.redrawAll();
 }
 window.switchTab = switchTab;
 )JS";

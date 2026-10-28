@@ -99,9 +99,7 @@ const delta = n => (n > 0 ? '+' : '') + num(n);
 
 const nodeIdsHtml = (ids, containerId, label = '节点ID') => {
   const values = (ids || []).map(String);
-  if (!values.length) {
-      return `<div class="chain-node-ids">${esc(label)}: 无</div>`;
-  }
+  if (!values.length) return `<div class="chain-node-ids">${esc(label)}: 无</div>`;
   const shown = values.slice(0, 10).map(id => `<span class="node-id-tag">${esc(id)}</span>`).join('');
   const more = values.length > 10
     ? `<span class="node-id-tag expand-btn" id="expandBtn_${containerId}" onclick="expandNodeIds('${containerId}')">展开</span>`
@@ -111,9 +109,7 @@ const nodeIdsHtml = (ids, containerId, label = '节点ID') => {
 
 window.expandNodeIds = containerId => {
   const container = document.getElementById(containerId);
-  if (!container) {
-      return;
-  }
+  if (!container) return;
   const values = (container.dataset.allIds || '').split(',').filter(Boolean);
   const label = container.dataset.label || '节点ID';
   const button = document.getElementById('expandBtn_' + containerId);
@@ -135,26 +131,20 @@ const chainHtml = path => String(path).split(' -> ').map(esc).join('<span class=
 window.showDetail = (prefix, i) => {
   const header = document.getElementById(prefix + 'Header_' + i);
   const body = document.getElementById(prefix + 'Body_' + i);
-  if (!header || !body) {
-      return;
-  }
+  if (!header || !body) return;
   header.classList.remove('collapsed');
   header.classList.add('expanded');
   body.classList.add('expanded');
   setTimeout(() => {
     const item = document.getElementById(prefix + 'Detail_' + i);
-    if (item) {
-        item.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    if (item) item.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, 100);
 };
 
 window.toggleDetail = (prefix, i) => {
   const header = document.getElementById(prefix + 'Header_' + i);
   const body = document.getElementById(prefix + 'Body_' + i);
-  if (!header || !body) {
-      return;
-  }
+  if (!header || !body) return;
   const expanded = header.classList.contains('expanded');
   header.classList.toggle('expanded', !expanded);
   header.classList.toggle('collapsed', expanded);
@@ -184,14 +174,12 @@ std::string ReportCommonSubTabJs()
 {
     return R"JS(
 // 二级页签（详情列表 / 引用链总览图）+ 引用链树表交互：单快照与多快照报告共用。
-(function()
-{
+(function() {
   // 最近一次在详情列表点过「详情」或「查看」的行，切回详情列表时据此滚回并保持高亮
   var lastSelectedRow = null;
 
   // 标记「详情」/「查看」所在行（同时取消上一个标记），供返回详情列表时定位
-  function markSelectedRow(el)
-  {
+  function markSelectedRow(el) {
     var row = el && el.closest ? el.closest('tr') : null;
     if (lastSelectedRow && lastSelectedRow !== row) {
       lastSelectedRow.classList.remove('detail-row-active');
@@ -203,12 +191,9 @@ std::string ReportCommonSubTabJs()
   // 二级页签切换：范围限定在目标所在的容器内，避免与主 tab 的 switchTab 互相干扰。
   // 按钮高亮按 data-subtab 反查（单/多快照的 sub-tab-item 均带 data-subtab），
   // 这样从详情列表的「查看」跳转时无需传按钮引用。
-  function switchSubTab(subTabId)
-  {
+  function switchSubTab(subTabId) {
     var target = document.getElementById(subTabId);
-    if (!target) {
-        return;
-    }
+    if (!target) return;
     var container = target.parentNode;
     var bar = null;
     var contents = [];
@@ -229,18 +214,15 @@ std::string ReportCommonSubTabJs()
       }
     }
     // 冰柱图在隐藏容器里宽度为 0 无法绘制，等布局完成后再重绘
-    requestAnimationFrame(function()
-    {
-      requestAnimationFrame(function()
-      {
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
         if (window.icicleRedrawAll) { window.icicleRedrawAll(); }
       });
     });
     // 切回「详情列表」且上次在某行点过「详情」/「查看」的，滚到那一行；否则滚到页签栏
     if (lastSelectedRow && target.contains(lastSelectedRow)) {
       lastSelectedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else if (bar)
-    {
+    } else if (bar) {
       bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
@@ -248,24 +230,17 @@ std::string ReportCommonSubTabJs()
   // 详情列表「总览图」列的「查看」：切到引用链总览图并自动搜索该行关键词。
   // 关键词由后端给出（ArkTS 对象泄漏分析报告=对象名称；最短引用链=链名最后一个 "->" 后的名字）；
   // 关键词为空串时清空搜索框，等价于不带过滤、直接展示完整总览图。
-  function showInOverview(el)
-  {
-    if (!el) {
-        return;
-    }
+  function showInOverview(el) {
+    if (!el) return;
     var subTabId = el.getAttribute('data-chart-subtab');
     var keyword = el.getAttribute('data-keyword') || '';
-    if (!subTabId || !document.getElementById(subTabId)) {
-        return;
-    }
+    if (!subTabId || !document.getElementById(subTabId)) return;
     // 先记录并高亮本行，再切页签：switchSubTab 内部会顺势把视野滚到总览图
     markSelectedRow(el);
     switchSubTab(subTabId);
     // 画布 id 与二级页签 id 同源：subtabChart_<tabId> -> icicleCanvas_<tabId>
     var input = document.getElementById('searchInput_' + subTabId.replace('subtabChart_', 'icicleCanvas_'));
-    if (!input) {
-        return;
-    }
+    if (!input) return;
     input.value = keyword;
     // 直接派发 input 事件，复用搜索框自身的逻辑（匹配集合、匹配计数、重绘）
     input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -273,8 +248,7 @@ std::string ReportCommonSubTabJs()
 
   // 依据各行是否有处于折叠态的祖先，统一重算树表显隐。
   // 折叠态的唯一来源是 itt-collapsed 类（服务端渲染时也已打上）。
-  function applyIcicleTreeVisibility(table)
-  {
+  function applyIcicleTreeVisibility(table) {
     var collapsedIds = {};
     var collapsedRows = table.querySelectorAll('tbody tr.itt-collapsed');
     for (var i = 0; i < collapsedRows.length; i++) { collapsedIds[collapsedRows[i].id] = true; }
@@ -290,16 +264,11 @@ std::string ReportCommonSubTabJs()
   }
 
   // 单个节点展开/折叠
-  function toggleIcicleTreeRow(btn)
-  {
+  function toggleIcicleTreeRow(btn) {
     var row = btn.closest ? btn.closest('tr') : null;
-    if (!row) {
-        return;
-    }
+    if (!row) return;
     var table = row.closest('table');
-    if (!table) {
-        return;
-    }
+    if (!table) return;
     var collapsed = row.classList.toggle('itt-collapsed');
     btn.textContent = collapsed ? '+' : '-';
     applyIcicleTreeVisibility(table);
@@ -307,21 +276,14 @@ std::string ReportCommonSubTabJs()
 
   // 一键全部展开 / 全部折叠。根节点（data-anc 为空）始终保持展开，
   // 于是「全部折叠」回到最紧凑的视图：只显示根 + 它的直接子节点。
-  function toggleIcicleTreeAll(tableId, expand)
-  {
+  function toggleIcicleTreeAll(tableId, expand) {
     var table = document.getElementById(tableId);
-    if (!table) {
-        return;
-    }
+    if (!table) return;
     var rows = table.querySelectorAll('tbody tr');
     for (var i = 0; i < rows.length; i++) {
       var btn = rows[i].querySelector('.itt-toggle');
-      if (!btn) {
-          continue; // 叶子节点没有开关，保持可见
-      }
-      if (!rows[i].getAttribute('data-anc')) {
-          continue; // 根节点不参与折叠
-      }
+      if (!btn) continue;                       // 叶子节点没有开关，保持可见
+      if (!rows[i].getAttribute('data-anc')) continue;  // 根节点不参与折叠
       rows[i].classList.toggle('itt-collapsed', !expand);
       btn.textContent = expand ? '-' : '+';
     }
@@ -329,18 +291,13 @@ std::string ReportCommonSubTabJs()
   }
 
   // 复制引用链：忽略当前折叠状态，按「全部展开」的树形导出纯文本。
-  function copyIcicleTree(tableId, btn)
-  {
+  function copyIcicleTree(tableId, btn) {
     var table = document.getElementById(tableId);
-    if (!table) {
-        return;
-    }
+    if (!table) return;
     // 表头取自 thead，列增减时自动同步
     var ths = table.querySelectorAll('thead th');
     var header = [];
-    for (var t = 0; t < ths.length; t++) {
-        header.push(ths[t].textContent);
-    }
+    for (var t = 0; t < ths.length; t++) header.push(ths[t].textContent);
     var lines = [header.join('\t')];
     var rows = table.querySelectorAll('tbody tr');
     for (var i = 0; i < rows.length; i++) {
@@ -363,16 +320,12 @@ std::string ReportCommonSubTabJs()
     }
     var text = lines.join('\n');
     var restore = function() { if (btn) btn.textContent = '复制引用链'; };
-    var showCopied = function()
-    {
-      if (btn) {
-          btn.textContent = '已拷贝';
-      }
+    var showCopied = function() {
+      if (btn) btn.textContent = '已拷贝';
       setTimeout(restore, 1500);
     };
     // 非安全上下文（部分 file:// 场景）或写入被拒时，回退到临时 textarea + execCommand
-    var fallbackCopy = function()
-    {
+    var fallbackCopy = function() {
       var ta = document.createElement('textarea');
       ta.value = text;
       ta.style.position = 'fixed';
@@ -403,21 +356,15 @@ std::string ReportCommonChartInitJs()
     return R"JS(
 // 引用链总览图：把 window.ICICLE_CHARTS_DATA 交给共享图表模块渲染。
 // 单快照与多快照报告共用；缩放平移/悬停/搜索/下钻等交互由 chart_module 提供。
-(function()
-{
-  function initVisibleCharts()
-  {
+(function() {
+  function initVisibleCharts() {
     var data = window.ICICLE_CHARTS_DATA || [];
-    if (!data.length) {
-        return;
-    }
+    if (!data.length) return;
     window.ICICLE_CHARTS_DATA = [];
     var charts = [];
     for (var i = 0; i < data.length; i++) {
       var c = data[i];
-      if (!c || !c.tree) {
-          continue;
-      }
+      if (!c || !c.tree) continue;
       charts.push({
         icicleCanvasId: c.id,
         icicleTree: c.tree,
@@ -439,9 +386,8 @@ std::string ReportCommonChartInitJs()
     }
   }
   // 等首帧布局完成后再初始化，避免隐藏容器里画布宽度为 0
-  requestAnimationFrame(function()
-  {
-    requestAnimationFrame(function() { InitVisibleCharts(); });
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { initVisibleCharts(); });
   });
 })();
 )JS";

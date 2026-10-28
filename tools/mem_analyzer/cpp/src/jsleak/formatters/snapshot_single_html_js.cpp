@@ -23,10 +23,8 @@ namespace mem_analyzer {
 std::string SnapshotHtmlJs()
 {
     return R"JS(
-(function()
-{
-  function switchTab(tabId, el)
-  {
+(function() {
+  function switchTab(tabId, el) {
     var target = document.getElementById(tabId);
     if (!target) {
       target = document.querySelector('.tab-content[data-tab="' + tabId + '"]');
@@ -64,18 +62,13 @@ std::string SnapshotHtmlJs()
     if (window.icicleRedrawAll) { window.icicleRedrawAll(); }
   }
 
-  function expandHashValues(containerId)
-  {
+  function expandHashValues(containerId) {
     var container = document.getElementById(containerId);
     var btnId = "expandBtn_" + containerId;
     var btn = document.getElementById(btnId);
-    if (!container || !btn) {
-        return;
-    }
+    if (!container || !btn) return;
     var allHashes = container.getAttribute('data-all-hashes');
-    if (!allHashes) {
-        return;
-    }
+    if (!allHashes) return;
     var hashes = allHashes.split(',');
     var isExpanded = btn.getAttribute('data-expanded') === 'true';
     if (isExpanded) {
@@ -84,7 +77,7 @@ std::string SnapshotHtmlJs()
         html += '<span class="node-id-tag">' + hashes[i] + '</span>';
       }
       if (hashes.length > 10) {
-        html += '<span class="node-id-tag expand-btn" id="' + btnId + '" onclick="ExpandHashValues(\'' + containerId + '\')">展开</span>';
+        html += '<span class="node-id-tag expand-btn" id="' + btnId + '" onclick="expandHashValues(\'' + containerId + '\')">展开</span>';
       }
       container.innerHTML = html;
     } else {
@@ -97,8 +90,8 @@ std::string SnapshotHtmlJs()
     }
   }
 
-  window.SwitchTab = SwitchTab;
-  window.ExpandHashValues = ExpandHashValues;
+  window.switchTab = switchTab;
+  window.expandHashValues = expandHashValues;
 })();
 )JS";
 }
