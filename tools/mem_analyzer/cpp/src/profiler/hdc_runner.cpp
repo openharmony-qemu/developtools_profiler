@@ -1015,8 +1015,7 @@ void StopHiprofiler()
 {
     std::atomic<bool> stopDone{false};
     CapturedCmd stopCap;
-    std::thread StopWorker([&]()
-    {
+    std::thread StopWorker([&]() {
         std::string stopCmd = HdcShell("hiprofiler_cmd stop") + " 2>&1";
         stopCap = CaptureCommand(stopCmd);
         stopDone = true;
@@ -1928,8 +1927,7 @@ void maybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
     }
     startExported = true;
     const std::string pidCopy = pid;
-    startExportThread = std::thread([state, pidCopy, outputDir, smapsPrefix, &result]()
-    {
+    startExportThread = std::thread([state, pidCopy, outputDir, smapsPrefix, &result]() {
         std::string perr;
         const std::string path =
             ExportProcessFile(pidCopy, outputDir, smapsPrefix, &perr);
@@ -1974,7 +1972,7 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
         log::Logi("Running snapshot export command...");
         while (!state->done.load() && !gInterruptRequested &&
                !DeviceLost()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(POLL_INTERVAL_MS));
         }
         return;
     }
@@ -2081,11 +2079,9 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
         // finishes mid-interval, when the start command fails, when the
         // first smaps/lsof export reports a permission failure, or when the
         // target device fails at the hdc level (pinned target).
-        SleepTicks(PROGRESS_INTERVAL_TICKS, [&]()
-        {
+        SleepTicks(PROGRESS_INTERVAL_TICKS, [&]() {
             return (state->done.load() && (!asyncStartMode || CaptureStartFailed(state))) ||
-                   state->permissionFailed.load() ||
-                   DeviceLost();
+            state->permissionFailed.load() || DeviceLost();
         });
     }
 }
@@ -2210,10 +2206,8 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
         while (!state->done.load() && !gInterruptRequested) {
             const long long total = ElapsedSince(start);
             std::cout << "Finalizing... total " << total << "s elapsed " <<
-                      "(post-capture wait: " << finalizeWait << "s)\n" <<
-                      std::flush;
-            SleepTicks(PROGRESS_INTERVAL_TICKS, [&]()
-            {
+                "(post-capture wait: " << finalizeWait << "s)\n" << std::flush;
+            SleepTicks(PROGRESS_INTERVAL_TICKS, [&]() {
                 return state->done.load() || gInterruptRequested;
             });
             finalizeWait += PROGRESS_INTERVAL_S;

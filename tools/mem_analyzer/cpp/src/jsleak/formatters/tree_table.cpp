@@ -157,8 +157,7 @@ void EmitIcicleTreeRows(const json& node, const std::string& tableId,
         for (size_t i = 0; i < children.size(); ++i) {
             order.push_back(i);
         }
-        std::sort(order.begin(), order.end(), [&](size_t a, size_t b)
-        {
+        std::sort(order.begin(), order.end(), [&](size_t a, size_t b) {
             const int64_t ta = children[a].value("t", static_cast<int64_t>(0));
             const int64_t tb = children[b].value("t", static_cast<int64_t>(0));
             if (ta != tb) {

@@ -39,6 +39,7 @@ constexpr size_t OFFSET_BOOTTIME_NS = 60;
 constexpr size_t OFFSET_REALTIME_NS = 68;
 constexpr size_t OFFSET_DURATION_NS = 244;
 constexpr size_t LEN_PREFIX_SIZE = 4;
+constexpr int VARINT_MAX_SHIFT = 64;
 
 enum class HtraceDataType : uint32_t {
     PROTOBUF_BIN = 0,    // HIPROFILER_PROTOBUF_BIN，标准 HiProfiler protobuf 二进制
@@ -86,7 +87,7 @@ uint64_t ReadVarint(const uint8_t* buf, size_t size, size_t& pos)
     uint64_t result = 0;
     int shift = 0;
     while (pos < size) {
-        if (shift >= 64) {
+        if (shift >= VARINT_MAX_SHIFT) {
             throw std::runtime_error("varint too long");
         }
         uint8_t b = buf[pos++];

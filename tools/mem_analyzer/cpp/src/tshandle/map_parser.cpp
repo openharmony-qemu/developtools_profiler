@@ -23,6 +23,12 @@
 
 namespace mem_analyzer {
 
+namespace {
+constexpr int PROTO_FIXED64_BYTES = 8;
+constexpr int PROTO_DATA_TYPE_OFFSET = 2;
+constexpr int COMMENT_PREFIX_LEN = 2;
+} // namespace
+
 // ============================================================================
 //  Protobuf helpers for HandleNodeIdMap (proto3)
 // ============================================================================
@@ -55,7 +61,7 @@ static size_t SkipProtobufField(const uint8_t* data, size_t size, size_t offset,
             }
             return offset + 1;
         }
-        case 1: return offset + 8;
+        case 1: return offset + PROTO_FIXED64_BYTES;
         case 2: {
             uint64_t len = 0;
             if (!ReadVarint(data, size, offset, len)) {
@@ -79,7 +85,7 @@ static bool IsProtobufAddrFile(const uint8_t* data, size_t size)
     if (data[1] >= 0x80) {
         return false;
     }
-    return data[2] == 0x09 || data[2] == 0x10;
+    return data[PROTO_DATA_TYPE_OFFSET] == 0x09 || data[PROTO_DATA_TYPE_OFFSET] == 0x10;
 }
 
 static ParseAddrResult ParseProtobufAddrToNodeId(const uint8_t* data, size_t size)
@@ -230,7 +236,7 @@ ParseAddrResult ParseAddrToNodeId(const std::string& content)
         if (trimmed[0] == '#') {
             continue;
         }
-        if (trimmed.size() >= 2 && trimmed[0] == '/' && trimmed[1] == '/') {
+        if (trimmed.size() >= COMMENT_PREFIX_LEN && trimmed[0] == '/' && trimmed[1] == '/') {
             continue;
         }
 

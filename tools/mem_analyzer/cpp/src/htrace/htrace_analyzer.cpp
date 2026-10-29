@@ -952,9 +952,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     };
 
     // leak_mode: 收集非 top N 覆盖的栈 -> other, 追加到对应 top_symbols 分类
-    auto AppendOther = [&](std::vector<TopSymbolInfo>& targetVec,
-                            const std::vector<SymbolData>& finalSymbols)
-    {
+    auto AppendOther = [&](std::vector<TopSymbolInfo>& targetVec, const std::vector<SymbolData>& finalSymbols) {
         if (!config.leakMode) {
             return;
         }
@@ -999,8 +997,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         output.topSymbols.app.sections.push_back(MakeSymbolSection(std::move(appSyms), symbolTrackKey.c_str()));
         output.stats = result.stats;
         output.stats.orgSetSize = appOrg;
-    }
-    else if (scopeStr == "system-only") {
+    } else if (scopeStr == "system-only") {
         auto [sysFiltered, sysOrg] = buildFiltered(Scope::SYSTEM_ONLY);
         auto result = RunAlgorithm(sysFiltered, callStacks, config);
         output.topSymbols.mode = "system-only";
@@ -1009,8 +1006,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         output.topSymbols.system.sections.push_back(MakeSymbolSection(std::move(sysSyms), symbolTrackKey.c_str()));
         output.stats = result.stats;
         output.stats.orgSetSize = sysOrg;
-    }
-    else if (scopeStr == "mixed") {
+    } else if (scopeStr == "mixed") {
         auto [mixedFiltered, mixedOrg] = buildFiltered(Scope::MIXED);
         auto result = RunAlgorithm(mixedFiltered, callStacks, config);
         output.topSymbols.mode = "mixed";
@@ -1019,8 +1015,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         output.topSymbols.mixed.sections.push_back(MakeSymbolSection(std::move(mixedSyms), symbolTrackKey.c_str()));
         output.stats = result.stats;
         output.stats.orgSetSize = mixedOrg;
-    }
-    else {
+    } else {
         // app-and-system (default)
         auto [appFiltered, appOrg] = buildFiltered(Scope::APP_ONLY);
         auto [sysFiltered, sysOrg] = buildFiltered(Scope::SYSTEM_ONLY);
@@ -1093,7 +1088,7 @@ static FilepageSplit AnalyzeFilepages(
         // detail 模式下 data_dict 的 sub_type 值可能带 "FilePage:" 前缀，输出时剥离
         info.filename = NormalizeFilepageFilename(info.filename, mode);
         if (mmapTotalSize > 0) {
-            info.percentage = std::round((double)info.size * PERCENT_PRECISION_SCALE / (double)mmapTotalSize) / 100.0;
+            info.percentage = std::round((double)info.size * PERCENT_PRECISION_SCALE / (double)mmapTotalSize) / PERCENT_SCALE;
         }
         // 文件级分类：任意栈的任意帧是应用符号 → app 类；否则 system 类
         bool isApp = false;
@@ -1105,8 +1100,7 @@ static FilepageSplit AnalyzeFilepages(
         }
         if (isApp) {
             split.app.push_back(std::move(info));
-        }
-        else {
+        } else {
             split.system.push_back(std::move(info));
         }
     }

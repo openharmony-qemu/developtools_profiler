@@ -430,8 +430,7 @@ std::string ShellQuote(const std::string& s)
     for (char c : s) {
         if (c == '"') {
             out += "\\\"";
-        }
-        else {
+        } else {
             out += c;
         }
     }

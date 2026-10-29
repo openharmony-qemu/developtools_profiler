@@ -53,6 +53,8 @@ namespace {
 constexpr uint32_t UNREACHABLE = 0xFFFFFFFF;  // dominator for unreachable nodes
 constexpr uint32_t ROOT = 0;                  // GC root node index (always 0)
 constexpr int EMPTY_SLOT = -1;                // Cooper algorithm sentinel (unused in LT)
+constexpr uint32_t MAP_DESC_SKIP_THRESHOLD = 2;       // map descriptor edge index skip threshold
+constexpr uint32_t MAP_DESC_FIELDS_PER_ENTRY = 3;      // fields per map descriptor entry
 
 // --------------------------------------------------------------------------
 //  Low-level array access helpers
@@ -1082,7 +1084,7 @@ static void RunLayeredBfs(
                     const std::string& childName = ctx.GetNodeName(child);
                     if (childName == "(map descriptors)") {
                         uint32_t index = ctx.edges[ptr + static_cast<size_t>(ctx.edgeNameOff)];
-                        if (index >= 2 || index % 3 == 1) {
+                        if (index >= MAP_DESC_SKIP_THRESHOLD || index % MAP_DESC_FIELDS_PER_ENTRY == 1) {
                             continue;
                         }
                     }

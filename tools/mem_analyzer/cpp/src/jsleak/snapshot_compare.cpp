@@ -410,8 +410,9 @@ LogicalGrowthResult BuildLogicalGrowthGroups(json rows, const SnapshotIndex& bas
             }
             if (!nearestSource.empty()) {
                 rootKey = nearestSource;
+            } else if (!outermostChanged.empty()) {
+                rootKey = outermostChanged;
             }
-            else if (!outermostChanged.empty()) rootKey = outermostChanged;
         }
         row["logicalGroupId"] = rootKey;
         row["includedIn"] = rootKey == key ? json(nullptr) : json(rootKey);
@@ -532,8 +533,7 @@ LogicalGrowthResult BuildLogicalGrowthGroups(json rows, const SnapshotIndex& bas
                    std::abs(rhs["delta"]["selfSize"].get<int64_t>());
         });
     }
-    std::sort(result.groups.begin(), result.groups.end(), [](const json& lhs, const json& rhs)
-    {
+    std::sort(result.groups.begin(), result.groups.end(), [](const json& lhs, const json& rhs) {
         const int64_t lr = lhs["delta"]["retainedSize"].get<int64_t>();
         const int64_t rr = rhs["delta"]["retainedSize"].get<int64_t>();
         if (lr != rr) {

@@ -58,6 +58,14 @@ namespace mem_analyzer {
 
 namespace {
 
+constexpr int NAME_SET_INITIAL_CAPACITY = 16;
+constexpr int MAX_EXPORT_NAMES = 4;
+constexpr int BRACKET_SEARCH_BUF_SIZE = 256;
+constexpr int STRINGS_SEARCH_BUF_SIZE = 256;
+constexpr int REF_CHAIN_PATH_RESERVE = 64;
+constexpr int REF_CHAIN_INDICES_RESERVE = 32;
+constexpr int UNICODE_ESCAPE_LEN = 6;
+
 // 快速判断字符串是否为纯数字（内联）
 inline bool IsNumericString(const std::string& s)
 {
@@ -82,7 +90,7 @@ std::string HeapSnapshot::GetJsObjectExtName(uint32_t nodeIndex) const
     std::vector<std::string> propNames;
     propNames.reserve(10);
     std::unordered_set<std::string> added;
-    added.reserve(16);
+    added.reserve(NAME_SET_INITIAL_CAPACITY);
 
     size_t begin = firstEdgePointers[nodeIndex];
     size_t end = firstEdgePointers[nodeIndex + 1];
@@ -331,11 +339,11 @@ std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t nodeIndex) const
     }
 
     std::vector<std::string> exportNames;
-    exportNames.reserve(4);
+    exportNames.reserve(MAX_EXPORT_NAMES);
     if (localExportEntriesNode != 0xFFFFFFFF && localExportEntriesNode < static_cast<uint32_t>(nodeCount)) {
         size_t eBegin = firstEdgePointers[localExportEntriesNode];
         size_t eEnd = firstEdgePointers[localExportEntriesNode + 1];
-        for (size_t ptr = eBegin; ptr < eEnd && exportNames.size() < 4; ptr += edgeFieldsCount) {
+        for (size_t ptr = eBegin; ptr < eEnd && exportNames.size() < MAX_EXPORT_NAMES; ptr += edgeFieldsCount) {
             uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
             if (nameIdx < strings.size() && IsNumericString(strings[nameIdx])) {
                 uint32_t entryNode = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
@@ -364,8 +372,7 @@ std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t nodeIndex) const
                                                 // 裸 "JSObject" 永远不会出现；按前缀判断才能真正跳过无信息对象。
                                                 if (extName.rfind("JSObject(", 0) != 0 &&
                                                     extName != "JSSharedObject" &&
-                                                    extName.rfind("JSSharedObject(", 0) != 0)
-                                                    {
+                                                    extName.rfind("JSSharedObject(", 0) != 0) {
                                                     exportNames.push_back(extName);
                                                     break;
                                                 }
@@ -454,8 +461,7 @@ const std::string& HeapSnapshot::GetExtendedNodeName(uint32_t nodeIndex) const
         for (int t = 0; t < T; ++t) {
             const int b = static_cast<int>((static_cast<long long>(N) * t) / T);
             const int e = static_cast<int>((static_cast<long long>(N) * (t + 1)) / T);
-            workers.emplace_back([this, b, e]()
-            {
+            workers.emplace_back([this, b, e]() {
                 for (int i = b; i < e; ++i) {
                     extNames_[static_cast<size_t>(i)] =
                         ComputeExtendedName(static_cast<uint32_t>(i));
@@ -692,10 +698,10 @@ static size_t FindArrayBracketAfter(std::ifstream& file, const std::string& mark
         return std::string::npos;
     }
 
-    std::string buf(256, '\0');
+    std::string buf(BRACKET_SEARCH_BUF_SIZE, '\0');
     size_t searchStart = markPos + marker.size();
     file.seekg(searchStart);
-    file.read(&buf[0], 256);
+    file.read(&buf[0], BRACKET_SEARCH_BUF_SIZE);
     size_t bytes = file.gcount();
     std::string view(buf.data(), bytes);
     size_t bracket = view.find('[');
@@ -782,7 +788,7 @@ static std::string SanitizeJsonStringArray(const std::string& strBuf)
                         char h2 = strBuf[i+3];
                         if (h1 == 'd' && ((h2 >= '8' && h2 <= 'f') || (h2 >= 'A' && h2 <= 'F'))) {
                             sanitized += "\\uFFFD";  // replace with replacement character
-                            i += 6;
+                            i += UNICODE_ESCAPE_LEN;
                             continue;
                         }
                     }
@@ -980,11 +986,15 @@ static void ParseSnapshotMeta(HeapSnapshot& snapshot,
             for (int i = 0; i < static_cast<int>(types.size()); i++) {
                 if (types[i] == "weak") {
                     snapshot.edgeWeakType = i;
+                } else if (types[i] == "shortcut") {
+                    snapshot.edgeShortcutType = i;
+                } else if (types[i] == "hidden") {
+                    snapshot.edgeHiddenType = i;
+                } else if (types[i] == "element") {
+                    snapshot.edgeElementType = i;
+                } else if (types[i] == "internal") {
+                    snapshot.edgeInternalType = i;
                 }
-                else if (types[i] == "shortcut") snapshot.edgeShortcutType = i;
-                else if (types[i] == "hidden") snapshot.edgeHiddenType = i;
-                else if (types[i] == "element") snapshot.edgeElementType = i;
-                else if (types[i] == "internal") snapshot.edgeInternalType = i;
             }
         }
     }
@@ -1109,10 +1119,10 @@ static void ParseStringsTable(HeapSnapshot& snapshot, std::ifstream& file,
         size_t searchStart = std::max<size_t>(META_LIMIT, edgesBracketPos + 1);
         size_t markPos = FindMarkerInFile(file, "\"strings\":", searchStart, file_size);
         if (markPos != std::string::npos) {
-            std::string buf(256, '\0');
+            std::string buf(STRINGS_SEARCH_BUF_SIZE, '\0');
             file.clear();
             file.seekg(markPos + 10);
-            file.read(&buf[0], 256);
+            file.read(&buf[0], STRINGS_SEARCH_BUF_SIZE);
             size_t bytes = file.gcount();
             std::string view(buf.data(), bytes);
             size_t bracket = view.find('[');
@@ -1357,8 +1367,7 @@ uint32_t HeapSnapshot::GetNodeInternalHash(uint32_t nodeIndex) const
     static const std::regex pattern(R"(Int:\s*(\d+))");
     std::smatch matches;
 
-    ForEachEdge(nodeIndex, [&](const EdgeInfo &edge, size_t)
-    {
+    ForEachEdge(nodeIndex, [&](const EdgeInfo &edge, size_t) {
         if (edge.nameOrIndex < static_cast<uint32_t>(strings.size())) {
             std::string edgeName = strings[edge.nameOrIndex];
             if (edgeName == "ArkInternalHash") {
@@ -1387,7 +1396,7 @@ std::string HeapSnapshot::FormatRefChain(uint32_t nodeIndex) const
     
     // 先收集节点索引，避免在收集过程中反复访问名称
     std::vector<uint32_t> indices;
-    indices.reserve(32); // 预留常见链长度
+    indices.reserve(REF_CHAIN_INDICES_RESERVE); // 预留常见链长度
     
     uint32_t cur = nodeIndex;
     uint32_t guard = 0;
@@ -1441,7 +1450,7 @@ std::vector<std::string> HeapSnapshot::FormatRefChainFrames(uint32_t nodeIndex) 
     constexpr uint32_t INVALID = 0xFFFFFFFF;
 
     std::vector<uint32_t> indices;
-    indices.reserve(32);
+    indices.reserve(REF_CHAIN_INDICES_RESERVE);
 
     uint32_t cur = nodeIndex;
     uint32_t guard = 0;
@@ -1523,8 +1532,7 @@ RefChainKey HeapSnapshot::RefChainHash(uint32_t nodeIndex) const
     }
 
     // 一次性预构建「正向链 hash」表（root → node），之后 O(1) 查表。
-    std::call_once(*chainHashOnce_, [this]()
-    {
+    std::call_once(*chainHashOnce_, [this]() {
         const auto t0 = std::chrono::steady_clock::now();
         log::Logd("[ref_chain] build chain_hash start node_count=", nodeCount);
 
@@ -1538,7 +1546,7 @@ RefChainKey HeapSnapshot::RefChainHash(uint32_t nodeIndex) const
 
         // 复用 scratch：沿父链反向收集未算节点，再反转回填（天然正向拓扑序）。
         std::vector<uint32_t> path;
-        path.reserve(64);
+        path.reserve(REF_CHAIN_PATH_RESERVE);
         const size_t cycleLimit = static_cast<size_t>(N) + 1;
 
         for (int ni = 0; ni < N; ++ni) {

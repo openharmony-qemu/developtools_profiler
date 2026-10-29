@@ -548,8 +548,7 @@ void CliParser::PrintHelp(std::ostream& os) const
             std::string line = "  " + p.name;
             if (line.size() < HELP_COLUMN_WIDTH) {
                 line.append(HELP_COLUMN_WIDTH - line.size(), ' ');
-            }
-            else {
+            } else {
                 line += "\n" + std::string(HELP_WRAP_INDENT, ' ');
             }
             line += p.description;

@@ -22,11 +22,13 @@ namespace mem_analyzer {
 
 namespace {
 
+constexpr int UINT64_BYTES = 8;
+
 // 从二进制流读取 8 字节小端 uint64（不依赖主机字节序）
 bool ReadU64Le(std::ifstream& f, uint64_t& out)
 {
-    unsigned char b[8];
-    if (!f.read(reinterpret_cast<char*>(b), 8)) {
+    unsigned char b[UINT64_BYTES];
+    if (!f.read(reinterpret_cast<char*>(b), UINT64_BYTES)) {
         return false;
     }
     out = static_cast<uint64_t>(b[0]) |

@@ -100,18 +100,16 @@ std::vector<std::string> ModuleRegistry::SelfCheck()
                 // 明确不支持该模式：此时默认格式是死数据，留着会误导下一个改的人
                 if (!mc.defaultFormat.empty()) {
                     issues.push_back(name + ": " + mode + " declares no formats but has default '" +
-                                     mc.defaultFormat + "'");
+                        mc.defaultFormat + "'");
                 }
                 return;
             }
             // 声明了格式列表时，默认格式必须非空且是其一
             if (mc.defaultFormat.empty()) {
                 issues.push_back(name + ": missing default " + mode + " format");
-            } else if (std::find(mc.formats.begin(), mc.formats.end(), mc.defaultFormat) ==
-                       mc.formats.end())
-                       {
+            } else if (std::find(mc.formats.begin(), mc.formats.end(), mc.defaultFormat) == mc.formats.end()) {
                 issues.push_back(name + ": default " + mode + " format '" + mc.defaultFormat +
-                                 "' is not in the declared format list");
+                    "' is not in the declared format list");
             }
         };
 

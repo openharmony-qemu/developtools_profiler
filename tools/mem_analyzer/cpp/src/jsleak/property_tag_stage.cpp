@@ -88,8 +88,7 @@ std::string PropertyTagStage::CheckDestoryedTag(uint32_t uNi, const HeapSnapshot
 {
     std::string foundEdgeName;
 
-    heap.ForEachEdge(uNi, [&](const HeapSnapshot::EdgeInfo& edge, size_t)
-    {
+    heap.ForEachEdge(uNi, [&](const HeapSnapshot::EdgeInfo& edge, size_t) {
         std::string edgeName;
         if (edge.nameOrIndex < static_cast<uint32_t>(heap.strings.size())) {
             edgeName = heap.strings[edge.nameOrIndex];
@@ -127,8 +126,7 @@ BaseClassInfo PropertyTagStage::FindConcernType(uint32_t uNi, const std::vector<
 
         // 沿原型链推进：node → hclass → Proto/__proto__ → 父原型 → hclass → ...
         bool advanced = false;
-        heap.ForEachEdge(cur, [&](const HeapSnapshot::EdgeInfo& edge, size_t)
-        {
+        heap.ForEachEdge(cur, [&](const HeapSnapshot::EdgeInfo& edge, size_t) {
             if (advanced) {
                 return;
             }
