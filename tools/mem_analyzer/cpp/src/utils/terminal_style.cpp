@@ -37,12 +37,12 @@ static constexpr const char* ANSI_BOLD   = "\033[1m";
 static constexpr const char* ANSI_DIM    = "\033[2m";
 static constexpr const char* ANSI_RESET  = "\033[0m";
 
-static bool sInitialized = false;
+static bool g_sInitialized = false;
 
 void Init()
 {
 #if defined(_WIN32)
-    if (sInitialized) {
+    if (g_sInitialized) {
         return;
     }
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -52,9 +52,9 @@ void Init()
             SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
         }
     }
-    sInitialized = true;
+    g_sInitialized = true;
 #else
-    (void)sInitialized;
+    (void)g_sInitialized;
 #endif
 }
 

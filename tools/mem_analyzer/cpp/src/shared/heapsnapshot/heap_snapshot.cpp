@@ -545,7 +545,7 @@ public:
     }
 
     /// Must be called after the last chunk to flush pending overflow.
-    void done()
+    void Done()
     {
         if (done_) {
             return;
@@ -649,7 +649,7 @@ static std::vector<uint32_t> parseArrayChunked(std::ifstream& file, size_t byteO
         }
     }
 
-    parser.done();
+    parser.Done();
     return std::move(parser.result);
 }
 

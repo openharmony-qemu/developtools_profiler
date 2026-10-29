@@ -48,10 +48,10 @@ json BuildSummary(const TraceDB& db)
         db.meta.processName);
 
     // Parse mode: output all resource types（summary_entries 表驱动，顺序=历史字节序）
-    static const char* const PARSE_SUMMARY_ORDER[] = {
+    static const char* const parseSummaryOrder[] = {
         "nativeheap", "mmap", "ashmem", "dma", "fd", "thread"
     };
-    for (const char* cat : PARSE_SUMMARY_ORDER) {
+    for (const char* cat : parseSummaryOrder) {
         for (const auto& e : HtraceCategory(cat).summaryEntries) {
             long long v = 0;
             for (const char* tn : e.typeNames) {

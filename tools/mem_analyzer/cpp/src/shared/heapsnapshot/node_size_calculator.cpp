@@ -979,7 +979,7 @@ static void RunLayeredBfs(
     std::vector<uint32_t>& lowPriRoots,
     ShortestPathsResult& result)
 {
-    constexpr uint32_t INVALID = 0xFFFFFFFF;
+    constexpr uint32_t invalid = 0xFFFFFFFF;
 
     // 'queued' is set immediately when a target is enqueued, matching the
     // reference implementation's queued[toNode.nodeIndex] = 1.
@@ -992,7 +992,7 @@ static void RunLayeredBfs(
     // pop_back() then processes the highest-index root first (LIFO),
     // matching the reference implementation's curQueue.pop().
     for (uint32_t idx : highPriRoots) {
-        result.pathEdges[idx] = {idx, INVALID};  // root points to itself
+        result.pathEdges[idx] = {idx, invalid};  // root points to itself
         curQueue.push_back(idx);
         queued[idx] = 1;
         result.reachableCount++;
@@ -1151,7 +1151,7 @@ static void RunLayeredBfs(
             auto [parent, ptr] = postponeQueue.back();
             postponeQueue.pop_back();
             uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
-            if (result.pathEdges[child].parentNodeIndex == INVALID) {
+            if (result.pathEdges[child].parentNodeIndex == invalid) {
                 result.pathEdges[child] = {parent, static_cast<uint32_t>(ptr)};
                 nextQueue.push_back(child);
             }
@@ -1164,7 +1164,7 @@ static void RunLayeredBfs(
             uint32_t idx = lowPriRoots.back();
             lowPriRoots.pop_back();
             if (!queued[idx]) {
-                result.pathEdges[idx] = {idx, INVALID};
+                result.pathEdges[idx] = {idx, invalid};
                 nextQueue.push_back(idx);
                 queued[idx] = 1;
                 result.reachableCount++;
@@ -1210,14 +1210,14 @@ ShortestPathsResult ComputeShortestPaths(const HeapSnapshot& snapshot,
         static_cast<uint32_t>(snapshot.nodeCount),
     };
 
-    constexpr uint32_t INVALID = 0xFFFFFFFF;
+    constexpr uint32_t invalid = 0xFFFFFFFF;
     ShortestPathsResult result;
     // 与 compute_node_sizes 对称：空快照直接返回，避免后面 collect_shortest_path_roots
     // 把节点 0 当根、对空 vector 越界写。
     if (ctx.nodeCount == 0) {
         return result;
     }
-    result.pathEdges.resize(ctx.nodeCount, {INVALID, INVALID});
+    result.pathEdges.resize(ctx.nodeCount, {invalid, invalid});
 
     std::vector<uint32_t> highPriRoots;
     std::vector<uint32_t> lowPriRoots;

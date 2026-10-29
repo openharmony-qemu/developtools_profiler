@@ -100,8 +100,8 @@ struct orderedSet {
     }
 
     // Range-based for support (iterate in insertion order)
-    auto begin() const { return items.begin(); }
-    auto end() const { return items.end(); }
+    auto Begin() const { return items.begin(); }
+    auto End() const { return items.end(); }
     auto begin() { return items.begin(); }
     auto end() { return items.end(); }
 
@@ -312,8 +312,8 @@ struct InnerMap {
         }
     }
 
-    auto begin() const { return items.begin(); }
-    auto end() const { return items.end(); }
+    auto Begin() const { return items.begin(); }
+    auto End() const { return items.end(); }
 };
 
 // ===== 方案2：近似判定的相对差值阈值 =====
@@ -952,7 +952,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     };
 
     // leak_mode: 收集非 top N 覆盖的栈 -> other, 追加到对应 top_symbols 分类
-    auto AppendOther = [&](std::vector<TopSymbolInfo>& targetVec, const std::vector<SymbolData>& finalSymbols) {
+    auto appendOther = [&](std::vector<TopSymbolInfo>& targetVec, const std::vector<SymbolData>& finalSymbols) {
         if (!config.leakMode) {
             return;
         }
@@ -993,7 +993,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         auto result = RunAlgorithm(appFiltered, callStacks, config);
         output.topSymbols.mode = "app-only";
         auto appSyms = buildAndEnrich(result.finalSymbols, callStacks, dataDict, topN);
-        AppendOther(appSyms, result.finalSymbols);
+        appendOther(appSyms, result.finalSymbols);
         output.topSymbols.app.sections.push_back(MakeSymbolSection(std::move(appSyms), symbolTrackKey.c_str()));
         output.stats = result.stats;
         output.stats.orgSetSize = appOrg;
@@ -1002,7 +1002,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         auto result = RunAlgorithm(sysFiltered, callStacks, config);
         output.topSymbols.mode = "system-only";
         auto sysSyms = buildAndEnrich(result.finalSymbols, callStacks, dataDict, topN);
-        AppendOther(sysSyms, result.finalSymbols);
+        appendOther(sysSyms, result.finalSymbols);
         output.topSymbols.system.sections.push_back(MakeSymbolSection(std::move(sysSyms), symbolTrackKey.c_str()));
         output.stats = result.stats;
         output.stats.orgSetSize = sysOrg;
@@ -1011,7 +1011,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         auto result = RunAlgorithm(mixedFiltered, callStacks, config);
         output.topSymbols.mode = "mixed";
         auto mixedSyms = buildAndEnrich(result.finalSymbols, callStacks, dataDict, topN);
-        AppendOther(mixedSyms, result.finalSymbols);
+        appendOther(mixedSyms, result.finalSymbols);
         output.topSymbols.mixed.sections.push_back(MakeSymbolSection(std::move(mixedSyms), symbolTrackKey.c_str()));
         output.stats = result.stats;
         output.stats.orgSetSize = mixedOrg;
@@ -1023,10 +1023,10 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         auto sysResult = RunAlgorithm(sysFiltered, callStacks, config);
         output.topSymbols.mode = "app-and-system";
         auto appSyms = buildAndEnrich(appResult.finalSymbols, callStacks, dataDict, topN);
-        AppendOther(appSyms, appResult.finalSymbols);
+        appendOther(appSyms, appResult.finalSymbols);
         output.topSymbols.app.sections.push_back(MakeSymbolSection(std::move(appSyms), symbolTrackKey.c_str()));
         auto sysSyms = buildAndEnrich(sysResult.finalSymbols, callStacks, dataDict, topN);
-        AppendOther(sysSyms, sysResult.finalSymbols);
+        appendOther(sysSyms, sysResult.finalSymbols);
         output.topSymbols.system.sections.push_back(MakeSymbolSection(std::move(sysSyms), symbolTrackKey.c_str()));
         output.stats.orgSetSize = appOrg + sysOrg;
         output.stats.filteredSetSize = appResult.stats.filteredSetSize + sysResult.stats.filteredSetSize;

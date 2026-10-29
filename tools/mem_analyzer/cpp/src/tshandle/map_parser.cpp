@@ -300,10 +300,9 @@ ParseAddrResult ParseAddrFile(const std::string& filePath)
     size_t fileSize = static_cast<size_t>(file.tellg());
     file.seekg(0);
 
-    constexpr size_t MAX_ADDR_FILE_BYTES = 4ULL * 1024 * 1024 * 1024;  // 4 GiB，防恶意超大 addr 文件 OOM
-    if (fileSize > MAX_ADDR_FILE_BYTES) {
-        throw std::runtime_error("addr file too large (" + std::to_string(fileSize) +
-                                 " bytes): " + filePath);
+    constexpr size_t maxAddrFileBytes = 4ULL * 1024 * 1024 * 1024;  // 4 GiB，防恶意超大 addr 文件 OOM
+    if (fileSize > maxAddrFileBytes) {
+        throw std::runtime_error("addr file too large (" + std::to_string(fileSize) + " bytes): " + filePath);
     }
 
     std::vector<uint8_t> data(fileSize);

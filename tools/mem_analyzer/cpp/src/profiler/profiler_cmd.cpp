@@ -819,11 +819,11 @@ static bool ResolveProcessName(const std::string& input, bool requireApp, std::s
 // platform the tool ships for.
 static std::string AsPathSegment(const std::string& name)
 {
-    static const std::string ILLEGAL = "/\\:*?\"<>|";
+    static const std::string illegal = "/\\:*?\"<>|";
     std::string out;
     out.reserve(name.size());
     for (const char c : name) {
-        out += (ILLEGAL.find(c) != std::string::npos) ? '_' : c;
+        out += (illegal.find(c) != std::string::npos) ? '_' : c;
     }
     while (!out.empty() && (out.back() == ' ' || out.back() == '.')) {
         out.pop_back();
@@ -836,13 +836,13 @@ static std::string AsPathSegment(const std::string& name)
 std::string ResolveMemAnalyzerBinary()
 {
 #if defined(_WIN32)
-    constexpr const char* BINARY_NAME = "mem-analyzer.exe";
+    constexpr const char* binaryName = "mem-analyzer.exe";
 #else
-    constexpr const char* BINARY_NAME = "mem-analyzer";
+    constexpr const char* binaryName = "mem-analyzer";
 #endif
     const std::string exeDir = proc::GetExecutableDir();
-    return exeDir.empty() ? BINARY_NAME :
-                           platform::JoinPath(exeDir, BINARY_NAME);
+    return exeDir.empty() ? binaryName :
+                           platform::JoinPath(exeDir, binaryName);
 }
 
 // Undo the nesting the analysis subcommands apply to their output: move

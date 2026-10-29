@@ -26,7 +26,7 @@ namespace mem_analyzer {
 namespace {
 
 std::string g_connectKey;        // device id (serial number); empty => no -t is added
-bool gTargetResolved = false;   // whether the gate has already resolved the target
+bool g_targetResolved = false;   // whether the gate has already resolved the target
 
 // Contract check for the three command builders: the gate must have resolved the
 // target before any business command is built. A missed gate is the dangerous case
@@ -36,7 +36,7 @@ bool gTargetResolved = false;   // whether the gate has already resolved the tar
 // so a programming mistake cannot cut short a user's running capture.
 void CheckTargetResolved(const char* fn)
 {
-    if (gTargetResolved) {
+    if (g_targetResolved) {
         return;
     }
     static bool warned = false;
@@ -45,7 +45,7 @@ void CheckTargetResolved(const char* fn)
         log::Loge("[internal] ", fn, "() called before target resolution; continuing without -t");
     }
     // Mark resolved so later builders skip this check.
-    gTargetResolved = true;
+    g_targetResolved = true;
 }
 
 constexpr size_t MAX_KEY_LEN = 64;  // max length of a usable device id
@@ -93,12 +93,12 @@ std::string trimmed(const std::string& s)
 
 // ---- Global target state ----
 
-void HdcMarkTargetResolved() { gTargetResolved = true; }
+void HdcMarkTargetResolved() { g_targetResolved = true; }
 
 void HdcSetConnectKey(const std::string& key)
 {
     g_connectKey = key;
-    gTargetResolved = true;
+    g_targetResolved = true;
 }
 
 const std::string& HdcConnectKey() { return g_connectKey; }

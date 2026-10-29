@@ -440,10 +440,10 @@ std::string DeobfuscateOneString(const std::string& value,
             if (entry != nullptr && !entry->sourcePath.empty()) {
                 std::string suffix = (hashPos == std::string::npos) ? "" : result.substr(hashPos);
                 // 映射 (line:N)：取 N，若该行在 mappings 中有映射则替换为源码行号
-                const std::string LINE_PREFIX = "(line:";
-                const size_t lp = suffix.find(LINE_PREFIX);
+                const std::string linePrefix = "(line:";
+                const size_t lp = suffix.find(linePrefix);
                 if (lp != std::string::npos) {
-                    const size_t numBegin = lp + LINE_PREFIX.size();
+                    const size_t numBegin = lp + linePrefix.size();
                     const size_t numEnd = suffix.find(')', numBegin);
                     if (numEnd != std::string::npos) {
                         const std::string numStr = suffix.substr(numBegin, numEnd - numBegin);
@@ -514,13 +514,13 @@ bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& ou
     }
 
     // 1. 流式定位 "strings": 标记及其后的 '['
-    const std::string MARKER = "\"strings\":";
-    size_t markPos = FindMarkerOffset(in, MARKER, 0, fileSize);
+    const std::string marker = "\"strings\":";
+    size_t markPos = FindMarkerOffset(in, marker, 0, fileSize);
     if (markPos == std::string::npos) {
         log::Loge("Error: No \"strings\" field in heapsnapshot file: ", inputPath);
         return false;
     }
-    size_t openBracket = FindCharAfter(in, '[', markPos + MARKER.size(), fileSize);
+    size_t openBracket = FindCharAfter(in, '[', markPos + marker.size(), fileSize);
     if (openBracket == std::string::npos) {
         log::Loge("Error: \"strings\" is not an array in heapsnapshot file: ", inputPath);
         return false;
