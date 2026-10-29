@@ -100,8 +100,8 @@ struct orderedSet {
     }
 
     // Range-based for support (iterate in insertion order)
-    auto Begin() const { return items.begin(); }
-    auto End() const { return items.end(); }
+    auto begin() const { return items.begin(); }
+    auto end() const { return items.end(); }
     auto begin() { return items.begin(); }
     auto end() { return items.end(); }
 
@@ -312,8 +312,8 @@ struct InnerMap {
         }
     }
 
-    auto Begin() const { return items.begin(); }
-    auto End() const { return items.end(); }
+    auto begin() const { return items.begin(); }
+    auto end() const { return items.end(); }
 };
 
 // ===== 方案2：近似判定的相对差值阈值 =====
