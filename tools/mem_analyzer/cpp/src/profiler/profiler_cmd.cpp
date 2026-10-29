@@ -887,6 +887,7 @@ void FlattenReportDir(const std::string& dir, const std::string& stem)
 constexpr int EXIT_PROFILER_FAILED = 2;
 constexpr int EXIT_EXPORT_FAILED = 3;
 constexpr int EXIT_CONFIG_FAILED = 2;
+constexpr int EXIT_API_CHECK_FAILED = 2;
 
 } // namespace
 
@@ -1012,7 +1013,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
 
     // 6. API version check.
     if (!CheckApiVersion(minApiVersion)) {
-        return 2;
+        return EXIT_API_CHECK_FAILED;
     }
 
     // 7. Process template.

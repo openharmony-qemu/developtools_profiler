@@ -35,6 +35,7 @@ namespace zipUtils {
 namespace {
 constexpr int WIN_DRIVE_LETTER_MIN_LEN = 2;
 constexpr int UNZIP_BUF_SIZE_KB = 64;
+constexpr int BYTES_PER_KB = 1024;
 } // namespace
 
 namespace {
@@ -152,7 +153,7 @@ bool ExtractZip(const std::string& zipPath, const std::string& destDir, std::str
             return false;
         }
 
-        std::vector<char> buf(UNZIP_BUF_SIZE_KB * 1024);
+        std::vector<char> buf(UNZIP_BUF_SIZE_KB * BYTES_PER_KB);
         int n = 0;
         while ((n = unzReadCurrentFile(uf, buf.data(), static_cast<unsigned>(buf.size()))) > 0) {
             out.write(buf.data(), n);

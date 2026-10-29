@@ -74,6 +74,7 @@ constexpr int VISITED_SET_INITIAL_CAPACITY = 16;
 constexpr int ARROW_SEPARATOR_LEN = 4;
 constexpr int ESCAPE_CHAR_SKIP_LEN = 2;
 constexpr int HEX_UPPER_NIBBLE_SHIFT = 4;
+constexpr int DECIMAL_BASE = 10;
 
 // 快速判断字符串是否为纯数字（内联）
 inline bool IsNumericString(const std::string& s)
@@ -571,11 +572,11 @@ private:
             if (c >= '0' && c <= '9') {
                 const uint32_t digit = static_cast<uint32_t>(c - '0');
                 // 溢出检查：num * 10 + digit 超出 uint32 范围即视为损坏/恶意输入。
-                if (num > (UINT32_MAX - digit) / 10) {
+                if (num > (UINT32_MAX - digit) / DECIMAL_BASE) {
                     throw std::runtime_error(
                         "heapsnapshot: numeric array contains an integer exceeding uint32");
                 }
-                num = num * 10 + digit;
+                num = num * DECIMAL_BASE + digit;
                 inNum = true;
             } else if (inNum) {
                 out.push_back(num);

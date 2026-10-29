@@ -33,6 +33,8 @@ constexpr int PROTO_FIELD_NUM_SHIFT = 3;
 constexpr int PROTO_WIRE_TYPE_LEN_DELIMITED = 2;
 constexpr int PROTO_ADDR_FILE_MIN_SIZE = 3;
 constexpr int HEX_PREFIX_LEN = 2;
+constexpr int PROTO_WIRE_TYPE_FIXED32 = 5;
+constexpr int PROTO_FIXED32_BYTES = 4;
 constexpr int PROTO_FIELD_NODE_ID = 2;
 } // namespace
 
@@ -76,7 +78,7 @@ static size_t SkipProtobufField(const uint8_t* data, size_t size, size_t offset,
             }
             return offset + static_cast<size_t>(len);
         }
-        case 5: return offset + 4;
+        case PROTO_WIRE_TYPE_FIXED32: return offset + PROTO_FIXED32_BYTES;
         default: return size;
     }
 }
