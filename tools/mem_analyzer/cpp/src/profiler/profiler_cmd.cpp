@@ -509,7 +509,7 @@ constexpr size_t CAPTURE_TYPE_COUNT = sizeof(CAPTURE_TYPES) / sizeof(CAPTURE_TYP
 //   localhandle  → local, lh
 //   fd, dma, thread, ashmem → (no alias, already short)
 // Returns nullptr and sets err_msg on unrecognized input.
-const CaptureTypeInfo* resolveCategory(const std::string& cat, std::string& errMsg)
+const CaptureTypeInfo* ResolveCategory(const std::string& cat, std::string& errMsg)
 {
     struct CategoryMapping {
         const char* name;
@@ -962,7 +962,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
 
     // 4. Resolve category string to capture type.
     std::string errMsg;
-    const CaptureTypeInfo* capture = resolveCategory(category, errMsg);
+    const CaptureTypeInfo* capture = ResolveCategory(category, errMsg);
     if (!capture) {
         log::Loge("Error:", errMsg);
         return 2;

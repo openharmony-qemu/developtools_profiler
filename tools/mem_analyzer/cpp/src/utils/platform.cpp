@@ -194,7 +194,7 @@ bool CreateDirectory(const std::string& path)
 #endif
 }
 
-std::string dirname(const std::string& path)
+std::string Dirname(const std::string& path)
 {
     return PathToUtf8(PathFromUtf8(path).parent_path());
 }
@@ -214,7 +214,7 @@ std::string JoinPath(const std::string& a, const std::string& b)
     return PathToUtf8(PathFromUtf8(a) / b);
 }
 
-std::string filename(const std::string& path)
+std::string Filename(const std::string& path)
 {
     return PathToUtf8(PathFromUtf8(path).filename());
 }

@@ -132,7 +132,7 @@ bool PreviewFeaturesMgr::Save(std::string& err) const
     json j;
     j["enabled"] = std::move(enabled);
 
-    const std::string dir = platform::dirname(configPath_);
+    const std::string dir = platform::Dirname(configPath_);
     if (!dir.empty() && !platform::DirectoryExists(dir)) {
         std::error_code ec;
         fs::create_directories(PathFromUtf8(dir), ec);

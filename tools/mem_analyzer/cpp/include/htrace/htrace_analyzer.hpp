@@ -81,7 +81,7 @@ struct HtraceSection {
 struct ScopeResult {
     std::vector<HtraceSection> sections;
 
-    bool empty() const
+    bool Empty() const
     {
         for (const auto& s : sections)
             if (!s.rows.empty()) {

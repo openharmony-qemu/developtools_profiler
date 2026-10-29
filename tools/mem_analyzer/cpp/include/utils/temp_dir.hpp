@@ -62,7 +62,7 @@ public:
     void Cleanup();
 
     /// Release ownership so the destructor does NOT remove the directory.
-    void release() { released_ = true; }
+    void Release() { released_ = true; }
 
     /// Remove the root mem-analyzer/ directory in the system temp if empty.
     /// Safe to call even if the directory does not exist.

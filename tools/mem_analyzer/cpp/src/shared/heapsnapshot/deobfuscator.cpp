@@ -649,7 +649,7 @@ bool DeobfuscateWithIndices(const std::string& inputPath, const std::string& out
     // 创建输出文件的父目录。注意：macOS libc++ 的 fs::create_directories 在
     // 目录已存在时返回 false 且 ec 为空（与 Linux/标准实现返回 true 不同），
     // 因此仅当 ec 非空（创建真失败）时才报错，目录已存在视为成功。
-    const std::string parentDir = mem_analyzer::platform::dirname(outputPath);
+    const std::string parentDir = mem_analyzer::platform::Dirname(outputPath);
     if (!parentDir.empty()) {
         std::error_code ec;
         if (!fs::create_directories(mem_analyzer::PathFromUtf8(parentDir), ec) && ec) {

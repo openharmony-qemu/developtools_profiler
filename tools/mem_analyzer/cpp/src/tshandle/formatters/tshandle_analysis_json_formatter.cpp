@@ -178,7 +178,7 @@ std::string TshandleWriteAnalysisJson(const TshandleAnalysisOutput& analysis,
     JsonStreamWriter writer(outPath);
 
     json meta = BuildOutputMetaBase(ctx);
-    std::string filename = platform::filename(filePath);
+    std::string filename = platform::Filename(filePath);
     auto dotPos = filename.rfind('.');
     std::string fileType = (dotPos != std::string::npos) ? filename.substr(dotPos + 1) : "";
     meta["sourceFileInfo"] = {{"name", filePath}, {"fileType", fileType}};

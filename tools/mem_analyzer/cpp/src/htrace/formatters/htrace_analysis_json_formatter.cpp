@@ -197,7 +197,7 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
     // 且每个键恒写（该轨为空也输出空数组）。scope 全空（所有轨均无行）才跳过。
     // mmap → {mmapAnons, mmapFilepages}；非 mmap → {nativeHeaps} / {dmas} / …（键来自描述符表 tracks[].json_key）。
     auto writeScope = [&](const std::string& key, const ScopeResult& scope) {
-        if (scope.empty()) {
+        if (scope.Empty()) {
             return;
         }
         writer.WriteKey(key);

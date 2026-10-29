@@ -89,7 +89,7 @@ extern "C" void HandleSigint(int)
 // gate): on an hdc device-level failure, flag it and surface the hdc text once, so
 // polling loops can bail out early instead of spinning until timeout. Untargeted runs
 // (no key pinned: 0 devices, noisy parse, hdc failure) never trigger this.
-std::atomic<bool> gHdcDeviceFailed{false};
+std::atomic<bool> g_hdcDeviceFailed{false};
 
 bool NoteDeviceFailure(const std::string& output)
 {
@@ -99,7 +99,7 @@ bool NoteDeviceFailure(const std::string& output)
     if (!HdcIsDeviceFailure(output)) {
         return false;
     }
-    if (!gHdcDeviceFailed.exchange(true)) {
+    if (!g_hdcDeviceFailed.exchange(true)) {
         log::Loge(HdcFailureLines(output));
     }
     return true;
@@ -126,7 +126,7 @@ bool NoteDeviceFailure(const std::string& output)
 // returns early while no key is pinned), so 0-device runs behave exactly as before.
 // A 1-device run IS pinned by the gate, so it gains this early-stop behaviour on
 // purpose — that is what the auto-pin is for (see resolve_device_target()).
-bool DeviceLost() { return gHdcDeviceFailed.load(); }
+bool DeviceLost() { return g_hdcDeviceFailed.load(); }
 
 // Whole seconds elapsed since `start`.
 long long ElapsedSince(clockType::time_point start)

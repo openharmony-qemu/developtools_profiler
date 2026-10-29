@@ -79,7 +79,7 @@ template <typename Pred> std::vector<RefChainInfo> collectRefChains(const HeapSn
             result.emplace_back(std::move(kv.second));
         }
     } else {
-        const size_t K = *topK;
+        const size_t k = *topK;
 
         // 第一遍：统计每条引用链（按 hash）的累计 retained size
         std::unordered_map<RefChainKey, uint64_t, RefChainKeyHash> sizeMap;
@@ -101,7 +101,7 @@ template <typename Pred> std::vector<RefChainInfo> collectRefChains(const HeapSn
         auto cmp = [](const Pair& a, const Pair& b) { return a.second > b.second; };
         std::priority_queue<Pair, std::vector<Pair>, decltype(cmp)> minHeap(cmp);
         for (const auto& entry : sizeMap) {
-            if (minHeap.size() < K) {
+            if (minHeap.size() < k) {
                 minHeap.push(entry);
             } else if (!minHeap.empty() && entry.second > minHeap.top().second) {
                 minHeap.pop();
