@@ -1217,7 +1217,8 @@ ShortestPathsResult ComputeShortestPaths(const HeapSnapshot& snapshot,
     }
     result.pathEdges.resize(ctx.nodeCount, {INVALID, INVALID});
 
-    std::vector<uint32_t> highPriRoots, lowPriRoots;
+    std::vector<uint32_t> highPriRoots;
+    std::vector<uint32_t> lowPriRoots;
     CollectShortestPathRoots(ctx, highPriRoots, lowPriRoots);
 
     RunLayeredBfs(ctx, highPriRoots, lowPriRoots, result);

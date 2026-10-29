@@ -22,53 +22,52 @@ namespace mem_analyzer {
 // HiProfiler NativeHookConfig（native_hook_config.proto）
 // 未出现在文件中的字段保持默认值。
 struct HtraceNativeHookConfig {
-    bool present = false;               // 是否解析到 nativehook_config 段
-
-    int32_t  pid = 0;                   // 1
-    bool     saveFile = false;         // 2
-    std::string fileName;              // 3
-    int32_t  filterSize = 0;           // 4
-    int32_t  smbPages = 0;             // 5
-    int32_t  maxStackDepth = 0;       // 6
-    std::string processName;           // 7
-    bool     mallocDisable = false;    // 8
-    bool     mmapDisable = false;      // 9
-    bool     freeStackReport = false; // 10
-    bool     munmapStackReport = false; // 11
-    uint32_t mallocFreeMatchingInterval = 0; // 12
-    uint32_t mallocFreeMatchingCnt = 0;      // 13
-    bool     stringCompressed = false; // 14
-    bool     fpUnwind = false;         // 15
-    bool     blocked = false;           // 16
-    bool     recordAccurately = false; // 17
-    bool     startupMode = false;      // 18
-    bool     memtraceEnable = false;   // 19
-    bool     offlineSymbolization = false; // 20
-    bool     callframeCompress = false;    // 21
-    uint32_t statisticsInterval = 0;   // 22
-    std::string clock;                  // 23
-    uint32_t sampleInterval = 0;       // 24
-    bool     responseLibraryMode = false; // 25
-    std::vector<int32_t> expandPids;   // 26 (repeated int32)
-    int32_t  jsStackReport = 0;       // 27
-    uint32_t maxJsStackDepth = 0;    // 28
-    std::string filterNapiName;       // 29
-    bool     dumpNmd = false;          // 30
-    std::string targetSoName;         // 31
-    std::vector<std::string> restraceTag; // 32 (repeated string)
-    bool     asyncStackEnable = false;// 33
-    std::vector<uint32_t> asyncType;   // 34 (repeated enum)
-    uint32_t uniqueStackTableSize = 0; // 35
-    bool     useFileCacheMode = false; // 36
-    uint32_t fileCacheBufferSize = 0;  // 37
-    bool     allocatorSamplingEnable = false; // 38
-    bool     nativeOrphansnapshotsEnable = false; // 39
-    bool     nestedAsyncStackEnable = false;     // 40
-    std::vector<std::string> filterLibList; // 41 (repeated string)
-    uint32_t asyncNestingDepth = 0;     // 42
-    uint32_t asyncTaskStackDepth = 0;  // 43
-    bool     arkuiMemTraceEnable = false; // 44
-    bool     discardDestroyedTraces = false; // 45
+    bool present = false;                     // 是否解析到 nativehook_config 段
+    int32_t pid = 0;                          // 1
+    bool saveFile = false;                    // 2
+    std::string fileName;                     // 3
+    int32_t filterSize = 0;                   // 4
+    int32_t smbPages = 0;                     // 5
+    int32_t maxStackDepth = 0;                // 6
+    std::string processName;                  // 7
+    bool mallocDisable = false;               // 8
+    bool mmapDisable = false;                 // 9
+    bool freeStackReport = false;             // 10
+    bool munmapStackReport = false;           // 11
+    uint32_t mallocFreeMatchingInterval = 0;  // 12
+    uint32_t mallocFreeMatchingCnt = 0;       // 13
+    bool stringCompressed = false;            // 14
+    bool fpUnwind = false;                    // 15
+    bool blocked = false;                     // 16
+    bool recordAccurately = false;            // 17
+    bool startupMode = false;                 // 18
+    bool memtraceEnable = false;              // 19
+    bool offlineSymbolization = false;        // 20
+    bool callframeCompress = false;           // 21
+    uint32_t statisticsInterval = 0;          // 22
+    std::string clock;                        // 23
+    uint32_t sampleInterval = 0;              // 24
+    bool responseLibraryMode = false;         // 25
+    std::vector<int32_t> expandPids;          // 26 (repeated int32)
+    int32_t  jsStackReport = 0;               // 27
+    uint32_t maxJsStackDepth = 0;             // 28
+    std::string filterNapiName;               // 29
+    bool dumpNmd = false;                     // 30
+    std::string targetSoName;                 // 31
+    std::vector<std::string> restraceTag;     // 32 (repeated string)
+    bool asyncStackEnable = false;            // 33
+    std::vector<uint32_t> asyncType;          // 34 (repeated enum)
+    uint32_t uniqueStackTableSize = 0;        // 35
+    bool useFileCacheMode = false;            // 36
+    uint32_t fileCacheBufferSize = 0;         // 37
+    bool allocatorSamplingEnable = false;     // 38
+    bool nativeOrphansnapshotsEnable = false; // 39
+    bool nestedAsyncStackEnable = false;      // 40
+    std::vector<std::string> filterLibList;   // 41 (repeated string)
+    uint32_t asyncNestingDepth = 0;           // 42
+    uint32_t asyncTaskStackDepth = 0;         // 43
+    bool arkuiMemTraceEnable = false;         // 44
+    bool discardDestroyedTraces = false;      // 45
 };
 
 // 直接读取原始 .htrace 文件信息（零依赖，手工解析 protobuf wire format）。

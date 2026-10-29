@@ -62,7 +62,7 @@ std::unordered_set<uint64_t> ReadLeakFile(const std::string& path)
     if (!f.read(magic, 8)) {
         throw std::runtime_error("Leak file too short for magic: " + path);
     }
-    static const char EXPECTED[8] = {'N','S','N','A','P','1','.','0'};
+    static const char EXPECTED[8] = {'N', 'S', 'N', 'A', 'P', '1', '.', '0'};
     if (std::memcmp(magic, EXPECTED, 8) != 0) {
         throw std::runtime_error("Invalid leak file magic (expected NSNAP1.0): " + path);
     }

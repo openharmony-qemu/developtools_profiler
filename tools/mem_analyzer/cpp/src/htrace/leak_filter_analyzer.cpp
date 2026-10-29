@@ -159,7 +159,8 @@ HtraceAnalysisOutput HtraceLeakAnalyze(TraceDB& db, const RunContext& ctx)
         " / ", total, " stacks (", l2Removed, " filtered by emutls).");
 
     // L3: 栈分 app/system（mixed 不分，直接用全部栈）
-    std::vector<CompressedCallStack> appStacks, systemStacks;
+    std::vector<CompressedCallStack> appStacks;
+    std::vector<CompressedCallStack> systemStacks;
     if (scope != Scope::MIXED) {
         for (auto& cs : clist->stacks) {
             if (HasAppSoFrame(cs, clist->dict)) {

@@ -263,7 +263,9 @@ bool HtraceConfigMgr::MatchTsPattern(const std::string& lib, const std::string& 
 
     if (ext == ".ts" || ext == ".js") {
         if (dot + TS_JS_PATTERN_LEN <= lib.size()) {
-            char a = lib[dot + 1], b = lib[dot + EXT_CHAR2_OFFSET], c = lib[dot + TS_JS_COLON_OFFSET];
+            char a = lib[dot + 1];
+            char b = lib[dot + EXT_CHAR2_OFFSET];
+            char c = lib[dot + TS_JS_COLON_OFFSET];
             if (a == ext[1] && b == ext[EXT_CHAR2_OFFSET] && c == ':') {
                 return ValidLineCol(dot + TS_JS_COLON_OFFSET);
             }

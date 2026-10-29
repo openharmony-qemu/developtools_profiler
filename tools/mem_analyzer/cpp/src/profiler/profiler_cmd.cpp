@@ -56,7 +56,8 @@ int RunCommandStreaming(const std::string& cmd)
 {
 #if defined(_WIN32)
     SECURITY_ATTRIBUTES sa{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
-    HANDLE hRead = nullptr, hWrite = nullptr;
+    HANDLE hRead = nullptr;
+    HANDLE hWrite = nullptr;
     if (!CreatePipe(&hRead, &hWrite, &sa, 0)) {
         return -1;
     }
@@ -906,7 +907,8 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
     int durationVal = opt.duration;
     std::string outputDirVal = opt.outputDir;
     std::string category = opt.category;
-    bool flagReport = opt.flagReport, flagListApps = opt.flagListApps;
+    bool flagReport = opt.flagReport;
+    bool flagListApps = opt.flagListApps;
 
     // 3.4 Target device gate: decides the target before ANY hdc command (including
     //     --list-apps) — see resolve_device_target(). It prints nothing on the
@@ -1151,7 +1153,8 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
         // snapshots. With -o, generate a single comparison report (start=baseline,
         // end=target) via jsleak -b, instead of per-file reports.
         if (continuousSnapshot && !rr.snapshotPulledFiles.empty()) {
-            std::string baselineFile, targetFile;
+            std::string baselineFile;
+            std::string targetFile;
             for (const auto& f : rr.snapshotPulledFiles) {
                 const std::string stem = platform::stem(f);
                 if (stem.empty()) {
@@ -1180,7 +1183,8 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
                     "falling back to file modification timestamps.");
                 fs::file_time_type minTime = fs::file_time_type::max();
                 fs::file_time_type maxTime = fs::file_time_type::min();
-                std::string earliest, latest;
+                std::string earliest;
+                std::string latest;
                 for (const auto& f : rr.snapshotPulledFiles) {
                     std::error_code ec;
                     const auto t = fs::last_write_time(PathFromUtf8(f), ec);

@@ -187,7 +187,8 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
 #if defined(_WIN32)
     // Create an inheritable pipe for the child's stdout.
     SECURITY_ATTRIBUTES sa{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
-    HANDLE hRead = nullptr, hWrite = nullptr;
+    HANDLE hRead = nullptr;
+    HANDLE hWrite = nullptr;
     if (!CreatePipe(&hRead, &hWrite, &sa, 0)) {
         return cap;
     }

@@ -60,7 +60,8 @@ json TraceMetaToJson(const TshandleAnalysisOutput& analysis)
         long long shallow = 0;
         long long retained = 0;
     };
-    Totals globalTotals, localTotals;
+    Totals globalTotals;
+    Totals localTotals;
 
     for (const auto& stack : analysis.callStacks) {
         if (stack.type == HtraceEventType::ARK_GLOBAL_HANDLE) {

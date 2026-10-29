@@ -825,12 +825,14 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
             symName = (sit != dataDict.end()) ? sit->second : "";
         };
         auto isNoise = [&](const SymbolData& sd) {
-            std::string libFile, symName;
+            std::string libFile;
+            std::string symName;
             ResolveNames(sd, libFile, symName);
             return HtraceConfigMgr::Instance().ShouldFilter(libFile, symName, filterScope);
         };
         auto IsOrphanRecoverable = [&](const SymbolData& sd) {
-            std::string libFile, symName;
+            std::string libFile;
+            std::string symName;
             ResolveNames(sd, libFile, symName);
             return HtraceConfigMgr::Instance().IsOrphanRecoverable(libFile, symName, filterScope);
         };
@@ -1135,7 +1137,8 @@ HtraceAnalysisOutput AnalyzeCallStacks(
 
     // category == "mmap": split into mmap-anon (MMAP_ANON) and mmap-filepage (FILE_PAGE_MSG).
     // anon 走 symbol 管道；filepage 走旁路（按文件聚合 + app/system 分类）。
-    std::vector<CompressedCallStack> anonStacks, filepageStacks;
+    std::vector<CompressedCallStack> anonStacks;
+    std::vector<CompressedCallStack> filepageStacks;
     for (const auto& cs : callStacks) {
         if (cs.type == HtraceEventType::MMAP_ANON) {
             anonStacks.push_back(cs);

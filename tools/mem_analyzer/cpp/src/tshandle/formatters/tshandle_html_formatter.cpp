@@ -181,7 +181,7 @@ SectionResult BuildSection(const char* tabId, const char* label,
             "); return false;\" class=\"detail-link\">详情</a></td>\n"
             "    <td class=\"top-size-val\">" << FormatBytes(object.existingSize) << "</td>\n"
             "    <td>" << object.count << "</td>\n"
-            "                <td class=\"top-pct-val\">" << ToFixed(std::min(PERCENTAGE_SCALE, object.percentage), 2) << "%</td>\n"
+            "    <td class=\"top-pct-val\">" << ToFixed(std::min(PERCENTAGE_SCALE, object.percentage), 2) << "%</td>\n"
             "    <td class=\"top-func\">" << EscapeHtml(object.objectName) << "</td>\n"
             "  </tr>\n";
         ++rowIndex;

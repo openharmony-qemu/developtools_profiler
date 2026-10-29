@@ -278,7 +278,7 @@ void LoadDetailStacks(HtraceParseContext& ctx,
     }
 
     // 聚合键扩展为 (callchain_id, sub_type_id)：同一 ccid 理论上可能 mmap 多文件。
-    std::vector<std::map<std::pair<int,int>, AllocEntry>> allocMaps(configs.size());
+    std::vector<std::map<std::pair<int, int>, AllocEntry>> allocMaps(configs.size());
 
     // Build lookup: alloc event_type string → list of mapping indices.
     // The same event_type ("MmapEvent") may map to multiple HtraceEventTypes,

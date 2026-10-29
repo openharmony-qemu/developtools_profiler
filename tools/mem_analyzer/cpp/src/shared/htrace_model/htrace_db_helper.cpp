@@ -181,19 +181,19 @@ void QueryFrames(sqlite3* db, const std::string& chainSelect, std::unordered_map
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         FrameRow fr;
-        fr.depth        = sqlite3_column_int(stmt, 0);
-        fr.symbolId    = sqlite3_column_int(stmt, 1);
+        fr.depth = sqlite3_column_int(stmt, 0);
+        fr.symbolId = sqlite3_column_int(stmt, 1);
         fr.fileIdNull = (sqlite3_column_type(stmt, COL_FILE_ID) == SQLITE_NULL);
-        fr.fileId      = fr.fileIdNull ? 0 : sqlite3_column_int(stmt, COL_FILE_ID);
+        fr.fileId = fr.fileIdNull ? 0 : sqlite3_column_int(stmt, COL_FILE_ID);
         fr.callchainId = sqlite3_column_int(stmt, COL_CALLCHAIN_ID);
-        fr.vaddrNull   = (sqlite3_column_type(stmt, COL_VADDR) == SQLITE_NULL);
-        fr.vaddr        = 0;
+        fr.vaddrNull = (sqlite3_column_type(stmt, COL_VADDR) == SQLITE_NULL);
+        fr.vaddr = 0;
         if (!fr.vaddrNull) {
             const char* s = reinterpret_cast<const char*>(sqlite3_column_text(stmt, COL_VADDR));
             fr.vaddr = s ? static_cast<uint64_t>(strtoull(s, nullptr, 0)) : 0;
         }
         fr.buildIdNull = (sqlite3_column_type(stmt, COL_BUILD_ID) == SQLITE_NULL);
-        fr.buildId      = fr.buildIdNull ? 0 : sqlite3_column_int(stmt, COL_BUILD_ID);
+        fr.buildId = fr.buildIdNull ? 0 : sqlite3_column_int(stmt, COL_BUILD_ID);
 
         out[fr.callchainId].push_back(std::move(fr));
     }

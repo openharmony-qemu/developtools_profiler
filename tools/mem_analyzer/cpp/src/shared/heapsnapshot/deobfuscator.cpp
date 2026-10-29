@@ -428,7 +428,9 @@ std::string DeobfuscateOneString(const std::string& value,
             // 并尝试将 (line:N) 由编译产物行号映射为源码行号。
             const size_t hashPos = result.find('#');
             const std::string pathPart = result.substr(0, hashPos);
-            std::string module, version, relPath;
+            std::string module;
+            std::string version;
+            std::string relPath;
             entry = nullptr;
             if (ParseArktsModulePath(pathPart, module, version, relPath)) {
                 entry = smap->LookupByModule(module, version, relPath);

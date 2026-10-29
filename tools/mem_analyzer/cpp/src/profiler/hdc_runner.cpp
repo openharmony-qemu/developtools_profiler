@@ -668,7 +668,10 @@ std::map<std::string, long long> listDirFileSizes(const std::string& dir,
         if (perm.empty() || perm[0] != '-') {
             continue; // skip dirs / "total" / blank
         }
-        std::string links, owner, group, sizeStr;
+        std::string links;
+        std::string owner;
+        std::string group;
+        std::string sizeStr;
         if (!(lss >> links >> owner >> group >> sizeStr)) {
             continue;
         }
@@ -1339,7 +1342,8 @@ std::string GetProcessPid(const std::string& processName)
             }
 
             std::istringstream lss(line);
-            std::string pid, tok;
+            std::string pid;
+            std::string tok;
             for (int col = 0; col < PS_FIELD_COUNT; ++col) {
                 if (!(lss >> tok)) {
                     pid.clear();
@@ -1630,7 +1634,8 @@ std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::s
         // 宽字符避免中文进程名的 ANSI 乱码；管道合并 stderr 到 stdout，
         // 消除 cmd.exe 对 `&|<>^` 等元字符的解释（主机命令注入）。
         SECURITY_ATTRIBUTES sa{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
-        HANDLE hRead = nullptr, hWrite = nullptr;
+        HANDLE hRead = nullptr;
+        HANDLE hWrite = nullptr;
         if (!CreatePipe(&hRead, &hWrite, &sa, 0)) {
             state->spawnFailed = true;
             state->done = true;
@@ -2487,8 +2492,12 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
     result.snapshotAttempted = true;
 
     std::string pid = pre.initialPid;
-    std::vector<std::string> startFiles, peakFiles, endFiles;
-    std::string status, output, err;
+    std::vector<std::string> startFiles;
+    std::vector<std::string> peakFiles;
+    std::vector<std::string> endFiles;
+    std::string status;
+    std::string output;
+    std::string err;
     std::string transcript;
 
     // The caller already created this session's directory
@@ -2592,7 +2601,9 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
                     // even if the export itself fails.
                     arktsPeakKb = metrics.arktsHeapKb;
                     std::vector<std::string> newPeak;
-                    std::string peakStatus, peakOutput, peakErr;
+                    std::string peakStatus;
+                    std::string peakOutput;
+                    std::string peakErr;
                     if (exportSnapshotOnce(opts, command, "peak", newPeak, peakStatus,
                         peakOutput, peakErr)) {
                         // Only one peak snapshot is kept: the new export is

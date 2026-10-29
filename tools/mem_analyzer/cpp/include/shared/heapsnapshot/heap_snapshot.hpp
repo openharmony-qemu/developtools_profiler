@@ -37,15 +37,19 @@ struct RefChainKey {
 };
 
 /// 引用链聚合 key 的桶哈希（把 128-bit 混合成单个 size_t bucket 索引）。
+constexpr int MIX_SHIFT_1 = 30;
+constexpr int MIX_SHIFT_2 = 27;
+constexpr int MIX_SHIFT_3 = 31;
+
 struct RefChainKeyHash {
     std::size_t operator()(const RefChainKey& k) const
     {
         uint64_t x = k.lo ^ (k.hi * 0x9E3779B97F4A7C15ULL);
-        x ^= x >> 30;
+        x ^= x >> MIX_SHIFT_1;
         x *= 0xBF58476D1CE4E5B9ULL;
-        x ^= x >> 27;
+        x ^= x >> MIX_SHIFT_2;
         x *= 0x94D049BB133111EBULL;
-        x ^= x >> 31;
+        x ^= x >> MIX_SHIFT_3;
         return static_cast<std::size_t>(x);
     }
 };

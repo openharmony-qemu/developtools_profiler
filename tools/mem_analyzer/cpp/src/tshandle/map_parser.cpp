@@ -235,7 +235,8 @@ ParseAddrResult ParseAddrToNodeId(const std::string& content)
         }
 
         std::istringstream lineStream(trimmed);
-        std::string addrStr, nodeIdStr;
+        std::string addrStr;
+        std::string nodeIdStr;
         if (!(lineStream >> addrStr)) {
             continue;
         }
