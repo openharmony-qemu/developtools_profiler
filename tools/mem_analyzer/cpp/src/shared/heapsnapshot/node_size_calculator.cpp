@@ -137,7 +137,7 @@ struct DomContext {
 // ============================================================================
 static void ComputePageFlags(DomContext& ctx, std::vector<uint32_t>& pageFlags, StageTimer& timer)
 {
-    constexpr uint32_t PAGE_OBJECT_FLAG = 1;  // single bit flag
+    constexpr uint32_t pageObjectFlag = 1;  // single bit flag
     pageFlags.assign(ctx.nodeCount, 0);
 
     // Use a stack-based DFS (not recursive) to avoid stack overflow on large heaps
@@ -170,8 +170,8 @@ static void ComputePageFlags(DomContext& ctx, std::vector<uint32_t>& pageFlags, 
         }
 
         uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
-        if (child < ctx.nodeCount && !(pageFlags[child] & PAGE_OBJECT_FLAG)) {
-            pageFlags[child] |= PAGE_OBJECT_FLAG;
+        if (child < ctx.nodeCount && !(pageFlags[child] & pageObjectFlag)) {
+            pageFlags[child] |= pageObjectFlag;
             stack[sp++] = child;
         }
     }
@@ -189,8 +189,8 @@ static void ComputePageFlags(DomContext& ctx, std::vector<uint32_t>& pageFlags, 
                 continue;
             }
             uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
-            if (child < ctx.nodeCount && !(pageFlags[child] & PAGE_OBJECT_FLAG)) {
-                pageFlags[child] |= PAGE_OBJECT_FLAG;
+            if (child < ctx.nodeCount && !(pageFlags[child] & pageObjectFlag)) {
+                pageFlags[child] |= pageObjectFlag;
                 stack[sp++] = child;
             }
         }
@@ -220,7 +220,7 @@ struct PostOrderResult {
 
 static PostOrderResult ComputeDfsPostOrder(DomContext& ctx, const std::vector<uint32_t>& pageFlags, StageTimer& timer)
 {
-    constexpr uint32_t PAGE_OBJECT_FLAG = 1;
+    constexpr uint32_t pageObjectFlag = 1;
 
     // ---- Edge filter for DFS reachability ----
     // Combines isEssentialEdge (weak + non-root shortcut) with page-flag exclusion.
@@ -242,8 +242,8 @@ static PostOrderResult ComputeDfsPostOrder(DomContext& ctx, const std::vector<ui
         // these should not affect the dominance relation.
         uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
         if (sourceNode != ROOT && child < ctx.nodeCount &&
-            (pageFlags[child] & PAGE_OBJECT_FLAG) &&
-            !(pageFlags[sourceNode] & PAGE_OBJECT_FLAG)) {
+            (pageFlags[child] & pageObjectFlag) &&
+            !(pageFlags[sourceNode] & pageObjectFlag)) {
             return false;
         }
         return true;
@@ -432,7 +432,7 @@ static std::vector<uint32_t> computeLtDominators(
     const ReverseCSR& rev,
     StageTimer& timer)
 {
-    constexpr uint32_t PAGE_OBJECT_FLAG = 1;
+    constexpr uint32_t pageObjectFlag = 1;
 
     // ---- Edge filter for the LT DFS (same as post-order DFS) ----
     auto isTraversable = [&](uint32_t sourceNode, size_t ptr) -> bool {
@@ -445,8 +445,8 @@ static std::vector<uint32_t> computeLtDominators(
         }
         uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
         if (sourceNode != ROOT && child < ctx.nodeCount &&
-            (pageFlags[child] & PAGE_OBJECT_FLAG) &&
-            !(pageFlags[sourceNode] & PAGE_OBJECT_FLAG)) {
+            (pageFlags[child] & pageObjectFlag) &&
+            !(pageFlags[sourceNode] & pageObjectFlag)) {
             return false;
         }
         return true;
@@ -615,8 +615,8 @@ static std::vector<uint32_t> computeLtDominators(
 
             // Page-flag exclusion: skip edges from non-page-owned to page-owned nodes
             if (pred != ROOT &&
-                (pageFlags[w] & PAGE_OBJECT_FLAG) &&
-                !(pageFlags[pred] & PAGE_OBJECT_FLAG)) {
+                (pageFlags[w] & pageObjectFlag) &&
+                !(pageFlags[pred] & pageObjectFlag)) {
                 continue;
             }
 

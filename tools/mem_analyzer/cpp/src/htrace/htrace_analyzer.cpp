@@ -301,7 +301,7 @@ struct InnerMap {
     std::vector<std::pair<int, long long>> items;
     std::unordered_map<int, size_t> idx;
 
-    void add(int key, long long val)
+    void Add(int key, long long val)
     {
         auto it = idx.find(key);
         if (it == idx.end()) {
@@ -350,12 +350,12 @@ static ApproxResult CalcApproximations(
     const std::vector<CompressedCallStack>& callStacks,
     const AnalysisConfig& config)
 {
-    int N = (int)filtered.size();
+    int n = (int)filtered.size();
 
     // Build uid → index map (int keys for all internal lookups)
     std::unordered_map<uint64_t, int> symIndex;
-    symIndex.reserve(N);
-    for (int i = 0; i < N; i++) {
+    symIndex.reserve(n);
+    for (int i = 0; i < n; i++) {
         symIndex[filtered[i]->uid] = i;
     }
 
@@ -420,7 +420,7 @@ static ApproxResult CalcApproximations(
                     contrib.emplace_back(deepIdx, InnerMap());
                     cIt = contribIdx.find(deepIdx);
                 }
-                contrib[cIt->second].second.add(shallowIdx, leak);
+                contrib[cIt->second].second.Add(shallowIdx, leak);
 
                 // alloc: insert shallow in insertion order
                 auto aIt = allocIdx.find(shallowIdx);
@@ -429,7 +429,7 @@ static ApproxResult CalcApproximations(
                     alloc.emplace_back(shallowIdx, InnerMap());
                     aIt = allocIdx.find(shallowIdx);
                 }
-                alloc[aIt->second].second.add(deepIdx, leak);
+                alloc[aIt->second].second.Add(deepIdx, leak);
             }
         }
     }

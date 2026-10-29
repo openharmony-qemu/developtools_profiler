@@ -53,7 +53,7 @@ using proc::ShellQuote;
 using proc::CapturedCmd;
 
 namespace fs = std::filesystem;
-using clockType = std::chrono::steady_clock;
+using ClockType = std::chrono::steady_clock;
 
 namespace {
 
@@ -129,11 +129,11 @@ bool NoteDeviceFailure(const std::string& output)
 bool DeviceLost() { return g_hdcDeviceFailed.load(); }
 
 // Whole seconds elapsed since `start`.
-long long ElapsedSince(clockType::time_point start)
+long long ElapsedSince(ClockType::time_point start)
 {
     return static_cast<long long>(
         std::chrono::duration_cast<std::chrono::seconds>(
-            clockType::now() - start)
+            ClockType::now() - start)
             .count());
 }
 
@@ -354,7 +354,7 @@ ProcessMetrics SampleProcessMetrics(const std::string& pid, long long timeoutMs 
 // fast before a capture / poll loop runs to completion.
 std::string DetectPermissionError(const std::string& output)
 {
-    static const char* MARKERS[] = {
+    static const char* markers[] = {
         "permission check failed",
         "debug-signed application",
         "permission denied",
@@ -372,7 +372,7 @@ std::string DetectPermissionError(const std::string& output)
 
     for (size_t i = 0; i < lines.size(); ++i) {
         bool hit = false;
-        for (const char* m : MARKERS) {
+        for (const char* m : markers) {
             if (ContainsCi(lines[i], m)) {
                 hit = true;
                 break;
@@ -736,7 +736,7 @@ void pollAndPullSnapshot(const std::string& resultDir,
     const std::string& role = "")
 {
     const int intervalS = 2;
-    auto start = clockType::now();
+    auto start = ClockType::now();
 
     std::map<std::string, long long> prevSizes;  // candidates' sizes from prior poll
     std::map<std::string, long long> stable;      // candidates confirmed complete
@@ -1014,13 +1014,13 @@ void StopHiprofiler()
 {
     std::atomic<bool> stopDone{false};
     CapturedCmd stopCap;
-    std::thread StopWorker([&]() {
+    std::thread stopWorker([&]() {
         std::string stopCmd = HdcShell("hiprofiler_cmd stop") + " 2>&1";
         stopCap = CaptureCommand(stopCmd);
         stopDone = true;
     });
 
-    const auto stopStart = clockType::now();
+    const auto stopStart = ClockType::now();
     while (!stopDone.load()) {
         const long long wait = ElapsedSince(stopStart);
         // Only show progress once the wait becomes non-trivial.
@@ -1031,7 +1031,7 @@ void StopHiprofiler()
         // Sleep up to 5s, waking every 100ms so we react to completion.
         SleepTicks(PROGRESS_INTERVAL_TICKS, [&]() { return stopDone.load(); });
     }
-    StopWorker.join();
+    stopWorker.join();
 
     if (!stopCap.output.empty()) {
         std::cout << stopCap.output;
@@ -1057,7 +1057,7 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
 
     long long prevSize = -1;
     int stableCount = 0;
-    auto pollStart = clockType::now();
+    auto pollStart = ClockType::now();
 
     for (int i = 0; i < timeoutS; ++i) {
         if (DeviceLost()) { // pinned target: device-level failure -> stop polling now
@@ -1147,7 +1147,7 @@ std::string WaitForNativeleaksFile(const std::string& pid, const std::string& di
 
     long long prevSize = -1;
     int stableCount = 0;
-    auto pollStart = clockType::now();
+    auto pollStart = ClockType::now();
 
     for (int i = 0; i < timeoutS; ++i) {
         if (DeviceLost()) {
@@ -1958,7 +1958,7 @@ void maybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
 //     Process status comes from the background pid_checker thread
 //     (non-blocking read of shared state).
 void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
-    clockType::time_point start, const PreCaptureState& pre,
+    ClockType::time_point start, const PreCaptureState& pre,
     bool asyncStartMode, bool snapshotMode,
     bool& startExported, std::thread& startExportThread,
     RunResult& result)
@@ -2090,7 +2090,7 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
 // instead — the background threads are detached and finish on their own (they
 // only reference the heap-allocated shared state, so this is safe).
 void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
-    clockType::time_point start, bool asyncStartMode,
+    ClockType::time_point start, bool asyncStartMode,
     std::thread& worker, std::thread& pidChecker,
     std::thread& freshRestartThread,
     std::thread& startExportThread, RunResult& result)
@@ -2240,7 +2240,7 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
 // temp config file. The end-of-capture smaps/lsof snapshot is exported in
 // stop_and_join_threads, before `hiprofiler_cmd stop` runs.
 void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
-    clockType::time_point start, bool snapshotMode,
+    ClockType::time_point start, bool snapshotMode,
     bool asyncStartMode,
     const std::map<std::string, long long>& resultBaseline,
     const std::map<std::string, long long>& hiprofilerZipBaseline,
@@ -2473,7 +2473,7 @@ void RemoveSnapshotArtifacts(const std::vector<std::string>& files)
 void RunContinuousSnapshot(const HdcRunOptions& opts,
     const std::string& command,
     const PreCaptureState& pre,
-    clockType::time_point start,
+    ClockType::time_point start,
     RunResult& result)
 {
     result.snapshotAttempted = true;
@@ -2663,7 +2663,7 @@ RunResult RunHdc(const HdcRunOptions& opts)
     }
 
     auto state = std::make_shared<CaptureState>();
-    const auto start = clockType::now();
+    const auto start = ClockType::now();
 
     PreCaptureState pre;
     if (!PrepareCaptureStart(opts, snapshotMode, pre, result)) {

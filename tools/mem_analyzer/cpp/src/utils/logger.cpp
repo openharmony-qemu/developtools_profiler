@@ -105,7 +105,7 @@ unsigned ThreadIdShort()
 } // namespace
 
 void SetLevel(Level min) { g_level.store(min); }
-Level level() { return g_level.load(); }
+Level GetLevel() { return g_level.load(); }
 void SetPrefix(Prefix flags) { g_prefix.store(static_cast<unsigned>(flags)); }
 
 void SetSink(std::shared_ptr<Sink> sink)
@@ -134,7 +134,7 @@ void WriteLine(Level lv, bool dim, const std::string& msg)
                              paint(lv, dim, msg) + "\n";
 
     if (g_sink) {
-        g_sink->write(lv, line);
+        g_sink->Write(lv, line);
         return;
     }
     // 诊断统一走 stderr（无缓冲单流）：保证与 error 的严格输出顺序，并保持 stdout 干净

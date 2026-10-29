@@ -1213,7 +1213,7 @@ static void ComputePathsAndRetained(HeapSnapshot& snapshot)
         auto paths = ComputeShortestPaths(snapshot, true, true, true);
         snapshot.pathParentIndex.resize(snapshot.nodeCount);
         snapshot.pathEdgeStart.resize(snapshot.nodeCount);
-        constexpr uint32_t INVALID = 0xFFFFFFFF;
+        constexpr uint32_t invalid = 0xFFFFFFFF;
         for (uint32_t i = 0; i < static_cast<uint32_t>(snapshot.nodeCount); i++) {
             snapshot.pathParentIndex[i] = paths.pathEdges[i].parentNodeIndex;
             snapshot.pathEdgeStart[i] = paths.pathEdges[i].edgeFieldStart;
@@ -1393,11 +1393,11 @@ uint32_t HeapSnapshot::GetNodeInternalHash(uint32_t nodeIndex) const
 /// Format the shortest reference chain from a GC root to the given node.
 /// Walks up via path_parent_index (set by compute_shortest_paths).
 /// Root nodes have path_parent_index[root] == root (self-reference).
-/// Unreachable nodes have path_parent_index == INVALID.
+/// Unreachable nodes have path_parent_index == invalid.
 /// Format: "RootNode -> ChildNode -> TargetNode"
 std::string HeapSnapshot::FormatRefChain(uint32_t nodeIndex) const
 {
-    constexpr uint32_t INVALID = 0xFFFFFFFF;
+    constexpr uint32_t invalid = 0xFFFFFFFF;
     
     // 先收集节点索引，避免在收集过程中反复访问名称
     std::vector<uint32_t> indices;
@@ -1411,7 +1411,7 @@ std::string HeapSnapshot::FormatRefChain(uint32_t nodeIndex) const
             return "";
         }
         uint32_t parent = pathParentIndex[cur];
-        if (parent == INVALID) {
+        if (parent == invalid) {
             return ""; // unreachable
         }
         indices.push_back(cur);
@@ -1452,7 +1452,7 @@ std::string HeapSnapshot::FormatRefChain(uint32_t nodeIndex) const
 
 std::vector<std::string> HeapSnapshot::FormatRefChainFrames(uint32_t nodeIndex) const
 {
-    constexpr uint32_t INVALID = 0xFFFFFFFF;
+    constexpr uint32_t invalid = 0xFFFFFFFF;
 
     std::vector<uint32_t> indices;
     indices.reserve(REF_CHAIN_INDICES_RESERVE);
@@ -1465,7 +1465,7 @@ std::vector<std::string> HeapSnapshot::FormatRefChainFrames(uint32_t nodeIndex) 
             return {};
         }
         uint32_t parent = pathParentIndex[cur];
-        if (parent == INVALID) {
+        if (parent == invalid) {
             return {};  // unreachable
         }
         indices.push_back(cur);
@@ -1531,7 +1531,7 @@ RefChainKey FnvContinue(const RefChainKey& prev, const std::string& name)
 
 RefChainKey HeapSnapshot::RefChainHash(uint32_t nodeIndex) const
 {
-    constexpr uint32_t INVALID = 0xFFFFFFFF;
+    constexpr uint32_t invalid = 0xFFFFFFFF;
     if (nodeIndex >= static_cast<uint32_t>(nodeCount)) {
         return RefChainKey{};
     }
@@ -1565,7 +1565,7 @@ RefChainKey HeapSnapshot::RefChainHash(uint32_t nodeIndex) const
             while (!chainHashComputed_[cur] && path.size() < cycleLimit) {
                 path.push_back(cur);
                 const uint32_t parent = pathParentIndex[cur];
-                if (parent == INVALID || parent == cur) {
+                if (parent == invalid || parent == cur) {
                     break;
                 }
                 cur = parent;
@@ -1577,7 +1577,7 @@ RefChainKey HeapSnapshot::RefChainHash(uint32_t nodeIndex) const
             for (auto it = path.rbegin(); it != path.rend(); ++it) {
                 const uint32_t u = *it;
                 const uint32_t p = pathParentIndex[u];
-                if (p == INVALID || p >= static_cast<uint32_t>(N)) {
+                if (p == invalid || p >= static_cast<uint32_t>(N)) {
                     chainHash_[u] = RefChainKey{};  // 不可达 => {0,0}
                 } else if (p == u) {
                     chainHash_[u] = FnvSeed(extNames_[u]);  // root：种子

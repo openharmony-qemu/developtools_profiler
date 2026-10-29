@@ -33,14 +33,14 @@ enum class Prefix : unsigned {
 
 // ── 全局状态 ──
 void SetLevel(Level min);          // 低于 min 的日志被丢弃；默认 Info
-Level level();
+Level GetLevel();
 void SetPrefix(Prefix flags);      // 默认 None
 
 // ── 后端抽象（默认 console：stderr）──
 class Sink {
 public:
     virtual ~Sink() = default;
-    virtual void write(Level lv, const std::string& line) = 0;
+    virtual void Write(Level lv, const std::string& line) = 0;
 };
 void SetSink(std::shared_ptr<Sink> sink);
 
@@ -77,7 +77,7 @@ template <typename... Args> void Loge(Args&&... a)
 template <typename... Args>
 void Emit(Level lv, bool dim, Args&&... args)
 {
-    if (lv < level()) { // ① 级别过滤（先于字符串构造）
+    if (lv < GetLevel()) { // ① 级别过滤（先于字符串构造）
         return;
     }
     std::ostringstream oss;

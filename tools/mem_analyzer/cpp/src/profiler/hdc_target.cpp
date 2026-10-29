@@ -79,7 +79,7 @@ bool IsHdcChatter(const std::string& s)
     return s[0] == '*' || s[0] == '[';   // "[Empty]"/"[Fail]" are handled by the caller
 }
 
-std::string trimmed(const std::string& s)
+std::string Trimmed(const std::string& s)
 {
     const auto b = s.find_first_not_of(" \t\r\n");
     if (b == std::string::npos) {
@@ -138,7 +138,7 @@ HdcTargets HdcListTargets()
     std::istringstream iss(cap.output);
     std::string line;
     while (std::getline(iss, line)) {
-        const std::string s = trimmed(line);
+        const std::string s = Trimmed(line);
         if (s.empty()) {
             continue;
         }
@@ -174,7 +174,7 @@ bool HdcIsDeviceFailure(const std::string& output)
     std::istringstream iss(output);
     std::string line;
     while (std::getline(iss, line)) {
-        if (trimmed(line).rfind("[Fail]", 0) == 0) {
+        if (Trimmed(line).rfind("[Fail]", 0) == 0) {
             return true;
         }
     }
@@ -187,7 +187,7 @@ std::string HdcFailureLines(const std::string& output)
     std::istringstream iss(output);
     std::string line;
     while (std::getline(iss, line)) {
-        if (trimmed(line).rfind("[Fail]", 0) != 0) {
+        if (Trimmed(line).rfind("[Fail]", 0) != 0) {
             continue; // drop hdc internal log lines
         }
         out += line;
@@ -203,7 +203,7 @@ std::string HdcUnparsedLines(const std::string& output, size_t maxLines)
     std::istringstream iss(output);
     std::string line;
     while (std::getline(iss, line)) {
-        const std::string s = trimmed(line);
+        const std::string s = Trimmed(line);
         if (s.empty()) {
             continue;
         }

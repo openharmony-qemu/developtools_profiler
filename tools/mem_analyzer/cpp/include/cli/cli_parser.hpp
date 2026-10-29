@@ -102,7 +102,7 @@ public:
     const std::string& MatchedSubcommand() const { return matchedSubcommand_; }
 
     // ── Error/help handling (mimics CLI::App::exit) ──────────
-    int exit(const std::exception& e) const;
+    int Exit(const std::exception& e) const;
 
     // ── Print help ───────────────────────────────────────────
     void PrintHelp(std::ostream& os = std::cout) const;

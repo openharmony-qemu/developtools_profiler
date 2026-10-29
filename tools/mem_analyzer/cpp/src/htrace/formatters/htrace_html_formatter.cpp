@@ -406,13 +406,13 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
     if (startMs > 0) {
         time_t t = static_cast<time_t>(startMs / 1000);
         char buf[64];
-        struct tm tm_info;
+        struct tm tmInfo;
 #if defined(_WIN32)
-        localtime_s(&tm_info, &t);
+        localtime_s(&tmInfo, &t);
 #else
-        localtime_r(&t, &tm_info);
+        localtime_r(&t, &tmInfo);
 #endif
-        std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", &tm_info);
+        std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", &tmInfo);
         timestamp = buf;
     }
     std::string formattedTimestamp = timestamp;

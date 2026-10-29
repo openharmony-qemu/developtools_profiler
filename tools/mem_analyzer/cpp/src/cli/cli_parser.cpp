@@ -401,7 +401,7 @@ bool CliParser::IsSubcommand(const std::string& name) const
 // exit()
 // ═══════════════════════════════════════════════════════════════
 
-int CliParser::exit(const std::exception& e) const
+int CliParser::Exit(const std::exception& e) const
 {
     const auto* ce = dynamic_cast<const CliError*>(&e);
     if (ce && ce->isHelp) {

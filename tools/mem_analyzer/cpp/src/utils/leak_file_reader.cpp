@@ -67,8 +67,8 @@ std::unordered_set<uint64_t> ReadLeakFile(const std::string& path)
     if (!f.read(magic, NSAPI_VERSON_LENGTH)) {
         throw std::runtime_error("Leak file too short for magic: " + path);
     }
-    static const char EXPECTED[NSAPI_VERSON_LENGTH] = {'N', 'S', 'N', 'A', 'P', '1', '.', '0'};
-    if (std::memcmp(magic, EXPECTED, NSAPI_VERSON_LENGTH) != 0) {
+    static const char expected[NSAPI_VERSON_LENGTH] = {'N', 'S', 'N', 'A', 'P', '1', '.', '0'};
+    if (std::memcmp(magic, expected, NSAPI_VERSON_LENGTH) != 0) {
         throw std::runtime_error("Invalid leak file magic (expected NSNAP1.0): " + path);
     }
 
