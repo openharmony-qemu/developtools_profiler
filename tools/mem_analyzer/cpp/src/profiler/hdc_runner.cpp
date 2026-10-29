@@ -1790,11 +1790,8 @@ std::thread SpawnPidChecker(const std::shared_ptr<CaptureState>& state,
                 }
             }
             // Sleep 5s between checks, in 100ms ticks so we stop promptly.
-            SleepTicks(PROGRESS_INTERVAL_TICKS, [state, ignoreDone]()
-            {
-                return state->stopPidCheck.load() ||
-                       DeviceLost() ||
-                       (state->done.load() && !ignoreDone);
+            SleepTicks(PROGRESS_INTERVAL_TICKS, [state, ignoreDone]() {
+                return state->stopPidCheck.load() || DeviceLost() || (state->done.load() && !ignoreDone);
             });
         }
     });

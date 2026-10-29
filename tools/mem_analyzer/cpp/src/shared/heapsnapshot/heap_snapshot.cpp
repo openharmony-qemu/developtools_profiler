@@ -453,8 +453,7 @@ const std::string& HeapSnapshot::GetExtendedNodeName(uint32_t nodeIndex) const
     }
 
     // 一次性并行预构建全量扩展名，之后并行阶段无锁只读。
-    std::call_once(*extNamesOnce_, [this]()
-    {
+    std::call_once(*extNamesOnce_, [this]() {
         const auto t0 = std::chrono::steady_clock::now();
         log::Logd("[ref_chain] build ext_names start node_count=", nodeCount);
 
@@ -468,8 +467,7 @@ const std::string& HeapSnapshot::GetExtendedNodeName(uint32_t nodeIndex) const
             const int e = static_cast<int>((static_cast<long long>(N) * (t + 1)) / T);
             workers.emplace_back([this, b, e]() {
                 for (int i = b; i < e; ++i) {
-                    extNames_[static_cast<size_t>(i)] =
-                        ComputeExtendedName(static_cast<uint32_t>(i));
+                    extNames_[static_cast<size_t>(i)] = ComputeExtendedName(static_cast<uint32_t>(i));
                 }
             });
         }
@@ -954,9 +952,11 @@ static void ParseSnapshotMeta(HeapSnapshot& snapshot,
     for (int i = 0; i < static_cast<int>(edgeFields.size()); i++) {
         if (edgeFields[i] == "type") {
             snapshot.edgeTypeOffset = i;
+        } else if (edgeFields[i] == "name_or_index") {
+            snapshot.edgeNameOrIndexOffset = i;
+        } else if (edgeFields[i] == "to_node") {
+            snapshot.edgeToNodeOffset = i;
         }
-        else if (edgeFields[i] == "name_or_index") snapshot.edgeNameOrIndexOffset = i;
-        else if (edgeFields[i] == "to_node") snapshot.edgeToNodeOffset = i;
     }
 
     // 元数据完整性校验：缺失必填字段会让下游用 -1（转成 SIZE_MAX）当数组下标越界读，

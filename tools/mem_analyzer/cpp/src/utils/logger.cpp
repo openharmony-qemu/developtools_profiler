@@ -83,9 +83,9 @@ std::string TimestampNow()
     const std::time_t t = system_clock::to_time_t(now);
     std::tm tm{};
 #if defined(_WIN32)
-    localtime_s(&tm, &t);
+    (void)localtime_s(&tm, &t);
 #else
-    localtime_r(&t, &tm);
+    (void)localtime_r(&t, &tm);
 #endif
     char buf[16];
     std::strftime(buf, sizeof(buf), "%H:%M:%S", &tm);

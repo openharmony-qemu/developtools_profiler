@@ -520,8 +520,7 @@ void CliParser::PrintHelp(std::ostream& os) const
                 // Pad to 32 chars
                 if (optLine.size() < HELP_COLUMN_WIDTH) {
                     optLine.append(HELP_COLUMN_WIDTH - optLine.size(), ' ');
-                }
-                else {
+                } else {
                     optLine += "\n" + std::string(HELP_WRAP_INDENT, ' ');
                 }
 
