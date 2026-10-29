@@ -36,6 +36,7 @@ constexpr int IN_SWAP_OFFSET = 54;
 constexpr int SHARED_OFFSET = 53;
 constexpr int EXCLUSIVE_OFFSET = 52;
 constexpr int SOFTDIRTY_OFFSET = 51;
+constexpr uint64_t MAX_MAPPING_SIZE = (1ULL << 48); // 用户态 VA 空间上限（256TB），用于校验映射区间
 struct MapInfo {
     uint64_t startAddr; // 起始地址
     uint64_t endAddr;   // 结束地址
@@ -140,6 +141,14 @@ bool IsValidPid(const string& pid_str)
     });
     return ret;
 }
+
+bool IsValidMapping(const MapInfo& mapping)
+{
+    if (mapping.endAddr <= mapping.startAddr) {
+        return false;
+    }
+    return mapping.endAddr <= MAX_MAPPING_SIZE;
+}
 } // namespace
 
 int main(int argc, char* argv[])
@@ -177,10 +186,15 @@ int main(int argc, char* argv[])
     string line;
     while (getline(maps_file, line)) {
         MapInfo mapping;
-        bool ret = ParseMapsLine(line, mapping);
+        int ret = ParseMapsLine(line, mapping);
         if (ret != 0) {
             fdsan_close_with_tag(pagemapFd, FD_TAG_PAGEMAP);
             return ret;
+        }
+        if (!IsValidMapping(mapping)) {
+            cerr << "Invalid mapping range: " << hex << mapping.startAddr << '-' << mapping.endAddr << endl;
+            fdsan_close_with_tag(pagemapFd, FD_TAG_PAGEMAP);
+            return -1;
         }
         for (uint64_t tmpAddr = mapping.startAddr; tmpAddr < mapping.endAddr; tmpAddr += PAGE_SIZE) {
             // 计算文件中要读取的偏移量
