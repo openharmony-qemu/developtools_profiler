@@ -68,6 +68,8 @@ constexpr int UNICODE_ESCAPE_LEN = 6;
 constexpr int NODE_NAME_DISPLAY_MAX_LEN = 20;
 constexpr int NODES_MARKER_LEN = 8;
 constexpr int STRINGS_MARKER_LEN = 10;
+constexpr int UNICODE_ESCAPE_TAIL_LEN = 5;
+constexpr int MAX_PROP_NAMES = 10;
 
 // 快速判断字符串是否为纯数字（内联）
 inline bool IsNumericString(const std::string& s)
@@ -91,7 +93,7 @@ std::string HeapSnapshot::GetJsObjectExtName(uint32_t nodeIndex) const
     uint32_t ctorNode = 0xFFFFFFFF;
     std::string ctorName;
     std::vector<std::string> propNames;
-    propNames.reserve(10);
+    propNames.reserve(MAX_PROP_NAMES);
     std::unordered_set<std::string> added;
     added.reserve(NAME_SET_INITIAL_CAPACITY);
 
@@ -124,7 +126,7 @@ std::string HeapSnapshot::GetJsObjectExtName(uint32_t nodeIndex) const
         if (added.find(en) != added.end()) {
             continue;
         }
-        if (propNames.size() >= 10) {
+        if (propNames.size() >= MAX_PROP_NAMES) {
             break;
         }
         propNames.push_back(en);
@@ -247,9 +249,7 @@ std::string HeapSnapshot::ResolveStateMgmtWrappedClass(
 // 获取 stateMgmt.js#observedClass 全局对象的扩展名（沿原型链提取 ArkTS 类名）
 std::string HeapSnapshot::GetObservedClassExtName(uint32_t nodeIndex) const
 {
-    std::string resultProto =
-        ResolveStateMgmtWrappedClass(nodeIndex, {"stateMgmt.js#observedClass"});
-
+    std::string resultProto = ResolveStateMgmtWrappedClass(nodeIndex, {"stateMgmt.js#observedClass"});
     if (!resultProto.empty()) {
         return "stateMgmt.js#observedClass(" + resultProto + ")";
     }
@@ -421,12 +421,10 @@ std::string HeapSnapshot::ComputeExtendedName(uint32_t nodeIndex) const
     std::string result;
     std::string nodeName = GetNodeName(nodeIndex);
     std::string nodeType = GetNodeTypeName(nodeIndex);
-
     // 先按类型分流：string 节点的 node_name 就是字符串内容本身，若内容恰好含
     // "declarative_frontend/stateMgmt.js"（例如堆里保存的模块 URL），会被误判成
     // stateMgmt 对象，进而改变 property-tag / compare / 引用链的分组键。
-    if (nodeType != "string" &&
-        nodeName.find("declarative_frontend/stateMgmt.js") != std::string::npos) {
+    if (nodeType != "string" && nodeName.find("declarative_frontend/stateMgmt.js") != std::string::npos) {
         result = GetStateMgmtExtName(nodeIndex, nodeName);
     } else if (nodeType == "string") {
         result = GetStringExtName(nodeIndex);
@@ -786,7 +784,7 @@ static std::string SanitizeJsonStringArray(const std::string& strBuf)
                 char sc = strBuf[i];
                 if (sc == '\\') {
                     // Check for orphan surrogate: \uD[89AB]xx or \uD[CDEF]xx
-                    if (i + 5 < strBuf.size() && strBuf[i+1] == 'u') {
+                    if (i + UNICODE_ESCAPE_TAIL_LEN < strBuf.size() && strBuf[i+1] == 'u') {
                         char h1 = strBuf[i+2] | 0x20;  // lowercase
                         char h2 = strBuf[i+3];
                         if (h1 == 'd' && ((h2 >= '8' && h2 <= 'f') || (h2 >= 'A' && h2 <= 'F'))) {
@@ -1130,7 +1128,7 @@ static void ParseStringsTable(HeapSnapshot& snapshot, std::ifstream& file,
             std::string view(buf.data(), bytes);
             size_t bracket = view.find('[');
             if (bracket != std::string::npos) {
-                stringsBracketPos = markPos + 10 + bracket;
+                stringsBracketPos = markPos + STRINGS_MARKER_LEN + bracket;
             }
         }
     }

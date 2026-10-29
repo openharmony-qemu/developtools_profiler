@@ -418,7 +418,6 @@ bool SourceMapIndex::LoadFromDir(const std::string& dir)
 {
     std::error_code ec;
     const fs::path dirPath = mem_analyzer::PathFromUtf8(dir);
-
     // 直接指定单个 source map 文件（sourceMaps.map / *.map）时直接加载
     if (fs::is_regular_file(dirPath, ec)) {
         ec.clear();

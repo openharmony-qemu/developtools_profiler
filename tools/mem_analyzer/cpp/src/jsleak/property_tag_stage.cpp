@@ -24,6 +24,10 @@
 
 namespace mem_analyzer {
 
+namespace {
+constexpr int VISITED_SET_INITIAL_CAPACITY = 16;
+} // namespace
+
 PropertyTagStage::PropertyTagStage(const std::string& jsleakListFile)
 {
     LoadPropertyTagConfig();
@@ -111,7 +115,7 @@ BaseClassInfo PropertyTagStage::FindConcernType(uint32_t uNi, const std::vector<
     }
 
     std::unordered_set<uint32_t> visited;
-    visited.reserve(16);
+    visited.reserve(VISITED_SET_INITIAL_CAPACITY);
     uint32_t cur = uNi;
     bool lookingForHclass = true;
 

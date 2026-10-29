@@ -29,6 +29,9 @@ using htmlAnalysis::FormatSizeText;
 
 namespace {
 
+constexpr int MAX_NODE_IDS_DISPLAY = 10;
+constexpr int MAX_HASH_DISPLAY = 10;
+
 std::string BuildChainPathHtmlImpl(const json& chainFrames)
 {
     // chain 现为帧名数组（根 -> 目标），相邻帧间插入箭头 span。
@@ -154,11 +157,11 @@ std::string BuildNodeIdsHtml(const json& nodeIdsJson, const std::string& contain
     html += "<div class=\"chain-node-ids\" id=\"" + containerId +
         "\" data-label=\"节点ID\" data-all-ids=\"" + allIds + "\">节点ID: ";
 
-    size_t show = std::min(ids.size(), (size_t)10);
+    size_t show = std::min(ids.size(), (size_t)MAX_NODE_IDS_DISPLAY);
     for (size_t i = 0; i < show; ++i) {
         html += "<span class=\"node-id-tag\">" + ids[i] + "</span>";
     }
-    if (ids.size() > 10) {
+    if (ids.size() > MAX_NODE_IDS_DISPLAY) {
         html += "<span class=\"node-id-tag expand-btn\" id=\"expandBtn_" +
             containerId + "\" onclick=\"expandNodeIds('" + containerId + "')\">展开</span>";
     }
@@ -188,11 +191,11 @@ std::string BuildHashValuesHtml(const json &hashValuesJson, const std::string &c
     html += "<div class=\"chain-node-ids\" id=\"" + containerId +
         "\" data-all-hashes=\"" + allHashes + "\">hash值: ";
     
-    size_t show = std::min(hashes.size(), (size_t)10);
+    size_t show = std::min(hashes.size(), (size_t)MAX_HASH_DISPLAY);
     for (size_t i = 0; i < show; ++i) {
         html += "<span class=\"node-id-tag\">" + hashes[i] + "</span>";
     }
-    if (hashes.size() > 10) {
+    if (hashes.size() > MAX_HASH_DISPLAY) {
         html += "<span class=\"node-id-tag expand-btn\" id=\"expandBtn_" +
             containerId + "\" onclick=\"expandHashValues('" + containerId + "')\">展开</span>";
     }

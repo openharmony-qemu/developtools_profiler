@@ -115,7 +115,6 @@ bool NameCacheIndex::LoadFromDir(const std::string& dir)
     std::error_code ec;
     std::vector<std::string> files;
     const fs::path dirPath = mem_analyzer::PathFromUtf8(dir);
-
     // 直接指定 nameCache.json 文件本身
     if (fs::is_regular_file(dirPath, ec)) {
         files.push_back(dir);

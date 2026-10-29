@@ -193,7 +193,6 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
                 "OR (event_type = 'ARK_GLOBAL_HANDLE_Alloc_Event' AND end_ts IS NULL)";
         }
         auto framesByChain = ReadFrames(db, chainSelect);
-
         if (framesByChain.empty()) {
             throw std::runtime_error("Failed to query frames");
         }

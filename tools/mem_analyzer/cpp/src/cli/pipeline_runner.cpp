@@ -37,7 +37,6 @@ static bool CheckPathLength(const std::string& filePath, const std::string& outp
     auto absOut = platform::AbsolutePath(outputDir);
     auto absIn = platform::AbsolutePath(filePath);
     size_t outFileLen = absOut.size() + 1 + sourceName.size() + 5;
-
     if (outFileLen >= pathLimit) {
         log::Loge("Error: Output file path exceeds ", platformName, " limit (", pathLimit, " chars).\n"
                   "  Output file: ", absOut, "\\", sourceName, ".html (", outFileLen, " chars)\n"

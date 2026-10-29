@@ -40,14 +40,15 @@ struct FlameKey {
 };
 
 constexpr int HASH_COMBINE_LSHIFT = 6;
+constexpr int HASH_COMBINE_RSHIFT = 2;
 
 struct FlameKeyHash {
     size_t operator()(const FlameKey& k) const
     {
         size_t h = std::hash<int>{}(k.symbolId);
-        h ^= std::hash<int>{}(k.fileId) + 0x9e3779b9 + (h << HASH_COMBINE_LSHIFT) + (h >> 2);
-        h ^= std::hash<bool>{}(k.fileIdNull) + 0x9e3779b9 + (h << HASH_COMBINE_LSHIFT) + (h >> 2);
-        h ^= std::hash<int>{}(k.depth) + 0x9e3779b9 + (h << HASH_COMBINE_LSHIFT) + (h >> 2);
+        h ^= std::hash<int>{}(k.fileId) + 0x9e3779b9 + (h << HASH_COMBINE_LSHIFT) + (h >> HASH_COMBINE_RSHIFT);
+        h ^= std::hash<bool>{}(k.fileIdNull) + 0x9e3779b9 + (h << HASH_COMBINE_LSHIFT) + (h >> HASH_COMBINE_RSHIFT);
+        h ^= std::hash<int>{}(k.depth) + 0x9e3779b9 + (h << HASH_COMBINE_LSHIFT) + (h >> HASH_COMBINE_RSHIFT);
         return h;
     }
 };

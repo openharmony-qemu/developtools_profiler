@@ -31,6 +31,8 @@ constexpr int VARINT_BITS_PER_GROUP = 7;
 constexpr int VARINT_MAX_SHIFT = 64;
 constexpr int PROTO_FIELD_NUM_SHIFT = 3;
 constexpr int PROTO_WIRE_TYPE_LEN_DELIMITED = 2;
+constexpr int PROTO_ADDR_FILE_MIN_SIZE = 3;
+constexpr int HEX_PREFIX_LEN = 2;
 } // namespace
 
 // ============================================================================
@@ -80,7 +82,7 @@ static size_t SkipProtobufField(const uint8_t* data, size_t size, size_t offset,
 
 static bool IsProtobufAddrFile(const uint8_t* data, size_t size)
 {
-    if (size < 3) {
+    if (size < PROTO_ADDR_FILE_MIN_SIZE) {
         return false;
     }
     if (data[0] != 0x0a) {
@@ -193,8 +195,8 @@ static std::string NormalizeAddr(const std::string& raw)
         trimmed = trimmed.substr(0, end + 1);
     }
 
-    if (trimmed.size() >= 2 && trimmed[0] == '0' && (trimmed[1] == 'x' || trimmed[1] == 'X')) {
-        trimmed = trimmed.substr(2);
+    if (trimmed.size() >= HEX_PREFIX_LEN && trimmed[0] == '0' && (trimmed[1] == 'x' || trimmed[1] == 'X')) {
+        trimmed = trimmed.substr(HEX_PREFIX_LEN);
     }
 
     if (trimmed.empty()) {
@@ -233,7 +235,6 @@ ParseAddrResult ParseAddrToNodeId(const std::string& content)
         }
         size_t end = line.find_last_not_of(" \t\r\n");
         std::string trimmed = line.substr(start, end - start + 1);
-
         if (trimmed.empty()) {
             continue;
         }

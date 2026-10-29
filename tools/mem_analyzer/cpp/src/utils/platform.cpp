@@ -551,6 +551,5 @@ void OpenWithDefaultApp(const std::string& filePath)
     waitpid(pid, &status, 0);
 #endif
 }
-
 } // namespace platform
 } // namespace mem_analyzer

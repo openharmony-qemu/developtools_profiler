@@ -45,6 +45,7 @@ constexpr int PROTO_FIELD_NUM_SHIFT = 3;
 constexpr int PROTO_FIXED64_BYTES = 8;
 constexpr int PROTO_WIRE_TYPE_LEN_DELIMITED = 2;
 constexpr int PROTO_WIRE_TYPE_FIXED32 = 5;
+constexpr int PROTO_FIXED32_BYTES = 4;
 
 enum class HtraceDataType : uint32_t {
     PROTOBUF_BIN = 0,    // HIPROFILER_PROTOBUF_BIN，标准 HiProfiler protobuf 二进制
@@ -142,11 +143,11 @@ std::vector<Field> ParseFields(const uint8_t* buf, size_t size)
                 break;
             }
             case PROTO_WIRE_TYPE_FIXED32:
-                if (pos + 4 > size) {
+                if (pos + PROTO_FIXED32_BYTES > size) {
                     throw std::runtime_error("fixed32 out of range");
                 }
                 f.varint = ReadU32(buf + pos);
-                pos += 4;
+                pos += PROTO_FIXED32_BYTES;
                 break;
             default:
                 throw std::runtime_error("unsupported wire type");

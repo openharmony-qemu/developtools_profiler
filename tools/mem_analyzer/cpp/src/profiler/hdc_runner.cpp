@@ -600,7 +600,6 @@ std::map<std::string, long long> listHiprofilerZips(const std::string& dir)
         }
         const auto last = line.find_last_not_of(" \t\r\n");
         std::string name = line.substr(first, last - first + 1);
-
         // Filter: must start with "hiprofiler_data_" and end with ".zip".
         if (name.rfind("hiprofiler_data_", 0) != 0) {
             continue;
@@ -1365,7 +1364,6 @@ std::string GetProcessPid(const std::string& processName)
                 continue;
             }
             cmdField = cmdField.substr(cmdStart);
-
             if (cmdField == processName) {
                 return pid;
             }
@@ -1837,7 +1835,7 @@ std::thread SpawnFreshRestart(const std::shared_ptr<CaptureState>& state, const 
             if (failed) {
                 break;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_POLL_INTERVAL_MS));
         }
         if (!sessionUp) {
             log::Logw("Warning: capture session did not become ready; please restart '", processName, "' manually if needed.");
@@ -2038,7 +2036,6 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
                 pid = state->latestPid;
             }
             const bool running = !pid.empty();
-
             if (running && opts.requireFreshStart && pre.wasRunningAtStart &&
                 !state->pidChanged.load() && !state->freshRestartTriggered.load()) {
                 std::cout << "[" << ++roundNo << "] Remaining " << remain << "s, " <<
