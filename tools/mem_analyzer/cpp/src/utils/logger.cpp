@@ -104,9 +104,18 @@ unsigned ThreadIdShort()
 
 } // namespace
 
-void SetLevel(Level min) { g_level.store(min); }
-Level GetLevel() { return g_level.load(); }
-void SetPrefix(Prefix flags) { g_prefix.store(static_cast<unsigned>(flags)); }
+void SetLevel(Level min)
+{
+    g_level.store(min);
+}
+Level GetLevel()
+{
+    return g_level.load();
+}
+void SetPrefix(Prefix flags)
+{
+    g_prefix.store(static_cast<unsigned>(flags));
+}
 
 void SetSink(std::shared_ptr<Sink> sink)
 {

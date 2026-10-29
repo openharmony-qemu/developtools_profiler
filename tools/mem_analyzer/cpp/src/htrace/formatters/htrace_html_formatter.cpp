@@ -293,13 +293,14 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
         std::vector<SymbolDataEntry> entries;
         entries.reserve(scope.SymbolCount());
         int rank = 1;
-        for (const auto& section : scope.sections)
+        for (const auto& section : scope.sections) {
             for (const auto& row : section.rows)
                 if (const auto* ts = std::get_if<TopSymbolInfo>(&row)) {
                     auto entry = BuildSymbolDataEntryFromContextLight(*ts, totalExistingSize, full.dataDict);
                     entry.info["rank"] = rank++;
                     entries.push_back(std::move(entry));
                 }
+        }
         return entries;
     };
 

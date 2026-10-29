@@ -14,5 +14,8 @@
  */
 #include <string>
 namespace mem_analyzer {
-std::string GetVersion() { return "0.7.0"; }
+std::string GetVersion()
+{
+    return "0.7.0";
+}
 }

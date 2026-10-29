@@ -126,7 +126,10 @@ bool NoteDeviceFailure(const std::string& output)
 // returns early while no key is pinned), so 0-device runs behave exactly as before.
 // A 1-device run IS pinned by the gate, so it gains this early-stop behaviour on
 // purpose — that is what the auto-pin is for (see resolve_device_target()).
-bool DeviceLost() { return g_hdcDeviceFailed.load(); }
+bool DeviceLost()
+{
+    return g_hdcDeviceFailed.load();
+}
 
 // Whole seconds elapsed since `start`.
 long long ElapsedSince(ClockType::time_point start)

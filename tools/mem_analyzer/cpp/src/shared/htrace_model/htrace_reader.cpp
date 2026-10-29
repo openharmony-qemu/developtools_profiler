@@ -329,21 +329,23 @@ bool DecodeConfig(const std::string& data, HtraceNativeHookConfig& out)
     auto asRepeatedInt = [&repeatedPacked](uint32_t n) {
         std::vector<int32_t> r;
         auto it = repeatedPacked.find(n);
-        if (it != repeatedPacked.end())
+        if (it != repeatedPacked.end()) {
             for (const auto& blob : it->second)
                 for (uint64_t v : UnpackPackedVarints(blob)) {
                     r.push_back(AsInt32(v));
                 }
+        }
         return r;
     };
     auto asRepeatedEnum = [&repeatedPacked](uint32_t n) {
         std::vector<uint32_t> r;
         auto it = repeatedPacked.find(n);
-        if (it != repeatedPacked.end())
+        if (it != repeatedPacked.end()) {
             for (const auto& blob : it->second)
                 for (uint64_t v : UnpackPackedVarints(blob)) {
                     r.push_back(static_cast<uint32_t>(v));
                 }
+        }
         return r;
     };
     auto asRepeatedStr = [&repeatedStrs](uint32_t n) {

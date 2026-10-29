@@ -102,8 +102,14 @@ struct orderedSet {
     // Range-based for support (iterate in insertion order)
     auto begin() const { return items.begin(); }
     auto end() const { return items.end(); }
-    auto begin() { return items.begin(); }
-    auto end() { return items.end(); }
+    auto begin()
+    {
+        return items.begin();
+    }
+    auto end()
+    {
+        return items.end();
+    }
 
     // Pass to functions expecting const std::vector<T>&
     const std::vector<T>& vector() const { return items; }
@@ -637,8 +643,9 @@ static AlgorithmResult RunAlgorithm(
 
     // 4.8: Build final result — only copy surviving symbols
     for (auto* s : filtered) {
-        if (!removedUids.count(s->uid))
+        if (!removedUids.count(s->uid)) {
             algResult.finalSymbols.push_back(*s);
+        }
     }
     std::stable_sort(algResult.finalSymbols.begin(), algResult.finalSymbols.end(),
         [](const auto& a, const auto& b) {
@@ -712,8 +719,9 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
         // Sum existing_count over all chains that contain this symbol (one contribution per chain)
         ts.totalExistingCount = 0;
         for (int ci : s.chainIds) {
-            if (ci >= 0 && ci < static_cast<int>(callStacks.size()))
+            if (ci >= 0 && ci < static_cast<int>(callStacks.size())) {
                 ts.totalExistingCount += callStacks[ci].existingCount;
+            }
         }
         ts.isApp = s.isApp;
         ts.buildIdNull = s.buildIdNull;
@@ -725,8 +733,9 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
         ts.flameGraph = BuildFlameGraph(ts.symbol, callStacks, s.chainIds.vector(), s.depthPerChain, dataDict);
         ts.icicleGraph = BuildIcicleGraph(ts.symbol, callStacks, s.chainIds.vector(), s.depthPerChain, dataDict);
         for (int ci : s.chainIds) {
-            if (ci >= 0 && ci < static_cast<int>(callStacks.size()))
+            if (ci >= 0 && ci < static_cast<int>(callStacks.size())) {
                 ts.callChains.push_back(callStacks[ci]);
+            }
         }
         result.push_back(std::move(ts));
     }
@@ -1229,10 +1238,13 @@ json HtraceAnalysisOutput::ToJson() const
     // app-and-system: app + system; app-only: app; system-only: system; mixed: mixed
     auto symbolsOf = [this](const ScopeResult& scope) {
         json arr = json::array();
-        for (const auto& s : scope.sections)
-            for (const auto& r : s.rows)
-                if (const auto* ts = std::get_if<TopSymbolInfo>(&r))
+        for (const auto& s : scope.sections) {
+            for (const auto& r : s.rows) {
+                if (const auto* ts = std::get_if<TopSymbolInfo>(&r)) {
                     arr.push_back(TopSymbolInfoToJson(*ts, this->dataDict));
+                }
+            }
+        }
         return arr;
     };
     if (topSymbols.mode == "app-only" || topSymbols.mode == "app-and-system") {

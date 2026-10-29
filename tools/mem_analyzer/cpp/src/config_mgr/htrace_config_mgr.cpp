@@ -354,11 +354,13 @@ bool HtraceConfigMgr::MatchFilterRule(const SymbolFilterRule& rule,
     Scope scope) const
 {
     if (rule.scope == "app") {
-        if (scope != Scope::APP_ONLY && scope != Scope::APP_AND_SYSTEM && scope != Scope::MIXED)
+        if (scope != Scope::APP_ONLY && scope != Scope::APP_AND_SYSTEM && scope != Scope::MIXED) {
             return false;
+        }
     } else if (rule.scope == "system") {
-        if (scope != Scope::SYSTEM_ONLY && scope != Scope::APP_AND_SYSTEM && scope != Scope::MIXED)
+        if (scope != Scope::SYSTEM_ONLY && scope != Scope::APP_AND_SYSTEM && scope != Scope::MIXED) {
             return false;
+        }
     }
 
     if (!rule.lib.empty()) {
@@ -395,8 +397,9 @@ bool HtraceConfigMgr::MatchFilterRule(const SymbolFilterRule& rule,
 bool HtraceConfigMgr::ShouldFilter(const std::string& libFile, const std::string& symName, Scope scope) const
 {
     for (const auto& rule : filterRules_) {
-        if (MatchFilterRule(rule, libFile, symName, scope))
+        if (MatchFilterRule(rule, libFile, symName, scope)) {
             return true;
+        }
     }
     return false;
 }

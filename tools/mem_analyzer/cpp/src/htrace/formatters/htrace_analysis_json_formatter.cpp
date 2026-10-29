@@ -137,14 +137,16 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
 
         // Always write flamegraph and icicle (even when empty, for base compatibility)
         json flameArr = json::array();
-        for (const auto& c : ts.flameGraph.children)
+        for (const auto& c : ts.flameGraph.children) {
             flameArr.push_back(c.ToFlameJson(full.dataDict));
+        }
         writer.WriteKey("flamegraph");
         writer.WriteRaw(flameArr.dump(JSON_INDENT_SPACES));
 
         json icicleArr = json::array();
-        for (const auto& c : ts.icicleGraph.children)
+        for (const auto& c : ts.icicleGraph.children) {
             icicleArr.push_back(c.ToIcicleJson(full.dataDict));
+        }
         writer.WriteKey("icicle");
         writer.WriteRaw(icicleArr.dump(JSON_INDENT_SPACES));
 

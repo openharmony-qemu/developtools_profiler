@@ -93,7 +93,10 @@ std::string Trimmed(const std::string& s)
 
 // ---- Global target state ----
 
-void HdcMarkTargetResolved() { g_targetResolved = true; }
+void HdcMarkTargetResolved()
+{
+    g_targetResolved = true;
+}
 
 void HdcSetConnectKey(const std::string& key)
 {

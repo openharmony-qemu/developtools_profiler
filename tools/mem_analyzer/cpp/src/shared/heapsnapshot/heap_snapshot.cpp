@@ -1027,8 +1027,9 @@ static void ParseNodesArray(HeapSnapshot& snapshot, std::ifstream& file, size_t 
 {
     snapshot.nodes = parseArrayChunked(file, nodesArrayBracket + 1, fileSize);
     size_t nc = snapshot.nodes.size() / snapshot.nodeFieldsCount;
-    if (nc > static_cast<size_t>(std::numeric_limits<int>::max()))
+    if (nc > static_cast<size_t>(std::numeric_limits<int>::max())) {
         throw std::runtime_error("malformed heapsnapshot: node count exceeds INT_MAX");
+    }
     snapshot.nodeCount = static_cast<int>(nc);
 }
 
@@ -1067,8 +1068,9 @@ static size_t ParseEdgesArray(HeapSnapshot& snapshot, std::ifstream& file,
 
     snapshot.edges = parseArrayChunked(file, edgesBracketPos + 1, fileSize);
     size_t ec = snapshot.edges.size() / snapshot.edgeFieldsCount;
-    if (ec > static_cast<size_t>(std::numeric_limits<int>::max()))
+    if (ec > static_cast<size_t>(std::numeric_limits<int>::max())) {
         throw std::runtime_error("malformed heapsnapshot: edge count exceeds INT_MAX");
+    }
     snapshot.edgeCount = static_cast<int>(ec);
     return edgesBracketPos;
 }

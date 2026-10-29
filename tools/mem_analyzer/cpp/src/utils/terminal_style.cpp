@@ -76,11 +76,26 @@ static std::string wrap(const char* code, const std::string& text)
     return std::string(code) + text + ANSI_RESET;
 }
 
-std::string Green(const std::string& text)  { return wrap(ANSI_GREEN,  text); }
-std::string Red(const std::string& text)    { return wrap(ANSI_RED,    text); }
-std::string Yellow(const std::string& text) { return wrap(ANSI_YELLOW, text); }
-std::string Bold(const std::string& text)   { return wrap(ANSI_BOLD,   text); }
-std::string Dim(const std::string& text)    { return wrap(ANSI_DIM,    text); }
+std::string Green(const std::string& text)
+{
+    return wrap(ANSI_GREEN, text);
+}
+std::string Red(const std::string& text)
+{
+    return wrap(ANSI_RED, text);
+}
+std::string Yellow(const std::string& text)
+{
+    return wrap(ANSI_YELLOW, text);
+}
+std::string Bold(const std::string& text)
+{
+    return wrap(ANSI_BOLD, text);
+}
+std::string Dim(const std::string& text)
+{
+    return wrap(ANSI_DIM, text);
+}
 
 } // namespace style
 } // namespace mem_analyzer

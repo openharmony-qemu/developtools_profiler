@@ -443,8 +443,9 @@ void CliParser::PrintHelp(std::ostream& os) const
         // Auto-detect form (no subcommand)
         os << "  " << programName_ << " [options]";
         if (!positionals_.empty()) {
-            for (const auto& p : positionals_)
+            for (const auto& p : positionals_) {
                 os << " <" << p.name << ">";
+            }
         }
         os << "\n";
         // Subcommand forms
@@ -467,8 +468,9 @@ void CliParser::PrintHelp(std::ostream& os) const
                     os << " " << subUsage << "\n";
                 } else {
                     os << " [options]";
-                    for (const auto& p : entry.parser->positionals_)
+                    for (const auto& p : entry.parser->positionals_) {
                         os << " <" << p.name << ">";
+                    }
                     os << "\n";
                 }
             }

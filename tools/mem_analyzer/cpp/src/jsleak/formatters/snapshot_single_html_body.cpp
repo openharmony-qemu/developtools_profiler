@@ -535,7 +535,10 @@ std::string BuildTopChainTabHtmlImpl(const json& topRefChains,
 } // namespace
 
 // 公开接口：从匿名空间导出
-std::string BuildChainPathHtml(const json& cf) { return BuildChainPathHtmlImpl(cf); }
+std::string BuildChainPathHtml(const json& cf)
+{
+    return BuildChainPathHtmlImpl(cf);
+}
 
 std::string BuildPropertyTagTabHtml(const json& objs, const std::string& prefix,
     const std::string& tabId, bool active,
