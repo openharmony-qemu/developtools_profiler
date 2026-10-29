@@ -101,7 +101,7 @@ private:
     int CreateRecvFileListenSocket(int &outPort);
     ssize_t RecvFileToDisk(int connFd, const std::string &savePath);
     void HandleStartDubaiDb();
-    void HandleSetDubaiDb(SpServerSocket &spSocket,std::string &retCode, const std::string &recvBuf);
+    void HandleSetDubaiDb(SpServerSocket &spSocket, std::string &retCode, const std::string &recvBuf);
     void HandleSaveGpuCounter(SpServerSocket &spSocket, const std::string &recvBuf);
     static std::string ParseRecvFileName(const std::string &recvBuf);
     void HandleAppStopCollect(SpServerSocket &spSocket, std::string &retCode);
@@ -123,6 +123,7 @@ private:
     int sendFileSocket = -1;
     int sendFileSocketPort = -1;
     static const int fileSocketBufferSize = 8192;
+    static const long long maxRecvFileSize = 512LL * 1024 * 1024; //512MB
     char fileSocketBuffer[fileSocketBufferSize] = {};
     const std::string recvFileDir = "/data/local/tmp/smartperf/recv/";
     bool isSetPid = false;

@@ -1111,7 +1111,7 @@ ssize_t SpThreadSocket::RecvFileToDisk(int connFd, const std::string &savePath)
     }
 
     ssize_t totalRecv = 0;
-    while (true) {
+    while (totalRecv < maxRecvFileSize) {
         ssize_t bytesRecv = recv(connFd, fileSocketBuffer, fileSocketBufferSize, 0);
         if (bytesRecv <= 0) {
             break;
@@ -1124,8 +1124,12 @@ ssize_t SpThreadSocket::RecvFileToDisk(int connFd, const std::string &savePath)
         }
         totalRecv += bytesRecv;
     }
+    if (totalRecv >= maxRecvFileSize) {
+        LOGE("StartRecvFile exceeded max size %lld, connection closed", maxRecvFileSize);
+        totalRecv = -1;
+    }
 
-    fclose(fp);
+    (void)fclose(fp);
     return totalRecv;
 }
 
