@@ -454,7 +454,6 @@ std::string BuildDetailSectionContent(
     return result;
 }
 
-
 std::string BuildDetailSections(const std::vector<SymbolDataEntry>& symbols,
     size_t startIndex,
     long long totalExistingSize,

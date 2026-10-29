@@ -83,7 +83,6 @@ std::string AnalysisHtmlFormatterBase::BuildTabContentHTML(const std::vector<Tab
     return result;
 }
 
-
 // 公共占位符统一替换：两条注入路径（TabGroup 流式 / 通用流式）× 两段片段（before/after）
 // 原先各写一遍，新增占位符极易漏改其中一处，这里收敛为唯一入口。
 // 各占位符只出现在模板的固定片段（如 __CHART_MODULE_CSS__ 只在头部、__CHART_MODULE_JS__

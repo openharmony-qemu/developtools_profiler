@@ -121,7 +121,6 @@ std::string BuildSubTabs(const std::vector<SubTabItem>& items)
 } // namespace
 namespace {
 
-
 } // namespace
 
 // 统一到 report_common 的 id 约定（<prefix>Header_<idx>/<prefix>Body_<idx>/<prefix>Detail_<idx>），
@@ -530,7 +529,6 @@ std::string BuildTopChainTabHtmlImpl(const json& topRefChains,
 }
 
 // ========== 主生成函数 ==========
-
 
 } // namespace
 
