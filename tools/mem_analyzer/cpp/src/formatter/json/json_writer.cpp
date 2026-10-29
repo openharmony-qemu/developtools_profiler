@@ -25,6 +25,8 @@
 
 namespace mem_analyzer {
 
+constexpr int JSON_INDENT_SPACES = 4;
+
 void WriteJsonToFile(const std::string& filePath, const json& data)
 {
     auto ofs = OpenOfstream(filePath);
@@ -32,7 +34,7 @@ void WriteJsonToFile(const std::string& filePath, const json& data)
         log::Loge("Error: Cannot write to ", filePath);
         return;
     }
-    ofs << data.dump(4) << std::endl;
+    ofs << data.dump(JSON_INDENT_SPACES) << std::endl;
     ofs.close();
 }
 

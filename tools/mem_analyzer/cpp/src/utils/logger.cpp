@@ -30,6 +30,7 @@ namespace log {
 
 namespace {
 
+constexpr int MS_DIGIT_WIDTH = 3;
 std::atomic<Level> gLevel{Level::LOG_INFO};
 std::atomic<unsigned> gPrefix{0};
 std::mutex gMutex;                          // 保护 g_sink 与单条日志的原子输出
@@ -89,7 +90,7 @@ std::string TimestampNow()
     char buf[16];
     std::strftime(buf, sizeof(buf), "%H:%M:%S", &tm);
     std::ostringstream oss;
-    oss << buf << '.' << std::setfill('0') << std::setw(3) << ms.count();
+    oss << buf << '.' << std::setfill('0') << std::setw(MS_DIGIT_WIDTH) << ms.count();
     return oss.str();
 }
 

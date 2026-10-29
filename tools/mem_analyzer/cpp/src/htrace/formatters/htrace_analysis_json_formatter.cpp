@@ -31,6 +31,8 @@
 namespace mem_analyzer {
 namespace {
 
+constexpr int JSON_INDENT_SPACES = 4;
+
 json BuildSummary(const HtraceAnalysisOutput& full, const RunContext& ctx)
 {
     const auto& ts = full.typeSizes;
@@ -93,7 +95,7 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
 
     json meta = HtraceBuildMeta(filePath, ctx);
     writer.WriteKey("meta");
-    writer.WriteRaw(meta.dump(4));
+    writer.WriteRaw(meta.dump(JSON_INDENT_SPACES));
 
     writer.WriteKey("content");
     writer.BeginObject();
@@ -102,7 +104,7 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
     writer.WriteKey("summary");
     writer.BeginObject();
     writer.WriteKey("htrace");
-    writer.WriteRaw(summary.dump(4));
+    writer.WriteRaw(summary.dump(JSON_INDENT_SPACES));
     writer.EndObject();
 
     // topSymbols — N 轨（每 scope 按轨键嵌套：mmap={mmapAnons,mmapFilepages}，非 mmap={nativeHeaps|dmas|ashmems|fds|threads}）
@@ -138,13 +140,13 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
         for (const auto& c : ts.flameGraph.children)
             flameArr.push_back(c.ToFlameJson(full.dataDict));
         writer.WriteKey("flamegraph");
-        writer.WriteRaw(flameArr.dump(4));
+        writer.WriteRaw(flameArr.dump(JSON_INDENT_SPACES));
 
         json icicleArr = json::array();
         for (const auto& c : ts.icicleGraph.children)
             icicleArr.push_back(c.ToIcicleJson(full.dataDict));
         writer.WriteKey("icicle");
-        writer.WriteRaw(icicleArr.dump(4));
+        writer.WriteRaw(icicleArr.dump(JSON_INDENT_SPACES));
 
         writer.EndObject();
     };

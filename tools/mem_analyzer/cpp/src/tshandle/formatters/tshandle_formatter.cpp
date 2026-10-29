@@ -30,10 +30,13 @@
 namespace mem_analyzer {
 namespace {
 
+constexpr double PERCENTAGE_SCALE = 100.0;
+constexpr int JSON_INDENT_SPACES = 4;
+
 // Round double to 2 decimal places for JSON output
 static double round2(double v)
 {
-    return std::round(v * 100.0) / 100.0;
+    return std::round(v * PERCENTAGE_SCALE) / PERCENTAGE_SCALE;
 }
 
 json BuildSummary(const std::vector<ResolvedCallStack>& callStacks, const std::vector<ArkTsClass>& arktsClasses)
@@ -249,9 +252,9 @@ std::string TshandleWriteParseJson(const TshandleParseResult& parsed, const std:
 
     writer.BeginObject();
     writer.WriteKey("meta");
-    writer.WriteRaw(meta.dump(4));
+    writer.WriteRaw(meta.dump(JSON_INDENT_SPACES));
     writer.WriteKey("content");
-    writer.WriteRaw(content.dump(4));
+    writer.WriteRaw(content.dump(JSON_INDENT_SPACES));
     writer.EndObject();
 
     writer.Close();

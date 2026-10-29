@@ -27,6 +27,11 @@
 
 namespace mem_analyzer::htmlAnalysis {
 
+constexpr int DECIMAL_PRECISION = 2;
+constexpr int MAX_BYTES_UNIT_INDEX = 3;
+constexpr int ESCAPE_RESERVE_NUMERATOR = 11;
+constexpr int SIMPLE_CALL_CHAIN_THRESHOLD = 2;
+
 // ===== Helper functions =====
 
 std::string ReplaceAll(std::string str, const std::string& from, const std::string& to)
@@ -123,14 +128,14 @@ std::string FormatBytes(double bytes)
     int i = 0;
     if (dbytes >= 1) {
         i = (int)std::floor(std::log(dbytes) / std::log((double)k));
-        if (i > 3) {
-            i = 3;
+        if (i > MAX_BYTES_UNIT_INDEX) {
+            i = MAX_BYTES_UNIT_INDEX;
         }
     }
     double val = dbytes / std::pow((double)k, i);
-    val = RoundHalfAwayFromZero(val, 2);
+    val = RoundHalfAwayFromZero(val, DECIMAL_PRECISION);
     std::ostringstream oss;
-    oss << std::fixed << std::setprecision(2) << val << " " << units[i];
+    oss << std::fixed << std::setprecision(DECIMAL_PRECISION) << val << " " << units[i];
     return oss.str();
 }
 
@@ -155,17 +160,17 @@ std::string FormatDuration(const std::string& durationStr)
     }
     if (d >= 1.0) {
         std::ostringstream oss;
-        oss << std::fixed << std::setprecision(2) << RoundHalfAwayFromZero(d, 2) << "s";
+        oss << std::fixed << std::setprecision(DECIMAL_PRECISION) << RoundHalfAwayFromZero(d, DECIMAL_PRECISION) << "s";
         return oss.str();
     }
     if (d >= 1e-3) {
         std::ostringstream oss;
-        oss << std::fixed << std::setprecision(2) << RoundHalfAwayFromZero(d * 1e3, 2) << "ms";
+        oss << std::fixed << std::setprecision(DECIMAL_PRECISION) << RoundHalfAwayFromZero(d * 1e3, DECIMAL_PRECISION) << "ms";
         return oss.str();
     }
     if (d >= 1e-6) {
         std::ostringstream oss;
-        oss << std::fixed << std::setprecision(2) << RoundHalfAwayFromZero(d * 1e6, 2) << "\u03bcs";
+        oss << std::fixed << std::setprecision(DECIMAL_PRECISION) << RoundHalfAwayFromZero(d * 1e6, DECIMAL_PRECISION) << "\u03bcs";
         return oss.str();
     }
     std::ostringstream oss;
@@ -176,7 +181,7 @@ std::string FormatDuration(const std::string& durationStr)
 std::string EscapeHtml(const std::string& str)
 {
     std::string result;
-    result.reserve(str.size() * 11 / 10);  // ~10% headroom for escape expansion
+    result.reserve(str.size() * ESCAPE_RESERVE_NUMERATOR / 10);  // ~10% headroom for escape expansion
     for (char c : str) {
         switch (c) {
             case '&':
@@ -250,7 +255,7 @@ std::string BuildCallChainHTML(const std::vector<CallChainResult>& callChains, d
         const auto& frames = chain.frames;
         std::vector<int> keptIndices;
 
-        if ((int)frames.size() <= 2) {
+        if ((int)frames.size() <= SIMPLE_CALL_CHAIN_THRESHOLD) {
             for (int fi = 0; fi < (int)frames.size(); fi++) {
                 keptIndices.push_back(fi);
             }
@@ -311,7 +316,7 @@ std::string BuildCallChainHTML(const std::vector<CallChainResult>& callChains, d
             }
             plainText += FormatShortFuncName(frames[fi].name, frames[fi].lib, frames[fi].libOffset);
         }
-        plainText += std::string("\n") + (countMode ? "\u6b21\u6570" : "\u5927\u5c0f") + " " + FormatSizeText(chainSize, countMode) + "\n\u5360\u6bd4" + ToFixed(pct, 2) + "%";
+        plainText += std::string("\n") + (countMode ? "\u6b21\u6570" : "\u5927\u5c0f") + " " + FormatSizeText(chainSize, countMode) + "\n\u5360\u6bd4" + ToFixed(pct, DECIMAL_PRECISION) + "%";
 
         result += "<div class=\"call-chain-line\">\u8c03\u7528\u94fe" +
             std::to_string(ci + 1) +
@@ -320,7 +325,7 @@ std::string BuildCallChainHTML(const std::vector<CallChainResult>& callChains, d
             ", " + (countMode ? "\u6b21\u6570" : "\u5927\u5c0f") + " <span class=\"chain-size\">" +
             FormatSizeText(chainSize, countMode) +
             "</span>, \u5360\u6bd4<span class=\"chain-pct\">" +
-            ToFixed(pct, 2) + "%</span>" +
+            ToFixed(pct, DECIMAL_PRECISION) + "%</span>" +
             "<span class=\"copy-chain-btn\" data-copy-chain=\"" + EscapeHtml(plainText) + "\" title=\"\u590d\u5236\u5b8c\u6574\u8c03\u7528\u94fe\">\u590d\u5236</span>" +
             "</div>";
     }

@@ -24,6 +24,8 @@
 
 namespace mem_analyzer {
 
+constexpr int DURATION_PRECISION = 3;
+
 json HtraceBuildMeta(const std::string& filePath, const RunContext& ctx)
 {
     json meta = BuildOutputMetaBase(ctx);
@@ -42,7 +44,7 @@ json HtraceBuildSummaryCommon(const std::string& mode, long long durationNs, lon
 
     double durationSeconds = std::round(durationNs / 1e6) / 1e3;
     std::ostringstream durSs;
-    durSs << std::fixed << std::setprecision(3) << durationSeconds;
+    durSs << std::fixed << std::setprecision(DURATION_PRECISION) << durationSeconds;
     summary["duration"] = durSs.str();
     summary["timestampFrom"] = startMs > 0 ? FormatReadableTimestamp(startMs) : "0";
     summary["timestampTo"] = endMs > 0 ? FormatReadableTimestamp(endMs) : "0";

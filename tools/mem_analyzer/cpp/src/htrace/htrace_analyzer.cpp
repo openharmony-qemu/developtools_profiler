@@ -30,6 +30,11 @@
 
 namespace mem_analyzer {
 
+constexpr int UID_SHIFT_BITS = 32;
+constexpr int PERCENT_SCALE = 100;
+constexpr int MIN_PAIR_SYMBOLS = 2;
+constexpr double PERCENT_PRECISION_SCALE = 10000.0;
+
 // ===== N 轨 section 构造（HtraceRow 是 variant，构造时按同质轨装箱）=====
 static HtraceSection MakeSymbolSection(std::vector<TopSymbolInfo> syms, const char* key = "", const char* label = "")
 {
@@ -124,7 +129,7 @@ struct SymbolData {
 // Helper: make uid from (symbol_id, file_id)
 inline uint64_t MakeUid(int symbolId, int fileId)
 {
-    return ((uint64_t)symbolId << 32) | (uint32_t)fileId;
+    return ((uint64_t)symbolId << UID_SHIFT_BITS) | (uint32_t)fileId;
 }
 
 // ===== Helper: check if a symbol is an app symbol =====
@@ -337,7 +342,7 @@ static bool CanApproximate(long long value,
     if (diff == 0) {
         return true;
     }
-    return value > counterpartTotal * config.approRatioThreshold / 100;
+    return value > counterpartTotal * config.approRatioThreshold / PERCENT_SCALE;
 }
 
 static ApproxResult CalcApproximations(
@@ -384,7 +389,7 @@ static ApproxResult CalcApproximations(
 
     // Pair building — all keys are int now, O(1) hash/comparison
     for (auto& [ci, chainSyms] : chainCacheVec) {
-        if (chainSyms.size() < 2) {
+        if (chainSyms.size() < MIN_PAIR_SYMBOLS) {
             continue;
         }
         std::stable_sort(chainSyms.begin(), chainSyms.end(),
@@ -1086,7 +1091,7 @@ static FilepageSplit AnalyzeFilepages(
         // detail 模式下 data_dict 的 sub_type 值可能带 "FilePage:" 前缀，输出时剥离
         info.filename = NormalizeFilepageFilename(info.filename, mode);
         if (mmapTotalSize > 0) {
-            info.percentage = std::round((double)info.size * 10000.0 / (double)mmapTotalSize) / 100.0;
+            info.percentage = std::round((double)info.size * PERCENT_PRECISION_SCALE / (double)mmapTotalSize) / 100.0;
         }
         // 文件级分类：任意栈的任意帧是应用符号 → app 类；否则 system 类
         bool isApp = false;

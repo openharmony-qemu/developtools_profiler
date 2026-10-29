@@ -28,10 +28,13 @@ namespace mem_analyzer {
 
 namespace {
 
+constexpr int HEX_RADIX = 16;
+constexpr int SO_SUFFIX_LEN = 3;
+
 // hex 字符串 "0x5c843f8b00" -> uint64（addr 是绝对地址）
 uint64_t ParseHexAddr(const std::string& s)
 {
-    return static_cast<uint64_t>(std::strtoull(s.c_str(), nullptr, 16));
+    return static_cast<uint64_t>(std::strtoull(s.c_str(), nullptr, HEX_RADIX));
 }
 
 // L1: 调用栈关联的分配地址（existing_addrs，hex 串）与 leaks 集合求交集，非空才留
@@ -66,8 +69,8 @@ bool HasAppSoFrame(const CompressedCallStack& cs, const std::unordered_map<int, 
         const std::string& lib = it->second;
         if (lib.find("data/storage/el") != std::string::npos &&
             lib.find("libarkweb_engine.so") == std::string::npos &&
-            lib.size() >= 3 &&
-            lib.compare(lib.size() - 3, 3, ".so") == 0) {
+            lib.size() >= SO_SUFFIX_LEN &&
+            lib.compare(lib.size() - SO_SUFFIX_LEN, SO_SUFFIX_LEN, ".so") == 0) {
             return true;
         }
     }

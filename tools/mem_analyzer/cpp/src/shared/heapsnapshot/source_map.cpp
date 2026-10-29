@@ -45,6 +45,17 @@ using json = nlohmann::json;
 
 namespace {
 
+constexpr int VLQ_BASE64_LOWERCASE_OFFSET = 26;
+constexpr int VLQ_BASE64_DIGIT_OFFSET = 52;
+constexpr int VLQ_BASE64_PLUS_VALUE = 62;
+constexpr int VLQ_BASE64_SLASH_VALUE = 63;
+constexpr int VLQ_BITS_PER_GROUP = 5;
+constexpr int VLQ_MAX_SHIFT = 25;
+
+constexpr size_t SEG_IDX_ORIGINAL_LINE = 2;
+constexpr size_t SEG_IDX_ORIGINAL_COLUMN = 3;
+constexpr size_t SEG_IDX_NAME_INDEX = 4;
+
 /// Base64 字符 → 6 位数值，非法字符返回 -1。
 inline int Base64Value(char c)
 {
@@ -52,16 +63,16 @@ inline int Base64Value(char c)
         return c - 'A';
     }
     if (c >= 'a' && c <= 'z') {
-        return c - 'a' + 26;
+        return c - 'a' + VLQ_BASE64_LOWERCASE_OFFSET;
     }
     if (c >= '0' && c <= '9') {
-        return c - '0' + 52;
+        return c - '0' + VLQ_BASE64_DIGIT_OFFSET;
     }
     if (c == '+') {
-        return 62;
+        return VLQ_BASE64_PLUS_VALUE;
     }
     if (c == '/') {
-        return 63;
+        return VLQ_BASE64_SLASH_VALUE;
     }
     return -1;
 }
@@ -76,7 +87,7 @@ inline bool DecodeVlqValue(const std::string& str, size_t& pos, int& value)
         if (pos >= str.size()) {
             return false;
         }
-        if (shift > 25) {
+        if (shift > VLQ_MAX_SHIFT) {
             return false;
         }// VLQ 最多 6 段（30 位），防有符号移位 UB
         int digit = Base64Value(str[pos++]);
@@ -85,7 +96,7 @@ inline bool DecodeVlqValue(const std::string& str, size_t& pos, int& value)
         }
         continuation = (digit & 0x20) != 0;
         result += (digit & 0x1F) << shift;
-        shift += 5;
+        shift += VLQ_BITS_PER_GROUP;
     }
     bool negative = (result & 0x01) != 0;
     value = result >> 1;
@@ -157,16 +168,16 @@ SourceMapIndex::DecodedMappings SourceMapIndex::DecodeVlqMappings(const std::str
                     sourceIndex += raw[1];
                     segment.push_back(clampInt(sourceIndex));
                 }
-                if (raw.size() > 2) {
-                    originalLine += raw[2];
+                if (raw.size() > SEG_IDX_ORIGINAL_LINE) {
+                    originalLine += raw[SEG_IDX_ORIGINAL_LINE];
                     segment.push_back(clampInt(originalLine));
                 }
-                if (raw.size() > 3) {
-                    originalColumn += raw[3];
+                if (raw.size() > SEG_IDX_ORIGINAL_COLUMN) {
+                    originalColumn += raw[SEG_IDX_ORIGINAL_COLUMN];
                     segment.push_back(clampInt(originalColumn));
                 }
-                if (raw.size() > 4) {
-                    nameIndex += raw[4];
+                if (raw.size() > SEG_IDX_NAME_INDEX) {
+                    nameIndex += raw[SEG_IDX_NAME_INDEX];
                     segment.push_back(clampInt(nameIndex));
                 }
                 decoded[line].push_back(std::move(segment));
@@ -224,10 +235,10 @@ bool SourceMapIndex::ResolveOriginalLine(const std::string& mappings, int genera
         return false;
     }
     const LineSegments& segments = decoded[line];
-    if (segments.empty() || segments.front().size() < 3) {
+    if (segments.empty() || segments.front().size() <= SEG_IDX_ORIGINAL_LINE) {
         return false;
     }
-    originalLine = segments.front()[2] + 1;  // originalLine 0-based → 1-based
+    originalLine = segments.front()[SEG_IDX_ORIGINAL_LINE] + 1;  // originalLine 0-based → 1-based
     return true;
 }
 
@@ -254,7 +265,7 @@ bool SourceMapIndex::ResolveOriginalPosition(const std::string& mappings, int ge
     const LineSegments* segments = &decoded[line];
     const Segment* best = nullptr;
     for (const auto& seg : *segments) {
-        if (seg.size() < 4) {
+        if (seg.size() <= SEG_IDX_ORIGINAL_COLUMN) {
             continue;
         }
         if (seg[0] <= generatedColumn) {
@@ -271,13 +282,13 @@ bool SourceMapIndex::ResolveOriginalPosition(const std::string& mappings, int ge
             }
             const Segment* last = nullptr;
             for (const auto& seg : decoded[l]) {
-                if (seg.size() >= 4) {
+                if (seg.size() > SEG_IDX_ORIGINAL_COLUMN) {
                     last = &seg;
                 }
             }
             if (last != nullptr) {
-                originalLine = (*last)[2] + 1;
-                originalColumn = (*last)[3] + 1;
+                originalLine = (*last)[SEG_IDX_ORIGINAL_LINE] + 1;
+                originalColumn = (*last)[SEG_IDX_ORIGINAL_COLUMN] + 1;
                 if (outSourceIndex != nullptr) {
                     *outSourceIndex = (*last)[1];
                 }
@@ -287,8 +298,8 @@ bool SourceMapIndex::ResolveOriginalPosition(const std::string& mappings, int ge
         return false;
     }
 
-    originalLine = (*best)[2] + 1;      // originalLine 0-based → 1-based
-    originalColumn = (*best)[3] + 1;    // originalColumn 0-based → 1-based
+    originalLine = (*best)[SEG_IDX_ORIGINAL_LINE] + 1;      // originalLine 0-based → 1-based
+    originalColumn = (*best)[SEG_IDX_ORIGINAL_COLUMN] + 1;    // originalColumn 0-based → 1-based
     if (outSourceIndex != nullptr) {
         *outSourceIndex = (*best)[1];
     }// sourceIndex

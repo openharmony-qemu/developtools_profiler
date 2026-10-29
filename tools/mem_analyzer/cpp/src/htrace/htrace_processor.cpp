@@ -31,6 +31,8 @@
 
 namespace mem_analyzer {
 
+constexpr int COL_SUB_TYPE_ID = 3;
+
 // ── Helper: 计算某 category（+是否过滤）下仍启用的 HtraceEventType ──
 static std::vector<HtraceEventType> AllowedEventTypes(const std::string& category, bool filterCategory)
 {
@@ -210,8 +212,8 @@ void LoadStatisticStacks(HtraceParseContext& ctx,
             int typeVal = sqlite3_column_int(stmt, 1);
             int maxTs = sqlite3_column_int(stmt, 2);
             int subTypeId = -1;
-            if (sqlite3_column_type(stmt, 3) != SQLITE_NULL) {
-                subTypeId = sqlite3_column_int(stmt, 3);
+            if (sqlite3_column_type(stmt, COL_SUB_TYPE_ID) != SQLITE_NULL) {
+                subTypeId = sqlite3_column_int(stmt, COL_SUB_TYPE_ID);
             }
             long long totalSize = sqlite3_column_int64(stmt, 4);
             long long totalCount = sqlite3_column_int64(stmt, 5);
@@ -317,8 +319,8 @@ void LoadDetailStacks(HtraceParseContext& ctx,
             int ccid = sqlite3_column_int(stmt, 1);
             long long heapSize = sqlite3_column_int64(stmt, 2);
             int subTypeId = -1;
-            if (sqlite3_column_type(stmt, 3) != SQLITE_NULL) {
-                subTypeId = sqlite3_column_int(stmt, 3);
+            if (sqlite3_column_type(stmt, COL_SUB_TYPE_ID) != SQLITE_NULL) {
+                subTypeId = sqlite3_column_int(stmt, COL_SUB_TYPE_ID);
             }
 
             auto lookupIt = allocEventLookup.find(eventTypeStr);

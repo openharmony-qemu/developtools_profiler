@@ -67,6 +67,15 @@ Platform CurrentPlatform()
 
 namespace platform {
 
+namespace {
+[[maybe_unused]] constexpr int STDERR_FD = 2;
+[[maybe_unused]] constexpr int EXIT_COMMAND_NOT_FOUND = 127;
+constexpr long long BYTES_PER_KB = 1024;
+constexpr int UTF8_TWO_BYTE_LEN = 2;
+constexpr int UTF8_THREE_BYTE_LEN = 3;
+constexpr int UTF8_MAX_BYTES = 4;
+} // namespace
+
 std::string GetExecutableDir()
 {
     // Resolved once: the executable path does not change during a run.
@@ -269,7 +278,7 @@ int RunProcess(const std::string& exe, const std::vector<std::string>& args, int
     if (redirect) {
         if (outputFd == 1) {
             hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-        } else if (outputFd == 2) {
+        } else if (outputFd == STDERR_FD) {
             hOut = GetStdHandle(STD_ERROR_HANDLE);
         } else {
             hOut = reinterpret_cast<HANDLE>(_get_osfhandle(outputFd));
@@ -332,7 +341,7 @@ int RunProcess(const std::string& exe, const std::vector<std::string>& args, int
             dup2(outputFd, STDERR_FILENO);
         }
         execv(program.c_str(), argv.data());
-        _exit(127);
+        _exit(EXIT_COMMAND_NOT_FOUND);
     }
     if (pid < 0) {
         throw std::runtime_error("Failed to launch process: " + exe);
@@ -376,7 +385,7 @@ int RunProcessWithSpinner(const std::string& exe, const std::vector<std::string>
         std::ifstream f(PathFromUtf8(outFile), std::ios::binary | std::ios::ate);
         if (f) {
             auto size = f.tellg();
-            if (size > 0 && size < 1024 * 1024) {
+            if (size > 0 && size < BYTES_PER_KB * BYTES_PER_KB) {
                 f.seekg(0);
                 std::string buf(static_cast<size_t>(size), '\0');
                 f.read(&buf[0], size);
@@ -425,12 +434,11 @@ std::string SanitizeUtf8(const std::string& input)
                 i++;
                 continue;
             }
-            result += input[i];
-            result += input[i+1];
-            i += 2;
+            result.append(input, i, UTF8_TWO_BYTE_LEN);
+            i += UTF8_TWO_BYTE_LEN;
         } else if ((c & 0xF0) == 0xE0) {
             // Three-byte sequence (1110xxxx 10xxxxxx 10xxxxxx)
-            if (i + 2 >= input.size()) {
+            if (i + UTF8_THREE_BYTE_LEN - 1 >= input.size()) {
                 result += '?';
                 i++;
                 continue;
@@ -449,13 +457,11 @@ std::string SanitizeUtf8(const std::string& input)
                 i++;
                 continue;
             }
-            result += input[i];
-            result += input[i+1];
-            result += input[i+2];
-            i += 3;
+            result.append(input, i, UTF8_THREE_BYTE_LEN);
+            i += UTF8_THREE_BYTE_LEN;
         } else if ((c & 0xF8) == 0xF0) {
             // Four-byte sequence (11110xxx 10xxxxxx 10xxxxxx 10xxxxxx)
-            if (i + 3 >= input.size()) {
+            if (i + UTF8_MAX_BYTES - 1 >= input.size()) {
                 result += '?';
                 i++;
                 continue;
@@ -474,11 +480,8 @@ std::string SanitizeUtf8(const std::string& input)
                 i++;
                 continue;
             }
-            result += input[i];
-            result += input[i+1];
-            result += input[i+2];
-            result += input[i+3];
-            i += 4;
+            result.append(input, i, UTF8_MAX_BYTES);
+            i += UTF8_MAX_BYTES;
         } else {
             // Invalid start byte (10xxxxxx or 11111xxx)
             result += '?';
@@ -538,7 +541,7 @@ void OpenWithDefaultApp(const std::string& filePath)
 #else
         execl("/usr/bin/xdg-open", "xdg-open", filePath.c_str(), (char*)nullptr);
 #endif
-        _exit(127);
+        _exit(EXIT_COMMAND_NOT_FOUND);
     }
     if (pid < 0) {
         log::Loge("Error: Unable to launch the default browser to open ", filePath);

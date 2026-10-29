@@ -36,6 +36,11 @@ using namespace mem_analyzer::htmlAnalysis;
 namespace mem_analyzer {
 namespace {
 
+constexpr int DECIMAL_PRECISION = 2;
+constexpr int DURATION_PRECISION = 3;
+constexpr int SCOPE_COUNT = 3;
+constexpr int SCOPE_INDEX_MIXED = 2;
+
 // mmap 二级 tab 内容：每个一级 tab（app/system/mixed）下拆 mmap-anon（symbol 表格）/ mmap-filepage（文件表格）两个子 tab。
 // 一级 .tab-content 显隐复用现有 switchTab + .tab-content.active CSS；
 // 二级 .sub-tab-content 显隐用内联 style.display（JS 控制，不依赖 CSS 类，避免改共享 HTML_TEMPLATE）。
@@ -80,7 +85,7 @@ std::string BuildFilepageTableRows(const HtraceSection& section, size_t startInd
         }
         size_t idx = startIndex + i;
         std::ostringstream pctSS;
-        pctSS << std::fixed << std::setprecision(2) << fp->percentage;
+        pctSS << std::fixed << std::setprecision(DECIMAL_PRECISION) << fp->percentage;
         rows.push_back("<tr>\n"
             "  <td><a onclick=\"showDetail(" + std::to_string(idx) + "); return false;\" class=\"detail-link\">\u8be6\u60c5</a></td>\n" +
             std::string(countMode ? "" : "  <td class=\"top-size-val\">" + FormatSizeText((double)fp->size, false) + "</td>\n") +
@@ -104,7 +109,7 @@ std::string BuildFilepageTableRows(const HtraceSection& section, size_t startInd
 std::string BuildFilepageDetailSectionContent(const FilepageInfo& fp, size_t idx, bool countMode)
 {
     std::ostringstream pctSS;
-    pctSS << std::fixed << std::setprecision(2) << fp.percentage;
+    pctSS << std::fixed << std::setprecision(DECIMAL_PRECISION) << fp.percentage;
     std::string stats = countMode ?
         ("\u6b21\u6570" + std::to_string(fp.count) + "\uff0c\u5360\u6bd4" + pctSS.str() + "%") :
         ("\u5927\u5c0f " + FormatSizeText((double)fp.size, false) + "\uff0c\u6b21\u6570" + std::to_string(fp.count) + "\uff0c\u5360\u6bd4" + pctSS.str() + "%");
@@ -169,7 +174,7 @@ std::string BuildMmapTabContentHTML(const std::vector<TabGroup>& groups,
     result += HelpTooltipCss();
     result += "\n</style>\n";
 
-    for (size_t scope = 0; scope < 3; ++scope) {
+    for (size_t scope = 0; scope < SCOPE_COUNT; ++scope) {
         if (scope >= groups.size()) {
             break;
         }
@@ -179,7 +184,7 @@ std::string BuildMmapTabContentHTML(const std::vector<TabGroup>& groups,
         }// 一级 tab 无数据则跳过（与 tab bar 一致）
 
         const TabGroup& anonG = streamGroups[scope];                 // anon 子 tab（scope 对应）
-        const TabGroup& filepageG = streamGroups[3 + scope];         // filepage 子 tab（app/system/mixed 对应）
+        const TabGroup& filepageG = streamGroups[SCOPE_COUNT + scope];         // filepage 子 tab（app/system/mixed 对应）
         const HtraceSection& fps = *filepageLists[scope];            // 对应 scope 的 filepage 轨
 
         result += "<div class=\"tab-content\" id=\"" + g.tabId + "\">\n";
@@ -275,7 +280,7 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
     std::string duration;
     {
         std::ostringstream durSs;
-        durSs << std::fixed << std::setprecision(3) << durationSeconds;
+        durSs << std::fixed << std::setprecision(DURATION_PRECISION) << durationSeconds;
         duration = durSs.str();
     }
     long long totalExistingSize = full.totalLeakSize;
@@ -373,13 +378,13 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
                 case Scope::SYSTEM_ONLY:
                     return idx == 1;
                 case Scope::MIXED:
-                    return idx == 2;
+                    return idx == SCOPE_INDEX_MIXED;
                 case Scope::APP_AND_SYSTEM:
                 default:
                     return idx == 0 || idx == 1;
             }
         };
-        for (size_t scope = 0; scope < 3 && scope < groups.size(); ++scope) {
+        for (size_t scope = 0; scope < SCOPE_COUNT && scope < groups.size(); ++scope) {
             if (scopeActive(scope) && groups[scope].symbols.empty() && !filepageLists[scope]->rows.empty()) {
                 SymbolDataEntry placeholder;
                 placeholder.info = json{{"name", ""}};

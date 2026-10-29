@@ -46,6 +46,10 @@ using json = nlohmann::ordered_json;
 namespace mem_analyzer {
 namespace {
 
+constexpr size_t REF_PATH_RESERVE_HINT = 32;
+constexpr int IDENTITY_CACHE_LOAD_DIVISOR = 8;
+constexpr size_t PATH_SEPARATOR_LEN = 4;
+
 struct Aggregate {
     std::string key;
     std::string label;
@@ -131,7 +135,7 @@ std::string FormatShortestReferencePath(
         return {};
     }
     std::vector<uint32_t> indices;
-    indices.reserve(32);
+    indices.reserve(REF_PATH_RESERVE_HINT);
     uint32_t current = node;
     for (size_t depth = 0; depth <= static_cast<size_t>(heap.nodeCount); ++depth) {
         if (current >= static_cast<uint32_t>(heap.nodeCount)) {
@@ -173,7 +177,7 @@ SnapshotIndex BuildIndex(const HeapSnapshot& heap, const HeapSnapshot& other)
     out.totalHeapSize = heap.GetTotalHeapSize();
 
     std::unordered_map<uint32_t, std::pair<std::string, std::string>> identityCache;
-    identityCache.reserve(static_cast<size_t>(heap.nodeCount / 8));
+    identityCache.reserve(static_cast<size_t>(heap.nodeCount / IDENTITY_CACHE_LOAD_DIVISOR));
     for (int i = 0; i < heap.nodeCount; ++i) {
         const uint32_t index = static_cast<uint32_t>(i);
         const uint64_t selfSize = heap.GetNodeSelfSize(index);
@@ -846,7 +850,7 @@ json JsleakCompareAnalyzeImpl(const HeapSnapshot& baseline,
                     break;
                 }
                 frames.push_back(pathStr.substr(start, sep - start));
-                start = sep + 4;
+                start = sep + PATH_SEPARATOR_LEN;
             }
             json item;
             item["chain"] = std::move(frames);

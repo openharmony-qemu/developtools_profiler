@@ -38,6 +38,9 @@ using namespace mem_analyzer::htmlAnalysis;
 namespace mem_analyzer {
 namespace {
 
+constexpr double PERCENTAGE_SCALE = 100.0;
+constexpr double NS_PER_SECOND = 1000000000.0;
+
 std::string FormatTimestamp(std::string value)
 {
     if (value.empty()) {
@@ -66,7 +69,7 @@ std::string FormatTshandleDuration(long long nanoseconds)
     if (nanoseconds <= 0) {
         return "-";
     }
-    return ToFixed(static_cast<double>(nanoseconds) / 1000000000.0, 2) + "s";
+    return ToFixed(static_cast<double>(nanoseconds) / NS_PER_SECOND, 2) + "s";
 }
 
 std::vector<TshandleCallChain> parseChains(const TshandleTopObject& object, double denominator, size_t maxChains = 3)
@@ -74,7 +77,7 @@ std::vector<TshandleCallChain> parseChains(const TshandleTopObject& object, doub
     std::vector<TshandleCallChain> chains;
     for (const auto& src : object.callChains) {
         TshandleCallChain chain = src;
-        chain.percentage = denominator > 0.0 ? (chain.existingSize / denominator * 100.0) : 0.0;
+        chain.percentage = denominator > 0.0 ? (chain.existingSize / denominator * PERCENTAGE_SCALE) : 0.0;
         chains.push_back(std::move(chain));
         if (maxChains > 0 && chains.size() >= maxChains) {
             break;
@@ -178,7 +181,7 @@ SectionResult BuildSection(const char* tabId, const char* label,
             "); return false;\" class=\"detail-link\">详情</a></td>\n"
             "    <td class=\"top-size-val\">" << FormatBytes(object.existingSize) << "</td>\n"
             "    <td>" << object.count << "</td>\n"
-            "    <td class=\"top-pct-val\">" << ToFixed(std::min(100.0, object.percentage), 2) << "%</td>\n"
+            "                <td class=\"top-pct-val\">" << ToFixed(std::min(PERCENTAGE_SCALE, object.percentage), 2) << "%</td>\n"
             "    <td class=\"top-func\">" << EscapeHtml(object.objectName) << "</td>\n"
             "  </tr>\n";
         ++rowIndex;
@@ -202,7 +205,7 @@ SectionResult BuildSection(const char* tabId, const char* label,
             {"objectName", objectName},
             {"existingSize", object.existingSize},
             {"count", object.count},
-            {"percentage", std::min(100.0, object.percentage)},
+            {"percentage", std::min(PERCENTAGE_SCALE, object.percentage)},
             {"type", HtraceEventTypeName(object.type)}
         };
         allData.push_back({
@@ -219,7 +222,7 @@ SectionResult BuildSection(const char* tabId, const char* label,
             "对象：</span><span class=\"header-func\">" << EscapeHtml(objectName) << "</span>\n"
             "    <div class=\"header-stats\">大小 " << FormatBytes(object.existingSize) <<
             "，数量" << object.count << "，占比" <<
-            ToFixed(std::min(100.0, object.percentage), 2) << "%</div>\n"
+            ToFixed(std::min(PERCENTAGE_SCALE, object.percentage), 2) << "%</div>\n"
             "  </div>\n"
             "  <div class=\"top-item-body expanded\" id=\"topItemBody" << graphIndex << "\">\n"
             "    <div class=\"call-chains-section\">\n      " <<

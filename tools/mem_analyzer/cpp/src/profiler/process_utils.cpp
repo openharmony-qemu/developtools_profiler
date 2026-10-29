@@ -41,6 +41,17 @@ namespace fs = std::filesystem;
 namespace mem_analyzer {
 namespace proc {
 
+namespace {
+[[maybe_unused]] constexpr size_t QUOTED_STRING_MIN_LEN = 2;
+[[maybe_unused]] constexpr int EXIT_COMMAND_NOT_FOUND = 127;
+[[maybe_unused]] constexpr int SHELL_REDIRECT_SUFFIX_LEN = 5;
+[[maybe_unused]] constexpr int IDLE_POLL_INTERVAL_MS = 10;
+[[maybe_unused]] constexpr int BOUNDED_POLL_INTERVAL_MS = 20;
+[[maybe_unused]] constexpr int KILL_GRACE_RETRIES = 20;
+[[maybe_unused]] constexpr int KILL_GRACE_SLEEP_US = 100000;
+[[maybe_unused]] constexpr size_t SHELL_QUOTE_RESERVE = 16;
+} // namespace
+
 #if defined(_WIN32)
 namespace {
 
@@ -97,8 +108,8 @@ std::string ResolveProgram(const std::string& prog)
         const size_t e = dirs.find(';', b);
         std::string dir = dirs.substr(b, e == std::string::npos ? std::string::npos : e - b);
         b = (e == std::string::npos) ? dirs.size() + 1 : e + 1;
-        if (dir.size() >= 2 && dir.front() == '"' && dir.back() == '"') {
-            dir = dir.substr(1, dir.size() - 2);
+        if (dir.size() >= QUOTED_STRING_MIN_LEN && dir.front() == '"' && dir.back() == '"') {
+            dir = dir.substr(1, dir.size() - QUOTED_STRING_MIN_LEN);
         }
         if (dir.empty()) {
             continue;
@@ -163,7 +174,7 @@ SpawnedProc SpawnPiped(const std::string& cmd)
         close(fds[0]);
         close(fds[1]);
         execl("/bin/sh", "sh", "-c", cmd.c_str(), (char*)nullptr);
-        _exit(127);
+        _exit(EXIT_COMMAND_NOT_FOUND);
     }
     close(fds[1]);
     return {pid, fds[0]};
@@ -212,8 +223,9 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
     // redundant — and without a shell it would reach the program as a literal argument, so
     // it must be dropped from the direct form.
     std::string direct = cmd;
-    if (direct.size() >= 5 && direct.compare(direct.size() - 5, 5, " 2>&1") == 0) {
-        direct.resize(direct.size() - 5);
+    if (direct.size() >= SHELL_REDIRECT_SUFFIX_LEN &&
+        direct.compare(direct.size() - SHELL_REDIRECT_SUFFIX_LEN, SHELL_REDIRECT_SUFFIX_LEN, " 2>&1") == 0) {
+        direct.resize(direct.size() - SHELL_REDIRECT_SUFFIX_LEN);
     }
     const std::string tok = ProgramToken(direct);
     const std::string prog = ResolveProgram(tok);
@@ -267,7 +279,7 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
                 if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) {
                     break;
                 }
-                Sleep(10);
+                Sleep(IDLE_POLL_INTERVAL_MS);
                 continue;
             }
             char buf[4096];
@@ -302,7 +314,7 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
             timedOut = true;
             break;
         }
-        Sleep(20);
+        Sleep(BOUNDED_POLL_INTERVAL_MS);
     }
     drainAvailable();
     CloseHandle(hRead);
@@ -387,11 +399,11 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
         // Give the child a brief chance to exit, then force-kill it.
         kill(sp.pid, SIGTERM);
         int st = 0;
-        for (int i = 0; i < 20; ++i) {
+        for (int i = 0; i < KILL_GRACE_RETRIES; ++i) {
             if (waitpid(sp.pid, &st, WNOHANG) == sp.pid) {
                 break;
             }
-            usleep(100000);
+            usleep(KILL_GRACE_SLEEP_US);
         }
         if (waitpid(sp.pid, &st, WNOHANG) != sp.pid) {
             kill(sp.pid, SIGKILL);
@@ -411,7 +423,7 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
 std::string ShellQuote(const std::string& s)
 {
     std::string out;
-    out.reserve(s.size() + 16);
+    out.reserve(s.size() + SHELL_QUOTE_RESERVE);
 #if defined(_WIN32)
     out += '"';
     for (char c : s) {
@@ -440,7 +452,7 @@ std::string ShellQuote(const std::string& s)
 std::string ShellQuoteDevice(const std::string& s)
 {
     std::string out;
-    out.reserve(s.size() + 16);
+    out.reserve(s.size() + SHELL_QUOTE_RESERVE);
     out += '\'';
     for (char c : s) {
         if (c == '\'') {

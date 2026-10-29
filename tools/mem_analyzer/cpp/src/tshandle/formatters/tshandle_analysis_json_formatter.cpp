@@ -29,20 +29,25 @@
 namespace mem_analyzer {
 namespace {
 
+constexpr double PERCENTAGE_SCALE = 100.0;
+constexpr double ROUND1_FACTOR = 10.0;
+constexpr int DURATION_PRECISION = 3;
+constexpr int JSON_INDENT_SPACES = 4;
+
 double round2(double v)
 {
-    return std::round(v * 100.0) / 100.0;
+    return std::round(v * PERCENTAGE_SCALE) / PERCENTAGE_SCALE;
 }
 
 double round1(double v)
 {
-    return std::round(v * 10.0) / 10.0;
+    return std::round(v * ROUND1_FACTOR) / ROUND1_FACTOR;
 }
 
 std::string FormatDuration(long long durationNs)
 {
     std::ostringstream oss;
-    oss << std::fixed << std::setprecision(3) <<
+    oss << std::fixed << std::setprecision(DURATION_PRECISION) <<
         (static_cast<double>(durationNs) / 1e9);
     return oss.str();
 }
@@ -187,9 +192,9 @@ std::string TshandleWriteAnalysisJson(const TshandleAnalysisOutput& analysis,
 
     writer.BeginObject();
     writer.WriteKey("meta");
-    writer.WriteRaw(meta.dump(4));
+    writer.WriteRaw(meta.dump(JSON_INDENT_SPACES));
     writer.WriteKey("content");
-    writer.WriteRaw(content.dump(4));
+    writer.WriteRaw(content.dump(JSON_INDENT_SPACES));
     writer.EndObject();
 
     writer.Close();

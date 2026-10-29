@@ -27,6 +27,8 @@
 namespace mem_analyzer {
 namespace {
 
+constexpr double PERCENTAGE_SCALE = 100.0;
+
 bool CallStackIsApp(const ResolvedCallStack& stack)
 {
     for (const auto& frame : stack.frames) {
@@ -165,9 +167,9 @@ TshandleTypeSection buildSectionWithStacks(
 void ComputeSectionPercentages(TshandleTypeSection& section, double denominator)
 {
     for (auto& object : section.topObjects) {
-        object.percentage = (denominator > 0.0) ? (object.existingSize / denominator * 100.0) : 0.0;
+        object.percentage = (denominator > 0.0) ? (object.existingSize / denominator * PERCENTAGE_SCALE) : 0.0;
         for (auto& chain : object.callChains) {
-            chain.percentage = (denominator > 0.0) ? (chain.existingSize / denominator * 100.0) : 0.0;
+            chain.percentage = (denominator > 0.0) ? (chain.existingSize / denominator * PERCENTAGE_SCALE) : 0.0;
         }
     }
 }

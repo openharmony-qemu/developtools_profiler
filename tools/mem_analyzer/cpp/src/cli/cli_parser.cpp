@@ -21,14 +21,23 @@
 
 namespace mem_analyzer {
 
+namespace {
+constexpr size_t OPTION_PREFIX_LEN = 2;
+constexpr size_t OPTION_VALUE_ARG_COUNT = 2;
+constexpr size_t HELP_COLUMN_WIDTH = 32;
+constexpr size_t HELP_WRAP_INDENT = 34;
+constexpr size_t HELP_FLAG_PADDING = 20;
+constexpr size_t NO_SUBCMD_PADDING = 15;
+} // namespace
+
 // ═══════════════════════════════════════════════════════════════
 // Helpers
 // ═══════════════════════════════════════════════════════════════
 
 static std::string StripLeadingDashes(const std::string& s)
 {
-    if (s.size() >= 2 && s[0] == '-' && s[1] == '-') {
-        return s.substr(2);
+    if (s.size() >= OPTION_PREFIX_LEN && s[0] == '-' && s[1] == '-') {
+        return s.substr(OPTION_PREFIX_LEN);
     }
     if (s.size() >= 1 && s[0] == '-') {
         return s.substr(1);
@@ -71,7 +80,7 @@ static void ParseOptionNames(const std::string& names, std::string& shortName, s
             end = names.size();
         }
         const std::string tok = names.substr(start, end - start);
-        if (tok.size() >= 2 && tok[0] == '-' && tok[1] == '-') {
+        if (tok.size() >= OPTION_PREFIX_LEN && tok[0] == '-' && tok[1] == '-') {
             if (longName.empty()) {
                 longName = tok;
             }
@@ -293,7 +302,7 @@ void CliParser::ConsumeArgs(const std::vector<std::string>& args, size_t start)
                 } else {
                     *static_cast<int*>(opt->target) = ParseInt(val);
                 }
-                i += 2;
+                i += OPTION_VALUE_ARG_COUNT;
             }
             continue;
         }
@@ -509,11 +518,11 @@ void CliParser::PrintHelp(std::ostream& os) const
 
                 std::string optLine = "  " + display + typeStr;
                 // Pad to 32 chars
-                if (optLine.size() < 32) {
-                    optLine.append(32 - optLine.size(), ' ');
+                if (optLine.size() < HELP_COLUMN_WIDTH) {
+                    optLine.append(HELP_COLUMN_WIDTH - optLine.size(), ' ');
                 }
                 else {
-                    optLine += "\n" + std::string(34, ' ');
+                    optLine += "\n" + std::string(HELP_WRAP_INDENT, ' ');
                 }
 
                 os << optLine;
@@ -528,7 +537,7 @@ void CliParser::PrintHelp(std::ostream& os) const
                 os << "\n";
             }
         }
-        os << "  -h, --help" << std::string(20, ' ') << "Print this help message\n";
+        os << "  -h, --help" << std::string(HELP_FLAG_PADDING, ' ') << "Print this help message\n";
         os << "\n";
     }
 
@@ -537,11 +546,11 @@ void CliParser::PrintHelp(std::ostream& os) const
         os << "ARGUMENTS:\n";
         for (const auto& p : positionals_) {
             std::string line = "  " + p.name;
-            if (line.size() < 32) {
-                line.append(32 - line.size(), ' ');
+            if (line.size() < HELP_COLUMN_WIDTH) {
+                line.append(HELP_COLUMN_WIDTH - line.size(), ' ');
             }
             else {
-                line += "\n" + std::string(34, ' ');
+                line += "\n" + std::string(HELP_WRAP_INDENT, ' ');
             }
             line += p.description;
             os << line << "\n";
@@ -559,7 +568,7 @@ void CliParser::PrintHelp(std::ostream& os) const
     }
     if (hasVisibleSub) {
         os << "SUBCOMMANDS:\n";
-        os << "  (no subcommand)" << std::string(15, ' ') << "Omit subcommand to auto-detect file type\n";
+        os << "  (no subcommand)" << std::string(NO_SUBCMD_PADDING, ' ') << "Omit subcommand to auto-detect file type\n";
         for (const auto& [name, entry] : subcommands_) {
             if (entry.hidden) {
                 continue;
@@ -568,8 +577,8 @@ void CliParser::PrintHelp(std::ostream& os) const
             if (!entry.alias.empty()) {
                 display += ", " + entry.alias;
             }
-            if (display.size() < 32) {
-                display.append(32 - display.size(), ' ');
+            if (display.size() < HELP_COLUMN_WIDTH) {
+                display.append(HELP_COLUMN_WIDTH - display.size(), ' ');
             }
             os << display << entry.parser->description_ << "\n";
         }

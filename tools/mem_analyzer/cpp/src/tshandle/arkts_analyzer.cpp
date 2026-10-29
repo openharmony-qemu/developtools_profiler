@@ -37,6 +37,8 @@ using json = nlohmann::ordered_json;
 
 namespace {
 
+constexpr size_t HEX_PREFIX_LEN = 2;
+
 // ---------------------------------------------------------------------------
 //  normalize_addr — strip 0x prefix, validate hex, lowercase without leading zeros
 // ---------------------------------------------------------------------------
@@ -51,8 +53,8 @@ static std::string NormalizeAddr(const std::string& raw)
     }
     s = s.substr(start);
     // remove 0x or 0X prefix
-    if (s.size() >= 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
-        s = s.substr(2);
+    if (s.size() >= HEX_PREFIX_LEN && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+        s = s.substr(HEX_PREFIX_LEN);
     }
     if (s.empty()) {
         return "";

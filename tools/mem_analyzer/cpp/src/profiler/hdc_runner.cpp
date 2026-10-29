@@ -57,6 +57,24 @@ using clockType = std::chrono::steady_clock;
 
 namespace {
 
+constexpr int POLL_INTERVAL_MS = 100;
+constexpr int PERMISSION_ERROR_BLOCK_LINES = 8;
+constexpr int ZIP_SUFFIX_LEN = 4;
+constexpr long long MS_PER_SECOND = 1000;
+constexpr long long BYTES_PER_KB = 1024;
+constexpr long long KB_PER_MB = 1024;
+constexpr int TICKS_PER_SECOND = 10;
+constexpr int APP_LAUNCH_WAIT_ITERS = 60;
+constexpr long long PIDOF_TIMEOUT_MS = 3000;
+constexpr int SHORT_POLL_INTERVAL_MS = 500;
+constexpr int SHELL_REDIRECT_SUFFIX_LEN = 5;
+constexpr int PROGRESS_INTERVAL_S = 5;
+constexpr int PROGRESS_INTERVAL_TICKS = 50;
+constexpr int STABLE_SAMPLE_THRESHOLD = 2;
+constexpr int PS_FIELD_COUNT = 7;
+constexpr int SESSION_READY_WAIT_ITERS = 120;
+constexpr int FRESH_RESTART_EXIT_WAIT_ITERS = 20;
+
 // Ctrl+C (SIGINT) flag: the signal handler only sets this flag; the capture
 // loop polls it so we can stop hiprofiler cleanly and save the data instead
 // of the process dying abruptly.
@@ -128,7 +146,7 @@ void SleepTicks(int ticks, const std::function<bool()>& stop)
         if (stop()) {
             return;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(POLL_INTERVAL_MS));
     }
 }
 
@@ -366,7 +384,7 @@ std::string DetectPermissionError(const std::string& output)
         // Collect an error block starting at the matched line: up to 8 lines,
         // stopping at the first empty line.
         std::string block;
-        for (size_t j = i; j < lines.size() && j < i + 8; ++j) {
+        for (size_t j = i; j < lines.size() && j < i + PERMISSION_ERROR_BLOCK_LINES; ++j) {
             if (lines[j].empty()) {
                 break;
             }
@@ -525,18 +543,18 @@ long long ParseHiprofilerDataTs(const std::string& filename)
     // Expected: "hiprofiler_data_1785766871434.zip"
     constexpr const char* prefix = "hiprofiler_data_";
     const auto plen = std::strlen(prefix);
-    if (filename.size() <= plen + 4) {
+    if (filename.size() <= plen + ZIP_SUFFIX_LEN) {
         return -1;
     }// need at least "X.zip"
     if (filename.rfind(prefix, 0) != 0) {
         return -1;
     }
-    if (filename.substr(filename.size() - 4) != ".zip") {
+    if (filename.substr(filename.size() - ZIP_SUFFIX_LEN) != ".zip") {
         return -1;
     }
 
     // Extract the numeric part between prefix and ".zip".
-    std::string numstr = filename.substr(plen, filename.size() - plen - 4);
+    std::string numstr = filename.substr(plen, filename.size() - plen - ZIP_SUFFIX_LEN);
     if (numstr.empty()) {
         return -1;
     }
@@ -550,7 +568,7 @@ long long ParseHiprofilerDataTs(const std::string& filename)
 
     try {
         long long ms = std::stoll(numstr);
-        return ms / 1000;  // convert milliseconds -> seconds
+        return ms / MS_PER_SECOND;  // convert milliseconds -> seconds
     } catch (...) {
         return -1;
     }
@@ -587,7 +605,7 @@ std::map<std::string, long long> listHiprofilerZips(const std::string& dir)
         if (name.rfind("hiprofiler_data_", 0) != 0) {
             continue;
         }
-        if (name.size() < 4 || name.substr(name.size() - 4) != ".zip") {
+        if (name.size() < ZIP_SUFFIX_LEN || name.substr(name.size() - ZIP_SUFFIX_LEN) != ".zip") {
             continue;
         }
 
@@ -757,7 +775,7 @@ void pollAndPullSnapshot(const std::string& resultDir,
                     allStable = false;
                 }
                 std::cout << "[Snapshot check] #" << pollNum << " (" << elapsedS <<
-                          "s): " << kv.first << " " << (kv.second / 1024) << "KB" <<
+                          "s): " << kv.first << " " << (kv.second / BYTES_PER_KB) << "KB" <<
                           (s ? " stable" : " generating") << "\n" <<
                           std::flush;
             }
@@ -772,7 +790,7 @@ void pollAndPullSnapshot(const std::string& resultDir,
         // so we don't overshoot the deadline by much.
         const long long remain = timeoutS - elapsedS;
         const int sleepS = static_cast<int>(std::min<long long>(intervalS, remain));
-        SleepTicks(sleepS * 10, []() { return false; });
+        SleepTicks(sleepS * TICKS_PER_SECOND, []() { return false; });
     }
 
     if (stable.empty()) {
@@ -912,11 +930,11 @@ bool LaunchDeviceAppAndWait(const std::string& packageName)
     if (!StartDeviceApp(packageName)) {
         return false;
     }
-    for (int i = 0; i < 60; ++i) {  // 500ms ticks
-        if (!GetProcessPidFast(packageName, 3000).empty()) {
+    for (int i = 0; i < APP_LAUNCH_WAIT_ITERS; ++i) {  // 500ms ticks
+        if (!GetProcessPidFast(packageName, PIDOF_TIMEOUT_MS).empty()) {
             return true;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_POLL_INTERVAL_MS));
     }
     return false;
 }
@@ -1005,12 +1023,12 @@ void StopHiprofiler()
     while (!stopDone.load()) {
         const long long wait = ElapsedSince(stopStart);
         // Only show progress once the wait becomes non-trivial.
-        if (wait >= 5) {
+        if (wait >= PROGRESS_INTERVAL_S) {
             std::cout << "Waiting for hiprofiler to stop... (" << wait << "s)\n" <<
                       std::flush;
         }
         // Sleep up to 5s, waking every 100ms so we react to completion.
-        SleepTicks(50, [&]() { return stopDone.load(); });
+        SleepTicks(PROGRESS_INTERVAL_TICKS, [&]() { return stopDone.load(); });
     }
     StopWorker.join();
 
@@ -1090,12 +1108,12 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
 
             std::cout << "[hiprofiler wait] #" << i <<
                       " (" << elapsedPoll << "s): new zip candidate " << candidate <<
-                      " size=" << (curSize / 1024) << "KB" <<
-                      (stableCount >= 2 ? " stable" :
+                      " size=" << (curSize / BYTES_PER_KB) << "KB" <<
+                      (stableCount >= STABLE_SAMPLE_THRESHOLD ? " stable" :
                           (stableCount == 1 ? " stabilizing" : " generating")) <<
                       "\n" << std::flush;
 
-            if (stableCount >= 2) {
+            if (stableCount >= STABLE_SAMPLE_THRESHOLD) {
                 std::cout << "Detected new hiprofiler_data zip after " << i <<
                           " polls: " << candidate <<
                           " (will prefer this over -o file)\n" << std::flush;
@@ -1163,12 +1181,12 @@ std::string WaitForNativeleaksFile(const std::string& pid, const std::string& di
             prevSize = curSize;
 
             std::cout << "[nativeleaks wait] #" << i << " (" << elapsedPoll << "s): " <<
-                      filename << " size=" << (curSize / 1024) << "KB" <<
-                      (stableCount >= 2 ? " stable" :
+                      filename << " size=" << (curSize / BYTES_PER_KB) << "KB" <<
+                      (stableCount >= STABLE_SAMPLE_THRESHOLD ? " stable" :
                           (stableCount == 1 ? " stabilizing" : " generating")) <<
                       "\n" << std::flush;
 
-            if (stableCount >= 2) {
+            if (stableCount >= STABLE_SAMPLE_THRESHOLD) {
                 std::cout << "Detected nativeleaks orphan-snapshot file after " << i <<
                           " polls: " << filename << "\n" << std::flush;
                 return MakeDevicePath(dir, filename);
@@ -1322,7 +1340,7 @@ std::string GetProcessPid(const std::string& processName)
 
             std::istringstream lss(line);
             std::string pid, tok;
-            for (int col = 0; col < 7; ++col) {
+            for (int col = 0; col < PS_FIELD_COUNT; ++col) {
                 if (!(lss >> tok)) {
                     pid.clear();
                     break;
@@ -1634,8 +1652,8 @@ std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::s
 
         // 去掉尾部 " 2>&1"：stderr 已由上面的 STARTF_USESTDHANDLES 合并进 stdout。
         std::string cleanCmd = cmd;
-        if (cleanCmd.size() >= 5 && cleanCmd.substr(cleanCmd.size() - 5) == " 2>&1") {
-            cleanCmd.resize(cleanCmd.size() - 5);
+        if (cleanCmd.size() >= SHELL_REDIRECT_SUFFIX_LEN && cleanCmd.substr(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN) == " 2>&1") {
+            cleanCmd.resize(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN);
         }
         std::wstring wcmdline = WidenPath(cleanCmd);
         if (!CreateProcessW(nullptr, wcmdline.data(), nullptr, nullptr, TRUE, 0,
@@ -1770,7 +1788,7 @@ std::thread SpawnPidChecker(const std::shared_ptr<CaptureState>& state,
                 }
             }
             // Sleep 5s between checks, in 100ms ticks so we stop promptly.
-            SleepTicks(50, [state, ignoreDone]()
+            SleepTicks(PROGRESS_INTERVAL_TICKS, [state, ignoreDone]()
             {
                 return state->stopPidCheck.load() ||
                        DeviceLost() ||
@@ -1799,7 +1817,7 @@ std::thread SpawnFreshRestart(const std::shared_ptr<CaptureState>& state, const 
         // full 60s would only delay the teardown and print a misleading "session did
         // not become ready" warning. Untargeted runs never set the flag.
         bool sessionUp = false;
-        for (int i = 0; i < 120 && !state->stopFreshRestart.load() && !DeviceLost(); ++i) {
+        for (int i = 0; i < SESSION_READY_WAIT_ITERS && !state->stopFreshRestart.load() && !DeviceLost(); ++i) {
             bool marker = false;
             bool failed = false;
             {
@@ -1826,11 +1844,11 @@ std::thread SpawnFreshRestart(const std::shared_ptr<CaptureState>& state, const 
             processName, "' for a fresh start...");
         ForceStopDeviceApp(processName);
         // Wait for the process to actually exit before relaunching.
-        for (int i = 0; i < 20; ++i) {  // up to 10s
-            if (GetProcessPidFast(processName, 3000).empty()) {
+        for (int i = 0; i < FRESH_RESTART_EXIT_WAIT_ITERS; ++i) {  // up to 10s
+            if (GetProcessPidFast(processName, PIDOF_TIMEOUT_MS).empty()) {
                 break;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_POLL_INTERVAL_MS));
         }
         if (LaunchDeviceAppAndWait(processName)) {
             log::Logi("'", processName, "' relaunched (fresh start).");
@@ -2058,7 +2076,7 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
         // finishes mid-interval, when the start command fails, when the
         // first smaps/lsof export reports a permission failure, or when the
         // target device fails at the hdc level (pinned target).
-        SleepTicks(50, [&]()
+        SleepTicks(PROGRESS_INTERVAL_TICKS, [&]()
         {
             return (state->done.load() && (!asyncStartMode || CaptureStartFailed(state))) ||
                    state->permissionFailed.load() ||
@@ -2189,11 +2207,11 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
             std::cout << "Finalizing... total " << total << "s elapsed " <<
                       "(post-capture wait: " << finalizeWait << "s)\n" <<
                       std::flush;
-            SleepTicks(50, [&]()
+            SleepTicks(PROGRESS_INTERVAL_TICKS, [&]()
             {
                 return state->done.load() || gInterruptRequested;
             });
-            finalizeWait += 5;
+            finalizeWait += PROGRESS_INTERVAL_S;
         }
         log::Logi("hiprofiler post-capture processing complete.");
     }
@@ -2566,7 +2584,7 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
                 ++samplesAbovePeak;
                 if (samplesAbovePeak >= kSnapshotPeakTrigger) {
                     log::Logi("ArkTS heap stayed above the recorded peak by more than ",
-                        (kSnapshotPeakGrowthKb / 1024), " MB for ",
+                        (kSnapshotPeakGrowthKb / KB_PER_MB), " MB for ",
                         samplesAbovePeak,
                         " consecutive samples; exporting a snapshot...");
                     // The peak is lifted as soon as the export is decided, so
@@ -2595,7 +2613,7 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
 
         // Also wake up when the device is lost, so the check above runs at the
         // next tick instead of sleeping out the remaining interval (pinned target).
-        SleepTicks(kSnapshotSampleIntervalS * 10, []() { return gInterruptRequested != 0 || DeviceLost(); });
+        SleepTicks(kSnapshotSampleIntervalS * TICKS_PER_SECOND, []() { return gInterruptRequested != 0 || DeviceLost(); });
     }
 
     // ── end-of-session snapshot ─────────────────────────────────────────────

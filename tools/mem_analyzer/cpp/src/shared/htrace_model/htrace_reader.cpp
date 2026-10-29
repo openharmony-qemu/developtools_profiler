@@ -32,6 +32,14 @@ namespace {
 constexpr uint32_t kHeaderSize = 1024;
 constexpr uint64_t kHeaderMagic = 0x464F5250534F484FULL; // 小端 == "OHOSPROF"
 
+constexpr size_t OFFSET_LENGTH = 8;
+constexpr size_t OFFSET_VERSION = 16;
+constexpr size_t OFFSET_DATA_TYPE = 56;
+constexpr size_t OFFSET_BOOTTIME_NS = 60;
+constexpr size_t OFFSET_REALTIME_NS = 68;
+constexpr size_t OFFSET_DURATION_NS = 244;
+constexpr size_t LEN_PREFIX_SIZE = 4;
+
 enum class HtraceDataType : uint32_t {
     PROTOBUF_BIN = 0,    // HIPROFILER_PROTOBUF_BIN，标准 HiProfiler protobuf 二进制
     HIPERF      = 1,    // hiperf 采样原始数据
@@ -407,12 +415,12 @@ bool ReadHeader(const std::string& path, HtraceHeaderInfo& out)
 
     out.magic = ReadU64(header + 0);
     out.valid = (out.magic == kHeaderMagic);
-    out.length = ReadU64(header + 8);
-    out.version = ReadU32(header + 16);
-    out.dataType = ReadU32(header + 56);
-    out.boottimeNs = ReadU64(header + 60);
-    out.realtimeNs = ReadU64(header + 68);
-    out.durationNs = ReadU64(header + 244);
+    out.length = ReadU64(header + OFFSET_LENGTH);
+    out.version = ReadU32(header + OFFSET_VERSION);
+    out.dataType = ReadU32(header + OFFSET_DATA_TYPE);
+    out.boottimeNs = ReadU64(header + OFFSET_BOOTTIME_NS);
+    out.realtimeNs = ReadU64(header + OFFSET_REALTIME_NS);
+    out.durationNs = ReadU64(header + OFFSET_DURATION_NS);
     return true;
 }
 
@@ -461,9 +469,9 @@ bool HtraceReader::ReadNativehookConfig(const std::string& path, HtraceNativeHoo
     ifs.seekg(static_cast<std::streamoff>(kHeaderSize));
 
     while (true) {
-        uint8_t lenBuf[4];
-        ifs.read(reinterpret_cast<char*>(lenBuf), 4);
-        if (ifs.gcount() != 4) {
+        uint8_t lenBuf[LEN_PREFIX_SIZE];
+        ifs.read(reinterpret_cast<char*>(lenBuf), static_cast<std::streamsize>(LEN_PREFIX_SIZE));
+        if (ifs.gcount() != static_cast<std::streamsize>(LEN_PREFIX_SIZE)) {
             break;
         }
         uint32_t len = ReadU32(lenBuf);

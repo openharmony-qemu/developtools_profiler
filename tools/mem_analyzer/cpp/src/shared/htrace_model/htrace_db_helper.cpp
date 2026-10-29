@@ -156,6 +156,11 @@ TraceMeta QueryTraceMeta(sqlite3* db)
 // ── read_frames ───────────────────────────────────────────────────
 namespace {
 
+constexpr int COL_FILE_ID = 2;
+constexpr int COL_CALLCHAIN_ID = 3;
+constexpr int COL_VADDR = 4;
+constexpr int COL_BUILD_ID = 5;
+
 void QueryFrames(sqlite3* db, const std::string& chainSelect, std::unordered_map<int, std::vector<FrameRow>>& out)
 {
     const std::string sql =
@@ -178,17 +183,17 @@ void QueryFrames(sqlite3* db, const std::string& chainSelect, std::unordered_map
         FrameRow fr;
         fr.depth        = sqlite3_column_int(stmt, 0);
         fr.symbolId    = sqlite3_column_int(stmt, 1);
-        fr.fileIdNull = (sqlite3_column_type(stmt, 2) == SQLITE_NULL);
-        fr.fileId      = fr.fileIdNull ? 0 : sqlite3_column_int(stmt, 2);
-        fr.callchainId = sqlite3_column_int(stmt, 3);
-        fr.vaddrNull   = (sqlite3_column_type(stmt, 4) == SQLITE_NULL);
+        fr.fileIdNull = (sqlite3_column_type(stmt, COL_FILE_ID) == SQLITE_NULL);
+        fr.fileId      = fr.fileIdNull ? 0 : sqlite3_column_int(stmt, COL_FILE_ID);
+        fr.callchainId = sqlite3_column_int(stmt, COL_CALLCHAIN_ID);
+        fr.vaddrNull   = (sqlite3_column_type(stmt, COL_VADDR) == SQLITE_NULL);
         fr.vaddr        = 0;
         if (!fr.vaddrNull) {
-            const char* s = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+            const char* s = reinterpret_cast<const char*>(sqlite3_column_text(stmt, COL_VADDR));
             fr.vaddr = s ? static_cast<uint64_t>(strtoull(s, nullptr, 0)) : 0;
         }
-        fr.buildIdNull = (sqlite3_column_type(stmt, 5) == SQLITE_NULL);
-        fr.buildId      = fr.buildIdNull ? 0 : sqlite3_column_int(stmt, 5);
+        fr.buildIdNull = (sqlite3_column_type(stmt, COL_BUILD_ID) == SQLITE_NULL);
+        fr.buildId      = fr.buildIdNull ? 0 : sqlite3_column_int(stmt, COL_BUILD_ID);
 
         out[fr.callchainId].push_back(std::move(fr));
     }

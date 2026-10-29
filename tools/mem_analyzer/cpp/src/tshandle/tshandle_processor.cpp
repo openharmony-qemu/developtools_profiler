@@ -31,6 +31,10 @@
 
 namespace mem_analyzer {
 
+constexpr int ARK_GLOBAL_HANDLE_TYPE = 17;
+constexpr int ARK_LOCAL_HANDLE_TYPE = 18;
+constexpr int COL_EXISTING_SIZE = 3;
+
 // ── Helper: split string by delimiter ─────────────────────────────
 static std::vector<std::string> split(const std::string& s, char delim)
 {
@@ -129,7 +133,7 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
                     if (existingAddrsStr) {
                         g.existingAddrs = split(existingAddrsStr, ',');
                     }
-                    g.existingSize = sqlite3_column_int64(stmt, 3);
+                    g.existingSize = sqlite3_column_int64(stmt, COL_EXISTING_SIZE);
                     groups.push_back(g);
                 }
             } else {
@@ -163,7 +167,7 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
                     if (existingAddrsStr) {
                         g.existingAddrs = split(existingAddrsStr, ',');
                     }
-                    g.existingSize = sqlite3_column_int64(stmt, 3);
+                    g.existingSize = sqlite3_column_int64(stmt, COL_EXISTING_SIZE);
                     groups.push_back(g);
                 }
             } else {
@@ -200,9 +204,9 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
         for (const auto& g : groups) {
             ResolvedCallStack cs;
             cs.id = g.callchainId;
-            if (g.type == 17) {
+            if (g.type == ARK_GLOBAL_HANDLE_TYPE) {
                 cs.type = HtraceEventType::ARK_GLOBAL_HANDLE;
-            } else if (g.type == 18) {
+            } else if (g.type == ARK_LOCAL_HANDLE_TYPE) {
                 cs.type = HtraceEventType::ARK_LOCAL_HANDLE;
             } else {
                 cs.type = HtraceEventType::UNKNOWN;

@@ -42,6 +42,9 @@ namespace mem_analyzer {
 
 namespace {
 
+constexpr int SHELL_REDIRECT_SUFFIX_LEN = 5;
+constexpr int STREAM_POLL_INTERVAL_MS = 20;
+
 // Run a command, streaming its stdout/stderr to the console in real time
 // (instead of capturing it all and printing once at the end).
 // On Windows, uses CreateProcessW directly (not cmd.exe /c) to avoid
@@ -76,8 +79,8 @@ int RunCommandStreaming(const std::string& cmd)
     // Strip any trailing "2>&1" that the caller may have appended (it's
     // redundant since STARTUPINFO already merges stderr into stdout).
     std::string cleanCmd = cmd;
-    if (cleanCmd.size() >= 5 && cleanCmd.substr(cleanCmd.size() - 5) == " 2>&1") {
-        cleanCmd.resize(cleanCmd.size() - 5);
+    if (cleanCmd.size() >= SHELL_REDIRECT_SUFFIX_LEN && cleanCmd.substr(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN) == " 2>&1") {
+        cleanCmd.resize(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN);
     }
     std::string cmdline = cleanCmd;
     std::wstring wcmdline = WidenPath(cmdline);
@@ -113,7 +116,7 @@ int RunCommandStreaming(const std::string& cmd)
         if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) {
             break;
         }
-        Sleep(20);
+        Sleep(STREAM_POLL_INTERVAL_MS);
     }
     drainAvailable();
     CloseHandle(hRead);
@@ -220,6 +223,7 @@ constexpr const char* kAmbiguousListMsg =
     "tool cannot recognize, so another device may be attached as well.\n"
     "Name the device explicitly with --device to continue.";
 constexpr size_t kMaxProbeKeyLen = 256;   // longer values skip the probe command
+constexpr size_t MULTI_DEVICE_THRESHOLD = 2;
 
 // Surrounding whitespace is invisible in a shell and would otherwise make an
 // otherwise correct id miss the exact match against `hdc list targets` (`hdc -t`
@@ -366,7 +370,7 @@ static bool ResolveDeviceTarget(const std::string& rawKey, bool keyProvided, std
     // would send untargeted commands to a two-device setup — the exact hazard the gate
     // exists to prevent.
     auto t = HdcListTargets();
-    if (!t.spawnFailed && t.keys.size() >= 2) {
+    if (!t.spawnFailed && t.keys.size() >= MULTI_DEVICE_THRESHOLD) {
         std::string text = HdcProbe("");
         if (!HdcIsDeviceFailure(text)) {
             text = kFallbackNeedKey;
@@ -878,6 +882,9 @@ void FlattenReportDir(const std::string& dir, const std::string& stem)
     }
 }
 
+constexpr int EXIT_PROFILER_FAILED = 2;
+constexpr int EXIT_EXPORT_FAILED = 3;
+
 } // namespace
 
 int RunProfilerCmd(const ProfilerCliOptions& opt)
@@ -1091,7 +1098,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
         if (!rr.output.empty() && !rr.outputStreamed) {
             std::cout << rr.output;
         }
-        return 2;
+        return EXIT_PROFILER_FAILED;
     }
 
     // 9. Report results.
@@ -1122,7 +1129,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
             } else {
                 log::Loge("Result file export failed: (exit code ", rr.pullExitCode, ")");
             }
-            return 3;
+            return EXIT_EXPORT_FAILED;
         }
     }
 

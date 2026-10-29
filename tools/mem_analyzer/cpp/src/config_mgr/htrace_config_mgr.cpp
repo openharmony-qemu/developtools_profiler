@@ -25,6 +25,15 @@ using json = nlohmann::json;
 
 namespace mem_analyzer {
 
+namespace {
+constexpr size_t TS_JS_PATTERN_LEN = 4;
+constexpr size_t ETS_PATTERN_LEN = 5;
+constexpr size_t TS_JS_COLON_OFFSET = 3;
+constexpr size_t ETS_COLON_OFFSET = 4;
+constexpr size_t EXT_CHAR2_OFFSET = 2;
+constexpr size_t EXT_CHAR3_OFFSET = 3;
+} // namespace
+
 // ===== Singleton =====
 
 HtraceConfigMgr& HtraceConfigMgr::Instance()
@@ -253,16 +262,16 @@ bool HtraceConfigMgr::MatchTsPattern(const std::string& lib, const std::string& 
     };
 
     if (ext == ".ts" || ext == ".js") {
-        if (dot + 4 <= lib.size()) {
-            char a = lib[dot + 1], b = lib[dot + 2], c = lib[dot + 3];
-            if (a == ext[1] && b == ext[2] && c == ':') {
-                return ValidLineCol(dot + 3);
+        if (dot + TS_JS_PATTERN_LEN <= lib.size()) {
+            char a = lib[dot + 1], b = lib[dot + EXT_CHAR2_OFFSET], c = lib[dot + TS_JS_COLON_OFFSET];
+            if (a == ext[1] && b == ext[EXT_CHAR2_OFFSET] && c == ':') {
+                return ValidLineCol(dot + TS_JS_COLON_OFFSET);
             }
         }
     } else if (ext == ".ets") {
-        if (dot + 5 <= lib.size()) {
-            if (lib[dot + 1] == 'e' && lib[dot + 2] == 't' && lib[dot + 3] == 's' && lib[dot + 4] == ':') {
-                return ValidLineCol(dot + 4);
+        if (dot + ETS_PATTERN_LEN <= lib.size()) {
+            if (lib[dot + 1] == 'e' && lib[dot + EXT_CHAR2_OFFSET] == 't' && lib[dot + EXT_CHAR3_OFFSET] == 's' && lib[dot + ETS_COLON_OFFSET] == ':') {
+                return ValidLineCol(dot + ETS_COLON_OFFSET);
             }
         }
     }

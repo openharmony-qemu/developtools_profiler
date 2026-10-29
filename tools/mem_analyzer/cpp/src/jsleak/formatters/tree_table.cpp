@@ -28,6 +28,10 @@ using htmlAnalysis::FormatBytes;
 
 namespace {
 
+constexpr double PERCENTAGE_SCALE = 100.0;
+constexpr int TREE_INDENT_BASE_PX = 10;
+constexpr int TREE_GUIDE_LEFT_PX = 18;
+
 // 百分比口径与图表 tooltip 一致：以整棵树的根节点（GC Roots）总大小/总节点数为分母。
 std::string FormatTreePct(int64_t part, int64_t total)
 {
@@ -35,7 +39,7 @@ std::string FormatTreePct(int64_t part, int64_t total)
         return "0%";
     }
     char buf[32];
-    std::snprintf(buf, sizeof(buf), "%.1f%%", static_cast<double>(part) / total * 100.0);
+    std::snprintf(buf, sizeof(buf), "%.1f%%", static_cast<double>(part) / total * PERCENTAGE_SCALE);
     return buf;
 }
 
@@ -100,7 +104,7 @@ void EmitIcicleTreeRows(const json& node, const std::string& tableId,
     // 同时限制默认展开的最大层数，超过 kIttMaxExpandDepth 的节点即使占比达标也收起。
     // 占比按「子树内最大占比」判定，使超过阈值的子孙链不会被未达阈值的父级折叠隐藏。
     const double pct = rootSize > 0 ?
-                           100.0 * static_cast<double>(IttSubtreeMaxSize(node)) /
+                           PERCENTAGE_SCALE * static_cast<double>(IttSubtreeMaxSize(node)) /
                                  static_cast<double>(rootSize) :
                            0.0;
     const bool collapsed =
@@ -123,13 +127,13 @@ void EmitIcicleTreeRows(const json& node, const std::string& tableId,
     out += "<td class=\"itt-num\">" + std::to_string(count) + "</td>";
     // 名称列允许换行，超长节点名完整展示（因此不再需要 title / 省略号）
     out += "<td class=\"itt-name" + std::string(depth == 0 ? " itt-root" : "") +
-           "\" style=\"padding-left:" + std::to_string(10 + depth * 16) + "px\">";
+           "\" style=\"padding-left:" + std::to_string(TREE_INDENT_BASE_PX + depth * 16) + "px\">";
     // 垂直引导线：每个祖先层级一条，位置对准该层展开/折叠开关的中心（18 + 16k），
     // 把同一祖先下的各级子节点串起来，避免层级多时看串行。
     // 颜色取该线所代表的层的颜色，与本层节点的 +/- 同色。
     // 绝对定位铺满整行高度，名称换行导致行变高时线也不会断开。
     for (int k = 0; k < depth; ++k) {
-        out += "<span class=\"itt-guide\" style=\"left:" + std::to_string(18 + k * 16) +
+        out += "<span class=\"itt-guide\" style=\"left:" + std::to_string(TREE_GUIDE_LEFT_PX + k * 16) +
                "px;background:" + IttLevelColor(k) + "\"></span>";
     }
     if (hasChildren) {

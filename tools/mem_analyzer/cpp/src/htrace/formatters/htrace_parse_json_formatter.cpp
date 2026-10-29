@@ -28,6 +28,8 @@
 namespace mem_analyzer {
 namespace {
 
+constexpr int JSON_INDENT_SPACES = 4;
+
 json BuildSummary(const TraceDB& db)
 {
     const auto& ts = db.meta.typeSizes;
@@ -87,7 +89,7 @@ std::string HtraceWriteParseJson(const TraceDB& db, const std::string& filePath,
 
     json meta = HtraceBuildMeta(filePath, ctx);
     writer.WriteKey("meta");
-    writer.WriteRaw(meta.dump(4));
+    writer.WriteRaw(meta.dump(JSON_INDENT_SPACES));
 
     writer.WriteKey("content");
     writer.BeginObject();
@@ -96,7 +98,7 @@ std::string HtraceWriteParseJson(const TraceDB& db, const std::string& filePath,
     writer.WriteKey("summary");
     writer.BeginObject();
     writer.WriteKey("htrace");
-    writer.WriteRaw(summary.dump(4));
+    writer.WriteRaw(summary.dump(JSON_INDENT_SPACES));
     writer.EndObject();
 
     // callStacks — streaming, one at a time

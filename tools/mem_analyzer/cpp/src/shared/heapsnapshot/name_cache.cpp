@@ -33,6 +33,8 @@ using json = nlohmann::json;
 
 namespace {
 
+constexpr size_t MIN_NAMECACHE_FILENAME_LEN = 8;
+
 /// 解析 nameCache 缓存条目 key 的 ":start:end" 行号后缀。
 /// 形如 "方法#成员#变量" / "#类名:start:end" / "方法名:start:end" / 普通变量名。
 /// 成功解析后缀时返回 true，name 为去掉后缀的原始名，start_line/end_line 为行号；
@@ -132,7 +134,7 @@ bool NameCacheIndex::LoadFromDir(const std::string& dir)
                 continue;
             }
             const std::string filename = mem_analyzer::PathToUtf8(entry.path().filename());
-            if (filename.size() < 8) {
+            if (filename.size() < MIN_NAMECACHE_FILENAME_LEN) {
                 continue;
             }
             std::string lower = filename;

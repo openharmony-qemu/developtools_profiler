@@ -25,6 +25,8 @@
 
 namespace mem_analyzer {
 
+constexpr int JSON_INDENT_SPACES = 4;
+
 std::string JsleakWriteAnalysisJson(const json& data, const std::string& filePath,
     const RunContext& ctx, const std::string& outDir)
 {
@@ -69,9 +71,9 @@ std::string JsleakWriteAnalysisJson(const json& data, const std::string& filePat
 
     writer.BeginObject();
     writer.WriteKey("meta");
-    writer.WriteRaw(meta.dump(4));
+    writer.WriteRaw(meta.dump(JSON_INDENT_SPACES));
     writer.WriteKey("content");
-    writer.WriteRaw(content.dump(4));
+    writer.WriteRaw(content.dump(JSON_INDENT_SPACES));
     writer.EndObject();
 
     writer.Close();

@@ -22,6 +22,9 @@
 
 namespace mem_analyzer {
 
+constexpr int CLOSE_TAG_LEN = 2;
+constexpr int ESCAPED_CLOSE_TAG_LEN = 3;
+
 std::string HtmlReportBegin(const std::string& title)
 {
     return R"HTML(<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
@@ -102,8 +105,8 @@ std::string HtmlEscapeScriptJson(const std::string& jsonText)
     std::string result = jsonText;
     size_t pos = 0;
     while ((pos = result.find("</", pos)) != std::string::npos) {
-        result.replace(pos, 2, "<\\/");
-        pos += 3;
+        result.replace(pos, CLOSE_TAG_LEN, "<\\/");
+        pos += ESCAPED_CLOSE_TAG_LEN;
     }
     return result;
 }
