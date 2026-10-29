@@ -661,6 +661,10 @@ ani_long GetAppVMObjectUsedSize(ani_env *env)
 ani_long GetAppSharedHeapObjectUsedSize(ani_env *env)
 {
     ani_vm* vm = AniUtil::GetAniVm(env);
+    if (vm == nullptr) {
+        AniUtil::ThrowErrorMessage(env, "Get ani vm failed.", ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        return 0;
+    }
     return static_cast<ani_long>(ark::dfx::GetHeapUsedSize(vm) >> BYTE_2_KB_SHIFT_BITS);
 }
 

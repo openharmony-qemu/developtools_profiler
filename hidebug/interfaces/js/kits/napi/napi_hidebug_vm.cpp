@@ -130,12 +130,17 @@ napi_value GetAppSharedHeapObjectUsedSize(napi_env env, napi_callback_info info)
     constexpr uint32_t limitSize = 100;
     static MultipleRecordReporter multipleRecordReporter(0, limitSize);
     ApiInvokeRecorder apiInvokeRecorder("getAppSharedHeapObjectUsedSize", multipleRecordReporter);
-    uint64_t sharedHeapObjectUsed{0};
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
-    if (engine) {
-        constexpr int byte2KbShiftBits = 10;
-        sharedHeapObjectUsed = static_cast<uint64_t>(engine->GetSharedHeapSize()) >> byte2KbShiftBits;
+    if (engine == nullptr) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(),
+                         "Get native engine failed.");
+        napi_value ret;
+        napi_create_bigint_uint64(env, 0, &ret);
+        return ret;
     }
+    constexpr int byte2KbShiftBits = 10;
+    uint64_t sharedHeapObjectUsed = static_cast<uint64_t>(engine->GetSharedHeapSize()) >> byte2KbShiftBits;
     napi_value ret;
     napi_create_bigint_uint64(env, sharedHeapObjectUsed, &ret);
     return ret;
