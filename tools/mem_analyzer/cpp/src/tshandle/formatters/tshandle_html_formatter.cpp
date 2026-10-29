@@ -41,6 +41,7 @@ namespace {
 constexpr double PERCENTAGE_SCALE = 100.0;
 constexpr double NS_PER_SECOND = 1000000000.0;
 constexpr int PERCENTAGE_DECIMAL_PLACES = 2;
+constexpr int DURATION_DECIMAL_PLACES = 2;
 
 std::string FormatTimestamp(std::string value)
 {
@@ -70,7 +71,7 @@ std::string FormatTshandleDuration(long long nanoseconds)
     if (nanoseconds <= 0) {
         return "-";
     }
-    return ToFixed(static_cast<double>(nanoseconds) / NS_PER_SECOND, 2) + "s";
+    return ToFixed(static_cast<double>(nanoseconds) / NS_PER_SECOND, DURATION_DECIMAL_PLACES) + "s";
 }
 
 std::vector<TshandleCallChain> parseChains(const TshandleTopObject& object, double denominator, size_t maxChains = 3)

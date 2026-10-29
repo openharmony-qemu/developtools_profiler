@@ -149,9 +149,9 @@ HdcTargets HdcListTargets()
             t.sawFail = true;
             continue;
         }
-        if (IsHdcChatter(s)) {
+        if (IsHdcChatter(s)) { // hdc's own banner / log lines, never a device
             continue;
-        }// hdc's own banner / log lines, never a device
+        }
         // Observed format: the whole line is the device id. Taking the first token also
         // tolerates a possible two-column "id state" layout.
         const std::string tok = s.substr(0, s.find_first_of(" \t"));

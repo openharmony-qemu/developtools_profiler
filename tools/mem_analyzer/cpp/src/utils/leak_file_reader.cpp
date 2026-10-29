@@ -22,8 +22,10 @@ namespace mem_analyzer {
 
 namespace {
 
+constexpr int NSAPI_VERSON_LENGTH = 8; // "NSNAP1.0"
 constexpr int UINT64_BYTES = 8;
 constexpr int LEAK_FILE_HEADER_BYTES = 16;
+constexpr uint64_t MAX_LEAK_FILE_BYTES = 4ULL * 1024 * 1024 * 1024;  // 4 GiB
 
 // 从二进制流读取 8 字节小端 uint64（不依赖主机字节序）
 bool ReadU64Le(std::ifstream& f, uint64_t& out)
@@ -61,12 +63,12 @@ std::unordered_set<uint64_t> ReadLeakFile(const std::string& path)
     }
 
     // magic: 8 bytes "NSNAP1.0"
-    char magic[8];
-    if (!f.read(magic, 8)) {
+    char magic[NSAPI_VERSON_LENGTH];
+    if (!f.read(magic, NSAPI_VERSON_LENGTH)) {
         throw std::runtime_error("Leak file too short for magic: " + path);
     }
-    static const char EXPECTED[8] = {'N', 'S', 'N', 'A', 'P', '1', '.', '0'};
-    if (std::memcmp(magic, EXPECTED, 8) != 0) {
+    static const char EXPECTED[NSAPI_VERSON_LENGTH] = {'N', 'S', 'N', 'A', 'P', '1', '.', '0'};
+    if (std::memcmp(magic, EXPECTED, NSAPI_VERSON_LENGTH) != 0) {
         throw std::runtime_error("Invalid leak file magic (expected NSNAP1.0): " + path);
     }
 
@@ -83,14 +85,14 @@ std::unordered_set<uint64_t> ReadLeakFile(const std::string& path)
     f.seekg(0, std::ios::end);
     auto filesize = f.tellg();
     f.seekg(LEAK_FILE_HEADER_BYTES, std::ios::beg);  // 回到数据起始（magic 8 + count 8）
-    if (filesize < LEAK_FILE_HEADER_BYTES || count > (static_cast<uint64_t>(filesize) - LEAK_FILE_HEADER_BYTES) / LEAK_FILE_HEADER_BYTES) {
+    if (filesize < LEAK_FILE_HEADER_BYTES ||
+        count > (static_cast<uint64_t>(filesize) - LEAK_FILE_HEADER_BYTES) / LEAK_FILE_HEADER_BYTES) {
         throw std::runtime_error("Leak file truncated: declared count " +
             std::to_string(count) + " exceeds file capacity (" +
             std::to_string(static_cast<uint64_t>(filesize)) + " bytes): " + path);
     }
 
     // 防超大文件本身触发 OOM：即使 count 合法，超大文件也会导致 reserve 海量内存
-    constexpr uint64_t MAX_LEAK_FILE_BYTES = 4ULL * 1024 * 1024 * 1024;  // 4 GiB
     if (static_cast<uint64_t>(filesize) > MAX_LEAK_FILE_BYTES) {
         throw std::runtime_error("Leak file too large (" +
             std::to_string(static_cast<uint64_t>(filesize)) + " bytes): " + path);

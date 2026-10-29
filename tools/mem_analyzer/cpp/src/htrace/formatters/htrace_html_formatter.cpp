@@ -178,9 +178,9 @@ std::string BuildMmapTabContentHTML(const std::vector<TabGroup>& groups,
             break;
         }
         const TabGroup& g = groups[scope];
-        if (g.symbols.empty()) {
+        if (g.symbols.empty()) { // 一级 tab 无数据则跳过（与 tab bar 一致
             continue;
-        }// 一级 tab 无数据则跳过（与 tab bar 一致）
+        }
 
         const TabGroup& anonG = streamGroups[scope];                 // anon 子 tab（scope 对应）
         const TabGroup& filepageG = streamGroups[SCOPE_COUNT + scope];         // filepage 子 tab（app/system/mixed 对应）

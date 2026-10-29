@@ -457,9 +457,9 @@ void CliParser::PrintHelp(std::ostream& os) const
         }
         if (hasVisibleSub) {
             for (const auto& [name, entry] : subcommands_) {
-                if (entry.hidden) {
+                if (entry.hidden) { // hidden subcommands are omitted from help
                     continue;
-                }// hidden subcommands are omitted from help
+                }
                 os << "  " << programName_ << " " << name;
                 // Use subcommand's own usage_args if set, else generate from positionals
                 const auto& subUsage = entry.parser->GetUsageArgs();
@@ -569,9 +569,9 @@ void CliParser::PrintHelp(std::ostream& os) const
         os << "SUBCOMMANDS:\n";
         os << "  (no subcommand)" << std::string(NO_SUBCMD_PADDING, ' ') << "Omit subcommand to auto-detect file type\n";
         for (const auto& [name, entry] : subcommands_) {
-            if (entry.hidden) {
+            if (entry.hidden) { // hidden subcommands are omitted from help
                 continue;
-            }// hidden subcommands are omitted from help
+            }
             std::string display = "  " + name;
             if (!entry.alias.empty()) {
                 display += ", " + entry.alias;

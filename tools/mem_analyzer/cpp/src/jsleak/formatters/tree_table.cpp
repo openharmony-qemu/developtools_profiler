@@ -128,7 +128,7 @@ void EmitIcicleTreeRows(const json& node, const std::string& tableId,
     out += "<td class=\"itt-num\">" + std::to_string(count) + "</td>";
     // 名称列允许换行，超长节点名完整展示（因此不再需要 title / 省略号）
     out += "<td class=\"itt-name" + std::string(depth == 0 ? " itt-root" : "") +
-           "\" style=\"padding-left:" + std::to_string(TREE_INDENT_BASE_PX + depth * 16) + "px\">";
+           "\" style=\"padding-left:" + std::to_string(TREE_INDENT_BASE_PX + depth * TREE_INDENT_STEP_PX) + "px\">";
     // 垂直引导线：每个祖先层级一条，位置对准该层展开/折叠开关的中心（18 + 16k），
     // 把同一祖先下的各级子节点串起来，避免层级多时看串行。
     // 颜色取该线所代表的层的颜色，与本层节点的 +/- 同色。

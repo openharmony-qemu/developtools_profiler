@@ -33,6 +33,7 @@ constexpr int PROTO_FIELD_NUM_SHIFT = 3;
 constexpr int PROTO_WIRE_TYPE_LEN_DELIMITED = 2;
 constexpr int PROTO_ADDR_FILE_MIN_SIZE = 3;
 constexpr int HEX_PREFIX_LEN = 2;
+constexpr int PROTO_FIELD_NODE_ID = 2;
 } // namespace
 
 // ============================================================================
@@ -68,7 +69,7 @@ static size_t SkipProtobufField(const uint8_t* data, size_t size, size_t offset,
             return offset + 1;
         }
         case 1: return offset + PROTO_FIXED64_BYTES;
-        case 2: {
+        case PROTO_WIRE_TYPE_LEN_DELIMITED: {
             uint64_t len = 0;
             if (!ReadVarint(data, size, offset, len)) {
                 return size;
@@ -142,7 +143,7 @@ static ParseAddrResult ParseProtobufAddrToNodeId(const uint8_t* data, size_t siz
                     handleAddress = val;
                     hasHandle = true;
                     offset += PROTO_FIXED64_BYTES;
-                } else if (fn == 2 && wt == 0) {
+                } else if (fn == PROTO_FIELD_NODE_ID && wt == 0) {
                     if (!ReadVarint(data, entryEnd, offset, nodeId)) {
                         break;
                     }

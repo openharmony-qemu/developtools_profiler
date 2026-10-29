@@ -87,9 +87,9 @@ inline bool DecodeVlqValue(const std::string& str, size_t& pos, int& value)
         if (pos >= str.size()) {
             return false;
         }
-        if (shift > VLQ_MAX_SHIFT) {
+        if (shift > VLQ_MAX_SHIFT) { // VLQ 最多 6 段（30 位），防有符号移位 UB
             return false;
-        }// VLQ 最多 6 段（30 位），防有符号移位 UB
+        }
         int digit = Base64Value(str[pos++]);
         if (digit < 0) {
             return false;
@@ -300,9 +300,9 @@ bool SourceMapIndex::ResolveOriginalPosition(const std::string& mappings, int ge
 
     originalLine = (*best)[SEG_IDX_ORIGINAL_LINE] + 1;      // originalLine 0-based → 1-based
     originalColumn = (*best)[SEG_IDX_ORIGINAL_COLUMN] + 1;    // originalColumn 0-based → 1-based
-    if (outSourceIndex != nullptr) {
+    if (outSourceIndex != nullptr) { // sourceIndex
         *outSourceIndex = (*best)[1];
-    }// sourceIndex
+    }
     return true;
 }
 

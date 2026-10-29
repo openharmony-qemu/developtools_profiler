@@ -244,9 +244,9 @@ ProcessMetrics ParseHidumperMem(const std::string& output)
     while (std::getline(iss, line)) {
         std::istringstream lss(line);
         std::string first;
-        if (!(lss >> first)) {
+        if (!(lss >> first)) { // blank line
             continue;
-        }// blank line
+        }
         if (!first.empty() && first[0] == '-') {
             continue; // separator row
         }
@@ -543,9 +543,9 @@ long long ParseHiprofilerDataTs(const std::string& filename)
     // Expected: "hiprofiler_data_1785766871434.zip"
     constexpr const char* prefix = "hiprofiler_data_";
     const auto plen = std::strlen(prefix);
-    if (filename.size() <= plen + ZIP_SUFFIX_LEN) {
+    if (filename.size() <= plen + ZIP_SUFFIX_LEN) { // need at least "X.zip"
         return -1;
-    }// need at least "X.zip"
+    }
     if (filename.rfind(prefix, 0) != 0) {
         return -1;
     }
@@ -743,9 +743,9 @@ void pollAndPullSnapshot(const std::string& resultDir,
     int pollNum = 0;
 
     while (stable.empty()) {
-        if (DeviceLost()) {
+        if (DeviceLost()) { // pinned target: device-level failure -> stop polling now
             break;
-        }// pinned target: device-level failure -> stop polling now
+        }
         ++pollNum;
         const long long elapsedS = ElapsedSince(start);
         if (elapsedS >= timeoutS) {
@@ -1060,9 +1060,9 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
     auto pollStart = clockType::now();
 
     for (int i = 0; i < timeoutS; ++i) {
-        if (DeviceLost()) {
+        if (DeviceLost()) { // pinned target: device-level failure -> stop polling now
             break;
-        }// pinned target: device-level failure -> stop polling now
+        }
         const long long elapsedPoll = ElapsedSince(pollStart);
         if (elapsedPoll >= timeoutS) {
             break;

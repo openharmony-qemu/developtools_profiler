@@ -70,6 +70,10 @@ constexpr int NODES_MARKER_LEN = 8;
 constexpr int STRINGS_MARKER_LEN = 10;
 constexpr int UNICODE_ESCAPE_TAIL_LEN = 5;
 constexpr int MAX_PROP_NAMES = 10;
+constexpr int VISITED_SET_INITIAL_CAPACITY = 16;
+constexpr int ARROW_SEPARATOR_LEN = 4;
+constexpr int ESCAPE_CHAR_SKIP_LEN = 2;
+constexpr int HEX_UPPER_NIBBLE_SHIFT = 4;
 
 // 快速判断字符串是否为纯数字（内联）
 inline bool IsNumericString(const std::string& s)
@@ -187,7 +191,7 @@ std::string HeapSnapshot::ResolveStateMgmtWrappedClass(
     uint32_t nodeIndex, const std::vector<std::string>& skipMarkers) const
 {
     std::unordered_set<uint32_t> visited;
-    visited.reserve(16);
+    visited.reserve(VISITED_SET_INITIAL_CAPACITY);
     uint32_t cur = nodeIndex;
     std::string resultProto;
     bool lookingForHclass = true;
@@ -743,7 +747,7 @@ static size_t FindMatchingCloseBracket(const std::string& text, size_t start)
             pos++;
             while (pos < text.size()) {
                 if (text[pos] == '\\') {
-                    pos += 2;
+                    pos += ESCAPE_CHAR_SKIP_LEN;
                     continue;
                 }  // skip escaped char
                 if (text[pos] == '"') {
@@ -751,9 +755,9 @@ static size_t FindMatchingCloseBracket(const std::string& text, size_t start)
                 }
                 pos++;
             }
-            if (pos >= text.size()) {
+            if (pos >= text.size()) { // unterminated string
                 return std::string::npos;
-            }// unterminated string
+            }
             pos++;
         } else if (c == ']') {
             return pos;  // found matching bracket
@@ -811,7 +815,7 @@ static std::string SanitizeJsonStringArray(const std::string& strBuf)
                 if (uc < 0x20 && uc != '\t' && uc != '\n' && uc != '\r') {
                     const char* hex = "0123456789abcdef";
                     sanitized += "\\u00";
-                    sanitized += hex[(uc >> 4) & 0xF];
+                    sanitized += hex[(uc >> HEX_UPPER_NIBBLE_SHIFT) & 0xF];
                     sanitized += hex[uc & 0xF];
                     i++;
                 } else {
@@ -1411,9 +1415,9 @@ std::string HeapSnapshot::FormatRefChain(uint32_t nodeIndex) const
             return ""; // unreachable
         }
         indices.push_back(cur);
-        if (parent == cur) {
+        if (parent == cur) { // 到达根节点
             break;
-        }// 到达根节点
+        }
         cur = parent;
     }
     
@@ -1427,9 +1431,9 @@ std::string HeapSnapshot::FormatRefChain(uint32_t nodeIndex) const
         // 直接获取节点名称，避免临时拷贝
         const std::string& name = GetExtendedNodeName(*it);
         totalLen += name.size();
-        if (it != indices.rbegin()) {
-            totalLen += 4;
-        }// " -> "
+        if (it != indices.rbegin()) { // " -> "
+            totalLen += ARROW_SEPARATOR_LEN;
+        }
     }
     
     std::string result;
@@ -1465,9 +1469,9 @@ std::vector<std::string> HeapSnapshot::FormatRefChainFrames(uint32_t nodeIndex) 
             return {};  // unreachable
         }
         indices.push_back(cur);
-        if (parent == cur) {
+        if (parent == cur) { // 到达根节点
             break;
-        }// 到达根节点
+        }
         cur = parent;
     }
 
@@ -1538,9 +1542,9 @@ RefChainKey HeapSnapshot::RefChainHash(uint32_t nodeIndex) const
         log::Logd("[ref_chain] build chain_hash start node_count=", nodeCount);
 
         const int N = nodeCount;
-        if (N > 0) {
+        if (N > 0) { // 触发 ext_names_ 预构建
             GetExtendedNodeName(0);
-        }// 触发 ext_names_ 预构建
+        }
 
         chainHash_.resize(static_cast<size_t>(N));
         chainHashComputed_.assign(static_cast<size_t>(N), 0);

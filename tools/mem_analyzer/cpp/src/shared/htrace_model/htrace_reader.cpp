@@ -46,6 +46,7 @@ constexpr int PROTO_FIXED64_BYTES = 8;
 constexpr int PROTO_WIRE_TYPE_LEN_DELIMITED = 2;
 constexpr int PROTO_WIRE_TYPE_FIXED32 = 5;
 constexpr int PROTO_FIXED32_BYTES = 4;
+constexpr int PROTO_FIELD_DATA = 3;
 
 enum class HtraceDataType : uint32_t {
     PROTOBUF_BIN = 0,    // HIPROFILER_PROTOBUF_BIN，标准 HiProfiler protobuf 二进制
@@ -274,7 +275,7 @@ bool DecodePlugin(const uint8_t* buf, size_t size, PluginData& out)
     for (const auto& f : fields) {
         if (f.number == 1) {
             out.name = f.bytes;
-        } else if (f.number == 3) {
+        } else if (f.number == PROTO_FIELD_DATA) {
             out.data = f.bytes;
         }
     }

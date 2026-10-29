@@ -247,9 +247,9 @@ static std::string ResolvePathArg(const std::string& arg)
         return arg; // flag, not a path
     }
     auto p = PathFromUtf8(arg);
-    if (!p.is_relative()) {
+    if (!p.is_relative()) { // already absolute
         return arg;
-    }// already absolute
+    }
     std::error_code ec;
     auto ap = fs::absolute(p, ec);
     return ec ? arg : PathToUtf8(ap.lexically_normal());

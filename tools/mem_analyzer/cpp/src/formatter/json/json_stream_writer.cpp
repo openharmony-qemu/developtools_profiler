@@ -19,6 +19,10 @@
 
 namespace mem_analyzer {
 
+namespace {
+constexpr int HEX_DIGIT_WIDTH = 4;
+} // namespace
+
 // -----------------------------------------------------------------------------
 // Construction / Destruction
 // -----------------------------------------------------------------------------
@@ -88,7 +92,7 @@ void JsonStreamWriter::WriteEscapedString(const std::string& s)
                 if (c < 0x20) {
                     // Control character: write as \uXXXX
                     file_ << "\\u" <<
-                          std::hex << std::setw(4) << std::setfill('0') <<
+                          std::hex << std::setw(HEX_DIGIT_WIDTH) << std::setfill('0') <<
                           static_cast<int>(c) <<
                           std::dec;
                 } else {

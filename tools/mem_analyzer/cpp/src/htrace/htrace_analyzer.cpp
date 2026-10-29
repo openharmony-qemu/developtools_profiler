@@ -798,9 +798,9 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         int orgCount = 0;
 
         auto scopeOk = [&](const SymbolData& sd) {
-            if (config.leakMode) {
+            if (config.leakMode) { // -l: L3 已分栈，整组符号定性，跳过 isApp 过滤
                 return true;
-            }// -l: L3 已分栈，整组符号定性，跳过 is_app 过滤
+            }
             if (filterScope == Scope::APP_ONLY && !sd.isApp) {
                 return false;
             }

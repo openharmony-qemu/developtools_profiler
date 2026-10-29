@@ -324,9 +324,9 @@ void LoadDetailStacks(HtraceParseContext& ctx,
             }
 
             auto lookupIt = allocEventLookup.find(eventTypeStr);
-            if (lookupIt == allocEventLookup.end()) {
+            if (lookupIt == allocEventLookup.end()) { // defensive
                 continue;
-            }// defensive
+            }
 
             for (int ci : lookupIt->second) {
                 const auto& c = configs[ci];

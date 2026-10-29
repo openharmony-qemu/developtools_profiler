@@ -55,6 +55,7 @@ constexpr uint32_t ROOT = 0;                  // GC root node index (always 0)
 constexpr int EMPTY_SLOT = -1;                // Cooper algorithm sentinel (unused in LT)
 constexpr uint32_t MAP_DESC_SKIP_THRESHOLD = 2;       // map descriptor edge index skip threshold
 constexpr uint32_t MAP_DESC_FIELDS_PER_ENTRY = 3;      // fields per map descriptor entry
+constexpr uint32_t MIN_DFN_FOR_SEMI_DOM = 2;           // skip root (dfn 0) and first real node (dfn 1)
 
 // --------------------------------------------------------------------------
 //  Low-level array access helpers
@@ -562,9 +563,9 @@ static std::vector<uint32_t> computeLtDominators(
     // eval(v): returns the node with minimal semi-dominator on the path
     // from v to the root of its DSU tree.
     auto ltEval = [&](uint32_t v) -> uint32_t {
-        if (ltAncestor[v] == 0) {
+        if (ltAncestor[v] == 0) { // v is a DSU root
             return ltLabel[v];
-        }// v is a DSU root
+        }
         ltCompress(v);
         // After compression, lt_ancestor[v] is the DSU root.
         // Compare semi of label[ancestor[v]] with label[v].
@@ -584,7 +585,7 @@ static std::vector<uint32_t> computeLtDominators(
     // For each node w, examine all its predecessors (from reverse CSR).
     // The semi-dominator of w is the minimum of:
     //   eval(pred).semi  for all essential predecessors pred of w
-    for (uint32_t i = ltDfnCount; i >= 2; i--) {
+    for (uint32_t i = ltDfnCount; i >= MIN_DFN_FOR_SEMI_DOM; i--) {
         uint32_t w = ltVertex[i];  // current node (by descending dfn)
         int wSemi = ltSemi[w];    // current best semi-dominator
 
@@ -592,9 +593,9 @@ static std::vector<uint32_t> computeLtDominators(
         size_t rEnd = rev.revStart[static_cast<size_t>(w) + 1];
         for (size_t r = rBegin; r < rEnd; r++) {
             uint32_t pred = rev.revAdj[r];
-            if (ltDfn[pred] == 0) {
+            if (ltDfn[pred] == 0) { // predecessor not in DFS tree
                 continue;
-            }// predecessor not in DFS tree
+            }
 
             // ---- Edge filtering (matching the reference implementation) ----
             uint32_t edgePtr = rev.revEdgePtr[r];
@@ -1032,10 +1033,9 @@ static void RunLayeredBfs(
                 }
 
                 // ---- isMeaningfulEdge checks (matching the reference implementation) ----
-
-                if (cur == child) {
+                if (cur == child) { // self-reference
                     continue;
-                }// self-reference
+                }
 
                 // Edge name block list + WeakMap key edge check
                 // WeakMap edges: keys are weakly referenced; skip the forward direction

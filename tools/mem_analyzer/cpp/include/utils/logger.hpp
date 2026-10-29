@@ -77,9 +77,9 @@ template <typename... Args> void Loge(Args&&... a)
 template <typename... Args>
 void Emit(Level lv, bool dim, Args&&... args)
 {
-    if (lv < level()) {
+    if (lv < level()) { // ① 级别过滤（先于字符串构造）
         return;
-    }// ① 级别过滤（先于字符串构造）
+    }
     std::ostringstream oss;
     (oss << ... << std::forward<Args>(args));       // ② C++17 fold 拼接
     WriteLine(lv, dim, oss.str());                 // ③ 前缀 + 着色 + 落盘

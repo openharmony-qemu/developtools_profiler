@@ -111,9 +111,9 @@ size_t TraceDB::StackCount() const
 void TraceDB::ResolveStacks()
 {
     auto* compressed = std::get_if<CompressedCallStackList>(&stacks);
-    if (!compressed) {
+    if (!compressed) { // already resolved, no-op
         return;
-    }// already resolved, no-op
+    }
 
     stacks = compressed->Resolve();
 }

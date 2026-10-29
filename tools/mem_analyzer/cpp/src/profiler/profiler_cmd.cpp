@@ -886,6 +886,7 @@ void FlattenReportDir(const std::string& dir, const std::string& stem)
 
 constexpr int EXIT_PROFILER_FAILED = 2;
 constexpr int EXIT_EXPORT_FAILED = 3;
+constexpr int EXIT_CONFIG_FAILED = 2;
 
 } // namespace
 
@@ -1029,7 +1030,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
     CaptureCommand cc = ProcessTemplate(configFile, popts);
     if (!cc.ok) {
         log::Loge("Failed to process config file:", cc.error);
-        return 2;
+        return EXIT_CONFIG_FAILED;
     }
 
     // Result output: one capture owns one session directory,
