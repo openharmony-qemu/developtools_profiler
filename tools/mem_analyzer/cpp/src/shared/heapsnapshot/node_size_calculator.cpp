@@ -391,7 +391,7 @@ static ReverseCSR BuildReverseCsr(DomContext& ctx, StageTimer& timer)
     // Iterating sources in reverse order (N-1 down to 0) and filling forward
     // produces the same slot order as the reference implementation's
     // --retainingEdgeCount pre-decrement pattern.
-    for (uint32_t src = ctx.nodeCount; src > 0; ) {
+    for (uint32_t src = ctx.nodeCount; src > 0;) {
         src--;
         size_t begin = ctx.firstEdgePointers[src];
         size_t end = ctx.firstEdgePointers[static_cast<size_t>(src) + 1];

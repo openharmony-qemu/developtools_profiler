@@ -115,7 +115,7 @@ std::string HeapSnapshot::GetJsObjectExtName(uint32_t nodeIndex) const
         // 跳过系统属性和数字索引
         if (en == "(object elements)" || en == "(object properties)" ||
             en == "ArkInternalHash" || en == "hclass" || en == "__proto__" ||
-            en == "Properties" || en == "Elements" || IsNumericString(en) || 
+            en == "Properties" || en == "Elements" || IsNumericString(en) ||
             en == "HashField") {
             continue;
         }

@@ -152,7 +152,7 @@ std::string BuildNodeIdsHtml(const json& nodeIdsJson, const std::string& contain
 
     std::string html;
     html += "<div class=\"chain-node-ids\" id=\"" + containerId +
-            "\" data-label=\"节点ID\" data-all-ids=\"" + allIds + "\">节点ID: ";
+        "\" data-label=\"节点ID\" data-all-ids=\"" + allIds + "\">节点ID: ";
 
     size_t show = std::min(ids.size(), (size_t)10);
     for (size_t i = 0; i < show; ++i) {
@@ -160,8 +160,7 @@ std::string BuildNodeIdsHtml(const json& nodeIdsJson, const std::string& contain
     }
     if (ids.size() > 10) {
         html += "<span class=\"node-id-tag expand-btn\" id=\"expandBtn_" +
-                containerId + "\" onclick=\"expandNodeIds('" + containerId +
-                "')\">展开</span>";
+            containerId + "\" onclick=\"expandNodeIds('" + containerId + "')\">展开</span>";
     }
     html += "</div>";
     return html;
@@ -186,17 +185,16 @@ std::string BuildHashValuesHtml(const json &hashValuesJson, const std::string &c
     }
 
     std::string html;
-    html += "<div class=\"chain-node-ids\" id=\"" + containerId + 
-            "\" data-all-hashes=\"" + allHashes + "\">hash值: ";
+    html += "<div class=\"chain-node-ids\" id=\"" + containerId +
+        "\" data-all-hashes=\"" + allHashes + "\">hash值: ";
     
     size_t show = std::min(hashes.size(), (size_t)10);
     for (size_t i = 0; i < show; ++i) {
         html += "<span class=\"node-id-tag\">" + hashes[i] + "</span>";
     }
     if (hashes.size() > 10) {
-        html += "<span class=\"node-id-tag expand-btn\" id=\"expandBtn_" + 
-                containerId + "\" onclick=\"expandHashValues('" + containerId + 
-                "')\">展开</span>";
+        html += "<span class=\"node-id-tag expand-btn\" id=\"expandBtn_" +
+            containerId + "\" onclick=\"expandHashValues('" + containerId + "')\">展开</span>";
     }
     html += "</div>";
     return html;
@@ -328,8 +326,7 @@ std::string BuildPropertyTagEntryHtml(const std::string& objName,
             }
             html += "<div class=\"chain-detail-section\">";
             std::string containerId = "nodeIdsContainer" +
-                (prefix.empty() ? "_" : ("_" + prefix + "_")) +
-                std::to_string(idx) + "_" + std::to_string(chainIdx);
+                (prefix.empty() ? "_" : ("_" + prefix + "_")) + std::to_string(idx) + "_" + std::to_string(chainIdx);
             html += BuildNodeIdsHtml(chainData["nodeIds"], containerId);
             if (multipleChains) {
                 html += "<div class=\"chain-node-size\">大小: " + FormatBytes(chainSize) + "</div>";
@@ -343,9 +340,8 @@ std::string BuildPropertyTagEntryHtml(const std::string& objName,
     }
 
     if (objData.contains("hashValues") && objData["hashValues"].is_array() && !objData["hashValues"].empty()) {
-        std::string hashContainerId = "hashValuesContainer" + 
-            (prefix.empty() ? "_" : ("_" + prefix + "_")) + 
-            std::to_string(idx);
+        std::string hashContainerId = "hashValuesContainer" +
+            (prefix.empty() ? "_" : ("_" + prefix + "_")) + std::to_string(idx);
         html += BuildHashValuesHtml(objData["hashValues"], hashContainerId);
     }
 
@@ -383,9 +379,7 @@ std::string BuildTopChainEntryHtml(const json& chainData, int idx, const std::st
         html += "<div class=\"call-chain-line\">引用链: " + chainPath + "</div>";
     }
 
-    std::string containerId = "nodeIdsContainer" +
-        (prefix.empty() ? "_" : ("_" + prefix + "_")) +
-        std::to_string(idx);
+    std::string containerId = "nodeIdsContainer" + (prefix.empty() ? "_" : ("_" + prefix + "_")) + std::to_string(idx);
     if (chainData.contains("nodeIds")) {
         html += BuildNodeIdsHtml(chainData["nodeIds"], containerId);
     } else {
