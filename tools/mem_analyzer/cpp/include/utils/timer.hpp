@@ -82,8 +82,8 @@ public:
 
 private:
     std::string tag_;
-    clock::time_point start_;
-    clock::time_point last_;
+    Clock::time_point start_;
+    Clock::time_point last_;
 };
 
 } // namespace mem_analyzer
