@@ -48,7 +48,7 @@ TraceDB HtraceParse(const std::string& filePath, const RunContext& ctx)
     // 2. Create temp directory (in system temp dir, not output dir).
     //    RAII：DB 文件在函数返回前已被消费完，故可随作用域自动清理。
     TempDir tempDir("htrace");
-    auto sourceName = platform::stem(filePath);
+    auto sourceName = platform::Stem(filePath);
 
     auto dbPath = platform::JoinPath(tempDir.Path(), sourceName + "_trace_streamer.db");
 

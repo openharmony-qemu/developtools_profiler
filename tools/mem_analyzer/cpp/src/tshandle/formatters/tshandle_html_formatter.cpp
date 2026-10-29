@@ -122,7 +122,7 @@ std::string BuildMetaHtml(const std::string& sourceFile, const std::string& pars
     const TraceMeta& traceMeta,
     const TshandleHandleSections& global, const TshandleTypeSection& local)
 {
-    std::string name = platform::basename(sourceFile);
+    std::string name = platform::Basename(sourceFile);
     if (name.empty()) {
         name = "-";
     }
@@ -381,7 +381,7 @@ std::string TshandleWriteAnalysisHtml(const TshandleAnalysisOutput& analysis,
     (void)ctx;  // 当前 tshandle HTML 不使用运行参数
     StageTimer timer("HTML write");
 
-    auto base = platform::stem(filePath);
+    auto base = platform::Stem(filePath);
     if (base.empty()) {
         base = "output";
     }

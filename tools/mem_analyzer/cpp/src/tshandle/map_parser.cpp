@@ -297,25 +297,25 @@ ParseAddrResult ParseAddrFile(const std::string& filePath)
     if (!file.is_open()) {
         throw std::runtime_error("cannot open addr file: " + filePath);
     }
-    size_t file_size = static_cast<size_t>(file.tellg());
+    size_t fileSize = static_cast<size_t>(file.tellg());
     file.seekg(0);
 
     constexpr size_t MAX_ADDR_FILE_BYTES = 4ULL * 1024 * 1024 * 1024;  // 4 GiB，防恶意超大 addr 文件 OOM
-    if (file_size > MAX_ADDR_FILE_BYTES) {
-        throw std::runtime_error("addr file too large (" + std::to_string(file_size) +
+    if (fileSize > MAX_ADDR_FILE_BYTES) {
+        throw std::runtime_error("addr file too large (" + std::to_string(fileSize) +
                                  " bytes): " + filePath);
     }
 
-    std::vector<uint8_t> data(file_size);
-    file.read(reinterpret_cast<char*>(data.data()), static_cast<std::streamsize>(file_size));
+    std::vector<uint8_t> data(fileSize);
+    file.read(reinterpret_cast<char*>(data.data()), static_cast<std::streamsize>(fileSize));
     file.close();
 
     if (IsProtobufAddrFile(data.data(), data.size())) {
-        log::Logd("[map] addr file '", filePath, "' -> protobuf (", file_size, " bytes)");
+        log::Logd("[map] addr file '", filePath, "' -> protobuf (", fileSize, " bytes)");
         return ParseProtobufAddrToNodeId(data.data(), data.size());
     }
 
-    log::Logd("[map] addr file '", filePath, "' -> text (", file_size, " bytes)");
+    log::Logd("[map] addr file '", filePath, "' -> text (", fileSize, " bytes)");
     std::string content(data.begin(), data.end());
     return ParseAddrToNodeId(content);
 }

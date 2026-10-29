@@ -78,11 +78,11 @@ constexpr int FRESH_RESTART_EXIT_WAIT_ITERS = 20;
 // Ctrl+C (SIGINT) flag: the signal handler only sets this flag; the capture
 // loop polls it so we can stop hiprofiler cleanly and save the data instead
 // of the process dying abruptly.
-volatile std::sig_atomic_t gInterruptRequested = 0;
+volatile std::sig_atomic_t g_interruptRequested = 0;
 
 extern "C" void HandleSigint(int)
 {
-    gInterruptRequested = 1;
+    g_interruptRequested = 1;
 }
 
 // Pinned target (explicit --device, or the single attached device auto-pinned by the
@@ -1158,7 +1158,7 @@ std::string WaitForNativeleaksFile(const std::string& pid, const std::string& di
             break;
         }
 
-        // Pass the full filename as the prefix so list_dir_file_sizes matches
+        // Pass the full filename as the prefix so list_dir_fileSizes matches
         // only that one file (rfind(prefix, 0) == 0), ignoring other pids'.
         const auto current = listDirFileSizes(dir, filename);
         long long curSize = 0;
@@ -1450,7 +1450,7 @@ bool SetupCapture(const HdcRunOptions& opts, RunResult& result, CaptureSetup& se
     // Trap Ctrl+C so the profiler can stop hiprofiler and save data instead
     // of being killed abruptly. The handler just sets a flag that the capture
     // loop polls.
-    gInterruptRequested = 0;
+    g_interruptRequested = 0;
     std::signal(SIGINT, HandleSigint);
 
     // Create the output directory (and parents) if missing; ignore existing.
@@ -1965,7 +1965,7 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
 {
     if (snapshotMode) {
         log::Logi("Running snapshot export command...");
-        while (!state->done.load() && !gInterruptRequested &&
+        while (!state->done.load() && !g_interruptRequested &&
                !DeviceLost()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(POLL_INTERVAL_MS));
         }
@@ -1981,7 +1981,7 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
         if (remain <= 0) {
             break;
         }
-        if (gInterruptRequested) {
+        if (g_interruptRequested) {
             log::Logw("Interrupted (Ctrl+C); stopping hiprofiler and saving data...");
             break;
         }
@@ -2131,7 +2131,7 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
     };
     if (asyncStartMode) {
         if (!state->spawnFailed) {
-            if (gInterruptRequested) {
+            if (g_interruptRequested) {
                 // Ctrl+C: SIGINT killed the local hdc child, but the
                 // device-side session keeps capturing — it must still be
                 // stopped and saved.
@@ -2191,17 +2191,17 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
     // A permission failure is also unaffected: the capture was already aborted,
     // so there is nothing to finalize and we must not idle until the
     // device-side command runs out.
-    if (!state->done.load() && !gInterruptRequested &&
+    if (!state->done.load() && !g_interruptRequested &&
         !state->permissionFailed.load()) {
         log::Logi("Capture duration finished; hiprofiler is finalizing output "
                   "(stopping session, flushing data)...");
         int finalizeWait = 0;
-        while (!state->done.load() && !gInterruptRequested) {
+        while (!state->done.load() && !g_interruptRequested) {
             const long long total = ElapsedSince(start);
             std::cout << "Finalizing... total " << total << "s elapsed " <<
                 "(post-capture wait: " << finalizeWait << "s)\n" << std::flush;
             SleepTicks(PROGRESS_INTERVAL_TICKS, [&]() {
-                return state->done.load() || gInterruptRequested;
+                return state->done.load() || g_interruptRequested;
             });
             finalizeWait += PROGRESS_INTERVAL_S;
         }
@@ -2527,7 +2527,7 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
         if (remain <= 0) {
             break;
         }
-        if (gInterruptRequested) {
+        if (g_interruptRequested) {
             log::Logw("Interrupted (Ctrl+C); finishing the capture...");
             break;
         }
@@ -2611,7 +2611,7 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
 
         // Also wake up when the device is lost, so the check above runs at the
         // next tick instead of sleeping out the remaining interval (pinned target).
-        SleepTicks(SNAPSHOT_SAMPLE_INTERVAL_S * TICKS_PER_SECOND, []() { return gInterruptRequested != 0 || DeviceLost(); });
+        SleepTicks(SNAPSHOT_SAMPLE_INTERVAL_S * TICKS_PER_SECOND, []() { return g_interruptRequested != 0 || DeviceLost(); });
     }
 
     // ── end-of-session snapshot ─────────────────────────────────────────────

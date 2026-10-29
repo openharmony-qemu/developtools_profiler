@@ -112,11 +112,11 @@ bool WriteCompareFile(const std::string& path, const std::string& content)
     return true;
 }
 
-std::string GetChartHtml(const json& report, const std::string& id_prefix)
+std::string GetChartHtml(const json& report, const std::string& idPrefix)
 {
     for (const auto& chart : report.value("icicleCharts", json::array())) {
         const std::string id = chart.value("id", "");
-        if (id.find(id_prefix) != std::string::npos) {
+        if (id.find(idPrefix) != std::string::npos) {
             return chart.value("chartHtml", "");
         }
     }
@@ -178,8 +178,8 @@ std::string JsleakRenderCompareHtml(const json& report)
 
 std::string JsleakWriteCompareHtml(const json& report, const std::string& outDir)
 {
-    const auto baselineStem = platform::stem(report["baseline"]["file"].get<std::string>());
-    const auto targetStem = platform::stem(report["target"]["file"].get<std::string>());
+    const auto baselineStem = platform::Stem(report["baseline"]["file"].get<std::string>());
+    const auto targetStem = platform::Stem(report["target"]["file"].get<std::string>());
     const std::string outPath =
         platform::JoinPath(outDir, baselineStem + "-vs-" + targetStem + ".html");
     platform::CreateDirectories(outDir);
@@ -192,8 +192,8 @@ std::string JsleakWriteCompareHtml(const json& report, const std::string& outDir
 
 std::string JsleakWriteCompareJson(const json& report, const std::string& outDir)
 {
-    const auto baselineStem = platform::stem(report["baseline"]["file"].get<std::string>());
-    const auto targetStem = platform::stem(report["target"]["file"].get<std::string>());
+    const auto baselineStem = platform::Stem(report["baseline"]["file"].get<std::string>());
+    const auto targetStem = platform::Stem(report["target"]["file"].get<std::string>());
     const std::string outPath =
         platform::JoinPath(outDir, baselineStem + "-vs-" + targetStem + ".json");
     platform::CreateDirectories(outDir);

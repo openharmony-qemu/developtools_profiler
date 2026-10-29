@@ -73,7 +73,7 @@ std::string HtraceWriteParseJson(const TraceDB& db, const std::string& filePath,
 {
     StageTimer timer("JSON write");
 
-    auto base = platform::stem(filePath);
+    auto base = platform::Stem(filePath);
     if (base.empty()) {
         base = "output";
     }

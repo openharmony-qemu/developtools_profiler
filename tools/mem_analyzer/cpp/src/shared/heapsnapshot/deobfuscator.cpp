@@ -50,13 +50,13 @@ constexpr size_t COPY_CHUNK = 4 * 1024 * 1024; // 4 MB — 字节流式拷贝块
 
 /// 在文件中从 start_pos 起流式扫描 marker（如 "\"strings\":"），返回其字节偏移。
 /// 窗口按 (marker.size() - 1) 字节重叠，避免跨块边界遗漏。
-size_t FindMarkerOffset(std::ifstream& file, const std::string& marker, size_t startPos, size_t file_size)
+size_t FindMarkerOffset(std::ifstream& file, const std::string& marker, size_t startPos, size_t fileSize)
 {
     std::string buf(SCAN_WIN, '\0');
     size_t pos = startPos;
     file.clear();
-    while (pos < file_size) {
-        size_t toRead = std::min(SCAN_WIN, file_size - pos);
+    while (pos < fileSize) {
+        size_t toRead = std::min(SCAN_WIN, fileSize - pos);
         file.seekg(pos);
         file.read(&buf[0], toRead);
         size_t bytes = static_cast<size_t>(file.gcount());
@@ -68,7 +68,7 @@ size_t FindMarkerOffset(std::ifstream& file, const std::string& marker, size_t s
         if (idx != std::string::npos) {
             return pos + idx;
         }
-        if (pos + bytes >= file_size) {
+        if (pos + bytes >= fileSize) {
             break;
         }
         pos += bytes;
@@ -80,9 +80,9 @@ size_t FindMarkerOffset(std::ifstream& file, const std::string& marker, size_t s
 }
 
 /// 从 start_pos 起读取最多 256 字节，返回首个 ch 的字节偏移。
-size_t FindCharAfter(std::ifstream& file, char ch, size_t startPos, size_t file_size)
+size_t FindCharAfter(std::ifstream& file, char ch, size_t startPos, size_t fileSize)
 {
-    std::string buf(std::min<size_t>(CHAR_SEARCH_BUF_SIZE, file_size - startPos), '\0');
+    std::string buf(std::min<size_t>(CHAR_SEARCH_BUF_SIZE, fileSize - startPos), '\0');
     file.clear();
     file.seekg(startPos);
     file.read(&buf[0], buf.size());
@@ -97,15 +97,15 @@ size_t FindCharAfter(std::ifstream& file, char ch, size_t startPos, size_t file_
 
 /// 从 open_pos 的 '[' 起流式扫描其匹配的 ']'，正确处理字符串字面量与转义。
 /// 适用于 strings 这种扁平字符串数组（无嵌套对象/数组）。返回 ']' 的字节偏移。
-size_t FindMatchingCloseBracket(std::ifstream& file, size_t openPos, size_t file_size)
+size_t FindMatchingCloseBracket(std::ifstream& file, size_t openPos, size_t fileSize)
 {
     std::string buf(BRACKET_CHUNK, '\0');
     size_t pos = openPos + 1;  // 跳过 '['
     bool inString = false;
     bool escaped = false;
     file.clear();
-    while (pos < file_size) {
-        size_t toRead = std::min(BRACKET_CHUNK, file_size - pos);
+    while (pos < fileSize) {
+        size_t toRead = std::min(BRACKET_CHUNK, fileSize - pos);
         file.seekg(pos);
         file.read(&buf[0], toRead);
         size_t bytes = static_cast<size_t>(file.gcount());
@@ -507,27 +507,27 @@ bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& ou
         return false;
     }
     in.seekg(0, std::ios::end);
-    const size_t file_size = static_cast<size_t>(in.tellg());
-    if (file_size == 0) {
+    const size_t fileSize = static_cast<size_t>(in.tellg());
+    if (fileSize == 0) {
         log::Loge("Error: Heapsnapshot file is empty: ", inputPath);
         return false;
     }
 
     // 1. 流式定位 "strings": 标记及其后的 '['
     const std::string MARKER = "\"strings\":";
-    size_t markPos = FindMarkerOffset(in, MARKER, 0, file_size);
+    size_t markPos = FindMarkerOffset(in, MARKER, 0, fileSize);
     if (markPos == std::string::npos) {
         log::Loge("Error: No \"strings\" field in heapsnapshot file: ", inputPath);
         return false;
     }
-    size_t openBracket = FindCharAfter(in, '[', markPos + MARKER.size(), file_size);
+    size_t openBracket = FindCharAfter(in, '[', markPos + MARKER.size(), fileSize);
     if (openBracket == std::string::npos) {
         log::Loge("Error: \"strings\" is not an array in heapsnapshot file: ", inputPath);
         return false;
     }
 
     // 2. 流式扫描 strings 数组的匹配 ']'（正确处理字符串字面量与转义）
-    size_t closeBracket = FindMatchingCloseBracket(in, openBracket, file_size);
+    size_t closeBracket = FindMatchingCloseBracket(in, openBracket, fileSize);
     if (closeBracket == std::string::npos) {
         log::Loge("Error: Unterminated \"strings\" array in heapsnapshot file: ", inputPath);
         return false;
@@ -584,7 +584,7 @@ bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& ou
         log::Loge("Error: Failed to write deobfuscated strings to output: ", outputPath);
         return false;
     }
-    if (!CopyByteRange(in, out, closeBracket + 1, file_size)) {
+    if (!CopyByteRange(in, out, closeBracket + 1, fileSize)) {
         log::Loge("Error: Failed to copy snapshot tail to output: ", outputPath);
         return false;
     }

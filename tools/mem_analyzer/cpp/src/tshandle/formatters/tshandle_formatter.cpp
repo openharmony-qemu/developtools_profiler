@@ -34,7 +34,7 @@ constexpr double PERCENTAGE_SCALE = 100.0;
 constexpr int JSON_INDENT_SPACES = 4;
 
 // Round double to 2 decimal places for JSON output
-static double round2(double v)
+static double Round2(double v)
 {
     return std::round(v * PERCENTAGE_SCALE) / PERCENTAGE_SCALE;
 }
@@ -100,7 +100,7 @@ static json CallStackToJson(const ResolvedCallStack& stack)
     json j;
     j["id"] = stack.id;
     j["type"] = HtraceEventTypeName(stack.type);
-    j["existingSize"] = round2(stack.relatedSize);
+    j["existingSize"] = Round2(stack.relatedSize);
     j["nativeRefObjSize"] = stack.existingSize;
     json addrs = json::array();
     if (stack.existingAddrs) {
@@ -221,7 +221,7 @@ std::string TshandleWriteParseJson(const TshandleParseResult& parsed, const std:
 {
     StageTimer timer("JSON write");
 
-    auto base = platform::stem(filePath);
+    auto base = platform::Stem(filePath);
     if (base.empty()) {
         base = "output";
     }

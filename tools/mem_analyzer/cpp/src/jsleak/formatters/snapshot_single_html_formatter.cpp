@@ -62,7 +62,7 @@ std::string SnapshotHtmlCss()
 
 std::string GenerateSnapshotHTML(const json& data, const std::string& sourceFile, const std::string& jsleakMode)
 {
-    std::string escapedSourceFile = EscapeHtml(platform::basename(sourceFile));
+    std::string escapedSourceFile = EscapeHtml(platform::Basename(sourceFile));
     std::string fileType = EndsWithIgnoreCase(sourceFile, "rawheap") ? "rawheap" : "heapsnapshot";
     std::string parsedAt = data.value("parsedAt", "");
     int64_t totalHeapSize = data.value("totalHeapSize", (int64_t)0);
@@ -183,7 +183,7 @@ std::string JsleakWriteAnalysisHtml(const json& data, const std::string& filePat
 {
     StageTimer timer("HTML write");
 
-    auto base = platform::stem(filePath);
+    auto base = platform::Stem(filePath);
     if (base.empty()) {
         base = "output";
     }

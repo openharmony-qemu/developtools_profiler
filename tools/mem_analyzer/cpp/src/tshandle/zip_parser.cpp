@@ -147,7 +147,7 @@ static std::string DeobfuscateZipSnapshot(const std::string& heapsnapshotPath,
     const std::string& namecacheDir)
 {
     std::string outputPath = platform::JoinPath(
-        outputDir, platform::stem(heapsnapshotPath) + "_deobfuscated.heapsnapshot");
+        outputDir, platform::Stem(heapsnapshotPath) + "_deobfuscated.heapsnapshot");
     if (!mem_analyzer::DeobfuscateWithIndices(heapsnapshotPath, outputPath,
         sourcemapDir, namecacheDir)) {
         // 未配置反混淆目录，或索引加载为空，或还原失败 → 降级为原始快照
@@ -198,15 +198,15 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
     if (addrPath.empty()) {
         log::Logw("  Warning: No js_map file (.binpb/.txt) found in ZIP");
     }
-    log::Logi("    Found: ", platform::basename(htracePath),
-        (!rawheapPath.empty() ? ", " + platform::basename(rawheapPath) : ""),
-        (!addrPath.empty() ? ", " + platform::basename(addrPath) : ""));
+    log::Logi("    Found: ", platform::Basename(htracePath),
+        (!rawheapPath.empty() ? ", " + platform::Basename(rawheapPath) : ""),
+        (!addrPath.empty() ? ", " + platform::Basename(addrPath) : ""));
 
     // ── Step 3: Run trace_streamer → DB ─────────────────────────
     log::Logi("  [2/4] Converting htrace to DB using trace_streamer...");
     std::string dbPath;
     {
-        auto htraceName = platform::stem(htracePath);
+        auto htraceName = platform::Stem(htracePath);
         dbPath = platform::JoinPath(tempDir.Path(), htraceName + "_trace_streamer.db");
 
         std::string streamerErr;
@@ -242,7 +242,7 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
     log::Logi("  [4/4] Processing rawheap (if available)...");
     if (!rawheapPath.empty()) {
         try {
-            auto rawheapName = platform::stem(rawheapPath);
+            auto rawheapName = platform::Stem(rawheapPath);
             // rawheap→heapsnapshot 中间产物放入系统 TempDir（RAII 自动清理），不再落 out 目录
             auto heapsnapshotPath = platform::JoinPath(tempDir.Path(), rawheapName + ".heapsnapshot");
 

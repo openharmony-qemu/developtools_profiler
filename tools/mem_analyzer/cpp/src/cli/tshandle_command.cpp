@@ -53,7 +53,7 @@ public:
 
     int Run(const GlobalOptions& g) override
     {
-        log::Logi(style::bold("=== Tshandle Command ==="));
+        log::Logi(style::Bold("=== Tshandle Command ==="));
 
         RunContext ctx = MakeBaseRunContext(g);
         ctx.resources.soDir = opt_.soDir;
@@ -75,7 +75,7 @@ public:
                 allOk = false;
             }
         }
-        log::Logi(style::bold("=== Tshandle processing completed ==="));
+        log::Logi(style::Bold("=== Tshandle processing completed ==="));
         return allOk ? 0 : 1;
     }
 };

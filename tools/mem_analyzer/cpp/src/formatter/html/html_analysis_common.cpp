@@ -69,7 +69,7 @@ std::string FormatFuncName(const std::string& symbol, const std::string& lib, co
 std::string FormatShortFuncName(const std::string& symbol, const std::string& lib, const std::string& libOffset)
 {
     bool isUnresolved = symbol.find(".so") != std::string::npos;
-    std::string libBase = platform::basename(lib);
+    std::string libBase = platform::Basename(lib);
     if (isUnresolved) {
         if (!libBase.empty() && !libOffset.empty()) {
             return libBase + "+" + libOffset;

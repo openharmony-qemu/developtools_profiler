@@ -60,7 +60,7 @@ bool ProcessFile(const std::string& filePath, AnalysisModule& module, const RunC
     // 派生当前文件的运行参数：输出目录嵌套一层 source stem（与 zip/tshandle 行为一致）。
     // 不再改写任何全局状态。
     RunContext ctx = baseCtx;
-    auto sourceName = platform::stem(filePath);
+    auto sourceName = platform::Stem(filePath);
     ctx.output.outDir = platform::JoinPath(ctx.output.outDir, sourceName);
     log::Logd("output_dir: ", ctx.output.outDir, " (parse_only=", ctx.output.parseOnly,
         ", format=", (ctx.output.format.empty() ? "<default>" : ctx.output.format), ")");

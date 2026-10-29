@@ -35,7 +35,7 @@ namespace mem_analyzer {
 class StageTimer {
 public:
     using clock = std::chrono::steady_clock;
-    using ms = std::chrono::milliseconds;
+    using Ms = std::chrono::milliseconds;
 
     explicit StageTimer(const std::string& tag) : tag_(tag), start_(clock::now()), last_(start_) {}
 
@@ -50,7 +50,7 @@ public:
     void Tick(const std::string& label, const std::string& extra = "")
     {
         auto now = clock::now();
-        auto elapsed = std::chrono::duration_cast<ms>(now - last_).count();
+        auto elapsed = std::chrono::duration_cast<Ms>(now - last_).count();
         if (extra.empty()) {
             log::LogiMinor("    [", tag_, "] ", label, ": ", elapsed, "ms");
         } else {
@@ -63,7 +63,7 @@ public:
     void Done()
     {
         auto now = clock::now();
-        auto elapsed = std::chrono::duration_cast<ms>(now - start_).count();
+        auto elapsed = std::chrono::duration_cast<Ms>(now - start_).count();
         log::LogiMinor("    [", tag_, "] done: ", elapsed, "ms");
         last_ = now;
     }
@@ -71,13 +71,13 @@ public:
     /// Get elapsed since start (no print)
     long long ElapsedMs() const
     {
-        return std::chrono::duration_cast<ms>(clock::now() - start_).count();
+        return std::chrono::duration_cast<Ms>(clock::now() - start_).count();
     }
 
     /// Get elapsed since last tick (no print)
     long long SinceLastMs() const
     {
-        return std::chrono::duration_cast<ms>(clock::now() - last_).count();
+        return std::chrono::duration_cast<Ms>(clock::now() - last_).count();
     }
 
 private:

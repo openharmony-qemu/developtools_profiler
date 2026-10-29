@@ -48,7 +48,7 @@ class HtraceConfigMgr {
 public:
     static HtraceConfigMgr& Instance();
 
-    bool load(const std::string& path, std::string& err);
+    bool Load(const std::string& path, std::string& err);
     bool LoadDefault(std::string& err);
     bool IsLoaded() const;
 

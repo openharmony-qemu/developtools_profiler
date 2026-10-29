@@ -84,7 +84,7 @@ public:
             return 1;
         }
 
-        log::Logi(style::bold("=== Jsleak Analyzer Command ==="));
+        log::Logi(style::Bold("=== Jsleak Analyzer Command ==="));
         log::Logi("  input file: ", opt_.inputFile);
 
         RunContext ctx = MakeBaseRunContext(g);
@@ -106,7 +106,7 @@ public:
             return 1;
         }
 
-        log::Logi(style::bold("=== Jsleak analysis completed ==="));
+        log::Logi(style::Bold("=== Jsleak analysis completed ==="));
         return 0;
     }
 
@@ -137,7 +137,7 @@ private:
 
         const std::string& baseline = opt_.baselineFile;
         const std::string& target = opt_.inputFile;
-        log::Logi(style::bold("=== Snapshot Compare Command ==="));
+        log::Logi(style::Bold("=== Snapshot Compare Command ==="));
         log::Logi("  A (baseline): ", baseline);
         log::Logi("  B (target):   ", target);
         log::Logi("  mode:         ", normalizedMode);

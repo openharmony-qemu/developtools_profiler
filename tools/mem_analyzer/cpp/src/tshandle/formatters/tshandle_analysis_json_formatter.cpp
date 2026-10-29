@@ -34,12 +34,12 @@ constexpr double ROUND1_FACTOR = 10.0;
 constexpr int DURATION_PRECISION = 3;
 constexpr int JSON_INDENT_SPACES = 4;
 
-double round2(double v)
+double Round2(double v)
 {
     return std::round(v * PERCENTAGE_SCALE) / PERCENTAGE_SCALE;
 }
 
-double round1(double v)
+double Round1(double v)
 {
     return std::round(v * ROUND1_FACTOR) / ROUND1_FACTOR;
 }
@@ -141,7 +141,7 @@ json SectionWithTreesToJson(const TshandleTypeSection& section)
             {"rank", object.rank},
             {"existingSize", object.existingSize},
             {"existingCount", object.count},
-            {"percentage", round2(object.percentage)},
+            {"percentage", Round2(object.percentage)},
             {"name", tree.symbol}
         };
         json icicleArr = json::array();
@@ -153,9 +153,9 @@ json SectionWithTreesToJson(const TshandleTypeSection& section)
     }
     return {
         {"totalObjects", section.totalObjects},
-        {"totalSize", round1(section.totalSize)},
+        {"totalSize", Round1(section.totalSize)},
         {"totalCount", section.totalCount},
-        {"totalCallStackExistingSize", round1(section.totalCallStackExistingSize)},
+        {"totalCallStackExistingSize", Round1(section.totalCallStackExistingSize)},
         {"topArkTsObjects", objectJson}
     };
 }
@@ -168,7 +168,7 @@ std::string TshandleWriteAnalysisJson(const TshandleAnalysisOutput& analysis,
 {
     StageTimer timer("JSON write");
 
-    auto base = platform::stem(filePath);
+    auto base = platform::Stem(filePath);
     if (base.empty()) {
         base = "output";
     }

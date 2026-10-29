@@ -19,7 +19,7 @@ namespace mem_analyzer {
 namespace style {
 
 /// Enable ANSI escape processing on Windows (call once at startup).
-void init();
+void Init();
 
 /// True if stdout is a terminal (not piped/redirected).
 bool IsTty();
@@ -28,11 +28,11 @@ bool IsTty();
 bool IsStderrTty();
 
 /// Wrap text with ANSI color/style. Returns raw text if stderr is not a TTY.
-std::string green(const std::string& text);
-std::string red(const std::string& text);
-std::string yellow(const std::string& text);
-std::string bold(const std::string& text);
-std::string dim(const std::string& text);
+std::string Green(const std::string& text);
+std::string Red(const std::string& text);
+std::string Yellow(const std::string& text);
+std::string Bold(const std::string& text);
+std::string Dim(const std::string& text);
 
 } // namespace style
 } // namespace mem_analyzer

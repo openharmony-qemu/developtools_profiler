@@ -399,7 +399,7 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
 
     // Build htrace-specific meta items
     std::string formattedDuration = FormatDuration(duration);
-    std::string escapedSourceFile = EscapeHtml(platform::basename(filePath));
+    std::string escapedSourceFile = EscapeHtml(platform::Basename(filePath));
 
     // Generate timestamp from trace_range
     std::string timestamp;
@@ -421,10 +421,10 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
         if (tpos != std::string::npos) {
             formattedTimestamp[tpos] = ' ';
         }
-        std::regex dot_re("\\.\\d+");
-        formattedTimestamp = std::regex_replace(formattedTimestamp, dot_re, "");
-        std::regex tz_re("[+-]\\d{2}:\\d{2}$");
-        formattedTimestamp = std::regex_replace(formattedTimestamp, tz_re, "");
+        std::regex dotRe("\\.\\d+");
+        formattedTimestamp = std::regex_replace(formattedTimestamp, dotRe, "");
+        std::regex tzRe("[+-]\\d{2}:\\d{2}$");
+        formattedTimestamp = std::regex_replace(formattedTimestamp, tzRe, "");
     }
     std::string escapedTimestamp = EscapeHtml(formattedTimestamp);
     std::string escapedProcessName = EscapeHtml(processName);
@@ -509,7 +509,7 @@ std::string HtraceWriteAnalysisHtml(const HtraceAnalysisOutput& full,
 {
     StageTimer timer("HTML write");
 
-    auto base = platform::stem(filePath);
+    auto base = platform::Stem(filePath);
     if (base.empty()) {
         base = "output";
     }

@@ -78,7 +78,7 @@ std::vector<SymbolFilterRule> HtraceConfigMgr::DefaultFilterRules()
 
 // ===== Load =====
 
-bool HtraceConfigMgr::load(const std::string& path, std::string& err)
+bool HtraceConfigMgr::Load(const std::string& path, std::string& err)
 {
     std::ifstream ifs(PathFromUtf8(path), std::ios::binary);
     if (!ifs.is_open()) {
@@ -214,7 +214,7 @@ bool HtraceConfigMgr::LoadDefault(std::string& err)
         loaded_ = true;
         return true;
     }
-    return load(path, err);
+    return Load(path, err);
 }
 
 bool HtraceConfigMgr::IsLoaded() const

@@ -32,7 +32,7 @@ std::string JsleakWriteAnalysisJson(const json& data, const std::string& filePat
 {
     StageTimer timer("JSON write");
 
-    auto base = platform::stem(filePath);
+    auto base = platform::Stem(filePath);
     if (base.empty()) {
         base = "output";
     }

@@ -31,15 +31,15 @@ constexpr int RANDOM_HEX_WIDTH = 6;
 constexpr int MAX_DIR_CREATE_RETRIES = 10;
 } // namespace
 
-static std::string sRoot;  // per-process root, cached
+static std::string g_root;  // per-process root, cached
 bool TempDir::sKeep = false;
 
 void TempDir::SetKeep(bool keep) { sKeep = keep; }
 
 std::string TempDir::SystemTempRoot()
 {
-    if (!sRoot.empty()) {
-        return sRoot;
+    if (!g_root.empty()) {
+        return g_root;
     }
     // std::filesystem::temp_directory_path() is cross-platform:
     //   Windows : %TEMP%  (typically C:\Users\<user>\AppData\Local\Temp)
@@ -50,8 +50,8 @@ std::string TempDir::SystemTempRoot()
     if (ec) {
         tmp = fs::current_path();
     }
-    sRoot = PathToUtf8(tmp / ("mem-analyzer." + GenerateRandomHex()));
-    return sRoot;
+    g_root = PathToUtf8(tmp / ("mem-analyzer." + GenerateRandomHex()));
+    return g_root;
 }
 
 static void EnsureRootExists(const std::string& root)

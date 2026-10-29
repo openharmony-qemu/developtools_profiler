@@ -1158,7 +1158,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
             std::string baselineFile;
             std::string targetFile;
             for (const auto& f : rr.snapshotPulledFiles) {
-                const std::string stem = platform::stem(f);
+                const std::string stem = platform::Stem(f);
                 if (stem.empty()) {
                     continue;
                 }
@@ -1245,8 +1245,8 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
                 // The jsleak compare subcommand nests its output under
                 // <output_dir>/<target-stem>/, writing
                 // <baseline-stem>-vs-<target-stem>.html there. Lift it up.
-                const std::string targetStem = platform::stem(targetFile);
-                const std::string baselineStem = platform::stem(baselineFile);
+                const std::string targetStem = platform::Stem(targetFile);
+                const std::string baselineStem = platform::Stem(baselineFile);
                 if (!targetStem.empty()) {
                     FlattenReportDir(outputDir, targetStem);
                 }
@@ -1331,7 +1331,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
                     // already lives in its own session directory, so lift
                     // everything the run produced next to it and report the
                     // final location (the subprocess printed the old one).
-                    std::string base = platform::stem(f);
+                    std::string base = platform::Stem(f);
                     if (base.empty()) {
                         base = "output";
                     }

@@ -20,7 +20,7 @@
 
 namespace mem_analyzer {
 
-static const char* FRAMES[] = { "\u280B", "\u2819", "\u2839", "\u2838", "\u283C", "\u2834", "\u2826", "\u2827",
+static const char* g_frames[] = { "\u280B", "\u2819", "\u2839", "\u2838", "\u283C", "\u2834", "\u2826", "\u2827",
     "\u2807", "\u280F" };
 static constexpr int FRAME_COUNT = 10;
 static constexpr int INTERVAL_MS = 100;
@@ -55,8 +55,8 @@ void ProcessSpinner::Done(bool success)
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(1) << sec;
 
-    auto status = success ? style::green("done") : style::red("failed");
-    auto time   = style::dim("(" + oss.str() + "s)");
+    auto status = success ? style::Green("done") : style::Red("failed");
+    auto time   = style::Dim("(" + oss.str() + "s)");
 
     if (style::IsTty()) {
         std::cout << "\r  " << description_ << "...  " <<
@@ -80,7 +80,7 @@ void ProcessSpinner::Run()
         oss << std::fixed << std::setprecision(1) << sec << "s";
 
         std::cout << "\r  " << description_ << "...  " <<
-                  FRAMES[frame] << "  (" << oss.str() << ")   " << std::flush;
+                  g_frames[frame] << "  (" << oss.str() << ")   " << std::flush;
 
         frame = (frame + 1) % FRAME_COUNT;
         std::this_thread::sleep_for(std::chrono::milliseconds(INTERVAL_MS));

@@ -86,7 +86,7 @@ public:
             }
         }
 
-        log::Logi(style::bold("=== Trace Command ==="));
+        log::Logi(style::Bold("=== Trace Command ==="));
         log::Logi("Mode: ", (g.parseOnly ? "parse-only" : "analysis"), ", category: ", opt_.category);
         if (g.parseOnly) {
             log::LogiMinor("Note: --category is ignored in parse-only mode; all resource types are "
@@ -105,7 +105,7 @@ public:
                 allOk = false;
             }
         }
-        log::Logi(style::bold("=== Trace processing completed ==="));
+        log::Logi(style::Bold("=== Trace processing completed ==="));
         return allOk ? 0 : 1;
     }
 };

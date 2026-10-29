@@ -31,10 +31,10 @@ namespace log {
 namespace {
 
 constexpr int MS_DIGIT_WIDTH = 3;
-std::atomic<Level> gLevel{Level::LOG_INFO};
-std::atomic<unsigned> gPrefix{0};
-std::mutex gMutex;                          // 保护 g_sink 与单条日志的原子输出
-std::shared_ptr<Sink> gSink;                // null = 默认 console（stdout/stderr）
+std::atomic<Level> g_level{Level::LOG_INFO};
+std::atomic<unsigned> g_prefix{0};
+std::mutex g_mutex;                          // 保护 g_sink 与单条日志的原子输出
+std::shared_ptr<Sink> g_sink;                // null = 默认 console（stdout/stderr）
 
 // 级别标签（定宽 7 字符，便于对齐）。
 const char* tag(Level lv)
@@ -53,11 +53,11 @@ const char* tag(Level lv)
 std::string paint(Level lv, bool dim, const std::string& text)
 {
     switch (lv) {
-        case Level::LOG_DEBUG:   return style::dim(text);
-        case Level::LOG_INFO:    return dim ? style::dim(text) : text;
-        case Level::LOG_SUCCESS: return style::green(text);
-        case Level::LOG_WARN:    return style::yellow(text);
-        case Level::LOG_ERROR:   return style::red(text);
+        case Level::LOG_DEBUG:   return style::Dim(text);
+        case Level::LOG_INFO:    return dim ? style::Dim(text) : text;
+        case Level::LOG_SUCCESS: return style::Green(text);
+        case Level::LOG_WARN:    return style::Yellow(text);
+        case Level::LOG_ERROR:   return style::Red(text);
     }
     return text;
 }
@@ -66,11 +66,11 @@ std::string paint(Level lv, bool dim, const std::string& text)
 std::string PaintTag(Level lv, bool dim, const std::string& text)
 {
     switch (lv) {
-        case Level::LOG_DEBUG:   return style::bold(style::dim(text));
-        case Level::LOG_INFO:    return dim ? style::bold(style::dim(text)) : style::bold(text);
-        case Level::LOG_SUCCESS: return style::bold(style::green(text));
-        case Level::LOG_WARN:    return style::bold(style::yellow(text));
-        case Level::LOG_ERROR:   return style::bold(style::red(text));
+        case Level::LOG_DEBUG:   return style::Bold(style::Dim(text));
+        case Level::LOG_INFO:    return dim ? style::Bold(style::Dim(text)) : style::Bold(text);
+        case Level::LOG_SUCCESS: return style::Bold(style::Green(text));
+        case Level::LOG_WARN:    return style::Bold(style::Yellow(text));
+        case Level::LOG_ERROR:   return style::Bold(style::Red(text));
     }
     return text;
 }
@@ -104,21 +104,21 @@ unsigned ThreadIdShort()
 
 } // namespace
 
-void SetLevel(Level min) { gLevel.store(min); }
-Level level() { return gLevel.load(); }
-void SetPrefix(Prefix flags) { gPrefix.store(static_cast<unsigned>(flags)); }
+void SetLevel(Level min) { g_level.store(min); }
+Level level() { return g_level.load(); }
+void SetPrefix(Prefix flags) { g_prefix.store(static_cast<unsigned>(flags)); }
 
 void SetSink(std::shared_ptr<Sink> sink)
 {
-    std::lock_guard<std::mutex> g(gMutex);
-    gSink = std::move(sink);
+    std::lock_guard<std::mutex> g(g_mutex);
+    g_sink = std::move(sink);
 }
 
 void WriteLine(Level lv, bool dim, const std::string& msg)
 {
-    std::lock_guard<std::mutex> g(gMutex);   // 单条日志原子输出，多线程不交错
+    std::lock_guard<std::mutex> g(g_mutex);   // 单条日志原子输出，多线程不交错
 
-    const unsigned prefixFlags = gPrefix.load();
+    const unsigned prefixFlags = g_prefix.load();
 
     std::string prefix;
     if (prefixFlags & static_cast<unsigned>(Prefix::TIMESTAMP)) {
@@ -133,8 +133,8 @@ void WriteLine(Level lv, bool dim, const std::string& msg)
     const std::string line = prefix + PaintTag(lv, dim, tag(lv)) + " " +
                              paint(lv, dim, msg) + "\n";
 
-    if (gSink) {
-        gSink->write(lv, line);
+    if (g_sink) {
+        g_sink->write(lv, line);
         return;
     }
     // 诊断统一走 stderr（无缓冲单流）：保证与 error 的严格输出顺序，并保持 stdout 干净

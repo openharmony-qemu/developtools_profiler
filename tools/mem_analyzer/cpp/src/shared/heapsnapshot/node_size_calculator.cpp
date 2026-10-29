@@ -818,7 +818,7 @@ namespace {
 
 // 查表越界时返回的空字符串（const std::string& 返回路径需要稳定的引用，
 // 不能返回临时对象 ""，否则悬垂）。
-const std::string kEmptyString;
+const std::string EMPTY_STRING;
 
 /// Context struct for the BFS, mirroring DomContext for the dominator pipeline.
 struct BfsContext {
@@ -846,29 +846,29 @@ struct BfsContext {
     const std::string& getEdgeName(size_t ptr) const
     {
         uint32_t nameIdx = edges[ptr + static_cast<size_t>(edgeNameOff)];
-        return (nameIdx < strings.size()) ? strings[nameIdx] : kEmptyString;
+        return (nameIdx < strings.size()) ? strings[nameIdx] : EMPTY_STRING;
     }
 
     /// Look up a node's name from the string table.
     const std::string& GetNodeName(uint32_t idx) const
     {
         if (idx >= nodeCount) {
-            return kEmptyString;
+            return EMPTY_STRING;
         }
         size_t base = static_cast<size_t>(idx) * static_cast<size_t>(nodeFieldsCount);
         uint32_t ni = nodes[base + static_cast<size_t>(nameOff)];
-        return (ni < strings.size()) ? strings[ni] : kEmptyString;
+        return (ni < strings.size()) ? strings[ni] : EMPTY_STRING;
     }
 
     /// Look up a node's type name (e.g. "object", "string", "code").
-    const std::string& getNodeType(uint32_t idx) const
+    const std::string& GetNodeType(uint32_t idx) const
     {
         if (idx >= nodeCount || nodeTypeNames.empty()) {
-            return kEmptyString;
+            return EMPTY_STRING;
         }
         size_t base = static_cast<size_t>(idx) * static_cast<size_t>(nodeFieldsCount);
         uint32_t ti = nodes[base + static_cast<size_t>(nodeTypeOff)];
-        return (ti < nodeTypeNames.size()) ? nodeTypeNames[ti] : kEmptyString;
+        return (ti < nodeTypeNames.size()) ? nodeTypeNames[ti] : EMPTY_STRING;
     }
 };
 
@@ -909,7 +909,7 @@ static const std::unordered_set<std::string> nodeNameGreyList = {
 /// Check if a node is a "C++ roots" synthetic node (low priority).
 static bool IsCppRootsNode(const BfsContext& ctx, uint32_t idx)
 {
-    return ctx.GetNodeName(idx) == "C++ roots" && ctx.getNodeType(idx) == "synthetic";
+    return ctx.GetNodeName(idx) == "C++ roots" && ctx.GetNodeType(idx) == "synthetic";
 }
 
 // ============================================================================
@@ -941,7 +941,7 @@ static void CollectShortestPathRoots(
         uint32_t nid = ctx.nodes[i * static_cast<size_t>(ctx.nodeFieldsCount) +
                                static_cast<size_t>(ctx.idOff)];
 
-        std::string typeName = ctx.getNodeType(i);
+        std::string typeName = ctx.GetNodeType(i);
         std::string nodeName = ctx.GetNodeName(i);
 
         // High-priority root check (excludeBlinkRoot=true, excludePendingActivity=true)
@@ -1046,9 +1046,9 @@ static void RunLayeredBfs(
                         continue;
                     }
                     if (en.find("WeakMap") != std::string::npos) {
-                        static const std::regex KeyRe(R"(@(\d+)\) ->)");
+                        static const std::regex keyRe(R"(@(\d+)\) ->)");
                         std::smatch match;
-                        if (std::regex_search(en, match, KeyRe)) {
+                        if (std::regex_search(en, match, keyRe)) {
                             uint32_t keyId = 0xFFFFFFFFu;
                             try {
                                 keyId = static_cast<uint32_t>(std::stoul(match[1].str()));
@@ -1098,7 +1098,7 @@ static void RunLayeredBfs(
                         childName == "(map descriptors)") {
                         continue;
                     }
-                    if (ctx.getNodeType(child) == "code") {
+                    if (ctx.GetNodeType(child) == "code") {
                         continue;
                     }
                     if (IsNodeNameBlocked(childName)) {

@@ -60,7 +60,7 @@ static std::string AcpToUtf8(const std::string& acpStr)
 // ============================================================================
 static int RunAutoDetect(const mem_analyzer::GlobalOptions& g)
 {
-    mem_analyzer::log::Logi(mem_analyzer::style::bold("=== Auto Detect Mode ==="));
+    mem_analyzer::log::Logi(mem_analyzer::style::Bold("=== Auto Detect Mode ==="));
     // 未指定子命令：各域算法参数取默认值（与历史行为一致）
     const mem_analyzer::RunContext ctx = mem_analyzer::MakeBaseRunContext(g);
     bool allOk = true;
@@ -76,7 +76,7 @@ static int RunAutoDetect(const mem_analyzer::GlobalOptions& g)
             allOk = false;
         }
     }
-    mem_analyzer::log::Logi(mem_analyzer::style::bold("=== Auto detect processing completed ==="));
+    mem_analyzer::log::Logi(mem_analyzer::style::Bold("=== Auto detect processing completed ==="));
     return allOk ? 0 : 1;
 }
 
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
     argv = utf8ArgvPtrs.data();
 #endif
 
-    mem_analyzer::style::init();
+    mem_analyzer::style::Init();
 
     // 模块能力表一致性自检：正常构建下零输出，仅在不一致时告警（不改变退出码）。
     for (const auto& issue : mem_analyzer::ModuleRegistry::SelfCheck()) {

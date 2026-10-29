@@ -511,7 +511,7 @@ public:
     std::string overflow_;          // partial number straddling a chunk boundary
 
     /// Feed one chunk of text. When ']' appears the parser finishes.
-    void feed(const std::string& chunkText)
+    void Feed(const std::string& chunkText)
     {
         if (done_) {
             return;
@@ -599,9 +599,9 @@ struct HeaderResult {
 /// and "\"nodes\":" markers are found.  Returns the accumulated buffer
 /// and the position of the nodes marker.
 /// Throws if markers are not found within META_LIMIT bytes.
-static HeaderResult ReadHeader(std::ifstream& file, size_t file_size)
+static HeaderResult ReadHeader(std::ifstream& file, size_t fileSize)
 {
-    size_t limit = std::min<size_t>(file_size, META_LIMIT);
+    size_t limit = std::min<size_t>(fileSize, META_LIMIT);
     std::string acc;
     size_t pos = 0;
 
@@ -627,14 +627,14 @@ static HeaderResult ReadHeader(std::ifstream& file, size_t file_size)
 
 /// Stream-parse a flat numeric JSON array from file starting at byte_offset.
 /// Uses ChunkedUintParser with CHUNK_SIZE (16 MB) chunks.
-static std::vector<uint32_t> parseArrayChunked(std::ifstream& file, size_t byteOffset, size_t file_size)
+static std::vector<uint32_t> parseArrayChunked(std::ifstream& file, size_t byteOffset, size_t fileSize)
 {
     ChunkedUintParser parser;
     std::string readBuf(CHUNK_SIZE, '\0');
     size_t pos = byteOffset;
 
-    while (pos < file_size) {
-        size_t toRead = std::min<size_t>(CHUNK_SIZE, file_size - pos);
+    while (pos < fileSize) {
+        size_t toRead = std::min<size_t>(CHUNK_SIZE, fileSize - pos);
         file.seekg(pos);
         file.read(&readBuf[0], toRead);
         size_t bytesRead = file.gcount();
@@ -642,7 +642,7 @@ static std::vector<uint32_t> parseArrayChunked(std::ifstream& file, size_t byteO
             break;
         }
 
-        parser.feed(std::string(readBuf.data(), bytesRead));
+        parser.Feed(std::string(readBuf.data(), bytesRead));
         pos += bytesRead;
         if (parser.IsDone()) {
             break;
@@ -657,14 +657,14 @@ static std::vector<uint32_t> parseArrayChunked(std::ifstream& file, size_t byteO
 /// To avoid missing markers that straddle chunk boundaries, each window
 /// overlaps the previous one by (marker.length() - 1) bytes.
 /// Returns the absolute byte offset of the marker, or std::string::npos.
-static size_t FindMarkerInFile(std::ifstream& file, const std::string& marker, size_t startPos, size_t file_size)
+static size_t FindMarkerInFile(std::ifstream& file, const std::string& marker, size_t startPos, size_t fileSize)
 {
     std::string readBuf(META_CHUNK, '\0');
     file.clear();  // ensure stream is in good state before scanning
     size_t pos = startPos;
 
-    while (pos < file_size) {
-        size_t toRead = std::min<size_t>(META_CHUNK, file_size - pos);
+    while (pos < fileSize) {
+        size_t toRead = std::min<size_t>(META_CHUNK, fileSize - pos);
         file.seekg(pos);
         file.read(&readBuf[0], toRead);
         size_t bytesRead = file.gcount();
@@ -679,7 +679,7 @@ static size_t FindMarkerInFile(std::ifstream& file, const std::string& marker, s
         }
 
         // Overlap windows to catch markers that straddle boundaries
-        if (pos + bytesRead < file_size) {
+        if (pos + bytesRead < fileSize) {
             pos += bytesRead;
             if (pos >= marker.length()) {
                 pos -= (marker.length() - 1);
@@ -692,11 +692,11 @@ static size_t FindMarkerInFile(std::ifstream& file, const std::string& marker, s
 }
 
 /// Find the position of '[' that starts a JSON array after a given marker.
-/// e.g., find_array_bracket_after(file, "\"nodes\":", start_pos, file_size)
+/// e.g., find_array_bracket_after(file, "\"nodes\":", start_pos, fileSize)
 /// returns the byte offset of the '[' after the marker.
-static size_t FindArrayBracketAfter(std::ifstream& file, const std::string& marker, size_t startPos, size_t file_size)
+static size_t FindArrayBracketAfter(std::ifstream& file, const std::string& marker, size_t startPos, size_t fileSize)
 {
-    size_t markPos = FindMarkerInFile(file, marker, startPos, file_size);
+    size_t markPos = FindMarkerInFile(file, marker, startPos, fileSize);
     if (markPos == std::string::npos) {
         return std::string::npos;
     }
@@ -833,10 +833,10 @@ static std::string SanitizeJsonStringArray(const std::string& strBuf)
 /// The strings array is located at bracket_pos and parsed via JSON.
 /// If the initial parse fails, the buffer is sanitized and retried.
 /// If that also fails, an empty string table is returned as fallback.
-static std::vector<std::string> readStringsArray(std::ifstream& file, size_t bracketPos, size_t file_size)
+static std::vector<std::string> readStringsArray(std::ifstream& file, size_t bracketPos, size_t fileSize)
 {
     // Read up to 1 MB (META_CHUNK * 16) for the strings array
-    size_t remaining = file_size - bracketPos;
+    size_t remaining = fileSize - bracketPos;
     size_t readSize = std::min<size_t>(remaining, META_CHUNK * 16);
     std::string strBuf(readSize, '\0');
     file.clear();
@@ -1022,9 +1022,9 @@ static void ParseSnapshotMeta(HeapSnapshot& snapshot,
 //  Parsed via ChunkedUintParser to handle large arrays without loading the
 //  entire JSON string into memory.
 // ============================================================================
-static void ParseNodesArray(HeapSnapshot& snapshot, std::ifstream& file, size_t nodesArrayBracket, size_t file_size)
+static void ParseNodesArray(HeapSnapshot& snapshot, std::ifstream& file, size_t nodesArrayBracket, size_t fileSize)
 {
-    snapshot.nodes = parseArrayChunked(file, nodesArrayBracket + 1, file_size);
+    snapshot.nodes = parseArrayChunked(file, nodesArrayBracket + 1, fileSize);
     size_t nc = snapshot.nodes.size() / snapshot.nodeFieldsCount;
     if (nc > static_cast<size_t>(std::numeric_limits<int>::max()))
         throw std::runtime_error("malformed heapsnapshot: node count exceeds INT_MAX");
@@ -1041,7 +1041,7 @@ static void ParseNodesArray(HeapSnapshot& snapshot, std::ifstream& file, size_t 
 // ============================================================================
 static size_t ParseEdgesArray(HeapSnapshot& snapshot, std::ifstream& file,
     const std::string& headBuf,
-    size_t nodesArrayBracket, size_t file_size)
+    size_t nodesArrayBracket, size_t fileSize)
 {
     size_t edgesBracketPos = std::string::npos;
 
@@ -1058,13 +1058,13 @@ static size_t ParseEdgesArray(HeapSnapshot& snapshot, std::ifstream& file,
     if (edgesBracketPos == std::string::npos) {
         // Estimate: nodes array occupies roughly nodes.size() * 2 bytes (JSON text)
         size_t searchStart = nodesArrayBracket + snapshot.nodes.size() * 2;
-        edgesBracketPos = FindArrayBracketAfter(file, "\"edges\":", searchStart, file_size);
+        edgesBracketPos = FindArrayBracketAfter(file, "\"edges\":", searchStart, fileSize);
         if (edgesBracketPos == std::string::npos) {
             throw std::runtime_error("cannot find \"edges\" field");
         }
     }
 
-    snapshot.edges = parseArrayChunked(file, edgesBracketPos + 1, file_size);
+    snapshot.edges = parseArrayChunked(file, edgesBracketPos + 1, fileSize);
     size_t ec = snapshot.edges.size() / snapshot.edgeFieldsCount;
     if (ec > static_cast<size_t>(std::numeric_limits<int>::max()))
         throw std::runtime_error("malformed heapsnapshot: edge count exceeds INT_MAX");
@@ -1083,7 +1083,7 @@ static size_t ParseEdgesArray(HeapSnapshot& snapshot, std::ifstream& file,
 // ============================================================================
 static void ParseStringsTable(HeapSnapshot& snapshot, std::ifstream& file,
     const std::string& headBuf,
-    size_t edgesBracketPos, size_t file_size)
+    size_t edgesBracketPos, size_t fileSize)
 {
     size_t stringsBracketPos = std::string::npos;
 
@@ -1101,11 +1101,11 @@ static void ParseStringsTable(HeapSnapshot& snapshot, std::ifstream& file,
     }
 
     // Pass 2: tail of file (strings array is often the last field)
-    if (stringsBracketPos == std::string::npos && file_size > META_LIMIT) {
-        size_t tailReadSize = std::min<size_t>(file_size, META_LIMIT);
+    if (stringsBracketPos == std::string::npos && fileSize > META_LIMIT) {
+        size_t tailReadSize = std::min<size_t>(fileSize, META_LIMIT);
         std::string tailBuf(tailReadSize, '\0');
         file.clear();
-        file.seekg(file_size - tailReadSize);
+        file.seekg(fileSize - tailReadSize);
         file.read(&tailBuf[0], tailReadSize);
         size_t bytes = file.gcount();
         tailBuf.resize(bytes);
@@ -1114,7 +1114,7 @@ static void ParseStringsTable(HeapSnapshot& snapshot, std::ifstream& file,
         if (stringsMarkerPos != std::string::npos) {
             size_t bracket = tailBuf.find('[', stringsMarkerPos + 10);
             if (bracket != std::string::npos) {
-                stringsBracketPos = (file_size - tailReadSize) + bracket;
+                stringsBracketPos = (fileSize - tailReadSize) + bracket;
             }
         }
     }
@@ -1122,7 +1122,7 @@ static void ParseStringsTable(HeapSnapshot& snapshot, std::ifstream& file,
     // Pass 3: forward scan from after edges
     if (stringsBracketPos == std::string::npos) {
         size_t searchStart = std::max<size_t>(META_LIMIT, edgesBracketPos + 1);
-        size_t markPos = FindMarkerInFile(file, "\"strings\":", searchStart, file_size);
+        size_t markPos = FindMarkerInFile(file, "\"strings\":", searchStart, fileSize);
         if (markPos != std::string::npos) {
             std::string buf(STRINGS_SEARCH_BUF_SIZE, '\0');
             file.clear();
@@ -1138,7 +1138,7 @@ static void ParseStringsTable(HeapSnapshot& snapshot, std::ifstream& file,
     }
 
     if (stringsBracketPos != std::string::npos) {
-        snapshot.strings = readStringsArray(file, stringsBracketPos, file_size);
+        snapshot.strings = readStringsArray(file, stringsBracketPos, fileSize);
     }
 }
 
@@ -1248,7 +1248,7 @@ HeapSnapshot HeapSnapshot::FromFile(const std::string& path)
     if (!file.is_open()) {
         throw std::runtime_error("cannot open file: " + path);
     }
-    size_t file_size = static_cast<size_t>(file.tellg());
+    size_t fileSize = static_cast<size_t>(file.tellg());
     file.seekg(0);
 
     StageTimer timer("HeapSnapshot");
@@ -1256,14 +1256,14 @@ HeapSnapshot HeapSnapshot::FromFile(const std::string& path)
 
     // ---- Phase 1: metadata ----
     timer.Stage("Reading header");
-    auto header = ReadHeader(file, file_size);
+    auto header = ReadHeader(file, fileSize);
     size_t nodesArrayBracket = 0;
     ParseSnapshotMeta(snapshot, header.buf, header.nodesMarkerPos, nodesArrayBracket);
     timer.Tick("meta_parsed");
 
     // ---- Phase 2: nodes ----
     timer.Stage("Parsing nodes array");
-    ParseNodesArray(snapshot, file, nodesArrayBracket, file_size);
+    ParseNodesArray(snapshot, file, nodesArrayBracket, fileSize);
     timer.Tick("nodes", std::to_string(snapshot.nodeCount) + " nodes");
     // 空 nodes 数组会让下游 compute_shortest_paths 对空 vector 执行 path_edges[0] = ...
     if (snapshot.nodeCount <= 0) {
@@ -1273,12 +1273,12 @@ HeapSnapshot HeapSnapshot::FromFile(const std::string& path)
     // ---- Phase 3: edges ----
     timer.Stage("Parsing edges array");
     size_t edgesBracketPos = ParseEdgesArray(snapshot, file, header.buf,
-        nodesArrayBracket, file_size);
+        nodesArrayBracket, fileSize);
     timer.Tick("edges", std::to_string(snapshot.edgeCount) + " edges");
 
     // ---- Phase 4: strings ----
     timer.Stage("Parsing strings table");
-    ParseStringsTable(snapshot, file, header.buf, edgesBracketPos, file_size);
+    ParseStringsTable(snapshot, file, header.buf, edgesBracketPos, fileSize);
     timer.Tick("strings", std::to_string(snapshot.strings.size()) + " strings");
 
     // ---- Phase 5: CSR + node_id_to_idx ----

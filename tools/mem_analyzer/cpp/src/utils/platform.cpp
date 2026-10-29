@@ -199,12 +199,12 @@ std::string dirname(const std::string& path)
     return PathToUtf8(PathFromUtf8(path).parent_path());
 }
 
-std::string basename(const std::string& path)
+std::string Basename(const std::string& path)
 {
     return PathToUtf8(PathFromUtf8(path).filename());
 }
 
-std::string stem(const std::string& path)
+std::string Stem(const std::string& path)
 {
     return PathToUtf8(PathFromUtf8(path).stem());
 }
@@ -358,7 +358,7 @@ int RunProcess(const std::string& exe, const std::vector<std::string>& args, int
 int RunProcessWithSpinner(const std::string& exe, const std::vector<std::string>& args, const std::string& description)
 {
     TempDir tmp("spinner", true);
-    std::string outName = platform::stem(exe) + "_output.txt";
+    std::string outName = platform::Stem(exe) + "_output.txt";
     std::string outFile = platform::JoinPath(tmp.Path(), outName);
 
 #if defined(_WIN32)

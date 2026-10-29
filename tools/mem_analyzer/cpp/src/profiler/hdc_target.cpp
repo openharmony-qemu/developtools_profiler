@@ -25,7 +25,7 @@
 namespace mem_analyzer {
 namespace {
 
-std::string gConnectKey;        // device id (serial number); empty => no -t is added
+std::string g_connectKey;        // device id (serial number); empty => no -t is added
 bool gTargetResolved = false;   // whether the gate has already resolved the target
 
 // Contract check for the three command builders: the gate must have resolved the
@@ -97,11 +97,11 @@ void HdcMarkTargetResolved() { gTargetResolved = true; }
 
 void HdcSetConnectKey(const std::string& key)
 {
-    gConnectKey = key;
+    g_connectKey = key;
     gTargetResolved = true;
 }
 
-const std::string& HdcConnectKey() { return gConnectKey; }
+const std::string& HdcConnectKey() { return g_connectKey; }
 
 // ---- Parsing / classification ----
 
@@ -256,14 +256,14 @@ std::string HdcShell(const std::string& deviceCmd)
     CheckTargetResolved("hdc_shell");
     // With no target this is byte-identical to the original form:
     // "hdc shell " + shell_quote(device_cmd)
-    return HdcRawWithTarget(gConnectKey, "shell " + proc::ShellQuote(deviceCmd));
+    return HdcRawWithTarget(g_connectKey, "shell " + proc::ShellQuote(deviceCmd));
 }
 
 std::string HdcFileSend(const std::string& local, const std::string& remote)
 {
     CheckTargetResolved("hdc_file_send");
     return HdcRawWithTarget(
-        gConnectKey,
+        g_connectKey,
         "file send " + proc::ShellQuote(local) + " " + proc::ShellQuote(remote));
 }
 
@@ -271,7 +271,7 @@ std::string HdcFileRecv(const std::string& remote, const std::string& local)
 {
     CheckTargetResolved("hdc_file_recv");
     return HdcRawWithTarget(
-        gConnectKey,
+        g_connectKey,
         "file recv " + proc::ShellQuote(remote) + " " + proc::ShellQuote(local));
 }
 

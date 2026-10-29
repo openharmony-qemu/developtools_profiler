@@ -51,7 +51,7 @@ HeapSnapshot JsleakParse(const std::string& filePath, const RunContext& ctx)
             log::Logi("  Converting rawheap to heapsnapshot...");
             heapsnapshotFile = platform::JoinPath(
                 platform::JoinPath(tempBase, "convert"),
-                platform::stem(filePath) + ".heapsnapshot");
+                platform::Stem(filePath) + ".heapsnapshot");
             std::string convertErr;
             if (!RawheapToHeapsnapshot(filePath, heapsnapshotFile, &convertErr)) {
                 if (!convertErr.empty()) {
@@ -69,7 +69,7 @@ HeapSnapshot JsleakParse(const std::string& filePath, const RunContext& ctx)
             log::Logi("  Deobfuscating snapshot...");
             std::string deobDir = platform::JoinPath(tempBase, "deob");
             std::string deobPath = platform::JoinPath(
-                deobDir, platform::stem(filePath) + ".heapsnapshot");
+                deobDir, platform::Stem(filePath) + ".heapsnapshot");
             if (DeobfuscateWithIndices(source, deobPath,
                 ctx.resources.sourcemapDir,
                 ctx.resources.nameCacheDir)) {

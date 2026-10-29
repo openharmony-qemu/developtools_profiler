@@ -75,7 +75,7 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
 {
     StageTimer timer("JSON write");
 
-    auto base = platform::stem(filePath);
+    auto base = platform::Stem(filePath);
     if (base.empty()) {
         base = "output";
     }
