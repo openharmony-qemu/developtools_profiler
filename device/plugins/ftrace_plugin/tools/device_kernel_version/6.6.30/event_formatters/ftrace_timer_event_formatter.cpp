@@ -47,12 +47,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.hrtimer_expire_entry_format();
         char buffer[BUFFER_SIZE] = {0};
         int len = 0;
-        std::string functionStr = "";
+        std::string functionStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.function()) > 0) {
             functionStr = kernelSymbols[msg.function()];
         }
-        if (functionStr != "") {
+        if (!functionStr.empty()) {
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "hrtimer_expire_entry: hrtimer=%p function=%s now=%" PRIu64 "", msg.hrtimer(),
                              functionStr.c_str(), msg.now());
@@ -123,12 +123,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.hrtimer_start_format();
         char buffer[BUFFER_SIZE] = {0};
         int len = 0;
-        std::string functionStr = "";
+        std::string functionStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.function()) > 0) {
             functionStr = kernelSymbols[msg.function()];
         }
-        if (functionStr != "") {
+        if (!functionStr.empty()) {
             len = snprintf_s(
                 buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                 "hrtimer_start: hrtimer=%p function=%s expires=%" PRIu64 " softexpires=%" PRIu64 " mode=%s",
@@ -170,7 +170,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.itimer_expire_format();
         char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "itimer_expire: which=%d pid=%d now=%" PRIu64 "",
-                             msg.which(), (int)msg.pid(), msg.now());
+                             msg.which(), static_cast<int>(msg.pid()), msg.now());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(itimer_expire) msg had be cut off in outfile");
@@ -225,12 +225,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.timer_expire_entry_format();
         char buffer[BUFFER_SIZE] = {0};
         int len = 0;
-        std::string functionStr = "";
+        std::string functionStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.function()) > 0) {
             functionStr = kernelSymbols[msg.function()];
         }
-        if (functionStr != "") {
+        if (!functionStr.empty()) {
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "timer_expire_entry: timer=%p function=%s now=%" PRIu64 "", msg.timer(),
                              functionStr.c_str(), msg.now());
@@ -290,12 +290,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.timer_start_format();
         char buffer[BUFFER_SIZE] = {0};
         int len = 0;
-        std::string functionStr = "";
+        std::string functionStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.function()) > 0) {
             functionStr = kernelSymbols[msg.function()];
         }
-        if (functionStr != "") {
+        if (!functionStr.empty()) {
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "timer_start: timer=%p function=%s expires=%" PRIu64 " [timeout=%" PRIu64
                         "] cpu=%u idx=%u flags=%s",

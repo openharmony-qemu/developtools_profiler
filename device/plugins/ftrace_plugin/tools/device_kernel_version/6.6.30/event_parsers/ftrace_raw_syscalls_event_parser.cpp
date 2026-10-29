@@ -31,30 +31,27 @@ __attribute__((noinline)) void ParseSysEnterData(SysEnterData& eventData, uint8_
     eventData.id = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.args = FtraceFieldParser::ParseVectorIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseSysEnter(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSysEnter(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     SysEnterData eventData {};
     ParseSysEnterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sys_enter_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_id(eventData.id);
     for (size_t i = 0; i < eventData.args.size(); i++) {
         msg->add_args(eventData.args[i]);
     }
 }
-void ParseSysEnterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SysEnterData eventData {};
-    ParseSysEnterData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sys_enter_format();
-    msg->set_id(eventData.id);
-    for (size_t i = 0; i < eventData.args.size(); i++) {
-        msg->add_args(eventData.args[i]);
-    }
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sys_enter, ParseSysEnter);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sys_enter, ParseSysEnterEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sys_enter, ParseSysEnter<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sys_enter, ParseSysEnter<ProtoEncoder::FtraceEvent>);
 
 struct SysExitData {
     uint64_t id {};
@@ -67,25 +64,24 @@ __attribute__((noinline)) void ParseSysExitData(SysExitData& eventData, uint8_t 
     eventData.id = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.ret = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseSysExit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseSysExit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     SysExitData eventData {};
     ParseSysExitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_sys_exit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_id(eventData.id);
     msg->set_ret(eventData.ret);
 }
-void ParseSysExitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    SysExitData eventData {};
-    ParseSysExitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_sys_exit_format();
-    msg->set_id(eventData.id);
-    msg->set_ret(eventData.ret);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sys_exit, ParseSysExit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sys_exit, ParseSysExitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sys_exit, ParseSysExit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(sys_exit, ParseSysExit<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

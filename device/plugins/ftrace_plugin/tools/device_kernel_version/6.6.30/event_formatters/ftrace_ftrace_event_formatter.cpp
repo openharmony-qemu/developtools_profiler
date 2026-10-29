@@ -28,12 +28,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.bputs_format();
         char buffer[BUFFER_SIZE] = {0};
         int len = 0;
-        std::string functionStr = "";
+        std::string functionStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.ip()) > 0) {
             functionStr = kernelSymbols[msg.ip()];
         }
-        if (functionStr != "") {
+        if (!functionStr.empty()) {
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "bputs: %s: %s", functionStr.c_str(),
                              msg.str().c_str());
         } else {
@@ -91,12 +91,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.funcgraph_entry_format();
         char buffer[BUFFER_SIZE] = {0};
         int len = 0;
-        std::string functionStr = "";
+        std::string functionStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.func()) > 0) {
             functionStr = kernelSymbols[msg.func()];
         }
-        if (functionStr != "") {
+        if (!functionStr.empty()) {
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "funcgraph_entry: --> %s (%d)", functionStr.c_str(),
                              msg.depth());
         } else {
@@ -120,12 +120,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.funcgraph_exit_format();
         char buffer[BUFFER_SIZE] = {0};
         int len = 0;
-        std::string functionStr = "";
+        std::string functionStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.func()) > 0) {
             functionStr = kernelSymbols[msg.func()];
         }
-        if (functionStr != "") {
+        if (!functionStr.empty()) {
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "funcgraph_exit: <-- %s (%d) (start: %" PRIx64 "  end: %" PRIx64 ") over: %d",
                              functionStr.c_str(), msg.depth(), msg.calltime(), msg.rettime(), msg.depth());
@@ -151,12 +151,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.function_format();
         char buffer[BUFFER_SIZE] = {0};
         int len = 0;
-        std::string functionStr = "";
+        std::string functionStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.ip()) > 0) {
             functionStr = kernelSymbols[msg.ip()];
         }
-        if (functionStr != "") {
+        if (!functionStr.empty()) {
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "function:  %s <-- %s", functionStr.c_str(),
                              (void*)msg.parent_ip());
         } else {
@@ -179,12 +179,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.kernel_stack_format();
         char buffer[BUFFER_SIZE] = {0};
         int len = 0;
-        std::string kernelSymbolsStr = "";
+        std::string kernelSymbolsStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.caller()[0]) > 0) {
             kernelSymbolsStr = kernelSymbols[msg.caller()[0]];
         }
-        if (kernelSymbolsStr != "") {
+        if (!kernelSymbolsStr.empty()) {
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "kernel_stack: \t=> %s\n\t=> %s\n\t=> %s\n"
                              "\t=> %s\n\t=> %s\n\t=> %s\n"
@@ -277,12 +277,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.user_stack_format();
         char buffer[BUFFER_SIZE] = {0};
         int len = 0;
-        std::string kernelSymbolsStr = "";
+        std::string kernelSymbolsStr;
         auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.caller()[0]) > 0) {
             kernelSymbolsStr = kernelSymbols[msg.caller()[0]];
         }
-        if (kernelSymbolsStr != "") {
+        if (!kernelSymbolsStr.empty()) {
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "user_stack: \t=> %s\n\t=> %s\n\t=> %s\n"
                              "\t=> %s\n\t=> %s\n\t=> %s\n"

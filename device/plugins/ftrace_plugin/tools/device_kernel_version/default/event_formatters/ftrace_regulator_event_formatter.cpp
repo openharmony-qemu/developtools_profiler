@@ -205,7 +205,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.regulator_set_voltage_format();
         char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_set_voltage: name=%s (%d-%d)",
-            msg.name().c_str(), (int)msg.min(), (int)msg.max());
+            msg.name().c_str(), static_cast<int>(msg.min()), static_cast<int>(msg.max()));
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(regulator_set_voltage) msg had be cut off in outfile");
@@ -225,7 +225,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         auto msg = event.regulator_set_voltage_complete_format();
         char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_set_voltage_complete: name=%s, val=%u",
-            msg.name().c_str(), (int)msg.val());
+            msg.name().c_str(), static_cast<int>(msg.val()));
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(regulator_set_voltage_complete) msg had be cut off in outfile");

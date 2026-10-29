@@ -35,30 +35,27 @@ __attribute__((noinline)) void ParseDmaFenceDestroyData(DmaFenceDestroyData& eve
     eventData.context = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.seqno = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseDmaFenceDestroy(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseDmaFenceDestroy(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     DmaFenceDestroyData eventData {};
     ParseDmaFenceDestroyData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_destroy_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_driver(eventData.driver);
     msg->set_timeline(eventData.timeline);
     msg->set_context(eventData.context);
     msg->set_seqno(eventData.seqno);
 }
-void ParseDmaFenceDestroyEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    DmaFenceDestroyData eventData {};
-    ParseDmaFenceDestroyData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_dma_fence_destroy_format();
-    msg->set_driver(eventData.driver);
-    msg->set_timeline(eventData.timeline);
-    msg->set_context(eventData.context);
-    msg->set_seqno(eventData.seqno);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_destroy, ParseDmaFenceDestroy);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_destroy, ParseDmaFenceDestroyEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_destroy, ParseDmaFenceDestroy<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_destroy, ParseDmaFenceDestroy<ProtoEncoder::FtraceEvent>);
 
 struct DmaFenceEmitData {
     std::string driver {};
@@ -75,30 +72,27 @@ __attribute__((noinline)) void ParseDmaFenceEmitData(DmaFenceEmitData& eventData
     eventData.context = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.seqno = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseDmaFenceEmit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseDmaFenceEmit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     DmaFenceEmitData eventData {};
     ParseDmaFenceEmitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_emit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_driver(eventData.driver);
     msg->set_timeline(eventData.timeline);
     msg->set_context(eventData.context);
     msg->set_seqno(eventData.seqno);
 }
-void ParseDmaFenceEmitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    DmaFenceEmitData eventData {};
-    ParseDmaFenceEmitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_dma_fence_emit_format();
-    msg->set_driver(eventData.driver);
-    msg->set_timeline(eventData.timeline);
-    msg->set_context(eventData.context);
-    msg->set_seqno(eventData.seqno);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_emit, ParseDmaFenceEmit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_emit, ParseDmaFenceEmitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_emit, ParseDmaFenceEmit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_emit, ParseDmaFenceEmit<ProtoEncoder::FtraceEvent>);
 
 struct DmaFenceEnableSignalData {
     std::string driver {};
@@ -106,8 +100,9 @@ struct DmaFenceEnableSignalData {
     uint32_t context {};
     uint32_t seqno {};
 };
-__attribute__((noinline)) void ParseDmaFenceEnableSignalData(DmaFenceEnableSignalData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseDmaFenceEnableSignalData(
+    DmaFenceEnableSignalData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.driver = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -115,30 +110,28 @@ __attribute__((noinline)) void ParseDmaFenceEnableSignalData(DmaFenceEnableSigna
     eventData.context = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.seqno = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseDmaFenceEnableSignal(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseDmaFenceEnableSignal(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     DmaFenceEnableSignalData eventData {};
     ParseDmaFenceEnableSignalData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_enable_signal_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_driver(eventData.driver);
     msg->set_timeline(eventData.timeline);
     msg->set_context(eventData.context);
     msg->set_seqno(eventData.seqno);
 }
-void ParseDmaFenceEnableSignalEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    DmaFenceEnableSignalData eventData {};
-    ParseDmaFenceEnableSignalData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_dma_fence_enable_signal_format();
-    msg->set_driver(eventData.driver);
-    msg->set_timeline(eventData.timeline);
-    msg->set_context(eventData.context);
-    msg->set_seqno(eventData.seqno);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_enable_signal, ParseDmaFenceEnableSignal);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_enable_signal, ParseDmaFenceEnableSignalEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_enable_signal, ParseDmaFenceEnableSignal<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_enable_signal,
+    ParseDmaFenceEnableSignal<ProtoEncoder::FtraceEvent>);
 
 struct DmaFenceInitData {
     std::string driver {};
@@ -155,30 +148,27 @@ __attribute__((noinline)) void ParseDmaFenceInitData(DmaFenceInitData& eventData
     eventData.context = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.seqno = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseDmaFenceInit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseDmaFenceInit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     DmaFenceInitData eventData {};
     ParseDmaFenceInitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_init_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_driver(eventData.driver);
     msg->set_timeline(eventData.timeline);
     msg->set_context(eventData.context);
     msg->set_seqno(eventData.seqno);
 }
-void ParseDmaFenceInitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    DmaFenceInitData eventData {};
-    ParseDmaFenceInitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_dma_fence_init_format();
-    msg->set_driver(eventData.driver);
-    msg->set_timeline(eventData.timeline);
-    msg->set_context(eventData.context);
-    msg->set_seqno(eventData.seqno);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_init, ParseDmaFenceInit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_init, ParseDmaFenceInitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_init, ParseDmaFenceInit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_init, ParseDmaFenceInit<ProtoEncoder::FtraceEvent>);
 
 struct DmaFenceSignaledData {
     std::string driver {};
@@ -195,30 +185,27 @@ __attribute__((noinline)) void ParseDmaFenceSignaledData(DmaFenceSignaledData& e
     eventData.context = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.seqno = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseDmaFenceSignaled(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseDmaFenceSignaled(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     DmaFenceSignaledData eventData {};
     ParseDmaFenceSignaledData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_signaled_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_driver(eventData.driver);
     msg->set_timeline(eventData.timeline);
     msg->set_context(eventData.context);
     msg->set_seqno(eventData.seqno);
 }
-void ParseDmaFenceSignaledEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    DmaFenceSignaledData eventData {};
-    ParseDmaFenceSignaledData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_dma_fence_signaled_format();
-    msg->set_driver(eventData.driver);
-    msg->set_timeline(eventData.timeline);
-    msg->set_context(eventData.context);
-    msg->set_seqno(eventData.seqno);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_signaled, ParseDmaFenceSignaled);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_signaled, ParseDmaFenceSignaledEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_signaled, ParseDmaFenceSignaled<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_signaled, ParseDmaFenceSignaled<ProtoEncoder::FtraceEvent>);
 
 struct DmaFenceWaitEndData {
     std::string driver {};
@@ -235,30 +222,27 @@ __attribute__((noinline)) void ParseDmaFenceWaitEndData(DmaFenceWaitEndData& eve
     eventData.context = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.seqno = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseDmaFenceWaitEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseDmaFenceWaitEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     DmaFenceWaitEndData eventData {};
     ParseDmaFenceWaitEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_wait_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_driver(eventData.driver);
     msg->set_timeline(eventData.timeline);
     msg->set_context(eventData.context);
     msg->set_seqno(eventData.seqno);
 }
-void ParseDmaFenceWaitEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    DmaFenceWaitEndData eventData {};
-    ParseDmaFenceWaitEndData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_dma_fence_wait_end_format();
-    msg->set_driver(eventData.driver);
-    msg->set_timeline(eventData.timeline);
-    msg->set_context(eventData.context);
-    msg->set_seqno(eventData.seqno);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_wait_end, ParseDmaFenceWaitEnd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_wait_end, ParseDmaFenceWaitEndEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_wait_end, ParseDmaFenceWaitEnd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_wait_end, ParseDmaFenceWaitEnd<ProtoEncoder::FtraceEvent>);
 
 struct DmaFenceWaitStartData {
     std::string driver {};
@@ -275,29 +259,26 @@ __attribute__((noinline)) void ParseDmaFenceWaitStartData(DmaFenceWaitStartData&
     eventData.context = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.seqno = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseDmaFenceWaitStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseDmaFenceWaitStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     DmaFenceWaitStartData eventData {};
     ParseDmaFenceWaitStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_dma_fence_wait_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_driver(eventData.driver);
     msg->set_timeline(eventData.timeline);
     msg->set_context(eventData.context);
     msg->set_seqno(eventData.seqno);
 }
-void ParseDmaFenceWaitStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    DmaFenceWaitStartData eventData {};
-    ParseDmaFenceWaitStartData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_dma_fence_wait_start_format();
-    msg->set_driver(eventData.driver);
-    msg->set_timeline(eventData.timeline);
-    msg->set_context(eventData.context);
-    msg->set_seqno(eventData.seqno);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_wait_start, ParseDmaFenceWaitStart);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_wait_start, ParseDmaFenceWaitStartEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(dma_fence_wait_start, ParseDmaFenceWaitStart<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(dma_fence_wait_start, ParseDmaFenceWaitStart<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

@@ -26,8 +26,9 @@ struct MmCompactionIsolateFreepagesData {
     uint64_t nr_scanned {};
     uint64_t nr_taken {};
 };
-__attribute__((noinline)) void ParseMmCompactionIsolateFreepagesData(MmCompactionIsolateFreepagesData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseMmCompactionIsolateFreepagesData(
+    MmCompactionIsolateFreepagesData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.start_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -35,30 +36,28 @@ __attribute__((noinline)) void ParseMmCompactionIsolateFreepagesData(MmCompactio
     eventData.nr_scanned = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nr_taken = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseMmCompactionIsolateFreepages(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmCompactionIsolateFreepages(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     MmCompactionIsolateFreepagesData eventData {};
     ParseMmCompactionIsolateFreepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_isolate_freepages_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_start_pfn(eventData.start_pfn);
     msg->set_end_pfn(eventData.end_pfn);
     msg->set_nr_scanned(eventData.nr_scanned);
     msg->set_nr_taken(eventData.nr_taken);
 }
-void ParseMmCompactionIsolateFreepagesEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmCompactionIsolateFreepagesData eventData {};
-    ParseMmCompactionIsolateFreepagesData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_compaction_isolate_freepages_format();
-    msg->set_start_pfn(eventData.start_pfn);
-    msg->set_end_pfn(eventData.end_pfn);
-    msg->set_nr_scanned(eventData.nr_scanned);
-    msg->set_nr_taken(eventData.nr_taken);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_freepages, ParseMmCompactionIsolateFreepages);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_freepages, ParseMmCompactionIsolateFreepagesEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_freepages, ParseMmCompactionIsolateFreepages<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_freepages,
+    ParseMmCompactionIsolateFreepages<ProtoEncoder::FtraceEvent>);
 
 struct MmCompactionIsolateMigratepagesData {
     uint64_t start_pfn {};
@@ -66,8 +65,9 @@ struct MmCompactionIsolateMigratepagesData {
     uint64_t nr_scanned {};
     uint64_t nr_taken {};
 };
-__attribute__((noinline)) void ParseMmCompactionIsolateMigratepagesData(MmCompactionIsolateMigratepagesData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseMmCompactionIsolateMigratepagesData(
+    MmCompactionIsolateMigratepagesData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.start_pfn = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -75,29 +75,28 @@ __attribute__((noinline)) void ParseMmCompactionIsolateMigratepagesData(MmCompac
     eventData.nr_scanned = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nr_taken = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseMmCompactionIsolateMigratepages(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseMmCompactionIsolateMigratepages(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     MmCompactionIsolateMigratepagesData eventData {};
     ParseMmCompactionIsolateMigratepagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_mm_compaction_isolate_migratepages_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_start_pfn(eventData.start_pfn);
     msg->set_end_pfn(eventData.end_pfn);
     msg->set_nr_scanned(eventData.nr_scanned);
     msg->set_nr_taken(eventData.nr_taken);
 }
-void ParseMmCompactionIsolateMigratepagesEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    MmCompactionIsolateMigratepagesData eventData {};
-    ParseMmCompactionIsolateMigratepagesData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_mm_compaction_isolate_migratepages_format();
-    msg->set_start_pfn(eventData.start_pfn);
-    msg->set_end_pfn(eventData.end_pfn);
-    msg->set_nr_scanned(eventData.nr_scanned);
-    msg->set_nr_taken(eventData.nr_taken);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_migratepages, ParseMmCompactionIsolateMigratepages);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_migratepages, ParseMmCompactionIsolateMigratepagesEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(mm_compaction_isolate_migratepages,
+    ParseMmCompactionIsolateMigratepages<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(mm_compaction_isolate_migratepages,
+    ParseMmCompactionIsolateMigratepages<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

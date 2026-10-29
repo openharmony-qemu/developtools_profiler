@@ -57,12 +57,20 @@ __attribute__((noinline)) void ParseBalanceDirtyPagesData(BalanceDirtyPagesData&
     eventData.think = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBalanceDirtyPages(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBalanceDirtyPages(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     BalanceDirtyPagesData eventData {};
     ParseBalanceDirtyPagesData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_balance_dirty_pages_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_bdi(eventData.bdi);
     msg->set_limit(eventData.limit);
     msg->set_setpoint(eventData.setpoint);
@@ -79,30 +87,8 @@ void ParseBalanceDirtyPages(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_think(eventData.think);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseBalanceDirtyPagesEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BalanceDirtyPagesData eventData {};
-    ParseBalanceDirtyPagesData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_balance_dirty_pages_format();
-    msg->set_bdi(eventData.bdi);
-    msg->set_limit(eventData.limit);
-    msg->set_setpoint(eventData.setpoint);
-    msg->set_dirty(eventData.dirty);
-    msg->set_bdi_setpoint(eventData.bdi_setpoint);
-    msg->set_bdi_dirty(eventData.bdi_dirty);
-    msg->set_dirty_ratelimit(eventData.dirty_ratelimit);
-    msg->set_task_ratelimit(eventData.task_ratelimit);
-    msg->set_dirtied(eventData.dirtied);
-    msg->set_dirtied_pause(eventData.dirtied_pause);
-    msg->set_paused(eventData.paused);
-    msg->set_pause(eventData.pause);
-    msg->set_period(eventData.period);
-    msg->set_think(eventData.think);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(balance_dirty_pages, ParseBalanceDirtyPages);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(balance_dirty_pages, ParseBalanceDirtyPagesEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(balance_dirty_pages, ParseBalanceDirtyPages<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(balance_dirty_pages, ParseBalanceDirtyPages<ProtoEncoder::FtraceEvent>);
 
 struct BdiDirtyRatelimitData {
     std::string bdi {};
@@ -127,12 +113,20 @@ __attribute__((noinline)) void ParseBdiDirtyRatelimitData(BdiDirtyRatelimitData&
     eventData.balanced_dirty_ratelimit = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseBdiDirtyRatelimit(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseBdiDirtyRatelimit(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     BdiDirtyRatelimitData eventData {};
     ParseBdiDirtyRatelimitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_bdi_dirty_ratelimit_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_bdi(eventData.bdi);
     msg->set_write_bw(eventData.write_bw);
     msg->set_avg_write_bw(eventData.avg_write_bw);
@@ -142,23 +136,8 @@ void ParseBdiDirtyRatelimit(FtraceEvent& ftraceEvent, uint8_t data[], size_t siz
     msg->set_balanced_dirty_ratelimit(eventData.balanced_dirty_ratelimit);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseBdiDirtyRatelimitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    BdiDirtyRatelimitData eventData {};
-    ParseBdiDirtyRatelimitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_bdi_dirty_ratelimit_format();
-    msg->set_bdi(eventData.bdi);
-    msg->set_write_bw(eventData.write_bw);
-    msg->set_avg_write_bw(eventData.avg_write_bw);
-    msg->set_dirty_rate(eventData.dirty_rate);
-    msg->set_dirty_ratelimit(eventData.dirty_ratelimit);
-    msg->set_task_ratelimit(eventData.task_ratelimit);
-    msg->set_balanced_dirty_ratelimit(eventData.balanced_dirty_ratelimit);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(bdi_dirty_ratelimit, ParseBdiDirtyRatelimit);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(bdi_dirty_ratelimit, ParseBdiDirtyRatelimitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(bdi_dirty_ratelimit, ParseBdiDirtyRatelimit<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(bdi_dirty_ratelimit, ParseBdiDirtyRatelimit<ProtoEncoder::FtraceEvent>);
 
 struct GlobalDirtyStateData {
     uint64_t nr_dirty {};
@@ -181,12 +160,20 @@ __attribute__((noinline)) void ParseGlobalDirtyStateData(GlobalDirtyStateData& e
     eventData.nr_dirtied = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.nr_written = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseGlobalDirtyState(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseGlobalDirtyState(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     GlobalDirtyStateData eventData {};
     ParseGlobalDirtyStateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_global_dirty_state_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_nr_dirty(eventData.nr_dirty);
     msg->set_nr_writeback(eventData.nr_writeback);
     msg->set_background_thresh(eventData.background_thresh);
@@ -195,22 +182,8 @@ void ParseGlobalDirtyState(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_nr_dirtied(eventData.nr_dirtied);
     msg->set_nr_written(eventData.nr_written);
 }
-void ParseGlobalDirtyStateEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    GlobalDirtyStateData eventData {};
-    ParseGlobalDirtyStateData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_global_dirty_state_format();
-    msg->set_nr_dirty(eventData.nr_dirty);
-    msg->set_nr_writeback(eventData.nr_writeback);
-    msg->set_background_thresh(eventData.background_thresh);
-    msg->set_dirty_thresh(eventData.dirty_thresh);
-    msg->set_dirty_limit(eventData.dirty_limit);
-    msg->set_nr_dirtied(eventData.nr_dirtied);
-    msg->set_nr_written(eventData.nr_written);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(global_dirty_state, ParseGlobalDirtyState);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(global_dirty_state, ParseGlobalDirtyStateEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(global_dirty_state, ParseGlobalDirtyState<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(global_dirty_state, ParseGlobalDirtyState<ProtoEncoder::FtraceEvent>);
 
 struct WbcWritepageData {
     std::string name {};
@@ -241,12 +214,20 @@ __attribute__((noinline)) void ParseWbcWritepageData(WbcWritepageData& eventData
     eventData.range_end = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWbcWritepage(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWbcWritepage(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WbcWritepageData eventData {};
     ParseWbcWritepageData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_wbc_writepage_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_nr_to_write(eventData.nr_to_write);
     msg->set_pages_skipped(eventData.pages_skipped);
@@ -259,54 +240,38 @@ void ParseWbcWritepage(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_range_end(eventData.range_end);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseWbcWritepageEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WbcWritepageData eventData {};
-    ParseWbcWritepageData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_wbc_writepage_format();
-    msg->set_name(eventData.name);
-    msg->set_nr_to_write(eventData.nr_to_write);
-    msg->set_pages_skipped(eventData.pages_skipped);
-    msg->set_sync_mode(eventData.sync_mode);
-    msg->set_for_kupdate(eventData.for_kupdate);
-    msg->set_for_background(eventData.for_background);
-    msg->set_for_reclaim(eventData.for_reclaim);
-    msg->set_range_cyclic(eventData.range_cyclic);
-    msg->set_range_start(eventData.range_start);
-    msg->set_range_end(eventData.range_end);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(wbc_writepage, ParseWbcWritepage);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(wbc_writepage, ParseWbcWritepageEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(wbc_writepage, ParseWbcWritepage<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(wbc_writepage, ParseWbcWritepage<ProtoEncoder::FtraceEvent>);
 
 struct WritebackBdiRegisterData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseWritebackBdiRegisterData(WritebackBdiRegisterData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWritebackBdiRegisterData(
+    WritebackBdiRegisterData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseWritebackBdiRegister(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackBdiRegister(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackBdiRegisterData eventData {};
     ParseWritebackBdiRegisterData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_bdi_register_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseWritebackBdiRegisterEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackBdiRegisterData eventData {};
-    ParseWritebackBdiRegisterData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_bdi_register_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_bdi_register, ParseWritebackBdiRegister);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_bdi_register, ParseWritebackBdiRegisterEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_bdi_register, ParseWritebackBdiRegister<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_bdi_register,
+    ParseWritebackBdiRegister<ProtoEncoder::FtraceEvent>);
 
 struct WritebackDirtyInodeData {
     std::string name {};
@@ -314,8 +279,9 @@ struct WritebackDirtyInodeData {
     uint64_t state {};
     uint64_t flags {};
 };
-__attribute__((noinline)) void ParseWritebackDirtyInodeData(WritebackDirtyInodeData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWritebackDirtyInodeData(
+    WritebackDirtyInodeData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -323,30 +289,28 @@ __attribute__((noinline)) void ParseWritebackDirtyInodeData(WritebackDirtyInodeD
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackDirtyInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackDirtyInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackDirtyInodeData eventData {};
     ParseWritebackDirtyInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_dirty_inode_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
     msg->set_flags(eventData.flags);
 }
-void ParseWritebackDirtyInodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackDirtyInodeData eventData {};
-    ParseWritebackDirtyInodeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_dirty_inode_format();
-    msg->set_name(eventData.name);
-    msg->set_ino(eventData.ino);
-    msg->set_state(eventData.state);
-    msg->set_flags(eventData.flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode, ParseWritebackDirtyInode);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode, ParseWritebackDirtyInodeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode, ParseWritebackDirtyInode<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode,
+    ParseWritebackDirtyInode<ProtoEncoder::FtraceEvent>);
 
 struct WritebackDirtyInodeEnqueueData {
     uint64_t dev {};
@@ -355,8 +319,9 @@ struct WritebackDirtyInodeEnqueueData {
     uint32_t mode {};
     uint64_t dirtied_when {};
 };
-__attribute__((noinline)) void ParseWritebackDirtyInodeEnqueueData(WritebackDirtyInodeEnqueueData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWritebackDirtyInodeEnqueueData(
+    WritebackDirtyInodeEnqueueData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -365,32 +330,29 @@ __attribute__((noinline)) void ParseWritebackDirtyInodeEnqueueData(WritebackDirt
     eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.dirtied_when = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackDirtyInodeEnqueue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackDirtyInodeEnqueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackDirtyInodeEnqueueData eventData {};
     ParseWritebackDirtyInodeEnqueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_dirty_inode_enqueue_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
     msg->set_mode(eventData.mode);
     msg->set_dirtied_when(eventData.dirtied_when);
 }
-void ParseWritebackDirtyInodeEnqueueEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackDirtyInodeEnqueueData eventData {};
-    ParseWritebackDirtyInodeEnqueueData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_dirty_inode_enqueue_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_state(eventData.state);
-    msg->set_mode(eventData.mode);
-    msg->set_dirtied_when(eventData.dirtied_when);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode_enqueue, ParseWritebackDirtyInodeEnqueue);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode_enqueue, ParseWritebackDirtyInodeEnqueueEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode_enqueue, ParseWritebackDirtyInodeEnqueue<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode_enqueue,
+    ParseWritebackDirtyInodeEnqueue<ProtoEncoder::FtraceEvent>);
 
 struct WritebackDirtyInodeStartData {
     std::string name {};
@@ -398,8 +360,9 @@ struct WritebackDirtyInodeStartData {
     uint64_t state {};
     uint64_t flags {};
 };
-__attribute__((noinline)) void ParseWritebackDirtyInodeStartData(WritebackDirtyInodeStartData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWritebackDirtyInodeStartData(
+    WritebackDirtyInodeStartData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -407,30 +370,28 @@ __attribute__((noinline)) void ParseWritebackDirtyInodeStartData(WritebackDirtyI
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackDirtyInodeStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackDirtyInodeStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackDirtyInodeStartData eventData {};
     ParseWritebackDirtyInodeStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_dirty_inode_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
     msg->set_flags(eventData.flags);
 }
-void ParseWritebackDirtyInodeStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackDirtyInodeStartData eventData {};
-    ParseWritebackDirtyInodeStartData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_dirty_inode_start_format();
-    msg->set_name(eventData.name);
-    msg->set_ino(eventData.ino);
-    msg->set_state(eventData.state);
-    msg->set_flags(eventData.flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode_start, ParseWritebackDirtyInodeStart);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode_start, ParseWritebackDirtyInodeStartEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_dirty_inode_start, ParseWritebackDirtyInodeStart<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_dirty_inode_start,
+    ParseWritebackDirtyInodeStart<ProtoEncoder::FtraceEvent>);
 
 struct WritebackExecData {
     std::string name {};
@@ -457,12 +418,20 @@ __attribute__((noinline)) void ParseWritebackExecData(WritebackExecData& eventDa
     eventData.reason = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackExec(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackExec(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackExecData eventData {};
     ParseWritebackExecData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_exec_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_nr_pages(eventData.nr_pages);
     msg->set_sb_dev(eventData.sb_dev);
@@ -473,24 +442,8 @@ void ParseWritebackExec(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_reason(eventData.reason);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseWritebackExecEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackExecData eventData {};
-    ParseWritebackExecData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_exec_format();
-    msg->set_name(eventData.name);
-    msg->set_nr_pages(eventData.nr_pages);
-    msg->set_sb_dev(eventData.sb_dev);
-    msg->set_sync_mode(eventData.sync_mode);
-    msg->set_for_kupdate(eventData.for_kupdate);
-    msg->set_range_cyclic(eventData.range_cyclic);
-    msg->set_for_background(eventData.for_background);
-    msg->set_reason(eventData.reason);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_exec, ParseWritebackExec);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_exec, ParseWritebackExecEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_exec, ParseWritebackExec<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_exec, ParseWritebackExec<ProtoEncoder::FtraceEvent>);
 
 struct WritebackLazytimeData {
     uint64_t dev {};
@@ -509,32 +462,28 @@ __attribute__((noinline)) void ParseWritebackLazytimeData(WritebackLazytimeData&
     eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.dirtied_when = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackLazytime(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackLazytime(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackLazytimeData eventData {};
     ParseWritebackLazytimeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_lazytime_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
     msg->set_mode(eventData.mode);
     msg->set_dirtied_when(eventData.dirtied_when);
 }
-void ParseWritebackLazytimeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackLazytimeData eventData {};
-    ParseWritebackLazytimeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_lazytime_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_state(eventData.state);
-    msg->set_mode(eventData.mode);
-    msg->set_dirtied_when(eventData.dirtied_when);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_lazytime, ParseWritebackLazytime);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_lazytime, ParseWritebackLazytimeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_lazytime, ParseWritebackLazytime<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_lazytime, ParseWritebackLazytime<ProtoEncoder::FtraceEvent>);
 
 struct WritebackLazytimeIputData {
     uint64_t dev {};
@@ -543,8 +492,9 @@ struct WritebackLazytimeIputData {
     uint32_t mode {};
     uint64_t dirtied_when {};
 };
-__attribute__((noinline)) void ParseWritebackLazytimeIputData(WritebackLazytimeIputData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWritebackLazytimeIputData(
+    WritebackLazytimeIputData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.dev = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -553,32 +503,29 @@ __attribute__((noinline)) void ParseWritebackLazytimeIputData(WritebackLazytimeI
     eventData.mode = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.dirtied_when = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackLazytimeIput(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackLazytimeIput(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackLazytimeIputData eventData {};
     ParseWritebackLazytimeIputData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_lazytime_iput_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_dev(eventData.dev);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
     msg->set_mode(eventData.mode);
     msg->set_dirtied_when(eventData.dirtied_when);
 }
-void ParseWritebackLazytimeIputEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackLazytimeIputData eventData {};
-    ParseWritebackLazytimeIputData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_lazytime_iput_format();
-    msg->set_dev(eventData.dev);
-    msg->set_ino(eventData.ino);
-    msg->set_state(eventData.state);
-    msg->set_mode(eventData.mode);
-    msg->set_dirtied_when(eventData.dirtied_when);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_lazytime_iput, ParseWritebackLazytimeIput);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_lazytime_iput, ParseWritebackLazytimeIputEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_lazytime_iput, ParseWritebackLazytimeIput<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_lazytime_iput,
+    ParseWritebackLazytimeIput<ProtoEncoder::FtraceEvent>);
 
 struct WritebackMarkInodeDirtyData {
     std::string name {};
@@ -586,8 +533,9 @@ struct WritebackMarkInodeDirtyData {
     uint64_t state {};
     uint64_t flags {};
 };
-__attribute__((noinline)) void ParseWritebackMarkInodeDirtyData(WritebackMarkInodeDirtyData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWritebackMarkInodeDirtyData(
+    WritebackMarkInodeDirtyData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -595,58 +543,58 @@ __attribute__((noinline)) void ParseWritebackMarkInodeDirtyData(WritebackMarkIno
     eventData.state = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.flags = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackMarkInodeDirty(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackMarkInodeDirty(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackMarkInodeDirtyData eventData {};
     ParseWritebackMarkInodeDirtyData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_mark_inode_dirty_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
     msg->set_flags(eventData.flags);
 }
-void ParseWritebackMarkInodeDirtyEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackMarkInodeDirtyData eventData {};
-    ParseWritebackMarkInodeDirtyData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_mark_inode_dirty_format();
-    msg->set_name(eventData.name);
-    msg->set_ino(eventData.ino);
-    msg->set_state(eventData.state);
-    msg->set_flags(eventData.flags);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_mark_inode_dirty, ParseWritebackMarkInodeDirty);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_mark_inode_dirty, ParseWritebackMarkInodeDirtyEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_mark_inode_dirty, ParseWritebackMarkInodeDirty<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_mark_inode_dirty,
+    ParseWritebackMarkInodeDirty<ProtoEncoder::FtraceEvent>);
 
 struct WritebackPagesWrittenData {
     uint64_t pages {};
 };
-__attribute__((noinline)) void ParseWritebackPagesWrittenData(WritebackPagesWrittenData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWritebackPagesWrittenData(
+    WritebackPagesWrittenData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.pages = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackPagesWritten(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackPagesWritten(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackPagesWrittenData eventData {};
     ParseWritebackPagesWrittenData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_pages_written_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_pages(eventData.pages);
 }
-void ParseWritebackPagesWrittenEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackPagesWrittenData eventData {};
-    ParseWritebackPagesWrittenData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_pages_written_format();
-    msg->set_pages(eventData.pages);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_pages_written, ParseWritebackPagesWritten);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_pages_written, ParseWritebackPagesWrittenEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_pages_written, ParseWritebackPagesWritten<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_pages_written,
+    ParseWritebackPagesWritten<ProtoEncoder::FtraceEvent>);
 
 struct WritebackQueueData {
     std::string name {};
@@ -673,12 +621,20 @@ __attribute__((noinline)) void ParseWritebackQueueData(WritebackQueueData& event
     eventData.reason = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackQueue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackQueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackQueueData eventData {};
     ParseWritebackQueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_queue_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_nr_pages(eventData.nr_pages);
     msg->set_sb_dev(eventData.sb_dev);
@@ -689,24 +645,8 @@ void ParseWritebackQueue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_reason(eventData.reason);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseWritebackQueueEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackQueueData eventData {};
-    ParseWritebackQueueData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_queue_format();
-    msg->set_name(eventData.name);
-    msg->set_nr_pages(eventData.nr_pages);
-    msg->set_sb_dev(eventData.sb_dev);
-    msg->set_sync_mode(eventData.sync_mode);
-    msg->set_for_kupdate(eventData.for_kupdate);
-    msg->set_range_cyclic(eventData.range_cyclic);
-    msg->set_for_background(eventData.for_background);
-    msg->set_reason(eventData.reason);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_queue, ParseWritebackQueue);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_queue, ParseWritebackQueueEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_queue, ParseWritebackQueue<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_queue, ParseWritebackQueue<ProtoEncoder::FtraceEvent>);
 
 struct WritebackQueueIoData {
     std::string name {};
@@ -727,12 +667,20 @@ __attribute__((noinline)) void ParseWritebackQueueIoData(WritebackQueueIoData& e
     eventData.reason = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackQueueIo(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackQueueIo(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackQueueIoData eventData {};
     ParseWritebackQueueIoData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_queue_io_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_older(eventData.older);
     msg->set_age(eventData.age);
@@ -740,21 +688,8 @@ void ParseWritebackQueueIo(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_reason(eventData.reason);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseWritebackQueueIoEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackQueueIoData eventData {};
-    ParseWritebackQueueIoData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_queue_io_format();
-    msg->set_name(eventData.name);
-    msg->set_older(eventData.older);
-    msg->set_age(eventData.age);
-    msg->set_moved(eventData.moved);
-    msg->set_reason(eventData.reason);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_queue_io, ParseWritebackQueueIo);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_queue_io, ParseWritebackQueueIoEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_queue_io, ParseWritebackQueueIo<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_queue_io, ParseWritebackQueueIo<ProtoEncoder::FtraceEvent>);
 
 struct WritebackSbInodesRequeueData {
     std::string name {};
@@ -763,8 +698,9 @@ struct WritebackSbInodesRequeueData {
     uint64_t dirtied_when {};
     uint64_t cgroup_ino {};
 };
-__attribute__((noinline)) void ParseWritebackSbInodesRequeueData(WritebackSbInodesRequeueData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWritebackSbInodesRequeueData(
+    WritebackSbInodesRequeueData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -773,32 +709,29 @@ __attribute__((noinline)) void ParseWritebackSbInodesRequeueData(WritebackSbInod
     eventData.dirtied_when = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackSbInodesRequeue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackSbInodesRequeue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackSbInodesRequeueData eventData {};
     ParseWritebackSbInodesRequeueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_sb_inodes_requeue_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
     msg->set_dirtied_when(eventData.dirtied_when);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseWritebackSbInodesRequeueEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackSbInodesRequeueData eventData {};
-    ParseWritebackSbInodesRequeueData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_sb_inodes_requeue_format();
-    msg->set_name(eventData.name);
-    msg->set_ino(eventData.ino);
-    msg->set_state(eventData.state);
-    msg->set_dirtied_when(eventData.dirtied_when);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_sb_inodes_requeue, ParseWritebackSbInodesRequeue);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_sb_inodes_requeue, ParseWritebackSbInodesRequeueEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_sb_inodes_requeue, ParseWritebackSbInodesRequeue<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_sb_inodes_requeue,
+    ParseWritebackSbInodesRequeue<ProtoEncoder::FtraceEvent>);
 
 struct WritebackSingleInodeData {
     std::string name {};
@@ -810,8 +743,9 @@ struct WritebackSingleInodeData {
     uint64_t wrote {};
     uint64_t cgroup_ino {};
 };
-__attribute__((noinline)) void ParseWritebackSingleInodeData(WritebackSingleInodeData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWritebackSingleInodeData(
+    WritebackSingleInodeData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -823,12 +757,20 @@ __attribute__((noinline)) void ParseWritebackSingleInodeData(WritebackSingleInod
     eventData.wrote = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackSingleInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackSingleInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackSingleInodeData eventData {};
     ParseWritebackSingleInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_single_inode_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
@@ -838,23 +780,9 @@ void ParseWritebackSingleInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t 
     msg->set_wrote(eventData.wrote);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseWritebackSingleInodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackSingleInodeData eventData {};
-    ParseWritebackSingleInodeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_single_inode_format();
-    msg->set_name(eventData.name);
-    msg->set_ino(eventData.ino);
-    msg->set_state(eventData.state);
-    msg->set_dirtied_when(eventData.dirtied_when);
-    msg->set_writeback_index(eventData.writeback_index);
-    msg->set_nr_to_write(eventData.nr_to_write);
-    msg->set_wrote(eventData.wrote);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_single_inode, ParseWritebackSingleInode);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_single_inode, ParseWritebackSingleInodeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_single_inode, ParseWritebackSingleInode<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_single_inode,
+    ParseWritebackSingleInode<ProtoEncoder::FtraceEvent>);
 
 struct WritebackSingleInodeStartData {
     std::string name {};
@@ -866,8 +794,9 @@ struct WritebackSingleInodeStartData {
     uint64_t wrote {};
     uint64_t cgroup_ino {};
 };
-__attribute__((noinline)) void ParseWritebackSingleInodeStartData(WritebackSingleInodeStartData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWritebackSingleInodeStartData(
+    WritebackSingleInodeStartData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -879,12 +808,20 @@ __attribute__((noinline)) void ParseWritebackSingleInodeStartData(WritebackSingl
     eventData.wrote = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackSingleInodeStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackSingleInodeStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackSingleInodeStartData eventData {};
     ParseWritebackSingleInodeStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_single_inode_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_state(eventData.state);
@@ -894,23 +831,9 @@ void ParseWritebackSingleInodeStart(FtraceEvent& ftraceEvent, uint8_t data[], si
     msg->set_wrote(eventData.wrote);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseWritebackSingleInodeStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackSingleInodeStartData eventData {};
-    ParseWritebackSingleInodeStartData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_single_inode_start_format();
-    msg->set_name(eventData.name);
-    msg->set_ino(eventData.ino);
-    msg->set_state(eventData.state);
-    msg->set_dirtied_when(eventData.dirtied_when);
-    msg->set_writeback_index(eventData.writeback_index);
-    msg->set_nr_to_write(eventData.nr_to_write);
-    msg->set_wrote(eventData.wrote);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_single_inode_start, ParseWritebackSingleInodeStart);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_single_inode_start, ParseWritebackSingleInodeStartEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_single_inode_start, ParseWritebackSingleInodeStart<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_single_inode_start,
+    ParseWritebackSingleInodeStart<ProtoEncoder::FtraceEvent>);
 
 struct WritebackStartData {
     std::string name {};
@@ -937,12 +860,20 @@ __attribute__((noinline)) void ParseWritebackStartData(WritebackStartData& event
     eventData.reason = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackStartData eventData {};
     ParseWritebackStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_nr_pages(eventData.nr_pages);
     msg->set_sb_dev(eventData.sb_dev);
@@ -953,24 +884,8 @@ void ParseWritebackStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_reason(eventData.reason);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseWritebackStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackStartData eventData {};
-    ParseWritebackStartData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_start_format();
-    msg->set_name(eventData.name);
-    msg->set_nr_pages(eventData.nr_pages);
-    msg->set_sb_dev(eventData.sb_dev);
-    msg->set_sync_mode(eventData.sync_mode);
-    msg->set_for_kupdate(eventData.for_kupdate);
-    msg->set_range_cyclic(eventData.range_cyclic);
-    msg->set_for_background(eventData.for_background);
-    msg->set_reason(eventData.reason);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_start, ParseWritebackStart);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_start, ParseWritebackStartEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_start, ParseWritebackStart<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_start, ParseWritebackStart<ProtoEncoder::FtraceEvent>);
 
 struct WritebackWaitData {
     std::string name {};
@@ -997,12 +912,20 @@ __attribute__((noinline)) void ParseWritebackWaitData(WritebackWaitData& eventDa
     eventData.reason = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackWait(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackWait(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackWaitData eventData {};
     ParseWritebackWaitData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_wait_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_nr_pages(eventData.nr_pages);
     msg->set_sb_dev(eventData.sb_dev);
@@ -1013,56 +936,41 @@ void ParseWritebackWait(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_reason(eventData.reason);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseWritebackWaitEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackWaitData eventData {};
-    ParseWritebackWaitData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_wait_format();
-    msg->set_name(eventData.name);
-    msg->set_nr_pages(eventData.nr_pages);
-    msg->set_sb_dev(eventData.sb_dev);
-    msg->set_sync_mode(eventData.sync_mode);
-    msg->set_for_kupdate(eventData.for_kupdate);
-    msg->set_range_cyclic(eventData.range_cyclic);
-    msg->set_for_background(eventData.for_background);
-    msg->set_reason(eventData.reason);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_wait, ParseWritebackWait);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_wait, ParseWritebackWaitEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_wait, ParseWritebackWait<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_wait, ParseWritebackWait<ProtoEncoder::FtraceEvent>);
 
 struct WritebackWakeBackgroundData {
     std::string name {};
     uint64_t cgroup_ino {};
 };
-__attribute__((noinline)) void ParseWritebackWakeBackgroundData(WritebackWakeBackgroundData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWritebackWakeBackgroundData(
+    WritebackWakeBackgroundData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackWakeBackground(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackWakeBackground(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackWakeBackgroundData eventData {};
     ParseWritebackWakeBackgroundData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_wake_background_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseWritebackWakeBackgroundEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackWakeBackgroundData eventData {};
-    ParseWritebackWakeBackgroundData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_wake_background_format();
-    msg->set_name(eventData.name);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_wake_background, ParseWritebackWakeBackground);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_wake_background, ParseWritebackWakeBackgroundEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_wake_background, ParseWritebackWakeBackground<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_wake_background,
+    ParseWritebackWakeBackground<ProtoEncoder::FtraceEvent>);
 
 struct WritebackWriteInodeData {
     std::string name {};
@@ -1070,8 +978,9 @@ struct WritebackWriteInodeData {
     int32_t sync_mode {};
     uint64_t cgroup_ino {};
 };
-__attribute__((noinline)) void ParseWritebackWriteInodeData(WritebackWriteInodeData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWritebackWriteInodeData(
+    WritebackWriteInodeData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -1079,30 +988,28 @@ __attribute__((noinline)) void ParseWritebackWriteInodeData(WritebackWriteInodeD
     eventData.sync_mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackWriteInode(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackWriteInode(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackWriteInodeData eventData {};
     ParseWritebackWriteInodeData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_write_inode_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_sync_mode(eventData.sync_mode);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseWritebackWriteInodeEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackWriteInodeData eventData {};
-    ParseWritebackWriteInodeData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_write_inode_format();
-    msg->set_name(eventData.name);
-    msg->set_ino(eventData.ino);
-    msg->set_sync_mode(eventData.sync_mode);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_write_inode, ParseWritebackWriteInode);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_write_inode, ParseWritebackWriteInodeEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_write_inode, ParseWritebackWriteInode<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_write_inode,
+    ParseWritebackWriteInode<ProtoEncoder::FtraceEvent>);
 
 struct WritebackWriteInodeStartData {
     std::string name {};
@@ -1110,8 +1017,9 @@ struct WritebackWriteInodeStartData {
     int32_t sync_mode {};
     uint64_t cgroup_ino {};
 };
-__attribute__((noinline)) void ParseWritebackWriteInodeStartData(WritebackWriteInodeStartData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWritebackWriteInodeStartData(
+    WritebackWriteInodeStartData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
@@ -1119,30 +1027,28 @@ __attribute__((noinline)) void ParseWritebackWriteInodeStartData(WritebackWriteI
     eventData.sync_mode = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackWriteInodeStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackWriteInodeStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackWriteInodeStartData eventData {};
     ParseWritebackWriteInodeStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_write_inode_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_ino(eventData.ino);
     msg->set_sync_mode(eventData.sync_mode);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseWritebackWriteInodeStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackWriteInodeStartData eventData {};
-    ParseWritebackWriteInodeStartData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_write_inode_start_format();
-    msg->set_name(eventData.name);
-    msg->set_ino(eventData.ino);
-    msg->set_sync_mode(eventData.sync_mode);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_write_inode_start, ParseWritebackWriteInodeStart);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_write_inode_start, ParseWritebackWriteInodeStartEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_write_inode_start, ParseWritebackWriteInodeStart<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_write_inode_start,
+    ParseWritebackWriteInodeStart<ProtoEncoder::FtraceEvent>);
 
 struct WritebackWrittenData {
     std::string name {};
@@ -1169,12 +1075,20 @@ __attribute__((noinline)) void ParseWritebackWrittenData(WritebackWrittenData& e
     eventData.reason = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.cgroup_ino = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWritebackWritten(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWritebackWritten(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WritebackWrittenData eventData {};
     ParseWritebackWrittenData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_writeback_written_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_nr_pages(eventData.nr_pages);
     msg->set_sb_dev(eventData.sb_dev);
@@ -1185,23 +1099,7 @@ void ParseWritebackWritten(FtraceEvent& ftraceEvent, uint8_t data[], size_t size
     msg->set_reason(eventData.reason);
     msg->set_cgroup_ino(eventData.cgroup_ino);
 }
-void ParseWritebackWrittenEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WritebackWrittenData eventData {};
-    ParseWritebackWrittenData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_writeback_written_format();
-    msg->set_name(eventData.name);
-    msg->set_nr_pages(eventData.nr_pages);
-    msg->set_sb_dev(eventData.sb_dev);
-    msg->set_sync_mode(eventData.sync_mode);
-    msg->set_for_kupdate(eventData.for_kupdate);
-    msg->set_range_cyclic(eventData.range_cyclic);
-    msg->set_for_background(eventData.for_background);
-    msg->set_reason(eventData.reason);
-    msg->set_cgroup_ino(eventData.cgroup_ino);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_written, ParseWritebackWritten);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_written, ParseWritebackWrittenEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(writeback_written, ParseWritebackWritten<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(writeback_written, ParseWritebackWritten<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

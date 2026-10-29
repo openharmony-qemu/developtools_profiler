@@ -29,52 +29,53 @@ __attribute__((noinline)) void ParseClkDisableData(ClkDisableData& eventData, ui
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseClkDisable(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseClkDisable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ClkDisableData eventData {};
     ParseClkDisableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_disable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseClkDisableEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ClkDisableData eventData {};
-    ParseClkDisableData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_clk_disable_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_disable, ParseClkDisable);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_disable, ParseClkDisableEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_disable, ParseClkDisable<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_disable, ParseClkDisable<ProtoEncoder::FtraceEvent>);
 
 struct ClkDisableCompleteData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseClkDisableCompleteData(ClkDisableCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseClkDisableCompleteData(
+    ClkDisableCompleteData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseClkDisableComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseClkDisableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ClkDisableCompleteData eventData {};
     ParseClkDisableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_disable_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseClkDisableCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ClkDisableCompleteData eventData {};
-    ParseClkDisableCompleteData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_clk_disable_complete_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_disable_complete, ParseClkDisableComplete);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_disable_complete, ParseClkDisableCompleteEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_disable_complete, ParseClkDisableComplete<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_disable_complete, ParseClkDisableComplete<ProtoEncoder::FtraceEvent>);
 
 struct ClkEnableData {
     std::string name {};
@@ -85,24 +86,24 @@ __attribute__((noinline)) void ParseClkEnableData(ClkEnableData& eventData, uint
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseClkEnable(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseClkEnable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ClkEnableData eventData {};
     ParseClkEnableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_enable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseClkEnableEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ClkEnableData eventData {};
-    ParseClkEnableData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_clk_enable_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_enable, ParseClkEnable);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_enable, ParseClkEnableEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_enable, ParseClkEnable<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_enable, ParseClkEnable<ProtoEncoder::FtraceEvent>);
 
 struct ClkEnableCompleteData {
     std::string name {};
@@ -113,24 +114,24 @@ __attribute__((noinline)) void ParseClkEnableCompleteData(ClkEnableCompleteData&
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseClkEnableComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseClkEnableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ClkEnableCompleteData eventData {};
     ParseClkEnableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_enable_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseClkEnableCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ClkEnableCompleteData eventData {};
-    ParseClkEnableCompleteData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_clk_enable_complete_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_enable_complete, ParseClkEnableComplete);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_enable_complete, ParseClkEnableCompleteEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_enable_complete, ParseClkEnableComplete<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_enable_complete, ParseClkEnableComplete<ProtoEncoder::FtraceEvent>);
 
 struct ClkPrepareData {
     std::string name {};
@@ -141,52 +142,53 @@ __attribute__((noinline)) void ParseClkPrepareData(ClkPrepareData& eventData, ui
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseClkPrepare(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseClkPrepare(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ClkPrepareData eventData {};
     ParseClkPrepareData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_prepare_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseClkPrepareEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ClkPrepareData eventData {};
-    ParseClkPrepareData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_clk_prepare_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_prepare, ParseClkPrepare);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_prepare, ParseClkPrepareEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_prepare, ParseClkPrepare<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_prepare, ParseClkPrepare<ProtoEncoder::FtraceEvent>);
 
 struct ClkPrepareCompleteData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseClkPrepareCompleteData(ClkPrepareCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseClkPrepareCompleteData(
+    ClkPrepareCompleteData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseClkPrepareComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseClkPrepareComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ClkPrepareCompleteData eventData {};
     ParseClkPrepareCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_prepare_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseClkPrepareCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ClkPrepareCompleteData eventData {};
-    ParseClkPrepareCompleteData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_clk_prepare_complete_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_prepare_complete, ParseClkPrepareComplete);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_prepare_complete, ParseClkPrepareCompleteEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_prepare_complete, ParseClkPrepareComplete<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_prepare_complete, ParseClkPrepareComplete<ProtoEncoder::FtraceEvent>);
 
 struct ClkSetParentData {
     std::string name {};
@@ -199,58 +201,58 @@ __attribute__((noinline)) void ParseClkSetParentData(ClkSetParentData& eventData
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pname = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseClkSetParent(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseClkSetParent(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ClkSetParentData eventData {};
     ParseClkSetParentData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_parent_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_pname(eventData.pname);
 }
-void ParseClkSetParentEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ClkSetParentData eventData {};
-    ParseClkSetParentData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_clk_set_parent_format();
-    msg->set_name(eventData.name);
-    msg->set_pname(eventData.pname);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_parent, ParseClkSetParent);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_parent, ParseClkSetParentEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_parent, ParseClkSetParent<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_parent, ParseClkSetParent<ProtoEncoder::FtraceEvent>);
 
 struct ClkSetParentCompleteData {
     std::string name {};
     std::string pname {};
 };
-__attribute__((noinline)) void ParseClkSetParentCompleteData(ClkSetParentCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseClkSetParentCompleteData(
+    ClkSetParentCompleteData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.pname = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseClkSetParentComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseClkSetParentComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ClkSetParentCompleteData eventData {};
     ParseClkSetParentCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_parent_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_pname(eventData.pname);
 }
-void ParseClkSetParentCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ClkSetParentCompleteData eventData {};
-    ParseClkSetParentCompleteData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_clk_set_parent_complete_format();
-    msg->set_name(eventData.name);
-    msg->set_pname(eventData.pname);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_parent_complete, ParseClkSetParentComplete);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_parent_complete, ParseClkSetParentCompleteEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_parent_complete, ParseClkSetParentComplete<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_parent_complete,
+    ParseClkSetParentComplete<ProtoEncoder::FtraceEvent>);
 
 struct ClkSetPhaseData {
     std::string name {};
@@ -263,58 +265,58 @@ __attribute__((noinline)) void ParseClkSetPhaseData(ClkSetPhaseData& eventData, 
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.phase = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseClkSetPhase(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseClkSetPhase(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ClkSetPhaseData eventData {};
     ParseClkSetPhaseData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_phase_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_phase(eventData.phase);
 }
-void ParseClkSetPhaseEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ClkSetPhaseData eventData {};
-    ParseClkSetPhaseData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_clk_set_phase_format();
-    msg->set_name(eventData.name);
-    msg->set_phase(eventData.phase);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_phase, ParseClkSetPhase);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_phase, ParseClkSetPhaseEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_phase, ParseClkSetPhase<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_phase, ParseClkSetPhase<ProtoEncoder::FtraceEvent>);
 
 struct ClkSetPhaseCompleteData {
     std::string name {};
     int32_t phase {};
 };
-__attribute__((noinline)) void ParseClkSetPhaseCompleteData(ClkSetPhaseCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseClkSetPhaseCompleteData(
+    ClkSetPhaseCompleteData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.phase = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseClkSetPhaseComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseClkSetPhaseComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ClkSetPhaseCompleteData eventData {};
     ParseClkSetPhaseCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_phase_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_phase(eventData.phase);
 }
-void ParseClkSetPhaseCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ClkSetPhaseCompleteData eventData {};
-    ParseClkSetPhaseCompleteData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_clk_set_phase_complete_format();
-    msg->set_name(eventData.name);
-    msg->set_phase(eventData.phase);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_phase_complete, ParseClkSetPhaseComplete);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_phase_complete, ParseClkSetPhaseCompleteEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_phase_complete, ParseClkSetPhaseComplete<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_phase_complete,
+    ParseClkSetPhaseComplete<ProtoEncoder::FtraceEvent>);
 
 struct ClkSetRateData {
     std::string name {};
@@ -327,58 +329,57 @@ __attribute__((noinline)) void ParseClkSetRateData(ClkSetRateData& eventData, ui
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.rate = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseClkSetRate(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseClkSetRate(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ClkSetRateData eventData {};
     ParseClkSetRateData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_rate_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_rate(eventData.rate);
 }
-void ParseClkSetRateEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ClkSetRateData eventData {};
-    ParseClkSetRateData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_clk_set_rate_format();
-    msg->set_name(eventData.name);
-    msg->set_rate(eventData.rate);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_rate, ParseClkSetRate);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_rate, ParseClkSetRateEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_rate, ParseClkSetRate<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_rate, ParseClkSetRate<ProtoEncoder::FtraceEvent>);
 
 struct ClkSetRateCompleteData {
     std::string name {};
     uint64_t rate {};
 };
-__attribute__((noinline)) void ParseClkSetRateCompleteData(ClkSetRateCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseClkSetRateCompleteData(
+    ClkSetRateCompleteData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.rate = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseClkSetRateComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseClkSetRateComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ClkSetRateCompleteData eventData {};
     ParseClkSetRateCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_set_rate_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_rate(eventData.rate);
 }
-void ParseClkSetRateCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ClkSetRateCompleteData eventData {};
-    ParseClkSetRateCompleteData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_clk_set_rate_complete_format();
-    msg->set_name(eventData.name);
-    msg->set_rate(eventData.rate);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_rate_complete, ParseClkSetRateComplete);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_rate_complete, ParseClkSetRateCompleteEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_set_rate_complete, ParseClkSetRateComplete<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_set_rate_complete, ParseClkSetRateComplete<ProtoEncoder::FtraceEvent>);
 
 struct ClkUnprepareData {
     std::string name {};
@@ -389,51 +390,53 @@ __attribute__((noinline)) void ParseClkUnprepareData(ClkUnprepareData& eventData
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseClkUnprepare(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseClkUnprepare(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ClkUnprepareData eventData {};
     ParseClkUnprepareData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_unprepare_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseClkUnprepareEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ClkUnprepareData eventData {};
-    ParseClkUnprepareData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_clk_unprepare_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_unprepare, ParseClkUnprepare);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_unprepare, ParseClkUnprepareEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_unprepare, ParseClkUnprepare<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_unprepare, ParseClkUnprepare<ProtoEncoder::FtraceEvent>);
 
 struct ClkUnprepareCompleteData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseClkUnprepareCompleteData(ClkUnprepareCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseClkUnprepareCompleteData(
+    ClkUnprepareCompleteData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseClkUnprepareComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseClkUnprepareComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ClkUnprepareCompleteData eventData {};
     ParseClkUnprepareCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_clk_unprepare_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseClkUnprepareCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ClkUnprepareCompleteData eventData {};
-    ParseClkUnprepareCompleteData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_clk_unprepare_complete_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_unprepare_complete, ParseClkUnprepareComplete);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_unprepare_complete, ParseClkUnprepareCompleteEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(clk_unprepare_complete, ParseClkUnprepareComplete<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(clk_unprepare_complete,
+    ParseClkUnprepareComplete<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

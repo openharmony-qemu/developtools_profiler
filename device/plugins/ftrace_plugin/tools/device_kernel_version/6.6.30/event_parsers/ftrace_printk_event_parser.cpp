@@ -29,23 +29,23 @@ __attribute__((noinline)) void ParseConsoleData(ConsoleData& eventData, uint8_t 
     int i = 0;
     eventData.msg = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseConsole(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseConsole(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     ConsoleData eventData {};
     ParseConsoleData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_console_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_msg(eventData.msg);
 }
-void ParseConsoleEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    ConsoleData eventData {};
-    ParseConsoleData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_console_format();
-    msg->set_msg(eventData.msg);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(console, ParseConsole);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(console, ParseConsoleEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(console, ParseConsole<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(console, ParseConsole<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

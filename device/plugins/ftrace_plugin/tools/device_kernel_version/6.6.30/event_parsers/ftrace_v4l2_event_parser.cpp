@@ -63,12 +63,20 @@ __attribute__((noinline)) void ParseV4l2DqbufData(V4l2DqbufData& eventData, uint
     eventData.timecode_userbits3 = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.sequence = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseV4l2Dqbuf(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseV4l2Dqbuf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     V4l2DqbufData eventData {};
     ParseV4l2DqbufData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_v4l2_dqbuf_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_minor(eventData.minor);
     msg->set_index(eventData.index);
     msg->set_type(eventData.type);
@@ -88,33 +96,8 @@ void ParseV4l2Dqbuf(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_timecode_userbits3(eventData.timecode_userbits3);
     msg->set_sequence(eventData.sequence);
 }
-void ParseV4l2DqbufEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    V4l2DqbufData eventData {};
-    ParseV4l2DqbufData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_v4l2_dqbuf_format();
-    msg->set_minor(eventData.minor);
-    msg->set_index(eventData.index);
-    msg->set_type(eventData.type);
-    msg->set_bytesused(eventData.bytesused);
-    msg->set_flags(eventData.flags);
-    msg->set_field(eventData.field);
-    msg->set_timestamp(eventData.timestamp);
-    msg->set_timecode_type(eventData.timecode_type);
-    msg->set_timecode_flags(eventData.timecode_flags);
-    msg->set_timecode_frames(eventData.timecode_frames);
-    msg->set_timecode_seconds(eventData.timecode_seconds);
-    msg->set_timecode_minutes(eventData.timecode_minutes);
-    msg->set_timecode_hours(eventData.timecode_hours);
-    msg->set_timecode_userbits0(eventData.timecode_userbits0);
-    msg->set_timecode_userbits1(eventData.timecode_userbits1);
-    msg->set_timecode_userbits2(eventData.timecode_userbits2);
-    msg->set_timecode_userbits3(eventData.timecode_userbits3);
-    msg->set_sequence(eventData.sequence);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(v4l2_dqbuf, ParseV4l2Dqbuf);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(v4l2_dqbuf, ParseV4l2DqbufEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(v4l2_dqbuf, ParseV4l2Dqbuf<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(v4l2_dqbuf, ParseV4l2Dqbuf<ProtoEncoder::FtraceEvent>);
 
 struct V4l2QbufData {
     int32_t minor {};
@@ -159,12 +142,20 @@ __attribute__((noinline)) void ParseV4l2QbufData(V4l2QbufData& eventData, uint8_
     eventData.timecode_userbits3 = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.sequence = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseV4l2Qbuf(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseV4l2Qbuf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     V4l2QbufData eventData {};
     ParseV4l2QbufData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_v4l2_qbuf_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_minor(eventData.minor);
     msg->set_index(eventData.index);
     msg->set_type(eventData.type);
@@ -184,33 +175,8 @@ void ParseV4l2Qbuf(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_timecode_userbits3(eventData.timecode_userbits3);
     msg->set_sequence(eventData.sequence);
 }
-void ParseV4l2QbufEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    V4l2QbufData eventData {};
-    ParseV4l2QbufData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_v4l2_qbuf_format();
-    msg->set_minor(eventData.minor);
-    msg->set_index(eventData.index);
-    msg->set_type(eventData.type);
-    msg->set_bytesused(eventData.bytesused);
-    msg->set_flags(eventData.flags);
-    msg->set_field(eventData.field);
-    msg->set_timestamp(eventData.timestamp);
-    msg->set_timecode_type(eventData.timecode_type);
-    msg->set_timecode_flags(eventData.timecode_flags);
-    msg->set_timecode_frames(eventData.timecode_frames);
-    msg->set_timecode_seconds(eventData.timecode_seconds);
-    msg->set_timecode_minutes(eventData.timecode_minutes);
-    msg->set_timecode_hours(eventData.timecode_hours);
-    msg->set_timecode_userbits0(eventData.timecode_userbits0);
-    msg->set_timecode_userbits1(eventData.timecode_userbits1);
-    msg->set_timecode_userbits2(eventData.timecode_userbits2);
-    msg->set_timecode_userbits3(eventData.timecode_userbits3);
-    msg->set_sequence(eventData.sequence);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(v4l2_qbuf, ParseV4l2Qbuf);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(v4l2_qbuf, ParseV4l2QbufEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(v4l2_qbuf, ParseV4l2Qbuf<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(v4l2_qbuf, ParseV4l2Qbuf<ProtoEncoder::FtraceEvent>);
 
 struct Vb2V4l2BufDoneData {
     int32_t minor {};
@@ -249,12 +215,20 @@ __attribute__((noinline)) void ParseVb2V4l2BufDoneData(Vb2V4l2BufDoneData& event
     eventData.timecode_userbits3 = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.sequence = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseVb2V4l2BufDone(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseVb2V4l2BufDone(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     Vb2V4l2BufDoneData eventData {};
     ParseVb2V4l2BufDoneData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_vb2_v4l2_buf_done_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_minor(eventData.minor);
     msg->set_flags(eventData.flags);
     msg->set_field(eventData.field);
@@ -271,30 +245,8 @@ void ParseVb2V4l2BufDone(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_timecode_userbits3(eventData.timecode_userbits3);
     msg->set_sequence(eventData.sequence);
 }
-void ParseVb2V4l2BufDoneEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Vb2V4l2BufDoneData eventData {};
-    ParseVb2V4l2BufDoneData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_vb2_v4l2_buf_done_format();
-    msg->set_minor(eventData.minor);
-    msg->set_flags(eventData.flags);
-    msg->set_field(eventData.field);
-    msg->set_timestamp(eventData.timestamp);
-    msg->set_timecode_type(eventData.timecode_type);
-    msg->set_timecode_flags(eventData.timecode_flags);
-    msg->set_timecode_frames(eventData.timecode_frames);
-    msg->set_timecode_seconds(eventData.timecode_seconds);
-    msg->set_timecode_minutes(eventData.timecode_minutes);
-    msg->set_timecode_hours(eventData.timecode_hours);
-    msg->set_timecode_userbits0(eventData.timecode_userbits0);
-    msg->set_timecode_userbits1(eventData.timecode_userbits1);
-    msg->set_timecode_userbits2(eventData.timecode_userbits2);
-    msg->set_timecode_userbits3(eventData.timecode_userbits3);
-    msg->set_sequence(eventData.sequence);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(vb2_v4l2_buf_done, ParseVb2V4l2BufDone);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(vb2_v4l2_buf_done, ParseVb2V4l2BufDoneEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(vb2_v4l2_buf_done, ParseVb2V4l2BufDone<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(vb2_v4l2_buf_done, ParseVb2V4l2BufDone<ProtoEncoder::FtraceEvent>);
 
 struct Vb2V4l2BufQueueData {
     int32_t minor {};
@@ -333,12 +285,20 @@ __attribute__((noinline)) void ParseVb2V4l2BufQueueData(Vb2V4l2BufQueueData& eve
     eventData.timecode_userbits3 = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.sequence = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseVb2V4l2BufQueue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseVb2V4l2BufQueue(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     Vb2V4l2BufQueueData eventData {};
     ParseVb2V4l2BufQueueData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_vb2_v4l2_buf_queue_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_minor(eventData.minor);
     msg->set_flags(eventData.flags);
     msg->set_field(eventData.field);
@@ -355,30 +315,8 @@ void ParseVb2V4l2BufQueue(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_timecode_userbits3(eventData.timecode_userbits3);
     msg->set_sequence(eventData.sequence);
 }
-void ParseVb2V4l2BufQueueEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Vb2V4l2BufQueueData eventData {};
-    ParseVb2V4l2BufQueueData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_vb2_v4l2_buf_queue_format();
-    msg->set_minor(eventData.minor);
-    msg->set_flags(eventData.flags);
-    msg->set_field(eventData.field);
-    msg->set_timestamp(eventData.timestamp);
-    msg->set_timecode_type(eventData.timecode_type);
-    msg->set_timecode_flags(eventData.timecode_flags);
-    msg->set_timecode_frames(eventData.timecode_frames);
-    msg->set_timecode_seconds(eventData.timecode_seconds);
-    msg->set_timecode_minutes(eventData.timecode_minutes);
-    msg->set_timecode_hours(eventData.timecode_hours);
-    msg->set_timecode_userbits0(eventData.timecode_userbits0);
-    msg->set_timecode_userbits1(eventData.timecode_userbits1);
-    msg->set_timecode_userbits2(eventData.timecode_userbits2);
-    msg->set_timecode_userbits3(eventData.timecode_userbits3);
-    msg->set_sequence(eventData.sequence);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(vb2_v4l2_buf_queue, ParseVb2V4l2BufQueue);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(vb2_v4l2_buf_queue, ParseVb2V4l2BufQueueEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(vb2_v4l2_buf_queue, ParseVb2V4l2BufQueue<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(vb2_v4l2_buf_queue, ParseVb2V4l2BufQueue<ProtoEncoder::FtraceEvent>);
 
 struct Vb2V4l2DqbufData {
     int32_t minor {};
@@ -417,12 +355,20 @@ __attribute__((noinline)) void ParseVb2V4l2DqbufData(Vb2V4l2DqbufData& eventData
     eventData.timecode_userbits3 = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.sequence = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseVb2V4l2Dqbuf(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseVb2V4l2Dqbuf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     Vb2V4l2DqbufData eventData {};
     ParseVb2V4l2DqbufData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_vb2_v4l2_dqbuf_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_minor(eventData.minor);
     msg->set_flags(eventData.flags);
     msg->set_field(eventData.field);
@@ -439,30 +385,8 @@ void ParseVb2V4l2Dqbuf(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_timecode_userbits3(eventData.timecode_userbits3);
     msg->set_sequence(eventData.sequence);
 }
-void ParseVb2V4l2DqbufEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Vb2V4l2DqbufData eventData {};
-    ParseVb2V4l2DqbufData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_vb2_v4l2_dqbuf_format();
-    msg->set_minor(eventData.minor);
-    msg->set_flags(eventData.flags);
-    msg->set_field(eventData.field);
-    msg->set_timestamp(eventData.timestamp);
-    msg->set_timecode_type(eventData.timecode_type);
-    msg->set_timecode_flags(eventData.timecode_flags);
-    msg->set_timecode_frames(eventData.timecode_frames);
-    msg->set_timecode_seconds(eventData.timecode_seconds);
-    msg->set_timecode_minutes(eventData.timecode_minutes);
-    msg->set_timecode_hours(eventData.timecode_hours);
-    msg->set_timecode_userbits0(eventData.timecode_userbits0);
-    msg->set_timecode_userbits1(eventData.timecode_userbits1);
-    msg->set_timecode_userbits2(eventData.timecode_userbits2);
-    msg->set_timecode_userbits3(eventData.timecode_userbits3);
-    msg->set_sequence(eventData.sequence);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(vb2_v4l2_dqbuf, ParseVb2V4l2Dqbuf);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(vb2_v4l2_dqbuf, ParseVb2V4l2DqbufEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(vb2_v4l2_dqbuf, ParseVb2V4l2Dqbuf<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(vb2_v4l2_dqbuf, ParseVb2V4l2Dqbuf<ProtoEncoder::FtraceEvent>);
 
 struct Vb2V4l2QbufData {
     int32_t minor {};
@@ -501,12 +425,20 @@ __attribute__((noinline)) void ParseVb2V4l2QbufData(Vb2V4l2QbufData& eventData, 
     eventData.timecode_userbits3 = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
     eventData.sequence = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseVb2V4l2Qbuf(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseVb2V4l2Qbuf(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     Vb2V4l2QbufData eventData {};
     ParseVb2V4l2QbufData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_vb2_v4l2_qbuf_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_minor(eventData.minor);
     msg->set_flags(eventData.flags);
     msg->set_field(eventData.field);
@@ -523,29 +455,7 @@ void ParseVb2V4l2Qbuf(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
     msg->set_timecode_userbits3(eventData.timecode_userbits3);
     msg->set_sequence(eventData.sequence);
 }
-void ParseVb2V4l2QbufEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    Vb2V4l2QbufData eventData {};
-    ParseVb2V4l2QbufData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_vb2_v4l2_qbuf_format();
-    msg->set_minor(eventData.minor);
-    msg->set_flags(eventData.flags);
-    msg->set_field(eventData.field);
-    msg->set_timestamp(eventData.timestamp);
-    msg->set_timecode_type(eventData.timecode_type);
-    msg->set_timecode_flags(eventData.timecode_flags);
-    msg->set_timecode_frames(eventData.timecode_frames);
-    msg->set_timecode_seconds(eventData.timecode_seconds);
-    msg->set_timecode_minutes(eventData.timecode_minutes);
-    msg->set_timecode_hours(eventData.timecode_hours);
-    msg->set_timecode_userbits0(eventData.timecode_userbits0);
-    msg->set_timecode_userbits1(eventData.timecode_userbits1);
-    msg->set_timecode_userbits2(eventData.timecode_userbits2);
-    msg->set_timecode_userbits3(eventData.timecode_userbits3);
-    msg->set_sequence(eventData.sequence);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(vb2_v4l2_qbuf, ParseVb2V4l2Qbuf);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(vb2_v4l2_qbuf, ParseVb2V4l2QbufEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(vb2_v4l2_qbuf, ParseVb2V4l2Qbuf<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(vb2_v4l2_qbuf, ParseVb2V4l2Qbuf<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

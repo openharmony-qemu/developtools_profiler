@@ -23,94 +23,98 @@ using namespace OHOS::Developtools::Profiler;
 struct WorkqueueActivateWorkData {
     uint64_t work {};
 };
-__attribute__((noinline)) void ParseWorkqueueActivateWorkData(WorkqueueActivateWorkData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWorkqueueActivateWorkData(
+    WorkqueueActivateWorkData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.work = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWorkqueueActivateWork(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWorkqueueActivateWork(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WorkqueueActivateWorkData eventData {};
     ParseWorkqueueActivateWorkData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_workqueue_activate_work_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_work(eventData.work);
 }
-void ParseWorkqueueActivateWorkEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WorkqueueActivateWorkData eventData {};
-    ParseWorkqueueActivateWorkData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_workqueue_activate_work_format();
-    msg->set_work(eventData.work);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(workqueue_activate_work, ParseWorkqueueActivateWork);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(workqueue_activate_work, ParseWorkqueueActivateWorkEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(workqueue_activate_work, ParseWorkqueueActivateWork<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(workqueue_activate_work,
+    ParseWorkqueueActivateWork<ProtoEncoder::FtraceEvent>);
 
 struct WorkqueueExecuteEndData {
     uint64_t work {};
     uint64_t function {};
 };
-__attribute__((noinline)) void ParseWorkqueueExecuteEndData(WorkqueueExecuteEndData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWorkqueueExecuteEndData(
+    WorkqueueExecuteEndData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.work = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.function = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWorkqueueExecuteEnd(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWorkqueueExecuteEnd(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WorkqueueExecuteEndData eventData {};
     ParseWorkqueueExecuteEndData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_workqueue_execute_end_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_work(eventData.work);
     msg->set_function(eventData.function);
 }
-void ParseWorkqueueExecuteEndEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WorkqueueExecuteEndData eventData {};
-    ParseWorkqueueExecuteEndData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_workqueue_execute_end_format();
-    msg->set_work(eventData.work);
-    msg->set_function(eventData.function);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(workqueue_execute_end, ParseWorkqueueExecuteEnd);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(workqueue_execute_end, ParseWorkqueueExecuteEndEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(workqueue_execute_end, ParseWorkqueueExecuteEnd<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(workqueue_execute_end,
+    ParseWorkqueueExecuteEnd<ProtoEncoder::FtraceEvent>);
 
 struct WorkqueueExecuteStartData {
     uint64_t work {};
     uint64_t function {};
 };
-__attribute__((noinline)) void ParseWorkqueueExecuteStartData(WorkqueueExecuteStartData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWorkqueueExecuteStartData(
+    WorkqueueExecuteStartData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.work = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
     eventData.function = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
 }
-void ParseWorkqueueExecuteStart(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWorkqueueExecuteStart(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WorkqueueExecuteStartData eventData {};
     ParseWorkqueueExecuteStartData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_workqueue_execute_start_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_work(eventData.work);
     msg->set_function(eventData.function);
 }
-void ParseWorkqueueExecuteStartEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WorkqueueExecuteStartData eventData {};
-    ParseWorkqueueExecuteStartData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_workqueue_execute_start_format();
-    msg->set_work(eventData.work);
-    msg->set_function(eventData.function);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(workqueue_execute_start, ParseWorkqueueExecuteStart);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(workqueue_execute_start, ParseWorkqueueExecuteStartEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(workqueue_execute_start, ParseWorkqueueExecuteStart<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(workqueue_execute_start,
+    ParseWorkqueueExecuteStart<ProtoEncoder::FtraceEvent>);
 
 struct WorkqueueQueueWorkData {
     uint64_t work {};
@@ -119,8 +123,9 @@ struct WorkqueueQueueWorkData {
     int32_t req_cpu {};
     int32_t cpu {};
 };
-__attribute__((noinline)) void ParseWorkqueueQueueWorkData(WorkqueueQueueWorkData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseWorkqueueQueueWorkData(
+    WorkqueueQueueWorkData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.work = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size);
@@ -129,31 +134,27 @@ __attribute__((noinline)) void ParseWorkqueueQueueWorkData(WorkqueueQueueWorkDat
     eventData.req_cpu = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.cpu = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseWorkqueueQueueWork(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseWorkqueueQueueWork(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     WorkqueueQueueWorkData eventData {};
     ParseWorkqueueQueueWorkData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_workqueue_queue_work_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_work(eventData.work);
     msg->set_function(eventData.function);
     msg->set_workqueue_new(eventData.workqueue_new);
     msg->set_req_cpu(eventData.req_cpu);
     msg->set_cpu(eventData.cpu);
 }
-void ParseWorkqueueQueueWorkEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    WorkqueueQueueWorkData eventData {};
-    ParseWorkqueueQueueWorkData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_workqueue_queue_work_format();
-    msg->set_work(eventData.work);
-    msg->set_function(eventData.function);
-    msg->set_workqueue_new(eventData.workqueue_new);
-    msg->set_req_cpu(eventData.req_cpu);
-    msg->set_cpu(eventData.cpu);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(workqueue_queue_work, ParseWorkqueueQueueWork);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(workqueue_queue_work, ParseWorkqueueQueueWorkEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(workqueue_queue_work, ParseWorkqueueQueueWork<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(workqueue_queue_work, ParseWorkqueueQueueWork<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

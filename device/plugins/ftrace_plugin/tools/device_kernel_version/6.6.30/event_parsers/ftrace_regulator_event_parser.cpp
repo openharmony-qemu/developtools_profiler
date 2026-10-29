@@ -23,114 +23,123 @@ using namespace OHOS::Developtools::Profiler;
 struct RegulatorBypassDisableData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseRegulatorBypassDisableData(RegulatorBypassDisableData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseRegulatorBypassDisableData(
+    RegulatorBypassDisableData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRegulatorBypassDisable(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRegulatorBypassDisable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     RegulatorBypassDisableData eventData {};
     ParseRegulatorBypassDisableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_bypass_disable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseRegulatorBypassDisableEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RegulatorBypassDisableData eventData {};
-    ParseRegulatorBypassDisableData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_regulator_bypass_disable_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_disable, ParseRegulatorBypassDisable);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_disable, ParseRegulatorBypassDisableEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_disable, ParseRegulatorBypassDisable<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_disable,
+    ParseRegulatorBypassDisable<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorBypassDisableCompleteData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseRegulatorBypassDisableCompleteData(RegulatorBypassDisableCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseRegulatorBypassDisableCompleteData(
+    RegulatorBypassDisableCompleteData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRegulatorBypassDisableComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRegulatorBypassDisableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     RegulatorBypassDisableCompleteData eventData {};
     ParseRegulatorBypassDisableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_bypass_disable_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseRegulatorBypassDisableCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RegulatorBypassDisableCompleteData eventData {};
-    ParseRegulatorBypassDisableCompleteData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_regulator_bypass_disable_complete_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_disable_complete, ParseRegulatorBypassDisableComplete);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_disable_complete, ParseRegulatorBypassDisableCompleteEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_disable_complete,
+    ParseRegulatorBypassDisableComplete<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_disable_complete,
+    ParseRegulatorBypassDisableComplete<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorBypassEnableData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseRegulatorBypassEnableData(RegulatorBypassEnableData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseRegulatorBypassEnableData(
+    RegulatorBypassEnableData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRegulatorBypassEnable(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRegulatorBypassEnable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     RegulatorBypassEnableData eventData {};
     ParseRegulatorBypassEnableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_bypass_enable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseRegulatorBypassEnableEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RegulatorBypassEnableData eventData {};
-    ParseRegulatorBypassEnableData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_regulator_bypass_enable_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_enable, ParseRegulatorBypassEnable);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_enable, ParseRegulatorBypassEnableEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_enable, ParseRegulatorBypassEnable<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_enable,
+    ParseRegulatorBypassEnable<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorBypassEnableCompleteData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseRegulatorBypassEnableCompleteData(RegulatorBypassEnableCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseRegulatorBypassEnableCompleteData(
+    RegulatorBypassEnableCompleteData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRegulatorBypassEnableComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRegulatorBypassEnableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     RegulatorBypassEnableCompleteData eventData {};
     ParseRegulatorBypassEnableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_bypass_enable_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseRegulatorBypassEnableCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RegulatorBypassEnableCompleteData eventData {};
-    ParseRegulatorBypassEnableCompleteData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_regulator_bypass_enable_complete_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_enable_complete, ParseRegulatorBypassEnableComplete);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_enable_complete, ParseRegulatorBypassEnableCompleteEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_bypass_enable_complete, ParseRegulatorBypassEnableComplete<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_bypass_enable_complete,
+    ParseRegulatorBypassEnableComplete<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorDisableData {
     std::string name {};
@@ -141,52 +150,54 @@ __attribute__((noinline)) void ParseRegulatorDisableData(RegulatorDisableData& e
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRegulatorDisable(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRegulatorDisable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     RegulatorDisableData eventData {};
     ParseRegulatorDisableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_disable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseRegulatorDisableEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RegulatorDisableData eventData {};
-    ParseRegulatorDisableData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_regulator_disable_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_disable, ParseRegulatorDisable);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_disable, ParseRegulatorDisableEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_disable, ParseRegulatorDisable<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_disable, ParseRegulatorDisable<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorDisableCompleteData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseRegulatorDisableCompleteData(RegulatorDisableCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseRegulatorDisableCompleteData(
+    RegulatorDisableCompleteData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRegulatorDisableComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRegulatorDisableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     RegulatorDisableCompleteData eventData {};
     ParseRegulatorDisableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_disable_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseRegulatorDisableCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RegulatorDisableCompleteData eventData {};
-    ParseRegulatorDisableCompleteData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_regulator_disable_complete_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_disable_complete, ParseRegulatorDisableComplete);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_disable_complete, ParseRegulatorDisableCompleteEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_disable_complete, ParseRegulatorDisableComplete<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_disable_complete,
+    ParseRegulatorDisableComplete<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorEnableData {
     std::string name {};
@@ -197,147 +208,152 @@ __attribute__((noinline)) void ParseRegulatorEnableData(RegulatorEnableData& eve
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRegulatorEnable(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRegulatorEnable(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     RegulatorEnableData eventData {};
     ParseRegulatorEnableData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_enable_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseRegulatorEnableEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RegulatorEnableData eventData {};
-    ParseRegulatorEnableData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_regulator_enable_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_enable, ParseRegulatorEnable);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_enable, ParseRegulatorEnableEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_enable, ParseRegulatorEnable<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_enable, ParseRegulatorEnable<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorEnableCompleteData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseRegulatorEnableCompleteData(RegulatorEnableCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseRegulatorEnableCompleteData(
+    RegulatorEnableCompleteData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRegulatorEnableComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRegulatorEnableComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     RegulatorEnableCompleteData eventData {};
     ParseRegulatorEnableCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_enable_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseRegulatorEnableCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RegulatorEnableCompleteData eventData {};
-    ParseRegulatorEnableCompleteData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_regulator_enable_complete_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_enable_complete, ParseRegulatorEnableComplete);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_enable_complete, ParseRegulatorEnableCompleteEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_enable_complete, ParseRegulatorEnableComplete<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_enable_complete,
+    ParseRegulatorEnableComplete<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorEnableDelayData {
     std::string name {};
 };
-__attribute__((noinline)) void ParseRegulatorEnableDelayData(RegulatorEnableDelayData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseRegulatorEnableDelayData(
+    RegulatorEnableDelayData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
 }
-void ParseRegulatorEnableDelay(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRegulatorEnableDelay(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     RegulatorEnableDelayData eventData {};
     ParseRegulatorEnableDelayData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_enable_delay_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
 }
-void ParseRegulatorEnableDelayEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RegulatorEnableDelayData eventData {};
-    ParseRegulatorEnableDelayData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_regulator_enable_delay_format();
-    msg->set_name(eventData.name);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_enable_delay, ParseRegulatorEnableDelay);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_enable_delay, ParseRegulatorEnableDelayEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_enable_delay, ParseRegulatorEnableDelay<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_enable_delay,
+    ParseRegulatorEnableDelay<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorSetVoltageData {
     std::string name {};
     int32_t min {};
     int32_t max {};
 };
-__attribute__((noinline)) void ParseRegulatorSetVoltageData(RegulatorSetVoltageData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseRegulatorSetVoltageData(
+    RegulatorSetVoltageData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.min = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
     eventData.max = FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size);
 }
-void ParseRegulatorSetVoltage(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRegulatorSetVoltage(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     RegulatorSetVoltageData eventData {};
     ParseRegulatorSetVoltageData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_set_voltage_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_min(eventData.min);
     msg->set_max(eventData.max);
 }
-void ParseRegulatorSetVoltageEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RegulatorSetVoltageData eventData {};
-    ParseRegulatorSetVoltageData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_regulator_set_voltage_format();
-    msg->set_name(eventData.name);
-    msg->set_min(eventData.min);
-    msg->set_max(eventData.max);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_set_voltage, ParseRegulatorSetVoltage);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_set_voltage, ParseRegulatorSetVoltageEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_set_voltage, ParseRegulatorSetVoltage<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_set_voltage,
+    ParseRegulatorSetVoltage<ProtoEncoder::FtraceEvent>);
 
 struct RegulatorSetVoltageCompleteData {
     std::string name {};
     uint32_t val {};
 };
-__attribute__((noinline)) void ParseRegulatorSetVoltageCompleteData(RegulatorSetVoltageCompleteData& eventData, uint8_t data[], size_t size,
-                                             const EventFormat& format)
+__attribute__((noinline)) void ParseRegulatorSetVoltageCompleteData(
+    RegulatorSetVoltageCompleteData& eventData, uint8_t data[], size_t size,
+    const EventFormat& format)
 {
     int i = 0;
     eventData.name = FtraceFieldParser::ParseStrField(format.fields, i++, data, size);
     eventData.val = FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size);
 }
-void ParseRegulatorSetVoltageComplete(FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
+template <typename FtraceEventType>
+void ParseRegulatorSetVoltageComplete(FtraceEventType& ftraceEvent, uint8_t data[], size_t size,
                                const EventFormat& format)
 {
+    if (data == nullptr || size == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "%s: invalid input data or size", __func__);
+        return;
+    }
     RegulatorSetVoltageCompleteData eventData {};
     ParseRegulatorSetVoltageCompleteData(eventData, data, size, format);
     auto msg = ftraceEvent.mutable_regulator_set_voltage_complete_format();
+    if (msg == nullptr) {
+        return;
+    }
     msg->set_name(eventData.name);
     msg->set_val(eventData.val);
 }
-void ParseRegulatorSetVoltageCompleteEncoder(ProtoEncoder::FtraceEvent& ftraceEvent, uint8_t data[], size_t size,
-                               const EventFormat& format)
-{
-    RegulatorSetVoltageCompleteData eventData {};
-    ParseRegulatorSetVoltageCompleteData(eventData, data, size, format);
-    auto msg = ftraceEvent.mutable_regulator_set_voltage_complete_format();
-    msg->set_name(eventData.name);
-    msg->set_val(eventData.val);
-}
-REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_set_voltage_complete, ParseRegulatorSetVoltageComplete);
-REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_set_voltage_complete, ParseRegulatorSetVoltageCompleteEncoder);
+REGISTER_FTRACE_EVENT_PARSE_FUNCTION(regulator_set_voltage_complete, ParseRegulatorSetVoltageComplete<FtraceEvent>);
+REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION(regulator_set_voltage_complete,
+    ParseRegulatorSetVoltageComplete<ProtoEncoder::FtraceEvent>);
 }  // namespace
 FTRACE_NS_END

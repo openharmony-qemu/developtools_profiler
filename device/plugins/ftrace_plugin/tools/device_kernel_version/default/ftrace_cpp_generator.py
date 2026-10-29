@@ -67,11 +67,7 @@ class Common:
         "# limitations under the License.\n".format(this_file)
     )
 
-    parse_function_args = "{}, {}, {})".format(
-        "uint8_t data[]",
-        "size_t size",
-        "const EventFormat& format",
-    )
+    parse_function_args = "uint8_t data[], size_t size,\n                               const EventFormat& format)"
     parse_register_macro = "REGISTER_FTRACE_EVENT_PARSE_FUNCTION"
     parse_register_encoder_macro = "REGISTER_FTRACE_EVENT_PARSE_ENCODER_FUNCTION"
 
@@ -168,11 +164,11 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
             for i in range(len(event.remain_fields)):
                 self.generate_parse_field_lines(event, f, i)
             f.write("}\n")
-            self.generate_parse_wrapper(event, f, data_type, "FtraceEvent", "")
-            self.generate_parse_wrapper(event, f, data_type, "ProtoEncoder::FtraceEvent", "Encoder")
-            f.write("{}({}, Parse{});\n".format(Common.parse_register_macro, event.name, to_camel_case(event.name)))
-            f.write("{}({}, Parse{}Encoder);\n".format(Common.parse_register_encoder_macro, event.name,
-                                                       to_camel_case(event.name)))
+            self.generate_parse_wrapper_template(event, f, data_type)
+            f.write("{}({}, Parse{}<FtraceEvent>);\n".format(Common.parse_register_macro, event.name,
+                                                              to_camel_case(event.name)))
+            f.write("{}({}, Parse{}<ProtoEncoder::FtraceEvent>);\n".format(Common.parse_register_encoder_macro,
+                                                                            event.name, to_camel_case(event.name)))
 
     @staticmethod
     def get_field_parser_info(event, i):
@@ -197,17 +193,6 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
         if field_type is not None:
             f.write("    {} {} {{}};\n".format(field_type, field_name))
 
-    def generate_parse_wrapper(self, event, f, data_type, event_type, suffix):
-        function_name = "Parse{}{}".format(to_camel_case(event.name), suffix)
-        f.write("void {}({}& ftraceEvent, {}\n".format(function_name, event_type, Common.parse_function_args))
-        f.write("{\n")
-        f.write("    {} eventData {{}};\n".format(data_type))
-        f.write("    Parse{}(eventData, data, size, format);\n".format(data_type))
-        f.write("    auto msg = ftraceEvent.mutable_{}_format();\n".format(str.lower(event.name)))
-        for i in range(len(event.remain_fields)):
-            self.generate_write_field_lines(event, f, i)
-        f.write("}\n")
-
     @staticmethod
     def generate_parse_field_lines(event, f, i):
         field_name, field_type, parse_func, is_array = EventParserCodeGenerator.get_field_parser_info(event, i)
@@ -228,6 +213,25 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
             f.write("    }\n")
             return
         f.write("    msg->set_{}(eventData.{});\n".format(field_name, field_name))
+
+    def generate_parse_wrapper_template(self, event, f, data_type):
+        function_name = "Parse{}".format(to_camel_case(event.name))
+        f.write("template <typename FtraceEventType>\n")
+        f.write("void {}(FtraceEventType& ftraceEvent, {}\n".format(function_name, Common.parse_function_args))
+        f.write("{\n")
+        f.write("    if (data == nullptr || size == 0) {\n")
+        f.write("        PROFILER_LOG_WARN(LOG_CORE, \"%s: invalid input data or size\", __func__);\n")
+        f.write("        return;\n")
+        f.write("    }\n")
+        f.write("    {} eventData {{}};\n".format(data_type))
+        f.write("    Parse{}(eventData, data, size, format);\n".format(data_type))
+        f.write("    auto msg = ftraceEvent.mutable_{}_format();\n".format(str.lower(event.name)))
+        f.write("    if (msg == nullptr) {\n")
+        f.write("        return;\n")
+        f.write("    }\n")
+        for i in range(len(event.remain_fields)):
+            self.generate_write_field_lines(event, f, i)
+        f.write("}\n")
 
 
 class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
@@ -694,7 +698,7 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
                     self.handle_format_ps_functions(event, f, "func", True)
                 elif (event.name == "kernel_stack") | (event.name == "user_stack"):
                     f.write("    int len = 0;\n")
-                    f.write('    std::string kernelSymbolsStr = "";\n')
+                    f.write('    std::string kernelSymbolsStr;\n')
                     f.write(
                         "    auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;\n"
                     )
@@ -703,7 +707,7 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
                         "        kernelSymbolsStr = kernelSymbols[msg.caller()[0]];\n"
                     )
                     f.write("    }\n")
-                    f.write('    if (kernelSymbolsStr != "") {\n        ')
+                    f.write('    if (!kernelSymbolsStr.empty()) {\n        ')
                     print_fmt = event.print_fmt
                     event.print_fmt = str.replace(event.print_fmt, "%ps", "%s")
                     offset = 0
@@ -742,6 +746,15 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
                 '      PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event({}) msg had be cut off '
                 'in outfile");\n'.format(event.name)
             )
+            f.write("    }\n")
+            f.write("    if (len < 0) {\n")
+            f.write(
+                '      PROFILER_LOG_WARN(LOG_CORE,\n'
+            )
+            f.write(
+                '          "maybe, the contents of print event({}) msg snprintf_s error");\n'.format(event.name)
+            )
+            f.write('      return "";\n')
             f.write("    }\n")
             f.write("    return std::string(buffer);\n")
             f.write("});\n")  # end of format function
@@ -814,7 +827,7 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
 
     def handle_format_ps_functions(self, event, f, filed_name, is_void=False):
         f.write("    int len = 0;\n")
-        f.write('    std::string functionStr = "";\n')
+        f.write('    std::string functionStr;\n')
         f.write(
             "    auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;\n"
         )
@@ -822,7 +835,7 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
         f.write("{\n")
         f.write("        functionStr = kernelSymbols[msg.{}()];\n".format(filed_name))
         f.write("    }\n")
-        f.write('    if (functionStr != "") {\n        ')
+        f.write('    if (!functionStr.empty()) {\n        ')
         print_fmt = event.print_fmt
         event.print_fmt = str.replace(event.print_fmt, "%ps", "%s")
         if is_void:
