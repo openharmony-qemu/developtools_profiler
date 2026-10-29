@@ -737,48 +737,41 @@ void SpThreadSocket::ResetValue(std::string retCode) const
     FPS::GetInstance().isGameApp = SPUtils::GetIsGameApp(retCode);
     RAM::GetInstance().SetHapFirstFlag();
 }
+
 void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
     const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
-    Dubai &db = Dubai::GetInstance();
-    if (iterator->first == MessageType::START_DUBAI_DB) {
-        std::thread dStart([&db]() { db.CallBeginAndFinish(); });
-        dStart.detach();
-    } else if (iterator->first == MessageType::SET_DUBAI_DB) {
-        GetSocketPort(recvBuf);
-        db.CallBeginAndFinish();
-        FPS::GetInstance().isLowCurFps = false;
-        db.MoveDubaiDb(dubaiXpower);
-        ConnectAndSendFile(spSocket, dubaiFilePath);
-        retCode = "get_dubai_db";
-        LOGD("UDP send GetDubaiDb Message: (%s)", retCode.c_str());
-        spSocket.Sendto(retCode);
-        LOGD("UDP send DuBai get finish");
-    } else if (iterator->first == MessageType::CHECK_UDP_STATUS) {
-        retCode = "UDP status is normal";
-        spSocket.Sendto(retCode);
-        LOGD("UDP status is normal");
-    } else if (iterator->first == MessageType::SAVE_GPU_COUNTER) {
-        GetSocketPort(recvBuf);
-        std::unique_lock<std::mutex> lock(GpuCounter::GetInstance().GetGpuCounterLock());
-        ConnectAndSendFile(spSocket, gpuCounterfilePath + "/gpu_counter.csv");
-    } else if (iterator->first == MessageType::APP_STOP_COLLECT) {
-        if (taskMgr_ != nullptr) {
-            // UDP (device) 停止时，设置GPU_COUNTER保存路径
-            firstFlag = true;
-            SPUtils::CreateDir(gpuCounterfilePath);
-            GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
-            taskMgr_->ClearShaderFile();
-            taskMgr_->SetHapFlag(false);
-            taskMgr_->Stop();
-            SPUtils::OverDumpFun();
-            retCode = Hiperf::GetInstance().ReturnHiperfData();
+    switch (iterator->first) {
+        case MessageType::START_DUBAI_DB:
+            HandleStartDubaiDb();
+            break;
+        case MessageType::SET_DUBAI_DB:
+            HandleSetDubaiDb(spSocket, retCode, recvBuf);
+            break;
+        case MessageType::CHECK_UDP_STATUS:
+            retCode = "UDP status is normal";
             spSocket.Sendto(retCode);
-            taskMgr_->WriteToCSV();
+            LOGD("UDP status is normal");
+            break;
+        case MessageType::SAVE_GPU_COUNTER:
+            HandleSaveGpuCounter(spSocket, recvBuf);
+            break;
+        case MessageType::RECV_FILE: {
+            std::string fileName = ParseRecvFileName(recvBuf);
+            if (SPUtils::IsPathTraversal(fileName) || !SPUtils::IsValidPath(fileName)) {
+                LOGE("RECV_FILE fileName is invalid: %s", fileName.c_str());
+                return;
+            }
+            WLOGI("RECV_FILE request, fileName: %s", fileName.c_str());
+            StartRecvFile(spSocket, fileName);
+            break;
         }
-        spTask.ClearStopFlag();
-    } else {
-        UdpStartMessProcess(spSocket, profiler, retCode, recvBuf, iterator);
+        case MessageType::APP_STOP_COLLECT:
+            HandleAppStopCollect(spSocket, retCode);
+            break;
+        default:
+            UdpStartMessProcess(spSocket, profiler, retCode, recvBuf, iterator);
+            break;
     }
 }
 
@@ -1067,6 +1060,183 @@ void SpThreadSocket::GetTraceStartPoint(std::string &recvBuf)
             VisualEffectAnalysis::GetInstance().SetTraceEnd(result);
         }
     }
+}
+
+int SpThreadSocket::CreateRecvFileListenSocket(int &outPort)
+{
+    int listenFd = socket(AF_INET, SOCK_STREAM, 0);
+    if (listenFd < 0) {
+        WLOGE("StartRecvFile create socket failed, errno: %d", errno);
+        return -1;
+    }
+
+    int opt = 1;
+    setsockopt(listenFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+    // 绑定端口 0 让系统自动分配可用端口
+    struct sockaddr_in serverAddr = {0};
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(0);
+    serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    if (bind(listenFd, reinterpret_cast<struct sockaddr *>(&serverAddr), sizeof(serverAddr)) < 0) {
+        WLOGE("StartRecvFile bind failed, errno: %d", errno);
+        close(listenFd);
+        return -1;
+    }
+
+    if (listen(listenFd, 1) < 0) {
+        WLOGE("StartRecvFile listen failed, errno: %d", errno);
+        close(listenFd);
+        return -1;
+    }
+
+    // 获取系统分配的实际端口号
+    socklen_t addrLen = sizeof(serverAddr);
+    if (getsockname(listenFd, reinterpret_cast<struct sockaddr *>(&serverAddr), &addrLen) < 0) {
+        WLOGE("StartRecvFile getsockname failed, errno: %d", errno);
+        close(listenFd);
+        return -1;
+    }
+    outPort = ntohs(serverAddr.sin_port);
+    return listenFd;
+}
+
+ssize_t SpThreadSocket::RecvFileToDisk(int connFd, const std::string &savePath)
+{
+    FILE *fp = fopen(savePath.c_str(), "wb");
+    if (fp == nullptr) {
+        WLOGE("StartRecvFile fopen failed: %s", savePath.c_str());
+        return -1;
+    }
+
+    ssize_t totalRecv = 0;
+    while (true) {
+        ssize_t bytesRecv = recv(connFd, fileSocketBuffer, fileSocketBufferSize, 0);
+        if (bytesRecv <= 0) {
+            break;
+        }
+        size_t written = fwrite(fileSocketBuffer, 1, static_cast<size_t>(bytesRecv), fp);
+        if (written != static_cast<size_t>(bytesRecv)) {
+            WLOGE("StartRecvFile fwrite incomplete");
+            totalRecv = -1;
+            break;
+        }
+        totalRecv += bytesRecv;
+    }
+
+    fclose(fp);
+    return totalRecv;
+}
+
+void SpThreadSocket::StartRecvFile(SpServerSocket &spSocket, const std::string& fileName)
+{
+    if (!SPUtils::IsValidPath(fileName) || SPUtils::IsPathTraversal(fileName)) {
+        LOGE("StartRecvFile fileName is invalid: %s", fileName.c_str());
+        return;
+    }
+
+    SPUtils::CreateDir(recvFileDir);
+    std::string savePath = recvFileDir + fileName;
+
+    std::thread recvFileThread([this, savePath, &spSocket]() {
+        int actualPort = 0;
+        int listenFd = CreateRecvFileListenSocket(actualPort);
+        if (listenFd < 0) {
+            return;
+        }
+        WLOGI("StartRecvFile listening on port %d, waiting for App to connect...", actualPort);
+
+        // 通过 UDP 回复 App，告知端口号
+        std::string ackMsg = "recv_file_ready:::" + std::to_string(actualPort);
+        spSocket.Sendto(ackMsg);
+        WLOGI("StartRecvFile ack sent to App, port: %d", actualPort);
+
+        struct sockaddr_in clientAddr = {0};
+        socklen_t clientLen = sizeof(clientAddr);
+        int connFd = accept(listenFd, reinterpret_cast<struct sockaddr *>(&clientAddr), &clientLen);
+        if (connFd < 0) {
+            WLOGE("StartRecvFile accept failed, errno: %d", errno);
+            close(listenFd);
+            return;
+        }
+        WLOGI("StartRecvFile App connected, start receiving file to %s", savePath.c_str());
+
+        ssize_t totalRecv = RecvFileToDisk(connFd, savePath);
+
+        close(connFd);
+        close(listenFd);
+
+        if (totalRecv > 0) {
+            WLOGI("StartRecvFile success, received %zd bytes, saved to %s", totalRecv, savePath.c_str());
+        } else if (totalRecv == 0) {
+            WLOGE("StartRecvFile received 0 bytes");
+        }
+    });
+    recvFileThread.detach();
+}
+
+void SpThreadSocket::HandleStartDubaiDb()
+{
+    Dubai &db = Dubai::GetInstance();
+    std::thread dStart([&db]() { db.CallBeginAndFinish(); });
+    dStart.detach();
+}
+
+void SpThreadSocket::HandleSetDubaiDb(SpServerSocket &spSocket, std::string& retCode, const std::string& recvBuf)
+{
+    Dubai &db = Dubai::GetInstance();
+    GetSocketPort(recvBuf);
+    db.CallBeginAndFinish();
+    FPS::GetInstance().isLowCurFps = false;
+    db.MoveDubaiDb(dubaiXpower);
+    ConnectAndSendFile(spSocket, dubaiFilePath);
+    retCode = "get_dubai_db";
+    LOGD("UDP send GetDubaiDb Message: (%s)", retCode.c_str());
+    spSocket.Sendto(retCode);
+    LOGD("UDP send DuBai get finish");
+}
+
+void SpThreadSocket::HandleSaveGpuCounter(SpServerSocket &spSocket, const std::string& recvBuf)
+{
+    GetSocketPort(recvBuf);
+    std::unique_lock<std::mutex> lock(GpuCounter::GetInstance().GetGpuCounterLock());
+    ConnectAndSendFile(spSocket, gpuCounterfilePath + "/gpu_counter.csv");
+}
+
+std::string SpThreadSocket::ParseRecvFileName(const std::string& recvBuf)
+{
+    // UDP 消息格式: recv_file::文件名 (可选尾部 :::...)
+    std::string fileName = "recv_file.zip";
+    if (recvBuf.find("::") == std::string::npos) {
+        return fileName;
+    }
+    std::string param = recvBuf.substr(recvBuf.find("::") + 2);
+    if (param.find(":::") != std::string::npos) {
+        param = param.substr(0, param.find(":::"));
+    }
+    if (!param.empty()) {
+        fileName = param;
+    }
+    return fileName;
+}
+
+void SpThreadSocket::HandleAppStopCollect(SpServerSocket &spSocket, std::string& retCode)
+{
+    if (taskMgr_ != nullptr) {
+        // UDP (device) 停止时，设置GPU_COUNTER保存路径
+        firstFlag = true;
+        SPUtils::CreateDir(gpuCounterfilePath);
+        GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
+        taskMgr_->ClearShaderFile();
+        taskMgr_->SetHapFlag(false);
+        taskMgr_->Stop();
+        SPUtils::OverDumpFun();
+        retCode = Hiperf::GetInstance().ReturnHiperfData();
+        spSocket.Sendto(retCode);
+        taskMgr_->WriteToCSV();
+    }
+    spTask.ClearStopFlag();
 }
 }
 }

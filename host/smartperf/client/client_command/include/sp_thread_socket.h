@@ -92,11 +92,19 @@ public:
     void ConnectAndSendFile(SpServerSocket &spSocket, const std::string filePath);
     int FileSocketConnect();
     int SendFile(const std::string& filePath);
+    void StartRecvFile(SpServerSocket &spSocket, const std::string &fileName);
     void StartHapCollecting(SpServerSocket &spSocket);
     void RemoveToken(std::string &recvMessage);
     void HandleMsgTrace(std::string& recvMessage);
     void SendTraceFile(const std::string& recvBuf, SpServerSocket &spSocket);
 private:
+    int CreateRecvFileListenSocket(int &outPort);
+    ssize_t RecvFileToDisk(int connFd, const std::string &savePath);
+    void HandleStartDubaiDb();
+    void HandleSetDubaiDb(SpServerSocket &spSocket,std::string &retCode, const std::string &recvBuf);
+    void HandleSaveGpuCounter(SpServerSocket &spSocket, const std::string &recvBuf);
+    static std::string ParseRecvFileName(const std::string &recvBuf);
+    void HandleAppStopCollect(SpServerSocket &spSocket, std::string &retCode);
     bool flagRunning = false;
     bool socketConnect = true;
     std::string checkToken = "";    // 拉起测试时校验
@@ -116,6 +124,7 @@ private:
     int sendFileSocketPort = -1;
     static const int fileSocketBufferSize = 8192;
     char fileSocketBuffer[fileSocketBufferSize] = {};
+    const std::string recvFileDir = "/data/local/tmp/smartperf/recv/";
     bool isSetPid = false;
     SPTask &spTask = SPTask::GetInstance();
     std::thread udpStartCollect;
