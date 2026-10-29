@@ -94,12 +94,8 @@ TraceMeta QueryTraceMeta(sqlite3* db)
 
                 long long bootTs = 0;
                 long long realTs = 0;
-                if (QueryInt64(db,
-                        "SELECT ts FROM clock_snapshot WHERE clock_name = 'boottime' LIMIT 1",
-                        bootTs) &&
-                    QueryInt64(db,
-                        "SELECT ts FROM clock_snapshot WHERE clock_name = 'realtime' LIMIT 1",
-                        realTs) &&
+                if (QueryInt64(db, "SELECT ts FROM clock_snapshot WHERE clock_name = 'boottime' LIMIT 1", bootTs) &&
+                    QueryInt64(db, "SELECT ts FROM clock_snapshot WHERE clock_name = 'realtime' LIMIT 1", realTs) &&
                     bootTs != 0 && realTs != 0) {
                     const long long offsetNs = realTs - bootTs;
                     meta.startTimeMs = (startTs + offsetNs + 500000LL) / 1000000LL;

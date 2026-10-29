@@ -2064,9 +2064,8 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
                     if (metrics.valid) {
                         PrintMetricsLine(metrics);
                     }
-                    maybeStartSnapshotExport(state, opts.outputDir, opts.smapsPrefix,
-                                                opts.requireFreshStart, pid,
-                                                startExported, startExportThread, result);
+                    maybeStartSnapshotExport(state, opts.outputDir, opts.smapsPrefix, opts.requireFreshStart, pid,
+                        startExported, startExportThread, result);
                 }
             }
         } else {
@@ -2696,8 +2695,7 @@ RunResult RunHdc(const HdcRunOptions& opts)
 
     std::thread pidChecker;
     if (!snapshotMode && opts.duration > 0 && !opts.processName.empty()) {
-        pidChecker = SpawnPidChecker(state, opts.processName, pre.initialPid,
-                                        pre.initialMetrics, setup.asyncStartMode);
+        pidChecker = SpawnPidChecker(state, opts.processName, pre.initialPid, pre.initialMetrics, setup.asyncStartMode);
     }
 
     std::thread freshRestartThread;

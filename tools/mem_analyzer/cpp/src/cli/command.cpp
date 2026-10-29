@@ -37,9 +37,7 @@ std::vector<std::shared_ptr<ICommand>> CommandRegistry::All()
 {
     auto cmds = registry();
     std::stable_sort(cmds.begin(), cmds.end(),
-                        [](const std::shared_ptr<ICommand>& a, const std::shared_ptr<ICommand>& b) {
-                            return a->Order() < b->Order();
-                        });
+        [](const std::shared_ptr<ICommand>& a, const std::shared_ptr<ICommand>& b) { return a->Order() < b->Order(); });
     return cmds;
 }
 

@@ -260,9 +260,7 @@ std::string BuildTopChainTableRow(const json& chainData,
            std::to_string(idx) + "); return false;\" class=\"detail-link\">详情</a></td>";
     // 「总览图」列以引用链链尾的帧名作为搜索词；
     // searchOnOverview 为 false 时不带搜索词（空串），点击后直接展示完整总览图
-    row += BuildOverviewCell(chartSubTabId,
-                               searchOnOverview ? LastChainFrameName(chainData["chain"]) :
-                                                std::string());
+    row += BuildOverviewCell(chartSubTabId, searchOnOverview ? LastChainFrameName(chainData["chain"]) : std::string());
     row += "<td class=\"top-size-val\">" + FormatBytes(retainedSize) + "</td>";
     row += "<td class=\"top-size-val\">" + std::to_string(nodeCount) + "</td>";
     row += "<td class=\"top-func\"><b>" + chainPath + "</b></td>";
