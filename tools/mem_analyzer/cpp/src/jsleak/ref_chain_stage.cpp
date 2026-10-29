@@ -33,9 +33,7 @@ namespace {
 /// top_k 有值时只保留累计 retained size 最大的前 K 条（两遍扫描：第一遍统计
 /// 大小选出 top K，第二遍才收集 nodeIDs，避免为非 top 链保存大量节点 ID）；
 /// top_k 为空时单遍聚合全部引用链。
-template <typename Pred>
-std::vector<RefChainInfo>
-collectRefChains(const HeapSnapshot& heap,
+template <typename Pred> std::vector<RefChainInfo> collectRefChains(const HeapSnapshot& heap,
     Pred&& predicate,
     const std::optional<size_t>& topK,
     const std::unordered_set<std::string>& excludeChains)

@@ -53,9 +53,9 @@ inline std::string CurrentTimestamp()
     std::time_t now = std::time(nullptr);
     std::tm tmLocal{};
 #if defined(_WIN32)
-    localtime_s(&tmLocal, &now);
+    (void)localtime_s(&tmLocal, &now);
 #else
-    localtime_r(&now, &tmLocal);
+    (void)localtime_r(&now, &tmLocal);
 #endif
     char buf[32];
     std::strftime(buf, sizeof(buf), "%Y%m%d_%H%M%S", &tmLocal);

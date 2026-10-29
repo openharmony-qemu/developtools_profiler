@@ -165,8 +165,7 @@ std::string BuildMmapTabContentHTML(const std::vector<TabGroup>& groups,
     const std::vector<const HtraceSection*>& filepageLists,
     long long totalSize, bool countMode)
 {
-    std::string result;
-    result += "<style>\n"
+    std::string result = "<style>\n"
         ".sub-tab-bar { display: flex; margin: 20px 0 0; border-bottom: 1px solid #dee2e6; }\n"
         ".sub-tab-item { display: inline-block; padding: 8px 14px 7px; margin-right: 6px; cursor: pointer; font-size: 16px; font-weight: 600; color: #888; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.2s, border-color 0.2s; }\n"
         ".sub-tab-item:hover { color: #e94560; }\n"
@@ -460,8 +459,7 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
 
     // 延迟构建回调：在流式写入时按需构建flameTree/icicleTree
     // 避免所有entry的flameTree/icicleTree同时驻留内存，峰值内存从O(N)降至O(1)
-    FillTreeCallback fillTree;
-    fillTree = [&streamMeta, &full](SymbolDataEntry& entry, size_t groupIdx, size_t entryIdx) {
+    FillTreeCallback fillTree = [&streamMeta, &full](SymbolDataEntry& entry, size_t groupIdx, size_t entryIdx) {
         const StreamGroupMeta& meta = streamMeta[groupIdx];
         if (meta.render == TrackRender::FILEPAGE) {
             // 文件轨：文件名为根冰柱图（无调用链列表）

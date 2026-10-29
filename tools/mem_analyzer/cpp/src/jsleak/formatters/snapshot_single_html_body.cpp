@@ -133,8 +133,7 @@ std::string NormPrefix(const std::string& prefix)
 std::string BuildNodeIdsHtml(const json& nodeIdsJson, const std::string& containerId)
 {
     if (!nodeIdsJson.is_array() || nodeIdsJson.empty()) {
-        return "<div class=\"chain-node-ids\" id=\"" + containerId +
-               "\" data-all-ids=\"\">节点ID: 无</div>";
+        return "<div class=\"chain-node-ids\" id=\"" + containerId + "\" data-all-ids=\"\">节点ID: 无</div>";
     }
 
     std::vector<std::string> ids;
@@ -171,8 +170,7 @@ std::string BuildNodeIdsHtml(const json& nodeIdsJson, const std::string& contain
 std::string BuildHashValuesHtml(const json &hashValuesJson, const std::string &containerId)
 {
     if (!hashValuesJson.is_array() || hashValuesJson.empty()) {
-        return "<div class=\"chain-node-ids\" id=\"" + containerId + 
-               "\" data-all-hashes=\"\">hash值: 无</div>";
+        return "<div class=\"chain-node-ids\" id=\"" + containerId + "\" data-all-hashes=\"\">hash值: 无</div>";
     }
 
     std::vector<std::string> hashes;

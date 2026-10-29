@@ -128,15 +128,15 @@ std::string HeapSnapshot::GetJsObjectExtName(uint32_t nodeIndex) const
     }
     uint32_t edgeCount = GetNodeEdgeCount(nodeIndex);
     oss << "len=" << edgeCount;
-    if (!propNames.empty()) { 
-         oss << ", prop="; 
-         for (size_t i = 0; i < propNames.size(); ++i) { 
-             if (i > 0) {
-                 oss << ",";
-             }
-             oss << propNames[i]; 
-         } 
-     }
+    if (!propNames.empty()) {
+        oss << ", prop=";
+        for (size_t i = 0; i < propNames.size(); ++i) {
+            if (i > 0) {
+                oss << ",";
+            }
+            oss << propNames[i];
+        }
+    }
     oss << ")";
     return oss.str();
 }

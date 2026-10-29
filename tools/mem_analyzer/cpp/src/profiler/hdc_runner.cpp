@@ -1688,7 +1688,7 @@ std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::s
         }
 
         consumeStream(fp);
-        fclose(fp);  // 关闭 fd，进而关闭底层 h_read 句柄
+        (void)fclose(fp);  // 关闭 fd，进而关闭底层 h_read 句柄
 
         WaitForSingleObject(pi.hProcess, INFINITE);
         DWORD code = 0;
@@ -1711,7 +1711,7 @@ std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::s
             return;
         }
         consumeStream(fp);
-        fclose(fp);
+        (void)fclose(fp);
         int st = 0;
         waitpid(sp.pid, &st, 0);
         state->exitCode = WIFEXITED(st) ? WEXITSTATUS(st) : -1;
