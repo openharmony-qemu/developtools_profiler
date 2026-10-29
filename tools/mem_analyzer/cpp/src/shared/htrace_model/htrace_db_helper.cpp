@@ -44,7 +44,7 @@ void StmtGuard::reset(sqlite3_stmt* s)
 // ── Scalar query ──────────────────────────────────────────────────
 namespace {
 bool QueryScalar(sqlite3* db, const char* sql, void (*read)(sqlite3_stmt*, void*), void* out)
-                  {
+{
     if (!db || !sql) {
         return false;
     }

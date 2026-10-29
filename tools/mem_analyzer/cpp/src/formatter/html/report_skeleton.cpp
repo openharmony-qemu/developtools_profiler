@@ -79,7 +79,7 @@ std::string HtmlReportData(const std::string& varName, const std::string& jsonTe
 void HtmlReportDataStreamed(std::ostream& out,
     const std::string& varName,
     const std::function<void(std::ostream&)>& writeAll)
-                               {
+{
     out << "<script>const " << varName << "=";
     writeAll(out);
     out << ";\n</script>";

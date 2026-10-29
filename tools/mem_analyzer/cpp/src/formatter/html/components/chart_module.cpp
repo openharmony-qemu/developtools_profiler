@@ -44,8 +44,9 @@ std::string ChartModuleCss()
 
 // 图表模块 JS：布局 / 尺寸刻度 / 缩放平移 / 悬停 tooltip / 右键菜单 / 搜索高亮 /
 // 下钻与祖先链 / 重置 / resize 自适应。对外暴露 window.MemChart。
-std::string ChartModuleJs() {
-  return R"CHARTJS(
+std::string ChartModuleJs()
+{
+    return R"CHARTJS(
 (function () {
   'use strict';
 
