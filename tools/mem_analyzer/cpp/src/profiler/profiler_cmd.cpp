@@ -80,7 +80,8 @@ int RunCommandStreaming(const std::string& cmd)
     // Strip any trailing "2>&1" that the caller may have appended (it's
     // redundant since STARTUPINFO already merges stderr into stdout).
     std::string cleanCmd = cmd;
-    if (cleanCmd.size() >= SHELL_REDIRECT_SUFFIX_LEN && cleanCmd.substr(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN) == " 2>&1") {
+    if (cleanCmd.size() >= SHELL_REDIRECT_SUFFIX_LEN &&
+        cleanCmd.substr(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN) == " 2>&1") {
         cleanCmd.resize(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN);
     }
     std::string cmdline = cleanCmd;
@@ -537,7 +538,8 @@ const CaptureTypeInfo* ResolveCategory(const std::string& cat, std::string& errM
         }
     }
     if (!resolved) {
-        errMsg = "invalid category '" + cat + "'. Valid: nativeheap/nh, nativeleaks/nl, snapshot/snap, global/gh, local/lh, fd, dma, thread, ashmem";
+        errMsg = "invalid category '" + cat +
+            "'. Valid: nativeheap/nh, nativeleaks/nl, snapshot/snap, global/gh, local/lh, fd, dma, thread, ashmem";
         return nullptr;
     }
     for (size_t i = 0; i < CAPTURE_TYPE_COUNT; ++i) {

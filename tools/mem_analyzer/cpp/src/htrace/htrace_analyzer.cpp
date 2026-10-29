@@ -1177,9 +1177,12 @@ HtraceAnalysisOutput AnalyzeCallStacks(
     // HTML 的 sections[0]/sections[1] 直接下标不会越界（AppAndSystem 下 mixed 也有空双轨）。
     // 轨 label 单一来源 = category 描述符表 tracks[].label（analyzer 只搬运，不自己造显示名）。
     const auto& tracks = HtraceCategory(config.category).tracks;
-    AttachFilepages(output.topSymbols.app,    std::move(fpSplit.app),    tracks[0].label.c_str(), tracks[1].label.c_str());
-    AttachFilepages(output.topSymbols.system, std::move(fpSplit.system), tracks[0].label.c_str(), tracks[1].label.c_str());
-    AttachFilepages(output.topSymbols.mixed,  std::move(fpSplit.mixed),  tracks[0].label.c_str(), tracks[1].label.c_str());
+    AttachFilepages(output.topSymbols.app, std::move(fpSplit.app),
+        tracks[0].label.c_str(), tracks[1].label.c_str());
+    AttachFilepages(output.topSymbols.system, std::move(fpSplit.system),
+        tracks[0].label.c_str(), tracks[1].label.c_str());
+    AttachFilepages(output.topSymbols.mixed, std::move(fpSplit.mixed),
+        tracks[0].label.c_str(), tracks[1].label.c_str());
     return output;
 }
 

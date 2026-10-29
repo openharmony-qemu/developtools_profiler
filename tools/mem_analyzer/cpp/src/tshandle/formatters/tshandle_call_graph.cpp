@@ -22,7 +22,7 @@
 namespace mem_analyzer {
 namespace {
 
-std::string key(const ResolvedStackFrame& f)
+std::string Key(const ResolvedStackFrame& f)
 {
     return f.symbol + '\0' + f.lib + '\0' + f.libOffset;
 }
@@ -89,7 +89,7 @@ TshandleRenderNode BuildTshandleDownstreamGraph(const std::string& objectName,
         auto* current = &root;
 
         for (std::size_t i = 0; i < frames.size(); ++i) {
-            const auto id = key(frames[i]);
+            const auto id = Key(frames[i]);
             auto child = std::find_if(current->children.begin(), current->children.end(),
                 [&frames, &i](const TshandleRenderNode& n) {
                     return n.symbol == frames[i].symbol && n.lib == frames[i].lib && n.libOffset == frames[i].libOffset;

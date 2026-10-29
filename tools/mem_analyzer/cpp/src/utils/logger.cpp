@@ -50,7 +50,7 @@ const char* tag(Level lv)
 }
 
 // 正文着色（整条同色的正文部分）：正色 = 不染色。
-std::string paint(Level lv, bool dim, const std::string& text)
+std::string Paint(Level lv, bool dim, const std::string& text)
 {
     switch (lv) {
         case Level::LOG_DEBUG:   return style::Dim(text);
@@ -140,7 +140,7 @@ void WriteLine(Level lv, bool dim, const std::string& msg)
     }
 
     const std::string line = prefix + PaintTag(lv, dim, tag(lv)) + " " +
-                             paint(lv, dim, msg) + "\n";
+                             Paint(lv, dim, msg) + "\n";
 
     if (g_sink) {
         g_sink->Write(lv, line);

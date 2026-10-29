@@ -422,7 +422,8 @@ std::string ExportProcessFile(const std::string& pid,
     std::string* permissionError = nullptr)
 {
     const std::string deviceCmd =
-        (prefix == "fds") ? ("lsof -p " + proc::ShellQuoteDevice(pid)) : ("hidumper --mem-smaps " + proc::ShellQuoteDevice(pid));
+        (prefix == "fds") ? ("lsof -p " + proc::ShellQuoteDevice(pid)) :
+            ("hidumper --mem-smaps " + proc::ShellQuoteDevice(pid));
     // Timeout so a stalled device query cannot leave the export thread (and
     // thus the join at stop time) blocked forever.
     CapturedCmd cap = CaptureCommand(
@@ -1436,7 +1437,7 @@ std::string GetProcessPidFast(const std::string& processName, long long timeoutM
 
 namespace {
 
-// ── capture setup ────────────────────────────────────────────────────────────
+// ── capture setup ────────────────────────────────
 
 // Everything that must happen before the capture threads start: trap Ctrl+C,
 // create the output directory, push the device config (hiprofiler) and build
@@ -1486,7 +1487,7 @@ bool SetupCapture(const HdcRunOptions& opts, RunResult& result, CaptureSetup& se
     return true;
 }
 
-// ── pre-capture: baselines + initial process state ───────────────────────────
+// ── pre-capture: baselines + initial process state ─────────────────────
 
 // State gathered before the worker occupies the hdc connection: device result
 // dir baseline (snapshot mode), hiprofiler zip baseline (-g/-l) and the
@@ -1600,7 +1601,7 @@ bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode, PreCaptur
     return true;
 }
 
-// ── background threads ───────────────────────────────────────────────────────
+// ── background threads ──────────────────────────────
 
 // Worker thread: runs the hdc command and streams its output into the shared
 // `output` buffer as it arrives (instead of capturing it all once at the
@@ -1657,7 +1658,8 @@ std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::s
 
         // 去掉尾部 " 2>&1"：stderr 已由上面的 STARTF_USESTDHANDLES 合并进 stdout。
         std::string cleanCmd = cmd;
-        if (cleanCmd.size() >= SHELL_REDIRECT_SUFFIX_LEN && cleanCmd.substr(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN) == " 2>&1") {
+        if (cleanCmd.size() >= SHELL_REDIRECT_SUFFIX_LEN &&
+            cleanCmd.substr(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN) == " 2>&1") {
             cleanCmd.resize(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN);
         }
         std::wstring wcmdline = WidenPath(cleanCmd);
@@ -1861,7 +1863,7 @@ std::thread SpawnFreshRestart(const std::shared_ptr<CaptureState>& state, const 
     });
 }
 
-// ── countdown display helpers ────────────────────────────────────────────────
+// ── countdown display helpers ────────────────────────────
 
 // Did the device-side `hiprofiler_cmd start` report a failed session? Its
 // exit code is useless (it returns 0 even on failure), so detect it from the
@@ -1952,7 +1954,7 @@ void maybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
     });
 }
 
-// ── main wait loop ───────────────────────────────────────────────────────────
+// ── main wait loop ───────────────────────────────
 
 // Wait while showing progress.
 //   snapshot: the hidumper command is near-instant, so there is no countdown —
@@ -2511,7 +2513,7 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
     long long arktsPeakKb = 0;
     bool peakSeeded = false;
 
-    // ── start-of-session snapshot ───────────────────────────────────────────
+    // ── start-of-session snapshot ──────────────────────────
     log::Logi("Exporting the start-of-session snapshot...");
     if (!exportSnapshotOnce(opts, command, "start", startFiles, status, output, err)) {
         result.ok = false;
@@ -2523,7 +2525,7 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
     transcript += output;
     log::Logok("Snapshot exported: ", startFiles.front(), " (start)");
 
-    // ── monitoring loop ─────────────────────────────────────────────────────
+    // ── monitoring loop ──────────────────────────────
     int roundNo = 0;
     int samplesAbovePeak = 0;
     while (true) {
@@ -2618,7 +2620,7 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
         SleepTicks(SNAPSHOT_SAMPLE_INTERVAL_S * TICKS_PER_SECOND, []() { return g_interruptRequested != 0 || DeviceLost(); });
     }
 
-    // ── end-of-session snapshot ─────────────────────────────────────────────
+    // ── end-of-session snapshot ───────────────────────────
     // Pinned target: once the device is gone this export is certain to fail — it
     // would spend one more hdc round-trip (up to SNAPSHOT_COMMAND_TIMEOUT_MS) just to
     // print a warning. Skip it, keep the snapshots exported above, and record the

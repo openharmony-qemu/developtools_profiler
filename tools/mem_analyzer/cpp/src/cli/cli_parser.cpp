@@ -568,7 +568,8 @@ void CliParser::PrintHelp(std::ostream& os) const
     }
     if (hasVisibleSub) {
         os << "SUBCOMMANDS:\n";
-        os << "  (no subcommand)" << std::string(NO_SUBCMD_PADDING, ' ') << "Omit subcommand to auto-detect file type\n";
+        os << "  (no subcommand)" << std::string(NO_SUBCMD_PADDING, ' ') <<
+            "Omit subcommand to auto-detect file type\n";
         for (const auto& [name, entry] : subcommands_) {
             if (entry.hidden) { // hidden subcommands are omitted from help
                 continue;
