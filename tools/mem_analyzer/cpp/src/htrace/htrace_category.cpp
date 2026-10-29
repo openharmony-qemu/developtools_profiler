@@ -39,7 +39,7 @@ const std::vector<HtraceCategorySpec>& HtraceCategories()
     // 表内顺序是有意设计的：它即 CLI 报错「Valid values:」的展示顺序（保持与历史一致：
     //   nativeheap, mmap, dma, ashmem, fd, thread）。
     //   注意 parse summary 的输出顺序与此不同（它在 parse formatter 里单独定序，见
-    //   htrace_parse_json_formatter.cpp 的 kParseSummaryOrder），不要把这处顺序当「输出顺序」改。
+    //   htrace_parse_json_formatter.cpp 的 PARSE_SUMMARY_ORDER），不要把这处顺序当「输出顺序」改。
     //
     // 扩展：新增 category = 在下面加一行；新增轨道 = 改该行 tracks；新增行种 = 改 TrackRender +
     //       writer 分派（详见头文件三个正交维度 + docs/htrace_refactor_design.md）。

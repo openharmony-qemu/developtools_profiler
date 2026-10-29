@@ -33,6 +33,10 @@ namespace mem_analyzer {
 namespace zipUtils {
 
 namespace {
+constexpr int WIN_DRIVE_LETTER_MIN_LEN = 2;
+} // namespace
+
+namespace {
 
 /// 校验 zip 条目名是否安全（防 zip-slip）：拒绝绝对路径、盘符、`..` 组件。
 bool IsSafeEntry(const std::string& name)
@@ -43,7 +47,7 @@ bool IsSafeEntry(const std::string& name)
     if (name.front() == '/' || name.front() == '\\') {
         return false;
     }
-    if (name.size() >= 2 && name[1] == ':') {
+    if (name.size() >= WIN_DRIVE_LETTER_MIN_LEN && name[1] == ':') {
         return false; // Windows 盘符（如 "C:"）
     }
     std::string normalized = name;
@@ -69,7 +73,7 @@ bool IsDirEntry(const std::string& name)
 
 /// zip 炸弹防护：累计解压字节数上限（4 GiB）。合法 tshandle 数据远小于此，
 /// 恶意/损坏 zip 声明超大 uncompressed_size 时中止。
-constexpr uint64_t kMaxTotalUncompressedBytes = 4ULL * 1024 * 1024 * 1024;
+constexpr uint64_t MAX_TOTAL_UNCOMPRESSED_BYTES = 4ULL * 1024 * 1024 * 1024;
 
 } // namespace
 
@@ -127,7 +131,7 @@ bool ExtractZip(const std::string& zipPath, const std::string& destDir, std::str
         std::error_code ec;
         fs::create_directories(outPath.parent_path(), ec);
 
-        if (fi.uncompressed_size > kMaxTotalUncompressedBytes - totalWritten) {
+        if (fi.uncompressed_size > MAX_TOTAL_UNCOMPRESSED_BYTES - totalWritten) {
             unzClose(uf);
             error = "ZIP entry exceeds decompressed size limit: " + entryName;
             return false;
@@ -152,7 +156,7 @@ bool ExtractZip(const std::string& zipPath, const std::string& destDir, std::str
         while ((n = unzReadCurrentFile(uf, buf.data(), static_cast<unsigned>(buf.size()))) > 0) {
             out.write(buf.data(), n);
             totalWritten += static_cast<uint64_t>(n);
-            if (totalWritten > kMaxTotalUncompressedBytes) {
+            if (totalWritten > MAX_TOTAL_UNCOMPRESSED_BYTES) {
                 out.close();
                 unzCloseCurrentFile(uf);
                 unzClose(uf);

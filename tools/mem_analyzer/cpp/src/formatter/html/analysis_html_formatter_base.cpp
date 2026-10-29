@@ -26,7 +26,7 @@ namespace {
 // 多跳 1 个字符会吞掉模板中紧跟占位符之后的 ';'，使生成的前端代码变成
 // `var allData = [...](function(){...})()`——数组被当作函数调用而抛 TypeError，
 // 后续图表引擎整体不执行。
-constexpr size_t kDataJsonPlaceholderLen = sizeof("__DATA_JSON__") - 1;
+constexpr size_t DATA_JSON_PLACEHOLDER_LEN = sizeof("__DATA_JSON__") - 1;
 }  // namespace
 
 std::string AnalysisHtmlFormatterBase::BuildTabBarHTML(const std::vector<TabGroup>& groups)
@@ -126,7 +126,7 @@ void AnalysisHtmlFormatterBase::FillHTMLTemplateStreamedDirect(
     // Split template at __DATA_JSON__
     size_t jsonPos = html.find("__DATA_JSON__");
     std::string beforeJson = html.substr(0, jsonPos);
-    std::string afterJson = html.substr(jsonPos + kDataJsonPlaceholderLen);
+    std::string afterJson = html.substr(jsonPos + DATA_JSON_PLACEHOLDER_LEN);
 
     // Replace placeholders in before part
     beforeJson = ReplaceAll(beforeJson, "__DATA_JSON__", "");
@@ -176,7 +176,7 @@ void AnalysisHtmlFormatterBase::FillHTMLTemplateStreamed(
     std::string html = HTML_TEMPLATE;
     size_t jsonPos = html.find("__DATA_JSON__");
     std::string beforeJson = html.substr(0, jsonPos);
-    std::string afterJson = html.substr(jsonPos + kDataJsonPlaceholderLen);
+    std::string afterJson = html.substr(jsonPos + DATA_JSON_PLACEHOLDER_LEN);
 
     beforeJson = ReplaceAll(beforeJson, "__TAB_BAR_HTML__", tabBarHTML);
     beforeJson = ReplaceAll(beforeJson, "__TAB_CONTENT_HTML__", tabContentHTML);

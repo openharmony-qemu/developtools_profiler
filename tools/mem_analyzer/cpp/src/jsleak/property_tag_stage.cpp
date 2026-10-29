@@ -34,8 +34,8 @@ PropertyTagStage::PropertyTagStage(const std::string& jsleakListFile)
 
 const std::string& PropertyTagStage::Mode() const
 {
-    static const std::string kMode = "property-tag";
-    return kMode;
+    static const std::string MODE = "property-tag";
+    return MODE;
 }
 
 const char* PropertyTagStage::PreviewId() const
@@ -257,12 +257,12 @@ void PropertyTagStage::LoadJsleakListFile(const std::string& filePath)
 void PropertyTagStage::LoadPropertyTagConfig()
 {
     // 内置默认：配置文件缺失或解析失败时兜底
-    static const std::unordered_map<std::string, std::vector<BaseClassInfo>> kDefaults = {
+    static const std::unordered_map<std::string, std::vector<BaseClassInfo>> DEFAULTS = {
         {"isDeleting_", {{"ViewBuildNodeBase", "Component"}}},
         {"_isDisposed", {{"BuilderNode", "BuilderNode"}, {"RenderNode", "RenderNode"}, {"FrameNode", "FrameNode"}}},
         {"isDestroyed", {{"Ability", "Ability"}, {"Window", "Window"}}},
     };
-    constexpr const char* kDefaultDisplayType = "Others";
+    constexpr const char* DEFAULT_DISPLAY_TYPE = "Others";
 
     const std::string rel = "config/jsleak/jsleak_config.json";
 
@@ -274,8 +274,8 @@ void PropertyTagStage::LoadPropertyTagConfig()
     }
 
     if (configPath.empty() || !platform::FileExists(configPath)) {
-        propertyTagBaseClasses = kDefaults;
-        defaultDisplayType = kDefaultDisplayType;
+        propertyTagBaseClasses = DEFAULTS;
+        defaultDisplayType = DEFAULT_DISPLAY_TYPE;
         return;
     }
 
@@ -325,21 +325,21 @@ void PropertyTagStage::LoadPropertyTagConfig()
                 }
                 parsed[tag] = std::move(bases);
             }
-            propertyTagBaseClasses = parsed.empty() ? kDefaults : std::move(parsed);
+            propertyTagBaseClasses = parsed.empty() ? DEFAULTS : std::move(parsed);
         } else {
-            propertyTagBaseClasses = kDefaults;
+            propertyTagBaseClasses = DEFAULTS;
         }
 
         // 默认展示类型（可缺省）
         if (root && root->contains("defaultDisplayType") && (*root)["defaultDisplayType"].is_string()) {
             defaultDisplayType = (*root)["defaultDisplayType"].get<std::string>();
         } else {
-            defaultDisplayType = kDefaultDisplayType;
+            defaultDisplayType = DEFAULT_DISPLAY_TYPE;
         }
     } catch (const std::exception& e) {
         log::Logw("Warning: Failed to parse property tag config: ", e.what());
-        propertyTagBaseClasses = kDefaults;
-        defaultDisplayType = kDefaultDisplayType;
+        propertyTagBaseClasses = DEFAULTS;
+        defaultDisplayType = DEFAULT_DISPLAY_TYPE;
     }
 }
 

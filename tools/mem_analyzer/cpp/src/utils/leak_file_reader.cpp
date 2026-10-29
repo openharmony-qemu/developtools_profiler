@@ -23,6 +23,7 @@ namespace mem_analyzer {
 namespace {
 
 constexpr int UINT64_BYTES = 8;
+constexpr int LEAK_FILE_HEADER_BYTES = 16;
 
 // 从二进制流读取 8 字节小端 uint64（不依赖主机字节序）
 bool ReadU64Le(std::ifstream& f, uint64_t& out)
@@ -81,16 +82,16 @@ std::unordered_set<uint64_t> ReadLeakFile(const std::string& path)
     // 校验文件长度，防止恶意/损坏文件声明超大 count 触发 OOM（除法防 count*16 溢出）
     f.seekg(0, std::ios::end);
     auto filesize = f.tellg();
-    f.seekg(16, std::ios::beg);  // 回到数据起始（magic 8 + count 8）
-    if (filesize < 16 || count > (static_cast<uint64_t>(filesize) - 16ULL) / 16ULL) {
+    f.seekg(LEAK_FILE_HEADER_BYTES, std::ios::beg);  // 回到数据起始（magic 8 + count 8）
+    if (filesize < LEAK_FILE_HEADER_BYTES || count > (static_cast<uint64_t>(filesize) - LEAK_FILE_HEADER_BYTES) / LEAK_FILE_HEADER_BYTES) {
         throw std::runtime_error("Leak file truncated: declared count " +
             std::to_string(count) + " exceeds file capacity (" +
             std::to_string(static_cast<uint64_t>(filesize)) + " bytes): " + path);
     }
 
     // 防超大文件本身触发 OOM：即使 count 合法，超大文件也会导致 reserve 海量内存
-    constexpr uint64_t kMaxLeakFileBytes = 4ULL * 1024 * 1024 * 1024;  // 4 GiB
-    if (static_cast<uint64_t>(filesize) > kMaxLeakFileBytes) {
+    constexpr uint64_t MAX_LEAK_FILE_BYTES = 4ULL * 1024 * 1024 * 1024;  // 4 GiB
+    if (static_cast<uint64_t>(filesize) > MAX_LEAK_FILE_BYTES) {
         throw std::runtime_error("Leak file too large (" +
             std::to_string(static_cast<uint64_t>(filesize)) + " bytes): " + path);
     }

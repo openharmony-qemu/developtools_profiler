@@ -211,19 +211,20 @@ bool CheckProfilerEnv()
 //                              behaviour; with unrecognized output present a
 //                              warning is printed, as the count is then not certain
 
-constexpr const char* kHdcMissingMsg =
+constexpr const char* HDC_MISSING_MSG =
     "Environment check failed: hdc command-line tool not found.";
-constexpr const char* kFallbackNotMatch =
+constexpr int EXIT_DIR_CREATE_FAILED = 2;
+constexpr const char* FALLBACK_NOT_MATCH =
     "[Fail]Not match target founded, check connect-key please";
-constexpr const char* kFallbackNeedKey =
+constexpr const char* FALLBACK_NEED_KEY =
     "[Fail]ExecuteCommand need connect-key? please confirm a device by help info";
-constexpr const char* kEmptyKeyMsg =
+constexpr const char* EMPTY_KEY_MSG =
     "Error: --device requires a non-empty value (device serial number).";
-constexpr const char* kAmbiguousListMsg =
+constexpr const char* AMBIGUOUS_LIST_MSG =
     "Error: cannot determine the target device: 'hdc list targets' returned an entry this "
     "tool cannot recognize, so another device may be attached as well.\n"
     "Name the device explicitly with --device to continue.";
-constexpr size_t kMaxProbeKeyLen = 256;   // longer values skip the probe command
+constexpr size_t MAX_PROBE_KEY_LEN = 256;   // longer values skip the probe command
 constexpr size_t MULTI_DEVICE_THRESHOLD = 2;
 
 // Surrounding whitespace is invisible in a shell and would otherwise make an
@@ -321,7 +322,7 @@ static bool ResolveDeviceTarget(const std::string& rawKey, bool keyProvided, std
         }
         // Our own wording must skip decorate_device_error(): that one filters the text
         // down to hdc's "[Fail]" lines, which would drop this message entirely.
-        msg = std::string(kEmptyKeyMsg) + "\n";
+        msg = std::string(EMPTY_KEY_MSG) + "\n";
         AppendTargetHints(msg, t.keys, "");   // keys is empty when hdc is missing
         return false;
     }
@@ -330,7 +331,7 @@ static bool ResolveDeviceTarget(const std::string& rawKey, bool keyProvided, std
     if (keyProvided) {
         auto t = HdcListTargets();
         if (t.spawnFailed) {
-            msg = kHdcMissingMsg;
+            msg = HDC_MISSING_MSG;
             return false;
         }
         bool found = false;
@@ -348,11 +349,11 @@ static bool ResolveDeviceTarget(const std::string& rawKey, bool keyProvided, std
                 return true;
             }
             std::string text;
-            if (key.size() <= kMaxProbeKeyLen) {
+            if (key.size() <= MAX_PROBE_KEY_LEN) {
                 text = HdcProbe(key);
             }
             if (!HdcIsDeviceFailure(text)) {
-                text = kFallbackNotMatch;
+                text = FALLBACK_NOT_MATCH;
             }
             msg = DecorateDeviceError(text, t.keys, key);
             return false;
@@ -374,7 +375,7 @@ static bool ResolveDeviceTarget(const std::string& rawKey, bool keyProvided, std
     if (!t.spawnFailed && t.keys.size() >= MULTI_DEVICE_THRESHOLD) {
         std::string text = HdcProbe("");
         if (!HdcIsDeviceFailure(text)) {
-            text = kFallbackNeedKey;
+            text = FALLBACK_NEED_KEY;
         }
         msg = DecorateDeviceError(text, t.keys, "");
         return false;
@@ -386,7 +387,7 @@ static bool ResolveDeviceTarget(const std::string& rawKey, bool keyProvided, std
     // Note this must come *after* the >=2 verdict above, which stays the more specific
     // message when the count already proves multiple devices.
     if (!t.spawnFailed && t.keys.size() == 1 && (t.unparsedLines > 0 || t.sawFail)) {
-        msg = std::string(kAmbiguousListMsg) + "\n";
+        msg = std::string(AMBIGUOUS_LIST_MSG) + "\n";
         AppendUnparsedLines(msg, t);
         AppendTargetHints(msg, t.keys, "");   // our wording: skip decorate_device_error()
         return false;
@@ -485,7 +486,7 @@ struct CaptureTypeInfo {
     const char* reportExtra;    // extra args for the report subcommand
 };
 
-const CaptureTypeInfo kCaptureTypes[] = {
+const CaptureTypeInfo CAPTURE_TYPES[] = {
     {"snapshot",     true,  false, "smaps", "jsleak",   ""},
     {"nativeheap",   false, false, "smaps", "trace",    " -c nativeheap"},
     {"nativeleaks",  false, false, "smaps", "trace",    " -c nativeheap"},
@@ -497,7 +498,7 @@ const CaptureTypeInfo kCaptureTypes[] = {
     {"thread",       false, false, "smaps", "trace",    " -c thread"},
     {"ashmem",       false, false, "smaps", "trace",    " -c ashmem"},
 };
-constexpr size_t kCaptureTypeCount = sizeof(kCaptureTypes) / sizeof(kCaptureTypes[0]);
+constexpr size_t CAPTURE_TYPE_COUNT = sizeof(CAPTURE_TYPES) / sizeof(CAPTURE_TYPES[0]);
 
 // Resolve a user-facing category string to a CaptureTypeInfo entry.
 // Supports full names and short aliases:
@@ -539,9 +540,9 @@ const CaptureTypeInfo* resolveCategory(const std::string& cat, std::string& errM
         errMsg = "invalid category '" + cat + "'. Valid: nativeheap/nh, nativeleaks/nl, snapshot/snap, global/gh, local/lh, fd, dma, thread, ashmem";
         return nullptr;
     }
-    for (size_t i = 0; i < kCaptureTypeCount; ++i) {
-        if (kCaptureTypes[i].flag == resolved) {
-            return &kCaptureTypes[i];
+    for (size_t i = 0; i < CAPTURE_TYPE_COUNT; ++i) {
+        if (CAPTURE_TYPES[i].flag == resolved) {
+            return &CAPTURE_TYPES[i];
         }
     }
     errMsg = "internal error: category '" + cat + "' resolved to unknown flag '" + resolved + "'";
@@ -818,11 +819,11 @@ static bool ResolveProcessName(const std::string& input, bool requireApp, std::s
 // platform the tool ships for.
 static std::string AsPathSegment(const std::string& name)
 {
-    static const std::string kIllegal = "/\\:*?\"<>|";
+    static const std::string ILLEGAL = "/\\:*?\"<>|";
     std::string out;
     out.reserve(name.size());
     for (const char c : name) {
-        out += (kIllegal.find(c) != std::string::npos) ? '_' : c;
+        out += (ILLEGAL.find(c) != std::string::npos) ? '_' : c;
     }
     while (!out.empty() && (out.back() == ' ' || out.back() == '.')) {
         out.pop_back();
@@ -835,13 +836,13 @@ static std::string AsPathSegment(const std::string& name)
 std::string ResolveMemAnalyzerBinary()
 {
 #if defined(_WIN32)
-    constexpr const char* kBinaryName = "mem-analyzer.exe";
+    constexpr const char* BINARY_NAME = "mem-analyzer.exe";
 #else
-    constexpr const char* kBinaryName = "mem-analyzer";
+    constexpr const char* BINARY_NAME = "mem-analyzer";
 #endif
     const std::string exeDir = proc::GetExecutableDir();
-    return exeDir.empty() ? kBinaryName :
-                           platform::JoinPath(exeDir, kBinaryName);
+    return exeDir.empty() ? BINARY_NAME :
+                           platform::JoinPath(exeDir, BINARY_NAME);
 }
 
 // Undo the nesting the analysis subcommands apply to their output: move
@@ -1070,7 +1071,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
     // create_directories also reports false for an existing directory.
     if (!platform::CreateDirectories(outputDir) && !platform::DirectoryExists(outputDir)) {
         log::Loge("Error: cannot create the output directory: ", outputDir);
-        return 2;
+        return EXIT_DIR_CREATE_FAILED;
     }
 
     // 8. Run hdc. The target was already echoed right after the gate (step 3.45).

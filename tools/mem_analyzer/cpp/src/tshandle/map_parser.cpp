@@ -27,6 +27,10 @@ namespace {
 constexpr int PROTO_FIXED64_BYTES = 8;
 constexpr int PROTO_DATA_TYPE_OFFSET = 2;
 constexpr int COMMENT_PREFIX_LEN = 2;
+constexpr int VARINT_BITS_PER_GROUP = 7;
+constexpr int VARINT_MAX_SHIFT = 64;
+constexpr int PROTO_FIELD_NUM_SHIFT = 3;
+constexpr int PROTO_WIRE_TYPE_LEN_DELIMITED = 2;
 } // namespace
 
 // ============================================================================
@@ -38,7 +42,7 @@ static bool ReadVarint(const uint8_t* data, size_t size, size_t& offset, uint64_
     value = 0;
     int shift = 0;
     while (offset < size) {
-        if (shift >= 64) {
+        if (shift >= VARINT_MAX_SHIFT) {
             return false;
         }
         uint8_t byte = data[offset];
@@ -47,7 +51,7 @@ static bool ReadVarint(const uint8_t* data, size_t size, size_t& offset, uint64_
         if ((byte & 0x80) == 0) {
             return true;
         }
-        shift += 7;
+        shift += VARINT_BITS_PER_GROUP;
     }
     return false;
 }
@@ -98,10 +102,10 @@ static ParseAddrResult ParseProtobufAddrToNodeId(const uint8_t* data, size_t siz
         if (!ReadVarint(data, size, offset, tag)) {
             break;
         }
-        int fieldNumber = static_cast<int>(tag >> 3);
+        int fieldNumber = static_cast<int>(tag >> PROTO_FIELD_NUM_SHIFT);
         int wireType = static_cast<int>(tag & 0x07);
 
-        if (fieldNumber == 1 && wireType == 2) {
+        if (fieldNumber == 1 && wireType == PROTO_WIRE_TYPE_LEN_DELIMITED) {
             uint64_t len = 0;
             if (!ReadVarint(data, size, offset, len)) {
                 break;
@@ -128,14 +132,14 @@ static ParseAddrResult ParseProtobufAddrToNodeId(const uint8_t* data, size_t siz
                 int wt = static_cast<int>(fieldTag & 0x07);
 
                 if (fn == 1 && wt == 1) {
-                    if (offset + 8 > entryEnd) {
+                    if (offset + PROTO_FIXED64_BYTES > entryEnd) {
                         break;
                     }
                     uint64_t val = 0;
-                    std::memcpy(&val, data + offset, 8);
+                    std::memcpy(&val, data + offset, PROTO_FIXED64_BYTES);
                     handleAddress = val;
                     hasHandle = true;
-                    offset += 8;
+                    offset += PROTO_FIXED64_BYTES;
                 } else if (fn == 2 && wt == 0) {
                     if (!ReadVarint(data, entryEnd, offset, nodeId)) {
                         break;
@@ -294,8 +298,8 @@ ParseAddrResult ParseAddrFile(const std::string& filePath)
     size_t file_size = static_cast<size_t>(file.tellg());
     file.seekg(0);
 
-    constexpr size_t kMaxAddrFileBytes = 4ULL * 1024 * 1024 * 1024;  // 4 GiB，防恶意超大 addr 文件 OOM
-    if (file_size > kMaxAddrFileBytes) {
+    constexpr size_t MAX_ADDR_FILE_BYTES = 4ULL * 1024 * 1024 * 1024;  // 4 GiB，防恶意超大 addr 文件 OOM
+    if (file_size > MAX_ADDR_FILE_BYTES) {
         throw std::runtime_error("addr file too large (" + std::to_string(file_size) +
                                  " bytes): " + filePath);
     }

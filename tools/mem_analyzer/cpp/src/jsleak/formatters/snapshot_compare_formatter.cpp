@@ -28,6 +28,8 @@ namespace mem_analyzer {
 
 namespace {
 
+constexpr int JSON_INDENT_SPACES = 2;
+
 std::string CompareRenderJs()
 {
     return R"JS(
@@ -195,7 +197,7 @@ std::string JsleakWriteCompareJson(const json& report, const std::string& outDir
     const std::string outPath =
         platform::JoinPath(outDir, baselineStem + "-vs-" + targetStem + ".json");
     platform::CreateDirectories(outDir);
-    if (!WriteCompareFile(outPath, report.dump(2))) {
+    if (!WriteCompareFile(outPath, report.dump(JSON_INDENT_SPACES))) {
         return {};
     }
     log::Logok("Output written to: ", outPath);

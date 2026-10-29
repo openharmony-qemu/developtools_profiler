@@ -46,11 +46,11 @@ std::string FormatTreePct(int64_t part, int64_t total)
 
 // 树表默认展开阈值（百分比，相对根节点总大小）：占比高于它的节点默认展开，
 // 使主干分支一进来就可见；小于等于它的分支收起，避免一开始就铺开上百行。
-constexpr double kIttDefaultExpandPct = 15.0;
+constexpr double ITT_DEFAULT_EXPAND_PCT = 15.0;
 
 // 默认展开的最大层数（根节点为第 0 层）：占比再高的分支也不会自动展开到更深，
 // 避免链特别深时一开始就铺开过多行。达到该深度的节点一律收起，仍可手动展开。
-constexpr int kIttMaxExpandDepth = 8;
+constexpr int ITT_MAX_EXPAND_DEPTH = 8;
 
 // 层级配色表：每一层一个颜色。竖引导线取「该线所代表的层」的颜色，节点 +/- 取
 // 「该节点所在层」的颜色，二者同色，因此顺着一条线的颜色就能找到它属于哪一层。
@@ -102,14 +102,14 @@ void EmitIcicleTreeRows(const json& node, const std::string& tableId,
     const int64_t count = node.value("cnt", static_cast<int64_t>(0));
     const bool hasChildren = node.contains("c") && node["c"].is_array() && !node["c"].empty();
     // 默认：占比超过阈值的节点展开（根节点占比恒为 100%，自然也展开），其余有子节点的层级收起；
-    // 同时限制默认展开的最大层数，超过 kIttMaxExpandDepth 的节点即使占比达标也收起。
+    // 同时限制默认展开的最大层数，超过 ITT_MAX_EXPAND_DEPTH 的节点即使占比达标也收起。
     // 占比按「子树内最大占比」判定，使超过阈值的子孙链不会被未达阈值的父级折叠隐藏。
     const double pct = rootSize > 0 ?
                            PERCENTAGE_SCALE * static_cast<double>(IttSubtreeMaxSize(node)) /
                                  static_cast<double>(rootSize) :
                            0.0;
     const bool collapsed =
-        hasChildren && depth >= 1 && (pct <= kIttDefaultExpandPct || depth >= kIttMaxExpandDepth);
+        hasChildren && depth >= 1 && (pct <= ITT_DEFAULT_EXPAND_PCT || depth >= ITT_MAX_EXPAND_DEPTH);
 
     // 折叠态的唯一来源是 itt-collapsed 类，初始渲染就必须打上：
     // 否则首次点击时 classList.toggle 反而会「加上」该类，表现为点了仍是 "+"，

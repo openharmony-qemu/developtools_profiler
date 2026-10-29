@@ -204,8 +204,8 @@ bool NameCacheIndex::IndexNameCacheFile(const std::string& filePath)
             continue;
         }
 
-        static const char* kCaches[] = {"IdentifierCache", "MemberMethodCache", "PropertyCache"};
-        for (const char* cacheName : kCaches) {
+        static const char* CACHES[] = {"IdentifierCache", "MemberMethodCache", "PropertyCache"};
+        for (const char* cacheName : CACHES) {
             auto cacheIt = fileObj.find(cacheName);
             if (cacheIt != fileObj.end()) {
                 IndexCacheObject(cacheIt.value(), fileOriginalPath, byObfuscated, byOriginal);

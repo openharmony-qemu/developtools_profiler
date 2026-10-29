@@ -347,16 +347,16 @@ bool RestoreFunctionNameInSuffix(const NameCacheIndex* ncache, std::string& valu
     if (ncache == nullptr) {
         return false;
     }
-    const size_t kLine = value.find("(line:");
-    if (kLine == std::string::npos || kLine == 0) {
+    const size_t LINE = value.find("(line:");
+    if (LINE == std::string::npos || LINE == 0) {
         return false;
     }
     // 取 '(' 之前最后一个 '#'，其后的子串即为混淆函数名（如 "#d1(" → "d1"）
-    const size_t hash = value.rfind('#', kLine - 1);
-    if (hash == std::string::npos || hash + 1 >= kLine) {
+    const size_t hash = value.rfind('#', LINE - 1);
+    if (hash == std::string::npos || hash + 1 >= LINE) {
         return false;
     }
-    const size_t nameLen = kLine - hash - 1;  // '#' 与 '(' 之间的函数名长度
+    const size_t nameLen = LINE - hash - 1;  // '#' 与 '(' 之间的函数名长度
     if (nameLen == 0) {
         return false;
     }
@@ -440,10 +440,10 @@ std::string DeobfuscateOneString(const std::string& value,
             if (entry != nullptr && !entry->sourcePath.empty()) {
                 std::string suffix = (hashPos == std::string::npos) ? "" : result.substr(hashPos);
                 // 映射 (line:N)：取 N，若该行在 mappings 中有映射则替换为源码行号
-                const std::string kLinePrefix = "(line:";
-                const size_t lp = suffix.find(kLinePrefix);
+                const std::string LINE_PREFIX = "(line:";
+                const size_t lp = suffix.find(LINE_PREFIX);
                 if (lp != std::string::npos) {
-                    const size_t numBegin = lp + kLinePrefix.size();
+                    const size_t numBegin = lp + LINE_PREFIX.size();
                     const size_t numEnd = suffix.find(')', numBegin);
                     if (numEnd != std::string::npos) {
                         const std::string numStr = suffix.substr(numBegin, numEnd - numBegin);
@@ -514,13 +514,13 @@ bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& ou
     }
 
     // 1. 流式定位 "strings": 标记及其后的 '['
-    const std::string kMarker = "\"strings\":";
-    size_t markPos = FindMarkerOffset(in, kMarker, 0, file_size);
+    const std::string MARKER = "\"strings\":";
+    size_t markPos = FindMarkerOffset(in, MARKER, 0, file_size);
     if (markPos == std::string::npos) {
         log::Loge("Error: No \"strings\" field in heapsnapshot file: ", inputPath);
         return false;
     }
-    size_t openBracket = FindCharAfter(in, '[', markPos + kMarker.size(), file_size);
+    size_t openBracket = FindCharAfter(in, '[', markPos + MARKER.size(), file_size);
     if (openBracket == std::string::npos) {
         log::Loge("Error: \"strings\" is not an array in heapsnapshot file: ", inputPath);
         return false;

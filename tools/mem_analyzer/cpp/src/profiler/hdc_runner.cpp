@@ -221,7 +221,7 @@ struct MemRowSpec {
     bool pssOnly;
 };
 
-const MemRowSpec kMemRows[] = {
+const MemRowSpec MEM_ROWS[] = {
     {{"Total"},             &ProcessMetrics::pssKb,             true},
     {{"native", "heap"},    &ProcessMetrics::nativeHeapKb,     false},
     {{"ark", "ts", "heap"}, &ProcessMetrics::arktsHeapKb,      false},
@@ -252,7 +252,7 @@ ProcessMetrics ParseHidumperMem(const std::string& output)
         }
         // Match the row label against the spec table (first token + the rest).
         const MemRowSpec* spec = nullptr;
-        for (const auto& s : kMemRows) {
+        for (const auto& s : MEM_ROWS) {
             if (s.label[0] != first) {
                 continue;
             }
@@ -354,7 +354,7 @@ ProcessMetrics SampleProcessMetrics(const std::string& pid, long long timeoutMs 
 // fast before a capture / poll loop runs to completion.
 std::string DetectPermissionError(const std::string& output)
 {
-    static const char* kMarkers[] = {
+    static const char* MARKERS[] = {
         "permission check failed",
         "debug-signed application",
         "permission denied",
@@ -372,7 +372,7 @@ std::string DetectPermissionError(const std::string& output)
 
     for (size_t i = 0; i < lines.size(); ++i) {
         bool hit = false;
-        for (const char* m : kMarkers) {
+        for (const char* m : MARKERS) {
             if (ContainsCi(lines[i], m)) {
                 hit = true;
                 break;
@@ -943,10 +943,10 @@ bool LaunchDeviceAppAndWait(const std::string& packageName)
 }
 
 // Device-side path where the hiprofiler config file is pushed via hdc file send.
-constexpr const char* kDeviceConfigPath = "/data/local/tmp/memory_analyzer_hiprofiler.config";
+constexpr const char* DEVICE_CONFIG_PATH = "/data/local/tmp/memory_analyzer_hiprofiler.config";
 
 // Device directory where hiprofiler writes its result zip files.
-constexpr const char* kHiprofilerZipDir = "/data/local/tmp";
+constexpr const char* HIPROFILER_ZIP_DIR = "/data/local/tmp";
 
 // Detect async "hiprofiler_cmd start" mode: `start` captures on the device and
 // we must explicitly run `hiprofiler_cmd stop` when the countdown expires to
@@ -991,7 +991,7 @@ bool PushDeviceConfig(const std::string& deviceConfigContent, std::string& local
     cfgOfs << deviceConfigContent;
     cfgOfs.close();
 
-    std::string sendCmd = HdcFileSend(localConfigFile, kDeviceConfigPath) + " 2>&1";
+    std::string sendCmd = HdcFileSend(localConfigFile, DEVICE_CONFIG_PATH) + " 2>&1";
     CapturedCmd sendCap = CaptureCommand(sendCmd);
     if (!sendCap.spawned || sendCap.exitCode != 0) {
         result.ok = false;
@@ -1530,7 +1530,7 @@ bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode, PreCaptur
     // hiprofiler completion). Other capture types (-n/-f/-d) don't produce a
     // hiprofiler_data_*.zip, so they skip this and just pull the -o file.
     if (!opts.remoteOutputPath.empty() && opts.waitForZip) {
-        pre.hiprofilerZipBaseline = listHiprofilerZips(kHiprofilerZipDir);
+        pre.hiprofilerZipBaseline = listHiprofilerZips(HIPROFILER_ZIP_DIR);
     }
 
     // hiprofiler mode: do the initial process check BEFORE starting the worker
@@ -2322,7 +2322,7 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
         if (opts.waitForZip) {
             const long long hiprofilerWaitTimeoutS = 3;
             const std::string newZipPath = WaitForHiprofilerZip(
-                hiprofilerZipBaseline, kHiprofilerZipDir, hiprofilerWaitTimeoutS);
+                hiprofilerZipBaseline, HIPROFILER_ZIP_DIR, hiprofilerWaitTimeoutS);
             if (!newZipPath.empty()) {
                 fileToPull = newZipPath;
             } else {
@@ -2361,7 +2361,7 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
             }
             const long long leaksWaitTimeoutS = 10;
             const std::string leaksRemote = WaitForNativeleaksFile(
-                pid, kHiprofilerZipDir, leaksWaitTimeoutS);
+                pid, HIPROFILER_ZIP_DIR, leaksWaitTimeoutS);
             if (!leaksRemote.empty()) {
                 PullOutcome lpo = PullFile(leaksRemote, opts.outputDir);
                 if (lpo.ok) {
@@ -2392,17 +2392,17 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
 // ── continuous snapshot session (-c snapshot with an explicit -t) ────────────
 
 // Memory sampling interval, matching the other capture types' countdown.
-constexpr int kSnapshotSampleIntervalS = 5;
+constexpr int SNAPSHOT_SAMPLE_INTERVAL_S = 5;
 // Number of consecutive samples above the recorded ArkTS-heap peak that
 // trigger a snapshot export.
-constexpr int kSnapshotPeakTrigger = 10;
+constexpr int SNAPSHOT_PEAK_TRIGGER = 10;
 // How far (in KB) the ArkTS heap must exceed the recorded peak before a sample
 // counts as above it, so that small fluctuations don't trigger an export.
-constexpr long long kSnapshotPeakGrowthKb = 50 * 1024;
+constexpr long long SNAPSHOT_PEAK_GROWTH_KB = 50 * 1024;
 // Upper bound for one device-side snapshot command.
-constexpr long long kSnapshotCommandTimeoutMs = 120000;
+constexpr long long SNAPSHOT_COMMAND_TIMEOUT_MS = 120000;
 // Upper bound for waiting until a generated snapshot file stops growing.
-constexpr long long kSnapshotPollTimeoutS = 120;
+constexpr long long SNAPSHOT_POLL_TIMEOUT_S = 120;
 
 // Export one snapshot: re-baseline the device result dir, run the snapshot
 // command, then wait for the generated file(s) to stabilize and pull them into
@@ -2425,7 +2425,7 @@ bool exportSnapshotOnce(const HdcRunOptions& opts,
     // Re-baseline right before the command so this call only picks up the
     // file(s) its own command generates.
     const auto baseline = listDirFileSizes(opts.resultDir, "hidumper-jsheap");
-    CapturedCmd cap = CaptureCommand(command, kSnapshotCommandTimeoutMs);
+    CapturedCmd cap = CaptureCommand(command, SNAPSHOT_COMMAND_TIMEOUT_MS);
     output = cap.output;
     const std::string perr = DetectPermissionError(cap.output);
     if (!perr.empty()) {
@@ -2446,7 +2446,7 @@ bool exportSnapshotOnce(const HdcRunOptions& opts,
         return false;
     }
     pollAndPullSnapshot(opts.resultDir, opts.outputDir, baseline,
-        kSnapshotPollTimeoutS, files, status, role);
+        SNAPSHOT_POLL_TIMEOUT_S, files, status, role);
     return !files.empty();
 }
 
@@ -2468,7 +2468,7 @@ void RemoveSnapshotArtifacts(const std::vector<std::string>& files)
 // `-c snapshot` with an explicit `-t`: keep monitoring for `duration` seconds
 // like the other capture types (same periodic memory line) and export a
 // snapshot at the start, at the end, and whenever the ArkTS heap stays at least
-// kSnapshotPeakGrowthKb above its recorded peak for kSnapshotPeakTrigger
+// SNAPSHOT_PEAK_GROWTH_KB above its recorded peak for SNAPSHOT_PEAK_TRIGGER
 // consecutive samples. Ctrl+C ends the session and still exports the final
 // snapshot.
 //
@@ -2579,15 +2579,15 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
             peakSeeded = true;
         }
 
-        // ArkTS heap at least kSnapshotPeakGrowthKb above the recorded peak
-        // for kSnapshotPeakTrigger consecutive samples: export a snapshot and
+        // ArkTS heap at least SNAPSHOT_PEAK_GROWTH_KB above the recorded peak
+        // for SNAPSHOT_PEAK_TRIGGER consecutive samples: export a snapshot and
         // lift the peak to it.
         if (metrics.valid && peakSeeded) {
-            if (metrics.arktsHeapKb > arktsPeakKb + kSnapshotPeakGrowthKb) {
+            if (metrics.arktsHeapKb > arktsPeakKb + SNAPSHOT_PEAK_GROWTH_KB) {
                 ++samplesAbovePeak;
-                if (samplesAbovePeak >= kSnapshotPeakTrigger) {
+                if (samplesAbovePeak >= SNAPSHOT_PEAK_TRIGGER) {
                     log::Logi("ArkTS heap stayed above the recorded peak by more than ",
-                        (kSnapshotPeakGrowthKb / KB_PER_MB), " MB for ",
+                        (SNAPSHOT_PEAK_GROWTH_KB / KB_PER_MB), " MB for ",
                         samplesAbovePeak,
                         " consecutive samples; exporting a snapshot...");
                     // The peak is lifted as soon as the export is decided, so
@@ -2618,12 +2618,12 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
 
         // Also wake up when the device is lost, so the check above runs at the
         // next tick instead of sleeping out the remaining interval (pinned target).
-        SleepTicks(kSnapshotSampleIntervalS * TICKS_PER_SECOND, []() { return gInterruptRequested != 0 || DeviceLost(); });
+        SleepTicks(SNAPSHOT_SAMPLE_INTERVAL_S * TICKS_PER_SECOND, []() { return gInterruptRequested != 0 || DeviceLost(); });
     }
 
     // ── end-of-session snapshot ─────────────────────────────────────────────
     // Pinned target: once the device is gone this export is certain to fail — it
-    // would spend one more hdc round-trip (up to kSnapshotCommandTimeoutMs) just to
+    // would spend one more hdc round-trip (up to SNAPSHOT_COMMAND_TIMEOUT_MS) just to
     // print a warning. Skip it, keep the snapshots exported above, and record the
     // device failure as the reason the session ended. Untargeted runs never set the
     // flag, so their behaviour and output are unchanged.

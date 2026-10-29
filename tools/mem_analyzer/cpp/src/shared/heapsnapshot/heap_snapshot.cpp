@@ -66,6 +66,8 @@ constexpr int REF_CHAIN_PATH_RESERVE = 64;
 constexpr int REF_CHAIN_INDICES_RESERVE = 32;
 constexpr int UNICODE_ESCAPE_LEN = 6;
 constexpr int NODE_NAME_DISPLAY_MAX_LEN = 20;
+constexpr int NODES_MARKER_LEN = 8;
+constexpr int STRINGS_MARKER_LEN = 10;
 
 // 快速判断字符串是否为纯数字（内联）
 inline bool IsNumericString(const std::string& s)
@@ -153,8 +155,8 @@ std::string HeapSnapshot::GetJsObjectExtName(uint32_t nodeIndex) const
 // 获取 String 扩展名
 std::string HeapSnapshot::GetStringExtName(uint32_t nodeIndex) const
 {
-    static constexpr uint32_t kStringSize10KB = 10 * 1024;
-    static constexpr uint32_t kStringSize1MB = 1024 * 1024;
+    static constexpr uint32_t STRING_SIZE_10KB = 10 * 1024;
+    static constexpr uint32_t STRING_SIZE_1MB = 1024 * 1024;
 
     uint32_t base = nodeIndex * nodeFieldsCount;
     uint32_t size = nodes[base + nodeSelfSizeOffset];
@@ -165,9 +167,9 @@ std::string HeapSnapshot::GetStringExtName(uint32_t nodeIndex) const
 
     // 按大小区间归类展示，避免精确 size 导致字符串对象过于分散
     const char* sizeRange = "<10KB";
-    if (size >= kStringSize1MB) {
+    if (size >= STRING_SIZE_1MB) {
         sizeRange = ">=1MB";
-    } else if (size >= kStringSize10KB) {
+    } else if (size >= STRING_SIZE_10KB) {
         sizeRange = ">=10KB && <1MB";
     }
 
@@ -893,7 +895,7 @@ static void ParseSnapshotMeta(HeapSnapshot& snapshot,
 {
     // Locate the snapshot metadata JSON between "snapshot": and "nodes":
     size_t snapIdx = headBuf.find("\"snapshot\":");
-    nodesArrayBracket = headBuf.find('[', nodesMarkerPos + 8);
+    nodesArrayBracket = headBuf.find('[', nodesMarkerPos + NODES_MARKER_LEN);
     size_t metaEnd = headBuf.rfind('}', nodesArrayBracket);
     if (metaEnd == std::string::npos) {
         throw std::runtime_error("cannot find snapshot metadata end");
@@ -1122,7 +1124,7 @@ static void ParseStringsTable(HeapSnapshot& snapshot, std::ifstream& file,
         if (markPos != std::string::npos) {
             std::string buf(STRINGS_SEARCH_BUF_SIZE, '\0');
             file.clear();
-            file.seekg(markPos + 10);
+            file.seekg(markPos + STRINGS_MARKER_LEN);
             file.read(&buf[0], STRINGS_SEARCH_BUF_SIZE);
             size_t bytes = file.gcount();
             std::string view(buf.data(), bytes);

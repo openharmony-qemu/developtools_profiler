@@ -29,8 +29,8 @@ namespace mem_analyzer {
 
 namespace {
 
-constexpr uint32_t kHeaderSize = 1024;
-constexpr uint64_t kHeaderMagic = 0x464F5250534F484FULL; // 小端 == "OHOSPROF"
+constexpr uint32_t HEADER_SIZE = 1024;
+constexpr uint64_t HEADER_MAGIC = 0x464F5250534F484FULL; // 小端 == "OHOSPROF"
 
 constexpr size_t OFFSET_LENGTH = 8;
 constexpr size_t OFFSET_VERSION = 16;
@@ -40,6 +40,11 @@ constexpr size_t OFFSET_REALTIME_NS = 68;
 constexpr size_t OFFSET_DURATION_NS = 244;
 constexpr size_t LEN_PREFIX_SIZE = 4;
 constexpr int VARINT_MAX_SHIFT = 64;
+constexpr int VARINT_BITS_PER_GROUP = 7;
+constexpr int PROTO_FIELD_NUM_SHIFT = 3;
+constexpr int PROTO_FIXED64_BYTES = 8;
+constexpr int PROTO_WIRE_TYPE_LEN_DELIMITED = 2;
+constexpr int PROTO_WIRE_TYPE_FIXED32 = 5;
 
 enum class HtraceDataType : uint32_t {
     PROTOBUF_BIN = 0,    // HIPROFILER_PROTOBUF_BIN，标准 HiProfiler protobuf 二进制
@@ -95,7 +100,7 @@ uint64_t ReadVarint(const uint8_t* buf, size_t size, size_t& pos)
         if (!(b & 0x80)) {
             return result;
         }
-        shift += 7;
+        shift += VARINT_BITS_PER_GROUP;
     }
     throw std::runtime_error("varint truncated or too long");
 }
@@ -114,20 +119,20 @@ std::vector<Field> ParseFields(const uint8_t* buf, size_t size)
     while (pos < size) {
         uint64_t tag = ReadVarint(buf, size, pos);
         Field f;
-        f.number = static_cast<uint32_t>(tag >> 3);
+        f.number = static_cast<uint32_t>(tag >> PROTO_FIELD_NUM_SHIFT);
         f.wireType = tag & 0x07;
         switch (f.wireType) {
             case 0:
                 f.varint = ReadVarint(buf, size, pos);
                 break;
             case 1:
-                if (pos + 8 > size) {
+                if (pos + PROTO_FIXED64_BYTES > size) {
                     throw std::runtime_error("fixed64 out of range");
                 }
                 f.varint = ReadU64(buf + pos);
-                pos += 8;
+                pos += PROTO_FIXED64_BYTES;
                 break;
-            case 2: {
+            case PROTO_WIRE_TYPE_LEN_DELIMITED: {
                 uint64_t len = ReadVarint(buf, size, pos);
                 if (len > size - pos) {
                     throw std::runtime_error("length-delimited out of range");
@@ -136,7 +141,7 @@ std::vector<Field> ParseFields(const uint8_t* buf, size_t size)
                 pos += static_cast<size_t>(len);
                 break;
             }
-            case 5:
+            case PROTO_WIRE_TYPE_FIXED32:
                 if (pos + 4 > size) {
                     throw std::runtime_error("fixed32 out of range");
                 }
@@ -180,7 +185,7 @@ struct SchemaEntry {
     Kind kind;
 };
 
-const SchemaEntry kConfigSchema[] = {
+const SchemaEntry CONFIG_SCHEMA[] = {
     {1,  "pid",                           Kind::K_INT},
     {2,  "save_file",                     Kind::K_BOOL},
     {3,  "file_name",                     Kind::K_STRING},
@@ -230,7 +235,7 @@ const SchemaEntry kConfigSchema[] = {
 
 Kind SchemaKind(uint32_t number)
 {
-    for (const auto& e : kConfigSchema) {
+    for (const auto& e : CONFIG_SCHEMA) {
         if (e.number == number) {
             return e.kind;
         }
@@ -240,7 +245,7 @@ Kind SchemaKind(uint32_t number)
 
 bool InSchema(uint32_t number)
 {
-    for (const auto& e : kConfigSchema) {
+    for (const auto& e : CONFIG_SCHEMA) {
         if (e.number == number) {
             return true;
         }
@@ -409,14 +414,14 @@ bool ReadHeader(const std::string& path, HtraceHeaderInfo& out)
         return false;
     }
 
-    uint8_t header[kHeaderSize];
-    ifs.read(reinterpret_cast<char*>(header), static_cast<std::streamsize>(kHeaderSize));
-    if (ifs.gcount() != static_cast<std::streamsize>(kHeaderSize)) {
+    uint8_t header[HEADER_SIZE];
+    ifs.read(reinterpret_cast<char*>(header), static_cast<std::streamsize>(HEADER_SIZE));
+    if (ifs.gcount() != static_cast<std::streamsize>(HEADER_SIZE)) {
         return false;
     }
 
     out.magic = ReadU64(header + 0);
-    out.valid = (out.magic == kHeaderMagic);
+    out.valid = (out.magic == HEADER_MAGIC);
     out.length = ReadU64(header + OFFSET_LENGTH);
     out.version = ReadU32(header + OFFSET_VERSION);
     out.dataType = ReadU32(header + OFFSET_DATA_TYPE);
@@ -464,11 +469,11 @@ bool HtraceReader::ReadNativehookConfig(const std::string& path, HtraceNativeHoo
         return false;
     }
 
-    ifs.seekg(static_cast<std::streamoff>(kHeaderSize));
+    ifs.seekg(static_cast<std::streamoff>(HEADER_SIZE));
 
     // 记录文件末尾位置，用于校验每个 length-delimited 字段的长度上界。
     const std::streampos fileEnd = ifs.seekg(0, std::ios::end).tellg();
-    ifs.seekg(static_cast<std::streamoff>(kHeaderSize));
+    ifs.seekg(static_cast<std::streamoff>(HEADER_SIZE));
 
     while (true) {
         uint8_t lenBuf[LEN_PREFIX_SIZE];

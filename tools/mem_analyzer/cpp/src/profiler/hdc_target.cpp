@@ -48,14 +48,14 @@ void CheckTargetResolved(const char* fn)
     gTargetResolved = true;
 }
 
-constexpr size_t kMaxKeyLen = 64;  // max length of a usable device id
+constexpr size_t MAX_KEY_LEN = 64;  // max length of a usable device id
 
 // Usable device id shape: a device serial number is alnum; '.' ':' '_' '-' are tolerated
 // as well, so an unusual id is still handed to hdc (which owns the final verdict) instead
 // of being rejected here.
 bool LooksLikeKey(const std::string& tok)
 {
-    if (tok.empty() || tok.size() > kMaxKeyLen) {
+    if (tok.empty() || tok.size() > MAX_KEY_LEN) {
         return false;
     }
     for (unsigned char c : tok) {

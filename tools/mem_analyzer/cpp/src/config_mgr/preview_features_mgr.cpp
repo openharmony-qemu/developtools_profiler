@@ -26,8 +26,9 @@ using json = nlohmann::json;
 namespace mem_analyzer {
 
 namespace {
-constexpr const char* kConfigDir = "config";
-constexpr const char* kConfigFileName = "preview_features.json";
+constexpr const char* CONFIG_DIR = "config";
+constexpr int JSON_INDENT_SPACES = 2;
+constexpr const char* CONFIG_FILE_NAME = "preview_features.json";
 
 bool IsRegistered(const std::string& featureId)
 {
@@ -53,10 +54,10 @@ PreviewFeaturesMgr& PreviewFeaturesMgr::Instance()
 const std::vector<PreviewFeatureInfo>& PreviewFeaturesMgr::Registry()
 {
     // 受预览特性开关逐项管控的功能清单，新增预览特性时在此登记
-    static const std::vector<PreviewFeatureInfo> kFeatures = {
+    static const std::vector<PreviewFeatureInfo> FEATURES = {
         {"napi_wrap", "Analyze shortest reference chains of JSWrappedNapiObject nodes in jsleak snapshot reports"},
     };
-    return kFeatures;
+    return FEATURES;
 }
 
 // ===== 配置文件定位 =====
@@ -65,7 +66,7 @@ std::string PreviewFeaturesMgr::ResolveConfigPath()
 {
     // 固定目录：可执行文件同级的 config/preview_features.json
     // （该文件需要可写，save() 会在目录缺失时按需创建）
-    const std::string rel = platform::JoinPath(kConfigDir, kConfigFileName);
+    const std::string rel = platform::JoinPath(CONFIG_DIR, CONFIG_FILE_NAME);
     const std::string exeDir = platform::GetExecutableDir();
     if (exeDir.empty()) {
         return rel;
@@ -143,7 +144,7 @@ bool PreviewFeaturesMgr::Save(std::string& err) const
 
     try {
         auto ofs = OpenOfstream(configPath_);
-        ofs << j.dump(2) << std::endl;
+        ofs << j.dump(JSON_INDENT_SPACES) << std::endl;
         if (!ofs) {
             err = "failed to write " + configPath_;
             return false;

@@ -28,6 +28,7 @@ namespace mem_analyzer {
 
 namespace {
 constexpr int RANDOM_HEX_WIDTH = 6;
+constexpr int MAX_DIR_CREATE_RETRIES = 10;
 } // namespace
 
 static std::string sRoot;  // per-process root, cached
@@ -72,7 +73,7 @@ TempDir::TempDir(const std::string& prefix, bool quiet) : quiet_(quiet)
     auto root = SystemTempRoot();
     EnsureRootExists(root);
 
-    for (int attempt = 0; attempt < 10; ++attempt) {
+    for (int attempt = 0; attempt < MAX_DIR_CREATE_RETRIES; ++attempt) {
         auto candidate = PathToUtf8(PathFromUtf8(root) / (prefix + "." + GenerateRandomHex()));
         if (platform::CreateDirectory(candidate)) {
             path_ = candidate;
