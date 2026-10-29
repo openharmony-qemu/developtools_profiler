@@ -31,8 +31,8 @@
 #if !defined(_WIN32)
 #include <unistd.h>   // fork, exec, read, usleep
 #include <poll.h>     // poll
-#include <signal.h>   // kill, SIGTERM, SIGKILL
-#include <errno.h>    // errno, EINTR
+#include <csignal>    // kill, SIGTERM, SIGKILL
+#include <cerrno>     // errno, EINTR
 #include <sys/wait.h> // WIFEXITED, WEXITSTATUS
 #endif
 
@@ -250,7 +250,7 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
     cap.spawned = true;
 
     std::string output;
-    auto drainAvailable = [&]() {
+    auto drainAvailable = [&hRead, &output]() {
         for (;;) {
             DWORD avail = 0;
             if (!PeekNamedPipe(hRead, nullptr, 0, nullptr, &avail, nullptr)) {

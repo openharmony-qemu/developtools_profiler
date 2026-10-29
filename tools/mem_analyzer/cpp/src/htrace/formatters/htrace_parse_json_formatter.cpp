@@ -34,7 +34,7 @@ json BuildSummary(const TraceDB& db)
 {
     const auto& ts = db.meta.typeSizes;
 
-    auto getTypeSize = [&](const char* name) -> long long {
+    auto getTypeSize = [&ts](const char* name) -> long long {
         auto et = HtraceEventTypeFromName(name);
         if (et == HtraceEventType::UNKNOWN) {
             return 0;

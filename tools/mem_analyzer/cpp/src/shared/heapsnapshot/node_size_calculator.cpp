@@ -225,7 +225,7 @@ static PostOrderResult ComputeDfsPostOrder(DomContext& ctx, const std::vector<ui
     // ---- Edge filter for DFS reachability ----
     // Combines isEssentialEdge (weak + non-root shortcut) with page-flag exclusion.
     // This is identical to the filter used in the LT DFS (Step 3a).
-    auto isTraversable = [&](uint32_t sourceNode, size_t ptr) -> bool {
+    auto isTraversable = [&ctx, &pageFlags](uint32_t sourceNode, size_t ptr) -> bool {
         int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edgeTypeOff)]);
 
         // isEssentialEdge: weak edges are always excluded;
@@ -435,7 +435,7 @@ static std::vector<uint32_t> computeLtDominators(
     constexpr uint32_t pageObjectFlag = 1;
 
     // ---- Edge filter for the LT DFS (same as post-order DFS) ----
-    auto isTraversable = [&](uint32_t sourceNode, size_t ptr) -> bool {
+    auto isTraversable = [&ctx, &pageFlags](uint32_t sourceNode, size_t ptr) -> bool {
         int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edgeTypeOff)]);
         if (ctx.weakType >= 0 && t == ctx.weakType) {
             return false;
@@ -538,7 +538,7 @@ static std::vector<uint32_t> computeLtDominators(
     // on the path from v to the DSU root.
     std::vector<uint32_t> ltCompressPath(ctx.nodeCount);
     std::function<void(uint32_t)> ltCompress;
-    ltCompress = [&](uint32_t v) {
+    ltCompress = [&ltAncestor, &ltCompressPath, &ltSemi, &ltLabel](uint32_t v) {
         // 1) Walk up the ancestor chain until reaching a node whose ancestor
         //    is a DSU root (lt_ancestor[lt_ancestor[cur]] == 0), recording
         //    the path for the post-order update below.
@@ -562,7 +562,7 @@ static std::vector<uint32_t> computeLtDominators(
 
     // eval(v): returns the node with minimal semi-dominator on the path
     // from v to the root of its DSU tree.
-    auto ltEval = [&](uint32_t v) -> uint32_t {
+    auto ltEval = [&ltAncestor, &ltLabel, &ltSemi, &ltCompress](uint32_t v) -> uint32_t {
         if (ltAncestor[v] == 0) { // v is a DSU root
             return ltLabel[v];
         }
@@ -576,7 +576,7 @@ static std::vector<uint32_t> computeLtDominators(
     };
 
     // link(v, w): makes v the parent of w in the DSU forest.
-    auto ltLink = [&](uint32_t v, uint32_t w) {
+    auto ltLink = [&ltAncestor](uint32_t v, uint32_t w) {
         ltAncestor[w] = v;
     };
 

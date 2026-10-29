@@ -310,23 +310,23 @@ bool DecodeConfig(const std::string& data, HtraceNativeHookConfig& out)
         }
     }
 
-    auto asBool = [&](uint32_t n) {
+    auto asBool = [&single](uint32_t n) {
         auto it = single.find(n);
         return it != single.end() && it->second->varint != 0;
     };
-    auto asInt = [&](uint32_t n) {
+    auto asInt = [&single](uint32_t n) {
         auto it = single.find(n);
         return it != single.end() ? AsInt32(it->second->varint) : 0;
     };
-    auto asUint = [&](uint32_t n) {
+    auto asUint = [&single](uint32_t n) {
         auto it = single.find(n);
         return it != single.end() ? static_cast<uint32_t>(it->second->varint) : 0u;
     };
-    auto asStr = [&](uint32_t n) {
+    auto asStr = [&single](uint32_t n) {
         auto it = single.find(n);
         return it != single.end() ? it->second->bytes : std::string();
     };
-    auto asRepeatedInt = [&](uint32_t n) {
+    auto asRepeatedInt = [&repeatedPacked](uint32_t n) {
         std::vector<int32_t> r;
         auto it = repeatedPacked.find(n);
         if (it != repeatedPacked.end())
@@ -336,7 +336,7 @@ bool DecodeConfig(const std::string& data, HtraceNativeHookConfig& out)
                 }
         return r;
     };
-    auto asRepeatedEnum = [&](uint32_t n) {
+    auto asRepeatedEnum = [&repeatedPacked](uint32_t n) {
         std::vector<uint32_t> r;
         auto it = repeatedPacked.find(n);
         if (it != repeatedPacked.end())
@@ -346,7 +346,7 @@ bool DecodeConfig(const std::string& data, HtraceNativeHookConfig& out)
                 }
         return r;
     };
-    auto asRepeatedStr = [&](uint32_t n) {
+    auto asRepeatedStr = [&repeatedStrs](uint32_t n) {
         auto it = repeatedStrs.find(n);
         return it != repeatedStrs.end() ? it->second : std::vector<std::string>();
     };

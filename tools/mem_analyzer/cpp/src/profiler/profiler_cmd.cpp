@@ -94,7 +94,7 @@ int RunCommandStreaming(const std::string& cmd)
     }
     CloseHandle(hWrite);
 
-    auto drainAvailable = [&]() {
+    auto drainAvailable = [&hRead]() {
         for (;;) {
             DWORD avail = 0;
             if (!PeekNamedPipe(hRead, nullptr, 0, nullptr, &avail, nullptr)) {
@@ -612,7 +612,7 @@ static AppQueryResult QueryDeviceApps()
             entry.package = jsonStr.substr(valStart + 1, valEnd - valStart - 1);
 
             // Extract app name (may be "label", "appName", or "name")
-            auto extractLabel = [&](const std::string& key) -> std::string {
+            auto extractLabel = [&jsonStr, &valEnd](const std::string& key) -> std::string {
                 auto keyPos = jsonStr.find("\"" + key + "\"", valEnd);
                 if (keyPos == std::string::npos) {
                     return "";

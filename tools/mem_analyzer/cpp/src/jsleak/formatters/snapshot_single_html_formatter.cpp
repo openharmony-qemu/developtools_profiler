@@ -66,7 +66,7 @@ std::string GenerateSnapshotHTML(const json& data, const std::string& sourceFile
     std::string fileType = EndsWithIgnoreCase(sourceFile, "rawheap") ? "rawheap" : "heapsnapshot";
     std::string parsedAt = data.value("parsedAt", "");
     int64_t totalHeapSize = data.value("totalHeapSize", (int64_t)0);
-    std::string totalMem = FormatBytes((double)totalHeapSize);
+    std::string totalMem = FormatBytes(static_cast<double>(totalHeapSize));
 
     const bool hasPropertyTag = data.contains("propertyTagObjects") && !data["propertyTagObjects"].empty();
     const bool hasTop  = data.contains("topRefChains") && !data["topRefChains"].empty();

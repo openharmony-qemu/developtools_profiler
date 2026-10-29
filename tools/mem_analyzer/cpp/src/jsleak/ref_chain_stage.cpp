@@ -48,7 +48,7 @@ template <typename Pred> std::vector<RefChainInfo> collectRefChains(const HeapSn
     // exclude 语义：排除「目标节点名」在 exclude_chains 中的链。
     // 原实现按完整链字符串精确匹配；当前唯一用例为 {"SyntheticRoot"}（仅根节点，
     // 其链字符串 == 目标节点简单名），故按简单名匹配等价且无需展开扩展名。
-    auto isExcluded = [&](uint32_t uNi) {
+    auto isExcluded = [&excludeChains, &heap](uint32_t uNi) {
         return !excludeChains.empty() &&
                excludeChains.find(heap.GetNodeName(uNi)) != excludeChains.end();
     };
@@ -191,7 +191,7 @@ void RefChainStage::Run(const HeapSnapshot& heap)
 {
     refChainInfos = collectRefChains(
         heap,
-        [&](uint32_t uNi) {
+        [this, &heap](uint32_t uNi) {
             if (!targetClass) {
                 return true;
             }

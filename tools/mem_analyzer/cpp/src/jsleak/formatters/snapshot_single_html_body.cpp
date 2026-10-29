@@ -157,7 +157,7 @@ std::string BuildNodeIdsHtml(const json& nodeIdsJson, const std::string& contain
     html += "<div class=\"chain-node-ids\" id=\"" + containerId +
         "\" data-label=\"节点ID\" data-all-ids=\"" + allIds + "\">节点ID: ";
 
-    size_t show = std::min(ids.size(), (size_t)MAX_NODE_IDS_DISPLAY);
+    size_t show = std::min(ids.size(), static_cast<size_t>(MAX_NODE_IDS_DISPLAY));
     for (size_t i = 0; i < show; ++i) {
         html += "<span class=\"node-id-tag\">" + ids[i] + "</span>";
     }
@@ -191,7 +191,7 @@ std::string BuildHashValuesHtml(const json &hashValuesJson, const std::string &c
     html += "<div class=\"chain-node-ids\" id=\"" + containerId +
         "\" data-all-hashes=\"" + allHashes + "\">hash值: ";
     
-    size_t show = std::min(hashes.size(), (size_t)MAX_HASH_DISPLAY);
+    size_t show = std::min(hashes.size(), static_cast<size_t>(MAX_HASH_DISPLAY));
     for (size_t i = 0; i < show; ++i) {
         html += "<span class=\"node-id-tag\">" + hashes[i] + "</span>";
     }
@@ -251,7 +251,7 @@ std::string BuildTopChainTableRow(const json& chainData,
     bool searchOnOverview)
 {
     int64_t retainedSize = chainData.value("totalRetainedSize", 0);
-    int nodeCount = chainData.contains("nodeIds") ? (int)chainData["nodeIds"].size() : 0;
+    int nodeCount = chainData.contains("nodeIds") ? static_cast<int>(chainData["nodeIds"].size()) : 0;
     std::string chainPath = BuildChainPathHtmlImpl(chainData["chain"]);
 
     std::string row;
@@ -279,7 +279,7 @@ std::string BuildPropertyTagEntryHtml(const std::string& objName,
     int64_t retainedSize = objData.value("totalRetainedSize", 0);
     int nodeCount = objData.value("totalNodeCount", 0);
 
-    auto makeId = [&](const std::string& type) {
+    auto makeId = [&idx, &prefix](const std::string& type) {
         return NormPrefix(prefix) + type + "_" + std::to_string(idx);
     };
     std::string headerId = makeId("Header");
@@ -353,9 +353,9 @@ std::string BuildPropertyTagEntryHtml(const std::string& objName,
 std::string BuildTopChainEntryHtml(const json& chainData, int idx, const std::string& prefix)
 {
     int64_t retainedSize = chainData.value("totalRetainedSize", 0);
-    int nodeCount = chainData.contains("nodeIds") ? (int)chainData["nodeIds"].size() : 0;
+    int nodeCount = chainData.contains("nodeIds") ? static_cast<int>(chainData["nodeIds"].size()) : 0;
 
-    auto makeId = [&](const std::string& type) {
+    auto makeId = [&idx, &prefix](const std::string& type) {
         return NormPrefix(prefix) + type + "_" + std::to_string(idx);
     };
     std::string headerId = makeId("Header");

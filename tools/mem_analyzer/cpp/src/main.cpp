@@ -116,7 +116,7 @@ int main(int argc, char** argv)
     // Bind 由 add_subcommand 同步调用，故 lambda 捕获引用是安全的。
     for (const auto& cmd : mem_analyzer::CommandRegistry::All()) {
         app.AddSubcommand(cmd->Name(), cmd->Description(), cmd->Alias(), cmd->Hidden(),
-            [&](mem_analyzer::CliParser& sub) { cmd->Bind(sub, global); });
+            [&cmd, &global](mem_analyzer::CliParser& sub) { cmd->Bind(sub, global); });
     }
 
     try {

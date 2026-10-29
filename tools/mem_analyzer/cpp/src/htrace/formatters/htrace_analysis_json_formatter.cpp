@@ -37,7 +37,7 @@ json BuildSummary(const HtraceAnalysisOutput& full, const RunContext& ctx)
 {
     const auto& ts = full.typeSizes;
 
-    auto getTypeSize = [&](const char* name) -> long long {
+    auto getTypeSize = [&ts](const char* name) -> long long {
         auto et = HtraceEventTypeFromName(name);
         if (et == HtraceEventType::UNKNOWN) {
             return 0;
@@ -114,10 +114,10 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
     writer.WriteKeyValue("mode", topSyms.mode);
 
     // 单个符号（不含数组包裹，供多条流式复用）
-    auto writeSymbol = [&](const TopSymbolInfo& ts, int64_t& rank) {
+    auto writeSymbol = [&totalExistingSize, &full, &writer](const TopSymbolInfo& ts, int64_t& rank) {
         long long existingSize = ts.totalLeakSize;
         double percentage = totalExistingSize > 0 ?
-            std::round((double)existingSize / (double)totalExistingSize * 10000.0) / 100.0 :
+            std::round(static_cast<double>(existingSize) / static_cast<double>(totalExistingSize) * 10000.0) / 100.0 :
             0.0;
 
         std::string lib = ts.libs.empty() ? "" : ts.libs[0];
@@ -152,7 +152,7 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
     };
 
     // 单个 filepage 文件（callStacks 展开，对齐 parse JSON 的调用栈结构）
-    auto writeFilepage = [&](const FilepageInfo& fp) {
+    auto writeFilepage = [&writer, &full](const FilepageInfo& fp) {
         writer.BeginObject();
         writer.WriteKeyValue("fileName", fp.filename);
         writer.WriteKeyValue("size", (int64_t)fp.size);
@@ -182,7 +182,7 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
     };
 
     // N 轨：每轨独立 rank（filepage 无 rank），std::get_if 按行分发
-    auto writeSection = [&](const HtraceSection& sec) {
+    auto writeSection = [&writeSymbol, &writeFilepage](const HtraceSection& sec) {
         int64_t rank = 1;
         for (const auto& row : sec.rows) {
             if (const auto* ts = std::get_if<TopSymbolInfo>(&row)) {
@@ -196,7 +196,7 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
     // N 轨写器路由：每个 scope 恒按 json_key 嵌套成对象（单轨一个 key、多轨多个 key），
     // 且每个键恒写（该轨为空也输出空数组）。scope 全空（所有轨均无行）才跳过。
     // mmap → {mmapAnons, mmapFilepages}；非 mmap → {nativeHeaps} / {dmas} / …（键来自描述符表 tracks[].json_key）。
-    auto writeScope = [&](const std::string& key, const ScopeResult& scope) {
+    auto writeScope = [&writer, &writeSection](const std::string& key, const ScopeResult& scope) {
         if (scope.Empty()) {
             return;
         }

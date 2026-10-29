@@ -252,14 +252,14 @@ void CliParser::ConsumeArgs(const std::vector<std::string>& args, size_t start)
     size_t i = start;
     size_t positionalIdx = 0;
 
-    auto nextStringPos = [&]() -> std::string* {
+    auto nextStringPos = [this, &positionalIdx]() -> std::string* {
         if (positionalIdx < positionals_.size() && positionals_[positionalIdx].isString) {
             return static_cast<std::string*>(positionals_[positionalIdx].target);
         }
         return nullptr;
     };
 
-    auto nextVectorPos = [&]() -> std::vector<std::string>* {
+    auto nextVectorPos = [this, &positionalIdx]() -> std::vector<std::string>* {
         if (positionalIdx < positionals_.size() && !positionals_[positionalIdx].isString) {
             return static_cast<std::vector<std::string>*>(positionals_[positionalIdx].target);
         }

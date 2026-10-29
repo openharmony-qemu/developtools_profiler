@@ -492,7 +492,7 @@ def try_convert_str(v):
 
 def values_equivalent(a: Any, b: Any) -> bool:
     """判断两个值是否语义等价（类型可能不同，如 '123' vs 123）。"""
-    if type(a) == type(b):
+    if isinstance(a, type(b)):
         return a == b
     if isinstance(a, str) and isinstance(b, (int, float)):
         cv, _ = try_convert_str(a)

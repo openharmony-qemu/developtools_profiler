@@ -1373,7 +1373,7 @@ uint32_t HeapSnapshot::GetNodeInternalHash(uint32_t nodeIndex) const
     static const std::regex pattern(R"(Int:\s*(\d+))");
     std::smatch matches;
 
-    ForEachEdge(nodeIndex, [&](const EdgeInfo &edge, size_t) {
+    ForEachEdge(nodeIndex, [this, &hash, &matches](const EdgeInfo &edge, size_t) {
         if (edge.nameOrIndex < static_cast<uint32_t>(strings.size())) {
             std::string edgeName = strings[edge.nameOrIndex];
             if (edgeName == "ArkInternalHash") {

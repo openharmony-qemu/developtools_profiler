@@ -40,7 +40,9 @@ ResolvedStackFrame CompressedStackFrame::Resolve(const DataDict& dict) const
     // Build library offset string
     if (!vaddrNull) {
         char buf[32];
-        snprintf(buf, sizeof(buf), "0x%llx", static_cast<unsigned long long>(vaddr));
+        int ret = snprintf(buf, sizeof(buf), "0x%llx",
+                           static_cast<unsigned long long>(vaddr));
+        if (ret < 0) buf[0] = '\0';
         r.libOffset = buf;
     }
 

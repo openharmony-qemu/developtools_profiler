@@ -304,7 +304,7 @@ int RunProcess(const std::string& exe, const std::vector<std::string>& args, int
     GetExitCodeProcess(pi.hProcess, &exitCode);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
-    return (int)exitCode;
+    return static_cast<int>(exitCode);
 #else
     // POSIX（macOS / Linux）：fork + execv，参数数组不经 shell 解析，
     // 文件路径中的 `"` / `$()` / 反引号 / `;` 等元字符不再被解释（消除命令注入）。

@@ -88,7 +88,7 @@ std::string BuildFilepageTableRows(const HtraceSection& section, size_t startInd
         pctSS << std::fixed << std::setprecision(DECIMAL_PRECISION) << fp->percentage;
         rows.push_back("<tr>\n"
             "  <td><a onclick=\"showDetail(" + std::to_string(idx) + "); return false;\" class=\"detail-link\">\u8be6\u60c5</a></td>\n" +
-            std::string(countMode ? "" : "  <td class=\"top-size-val\">" + FormatSizeText((double)fp->size, false) + "</td>\n") +
+            std::string(countMode ? "" : "  <td class=\"top-size-val\">" + FormatSizeText(static_cast<double>(fp->size), false) + "</td>\n") +
             "  <td class=\"top-count-val\">" + std::to_string(fp->count) + "</td>\n"
             "  <td class=\"top-pct-val\">" + pctSS.str() + "%</td>\n"
             "  <td class=\"top-func\"><b>" + EscapeHtml(fp->filename) + "</b></td>\n"
@@ -112,7 +112,7 @@ std::string BuildFilepageDetailSectionContent(const FilepageInfo& fp, size_t idx
     pctSS << std::fixed << std::setprecision(DECIMAL_PRECISION) << fp.percentage;
     std::string stats = countMode ?
         ("\u6b21\u6570" + std::to_string(fp.count) + "\uff0c\u5360\u6bd4" + pctSS.str() + "%") :
-        ("\u5927\u5c0f " + FormatSizeText((double)fp.size, false) + "\uff0c\u6b21\u6570" + std::to_string(fp.count) + "\uff0c\u5360\u6bd4" + pctSS.str() + "%");
+        ("\u5927\u5c0f " + FormatSizeText(static_cast<double>(fp.size), false) + "\uff0c\u6b21\u6570" + std::to_string(fp.count) + "\uff0c\u5360\u6bd4" + pctSS.str() + "%");
     return "<div class=\"top-item\" id=\"topItem" + std::to_string(idx) + "\">\n"
         "  <div class=\"top-item-header collapsed\" id=\"topItemHeader" + std::to_string(idx) + "\" onclick=\"toggleDetail(" + std::to_string(idx) + ")\">\n"
         "    <span class=\"arrow\" id=\"topItemArrow" + std::to_string(idx) + "\">&#9654;</span>\n"
@@ -289,7 +289,7 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
     std::vector<SymbolDataEntry> mixedSymbolData;
 
     // Build SymbolDataEntry directly from HtraceAnalysisOutput (no JSON round-trip)
-    auto buildEntries = [&](const ScopeResult& scope) -> std::vector<SymbolDataEntry> {
+    auto buildEntries = [&totalExistingSize, &full](const ScopeResult& scope) -> std::vector<SymbolDataEntry> {
         std::vector<SymbolDataEntry> entries;
         entries.reserve(scope.SymbolCount());
         int rank = 1;
@@ -370,7 +370,7 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
         // 但只对当前 scope 模式的活动 scope 生效——AppAndSystem 时 mixed 非活动（不能因为
         // mixed 合并 filepage 非空就显示 mixed tab，那是 AppAndSystem 下本就该隐藏的 tab）。
         // 只有当活动 scope 的 anon 为空、但其 filepage 有数据时，塞一个占位 entry 保住该 tab。
-        auto scopeActive = [&](size_t idx) -> bool {
+        auto scopeActive = [&ctx](size_t idx) -> bool {
             switch (ctx.htrace.scope) {
                 case Scope::APP_ONLY:
                     return idx == 0;
@@ -442,7 +442,7 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
         "    <div class=\"meta-item\"><span class=\"meta-label\"><b>日志名：</b></span><span class=\"meta-value\">" + escapedSourceFile + "</span></div>\n"
         "    <div class=\"meta-item\"><span class=\"meta-label\"><b>类型：</b></span><span class=\"meta-value\">" + typeDisplay + "</span></div>\n"
         "    <div class=\"meta-item\"><span class=\"meta-label\"><b>时间：</b></span><span class=\"meta-value\">" + escapedTimestamp + "</span></div>\n"
-        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>" + (countMode ? "\u603b\u4e2a\u6570\uff1a" : "\u603b\u5185\u5b58\uff1a") + "</b></span><span class=\"meta-value\">" + (countMode ? std::to_string(totalExistingSize) : FormatBytes((double)totalExistingSize)) + "</span></div>\n"
+        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>" + (countMode ? "\u603b\u4e2a\u6570\uff1a" : "\u603b\u5185\u5b58\uff1a") + "</b></span><span class=\"meta-value\">" + (countMode ? std::to_string(totalExistingSize) : FormatBytes(static_cast<double>(totalExistingSize))) + "</span></div>\n"
         "    <div class=\"meta-item\"><span class=\"meta-label\"><b>Trace时长：</b></span><span class=\"meta-value\">" + formattedDuration + "</span></div>\n"
         "    <div class=\"meta-item\"><span class=\"meta-label\"><b>进程：</b></span><span class=\"meta-value\">" + escapedProcessName + "</span></div>\n"
         "  </div>\n"

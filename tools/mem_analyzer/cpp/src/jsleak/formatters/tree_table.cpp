@@ -40,7 +40,9 @@ std::string FormatTreePct(int64_t part, int64_t total)
         return "0%";
     }
     char buf[32];
-    std::snprintf(buf, sizeof(buf), "%.1f%%", static_cast<double>(part) / total * PERCENTAGE_SCALE);
+    int ret = snprintf(buf, sizeof(buf), "%.1f%%",
+                       static_cast<double>(part) / total * PERCENTAGE_SCALE);
+    if (ret < 0) buf[0] = '\0';
     return buf;
 }
 
@@ -158,7 +160,7 @@ void EmitIcicleTreeRows(const json& node, const std::string& tableId,
         for (size_t i = 0; i < children.size(); ++i) {
             order.push_back(i);
         }
-        std::sort(order.begin(), order.end(), [&](size_t a, size_t b) {
+        std::sort(order.begin(), order.end(), [&children](size_t a, size_t b) {
             const int64_t ta = children[a].value("t", static_cast<int64_t>(0));
             const int64_t tb = children[b].value("t", static_cast<int64_t>(0));
             if (ta != tb) {

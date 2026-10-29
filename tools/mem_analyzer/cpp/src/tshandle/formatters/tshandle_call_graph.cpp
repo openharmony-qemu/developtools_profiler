@@ -91,7 +91,7 @@ TshandleRenderNode BuildTshandleDownstreamGraph(const std::string& objectName,
         for (std::size_t i = 0; i < frames.size(); ++i) {
             const auto id = key(frames[i]);
             auto child = std::find_if(current->children.begin(), current->children.end(),
-                [&](const TshandleRenderNode& n) {
+                [&frames, &i](const TshandleRenderNode& n) {
                     return n.symbol == frames[i].symbol && n.lib == frames[i].lib && n.libOffset == frames[i].libOffset;
                 });
             if (child == current->children.end()) {

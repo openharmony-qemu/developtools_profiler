@@ -166,7 +166,7 @@ static void CollectSelfNodesFromFlameNode(
     pathToRoot.insert(pathToRoot.end(), ancestorsPath.begin(), ancestorsPath.end());
 
     if (selfSize > 0) {
-        results.push_back({(double)selfSize, pathToRoot});
+        results.push_back({static_cast<double>(selfSize), pathToRoot});
     }
 
     for (const auto& child : node.children) {
@@ -209,7 +209,7 @@ static std::vector<CallChainResult> buildCallChainsFromFlameNode(
             return a.first > b.first;
         });
 
-    int takeCount = std::min(3, (int)candidates.size());
+    int takeCount = std::min(3, static_cast<int>(candidates.size()));
     std::vector<CallChainResult> topPaths;
     for (int i = 0; i < takeCount; i++) {
         CallChainResult cr;
@@ -228,7 +228,7 @@ SymbolDataEntry BuildSymbolDataEntryFromContextLight(const TopSymbolInfo& ts,
     SymbolDataEntry entry;
 
     double percentage = totalExistingSize > 0 ?
-        std::round((double)ts.totalLeakSize / (double)totalExistingSize * 10000.0) / 100.0 :
+        std::round(static_cast<double>(ts.totalLeakSize) / static_cast<double>(totalExistingSize) * 10000.0) / 100.0 :
         0.0;
     std::string lib = ts.libs.empty() ? "" : ts.libs[0];
     entry.info = json{

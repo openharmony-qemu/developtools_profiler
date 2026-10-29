@@ -95,7 +95,7 @@ std::vector<std::string> ModuleRegistry::SelfCheck()
         const ModuleCapability cap = module->Capability();
         const std::string name = module->Name();
 
-        auto checkMode = [&](const char* mode, const ModeCapability& mc) {
+        auto checkMode = [&issues, &name](const char* mode, const ModeCapability& mc) {
             if (!mc.Supported()) {
                 // 明确不支持该模式：此时默认格式是死数据，留着会误导下一个改的人
                 if (!mc.defaultFormat.empty()) {

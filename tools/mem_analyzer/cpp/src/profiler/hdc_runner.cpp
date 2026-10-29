@@ -1014,7 +1014,7 @@ void StopHiprofiler()
 {
     std::atomic<bool> stopDone{false};
     CapturedCmd stopCap;
-    std::thread stopWorker([&]() {
+    std::thread stopWorker([&stopCap, &stopDone]() {
         std::string stopCmd = HdcShell("hiprofiler_cmd stop") + " 2>&1";
         stopCap = CaptureCommand(stopCmd);
         stopDone = true;
@@ -1029,7 +1029,7 @@ void StopHiprofiler()
                       std::flush;
         }
         // Sleep up to 5s, waking every 100ms so we react to completion.
-        SleepTicks(PROGRESS_INTERVAL_TICKS, [&]() { return stopDone.load(); });
+        SleepTicks(PROGRESS_INTERVAL_TICKS, [&stopDone]() { return stopDone.load(); });
     }
     stopWorker.join();
 
@@ -1609,7 +1609,7 @@ std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::s
 {
     return std::thread([state, cmd, asyncStartMode]() {
         // 逐行消费子进程输出：写入共享缓冲，async 模式下即时回显到控制台。
-        auto consumeStream = [&](FILE* fp) {
+        auto consumeStream = [&state, &asyncStartMode](FILE* fp) {
             char buf[4096];
             while (fgets(buf, sizeof(buf), fp) != nullptr) {
                 {
@@ -1876,7 +1876,8 @@ void PrintMetricsLine(const ProcessMetrics& metrics)
 {
     auto fmtMb = [](long long kb) -> std::string {
         char buf[32];
-        snprintf(buf, sizeof(buf), "%.2f", kb / 1024.0);
+        int ret = snprintf(buf, sizeof(buf), "%.2f", kb / 1024.0);
+        if (ret < 0) buf[0] = '\0';
         return buf;
     };
     // Two lines, indented under the "Remaining ...s" line: the core
@@ -2072,7 +2073,7 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
         // finishes mid-interval, when the start command fails, when the
         // first smaps/lsof export reports a permission failure, or when the
         // target device fails at the hdc level (pinned target).
-        SleepTicks(PROGRESS_INTERVAL_TICKS, [&]() {
+        SleepTicks(PROGRESS_INTERVAL_TICKS, [&state, &asyncStartMode]() {
             return (state->done.load() && (!asyncStartMode || CaptureStartFailed(state))) ||
             state->permissionFailed.load() || DeviceLost();
         });
@@ -2118,7 +2119,7 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
     // cleanup it triggers would both delay the export and skew the sampled
     // state (the capture session is no longer the one the user profiled).
     // Skipped on a permission failure (the capture was already aborted).
-    auto exportEndSnapshotBeforeStop = [&]() {
+    auto exportEndSnapshotBeforeStop = [&state, &opts, &result]() {
         if (state->permissionFailed.load()) {
             return;
         }
@@ -2200,7 +2201,7 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
             const long long total = ElapsedSince(start);
             std::cout << "Finalizing... total " << total << "s elapsed " <<
                 "(post-capture wait: " << finalizeWait << "s)\n" << std::flush;
-            SleepTicks(PROGRESS_INTERVAL_TICKS, [&]() {
+            SleepTicks(PROGRESS_INTERVAL_TICKS, [&state]() {
                 return state->done.load() || g_interruptRequested;
             });
             finalizeWait += PROGRESS_INTERVAL_S;

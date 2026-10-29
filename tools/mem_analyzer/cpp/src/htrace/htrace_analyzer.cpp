@@ -129,7 +129,7 @@ struct SymbolData {
 // Helper: make uid from (symbol_id, file_id)
 inline uint64_t MakeUid(int symbolId, int fileId)
 {
-    return ((uint64_t)symbolId << UID_SHIFT_BITS) | (uint32_t)fileId;
+    return (static_cast<uint64_t>(symbolId) << UID_SHIFT_BITS) | static_cast<uint32_t>(fileId);
 }
 
 // ===== Helper: check if a symbol is an app symbol =====
@@ -157,7 +157,7 @@ static void BuildSymbolData(
 {
     totalLeakSize = 0;
 
-    for (int ci = 0; ci < (int)callStacks.size(); ci++) {
+    for (int ci = 0; ci < static_cast<int>(callStacks.size()); ci++) {
         auto& chain = callStacks[ci];
         long long size = chain.existingSize;
         if (size <= 0) {
@@ -350,7 +350,7 @@ static ApproxResult CalcApproximations(
     const std::vector<CompressedCallStack>& callStacks,
     const AnalysisConfig& config)
 {
-    int n = (int)filtered.size();
+    int n = static_cast<int>(filtered.size());
 
     // Build uid → index map (int keys for all internal lookups)
     std::unordered_map<uint64_t, int> symIndex;
@@ -393,14 +393,14 @@ static ApproxResult CalcApproximations(
             continue;
         }
         std::stable_sort(chainSyms.begin(), chainSyms.end(),
-            [&](const auto& a, const auto& b) {
+            [&filtered](const auto& a, const auto& b) {
                 if (a.second != b.second) {
                     return a.second < b.second;
                 }
                 return filtered[a.first]->uid < filtered[b.first]->uid;
             });
 
-        if (ci < 0 || ci >= (int)callStacks.size()) {
+        if (ci < 0 || ci >= static_cast<int>(callStacks.size())) {
             continue;
         }
         long long leak = callStacks[ci].existingSize;
@@ -437,22 +437,22 @@ static ApproxResult CalcApproximations(
     // Sort contrib/alloc and their inner maps deterministically by uid
     for (auto& [deepIdx, cMap] : contrib) {
         std::sort(cMap.items.begin(), cMap.items.end(),
-            [&](const auto& a, const auto& b) {
+            [&filtered](const auto& a, const auto& b) {
                 return filtered[a.first]->uid < filtered[b.first]->uid;
             });
     }
     std::sort(contrib.begin(), contrib.end(),
-        [&](const auto& a, const auto& b) {
+        [&filtered](const auto& a, const auto& b) {
             return filtered[a.first]->uid < filtered[b.first]->uid;
         });
     for (auto& [shallowIdx, aMap] : alloc) {
         std::sort(aMap.items.begin(), aMap.items.end(),
-            [&](const auto& a, const auto& b) {
+            [&filtered](const auto& a, const auto& b) {
                 return filtered[a.first]->uid < filtered[b.first]->uid;
             });
     }
     std::sort(alloc.begin(), alloc.end(),
-        [&](const auto& a, const auto& b) {
+        [&filtered](const auto& a, const auto& b) {
             return filtered[a.first]->uid < filtered[b.first]->uid;
         });
 
@@ -527,7 +527,7 @@ static AlgorithmResult RunAlgorithm(
 
     AlgorithmResult algResult;
     int orgSetSize = 0;     // set by caller
-    int filteredSetSize = (int)filtered.size();
+    int filteredSetSize = static_cast<int>(filtered.size());
 
     // 4.2: Track removed symbols (no deep copy of SymbolData)
     std::unordered_set<uint64_t> removedUids;
@@ -660,7 +660,7 @@ static AlgorithmResult RunAlgorithm(
     algResult.stats = {
         orgSetSize,
         filteredSetSize,
-        (int)algResult.finalSymbols.size(),
+        static_cast<int>(algResult.finalSymbols.size()),
         equivGroupCount,
         upRemoved,
         downRemoved,
@@ -681,7 +681,7 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
 
     timer.Stage("Building flame/icicle graphs for top symbols");
     std::vector<TopSymbolInfo> result;
-    int limit = std::min((int)finalSymbols.size(), topN);
+    int limit = std::min(static_cast<int>(finalSymbols.size()), topN);
     result.reserve(limit);
 
     for (int i = 0; i < limit; i++) {
@@ -690,8 +690,8 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
         ts.uid = s.uid;
 
         // Resolve symbol/lib from data_dict
-        int sid = (int)(s.uid >> 32);
-        int fid = (int)(s.uid & 0xFFFFFFFF);
+        int sid = static_cast<int>(s.uid >> 32);
+        int fid = static_cast<int>(s.uid & 0xFFFFFFFF);
         auto symIt = dataDict.find(sid);
         ts.symbol = (symIt != dataDict.end()) ? symIt->second : "unknown";
         auto libIt = dataDict.find(fid);
@@ -700,7 +700,9 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
         // Resolve lib_offset from stored vaddr
         if (!s.vaddrNull) {
             char buf[32];
-            snprintf(buf, sizeof(buf), "0x%llx", (unsigned long long)s.vaddr);
+            int ret = snprintf(buf, sizeof(buf), "0x%llx",
+                               static_cast<unsigned long long>(s.vaddr));
+            if (ret < 0) buf[0] = '\0';
             ts.libOffset = buf;
         } else {
             ts.libOffset = "";
@@ -710,7 +712,7 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
         // Sum existing_count over all chains that contain this symbol (one contribution per chain)
         ts.totalExistingCount = 0;
         for (int ci : s.chainIds) {
-            if (ci >= 0 && ci < (int)callStacks.size())
+            if (ci >= 0 && ci < static_cast<int>(callStacks.size()))
                 ts.totalExistingCount += callStacks[ci].existingCount;
         }
         ts.isApp = s.isApp;
@@ -723,7 +725,7 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
         ts.flameGraph = BuildFlameGraph(ts.symbol, callStacks, s.chainIds.vector(), s.depthPerChain, dataDict);
         ts.icicleGraph = BuildIcicleGraph(ts.symbol, callStacks, s.chainIds.vector(), s.depthPerChain, dataDict);
         for (int ci : s.chainIds) {
-            if (ci >= 0 && ci < (int)callStacks.size())
+            if (ci >= 0 && ci < static_cast<int>(callStacks.size()))
                 ts.callChains.push_back(callStacks[ci]);
         }
         result.push_back(std::move(ts));
@@ -793,11 +795,11 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     // symbols and would otherwise lose their leak size from the ranking), so the
     // leak size stays visible. Only the noise filter is bypassed for recovery;
     // recovered symbols are gated by an orphan-specific threshold.
-    auto buildFiltered = [&](Scope filterScope) -> std::pair<std::vector<SymbolData*>, int> {
+    auto buildFiltered = [&allSymbols, &config, &callStacks, &totalLeakSize, &recoveredOwner, &dataDict](Scope filterScope) -> std::pair<std::vector<SymbolData*>, int> {
         std::vector<SymbolData*> filtered;
         int orgCount = 0;
 
-        auto scopeOk = [&](const SymbolData& sd) {
+        auto scopeOk = [&config, &filterScope](const SymbolData& sd) {
             if (config.leakMode) { // -l: L3 已分栈，整组符号定性，跳过 isApp 过滤
                 return true;
             }
@@ -809,7 +811,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
             }
             return true;
         };
-        auto ResolveNames = [&](const SymbolData& sd, std::string& libFile, std::string& symName) {
+        auto ResolveNames = [&dataDict](const SymbolData& sd, std::string& libFile, std::string& symName) {
             std::string libName;
             if (sd.libIdNull) {
                 libName = "unknown";
@@ -820,17 +822,17 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
                 }
             }
             libFile = libName.substr(libName.find_last_of("/\\") + 1);
-            int sid = (int)(sd.uid >> 32);
+            int sid = static_cast<int>(sd.uid >> 32);
             auto sit = dataDict.find(sid);
             symName = (sit != dataDict.end()) ? sit->second : "";
         };
-        auto isNoise = [&](const SymbolData& sd) {
+        auto isNoise = [&ResolveNames, &filterScope](const SymbolData& sd) {
             std::string libFile;
             std::string symName;
             ResolveNames(sd, libFile, symName);
             return HtraceConfigMgr::Instance().ShouldFilter(libFile, symName, filterScope);
         };
-        auto IsOrphanRecoverable = [&](const SymbolData& sd) {
+        auto IsOrphanRecoverable = [&ResolveNames, &filterScope](const SymbolData& sd) {
             std::string libFile;
             std::string symName;
             ResolveNames(sd, libFile, symName);
@@ -863,7 +865,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         // restricted to orphan chains, so its reported size stays accurate.
         std::unordered_map<uint64_t, long long> orphanAgg;         // uid -> 孤儿栈内聚合泄漏量
         std::unordered_map<uint64_t, const SymbolData*> orphanSrc; // uid -> 原始符号（完整范围）
-        for (int ci = 0; ci < (int)callStacks.size(); ci++) {
+        for (int ci = 0; ci < static_cast<int>(callStacks.size()); ci++) {
             const auto& chain = callStacks[ci];
             long long size = chain.existingSize;
             if (size <= 0) {
@@ -952,11 +954,11 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     };
 
     // leak_mode: 收集非 top N 覆盖的栈 -> other, 追加到对应 top_symbols 分类
-    auto appendOther = [&](std::vector<TopSymbolInfo>& targetVec, const std::vector<SymbolData>& finalSymbols) {
+    auto appendOther = [&config, &topN, &callStacks, &dataDict](std::vector<TopSymbolInfo>& targetVec, const std::vector<SymbolData>& finalSymbols) {
         if (!config.leakMode) {
             return;
         }
-        int limit = std::min((int)finalSymbols.size(), topN);
+        int limit = std::min(static_cast<int>(finalSymbols.size()), topN);
         std::unordered_set<int> covered;
         for (int i = 0; i < limit; i++) {
             for (int ci : finalSymbols[i].chainIds) {
@@ -966,7 +968,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
         std::vector<int> otherIds;
         long long otherLeak = 0;
         long long otherCount = 0;
-        for (int ci = 0; ci < (int)callStacks.size(); ci++) {
+        for (int ci = 0; ci < static_cast<int>(callStacks.size()); ci++) {
             if (covered.count(ci)) {
                 continue;
             }
@@ -1088,7 +1090,7 @@ static FilepageSplit AnalyzeFilepages(
         // detail 模式下 data_dict 的 sub_type 值可能带 "FilePage:" 前缀，输出时剥离
         info.filename = NormalizeFilepageFilename(info.filename, mode);
         if (mmapTotalSize > 0) {
-            info.percentage = std::round((double)info.size * PERCENT_PRECISION_SCALE / (double)mmapTotalSize) / PERCENT_SCALE;
+            info.percentage = std::round(static_cast<double>(info.size) * PERCENT_PRECISION_SCALE / static_cast<double>(mmapTotalSize)) / PERCENT_SCALE;
         }
         // 文件级分类：任意栈的任意帧是应用符号 → app 类；否则 system 类
         bool isApp = false;
@@ -1225,7 +1227,7 @@ json HtraceAnalysisOutput::ToJson() const
     top["mode"] = topSymbols.mode;
     // Only include arrays relevant to the mode (matching TS behavior)
     // app-and-system: app + system; app-only: app; system-only: system; mixed: mixed
-    auto symbolsOf = [&](const ScopeResult& scope) {
+    auto symbolsOf = [this](const ScopeResult& scope) {
         json arr = json::array();
         for (const auto& s : scope.sections)
             for (const auto& r : s.rows)
@@ -1270,7 +1272,7 @@ HtraceAnalysisOutput HtraceAnalyze(TraceDB& db, const RunContext& ctx)
     analysis.typeSizes = std::move(db.meta.typeSizes);
     analysis.traceMeta = std::move(db.meta);
 
-    int totalTop = (int)(analysis.topSymbols.app.SymbolCount() +
+    int totalTop = static_cast<int>(analysis.topSymbols.app.SymbolCount() +
                         analysis.topSymbols.system.SymbolCount() +
                         analysis.topSymbols.mixed.SymbolCount());
     log::Logok("  Analysis completed. ", totalTop, " top symbols.");

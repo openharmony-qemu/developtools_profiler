@@ -250,7 +250,7 @@ bool HtraceConfigMgr::MatchTsPattern(const std::string& lib, const std::string& 
     }
 
     // Validate :digits:digits suffix starting at 'start'
-    auto ValidLineCol = [&](size_t start) -> bool {
+    auto ValidLineCol = [&lib](size_t start) -> bool {
         if (start + 1 >= lib.size() || !std::isdigit((unsigned char)lib[start + 1])) {
             return false;
         }

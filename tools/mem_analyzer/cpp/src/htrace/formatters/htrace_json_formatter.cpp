@@ -90,7 +90,9 @@ void HtraceWriteCallstackFrame(JsonStreamWriter& writer, const CompressedStackFr
     std::string libOffset;
     if (!frame.vaddrNull) {
         char buf[32];
-        snprintf(buf, sizeof(buf), "0x%llx", (unsigned long long)frame.vaddr);
+        int ret = snprintf(buf, sizeof(buf), "0x%llx",
+                          (unsigned long long)frame.vaddr);
+        if (ret < 0) buf[0] = '\0';
         libOffset = buf;
     }
     writer.WriteKeyValue("libOffset", libOffset);

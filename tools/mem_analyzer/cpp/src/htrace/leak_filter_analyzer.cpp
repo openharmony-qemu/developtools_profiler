@@ -207,7 +207,7 @@ HtraceAnalysisOutput HtraceLeakAnalyze(TraceDB& db, const RunContext& ctx)
     output.typeSizes = std::move(db.meta.typeSizes);
     output.traceMeta = std::move(db.meta);
 
-    int totalTop = (int)(output.topSymbols.app.SymbolCount() +
+    int totalTop = static_cast<int>(output.topSymbols.app.SymbolCount() +
                         output.topSymbols.system.SymbolCount() +
                         output.topSymbols.mixed.SymbolCount());
     log::Logok("  Leak analysis: ", totalTop, " top symbols (incl other).");

@@ -127,12 +127,12 @@ std::string FormatBytes(double bytes)
     double dbytes = bytes;
     int i = 0;
     if (dbytes >= 1) {
-        i = (int)std::floor(std::log(dbytes) / std::log((double)k));
+        i = static_cast<int>(std::floor(std::log(dbytes) / std::log(static_cast<double>(k))));
         if (i > MAX_BYTES_UNIT_INDEX) {
             i = MAX_BYTES_UNIT_INDEX;
         }
     }
-    double val = dbytes / std::pow((double)k, i);
+    double val = dbytes / std::pow(static_cast<double>(k), i);
     val = RoundHalfAwayFromZero(val, DECIMAL_PRECISION);
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(DECIMAL_PRECISION) << val << " " << units[i];
@@ -255,20 +255,20 @@ std::string BuildCallChainHTML(const std::vector<CallChainResult>& callChains, d
         const auto& frames = chain.frames;
         std::vector<int> keptIndices;
 
-        if ((int)frames.size() <= SIMPLE_CALL_CHAIN_THRESHOLD) {
-            for (int fi = 0; fi < (int)frames.size(); fi++) {
+        if (static_cast<int>(frames.size()) <= SIMPLE_CALL_CHAIN_THRESHOLD) {
+            for (int fi = 0; fi < static_cast<int>(frames.size()); fi++) {
                 keptIndices.push_back(fi);
             }
         } else {
             // 1. 顶层函数
             keptIndices.push_back(0);
             // 2. 底层函数
-            keptIndices.push_back((int)frames.size() - 1);
-            for (int fi = 1; fi < (int)frames.size() - 1; fi++) {
+            keptIndices.push_back(static_cast<int>(frames.size()) - 1);
+            for (int fi = 1; fi < static_cast<int>(frames.size()) - 1; fi++) {
                 bool curIsTs = HtraceConfigMgr::Instance().IsTsSymbol(frames[fi].lib, true);
-                bool nextIsTs = (fi + 1 < (int)frames.size()) && HtraceConfigMgr::Instance().IsTsSymbol(frames[fi + 1].lib, true);
+                bool nextIsTs = (fi + 1 < static_cast<int>(frames.size())) && HtraceConfigMgr::Instance().IsTsSymbol(frames[fi + 1].lib, true);
                 bool curIsApp = HtraceConfigMgr::Instance().IsAppSymbol(frames[fi].lib, true);
-                bool nextIsApp = (fi + 1 < (int)frames.size()) && HtraceConfigMgr::Instance().IsAppSymbol(frames[fi + 1].lib, true);
+                bool nextIsApp = (fi + 1 < static_cast<int>(frames.size())) && HtraceConfigMgr::Instance().IsAppSymbol(frames[fi + 1].lib, true);
                 // 3. JS函数调用Native函数时的JS函数
                 if (curIsTs && !nextIsTs) {
                     keptIndices.push_back(fi);
@@ -355,7 +355,7 @@ std::string BuildTopTableRows(const std::vector<SymbolDataEntry>& symbols, size_
 
         rowStrs.push_back("<tr>\n"
             "  <td><a onclick=\"showDetail(" + std::to_string(idx) + "); return false;\" class=\"detail-link\">\u8be6\u60c5</a></td>\n" +
-            std::string(countMode ? "" : "  <td class=\"top-size-val\">" + FormatSizeText((double)existingSize, false) + "</td>\n") +
+            std::string(countMode ? "" : "  <td class=\"top-size-val\">" + FormatSizeText(static_cast<double>(existingSize), false) + "</td>\n") +
             "  <td class=\"top-count-val\">" + std::to_string(existingCount) + "</td>\n"
             "  <td class=\"top-pct-val\">" + pctStr + "%</td>\n"
             "  <td class=\"top-func\"><b>" + EscapeHtml(shortFuncName) + "</b></td>\n"
@@ -385,7 +385,7 @@ std::string BuildDetailSectionContent(
     long long existingSize = s.value("existingSize", (long long)0);
     long long existingCount = s.value("existingCount", (long long)0);
     double percentage = s.value("percentage", 0.0);
-    int rank = s.value("rank", (int)(idx + 1));
+    int rank = s.value("rank", static_cast<int>(idx + 1));
 
     std::ostringstream pctSS;
     pctSS << percentage;
@@ -403,7 +403,7 @@ std::string BuildDetailSectionContent(
         "    <span class=\"header-rank\">TOP" + std::to_string(rank) + "\u51fd\u6570\uff1a</span><span class=\"header-func\">" + EscapeHtml(shortName) + "</span>\n"
         "    <div class=\"header-stats\">" + (countMode ?
             "\u6b21\u6570" + std::to_string(existingCount) + "\uff0c\u5360\u6bd4" + pctStr + "%" :
-            "\u5927\u5c0f " + FormatSizeText((double)existingSize, false) + "\uff0c\u6b21\u6570" + std::to_string(existingCount) + "\uff0c\u5360\u6bd4" + pctStr + "%") + "</div>\n"
+            "\u5927\u5c0f " + FormatSizeText(static_cast<double>(existingSize), false) + "\uff0c\u6b21\u6570" + std::to_string(existingCount) + "\uff0c\u5360\u6bd4" + pctStr + "%") + "</div>\n"
         "  </div>\n"
         "  <div class=\"top-item-body\" id=\"topItemBody" + std::to_string(idx) + "\">\n"
         "    <div class=\"call-chains-section\">\n"

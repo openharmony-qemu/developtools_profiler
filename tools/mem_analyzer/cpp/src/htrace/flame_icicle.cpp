@@ -112,7 +112,7 @@ FlameNode BuildFlameGraph(
     FlameNode root{};
 
     for (int ci : chainIds) {
-        if (ci < 0 || ci >= (int)callStacks.size()) {
+        if (ci < 0 || ci >= static_cast<int>(callStacks.size())) {
             continue;
         }
         auto& chain = callStacks[ci];
@@ -154,7 +154,7 @@ FlameNode BuildIcicleGraph(
     FlameNode root{};
 
     for (int ci : chainIds) {
-        if (ci < 0 || ci >= (int)callStacks.size()) {
+        if (ci < 0 || ci >= static_cast<int>(callStacks.size())) {
             continue;
         }
         auto& chain = callStacks[ci];
@@ -191,7 +191,7 @@ FlameNode BuildMergedIcicle(
 {
     FlameNode root{};
     for (int ci : chainIds) {
-        if (ci < 0 || ci >= (int)callStacks.size()) {
+        if (ci < 0 || ci >= static_cast<int>(callStacks.size())) {
             continue;
         }
         auto& chain = callStacks[ci];

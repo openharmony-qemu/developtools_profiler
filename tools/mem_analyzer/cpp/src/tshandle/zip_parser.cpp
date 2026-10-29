@@ -53,21 +53,21 @@ static std::string FindFileInDir(const std::string& dir, const std::string& ext,
             auto fileExt = PathToUtf8(entry.path().extension());
             // Normalize extension to lowercase for comparison
             for (auto& c : fileExt) {
-                c = (char)tolower((unsigned char)c);
+                c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
             }
             std::string targetExt = ext;
             for (auto& c : targetExt) {
-                c = (char)tolower((unsigned char)c);
+                c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
             }
             if (fileExt == targetExt) {
                 if (!namePrefix.empty()) {
                     std::string stem = PathToUtf8(entry.path().stem());
                     for (auto& c : stem) {
-                        c = (char)tolower((unsigned char)c);
+                        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
                     }
                     std::string lowerPrefix = namePrefix;
                     for (auto& c : lowerPrefix) {
-                        c = (char)tolower((unsigned char)c);
+                        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
                     }
                     if (stem.rfind(lowerPrefix, 0) != 0) {
                         continue;
@@ -83,21 +83,21 @@ static std::string FindFileInDir(const std::string& dir, const std::string& ext,
             auto path = PathToUtf8(entry.path());
             auto fileExt = PathToUtf8(entry.path().extension());
             for (auto& c : fileExt) {
-                c = (char)tolower((unsigned char)c);
+                c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
             }
             std::string targetExt = ext;
             for (auto& c : targetExt) {
-                c = (char)tolower((unsigned char)c);
+                c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
             }
             if (fileExt == targetExt) {
                 if (!namePrefix.empty()) {
                     std::string stem = PathToUtf8(entry.path().stem());
                     for (auto& c : stem) {
-                        c = (char)tolower((unsigned char)c);
+                        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
                     }
                     std::string lowerPrefix = namePrefix;
                     for (auto& c : lowerPrefix) {
-                        c = (char)tolower((unsigned char)c);
+                        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
                     }
                     if (stem.rfind(lowerPrefix, 0) != 0) {
                         continue;

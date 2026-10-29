@@ -286,7 +286,7 @@ bool RefineLineByNameCache(const NameCacheIndex* ncache, const std::string& sour
     // 依次尝试：短名(混淆) → 短名(原始) → 完整名(混淆) → 完整名(原始)，
     // 取首个有候选者即停止。函数名可能是混淆名（开启属性混淆）或原始名（未开启时）。
     std::vector<NameCacheCandidate> candidates;
-    auto tryLookup = [&](const std::string& name, bool obfuscated) {
+    auto tryLookup = [&candidates, &ncache](const std::string& name, bool obfuscated) {
         if (name.empty() || !candidates.empty()) {
             return;
         }
