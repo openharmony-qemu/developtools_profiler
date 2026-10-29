@@ -33,6 +33,8 @@ using json = nlohmann::ordered_json;
 
 namespace {
 
+constexpr size_t CHAR_SEARCH_BUF_SIZE = 256;
+
 // ============================================================================
 //  Streaming file helpers
 //
@@ -80,7 +82,7 @@ size_t FindMarkerOffset(std::ifstream& file, const std::string& marker, size_t s
 /// 从 start_pos 起读取最多 256 字节，返回首个 ch 的字节偏移。
 size_t FindCharAfter(std::ifstream& file, char ch, size_t startPos, size_t file_size)
 {
-    std::string buf(std::min<size_t>(256, file_size - startPos), '\0');
+    std::string buf(std::min<size_t>(CHAR_SEARCH_BUF_SIZE, file_size - startPos), '\0');
     file.clear();
     file.seekg(startPos);
     file.read(&buf[0], buf.size());

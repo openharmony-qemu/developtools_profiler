@@ -65,6 +65,7 @@ constexpr int STRINGS_SEARCH_BUF_SIZE = 256;
 constexpr int REF_CHAIN_PATH_RESERVE = 64;
 constexpr int REF_CHAIN_INDICES_RESERVE = 32;
 constexpr int UNICODE_ESCAPE_LEN = 6;
+constexpr int NODE_NAME_DISPLAY_MAX_LEN = 20;
 
 // 快速判断字符串是否为纯数字（内联）
 inline bool IsNumericString(const std::string& s)
@@ -158,8 +159,8 @@ std::string HeapSnapshot::GetStringExtName(uint32_t nodeIndex) const
     uint32_t base = nodeIndex * nodeFieldsCount;
     uint32_t size = nodes[base + nodeSelfSizeOffset];
     std::string content = GetNodeName(nodeIndex);
-    if (content.length() > 20) {
-        content = content.substr(0, 20);
+    if (content.length() > NODE_NAME_DISPLAY_MAX_LEN) {
+        content = content.substr(0, NODE_NAME_DISPLAY_MAX_LEN);
     }
 
     // 按大小区间归类展示，避免精确 size 导致字符串对象过于分散

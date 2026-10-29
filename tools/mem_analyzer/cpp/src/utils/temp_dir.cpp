@@ -26,6 +26,10 @@ namespace fs = std::filesystem;
 
 namespace mem_analyzer {
 
+namespace {
+constexpr int RANDOM_HEX_WIDTH = 6;
+} // namespace
+
 static std::string sRoot;  // per-process root, cached
 bool TempDir::sKeep = false;
 
@@ -59,7 +63,7 @@ std::string TempDir::GenerateRandomHex()
     static std::mt19937 rng(std::random_device{}());
     static std::uniform_int_distribution<uint32_t> dist(0, 0xFFFFFF);
     std::ostringstream oss;
-    oss << std::hex << std::setw(6) << std::setfill('0') << dist(rng);
+    oss << std::hex << std::setw(RANDOM_HEX_WIDTH) << std::setfill('0') << dist(rng);
     return oss.str();
 }
 

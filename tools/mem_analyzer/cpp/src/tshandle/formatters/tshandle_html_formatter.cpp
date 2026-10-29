@@ -40,6 +40,7 @@ namespace {
 
 constexpr double PERCENTAGE_SCALE = 100.0;
 constexpr double NS_PER_SECOND = 1000000000.0;
+constexpr int PERCENTAGE_DECIMAL_PLACES = 2;
 
 std::string FormatTimestamp(std::string value)
 {
@@ -181,7 +182,7 @@ SectionResult BuildSection(const char* tabId, const char* label,
             "); return false;\" class=\"detail-link\">详情</a></td>\n"
             "    <td class=\"top-size-val\">" << FormatBytes(object.existingSize) << "</td>\n"
             "    <td>" << object.count << "</td>\n"
-            "    <td class=\"top-pct-val\">" << ToFixed(std::min(PERCENTAGE_SCALE, object.percentage), 2) << "%</td>\n"
+            "    <td class=\"top-pct-val\">" << ToFixed(std::min(PERCENTAGE_SCALE, object.percentage), PERCENTAGE_DECIMAL_PLACES) << "%</td>\n"
             "    <td class=\"top-func\">" << EscapeHtml(object.objectName) << "</td>\n"
             "  </tr>\n";
         ++rowIndex;
@@ -222,7 +223,7 @@ SectionResult BuildSection(const char* tabId, const char* label,
             "对象：</span><span class=\"header-func\">" << EscapeHtml(objectName) << "</span>\n"
             "    <div class=\"header-stats\">大小 " << FormatBytes(object.existingSize) <<
             "，数量" << object.count << "，占比" <<
-            ToFixed(std::min(PERCENTAGE_SCALE, object.percentage), 2) << "%</div>\n"
+            ToFixed(std::min(PERCENTAGE_SCALE, object.percentage), PERCENTAGE_DECIMAL_PLACES) << "%</div>\n"
             "  </div>\n"
             "  <div class=\"top-item-body expanded\" id=\"topItemBody" << graphIndex << "\">\n"
             "    <div class=\"call-chains-section\">\n      " <<

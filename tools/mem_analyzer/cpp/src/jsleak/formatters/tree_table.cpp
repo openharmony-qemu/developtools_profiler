@@ -31,6 +31,7 @@ namespace {
 constexpr double PERCENTAGE_SCALE = 100.0;
 constexpr int TREE_INDENT_BASE_PX = 10;
 constexpr int TREE_GUIDE_LEFT_PX = 18;
+constexpr int TREE_INDENT_STEP_PX = 16;
 
 // 百分比口径与图表 tooltip 一致：以整棵树的根节点（GC Roots）总大小/总节点数为分母。
 std::string FormatTreePct(int64_t part, int64_t total)
@@ -133,7 +134,7 @@ void EmitIcicleTreeRows(const json& node, const std::string& tableId,
     // 颜色取该线所代表的层的颜色，与本层节点的 +/- 同色。
     // 绝对定位铺满整行高度，名称换行导致行变高时线也不会断开。
     for (int k = 0; k < depth; ++k) {
-        out += "<span class=\"itt-guide\" style=\"left:" + std::to_string(TREE_GUIDE_LEFT_PX + k * 16) +
+        out += "<span class=\"itt-guide\" style=\"left:" + std::to_string(TREE_GUIDE_LEFT_PX + k * TREE_INDENT_STEP_PX) +
                "px;background:" + IttLevelColor(k) + "\"></span>";
     }
     if (hasChildren) {
