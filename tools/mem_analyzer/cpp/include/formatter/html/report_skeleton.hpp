@@ -27,10 +27,10 @@ namespace mem_analyzer {
 ///   out << domain_css;                  // ① CSS 注入点（域专属 + 可选组件）
 ///   out << html_report_css_end();       // ② 自动注入 version/help_tooltip/nav_bar CSS
 ///   out << html_report_title("报告标题");
-///   out << html_report_body_open();
+///   out << html_report_body_open();     // 打开
 ///   out << html_report_meta({{"日志名", "xxx"}, {"类型", "yyy"}});
 ///   out << body_content;                // ③ 域正文
-///   out << html_report_body_close();
+///   out << html_report_body_close();    // 关闭
 ///   out << html_report_data("D", json); // ④ 数据段
 ///   out << html_report_core_script();   // ⑤ 脚本段（核心交互 + 可选组件 + 域）
 ///   out << html_report_end();           // ⑥ </body></html>

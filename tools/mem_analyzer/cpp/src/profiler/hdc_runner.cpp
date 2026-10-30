@@ -682,9 +682,8 @@ std::map<std::string, long long> listDirFileSizes(const std::string& dir,
         } catch (...) {
             continue;
         }
-        // Skip the date/time fields (ISO = 2, traditional = 3; see header).
         std::string dateOrMon;
-        if (!(lss >> dateOrMon)) {
+        if (!(lss >> dateOrMon)) { // Skip the date/time fields (ISO = 2, traditional = 3; see header).
             continue;
         }
         std::string discard;
