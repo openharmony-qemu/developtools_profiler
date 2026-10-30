@@ -901,7 +901,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
     std::string err;
     if (!LoadCmdConfig(configPath, cfg, err)) {
         log::Loge("Failed to load config: ", err);
-        return 2;
+        return EXIT_CONFIG_FAILED;
     }
 
     // 2. The options were already parsed by the main CliParser (see main.cpp),
@@ -922,7 +922,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
         std::string gateMsg;
         if (!ResolveDeviceTarget(opt.connectKey, opt.connectKeyProvided, gateMsg)) {
             log::Loge(gateMsg);
-            return 2;
+            return EXIT_CONFIG_FAILED;
         }
     }
 
@@ -945,12 +945,12 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
         auto q = QueryDeviceApps();
         if (q.deviceFailed) {
             log::Loge(q.deviceErr);
-            return 2;
+            return EXIT_CONFIG_FAILED;
         }
         const auto& apps = q.apps;
         if (apps.empty()) {
             log::Loge("No apps found or unable to query device.");
-            return 2;
+            return EXIT_CONFIG_FAILED;
         }
         std::cout << "Installed apps (" << apps.size() << "):\n";
         for (const auto& a : apps) {
@@ -968,17 +968,17 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
     const CaptureTypeInfo* capture = ResolveCategory(category, errMsg);
     if (!capture) {
         log::Loge("Error:", errMsg);
-        return 2;
+        return EXIT_CONFIG_FAILED;
     }
     if (processName.empty()) {
         log::Loge("Error: <bundle> is required for capture.");
-        return 2;
+        return EXIT_CONFIG_FAILED;
     }
     const std::string configOption = capture->flag;
 
     // 4. Environment check.
     if (!CheckProfilerEnv()) {
-        return 2;
+        return EXIT_PROFILER_FAILED;
     }
 
     // 4.5 Resolve process name: support partial matching of package name or app name.

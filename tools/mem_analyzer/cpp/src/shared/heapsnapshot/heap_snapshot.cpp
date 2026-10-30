@@ -373,7 +373,8 @@ std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t nodeIndex) const
                                     size_t dEnd2 = firstEdgePointers[nameDictNode + 1];
                                     for (size_t ptr3 = dBegin2; ptr3 < dEnd2; ptr3 += edgeFieldsCount) {
                                         uint32_t keyIdx = edges[ptr3 + edgeNameOrIndexOffset];
-                                        if (keyIdx < strings.size() && (strings[keyIdx] == "0" || strings[keyIdx] == "1")) {
+                                        if (keyIdx < strings.size() &&
+                                            (strings[keyIdx] == "0" || strings[keyIdx] == "1")) {
                                             uint32_t targetNode = edges[ptr3 + edgeToNodeOffset] / nodeFieldsCount;
                                             if (targetNode < static_cast<uint32_t>(nodeCount)) {
                                                 std::string extName = GetJsObjectExtName(targetNode);
