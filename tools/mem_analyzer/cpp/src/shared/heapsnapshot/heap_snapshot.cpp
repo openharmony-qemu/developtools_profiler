@@ -465,7 +465,6 @@ const std::string& HeapSnapshot::GetExtendedNodeName(uint32_t nodeIndex) const
         const int N = nodeCount;
         std::vector<std::thread> workers;
         workers.reserve(T);
-        if (T <= 0) return;
         for (int t = 0; t < T; ++t) {
             const int b = static_cast<int>((static_cast<long long>(N) * t) / T);
             const int e = static_cast<int>((static_cast<long long>(N) * (t + 1)) / T);
