@@ -264,7 +264,8 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
                 auto tArktsEnd = std::chrono::steady_clock::now();
                 auto arktsMs = std::chrono::duration_cast<std::chrono::milliseconds>(
                     tArktsEnd - tArktsStart).count();
-                log::Logok("  Analyzed ArkTS classes (", arktsMs, "ms). ", arktsResult.arktsClasses.size(), " classes.");
+                log::Logok("  Analyzed ArkTS classes (", arktsMs, "ms). ",
+                    arktsResult.arktsClasses.size(), " classes.");
 
                 parseResult.arktsClasses = std::move(arktsResult.arktsClasses);
 

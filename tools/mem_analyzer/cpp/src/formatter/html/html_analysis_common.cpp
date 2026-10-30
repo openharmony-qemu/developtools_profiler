@@ -172,7 +172,8 @@ std::string FormatDuration(const std::string& durationStr)
     }
     if (d >= 1e-6) {
         std::ostringstream oss;
-        oss << std::fixed << std::setprecision(DECIMAL_PRECISION) << RoundHalfAwayFromZero(d * 1e6, DECIMAL_PRECISION) << "\u03bcs";
+        oss << std::fixed << std::setprecision(DECIMAL_PRECISION) <<
+            RoundHalfAwayFromZero(d * 1e6, DECIMAL_PRECISION) << "\u03bcs";
         return oss.str();
     }
     std::ostringstream oss;

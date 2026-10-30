@@ -511,7 +511,9 @@ sqlite3* OpenSqlite3Db(const std::string& dbPath)
     sqlite3_wal_checkpoint_v2(db, nullptr, SQLITE_CHECKPOINT_TRUNCATE, nullptr, nullptr);
 
     sqlite3_stmt* chk = nullptr;
-    if (sqlite3_prepare_v2(db, "SELECT count(*) FROM sqlite_master WHERE type='table'", -1, &chk, nullptr) == SQLITE_OK) {
+    if (sqlite3_prepare_v2(db,
+        "SELECT count(*) FROM sqlite_master WHERE type='table'",
+        -1, &chk, nullptr) == SQLITE_OK) {
         if (sqlite3_step(chk) == SQLITE_ROW && sqlite3_column_int(chk, 0) == 0) {
             sqlite3_finalize(chk);
             sqlite3_close(db);
