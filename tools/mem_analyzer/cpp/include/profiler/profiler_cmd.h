@@ -22,9 +22,11 @@ namespace mem_analyzer {
 // Keeping the options in the overall CLI architecture means
 // `mem-analyzer profiler --help` renders like any other subcommand
 // (trace/tshandle/jsleak) instead of a separate help layout.
+constexpr int DEFAULT_CAPTURE_DURATION_S = 120;
+
 struct ProfilerCliOptions {
     std::string processName;        // positional <bundle>  target bundle name (required unless --list-apps)
-    int duration = 120;              // -t            capture duration in seconds (default 120)
+    int duration = DEFAULT_CAPTURE_DURATION_S;              // -t            capture duration in seconds (default 120)
     bool durationSpecified = false; // whether -t was explicitly given on the command line
     std::string outputDir = "out";  // -d/--out-dir  output directory
 

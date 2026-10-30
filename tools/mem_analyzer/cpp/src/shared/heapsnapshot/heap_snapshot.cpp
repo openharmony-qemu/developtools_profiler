@@ -75,6 +75,7 @@ constexpr int ARROW_SEPARATOR_LEN = 4;
 constexpr int ESCAPE_CHAR_SKIP_LEN = 2;
 constexpr int HEX_UPPER_NIBBLE_SHIFT = 4;
 constexpr int DECIMAL_BASE = 10;
+constexpr uint32_t INVALID_NODE = 0xFFFFFFFF;
 
 // 快速判断字符串是否为纯数字（内联）
 inline bool IsNumericString(const std::string& s)
@@ -95,7 +96,7 @@ inline bool IsNumericString(const std::string& s)
 // 获取 JSObject 扩展名
 std::string HeapSnapshot::GetJsObjectExtName(uint32_t nodeIndex) const
 {
-    uint32_t ctorNode = 0xFFFFFFFF;
+    uint32_t ctorNode = INVALID_NODE;
     std::string ctorName;
     std::vector<std::string> propNames;
     propNames.reserve(MAX_PROP_NAMES);
@@ -301,8 +302,8 @@ std::string HeapSnapshot::GetStateMgmtExtName(uint32_t nodeIndex, const std::str
 // 获取 SourceTextModule 扩展名
 std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t nodeIndex) const
 {
-    uint32_t localExportEntriesNode = 0xFFFFFFFF;
-    uint32_t nameDictNode = 0xFFFFFFFF;
+    uint32_t localExportEntriesNode = INVALID_NODE;
+    uint32_t nameDictNode = INVALID_NODE;
 
     size_t begin = firstEdgePointers[nodeIndex];
     size_t end = firstEdgePointers[nodeIndex + 1];
@@ -317,13 +318,13 @@ std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t nodeIndex) const
         } else if (en == "NameDictionary") {
             nameDictNode = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
         }
-        if (localExportEntriesNode != 0xFFFFFFFF && nameDictNode != 0xFFFFFFFF) {
+        if (localExportEntriesNode != INVALID_NODE && nameDictNode != INVALID_NODE) {
             break;
         }
     }
 
     std::string moduleName;
-    if (nameDictNode != 0xFFFFFFFF && nameDictNode < static_cast<uint32_t>(nodeCount)) {
+    if (nameDictNode != INVALID_NODE && nameDictNode < static_cast<uint32_t>(nodeCount)) {
         size_t dBegin = firstEdgePointers[nameDictNode];
         size_t dEnd = firstEdgePointers[nameDictNode + 1];
         for (size_t ptr = dBegin; ptr < dEnd; ptr += edgeFieldsCount) {
@@ -339,7 +340,7 @@ std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t nodeIndex) const
     }
 
     uint32_t exportCount = 0;
-    if (localExportEntriesNode != 0xFFFFFFFF && localExportEntriesNode < static_cast<uint32_t>(nodeCount)) {
+    if (localExportEntriesNode != INVALID_NODE && localExportEntriesNode < static_cast<uint32_t>(nodeCount)) {
         exportCount = GetNodeEdgeCount(localExportEntriesNode);
         if (exportCount > 0) {
             exportCount -= 1;
@@ -348,7 +349,7 @@ std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t nodeIndex) const
 
     std::vector<std::string> exportNames;
     exportNames.reserve(MAX_EXPORT_NAMES);
-    if (localExportEntriesNode != 0xFFFFFFFF && localExportEntriesNode < static_cast<uint32_t>(nodeCount)) {
+    if (localExportEntriesNode != INVALID_NODE && localExportEntriesNode < static_cast<uint32_t>(nodeCount)) {
         size_t eBegin = firstEdgePointers[localExportEntriesNode];
         size_t eEnd = firstEdgePointers[localExportEntriesNode + 1];
         for (size_t ptr = eBegin; ptr < eEnd && exportNames.size() < MAX_EXPORT_NAMES; ptr += edgeFieldsCount) {
@@ -367,7 +368,7 @@ std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t nodeIndex) const
                         if (exportNameNode < static_cast<uint32_t>(nodeCount)) {
                             std::string ename = GetNodeName(exportNameNode);
                             if (ename == "default" || ename.empty()) {
-                                if (nameDictNode != 0xFFFFFFFF) {
+                                if (nameDictNode != INVALID_NODE) {
                                     size_t dBegin2 = firstEdgePointers[nameDictNode];
                                     size_t dEnd2 = firstEdgePointers[nameDictNode + 1];
                                     for (size_t ptr3 = dBegin2; ptr3 < dEnd2; ptr3 += edgeFieldsCount) {
@@ -1216,7 +1217,7 @@ static void ComputePathsAndRetained(HeapSnapshot& snapshot)
         auto paths = ComputeShortestPaths(snapshot, true, true, true);
         snapshot.pathParentIndex.resize(snapshot.nodeCount);
         snapshot.pathEdgeStart.resize(snapshot.nodeCount);
-        constexpr uint32_t invalid = 0xFFFFFFFF;
+        constexpr uint32_t invalid = INVALID_NODE;
         for (uint32_t i = 0; i < static_cast<uint32_t>(snapshot.nodeCount); i++) {
             snapshot.pathParentIndex[i] = paths.pathEdges[i].parentNodeIndex;
             snapshot.pathEdgeStart[i] = paths.pathEdges[i].edgeFieldStart;
@@ -1322,7 +1323,7 @@ HeapSnapshot::NodeView HeapSnapshot::GetNodeById(uint32_t id) const
 {
     auto it = nodeIdToIdx.find(id);
     if (it == nodeIdToIdx.end()) {
-        return {0xFFFFFFFF, 0, "", 0};  // sentinel: not found
+        return {INVALID_NODE, 0, "", 0};  // sentinel: not found
     }
     uint32_t nodeIndex = it->second;
     uint32_t base = nodeIndex * nodeFieldsCount;
@@ -1400,7 +1401,7 @@ uint32_t HeapSnapshot::GetNodeInternalHash(uint32_t nodeIndex) const
 /// Format: "RootNode -> ChildNode -> TargetNode"
 std::string HeapSnapshot::FormatRefChain(uint32_t nodeIndex) const
 {
-    constexpr uint32_t invalid = 0xFFFFFFFF;
+    constexpr uint32_t invalid = INVALID_NODE;
     
     // 先收集节点索引，避免在收集过程中反复访问名称
     std::vector<uint32_t> indices;
@@ -1455,7 +1456,7 @@ std::string HeapSnapshot::FormatRefChain(uint32_t nodeIndex) const
 
 std::vector<std::string> HeapSnapshot::FormatRefChainFrames(uint32_t nodeIndex) const
 {
-    constexpr uint32_t invalid = 0xFFFFFFFF;
+    constexpr uint32_t invalid = INVALID_NODE;
 
     std::vector<uint32_t> indices;
     indices.reserve(REF_CHAIN_INDICES_RESERVE);
@@ -1534,7 +1535,7 @@ RefChainKey FnvContinue(const RefChainKey& prev, const std::string& name)
 
 RefChainKey HeapSnapshot::RefChainHash(uint32_t nodeIndex) const
 {
-    constexpr uint32_t invalid = 0xFFFFFFFF;
+    constexpr uint32_t invalid = INVALID_NODE;
     if (nodeIndex >= static_cast<uint32_t>(nodeCount)) {
         return RefChainKey{};
     }

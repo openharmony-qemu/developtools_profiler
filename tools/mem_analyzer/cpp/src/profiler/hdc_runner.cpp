@@ -75,6 +75,7 @@ constexpr int PS_FIELD_COUNT = 7;
 constexpr int SESSION_READY_WAIT_ITERS = 120;
 constexpr int FRESH_RESTART_EXIT_WAIT_ITERS = 20;
 constexpr int HEX_BUF_SIZE = 32;
+constexpr int DEFAULT_CAPTURE_DURATION_S = 120;
 
 // Ctrl+C (SIGINT) flag: the signal handler only sets this flag; the capture
 // loop polls it so we can stop hiprofiler cleanly and save the data instead
@@ -2301,7 +2302,7 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
         // app; "[Permission Check Failed] ..."), or the command exits with a
         // nonzero code, fail now instead of idling through the poll timeout.
         if (!HandleSnapshotCommandFailure(result)) {
-            const long long pollTimeout = (opts.duration > 0) ? opts.duration : 120;
+            const long long pollTimeout = (opts.duration > 0) ? opts.duration : DEFAULT_CAPTURE_DURATION_S;
             result.snapshotAttempted = true;
             pollAndPullSnapshot(opts.resultDir, opts.outputDir, resultBaseline,
                 pollTimeout, result.snapshotPulledFiles,

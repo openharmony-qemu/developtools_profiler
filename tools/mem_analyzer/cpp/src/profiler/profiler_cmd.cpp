@@ -1025,7 +1025,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
         popts.t = durationVal;
     } else {
         // Default to 120s when -t is not given, instead of finishing immediately.
-        popts.t = 120;
+        popts.t = DEFAULT_CAPTURE_DURATION_S;
     }
     popts.o = outputDirVal;
     popts.configOption = configOption;
