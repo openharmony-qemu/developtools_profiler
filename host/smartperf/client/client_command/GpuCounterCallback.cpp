@@ -181,13 +181,12 @@ namespace OHOS {
                 LOGE("GetRealTime newData is nullptr");
                 return;
             }
-
+            JoinSocketData(newData);
             if ((realtimeGpuPerfInfoData.duration == 0) || (newData->duration == 0)) {
                 LOGE("Invalid duration found: realtime = %d, newData = %d",
                     realtimeGpuPerfInfoData.duration, newData->duration);
                 return;
             }
-            JoinSocketData(newData);
             while (realtimeGpuPerfInfoData.duration >= maxDuration) {
                 SplitSocketData();
             }
