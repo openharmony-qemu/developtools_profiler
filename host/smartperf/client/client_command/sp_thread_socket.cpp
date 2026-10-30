@@ -756,14 +756,28 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         case MessageType::SAVE_GPU_COUNTER:
             HandleSaveGpuCounter(spSocket, recvBuf);
             break;
-        case MessageType::RECV_FILE: {
-            std::string fileName = ParseRecvFileName(recvBuf);
+        case MessageType::RECV_FILES: {
+            std::string fileName;
+            int fileCount = 0;   // UDP 消息格式：recv_files::<dirName>::<fileCount>
+            if (recvBuf.find("::") != std::string::npos) {
+                std::string param = recvBuf.substr(recvBuf.find("::") + separatorLen);
+                if (param.find(":::") != std::string::npos) {
+                    fileName = param.substr(0, param.find(":::"));
+                }
+                if (param.find("::") != std::string::npos) {
+                    fileName = param.substr(0, param.find("::"));
+                    std::string countStr = param.substr(param.find("::") + separatorLen);
+                    fileCount = std::atoi(countStr.c_str());
+                } else {
+                    fileName = param;
+                }
+            }
             if (SPUtils::IsPathTraversal(fileName) || !SPUtils::IsValidPath(fileName)) {
-                LOGE("RECV_FILE fileName is invalid: %s", fileName.c_str());
+                LOGE("RECV_FILES fileName is invalid: %s", fileName.c_str());
                 return;
             }
-            WLOGI("RECV_FILE request, fileName: %s", fileName.c_str());
-            StartRecvFile(spSocket, fileName);
+            LOGI("RECV FILS request, fileName %s, fileCount %d", fileName.c_str(), fileCount);
+            StartRecvFile(spSocket, fileName, fileCount);
             break;
         }
         case MessageType::APP_STOP_COLLECT:
@@ -1073,16 +1087,24 @@ int SpThreadSocket::CreateRecvFileListenSocket(int &outPort)
     int opt = 1;
     setsockopt(listenFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-    // 绑定端口 0 让系统自动分配可用端口
+    // 在固定端口范围内尝试bind， 避免使用getsockname（该进程SElinux权限管控）
+    constexpr int portStart = 9300;
+    constexpr int portEnd = 9399;
     struct sockaddr_in serverAddr = {0};
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(0);
     serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    int actualPort = -1;
+    for (int port = portStart; port <= portEnd; port++) {
+        serverAddr.sin_port = htons(port);
+        if (bind(listenFd, reinterpret_cast<struct sockaddr *>(&serverAddr), sizeof(serverAddr)) == 0) {
+            actualPort = port;
+            break;
+        }
+        LOGE("StartRecvFile port %d bind failed (error: %d), trying next....", port, error);
+    }
 
-    if (bind(listenFd, reinterpret_cast<struct sockaddr *>(&serverAddr), sizeof(serverAddr)) < 0) {
-        WLOGE("StartRecvFile bind failed, errno: %d", errno);
-        close(listenFd);
-        return -1;
+    if (actualPort < 0) {
+        LOGE("StartRecvFile bind failed for all ports %d-%d", portStart, portEnd);
     }
 
     if (listen(listenFd, 1) < 0) {
@@ -1091,14 +1113,7 @@ int SpThreadSocket::CreateRecvFileListenSocket(int &outPort)
         return -1;
     }
 
-    // 获取系统分配的实际端口号
-    socklen_t addrLen = sizeof(serverAddr);
-    if (getsockname(listenFd, reinterpret_cast<struct sockaddr *>(&serverAddr), &addrLen) < 0) {
-        WLOGE("StartRecvFile getsockname failed, errno: %d", errno);
-        close(listenFd);
-        return -1;
-    }
-    outPort = ntohs(serverAddr.sin_port);
+    outPort = actualPort;
     return listenFd;
 }
 
@@ -1140,8 +1155,8 @@ void SpThreadSocket::StartRecvFile(SpServerSocket &spSocket, const std::string& 
         return;
     }
 
-    SPUtils::CreateDir(recvFileDir);
-    std::string savePath = recvFileDir + fileName;
+    // 传输的数据直接写入 /data/local/tmp/sp_report/
+    std::string savePath = BuildSpReportPath(fileName);
 
     std::thread recvFileThread([this, savePath, &spSocket]() {
         int actualPort = 0;
@@ -1241,6 +1256,18 @@ void SpThreadSocket::HandleAppStopCollect(SpServerSocket &spSocket, std::string&
         taskMgr_->WriteToCSV();
     }
     spTask.ClearStopFlag();
+}
+
+std::string SpThreadSocket::BuildSpReportPath(const std::string &fileName)
+{
+    const std::string dstDir = "/data/local/tmp/sp_report/";
+    SPUtils::CreateDir(dstDir);
+    std::string savePath = dstDir + fileName;
+    size_t lastSlash = savePath.find_last_not_of('/');
+    if (lastSlash != std::string::npos && lastSlash > dstDir.length() - 1) {
+        SPUtils::CreateDir(savePath.substr()0, lastSlash);
+    }
+    return savePath;
 }
 }
 }

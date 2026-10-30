@@ -129,6 +129,7 @@ private:
     bool isSetPid = false;
     SPTask &spTask = SPTask::GetInstance();
     std::thread udpStartCollect;
+    std::string BuildSpReportPath(const std::string &fileName);
 
     ~SpThreadSocket()
     {
