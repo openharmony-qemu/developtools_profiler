@@ -458,13 +458,16 @@ const std::string& HeapSnapshot::GetExtendedNodeName(uint32_t nodeIndex) const
         log::Logd("[ref_chain] build ext_names start node_count=", nodeCount);
 
         extNames_.resize(static_cast<size_t>(nodeCount));
-        const int T = std::max(1, static_cast<int>(std::thread::hardware_concurrency()));
-        const int N = nodeCount;
+        const int threadCount = std::max(1, static_cast<int>(std::thread::hardware_concurrency()));
+        if (threadCount <= 0) {
+            return;
+        }
+        const int n = nodeCount;
         std::vector<std::thread> workers;
-        workers.reserve(T);
-        for (int t = 0; t < T; ++t) {
-            const int b = static_cast<int>((static_cast<long long>(N) * t) / T);
-            const int e = static_cast<int>((static_cast<long long>(N) * (t + 1)) / T);
+        workers.reserve(threadCount);
+        for (int t = 0; t < threadCount; ++t) {
+            const int b = static_cast<int>((static_cast<long long>(n) * t) / threadCount);
+            const int e = static_cast<int>((static_cast<long long>(n) * (t + 1)) / threadCount);
             workers.emplace_back([this, b, e]() {
                 for (int i = b; i < e; ++i) {
                     extNames_[static_cast<size_t>(i)] = ComputeExtendedName(static_cast<uint32_t>(i));
