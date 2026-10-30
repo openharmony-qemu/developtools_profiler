@@ -381,6 +381,7 @@ private:
     std::shared_ptr<HookRecordFactory> factory_{nullptr};
     std::set<uint64_t> addrSet_;
     std::unordered_multimap<uint64_t, AllocAddrInfo> allocAddrMap_;
+    std::unordered_map<uint64_t, uint32_t> resTraceAddrMap_;
     std::function<void(uint32_t)> serverCommandCallback_;
     std::unordered_set<uint64_t> snapshotAddrs_;
     std::atomic_bool waitingFinalSnapshot_{false};

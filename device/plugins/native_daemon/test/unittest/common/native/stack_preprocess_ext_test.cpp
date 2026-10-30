@@ -2596,4 +2596,35 @@ HWTEST_F(StackPreprocessExtTest, SetHookDataSerializesTagAwareRecordTypes, TestS
         EXPECT_GT(data.events_size(), 0);
     }
 }
+
+HWTEST_F(StackPreprocessExtTest, SetHookDataMunmapMatchesResTraceAddrAsTraceFree, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    auto frames = MakeFrames(0x1111);
+    auto makeRecord = [](uint16_t type, void* addr) {
+        auto rawStack = MakeRawStack(1, 100, 0);
+        rawStack->stackContext->ts = {1, 2};
+        rawStack->stackContext->addr = addr;
+        rawStack->stackContext->mallocSize = 64;
+        rawStack->stackContext->pid = 123;
+        rawStack->stackContext->type = type;
+        return rawStack;
+    };
+    auto usingRecord = std::make_shared<MemoryUsingRecord>(makeRecord(MEMORY_USING_MSG,
+        reinterpret_cast<void*>(0x6000)));
+    BatchNativeHookData usingData;
+    preprocess.SetHookData(usingRecord, frames, usingData);
+    ASSERT_EQ(usingData.events_size(), 1);
+    EXPECT_EQ(usingData.events(0).has_trace_alloc_event(), true);
+    EXPECT_EQ(preprocess.resTraceAddrMap_.count(0x6000), 1u);
+    auto munmapRecord = std::make_shared<MunmapRecord>(makeRecord(MUNMAP_MSG,
+        reinterpret_cast<void*>(0x6000)));
+    BatchNativeHookData munmapData;
+    preprocess.SetHookData(munmapRecord, frames, munmapData);
+    ASSERT_EQ(munmapData.events_size(), 1);
+    EXPECT_EQ(munmapData.events(0).has_trace_free_event(), true);
+    EXPECT_EQ(munmapData.events(0).has_munmap_event(), false);
+    EXPECT_EQ(preprocess.resTraceAddrMap_.count(0x6000), 0u);
+}
 }
