@@ -26,6 +26,13 @@ using namespace mem_analyzer::htmlAnalysis;
 
 namespace mem_analyzer {
 
+namespace {
+
+constexpr double PERCENT_PRECISION_SCALE = 10000.0;
+constexpr int PERCENT_SCALE = 100;
+
+} // namespace
+
 // ===== Build flame/icicle tree JSON directly from FlameNode (skip intermediate JSON) =====
 
 // Internal: recursive helper for non-root nodes (reads symbol info from FlameNode)
@@ -228,7 +235,7 @@ SymbolDataEntry BuildSymbolDataEntryFromContextLight(const TopSymbolInfo& ts,
     SymbolDataEntry entry;
 
     double percentage = totalExistingSize > 0 ?
-        std::round(static_cast<double>(ts.totalLeakSize) / static_cast<double>(totalExistingSize) * 10000.0) / 100.0 :
+        std::round(static_cast<double>(ts.totalLeakSize) / static_cast<double>(totalExistingSize) * PERCENT_PRECISION_SCALE) / static_cast<double>(PERCENT_SCALE) :
         0.0;
     std::string lib = ts.libs.empty() ? "" : ts.libs[0];
     entry.info = json{

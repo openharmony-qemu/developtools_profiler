@@ -32,6 +32,7 @@ constexpr double PERCENTAGE_SCALE = 100.0;
 constexpr int TREE_INDENT_BASE_PX = 10;
 constexpr int TREE_GUIDE_LEFT_PX = 18;
 constexpr int TREE_INDENT_STEP_PX = 16;
+constexpr int HEX_BUF_SIZE = 32;
 
 // 百分比口径与图表 tooltip 一致：以整棵树的根节点（GC Roots）总大小/总节点数为分母。
 std::string FormatTreePct(int64_t part, int64_t total)
@@ -39,7 +40,7 @@ std::string FormatTreePct(int64_t part, int64_t total)
     if (total <= 0) {
         return "0%";
     }
-    char buf[32];
+    char buf[HEX_BUF_SIZE];
     int ret = snprintf(buf, sizeof(buf), "%.1f%%",
                        static_cast<double>(part) / total * PERCENTAGE_SCALE);
     if (ret < 0) buf[0] = '\0';

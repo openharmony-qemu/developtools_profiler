@@ -26,6 +26,10 @@ namespace mem_analyzer {
 
 constexpr int DURATION_PRECISION = 3;
 
+namespace {
+constexpr int HEX_BUF_SIZE = 32;
+}
+
 json HtraceBuildMeta(const std::string& filePath, const RunContext& ctx)
 {
     json meta = BuildOutputMetaBase(ctx);
@@ -89,7 +93,7 @@ void HtraceWriteCallstackFrame(JsonStreamWriter& writer, const CompressedStackFr
 
     std::string libOffset;
     if (!frame.vaddrNull) {
-        char buf[32];
+        char buf[HEX_BUF_SIZE];
         int ret = snprintf(buf, sizeof(buf), "0x%llx",
                           (unsigned long long)frame.vaddr);
         if (ret < 0) buf[0] = '\0';

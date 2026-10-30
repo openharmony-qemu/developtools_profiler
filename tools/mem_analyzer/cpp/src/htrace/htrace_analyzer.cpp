@@ -34,6 +34,7 @@ constexpr int UID_SHIFT_BITS = 32;
 constexpr int PERCENT_SCALE = 100;
 constexpr int MIN_PAIR_SYMBOLS = 2;
 constexpr double PERCENT_PRECISION_SCALE = 10000.0;
+constexpr int HEX_BUF_SIZE = 32;
 
 // ===== N 轨 section 构造（HtraceRow 是 variant，构造时按同质轨装箱）=====
 static HtraceSection MakeSymbolSection(std::vector<TopSymbolInfo> syms, const char* key = "", const char* label = "")
@@ -329,7 +330,7 @@ struct InnerMap {
 // 避免把只覆盖一小部分的大容器符号误当作近似。
 static long long RelThresholdFor(long long replacedTotal, const AnalysisConfig& config)
 {
-    long long t = replacedTotal * config.approRelRatio / 100;
+    long long t = replacedTotal * config.approRelRatio / PERCENT_SCALE;
     return t < config.approRelCap ? t : config.approRelCap;
 }
 
@@ -697,7 +698,7 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
         ts.uid = s.uid;
 
         // Resolve symbol/lib from data_dict
-        int sid = static_cast<int>(s.uid >> 32);
+        int sid = static_cast<int>(s.uid >> UID_SHIFT_BITS);
         int fid = static_cast<int>(s.uid & 0xFFFFFFFF);
         auto symIt = dataDict.find(sid);
         ts.symbol = (symIt != dataDict.end()) ? symIt->second : "unknown";
@@ -706,7 +707,7 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
         ts.libs = {libStr};
         // Resolve lib_offset from stored vaddr
         if (!s.vaddrNull) {
-            char buf[32];
+            char buf[HEX_BUF_SIZE];
             int ret = snprintf(buf, sizeof(buf), "0x%llx",
                                static_cast<unsigned long long>(s.vaddr));
             if (ret < 0) buf[0] = '\0';
@@ -831,7 +832,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
                 }
             }
             libFile = libName.substr(libName.find_last_of("/\\") + 1);
-            int sid = static_cast<int>(sd.uid >> 32);
+            int sid = static_cast<int>(sd.uid >> UID_SHIFT_BITS);
             auto sit = dataDict.find(sid);
             symName = (sit != dataDict.end()) ? sit->second : "";
         };
@@ -938,7 +939,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
 
         // 孤儿栈兜底显著度门槛 = min(总泄漏量 × orphan_rel_ratio/100, orphan_rel_cap)。
         // 只有孤儿栈内聚合泄漏量达到门槛的符号才恢复，避免引入碎片化干扰。
-        long long orphanThreshold = totalLeakSize * config.orphanRelRatio / 100;
+        long long orphanThreshold = totalLeakSize * config.orphanRelRatio / PERCENT_SCALE;
         if (orphanThreshold > config.orphanRelCap) {
             orphanThreshold = config.orphanRelCap;
         }

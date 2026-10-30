@@ -74,6 +74,7 @@ constexpr int STABLE_SAMPLE_THRESHOLD = 2;
 constexpr int PS_FIELD_COUNT = 7;
 constexpr int SESSION_READY_WAIT_ITERS = 120;
 constexpr int FRESH_RESTART_EXIT_WAIT_ITERS = 20;
+constexpr int HEX_BUF_SIZE = 32;
 
 // Ctrl+C (SIGINT) flag: the signal handler only sets this flag; the capture
 // loop polls it so we can stop hiprofiler cleanly and save the data instead
@@ -1882,7 +1883,7 @@ bool CaptureStartFailed(const std::shared_ptr<CaptureState>& state)
 void PrintMetricsLine(const ProcessMetrics& metrics)
 {
     auto fmtMb = [](long long kb) -> std::string {
-        char buf[32];
+        char buf[HEX_BUF_SIZE];
         int ret = snprintf(buf, sizeof(buf), "%.2f", kb / 1024.0);
         if (ret < 0) buf[0] = '\0';
         return buf;
