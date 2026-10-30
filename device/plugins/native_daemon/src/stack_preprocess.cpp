@@ -354,6 +354,31 @@ void StackPreprocess::SetWriter(const std::shared_ptr<Writer>& writer)
     }
 }
 
+bool StackPreprocess::SetUniqueStackTable(const std::shared_ptr<ShareMemoryBlock>& block)
+{
+    if (block == nullptr || !block->Valid() || uniqueStackTable_ != nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "SetUniqueStackTable invalid block or table already bound");
+        return false;
+    }
+    uniqueTableBlock_ = block;
+    uniqueStackTable_ = std::make_unique<OHOS::HiviewDFX::UniqueStackTable>(
+        block->GetMMapBase(), block->GetSize(), false);
+    return true;
+}
+
+void StackPreprocess::ReleaseUniqueStackTable()
+{
+    if (uniqueTableBlock_ == nullptr) {
+        return;
+    }
+    if (thread_.joinable()) {
+        PROFILER_LOG_WARN(LOG_CORE, "ReleaseUniqueStackTable: preprocessing worker has not joined");
+        return;
+    }
+    uniqueStackTable_.reset();
+    uniqueTableBlock_.reset();
+}
+
 void StackPreprocess::SetWriterForFdSa(uint32_t fd)
 {
     writer_ = std::make_shared<TraceFileWriter>(fd);
@@ -1091,8 +1116,7 @@ bool StackPreprocess::GetPcsByStackId(StackId stackIdUnion, std::vector<uintptr_
 {
     if (stackIdUnion.value > 0) {
         pcs.reserve(MAX_CALL_FRAME_UNWIND_SIZE);
-        auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
-        if (!table->GetPcsByStackId(stackIdUnion, pcs, true)) {
+        if (uniqueStackTable_ == nullptr || !uniqueStackTable_->GetPcsByStackId(stackIdUnion, pcs, true)) {
             PROFILER_LOG_ERROR(LOG_CORE, "%s", errorMsg);
             return false;
         }

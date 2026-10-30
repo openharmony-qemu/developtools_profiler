@@ -86,6 +86,7 @@ public:
         int32_t pid = -1;
         std::string processName;
         std::vector<std::shared_ptr<ShareMemoryBlock>> shareMemoryBlockList;
+        std::shared_ptr<ShareMemoryBlock> uniqueTableBlock;
         std::vector<std::shared_ptr<EventNotifier>> eventNotifierList;
         std::vector<std::shared_ptr<EpollEventPoller>> eventPollerList;
         std::vector<std::string> smbNames;
@@ -119,6 +120,12 @@ public:
         std::atomic<uint32_t> recommendedDelayNs_{0};
         std::atomic<uint64_t> lastStateBroadcastTime_{0};
         BackpressureStateMsg CalculateBackpressureState();
+
+        bool shouldSkipGlobalFreed_ = false;
+        std::unordered_map<void*, struct timespec> validLiveData_;
+        std::unordered_map<void*, struct timespec> orphanFreeWhitelist_;
+        size_t totalRecord_{0};
+        size_t skipRecord_{0};
     };
     EXPORT_API HookManager();
     ~HookManager();
@@ -150,12 +157,12 @@ public:
     void StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, gid_t>>* pidInfo = nullptr);
     void ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex);
     void RefreshValidLiveDataFromFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd);
-    void ScanFileForLiveData(CacheFileReadContext& ctx);
-    bool ProcessFileChunk(CacheFileReadContext& ctx);
+    void ScanFileForLiveData(const std::shared_ptr<HookManagerCtx>& hookCtx, CacheFileReadContext& ctx);
+    bool ProcessFileChunk(const std::shared_ptr<HookManagerCtx>& hookCtx, CacheFileReadContext& ctx);
     uint32_t HandleRemainData(uint8_t* buffer, uint32_t totalAvail, uint32_t offset,
                               int fd, uint64_t& readfileSize);
-    bool RefreshValidLiveDataFromBuffer(uint8_t* buffer, uint32_t totalAvail,
-                                        uint32_t& offset, uint64_t& fileSize, bool isCrashFile);
+    bool RefreshValidLiveDataFromBuffer(const std::shared_ptr<HookManagerCtx>& hookCtx, uint8_t* buffer,
+                                        uint32_t totalAvail, uint32_t& offset, uint64_t& fileSize, bool isCrashFile);
     void ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd);
     bool ParseCacheFileLoop(const std::shared_ptr<HookManagerCtx>& hookCtx, CacheFileReadContext& ctx);
     bool HandleParsedRemainder(CacheFileReadContext& ctx, uint32_t totalAvail, uint32_t offset);
@@ -182,6 +189,8 @@ public:
     void DumpGwpAsanInfo(uint8_t* data);
     std::string GetCmdArgs(const NativeHookConfig& traceConfig);
     std::vector<int> GetFds(int32_t pid, const std::string& name, int sharedMemCount);
+    // Returns a borrowed FD, or -1 if no matching async stack context exists.
+    int GetAsyncStackFd(int32_t pid, const std::string& name) const;
     inline void SetSaServiceConfig(bool saFlag, bool isProtobufSerialize)
     {
         isSaService_ = saFlag;
@@ -229,7 +238,6 @@ public:
     bool StartInHookSimpNmdDump(std::function<bool(int)> postProcessor);
     std::string GetInHookSimpNmdResult(uint32_t waitMs);
     bool HandleInHookSimpNmdDone();
-    std::shared_ptr<ShareMemoryBlock> uniqueTableBlock_;
 
 private:
     int pid_ = -1; // for SA mode
@@ -284,7 +292,8 @@ private:
     void FlushPendingRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx);
     bool ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& hookCtx, uint8_t* buffer,
         uint32_t totalAvail, uint32_t& offset, uint64_t& readfileSize, bool isCrashFile);
-    bool ShouldSkipGlobalFreedRecord(const int8_t* data, uint32_t size) const;
+    bool ShouldSkipGlobalFreedRecord(const std::shared_ptr<HookManagerCtx>& ctx,
+                                     const int8_t* data, uint32_t size) const;
     std::string GetMemLeakFileName(MemLeakFormat format);
     void UpdateFreezeExcludedPid(bool isAdd, int32_t targetPid, int32_t profilerPid);
     bool CloseMemLeakTempFile();
@@ -334,11 +343,6 @@ private:
     std::atomic_bool inHookSimpNmdStarted_{false};
     int inHookSimpNmdFd_{-1};
     SemaphorePtr inHookSimpNmdSem_{nullptr};
-    bool shouldSkipGlobalFreed_ = false;
-    std::unordered_map<void*, struct timespec> validLiveData_;
-    std::unordered_map<void*, struct timespec> orphanFreeWhitelist_;
-    size_t totalRecord_{0};
-    size_t skipRecord_{0};
 };
 }
 #endif // AGENT_MANAGER_H

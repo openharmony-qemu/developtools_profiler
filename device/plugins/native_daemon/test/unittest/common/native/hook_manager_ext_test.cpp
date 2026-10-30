@@ -1494,7 +1494,7 @@ HWTEST_F(HookManagerExtTest, HandleHookContextSharedMemoryAsyncStackCreatesUniqu
     EXPECT_TRUE(hookManager_->HandleHookContext(ctx));
     EXPECT_NE(ctx->stackPreprocess, nullptr);
     EXPECT_EQ(ctx->eventPollerList.size(), 1u);
-    EXPECT_NE(hookManager_->uniqueTableBlock_, nullptr);
+    EXPECT_NE(ctx->uniqueTableBlock, nullptr);
     EXPECT_TRUE(hookManager_->DestroyPluginSession({0}));
 }
 
@@ -1791,12 +1791,11 @@ HWTEST_F(HookManagerExtTest, DestroyPluginSessionReleasesSharedMemoryResources, 
     ctx->stackPreprocess->SetFactory(hookManager_->factory_);
     ASSERT_TRUE(hookManager_->HandleSharedMemoryHookContext(ctx, 1));
     hookManager_->hookCtx_.push_back(ctx);
-    hookManager_->uniqueTableBlock_ =
-        ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("unique_stack_table", TEST_PAGE_BYTES);
+    ctx->uniqueTableBlock = std::make_shared<ShareMemoryBlock>("unique_stack_table", TEST_PAGE_BYTES);
 
     EXPECT_TRUE(hookManager_->DestroyPluginSession({0}));
     EXPECT_TRUE(ctx->stackData->Size() == 0);
-    EXPECT_EQ(hookManager_->uniqueTableBlock_, nullptr);
+    EXPECT_EQ(ctx->uniqueTableBlock, nullptr);
 }
 
 /*
@@ -2850,19 +2849,20 @@ HWTEST_F(HookManagerExtTest, ReadFromCacheFileStopsAtDeclaredDataSize, TestSize.
  */
 HWTEST_F(HookManagerExtTest, ShouldSkipGlobalFreedRecordInvalidInput, TestSize.Level0)
 {
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(-1);
     BaseStackRawData record = {};
     record.type = MALLOC_MSG;
-    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(nullptr, sizeof(BaseStackRawData)));
-    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(
+    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(ctx, nullptr, sizeof(BaseStackRawData)));
+    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(ctx,
         reinterpret_cast<const int8_t*>(&record), 0));
 
-    hookManager_->shouldSkipGlobalFreed_ = false;
-    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(
+    ctx->shouldSkipGlobalFreed_ = false;
+    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(ctx,
         reinterpret_cast<const int8_t*>(&record), sizeof(BaseStackRawData)));
 
-    hookManager_->shouldSkipGlobalFreed_ = true;
+    ctx->shouldSkipGlobalFreed_ = true;
     record.type = THREAD_NAME_MSG;
-    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(
+    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(ctx,
         reinterpret_cast<const int8_t*>(&record), sizeof(BaseStackRawData)));
 }
 
@@ -2873,19 +2873,46 @@ HWTEST_F(HookManagerExtTest, ShouldSkipGlobalFreedRecordInvalidInput, TestSize.L
  */
 HWTEST_F(HookManagerExtTest, ShouldSkipGlobalFreedRecordSkipsStaleMalloc, TestSize.Level0)
 {
-    hookManager_->shouldSkipGlobalFreed_ = true;
-    hookManager_->validLiveData_.clear();
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(-1);
+    ctx->shouldSkipGlobalFreed_ = true;
+    ctx->validLiveData_.clear();
     constexpr uintptr_t testRecordAddr = 0x1234;
     BaseStackRawData record = {};
     record.type = MALLOC_MSG;
     record.addr = reinterpret_cast<void*>(testRecordAddr);
     record.ts = {1, 0};
-    hookManager_->validLiveData_[record.addr] = {2, 0};
-    EXPECT_TRUE(hookManager_->ShouldSkipGlobalFreedRecord(
+    ctx->validLiveData_[record.addr] = {2, 0};
+    EXPECT_TRUE(hookManager_->ShouldSkipGlobalFreedRecord(ctx,
         reinterpret_cast<const int8_t*>(&record), sizeof(BaseStackRawData)));
 
     record.ts = {3, 0};
-    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(
+    EXPECT_FALSE(hookManager_->ShouldSkipGlobalFreedRecord(ctx,
         reinterpret_cast<const int8_t*>(&record), sizeof(BaseStackRawData)));
+}
+
+/*
+ * @tc.name: FindHookContextMultiprocessEmptyNameMatchesExactPid
+ * @tc.desc: test FindHookContext matches by pid only when name is empty; empty processName does not cause false match.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, FindHookContextMultiprocessEmptyNameMatchesExactPid, TestSize.Level0)
+{
+    constexpr int32_t pidA = 100;
+    constexpr int32_t pidB = 200;
+    constexpr int32_t pidUnconfigured = 65537;
+    auto ctxA = std::make_shared<HookManager::HookManagerCtx>(pidA);
+    ASSERT_TRUE(ctxA != nullptr);
+    EXPECT_TRUE(ctxA->processName.empty());
+    auto ctxB = std::make_shared<HookManager::HookManagerCtx>(pidB);
+    ASSERT_TRUE(ctxB != nullptr);
+    EXPECT_TRUE(ctxB->processName.empty());
+    hookManager_->hookCtx_.push_back(ctxA);
+    hookManager_->hookCtx_.push_back(ctxB);
+
+    EXPECT_EQ(hookManager_->FindHookContext(pidA, ""), ctxA);
+    EXPECT_EQ(hookManager_->FindHookContext(pidB, ""), ctxB);
+    EXPECT_EQ(hookManager_->FindHookContext(pidUnconfigured, ""), nullptr);
+
+    hookManager_->hookCtx_.clear();
 }
 } // namespace

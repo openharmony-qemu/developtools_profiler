@@ -991,9 +991,10 @@ HWTEST_F(HookManagerTest, FormatGwpAsanOutputEmptyFrameMap, TestSize.Level0)
 HWTEST_F(HookManagerTest, ScanFileForLiveData_ReadError, TestSize.Level0)
 {
     HookManager hookManager;
+    auto hookCtx = std::make_shared<HookManager::HookManagerCtx>(-1);
     CacheFileReadContext ctx;
     ctx.fd = -1;
-    hookManager.ScanFileForLiveData(ctx);
+    hookManager.ScanFileForLiveData(hookCtx, ctx);
 }
 
 /*
@@ -1014,10 +1015,11 @@ HWTEST_F(HookManagerTest, ScanFileForLiveData_InvalidData, TestSize.Level0)
     write(fd, &size, sizeof(uint32_t));
     lseek(fd, 0, SEEK_SET);
 
+    auto hookCtx = std::make_shared<HookManager::HookManagerCtx>(-1);
     CacheFileReadContext ctx;
     ctx.fd = fd;
     ctx.bytesToRead = MMAP_FILE_SIZE;
-    hookManager.ScanFileForLiveData(ctx);
+    hookManager.ScanFileForLiveData(hookCtx, ctx);
     close(fd);
 }
 } // namespace

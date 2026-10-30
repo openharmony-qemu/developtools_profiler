@@ -660,12 +660,12 @@ bool HookManager::HandleFileCacheHookContext(const std::shared_ptr<HookManagerCt
     ctx->cacheFileStopReceived = false;
     ctx->cacheFileStopRequested = false;
 
-    shouldSkipGlobalFreed_ = hookConfig_.discard_destroyed_traces();
-    if (shouldSkipGlobalFreed_) {
-        totalRecord_ = 0;
-        skipRecord_ = 0;
-        validLiveData_.clear();
-        validLiveData_.reserve(VALID_LIVE_DATA_RESERVE_COUNT);
+    ctx->shouldSkipGlobalFreed_ = hookConfig_.discard_destroyed_traces();
+    if (ctx->shouldSkipGlobalFreed_) {
+        ctx->totalRecord_ = 0;
+        ctx->skipRecord_ = 0;
+        ctx->validLiveData_.clear();
+        ctx->validLiveData_.reserve(VALID_LIVE_DATA_RESERVE_COUNT);
     }
 
     return true;
@@ -713,7 +713,7 @@ bool HookManager::HandleSharedMemoryHookContext(const std::shared_ptr<HookManage
 std::shared_ptr<HookManager::HookManagerCtx> HookManager::FindHookContext(int32_t pid, const std::string& name)
 {
     for (const auto& item : hookCtx_) {
-        if (item != nullptr && (item->pid == pid || item->processName == name)) {
+        if (item != nullptr && (item->pid == pid || (!name.empty() && item->processName == name))) {
             return item;
         }
     }
@@ -730,14 +730,14 @@ void HookManager::HandleReadyCacheFile(const std::shared_ptr<HookManagerCtx>& ct
     if (ctx->stackPreprocess != nullptr) {
         ctx->stackPreprocess->RefreshDmaFdSizeCache();
     }
-    if (shouldSkipGlobalFreed_) {
-        validLiveData_.clear();
-        orphanFreeWhitelist_.clear();
+    if (ctx->shouldSkipGlobalFreed_) {
+        ctx->validLiveData_.clear();
+        ctx->orphanFreeWhitelist_.clear();
         RefreshValidLiveDataFromFile(ctx, frontFd);
     }
     if (noDataQueue_) {
-        ctx->stackPreprocess->SetValidLiveData(shouldSkipGlobalFreed_ ? &validLiveData_ : nullptr,
-            shouldSkipGlobalFreed_ ? &orphanFreeWhitelist_ : nullptr);
+        ctx->stackPreprocess->SetValidLiveData(ctx->shouldSkipGlobalFreed_ ? &ctx->validLiveData_ : nullptr,
+            ctx->shouldSkipGlobalFreed_ ? &ctx->orphanFreeWhitelist_ : nullptr);
         ctx->stackPreprocess->TakeResultsFromCacheFile(frontFd);
     } else {
         ReadFromCacheFile(ctx, frontFd);
@@ -1032,24 +1032,11 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
 
     if (hookConfig_.async_stack_enable()) {
         const uint32_t uniqueStackTableSize = GetUniqueStackTableSizeWithDefault(hookConfig_);
-        uniqueTableBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("unique_stack_table",
-            uniqueStackTableSize);
-        if (uniqueTableBlock_ == nullptr) {
-            PROFILER_LOG_ERROR(LOG_CORE, "HandleHookContext uniqueTableBlock_ nullptr");
+        ctx->uniqueTableBlock = std::make_shared<ShareMemoryBlock>("unique_stack_table", uniqueStackTableSize);
+        if (!ctx->uniqueTableBlock->Valid()) {
+            PROFILER_LOG_ERROR(LOG_CORE, "HandleHookContext create unique stack table failed");
             return false;
         }
-        void* memoryBase = uniqueTableBlock_->GetMMapBase();
-        if (memoryBase == nullptr) {
-            PROFILER_LOG_ERROR(LOG_CORE, "HandleHookContext memoryBase nullptr");
-            return false;
-        }
-        auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
-        if (table == nullptr) {
-            PROFILER_LOG_ERROR(LOG_CORE, "HandleHookContext new UniqueStackTable failed.");
-            return false;
-        }
-        // Use faultloggerd to record sync/async stack info.
-        table->SwitchExternalBuffer(memoryBase, uniqueStackTableSize);
     }
 
     ctx->isRecordAccurately = hookConfig_.record_accurately();
@@ -1069,6 +1056,9 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         if (!CreateQueueDataHandler(ctx, sharedMemCount)) {
             return false;
         }
+    }
+    if (ctx->uniqueTableBlock != nullptr && !ctx->stackPreprocess->SetUniqueStackTable(ctx->uniqueTableBlock)) {
+        return false;
     }
     if (isProtobufSerialize_) {
         ctx->stackPreprocess->SetWriter(g_buffWriter);
@@ -1855,17 +1845,18 @@ bool HookManager::DrainSharedMemoryBlock(const std::shared_ptr<HookManagerCtx>& 
     return drained;
 }
 
-bool HookManager::ShouldSkipGlobalFreedRecord(const int8_t* data, uint32_t size) const
+bool HookManager::ShouldSkipGlobalFreedRecord(const std::shared_ptr<HookManagerCtx>& ctx,
+    const int8_t* data, uint32_t size) const
 {
-    if (data == nullptr || size == 0) {
+    if (ctx == nullptr || data == nullptr || size == 0) {
         return false;
     }
-    if (!shouldSkipGlobalFreed_ || !IsBaseStackRawDataRecord(data, size)) {
+    if (!ctx->shouldSkipGlobalFreed_ || !IsBaseStackRawDataRecord(data, size)) {
         return false;
     }
     auto* rawData = reinterpret_cast<const BaseStackRawData*>(data);
-    return (IsAllocRecord(rawData) || IsFreeRecord(rawData)) && ShouldSkipRecord(rawData, validLiveData_) &&
-        !(IsFreeRecord(rawData) && InOrphanFreeWhitelist(rawData, orphanFreeWhitelist_));
+    return (IsAllocRecord(rawData) || IsFreeRecord(rawData)) && ShouldSkipRecord(rawData, ctx->validLiveData_) &&
+        !(IsFreeRecord(rawData) && InOrphanFreeWhitelist(rawData, ctx->orphanFreeWhitelist_));
 }
 
 bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& hookCtx, uint8_t* buffer,
@@ -1899,10 +1890,10 @@ bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& 
         std::shared_ptr<RawStack> rawStack = nullptr;
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + offset);
 
-        totalRecord_++;
-        if (ShouldSkipGlobalFreedRecord(dataPtr, totalSize)) {
+        hookCtx->totalRecord_++;
+        if (ShouldSkipGlobalFreedRecord(hookCtx, dataPtr, totalSize)) {
             offset += totalSize;
-            skipRecord_++;
+            hookCtx->skipRecord_++;
             continue;
         }
         if (!TakeDataHandler(hookCtx, hookRecord, rawStack, dataPtr, totalSize)) {
@@ -1920,8 +1911,8 @@ bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& 
     return true;
 }
 
-bool HookManager::RefreshValidLiveDataFromBuffer(uint8_t* buffer, uint32_t totalAvail,
-                                                 uint32_t& offset, uint64_t& fileSize, bool isCrashFile)
+bool HookManager::RefreshValidLiveDataFromBuffer(const std::shared_ptr<HookManagerCtx>& hookCtx,
+    uint8_t* buffer, uint32_t totalAvail, uint32_t& offset, uint64_t& fileSize, bool isCrashFile)
 {
     while (offset + sizeof(uint32_t) <= totalAvail) {
         uint32_t totalSize = 0;
@@ -1953,7 +1944,7 @@ bool HookManager::RefreshValidLiveDataFromBuffer(uint8_t* buffer, uint32_t total
         }
         auto* rawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
         if (IsAllocRecord(rawData) || IsFreeRecord(rawData)) {
-            UpdateLiveData(rawData, validLiveData_, orphanFreeWhitelist_);
+            UpdateLiveData(rawData, hookCtx->validLiveData_, hookCtx->orphanFreeWhitelist_);
         }
         offset += totalSize;
     }
@@ -2021,10 +2012,10 @@ void HookManager::RefreshValidLiveDataFromFile(const std::shared_ptr<HookManager
         }
     }
     ctx.bytesToRead = ctx.isCrashFile ? MAX_CACHE_DATA_SIZE : dataSize;
-    ScanFileForLiveData(ctx);
+    ScanFileForLiveData(hookCtx, ctx);
 }
 
-bool HookManager::ProcessFileChunk(CacheFileReadContext& ctx)
+bool HookManager::ProcessFileChunk(const std::shared_ptr<HookManagerCtx>& hookCtx, CacheFileReadContext& ctx)
 {
     uint32_t maxRead = GetCacheFileReadSize(ctx);
     if (ctx.readDone) {
@@ -2045,7 +2036,8 @@ bool HookManager::ProcessFileChunk(CacheFileReadContext& ctx)
 
     uint32_t totalAvail = ctx.remainSize + static_cast<uint32_t>(bytesRead);
     uint32_t offset = 0;
-    if (!RefreshValidLiveDataFromBuffer(ctx.readBuffer, totalAvail, offset, ctx.readfileSize, ctx.isCrashFile)) {
+    if (!RefreshValidLiveDataFromBuffer(hookCtx, ctx.readBuffer, totalAvail, offset,
+        ctx.readfileSize, ctx.isCrashFile)) {
         return false;
     }
 
@@ -2058,14 +2050,14 @@ bool HookManager::ProcessFileChunk(CacheFileReadContext& ctx)
     return true;
 }
 
-void HookManager::ScanFileForLiveData(CacheFileReadContext& ctx)
+void HookManager::ScanFileForLiveData(const std::shared_ptr<HookManagerCtx>& hookCtx, CacheFileReadContext& ctx)
 {
     auto readBuffer = std::make_unique<uint8_t[]>(FILE_CACHE_READ_BUFFER_SIZE);
     ctx.readBuffer = readBuffer.get();
 
     bool keepReading = true;
     while (keepReading) {
-        keepReading = ProcessFileChunk(ctx);
+        keepReading = ProcessFileChunk(hookCtx, ctx);
     }
 }
 
@@ -2100,8 +2092,8 @@ void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookC
     ctx.bytesToRead = ctx.isCrashFile ? MAX_CACHE_DATA_SIZE : dataSize;
     auto readBuffer = std::make_unique<uint8_t[]>(FILE_CACHE_READ_BUFFER_SIZE);
     ctx.readBuffer = readBuffer.get();
-    totalRecord_ = 0;
-    skipRecord_ = 0;
+    hookCtx->totalRecord_ = 0;
+    hookCtx->skipRecord_ = 0;
     PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile dataSize=%u, crashFile=%d",
         dataSize, static_cast<int>(ctx.isCrashFile));
 
@@ -2112,8 +2104,8 @@ void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookC
     PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile [%llu]completed, ret %d.",
         static_cast<unsigned long long>(ctx.readfileSize), ret);
     PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile total record %zu, skip record %zu, ratio %f",
-        totalRecord_, skipRecord_,
-        static_cast<double>(skipRecord_) / static_cast<double>(totalRecord_));
+        hookCtx->totalRecord_, hookCtx->skipRecord_,
+        static_cast<double>(hookCtx->skipRecord_) / static_cast<double>(hookCtx->totalRecord_));
 }
 
 bool HookManager::ParseCacheFileLoop(const std::shared_ptr<HookManagerCtx>& hookCtx,
@@ -2226,10 +2218,10 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
         if (item->stackData != nullptr) {
             item->stackData->ClearCache();
         }
-        if (uniqueTableBlock_ != nullptr) {
-            ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("unique_stack_table");
-            uniqueTableBlock_ = nullptr;
+        if (item->stackPreprocess != nullptr) {
+            item->stackPreprocess->ReleaseUniqueStackTable();
         }
+        item->uniqueTableBlock.reset();
     }
     WaitMemLeakDoneIfNeeded();
     CloseResource();
@@ -2627,10 +2619,26 @@ int HookManager::CreateFileCacheFd()
     return fd;
 }
 
+int HookManager::GetAsyncStackFd(int32_t pid, const std::string& name) const
+{
+    for (const auto& item : hookCtx_) {
+        if (pid > 0 && item->pid == pid) {
+            return item->uniqueTableBlock ? item->uniqueTableBlock->GetfileDescriptor() : -1;
+        }
+    }
+    // Resolve an unbound startup context only after checking all PID matches.
+    for (const auto& item : hookCtx_) {
+        if (item->pid <= 0 && !name.empty() && item->processName == name) {
+            return item->uniqueTableBlock ? item->uniqueTableBlock->GetfileDescriptor() : -1;
+        }
+    }
+    return -1;
+}
+
 std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name, int sharedMemCount)
 {
     for (const auto& item : hookCtx_) {
-        if (item->pid == pid || item->processName == name) {
+        if (item != nullptr && (item->pid == pid || (!name.empty() && item->processName == name))) {
             if (item->pid == -1) {
                 item->pid = pid;
             }

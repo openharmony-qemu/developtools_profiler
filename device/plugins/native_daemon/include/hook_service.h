@@ -44,7 +44,7 @@ private:
     bool CheckConnectionPermission(SocketContext &context, pid_t pid);
     bool SendPeerFds(SocketContext &context, int32_t peerConfig, const std::string& procName);
     bool SendSharedMemoryFds(SocketContext &context, int32_t peerConfig, const std::string& procName);
-    bool SendAsyncStackFd(SocketContext &context);
+    bool SendAsyncStackFd(SocketContext &context, int32_t pid, const std::string& name);
     bool SendMemLeakFd(SocketContext &context);
     void SaveSocketFd(SocketContext &context, pid_t pid);
     bool HandleControlCommand(SocketContext &context, uint32_t cmd);
