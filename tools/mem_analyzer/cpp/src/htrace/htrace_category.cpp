@@ -22,11 +22,9 @@ const std::vector<HtraceCategorySpec>& HtraceCategories()
 {
     // ─────────────────────────────────────────────────────────────────────────
     // 描述符表：全仓唯一一处枚举「有哪些 category、各自长什么样」的地方。
-    //
     // 一行 = 一个 HtraceCategorySpec，字段顺序（与头文件一致）：
     //   name, event_types(升序), summary_total_key, html_type_class, count_mode,
     //   tracks, summary_entries
-    //
     // 各列注意：
     // - name：category 关键词；**行为契约**，改名会改输出/报错文案，回归会挂。
     // - event_types：allowed_event_types(name, true) 的结果，必须升序（SQL 的 type IN(...) 与过滤遍历都依赖）。
@@ -35,12 +33,10 @@ const std::vector<HtraceCategorySpec>& HtraceCategories()
     // - tracks：N 轨声明。单轨用 {{"<key>", "", TrackRender::SYMBOL}}（key 是 JSON 嵌套键；
     //   无 label，因为单轨无 HTML 二级 tab）。多轨（仅 mmap）按渲染顺序列出，label 是 HTML 二级 tab 名的唯一权威来源。
     // - summary_entries：build_summary 的输出条目，顺序即 JSON 键顺序。
-    //
     // 表内顺序是有意设计的：它即 CLI 报错「Valid values:」的展示顺序（保持与历史一致：
     //   nativeheap, mmap, dma, ashmem, fd, thread）。
     //   注意 parse summary 的输出顺序与此不同（它在 parse formatter 里单独定序，见
     //   htrace_parse_json_formatter.cpp 的 PARSE_SUMMARY_ORDER），不要把这处顺序当「输出顺序」改。
-    //
     // 扩展：新增 category = 在下面加一行；新增轨道 = 改该行 tracks；新增行种 = 改 TrackRender +
     //       writer 分派（详见头文件三个正交维度 + docs/htrace_refactor_design.md）。
     // ─────────────────────────────────────────────────────────────────────────

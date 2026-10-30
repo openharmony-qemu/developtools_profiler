@@ -83,7 +83,6 @@ std::string BuildOverviewCell(const std::string& chartSubTabId, const std::strin
 
 // 引用链前缀树节点：把大量重复前缀（a、a -> b、a -> b -> c）合并成一棵树，
 // 供冰柱图按层级渲染。
-//
 // 数值口径与报告表格行保持一致：
 //   own_size/own_count —— 以该节点结尾的那条引用链的值（即表格中该链那一行的
 //                        「总大小 / 节点数」）。retained size 本身已包含其子树，

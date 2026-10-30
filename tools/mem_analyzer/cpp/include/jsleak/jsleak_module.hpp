@@ -19,11 +19,9 @@
 namespace mem_analyzer {
 
 /// jsleak 数据域模块（输入 heapsnapshot / rawheap）。
-///
 /// 内部为编译期类型：解析产出 `HeapSnapshot`，分析产出结果 json（见
 /// `jsleak_analyze()` 的说明——分析层保留「提前 JSON 化」的既有设计），
 /// 不再经过 `ProcessData` / `std::any` / `from` 字符串协议；输出由域内 writer 直写文件。
-///
 /// 该域**不支持 parse-only**（能力表不声明 parse 格式），`-p` 会被明确拒绝。
 class JsleakModule final : public AnalysisModule {
 public:

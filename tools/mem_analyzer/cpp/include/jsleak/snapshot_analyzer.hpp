@@ -57,10 +57,8 @@ struct JsleakStage {
 
 /// jsleak 分析步骤：按 `mode` 与预览开关过滤各阶段，产出结果 json
 /// （含 parsedAt / sourceFile / totalHeapSize 与各阶段结果）。
-///
 /// **注意（P4-d 有意保留）**：分析层仍**提前 JSON 化**——各阶段结果在分析阶段即写成
 /// `json`，writer 只做重组。改掉它会动分析层与输出层的数据协议，不在本期范围内。
-///
 /// 强类型入参/出参：不再经过 ProcessData / std::any。
 json JsleakAnalyze(const HeapSnapshot& heap, const std::string& filePath, const RunContext& ctx);
 

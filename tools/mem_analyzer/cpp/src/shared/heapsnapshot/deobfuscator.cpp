@@ -37,7 +37,6 @@ constexpr size_t CHAR_SEARCH_BUF_SIZE = 256;
 
 // ============================================================================
 //  Streaming file helpers
-//
 //  deobfuscate_heapsnapshot 只需改写顶层 "strings" 数组。为避免对整份
 //  heapsnapshot（含巨大的 nodes/edges 数组）做全量 json::parse + dump，
 //  这里用流式扫描定位 strings 数组的字节范围，仅解析该数组，
@@ -488,7 +487,6 @@ std::string DeobfuscateOneString(const std::string& value,
 
 // ============================================================================
 //  deobfuscate_heapsnapshot: 流式反混淆 heapsnapshot
-//
 //  仅解析并改写顶层 "strings" 字符串数组，nodes / edges / meta 等其余字段
 //  按原始字节流式拷贝，避免大快照全量 json::parse + dump 导致的内存峰值。
 // ============================================================================
@@ -599,7 +597,6 @@ bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& ou
 
 // ============================================================================
 //  deobfuscate_with_indices: 加载索引 + 反混淆的公共时序
-//
 //  供 jsleak_parse()（jsleak 入口）与 deobfuscate_zip_snapshot
 //  （tshandle zip 入口）共用，消除重复逻辑。
 // ============================================================================

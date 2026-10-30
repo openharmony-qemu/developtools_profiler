@@ -22,7 +22,6 @@ namespace mem_analyzer {
 
 /// HTML 报告页面骨架接口：封装所有报告共用的文档结构，
 /// 各域 formatter 只提供标题、meta 项、数据、脚本和主体内容，骨架负责拼接完整页面。
-///
 /// 用法示例（非流式）：
 ///   out << html_report_begin("报告标题");
 ///   out << domain_css;                  // ① CSS 注入点（域专属 + 可选组件）
@@ -35,7 +34,6 @@ namespace mem_analyzer {
 ///   out << html_report_data("D", json); // ④ 数据段
 ///   out << html_report_core_script();   // ⑤ 脚本段（核心交互 + 可选组件 + 域）
 ///   out << html_report_end();           // ⑥ </body></html>
-///
 /// 骨架自动注入的「必选核心」：navigation_bar / help_tooltip / version。
 /// 「可选组件」（chart_module 图 / tab_bar 分类 tab / tree_table 数据树表）由域按需注入。
 

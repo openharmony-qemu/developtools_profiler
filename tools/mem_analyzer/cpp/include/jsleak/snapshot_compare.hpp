@@ -27,7 +27,6 @@ bool JsleakCompareInputsValid(const std::string& baselineFile, const std::string
 
 /// 快照对比分析：双端已解析的 HeapSnapshot → Schema v6 对比报告 json。
 /// 渲染由 jsleak/formatters/snapshot_compare_formatter 的 writer 负责。
-///
 /// mode 选择输出内容：
 ///   "all"           —— 属性标签泄漏对比 + 最短引用链对比（默认）
 ///   "property-tag"  —— 仅属性标签泄漏对比（leakObjInfo）

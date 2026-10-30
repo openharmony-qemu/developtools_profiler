@@ -255,11 +255,9 @@ struct ResolvedCallStackList {
 using CallStackList = std::variant<CompressedCallStackList, ResolvedCallStackList>;
 
 /// Abstract representation of a parsed trace database.
-///
 /// Contains:
 ///   - stacks : call stacks — compressed with DataDict (htrace) or resolved (tshandle)
 ///   - meta   : trace-level metadata (time range, process name, mode)
-///
 /// This is the output of the parsing stage — agnostic to htrace vs tshandle.
 /// Downstream analyzers and formatters consume TraceDB uniformly.
 struct TraceDB {

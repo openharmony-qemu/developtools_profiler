@@ -108,7 +108,6 @@ bool NoteDeviceFailure(const std::string& output)
 }
 
 // Pinned target: has the target device failed at the hdc level?
-//
 // Why every wait/poll loop must ask this: the flag is only ever set by
 // note_device_failure(), i.e. by an hdc device-level error (a "[Fail]" line),
 // and it stays set for the rest of the run. Without this check a device that
@@ -117,13 +116,11 @@ bool NoteDeviceFailure(const std::string& output)
 // empty results as "process not running" / "no file produced". Asking lets each
 // loop end promptly and fall through to the normal teardown, which still stops
 // hiprofiler and keeps the data captured so far.
-//
 // What must NOT count as device loss: a stalled connection (cap.timed_out), an
 // empty output, or any text without a "[Fail]" line. Those are normal in-flight
 // conditions — e.g. a second hdc connection that is briefly busy because the
 // foregrounded capture holds it — so treating them as device loss would abort a
 // healthy capture.
-//
 // Scope: only runs with a pinned target can set the flag (note_device_failure()
 // returns early while no key is pinned), so 0-device runs behave exactly as before.
 // A 1-device run IS pinned by the gate, so it gains this early-stop behaviour on
@@ -641,7 +638,6 @@ std::string MakeDevicePath(const std::string& dir, const std::string& name)
 // heap-snapshot / hiprofiler files); the whole remainder after the time field
 // is taken as the name. Only files whose name starts with `name_prefix` (and,
 // when `name_suffix` is non-empty, also ends with it) are kept.
-//
 // Two date/time layouts are supported, since the device may emit either:
 //   traditional "Aug  2 20:53"     -> 3 fields (month, day, time)
 //   ISO         "2026-08-02 20:53" -> 2 fields (date, time)
@@ -1399,7 +1395,6 @@ std::string GetProcessPidFast(const std::string& processName, long long timeoutM
     // (which outputs the entire process list, often several KB) and is
     // specifically designed for use in a background thread while another
     // `hdc shell` (hiprofiler_cmd) is running.
-    //
     // pidof returns space-separated PIDs (e.g. "12345 12346") on success,
     // or nothing if the process isn't running. We take the first PID.
     std::string cmd = HdcShell("pidof " + proc::ShellQuoteDevice(processName)) + " 2>&1";
@@ -1541,7 +1536,6 @@ bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode, PreCaptur
     // hiprofiler mode: do the initial process check BEFORE starting the worker
     // thread. Once the worker's `hdc shell 'hiprofiler_cmd ...'` is running, it
     // may occupy the hdc connection and serialize other `hdc shell` calls.
-    //
     // We check the process status once here (when hdc is still free). During
     // the countdown, a background thread periodically tries to refresh the pid
     // — if hdc is free, the pid updates in real-time; if hdc serializes, the
@@ -2126,7 +2120,6 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
     // inside the worker pipe) until the stop releases it, so stop must run BEFORE joining
     // the worker — joining first would deadlock. `hiprofiler_cmd stop` also
     // finishes the capture and writes out the result file.
-    //
     // The end-of-capture smaps/lsof snapshot must be exported BEFORE stop runs:
     // stop flushes buffers and finalizes the session, and the device-side
     // cleanup it triggers would both delay the export and skew the sampled
@@ -2199,7 +2192,6 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
     // worker.join() below would block silently — which looks like a hang
     // to the user. So we keep printing a "finalizing" line every 5s with
     // the total elapsed time until the worker thread actually finishes.
-    //
     // Snapshot mode is unaffected: its loop above waits on `done` directly,
     // so when we reach here `done` is already true and this block is skipped.
     // A permission failure is also unaffected: the capture was already aborted,
@@ -2313,7 +2305,6 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
         }
     } else if (result.ok && !opts.remoteOutputPath.empty()) {
         // hiprofiler export flow.
-        //
         // wait_for_zip (only -g / -l): The hiprofiler_cmd process on the
         // device may continue writing the hiprofiler_data_*.zip file for a
         // few seconds AFTER `hdc shell` has returned. We poll /data/local/tmp
@@ -2321,7 +2312,6 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
         // whose size is stable across two consecutive samples. If found, we
         // prefer the zip over the -o file; otherwise we fall back to the -o
         // file.
-        //
         // !wait_for_zip (-n / -f / -d): these capture types don't produce a
         // hiprofiler_data_*.zip, so we just pull the -o file directly.
         std::string fileToPull = opts.remoteOutputPath;
@@ -2478,7 +2468,6 @@ void RemoveSnapshotArtifacts(const std::vector<std::string>& files)
 // SNAPSHOT_PEAK_GROWTH_KB above its recorded peak for SNAPSHOT_PEAK_TRIGGER
 // consecutive samples. Ctrl+C ends the session and still exports the final
 // snapshot.
-//
 // Artifacts: the start snapshot is exported once at the very beginning and is
 // never overwritten nor removed afterwards (a target restart doesn't re-export
 // it either), and the recorded peak never decreases, so the single peak

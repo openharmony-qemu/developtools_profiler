@@ -18,12 +18,10 @@
 namespace mem_analyzer {
 
 /// 调用 rawheap_translator 将 .rawheap 转为 .heapsnapshot（jsleak 与 tshandle 共用）。
-///
 /// 统一处理：校验 translator 存在 → 创建输出父目录 → 转绝对路径 → 执行转换 →
 /// 校验产物已生成。本函数只返回成功/失败与失败原因，不打印、不抛异常——
 /// 失败后是报错中止还是降级继续，由调用方按各自域的语义决定（jsleak 硬错误、
 /// tshandle 软告警跳过 ArkTS 类分析）。
-///
 /// @param rawheap_path        输入的 .rawheap 文件
 /// @param output_heapsnapshot 输出的 .heapsnapshot 文件（父目录不存在会被创建）
 /// @param error               可选，失败原因；成功时保持不变

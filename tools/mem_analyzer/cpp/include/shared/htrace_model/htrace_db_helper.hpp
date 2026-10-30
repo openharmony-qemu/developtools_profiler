@@ -15,7 +15,6 @@
 #pragma once
 // ============================================================================
 //  htrace_db_helper.hpp
-//
 //  htrace / tshandle SQLite 读取的统一底层工具：
 //   - StmtGuard          RAII finalize
 //   - query_trace_meta   时间区间 + 模式(statistic/detail) + 进程名

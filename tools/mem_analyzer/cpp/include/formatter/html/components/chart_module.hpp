@@ -15,15 +15,12 @@
 #pragma once
 
 // chart_module.hpp — 火焰图/冰柱图共享图表模块
-//
 // 把原先内联在 html_analysis_common.cpp 模板里的图表引擎（布局、尺寸刻度、
 // 缩放平移、悬停 tooltip、右键菜单、搜索高亮、下钻与祖先链、重置、resize 自适应）
 // 抽成独立模块，供 htrace / tshandle / snapshot 等报告复用，避免多份实现分叉。
-//
 // 用法：
 //   1. 在页面模板中注入 __CHART_MODULE_CSS__ 与 __CHART_MODULE_JS__ 占位符；
 //   2. 页面脚本调用 MemChart.init({...}) 注册图表并绑定交互。
-//
 // JS 侧 API（window.MemChart）：
 //   MemChart.init(config)  注册所有图表并绑定交互
 //   MemChart.redrawAll()   重绘全部图表（如切换 tab 后调用）

@@ -214,12 +214,10 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
     // be expanded even inside quotes. A direct CreateProcess parses the line exactly the
     // way shell_quote() assumes. (`run_command_streaming()` in profiler_cmd.cpp already
     // spawns this way for the same reason.)
-    //
     // The program is resolved first and its absolute path is substituted, so the direct
     // spawn cannot pick a different file than the shell would (see resolve_program()).
     // A `.bat`/`.cmd` shim (or an unresolvable program) is intentionally NOT run: doing so
     // would require cmd.exe, whose re-tokenization reopens the injection hole above.
-    //
     // stderr is redirected into the pipe via si.hStdError, so callers' trailing " 2>&1" is
     // redundant — and without a shell it would reach the program as a literal argument, so
     // it must be dropped from the direct form.

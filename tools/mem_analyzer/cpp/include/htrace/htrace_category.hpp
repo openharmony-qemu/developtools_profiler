@@ -22,23 +22,19 @@ namespace mem_analyzer {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // htrace「category」的单一静态事实源（描述符表）。
-//
 // 为什么需要它
 // 旧的 category 语义散落在 6+ 处 `if (category == "xx")` 里（CLI 合法性校验 /
 // allowed_event_types / analyzer 低阈值与多轨分叉 / JSON summary 键 / HTML 类型与计数语义），
 // 且 mmap 的「双轨」（anon 符号 + filepage 文件）曾是一个 `bool has_mmap_split` 加
 // 两套对称分支的特例。每新增一个 category、一条轨道，都要把所有分支同步改一遍，漏一处回归就挂。
-//
 // 这里的思路是「表驱动」：把每个 category 的全部静态事实收进一张只读描述符表
 // （HtraceCategorySpec），消费方只做「category 名 → 查表 → 读字段」，不再写 category if/else。
 // 新增 category 只需在 .cpp 的表里加一行，消费代码零改动。
-//
 // 三个正交维度（改动互不牵连）
 // 1. category（有哪些种类）：    描述符表加一行 HtraceCategorySpec    —— 运行前就确定的种类，封闭的表。
 // 2. 轨道（一个 category 产出几段并列输出）：spec.tracks 加一条 HtraceTrackSpec —— 开放列表（N 轨）。
 // 3. 行种（一段轨道里每行的数据类型）：TrackRender 加一个值 + HtraceRow variant 加一个备选
 //    + 各 writer 的行级分派（std::get_if / overloaded）加一个分支 —— 编译期封闭类型集。
-//
 // 完整设计（N 轨 variant 行模型、JSON/HTML 写器路由的字节契约、拆分步骤）见
 // docs/htrace_refactor_design.md。本头文件只放「那张表」+ 查询接口。
 // ─────────────────────────────────────────────────────────────────────────────

@@ -34,7 +34,6 @@ using json = nlohmann::json;
 
 // ============================================================================
 //  Base64 VLQ (Variable Length Quantity) 解码
-//
 //  source map v3 的 "mappings" 字段编码规则：
 //    - 以 ';' 分隔行，以 ',' 分隔段（segment）
 //    - 每个段由若干 VLQ 字段组成（相对值，需累积解码）：
@@ -115,7 +114,6 @@ SourceMapIndex::DecodedMappings SourceMapIndex::DecodeVlqMappings(const std::str
     // 行映射列表（vector<vector<vector<int>>>），行数 = 分号数 + 1，
     // 段内字段依次为
     // [generatedColumn, sourceIndex, originalLine, originalColumn, nameIndex?]
-    //
     // 注意：segment 的实际字段数（1/4/5 个）无法从编码数据直接判断，
     // 必须按 ';'（行）与 ','（段）先切分出每个 segment 的原始子串，
     // 再解码该子串内的全部 VLQ 字段；若固定按 5 个字段读取，会跨段

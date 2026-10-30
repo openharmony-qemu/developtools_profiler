@@ -15,7 +15,6 @@
 #pragma once
 
 // htrace_flame_json.hpp — htrace 专用的火焰图/冰柱图 JSON 构建
-//
 // 这三个函数原先放在 `formatter/html/html_analysis_common.*`（三域共享头）里，
 // 使得共享头反向依赖 `htrace/flame_icicle.hpp` 与 `htrace/htrace_analyzer.hpp`。
 // 它们的唯一调用方是 htrace 域的 HTML writer，因此下沉回 htrace 域——

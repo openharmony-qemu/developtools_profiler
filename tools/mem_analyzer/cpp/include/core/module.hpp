@@ -28,7 +28,6 @@ struct ModuleRequest {
 };
 
 /// 一个数据域 = 一个模块，自持 parse → analyze → render 整条管道。
-///
 /// 这是 L0 与数据域之间唯一的接口：除 `Run()` 之外，管道层不知道模块内部怎么切分。
 /// 类型在模块内编译期确定，不再经过 `ProcessData` / `std::any` / `from` 字符串协议。
 class AnalysisModule {

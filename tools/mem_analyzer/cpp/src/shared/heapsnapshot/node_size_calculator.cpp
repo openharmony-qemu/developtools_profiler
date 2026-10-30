@@ -28,17 +28,14 @@
 
 // ============================================================================
 //  node_size_calculator.cpp
-//
 //  Implements dominator-based retained size computation and shortest-path
 //  BFS for V8 heap snapshots.
-//
 //  Dominator algorithm: Lengauer-Tarjan (1979), O(N log N) near-linear.
 //    - DFS numbering on the forward graph (filtered by isEssentialEdge + page-flag)
 //    - Semi-dominator computation via reverse CSR (filtered same as DFS)
 //    - DSU with path compression for O(α(N)) amortized eval/link
 //    - Finalization pass to resolve implicit dominators
 //    - Retained size = post-order prefix sum up the dominator tree
-//
 //  Shortest paths: layered BFS from GC roots with priority queues.
 //    - High-priority roots first, then low-priority fallback
 //    - Postpone queue for less-preferable edges/nodes
@@ -78,7 +75,6 @@ inline uint32_t SelfSizeOf(const std::vector<uint32_t>& nodes, uint32_t nodeInde
 
 // ============================================================================
 //  DomContext — bundles all snapshot data for dominator computation.
-//
 //  Instead of passing 20+ parameters through every function, we pack
 //  all read-only references and field offsets into a single struct.
 //  The helper methods (get_node_name, etc.) encapsulate the raw array
@@ -122,14 +118,11 @@ struct DomContext {
 
 // ============================================================================
 //  Step 0: compute page-object flags
-//
 //  Marks nodes that are reachable from the "window" (i.e., page-owned objects).
 //  This mirrors the reference implementation's flagReachableNodesFromWindow.
-//
 //  Purpose: prevent debugger-injected references from dominating page objects.
 //  Edges from non-page-owned nodes to page-owned nodes are skipped during
 //  dominator computation.
-//
 //  Algorithm: BFS/DFS from root's children, skipping:
 //    - shortcut edges (always from root)
 //    - element edges to (Document DOM trees) synthetic node
@@ -200,11 +193,9 @@ static void ComputePageFlags(DomContext& ctx, std::vector<uint32_t>& pageFlags, 
 
 // ============================================================================
 //  Step 1: DFS post-order traversal
-//
 //  Builds the post-order index used by the retained-size prefix sum.
 //  Uses is_traversable filter: isEssentialEdge + page-flag exclusion.
 //  This matches the reference implementation's buildPostOrderIndex.
-//
 //  The result is normalized so that ALL nodes have a post-order index:
 //    - Reachable non-root nodes: indices 0 .. reachable_count-2
 //    - Unreachable nodes: indices reachable_count-1 .. node_count-2
@@ -344,15 +335,12 @@ static PostOrderResult ComputeDfsPostOrder(DomContext& ctx, const std::vector<ui
 
 // ============================================================================
 //  Step 2: build reverse CSR (predecessors / referrers)
-//
 //  Constructs a Compressed Sparse Row (CSR) representation of the reverse
 //  edge graph: for each node, lists all predecessor nodes that have an edge
 //  pointing to it, along with the edge field pointer for filtering.
-//
 //  The reverse CSR includes ALL edges (no filtering).  Filtering is applied
 //  dynamically during the semi-dominator loop, matching the reference
 //  implementation's forEachReferrer callback.
-//
 //  Source order is reversed (N-1 first, 0 last) to match the reference
 //  implementation's --retainingEdgeCount pre-decrement fill pattern.
 // ============================================================================
@@ -412,15 +400,12 @@ static ReverseCSR BuildReverseCsr(DomContext& ctx, StageTimer& timer)
 
 // ============================================================================
 //  Step 3: Lengauer-Tarjan dominator algorithm
-//
 //  Reference: "A Fast Algorithm for Finding Dominators in a Flowgraph"
 //  by Thomas Lengauer and Robert Endre Tarjan, ACM TOPLAS 1979.
-//
 //  The algorithm has three sub-steps:
 //    3a) DFS to number nodes (1-based dfn), building the spanning tree
 //    3b) Compute semi-dominators in reverse dfn order, using DSU for eval
 //    3c) Finalize immediate dominators in forward dfn order
-//
 //  Edge filtering for the semi-dominator pass matches the TS reference:
 //    - isEssentialEdge (weak + non-root shortcut)
 //    - self-reference
@@ -683,11 +668,9 @@ static std::vector<uint32_t> computeLtDominators(
 
 // ============================================================================
 //  Step 4: retained size via post-order prefix sum
-//
 //  Retained size of a node = its self_size + sum of retained sizes of all
 //  nodes it dominates.  This is computed by propagating sizes up the
 //  dominator tree in ascending post-order (leaves first, root last).
-//
 //  Uses self_size only (not native_size), matching the reference
 //  implementation's calculateRetainedSizesFromDominatorNodes.
 // ============================================================================
@@ -742,7 +725,6 @@ static void ComputeRetainedSizes(
 
 // ============================================================================
 //  Public API: compute_node_sizes
-//
 //  Orchestrates the four steps of dominator-based retained size computation:
 //    0. page_flags (marks page-owned objects)
 //    1. DFS post-order (for retained size propagation)
@@ -802,11 +784,9 @@ RetainedSizeResult ComputeNodeSizes(const HeapSnapshot& snapshot, bool excludeWe
 
 // ============================================================================
 //  Shortest paths BFS — context and helpers
-//
 //  Computes the shortest reference chain from GC roots to every reachable
 //  node.  Uses a layered BFS with priority queues, matching the reference
 //  implementation's annotateShortestPaths.
-//
 //  Key design decisions:
 //    - Layer-by-layer processing with LIFO pop within each layer
 //    - 'queued' flag prevents nodes from being targeted by multiple edges
@@ -914,11 +894,9 @@ static bool IsCppRootsNode(const BfsContext& ctx, uint32_t idx)
 
 // ============================================================================
 //  Collect root nodes (high-priority + low-priority)
-//
 //  Matches the reference implementation's getRootNodeList with prioritize:true.
 //  High-priority roots are processed first; low-priority roots are only used
 //  as a fallback when the normal queue is empty.
-//
 //  Root classification:
 //    High-priority:
 //      - Node 0 (SyntheticRoot): always
@@ -963,7 +941,6 @@ static void CollectShortestPathRoots(
 
 // ============================================================================
 //  Run layered BFS from roots
-//
 //  Implements the reference implementation's annotateShortestPaths:
 //    1. Layer-by-layer processing with LIFO pop within each layer
 //    2. Edge filtering: weak, shortcut, hidden, self-ref, blocklists,

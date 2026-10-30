@@ -36,18 +36,15 @@ using json = nlohmann::ordered_json;
 
 // ============================================================================
 //  heap_snapshot.cpp
-//
 //  V8 heap snapshot (.heapsnapshot) file parser.
 //  Uses chunked streaming to avoid loading the entire JSON file into memory.
 //  The file format is:
 //    { "snapshot": { "meta": {...} }, "nodes": [n0,n1,...], "edges": [...],
 //      "strings": ["str1","str2",...], "locations": [...] }
-//
 //  The nodes and edges arrays can be very large (hundreds of MB), so they
 //  are parsed via ChunkedUintParser which processes 16 MB chunks at a time.
 //  The strings table is parsed via JSON (nlohmann::json) with fallback
 //  sanitization for unescaped control characters and orphan surrogates.
-//
 //  After parsing, the pipeline continues with:
 //    5) Build forward CSR (first_edge_pointers) and node_id_to_idx map
 //    6) Compute shortest paths (BFS from GC roots)
@@ -496,12 +493,10 @@ constexpr size_t META_LIMIT = 512 * 1024;          // max bytes to scan for file
 
 // ============================================================================
 //  ChunkedUintParser — streaming parser for flat JSON numeric arrays
-//
 //  Parses JSON arrays like [123,456,789,...] in 16 MB chunks without
 //  loading the entire array into memory as a string.  This is critical
 //  for large heapsnapshot files where the nodes/edges arrays can be
 //  hundreds of millions of integers.
-//
 //  The parser handles chunk boundaries by saving the partial number at
 //  the end of each chunk as "overflow" and prepending it to the next chunk.
 //  When the closing ']' is found, the parser finishes.
@@ -719,11 +714,9 @@ static size_t FindArrayBracketAfter(std::ifstream& file, const std::string& mark
 
 // ============================================================================
 //  Strings array parsing
-//
 //  The strings table is a JSON array of strings: ["str1","str2",...].
 //  Unlike the nodes/edges arrays, it's parsed via JSON (nlohmann::json)
 //  because the values are strings, not numbers.
-//
 //  Some heapsnapshot files contain unescaped control characters (U+0000-
 //  U+001F) or orphan surrogate escapes (\uD8xx-\uDFxx) in string values,
 //  which nlohmann::json rejects by spec.  We handle this with a fallback
@@ -885,7 +878,6 @@ static std::vector<std::string> readStringsArray(std::ifstream& file, size_t bra
 
 // ============================================================================
 //  Phase 1: parse snapshot metadata
-//
 //  Extracts the "snapshot" JSON object from the file header and discovers:
 //    - node_fields / edge_fields arrays → field offsets
 //    - edge_types / node_types arrays → numeric type values
@@ -1024,7 +1016,6 @@ static void ParseSnapshotMeta(HeapSnapshot& snapshot,
 
 // ============================================================================
 //  Phase 2: parse nodes array
-//
 //  The nodes array is a flat list of uint32 values, grouped by node_fields_count.
 //  Each node occupies node_fields_count consecutive integers.
 //  Parsed via ChunkedUintParser to handle large arrays without loading the
@@ -1042,7 +1033,6 @@ static void ParseNodesArray(HeapSnapshot& snapshot, std::ifstream& file, size_t 
 
 // ============================================================================
 //  Phase 3: parse edges array
-//
 //  The edges array is a flat list of uint32 values, grouped by edge_fields_count.
 //  The edges marker may be in the header buffer or further in the file
 //  (after the nodes array).  We try the header first, then scan forward.
@@ -1084,7 +1074,6 @@ static size_t ParseEdgesArray(HeapSnapshot& snapshot, std::ifstream& file,
 
 // ============================================================================
 //  Phase 4: parse strings table
-//
 //  The strings table is a JSON array of strings, typically located after
 //  the edges array.  Three search passes are used:
 //    Pass 1: header buffer
@@ -1154,7 +1143,6 @@ static void ParseStringsTable(HeapSnapshot& snapshot, std::ifstream& file,
 
 // ============================================================================
 //  Phase 5: build CSR indices + node_id map
-//
 //  Builds two indexing structures:
 //    - first_edge_pointers: CSR (Compressed Sparse Row) for forward edges.
 //      For node i, edges start at first_edge_pointers[i] and end at
@@ -1210,7 +1198,6 @@ static void BuildCsrAndIdMap(HeapSnapshot& snapshot)
 
 // ============================================================================
 //  Phase 6: compute shortest paths + retained sizes
-//
 //  Runs the two main analysis passes:
 //    - compute_shortest_paths: BFS from GC roots to find the shortest
 //      reference chain to every reachable node
@@ -1241,7 +1228,6 @@ static void ComputePathsAndRetained(HeapSnapshot& snapshot)
 
 // ============================================================================
 //  HeapSnapshot::from_file — main entry point
-//
 //  Orchestrates the six-phase pipeline:
 //    1. Parse snapshot metadata (field offsets, type values)
 //    2. Stream-parse nodes array
