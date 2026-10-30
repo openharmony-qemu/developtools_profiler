@@ -261,14 +261,20 @@ def build_to_dir(commit: str, build_dir_name: str, label: str,
 def collect_test_files(test_dir: Path) -> Dict[str, List[Path]]:
     files = {
         "htrace": sorted(test_dir.glob("*.htrace")),
-        "snapshot": sorted(test_dir.glob("*.heapsnapshot")),
+        "snapshot": sorted(test_dir.glob("*.heapsnapshot")) + sorted(test_dir.glob("*.rawheap")),
         "zip": sorted(test_dir.glob("*.zip")),
+        "rawheap_compare": collect_rawheap_pairs(test_dir),
     }
     log("  Test files:")
     for typ, flist in files.items():
-        log(f"    {typ}: {len(flist)} file(s)")
-        for f in flist:
-            log(f"      - {f.name}")
+        if typ == "rawheap_compare":
+            log(f"    {typ}: {len(flist)} pair(s)")
+            for start_f, end_f in flist:
+                log(f"      - {start_f.name} vs {end_f.name}")
+        else:
+            log(f"    {typ}: {len(flist)} file(s)")
+            for f in flist:
+                log(f"      - {f.name}")
     return files
 
 
@@ -278,6 +284,35 @@ _MODULE_TO_CATEGORY = {
     "jsleak": "snapshot",
     "tshandle": "zip",
 }
+
+
+def collect_rawheap_pairs(test_dir: Path) -> List[Tuple[Path, Path]]:
+    """收集 *-start.rawheap / *-end.rawheap 配对，用于 jsleak -b 差异分析测试。
+
+    文件名格式：hidumper-jsheap-{pid}-{tid}-{timestamp}-{role}.rawheap
+    其中 timestamp 在 start/end 之间不同，需要去掉末尾时间戳后再按前缀配对。
+    例如：
+      hidumper-jsheap-30192-30192-1793067300751-start.rawheap
+      hidumper-jsheap-30192-30192-1793067436714-end.rawheap
+    去掉 -{timestamp} 后前缀均为 hidumper-jsheap-30192-30192，配对成功。
+    """
+    rawheap_files = sorted(test_dir.glob("*.rawheap"))
+    starts = {}
+    ends = {}
+    for f in rawheap_files:
+        name_lower = f.name.lower()
+        if name_lower.endswith("-start.rawheap"):
+            prefix = name_lower[:-len("-start.rawheap")]
+            prefix = re.sub(r'-\d+$', '', prefix)  # 去掉末尾时间戳
+            starts[prefix] = f
+        elif name_lower.endswith("-end.rawheap"):
+            prefix = name_lower[:-len("-end.rawheap")]
+            prefix = re.sub(r'-\d+$', '', prefix)  # 去掉末尾时间戳
+            ends[prefix] = f
+    pairs = []
+    for prefix in sorted(set(starts.keys()) & set(ends.keys())):
+        pairs.append((starts[prefix], ends[prefix]))
+    return pairs
 
 
 def resolve_modules(modules_str: str) -> List[str]:
@@ -395,6 +430,53 @@ def run_snapshot_tests_sequential(exe: Path, files: List[Path], out_base: Path):
                  "-d", str(out_base / "analysis_json")], label=f"jsleak-json:{stem}")
 
 
+def _make_short_out_dir(out_base: Path) -> Path:
+    """创建短路径输出目录，避免 WSL UNC 路径 + 长文件名超过 Windows MAX_PATH。
+
+    在系统 TEMP 目录下创建临时目录，测试完成后由调用方拷贝回 out_base/cmp。
+    """
+    short_dir = Path(tempfile.mkdtemp(prefix="rc_out_"))
+    return short_dir
+
+
+def _copy_short_results(short_dir: Path, out_base: Path):
+    """将短路径目录的结果拷贝回 out_base/cmp。
+
+    mem-analyzer 的 ProcessFile 会在 outDir 下创建以源文件 stem 命名的子目录，
+    所以需要 rglob 递归搜索 *.html 和 *.json，不能只搜顶层。
+    拷贝回 WSL 路径时用短文件名避免 MAX_PATH。
+    """
+    dest = out_base / "cmp"
+    dest.mkdir(parents=True, exist_ok=True)
+    if short_dir.exists():
+        html_files = sorted(short_dir.rglob("*.html"))
+        json_files = sorted(short_dir.rglob("*.json"))
+        for idx, f in enumerate(html_files):
+            short_name = f"compare_{idx}.html"
+            shutil.copy2(str(f), str(dest / short_name))
+            log(f"  [COPY] {f.relative_to(short_dir)} -> {short_name}")
+        for idx, f in enumerate(json_files):
+            short_name = f"compare_{idx}.json"
+            shutil.copy2(str(f), str(dest / short_name))
+            log(f"  [COPY] {f.relative_to(short_dir)} -> {short_name}")
+        shutil.rmtree(short_dir, ignore_errors=True)
+
+
+def run_rawheap_compare_tests_sequential(exe: Path, pairs: List[Tuple[Path, Path]],
+                                         out_base: Path):
+    total = len(pairs)
+    short_dir = _make_short_out_dir(out_base)
+    try:
+        for idx, (start_f, end_f) in enumerate(pairs, 1):
+            label_stem = f"{start_f.stem}-vs-{end_f.stem}"
+            log(f"\n  [{idx}/{total}] jsleak-compare-html: {start_f.name} vs {end_f.name}")
+            run_cmd([str(exe), "jsleak", "-b", str(start_f), str(end_f),
+                     "-d", str(short_dir)],
+                    label=f"jsleak-compare-html:{label_stem}")
+    finally:
+        _copy_short_results(short_dir, out_base)
+
+
 def run_snapshot_tests_parallel(exe: Path, files: List[Path], out_base: Path) -> List[Tuple]:
     tasks = []
     for f in files:
@@ -403,6 +485,21 @@ def run_snapshot_tests_parallel(exe: Path, files: List[Path], out_base: Path) ->
                                               "-d", str(out_base / "analysis_html")]))
         tasks.append((f"jsleak-json:{stem}", [str(exe), "jsleak", str(f), "-f", "json",
                                               "-d", str(out_base / "analysis_json")]))
+    return tasks
+
+
+def run_rawheap_compare_tests_parallel(exe: Path, pairs: List[Tuple[Path, Path]],
+                                       out_base: Path) -> List[Tuple]:
+    # 使用系统 TEMP 短路径，避免 WSL UNC 路径 + 长文件名超过 Windows MAX_PATH
+    short_dir = _make_short_out_dir(out_base)
+    tasks = []
+    for start_f, end_f in pairs:
+        label_stem = f"{start_f.stem}-vs-{end_f.stem}"
+        tasks.append((f"jsleak-compare-html:{label_stem}",
+                      [str(exe), "jsleak", "-b", str(start_f), str(end_f),
+                       "-d", str(short_dir)]))
+    # 将短路径信息附加到任务列表末尾（哨兵任务），供 run_tests_parallel 在完成后拷贝
+    tasks.append(("__copy_short_results__", [str(short_dir)]))
     return tasks
 
 
@@ -415,6 +512,7 @@ def run_tests_sequential(exe: Path, out_base: Path, test_files: Dict[str, List[P
     run_htrace_tests_sequential(exe, test_files["htrace"], out_base)
     run_zip_tests_sequential(exe, test_files["zip"], out_base)
     run_snapshot_tests_sequential(exe, test_files["snapshot"], out_base)
+    run_rawheap_compare_tests_sequential(exe, test_files.get("rawheap_compare", []), out_base)
     log(f"  {label} tests DONE.")
 
 
@@ -429,8 +527,14 @@ def run_tests_parallel(exe: Path, out_base: Path, test_files: Dict[str, List[Pat
     all_tasks.extend(run_htrace_tests_parallel(exe, test_files["htrace"], out_base))
     all_tasks.extend(run_zip_tests_parallel(exe, test_files["zip"], out_base))
     all_tasks.extend(run_snapshot_tests_parallel(exe, test_files["snapshot"], out_base))
+    all_tasks.extend(run_rawheap_compare_tests_parallel(
+        exe, test_files.get("rawheap_compare", []), out_base))
 
-    total = len(all_tasks)
+    # 分离真实任务和哨兵任务（短路径拷贝）
+    real_tasks = [t for t in all_tasks if t[0] != "__copy_short_results__"]
+    sentinel_tasks = [t for t in all_tasks if t[0] == "__copy_short_results__"]
+
+    total = len(real_tasks)
     completed = 0
     failed = 0
 
@@ -441,7 +545,7 @@ def run_tests_parallel(exe: Path, out_base: Path, test_files: Dict[str, List[Pat
         return label_t, result.returncode, result.stderr[-200:] if result.returncode != 0 else ""
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(run_one, t): t for t in all_tasks}
+        futures = {executor.submit(run_one, t): t for t in real_tasks}
         for future in as_completed(futures):
             label_t, rc, err = future.result()
             completed += 1
@@ -452,6 +556,17 @@ def run_tests_parallel(exe: Path, out_base: Path, test_files: Dict[str, List[Pat
                     log(f"    {err}")
             else:
                 log(f"  [{completed}/{total}] OK: {label_t}")
+
+    # 所有并行任务完成后，拷贝短路径结果到 out_base/cmp
+    for _, cmd in sentinel_tasks:
+        short_dir = Path(cmd[0])
+        log(f"  [COPY] Copying from short dir: {short_dir}")
+        if short_dir.exists():
+            files_found = list(short_dir.glob("*.html")) + list(short_dir.glob("*.json"))
+            log(f"  [COPY] Found {len(files_found)} file(s) in short dir")
+            _copy_short_results(short_dir, out_base)
+        else:
+            log(f"  [COPY] WARNING: short dir does not exist!")
 
     log(f"  {label} tests DONE: {total - failed}/{total} passed, {failed} failed.")
 
@@ -950,6 +1065,16 @@ def run_comparison(base_out: Path, new_out: Path, compare_out: Path) -> dict:
         r["subdir"] = "analysis_html"
         all_reports["html"].append(r)
 
+    # rawheap compare HTML (输出在 cmp/ 目录，用短名避免 MAX_PATH)
+    base_compare_html = find_output_files(base_out, "cmp", "html")
+    new_compare_html = find_output_files(new_out, "cmp", "html")
+    for key in sorted(set(base_compare_html.keys()) | set(new_compare_html.keys())):
+        bp = base_compare_html.get(key, Path("__missing__"))
+        np = new_compare_html.get(key, Path("__missing__"))
+        r = compare_html_files(bp, np)
+        r["subdir"] = "cmp"
+        all_reports["html"].append(r)
+
     return all_reports
 
 
@@ -1136,15 +1261,24 @@ def main():
 
     log_header("STEP 0: 收集测试文件")
     test_files = collect_test_files(test_dir)
-    if not any(test_files.values()):
-        log("ERROR: No test files found!")
-        sys.exit(1)
+    if not any(v for k, v in test_files.items() if k != "rawheap_compare"):
+        # rawheap_compare pairs alone are sufficient to proceed
+        if not test_files.get("rawheap_compare"):
+            log("ERROR: No test files found!")
+            sys.exit(1)
 
     # 按 --modules 过滤要跑的类别；未选中的类别置空（保留 key，供后续 run_* 安全访问）
     modules = resolve_modules(args.modules)
     test_files = {k: (test_files[k] if k in modules else [])
                   for k in ("htrace", "snapshot", "zip")}
+    # rawheap_compare 跟随 jsleak(snapshot) 模块：snapshot 选中时保留，否则置空
+    if "snapshot" in modules:
+        test_files["rawheap_compare"] = collect_rawheap_pairs(test_dir)
+    else:
+        test_files["rawheap_compare"] = []
     log(f"  Selected modules: {', '.join(modules)}")
+    if test_files.get("rawheap_compare"):
+        log(f"  Rawheap compare pairs: {len(test_files['rawheap_compare'])}")
 
     # 清理旧产物：运行结果（base/new）与对比结果（compare）。
     # 构建结果（cpp/build_base、cpp/build_new）在完整模式的 build_to_dir 内、构建前清理。
