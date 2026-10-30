@@ -111,7 +111,10 @@ public:
     const std::string& GetUsageArgs() const { return usageArgs_; }
 
     // ── Version ──────────────────────────────────────────────
-    void SetVersion(const std::string& ver) { version_ = ver; }
+    void SetVersion(const std::string& ver)
+    {
+        version_ = ver;
+    }
 
 private:
     struct Option {

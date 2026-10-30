@@ -83,10 +83,11 @@ struct ScopeResult {
 
     bool Empty() const
     {
-        for (const auto& s : sections)
+        for (const auto& s : sections) {
             if (!s.rows.empty()) {
                 return false;
             }
+        }
         return true;
     }
 
@@ -94,11 +95,13 @@ struct ScopeResult {
     size_t SymbolCount() const
     {
         size_t n = 0;
-        for (const auto& s : sections)
-            for (const auto& r : s.rows)
+        for (const auto& s : sections) {
+            for (const auto& r : s.rows) {
                 if (std::holds_alternative<TopSymbolInfo>(r)) {
                     ++n;
                 }
+            }
+        }
         return n;
     }
 };
