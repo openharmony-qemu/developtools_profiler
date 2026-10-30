@@ -64,6 +64,7 @@ from typing import List, Dict, Tuple, Optional, Any
 _ENV_KEY = "_COMPARE_COMMITS_TEMP_DIR"
 _ENV_PROJECT_ROOT = "_COMPARE_COMMITS_PROJECT_ROOT"
 
+
 def _ensure_self_contained():
     """确保脚本在临时目录中运行，避免 git 操作影响自身。"""
     if _ENV_KEY in os.environ:
@@ -508,7 +509,7 @@ def values_equivalent(a: Any, b: Any) -> bool:
 def deep_compare(a: Any, b: Any, path: str = "$") -> List[str]:
     """深度对比，对 str↔int/float 类型变化做语义等价检测。"""
     diffs = []
-    if type(a) != type(b):
+    if not isinstance(a, type(b)):
         if values_equivalent(a, b):
             diffs.append(f"{path}: TYPE CHANGE {type(a).__name__}->{type(b).__name__} "
                          f"[EQUIVALENT] base={a!r} new={b!r}")
@@ -601,7 +602,7 @@ def compare_tshandle_parse(base_path: Path, new_path: Path) -> dict:
                 report["tracemeta_diffs"].append(f"  '{key}': only in new = {nv!r}")
             elif key not in n_tm:
                 report["tracemeta_diffs"].append(f"  '{key}': only in base = {bv!r}")
-            elif type(bv) != type(nv):
+            elif not isinstance(bv, type(nv)):
                 tag = "[EQUIVALENT]" if values_equivalent(bv, nv) else "[REAL DIFF]"
                 report["tracemeta_diffs"].append(
                     f"  '{key}': {type(bv).__name__}->{type(nv).__name__} {tag} base={bv!r} new={nv!r}")
@@ -623,7 +624,7 @@ def compare_tshandle_parse(base_path: Path, new_path: Path) -> dict:
                         report["addrs_diffs"].append(f"  addr[{i}].{ak}: only in new")
                     elif ak not in na:
                         report["addrs_diffs"].append(f"  addr[{i}].{ak}: only in base")
-                    elif type(bav) != type(nav):
+                    elif not isinstance(bav, type(nav)):
                         tag = "[EQUIVALENT]" if values_equivalent(bav, nav) else "[REAL DIFF]"
                         report["addrs_diffs"].append(
                             f"  addr[{i}].{ak}: {type(bav).__name__}->{type(nav).__name__} {tag} base={bav!r} new={nav!r}")
@@ -1043,6 +1044,7 @@ def print_comparison_report(all_reports: dict, compare_out: Path):
     log(f"\n    HTML Summary: {identical} identical, {with_diff} with differences")
 
     report_path = compare_out / "comparison_report.json"
+
     def serialize(obj):
         if isinstance(obj, Path):
             return str(obj)

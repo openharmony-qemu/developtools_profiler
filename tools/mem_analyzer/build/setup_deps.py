@@ -78,7 +78,7 @@ RAW_HEAP_VERSION = "7.0-Beta1"
 RAW_HEAP_DIR = THIRD_PARTY / "bin" / "rawheaptranslator" / RAW_HEAP_VERSION
 RAW_HEAP_FLAT_DIR = THIRD_PARTY / "bin" / "rawheaptranslator"  # 版本剥离后的固定路径，供构建脚本使用
 RAW_HEAP_SDK_WIN_LINUX_URL = "https://repo.huaweicloud.com/openharmony/os/7.0-Beta1/ohos-sdk-windows_linux-public.tar.gz"
-RAW_HEAP_SDK_MAC_X64_URL  = "https://repo.huaweicloud.com/openharmony/os/7.0-Beta1/ohos-sdk-mac-public.tar.gz"
+RAW_HEAP_SDK_MAC_X64_URL = "https://repo.huaweicloud.com/openharmony/os/7.0-Beta1/ohos-sdk-mac-public.tar.gz"
 RAW_HEAP_SDK_MAC_ARM64_URL = "https://repo.huaweicloud.com/openharmony/os/7.0-Beta1/L2-SDK-MAC-M1-PUBLIC.tar.gz"
 # macOS rawheap_translator 需要单独的 SDK 包下载
 
@@ -86,18 +86,23 @@ RAW_HEAP_SDK_MAC_ARM64_URL = "https://repo.huaweicloud.com/openharmony/os/7.0-Be
 #  Helpers
 # ============================================================================
 
+
 def info(msg: str) -> None:
     print(f"  [INFO] {msg}")
+
 
 def ok(msg: str) -> None:
     print(f"  [  OK] {msg}")
 
+
 def warn(msg: str) -> None:
     print(f"  [WARN] {msg}")
+
 
 def fail(msg: str) -> None:
     print(f"  [FAIL] {msg}")
     sys.exit(1)
+
 
 class DownloadProgress:
     """Report download progress to console with percentage and size."""
@@ -119,6 +124,7 @@ class DownloadProgress:
             if pct >= 100:
                 print()
 
+
 def detect_platform() -> str:
     """Return 'linux', 'darwin', or 'windows'."""
     sys_platform = sys.platform.lower()
@@ -129,6 +135,8 @@ def detect_platform() -> str:
     if sys_platform.startswith("win"):
         return "windows"
     fail(f"Unsupported platform: {sys.platform}")
+    return ""
+
 
 def current_rawheap_platform() -> str:
     """Return the current platform key for rawheap binaries: linux-x64 / mac-arm64 / mac-x64 / windows-x64."""
@@ -140,6 +148,7 @@ def current_rawheap_platform() -> str:
         return "linux-x64"
     return "windows-x64"
 
+
 def run_git(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
     return subprocess.run(
         ["git"] + args,
@@ -147,6 +156,7 @@ def run_git(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
         capture_output=True,
         text=True,
     )
+
 
 def rmtree_force(path: Path) -> None:
     """Remove a directory tree, clearing read-only attributes first (Windows git files are read-only)."""
@@ -165,11 +175,13 @@ def rmtree_force(path: Path) -> None:
 #  Git dependency check & clone
 # ============================================================================
 
+
 def check_git_installed() -> None:
     try:
         subprocess.run(["git", "--version"], capture_output=True, check=True)
     except (FileNotFoundError, subprocess.CalledProcessError):
         fail("git not found. Install git and try again.")
+
 
 def ensure_git_repo(dst: Path, url: str, commit: str, check_file: Path, name: str) -> bool:
     """
@@ -235,10 +247,13 @@ def ensure_git_repo(dst: Path, url: str, commit: str, check_file: Path, name: st
         return True
     else:
         fail(f"{name}: clone commit mismatch: {current[:12]} vs expected {expected[:12]}")
+        return False
+
 
 # ============================================================================
 #  Binary download helpers
 # ============================================================================
+
 
 def download_file(url: str, dst: Path, desc: str) -> None:
     """Download a file from `url` to `dst`."""
@@ -250,6 +265,7 @@ def download_file(url: str, dst: Path, desc: str) -> None:
         print()
         fail(f"{desc}: download failed: {e}")
     ok(f"{desc}: saved to {dst}")
+
 
 def download_and_extract(url: str, dst_dir: Path, desc: str) -> None:
     """Download an archive and extract it into `dst_dir`."""
@@ -278,6 +294,7 @@ def download_and_extract(url: str, dst_dir: Path, desc: str) -> None:
         pass
     tmp.unlink(missing_ok=True)
     ok(f"{desc}: extracted to {dst_dir}")
+
 
 def extract_rawheap_from_sdk(url: str, dst_dir: Path, platform_map: list[tuple[str, str]], desc: str, tmp_name: str = "_sdk_download.tar.gz") -> int:
     """
@@ -358,21 +375,22 @@ def extract_rawheap_from_sdk(url: str, dst_dir: Path, platform_map: list[tuple[s
 # ============================================================================
 
 TRACE_STREAMER_BINARIES = {
-    "linux":   TRACE_STREAMER_DIR / "trace_streamer_linux",
-    "darwin":  TRACE_STREAMER_DIR / "trace_streamer_mac",
+    "linux": TRACE_STREAMER_DIR / "trace_streamer_linux",
+    "darwin": TRACE_STREAMER_DIR / "trace_streamer_mac",
     "windows": TRACE_STREAMER_DIR / "trace_streamer_windows.exe",
 }
 
 RAW_HEAP_BINARIES = {
-    "linux-x64":   RAW_HEAP_FLAT_DIR / "linux-x64" / "rawheap_translator",
-    "mac-arm64":   RAW_HEAP_FLAT_DIR / "mac-arm64" / "rawheap_translator",
-    "mac-x64":     RAW_HEAP_FLAT_DIR / "mac-x64" / "rawheap_translator",
+    "linux-x64": RAW_HEAP_FLAT_DIR / "linux-x64" / "rawheap_translator",
+    "mac-arm64": RAW_HEAP_FLAT_DIR / "mac-arm64" / "rawheap_translator",
+    "mac-x64": RAW_HEAP_FLAT_DIR / "mac-x64" / "rawheap_translator",
     "windows-x64": RAW_HEAP_FLAT_DIR / "windows-x64" / "rawheap_translator.exe",
 }
 
 # ============================================================================
 #  Main
 # ============================================================================
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Setup mem-analyzer C++ dependencies (git sources + binaries)")
@@ -501,23 +519,23 @@ def main() -> None:
         binary_tasks.append(("trace_streamer", _download_trace_streamer))
 
         # rawheap SDK sources
-        RAW_HEAP_SDK_SOURCES = [
+        raw_heap_sdk_sources = [
             ("win+linux", RAW_HEAP_SDK_WIN_LINUX_URL,
              [("ohos-sdk/windows/", "windows-x64"), ("ohos-sdk/linux/", "linux-x64")]),
-            ("mac-x64",    RAW_HEAP_SDK_MAC_X64_URL,
+            ("mac-x64", RAW_HEAP_SDK_MAC_X64_URL,
              [("sdk/packages/ohos-sdk/darwin/", "mac-x64")]),
-            ("mac-arm64",  RAW_HEAP_SDK_MAC_ARM64_URL,
+            ("mac-arm64", RAW_HEAP_SDK_MAC_ARM64_URL,
              [("sdk/packages/ohos-sdk/darwin/", "mac-arm64")]),
         ]
         if not check_all:
             # cache 模式：仅保留能提供当前平台 rawheap 的 SDK 源
-            RAW_HEAP_SDK_SOURCES = [
+            raw_heap_sdk_sources = [
                 (label, url, [(prefix, arch) for prefix, arch in pm if arch == current_rh])
-                for label, url, pm in RAW_HEAP_SDK_SOURCES
+                for label, url, pm in raw_heap_sdk_sources
                 if any(arch == current_rh for _, arch in pm)
             ]
             info(f"cache 模式: rawheap 仅检查当前平台 {current_rh}")
-        for sdk_label, sdk_url, platform_map in RAW_HEAP_SDK_SOURCES:
+        for sdk_label, sdk_url, platform_map in raw_heap_sdk_sources:
             binary_tasks.append((
                 f"rawheap_{sdk_label}",
                 functools.partial(_download_rawheap, sdk_label, sdk_url, platform_map),
@@ -594,7 +612,7 @@ def main() -> None:
         fail(f"zlib/minizip source not found at {zlib_h}")
 
     # ── Verify binaries are NOT git-lfs pointer files ──────────────────
-    _GIT_LFS_SIGNATURE = "version https://git-lfs.github.com/spec/v1"
+    git_lfs_signature = "version https://git-lfs.github.com/spec/v1"
     bin_dir = THIRD_PARTY / "bin"
     if bin_dir.is_dir():
         lfs_fakes = []
@@ -608,7 +626,7 @@ def main() -> None:
                     text = head.decode("utf-8", errors="strict")
                 except UnicodeDecodeError:
                     continue  # binary file, definitely not lfs pointer
-                if text.startswith(_GIT_LFS_SIGNATURE):
+                if text.startswith(git_lfs_signature):
                     lfs_fakes.append(f.relative_to(REPO_ROOT))
             except OSError:
                 pass
