@@ -2113,11 +2113,33 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
         GetMemTag(rawStack->stackContext->tagId, tagName);
     }
 
+    if (type == MUNMAP_MSG) {
+        uint64_t addr = reinterpret_cast<uint64_t>(hookRecord->GetAddr());
+        std::lock_guard<std::mutex> guard(mtx_);
+        auto it = resTraceAddrMap_.find(addr);
+        if (it != resTraceAddrMap_.end()) {
+            GetMemTag(it->second, tagName);
+            SerializeInfo traceHookInfo = {&callFrames, stackMapId, tagName,
+                                           rawStack->stackContext->nodeType,
+                                           rawStack->stackContext->nodeId,
+                                           &hookConfig_};
+            MemoryUnusingRecord unusingRecord(rawStack);
+            unusingRecord.SerializeData(hookData, traceHookInfo);
+            resTraceAddrMap_.erase(it);
+            return;
+        }
+    }
+
     SerializeInfo hookInfo = {&callFrames, stackMapId, tagName,
                               rawStack->stackContext->nodeType,
                               rawStack->stackContext->nodeId,
                               &hookConfig_};
     hookRecord->SerializeData(hookData, hookInfo);
+    if (type == MEMORY_USING_MSG) {
+        std::lock_guard<std::mutex> guard(mtx_);
+        resTraceAddrMap_[reinterpret_cast<uint64_t>(hookRecord->GetAddr())] =
+            rawStack->stackContext->tagId;
+    }
 }
 
 template <typename T>
