@@ -220,8 +220,8 @@ public:
             EdgeInfo edge;
             edge.type = edges[ptr + static_cast<size_t>(edgeTypeOffset)];
             edge.nameOrIndex = edges[ptr + static_cast<size_t>(edgeNameOrIndexOffset)];
-            edge.toNode = edges[ptr + static_cast<size_t>(edgeToNodeOffset)]
-                           / static_cast<uint32_t>(nodeFieldsCount);
+            edge.toNode = edges[ptr + static_cast<size_t>(edgeToNodeOffset)] /
+                           static_cast<uint32_t>(nodeFieldsCount);
             if (edge.toNode < static_cast<uint32_t>(nodeCount) &&
                 edge.toNode * static_cast<uint32_t>(nodeFieldsCount) + static_cast<size_t>(nodeIdOffset) < nodesSize) {
                 edge.toNodeId = nodes[edge.toNode * static_cast<uint32_t>(nodeFieldsCount) +

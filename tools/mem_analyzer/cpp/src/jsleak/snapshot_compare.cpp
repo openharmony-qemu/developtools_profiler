@@ -129,7 +129,7 @@ std::string FormatShortestReferencePath(
     const HeapSnapshot& heap, uint32_t node,
     std::unordered_map<uint32_t, std::pair<std::string, std::string>>& identityCache)
 {
-    constexpr uint32_t INVALID = UINT32_MAX;
+    constexpr uint32_t invalidNode = UINT32_MAX;
     if (node >= static_cast<uint32_t>(heap.nodeCount) ||
         node >= heap.pathParentIndex.size()) {
         return {};
@@ -142,7 +142,7 @@ std::string FormatShortestReferencePath(
             return {};
         }
         const uint32_t parent = heap.pathParentIndex[current];
-        if (parent == INVALID) {
+        if (parent == invalidNode) {
             return {};
         }
         indices.push_back(current);
