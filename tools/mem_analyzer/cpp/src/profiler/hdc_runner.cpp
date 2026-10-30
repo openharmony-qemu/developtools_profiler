@@ -1886,7 +1886,9 @@ void PrintMetricsLine(const ProcessMetrics& metrics)
     auto fmtMb = [](long long kb) -> std::string {
         char buf[HEX_BUF_SIZE];
         int ret = snprintf(buf, sizeof(buf), "%.2f", kb / 1024.0);
-        if (ret < 0) buf[0] = '\0';
+        if (ret < 0) {
+            buf[0] = '\0';
+        }
         return buf;
     };
     // Two lines, indented under the "Remaining ...s" line: the core

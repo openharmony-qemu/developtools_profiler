@@ -941,8 +941,7 @@ static void ParseSnapshotMeta(HeapSnapshot& snapshot,
     for (int i = 0; i < static_cast<int>(nodeFields.size()); i++) {
         if (nodeFields[i] == "type") {
             snapshot.nodeTypeOffset = i;
-        }
-        else if (nodeFields[i] == "name") snapshot.nodeNameOffset = i;
+        } else if (nodeFields[i] == "name") snapshot.nodeNameOffset = i;
         else if (nodeFields[i] == "id") snapshot.nodeIdOffset = i;
         else if (nodeFields[i] == "self_size") snapshot.nodeSelfSizeOffset = i;
         else if (nodeFields[i] == "native_size") snapshot.nodeNativeSizeOffset = i;

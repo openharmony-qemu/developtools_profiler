@@ -144,7 +144,7 @@ std::string FormatSizeText(double val, bool countMode)
 {
     if (countMode) {
         // fd/thread 等类型的“大小”实际是个数，直接显示整数
-        return std::to_string((long long)std::llround(val));
+        return std::to_string(static_cast<long long>(std::llround(val)));
     }
     return FormatBytes(val);
 }
@@ -176,7 +176,7 @@ std::string FormatDuration(const std::string& durationStr)
         return oss.str();
     }
     std::ostringstream oss;
-    oss << (long long)(d * 1e9) << "ns";
+    oss << static_cast<long long>(d * 1e9) << "ns";
     return oss.str();
 }
 

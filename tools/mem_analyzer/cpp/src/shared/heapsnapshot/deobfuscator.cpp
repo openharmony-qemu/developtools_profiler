@@ -347,16 +347,16 @@ bool RestoreFunctionNameInSuffix(const NameCacheIndex* ncache, std::string& valu
     if (ncache == nullptr) {
         return false;
     }
-    const size_t LINE = value.find("(line:");
-    if (LINE == std::string::npos || LINE == 0) {
+    const size_t line = value.find("(line:");
+    if (line == std::string::npos || line == 0) {
         return false;
     }
     // 取 '(' 之前最后一个 '#'，其后的子串即为混淆函数名（如 "#d1(" → "d1"）
-    const size_t hash = value.rfind('#', LINE - 1);
-    if (hash == std::string::npos || hash + 1 >= LINE) {
+    const size_t hash = value.rfind('#', line - 1);
+    if (hash == std::string::npos || hash + 1 >= line) {
         return false;
     }
-    const size_t nameLen = LINE - hash - 1;  // '#' 与 '(' 之间的函数名长度
+    const size_t nameLen = line - hash - 1;  // '#' 与 '(' 之间的函数名长度
     if (nameLen == 0) {
         return false;
     }

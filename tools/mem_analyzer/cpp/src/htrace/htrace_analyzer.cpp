@@ -710,7 +710,9 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
             char buf[HEX_BUF_SIZE];
             int ret = snprintf(buf, sizeof(buf), "0x%llx",
                                static_cast<unsigned long long>(s.vaddr));
-            if (ret < 0) buf[0] = '\0';
+            if (ret < 0) {
+                buf[0] = '\0';
+            }
             ts.libOffset = buf;
         } else {
             ts.libOffset = "";

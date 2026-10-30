@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define _CRT_SECURE_NO_WARNINGS
+#define CRT_SECURE_NO_WARNINGS
 #include "shared/heapsnapshot/node_size_calculator.hpp"
 #include "utils/timer.hpp"
 #include <algorithm>
@@ -1026,8 +1026,8 @@ static void RunLayeredBfs(
                     continue;
                 }
 
-                uint32_t child = ctx.edges[ptr + static_cast<size_t>(ctx.toNodeOff)]
-                                / static_cast<uint32_t>(ctx.nodeFieldsCount);
+                uint32_t child = ctx.edges[ptr + static_cast<size_t>(ctx.toNodeOff)] /
+                                static_cast<uint32_t>(ctx.nodeFieldsCount);
                 if (child >= ctx.nodeCount) {
                     continue;
                 }

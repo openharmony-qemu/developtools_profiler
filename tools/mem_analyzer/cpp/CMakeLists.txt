@@ -165,7 +165,7 @@ add_executable(mem-analyzer ${SOURCES})
 # ── Compiler flags ────────────────────────────────────────────
 if(MSVC)
     target_compile_definitions(mem-analyzer PRIVATE
-        _CRT_SECURE_NO_WARNINGS
+        CRT_SECURE_NO_WARNINGS
         SQLITE_THREADSAFE=0
         SQLITE_OMIT_LOAD_EXTENSION)
     target_compile_options(mem-analyzer PRIVATE /utf-8)

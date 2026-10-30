@@ -28,7 +28,7 @@ namespace mem_analyzer {
 class CliError : public std::runtime_error {
 public:
     bool isHelp;
-    CliError(const std::string& msg, bool help = false) : std::runtime_error(msg), isHelp(help) {}
+    explicit CliError(const std::string& msg, bool help = false) : std::runtime_error(msg), isHelp(help) {}
 };
 
 /**

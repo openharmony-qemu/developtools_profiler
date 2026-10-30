@@ -1010,7 +1010,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
     }
     if (configFile.empty()) {
         log::Loge("Unknown config option: ", configOption);
-        return 2;
+        return EXIT_CONFIG_FAILED;
     }
 
     // 6. API version check.
@@ -1097,11 +1097,11 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
     if (!rr.ok) {
         // Name the pinned device when there is one: rr.error is hdc text and does not always
         // mention the target, and by now the `Device:` echo is well above this line.
-        std::string err = "hdc execution failed: " + rr.error;
+        std::string innerErr = "hdc execution failed: " + rr.error;
         if (!HdcConnectKey().empty()) {
-            err += " [device: " + HdcConnectKey() + "]";
+            innerErr += " [device: " + HdcConnectKey() + "]";
         }
-        log::Loge(err);
+        log::Loge(innerErr);
         if (!rr.output.empty() && !rr.outputStreamed) {
             std::cout << rr.output;
         }

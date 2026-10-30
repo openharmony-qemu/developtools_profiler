@@ -110,7 +110,7 @@ inline std::string ResolveOffsetStr(uint64_t vaddr, bool vaddrNull)
         return "";
     }
     char buf[32];
-    (void)snprintf(buf, sizeof(buf), "0x%llx", (unsigned long long)vaddr);
+    static_cast<void>(snprintf(buf, sizeof(buf), "0x%llx", static_cast<unsigned long long>(vaddr)));
     return buf;
 }
 

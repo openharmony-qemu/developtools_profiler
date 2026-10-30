@@ -43,7 +43,9 @@ std::string FormatTreePct(int64_t part, int64_t total)
     char buf[HEX_BUF_SIZE];
     int ret = snprintf(buf, sizeof(buf), "%.1f%%",
                        static_cast<double>(part) / total * PERCENTAGE_SCALE);
-    if (ret < 0) buf[0] = '\0';
+    if (ret < 0) {
+        buf[0] = '\0';
+    }
     return buf;
 }
 
