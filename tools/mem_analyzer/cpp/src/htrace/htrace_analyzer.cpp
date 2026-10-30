@@ -821,7 +821,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
             }
             return true;
         };
-        auto ResolveNames = [&dataDict](const SymbolData& sd, std::string& libFile, std::string& symName) {
+        auto resolveNames = [&dataDict](const SymbolData& sd, std::string& libFile, std::string& symName) {
             std::string libName;
             if (sd.libIdNull) {
                 libName = "unknown";
@@ -836,16 +836,16 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
             auto sit = dataDict.find(sid);
             symName = (sit != dataDict.end()) ? sit->second : "";
         };
-        auto isNoise = [&ResolveNames, &filterScope](const SymbolData& sd) {
+        auto isNoise = [&resolveNames, &filterScope](const SymbolData& sd) {
             std::string libFile;
             std::string symName;
-            ResolveNames(sd, libFile, symName);
+            resolveNames(sd, libFile, symName);
             return HtraceConfigMgr::Instance().ShouldFilter(libFile, symName, filterScope);
         };
-        auto IsOrphanRecoverable = [&ResolveNames, &filterScope](const SymbolData& sd) {
+        auto isOrphanRecoverable = [&resolveNames, &filterScope](const SymbolData& sd) {
             std::string libFile;
             std::string symName;
-            ResolveNames(sd, libFile, symName);
+            resolveNames(sd, libFile, symName);
             return HtraceConfigMgr::Instance().IsOrphanRecoverable(libFile, symName, filterScope);
         };
 
@@ -925,7 +925,7 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
                 if (!scopeOk(src)) {
                     continue;
                 }
-                if (!IsOrphanRecoverable(src)) {
+                if (!isOrphanRecoverable(src)) {
                     continue;
                 }
                 if (depthSeen.find(key) != depthSeen.end()) {

@@ -1008,9 +1008,9 @@ static void ParseSnapshotMeta(HeapSnapshot& snapshot,
     // Parse node type names from meta.node_types[type_offset]
     // Typical V8 node types: ["hidden","array","string","object","code","closure",...]
     if (meta.contains("node_types") && snapshot.nodeTypeOffset >= 0) {
-        auto NodeTypes = meta["node_types"][snapshot.nodeTypeOffset];
-        if (NodeTypes.is_array()) {
-            snapshot.nodeTypeNames = NodeTypes.get<std::vector<std::string>>();
+        auto nodeTypes = meta["node_types"][snapshot.nodeTypeOffset];
+        if (nodeTypes.is_array()) {
+            snapshot.nodeTypeNames = nodeTypes.get<std::vector<std::string>>();
         }
     }
 }

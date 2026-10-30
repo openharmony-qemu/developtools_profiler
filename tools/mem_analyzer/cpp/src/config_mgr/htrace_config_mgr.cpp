@@ -250,7 +250,7 @@ bool HtraceConfigMgr::MatchTsPattern(const std::string& lib, const std::string& 
     }
 
     // Validate :digits:digits suffix starting at 'start'
-    auto ValidLineCol = [&lib](size_t start) -> bool {
+    auto validLineCol = [&lib](size_t start) -> bool {
         if (start + 1 >= lib.size() || !std::isdigit((unsigned char)lib[start + 1])) {
             return false;
         }
@@ -267,14 +267,14 @@ bool HtraceConfigMgr::MatchTsPattern(const std::string& lib, const std::string& 
             char b = lib[dot + EXT_CHAR2_OFFSET];
             char c = lib[dot + TS_JS_COLON_OFFSET];
             if (a == ext[1] && b == ext[EXT_CHAR2_OFFSET] && c == ':') {
-                return ValidLineCol(dot + TS_JS_COLON_OFFSET);
+                return validLineCol(dot + TS_JS_COLON_OFFSET);
             }
         }
     } else if (ext == ".ets") {
         if (dot + ETS_PATTERN_LEN <= lib.size()) {
             if (lib[dot + 1] == 'e' && lib[dot + EXT_CHAR2_OFFSET] == 't' &&
                 lib[dot + EXT_CHAR3_OFFSET] == 's' && lib[dot + ETS_COLON_OFFSET] == ':') {
-                return ValidLineCol(dot + ETS_COLON_OFFSET);
+                return validLineCol(dot + ETS_COLON_OFFSET);
             }
         }
     }
