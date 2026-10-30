@@ -272,7 +272,8 @@ bool HtraceConfigMgr::MatchTsPattern(const std::string& lib, const std::string& 
         }
     } else if (ext == ".ets") {
         if (dot + ETS_PATTERN_LEN <= lib.size()) {
-            if (lib[dot + 1] == 'e' && lib[dot + EXT_CHAR2_OFFSET] == 't' && lib[dot + EXT_CHAR3_OFFSET] == 's' && lib[dot + ETS_COLON_OFFSET] == ':') {
+            if (lib[dot + 1] == 'e' && lib[dot + EXT_CHAR2_OFFSET] == 't' &&
+                lib[dot + EXT_CHAR3_OFFSET] == 's' && lib[dot + ETS_COLON_OFFSET] == ':') {
                 return ValidLineCol(dot + ETS_COLON_OFFSET);
             }
         }

@@ -488,8 +488,10 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
                 entry.icicleTree = BuildIcicleTreeJsonFromFlameNode(
                     ts.icicleGraph, OTHER_SYMBOL, lib, std::string(), full.dataDict, st);
             } else {
-                entry.flameTree = BuildFlameTreeJsonFromFlameNode(ts.flameGraph, ts.symbol, lib, ts.libOffset, full.dataDict, st);
-                entry.icicleTree = BuildIcicleTreeJsonFromFlameNode(ts.icicleGraph, ts.symbol, lib, ts.libOffset, full.dataDict, st);
+                entry.flameTree = BuildFlameTreeJsonFromFlameNode(ts.flameGraph, ts.symbol, lib,
+                    ts.libOffset, full.dataDict, st);
+                entry.icicleTree = BuildIcicleTreeJsonFromFlameNode(ts.icicleGraph, ts.symbol, lib,
+                    ts.libOffset, full.dataDict, st);
             }
             entry.names = st.ToArray();
         }

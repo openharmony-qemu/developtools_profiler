@@ -894,7 +894,8 @@ bool StartDeviceApp(const std::string& packageName)
     if (!resolved.empty()) {
         abilities.push_back(resolved);
     } else {
-        log::Logw("Warning: unable to resolve the entry ability of '", packageName, "' via 'bm dump -n'; trying common defaults.");
+        log::Logw("Warning: unable to resolve the entry ability of '", packageName,
+            "' via 'bm dump -n'; trying common defaults.");
     }
     abilities.push_back("EntryAbility");
     abilities.push_back("MainAbility");
@@ -1840,7 +1841,8 @@ std::thread SpawnFreshRestart(const std::shared_ptr<CaptureState>& state, const 
             std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_POLL_INTERVAL_MS));
         }
         if (!sessionUp) {
-            log::Logw("Warning: capture session did not become ready; please restart '", processName, "' manually if needed.");
+            log::Logw("Warning: capture session did not become ready; please restart '",
+                processName, "' manually if needed.");
             return;
         }
         state->freshRestartActive = true;
@@ -2028,7 +2030,9 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
                 std::lock_guard<std::mutex> lock(state->mtx);
                 perr = state->permissionErrorMsg;
             }
-            log::Loge("\n", perr, "\nThe target app cannot be tuned on this device (release-signed app on a non-root phone); aborting the capture.");
+            log::Loge("\n", perr,
+                "\nThe target app cannot be tuned on this device "
+                "(release-signed app on a non-root phone); aborting the capture.");
             break;
         }
         if (!opts.processName.empty()) {

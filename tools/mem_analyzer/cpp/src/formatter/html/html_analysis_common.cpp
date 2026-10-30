@@ -81,7 +81,8 @@ std::string FormatShortFuncName(const std::string& symbol, const std::string& li
     }
     if (!symbol.empty()) {
         if (!libBase.empty()) {
-            return libOffset.empty() ? (libBase + " (" + symbol + ")") : (libBase + "+" + libOffset + " (" + symbol + ")");
+            return libOffset.empty() ? (libBase + " (" + symbol + ")") :
+                (libBase + "+" + libOffset + " (" + symbol + ")");
         }
         return symbol;
     }
@@ -165,7 +166,8 @@ std::string FormatDuration(const std::string& durationStr)
     }
     if (d >= 1e-3) {
         std::ostringstream oss;
-        oss << std::fixed << std::setprecision(DECIMAL_PRECISION) << RoundHalfAwayFromZero(d * 1e3, DECIMAL_PRECISION) << "ms";
+        oss << std::fixed << std::setprecision(DECIMAL_PRECISION) <<
+            RoundHalfAwayFromZero(d * 1e3, DECIMAL_PRECISION) << "ms";
         return oss.str();
     }
     if (d >= 1e-6) {
@@ -316,7 +318,9 @@ std::string BuildCallChainHTML(const std::vector<CallChainResult>& callChains, d
             }
             plainText += FormatShortFuncName(frames[fi].name, frames[fi].lib, frames[fi].libOffset);
         }
-        plainText += std::string("\n") + (countMode ? "\u6b21\u6570" : "\u5927\u5c0f") + " " + FormatSizeText(chainSize, countMode) + "\n\u5360\u6bd4" + ToFixed(pct, DECIMAL_PRECISION) + "%";
+        plainText += std::string("\n") + (countMode ? "\u6b21\u6570" : "\u5927\u5c0f") + " " +
+            FormatSizeText(chainSize, countMode) + "\n\u5360\u6bd4" +
+            ToFixed(pct, DECIMAL_PRECISION) + "%";
 
         result += "<div class=\"call-chain-line\">\u8c03\u7528\u94fe" +
             std::to_string(ci + 1) +

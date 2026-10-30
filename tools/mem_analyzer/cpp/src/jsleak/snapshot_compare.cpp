@@ -926,13 +926,27 @@ json JsleakCompareAnalyzeImpl(const HeapSnapshot& baseline,
         {"leakObjInfo", changedLeakObjects},
         {"icicleCharts", std::move(icicleCharts)},
         {"limits", {{"topNPerDirection", topN}}},
-        {"methodology", {{"objectIdentity", "snapshot node ID; IDs present in both snapshots are excluded before aggregation"},
-                           {"pathMatching", "one representative shortest reference path per identity group; new/growth/replaced rows report snapshot B's path (falling back to A when B has none), removed/shrink rows report A's; weak, shortcut, and hidden edges excluded from the path search"},
-                          {"retainedMetric", "summed retained size of added or removed nodes per exact extended-name object bucket"},
-                          {"logicalGrouping", "dominator ancestry folds generic descendants and zero-count/zero-self carrier ancestors into the changed source-located descendant that explains their retained growth; component retained size is not added again"},
-                          {"leakCandidateScope", "leak-rule matches among added and removed node IDs only; surviving node IDs are excluded"},
-                           {"leakDetection", "property-tag rules only, as in the single-snapshot ArkUI/ArkTS leak report; JSLeakWatcher hash rules are not applied because comparison loads no leak list"},
-                          {"presentationFiltering", "JSON and HTML contain the same top-n logical changes and top-n changed leak objects per direction; only delta node IDs are retained; the analysis mode (all/property-tag/top-chain) selects which sections are produced"}}}
+        {"methodology", {{"objectIdentity", "snapshot node ID; IDs present in both snapshots are excluded "
+                                             "before aggregation"},
+                           {"pathMatching", "one representative shortest reference path per identity group; "
+                                             "new/growth/replaced rows report snapshot B's path (falling back to A "
+                                             "when B has none), removed/shrink rows report A's; weak, shortcut, and "
+                                             "hidden edges excluded from the path search"},
+                          {"retainedMetric", "summed retained size of added or removed nodes per exact "
+                                              "extended-name object bucket"},
+                          {"logicalGrouping", "dominator ancestry folds generic descendants and zero-count/zero-self "
+                                               "carrier ancestors into the changed source-located descendant that "
+                                               "explains their retained growth; component retained size is not "
+                                               "added again"},
+                          {"leakCandidateScope", "leak-rule matches among added and removed node IDs only; "
+                                                  "surviving node IDs are excluded"},
+                           {"leakDetection", "property-tag rules only, as in the single-snapshot ArkUI/ArkTS leak "
+                                              "report; JSLeakWatcher hash rules are not applied because comparison "
+                                              "loads no leak list"},
+                          {"presentationFiltering", "JSON and HTML contain the same top-n logical changes and top-n "
+                                                     "changed leak objects per direction; only delta node IDs are "
+                                                     "retained; the analysis mode (all/property-tag/top-chain) "
+                                                     "selects which sections are produced"}}}
     };
 }
 
