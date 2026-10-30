@@ -464,6 +464,7 @@ const std::string& HeapSnapshot::GetExtendedNodeName(uint32_t nodeIndex) const
         const int N = nodeCount;
         std::vector<std::thread> workers;
         workers.reserve(T);
+        if (T <= 0) return;
         for (int t = 0; t < T; ++t) {
             const int b = static_cast<int>((static_cast<long long>(N) * t) / T);
             const int e = static_cast<int>((static_cast<long long>(N) * (t + 1)) / T);
@@ -941,11 +942,17 @@ static void ParseSnapshotMeta(HeapSnapshot& snapshot,
     for (int i = 0; i < static_cast<int>(nodeFields.size()); i++) {
         if (nodeFields[i] == "type") {
             snapshot.nodeTypeOffset = i;
-        } else if (nodeFields[i] == "name") snapshot.nodeNameOffset = i;
-        else if (nodeFields[i] == "id") snapshot.nodeIdOffset = i;
-        else if (nodeFields[i] == "self_size") snapshot.nodeSelfSizeOffset = i;
-        else if (nodeFields[i] == "native_size") snapshot.nodeNativeSizeOffset = i;
-        else if (nodeFields[i] == "edge_count") snapshot.nodeEdgeCountOffset = i;
+        } else if (nodeFields[i] == "name") {
+            snapshot.nodeNameOffset = i;
+        } else if (nodeFields[i] == "id") {
+            snapshot.nodeIdOffset = i;
+        } else if (nodeFields[i] == "self_size") {
+            snapshot.nodeSelfSizeOffset = i;
+        } else if (nodeFields[i] == "native_size") {
+            snapshot.nodeNativeSizeOffset = i;
+        } else if (nodeFields[i] == "edge_count") {
+            snapshot.nodeEdgeCountOffset = i;
+        }
     }
 
     // Discover edge field offsets by name

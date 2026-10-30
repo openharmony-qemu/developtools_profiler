@@ -29,7 +29,8 @@ std::string HtmlReportBegin(const std::string& title)
 {
     return R"HTML(<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>)HTML" +
-           title + R"HTML(</title>
+           title +
+           R"HTML(</title>
 <style>
 )HTML";
 }
@@ -68,7 +69,8 @@ std::string HtmlReportBodyClose()
 <div id="navDoc" class="nav-content">)HTML" +
            NavBarDocContent() +
            R"HTML(</div><div id="navHelp" class="nav-content">)HTML" +
-           NavBarHelpCenterContent() + "</div>";
+           NavBarHelpCenterContent() +
+           "</div>";
 }
 
 std::string HtmlReportData(const std::string& varName, const std::string& jsonText)

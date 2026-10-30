@@ -537,9 +537,9 @@ void OpenWithDefaultApp(const std::string& filePath)
     pid_t pid = fork();
     if (pid == 0) {
 #if defined(__APPLE__)
-        execl("/usr/bin/open", "open", filePath.c_str(), (char*)nullptr);
+        execl("/usr/bin/open", "open", filePath.c_str(), static_cast<char*>(nullptr));
 #else
-        execl("/usr/bin/xdg-open", "xdg-open", filePath.c_str(), (char*)nullptr);
+        execl("/usr/bin/xdg-open", "xdg-open", filePath.c_str(), static_cast<char*>(nullptr));
 #endif
         _exit(EXIT_COMMAND_NOT_FOUND);
     }

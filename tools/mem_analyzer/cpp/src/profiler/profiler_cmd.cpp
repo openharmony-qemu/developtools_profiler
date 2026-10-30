@@ -989,7 +989,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
         std::string resolved;
         const bool requireApp = capture->requireApp;
         if (!ResolveProcessName(processName, requireApp, resolved, isApp)) {
-            return 2;
+            return EXIT_PROFILER_FAILED;
         }
         processName = resolved;
     }

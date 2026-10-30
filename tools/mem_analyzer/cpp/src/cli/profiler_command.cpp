@@ -55,7 +55,7 @@ public:
             .AddOption("--device", opt_.connectKey,
                 "Target device: device serial number (see 'hdc list targets'); optional "
                 "with 1 device, but required when 2 or more devices are connected or the target cannot be determined",
-                &opt_.connectKeyProvided)
+            &opt_.connectKeyProvided)
             .AddOption("-d,--out-dir", g.outDir, "Output directory")
             .AddOption("-S,--so-dir", opt_.soDir,
                 "Directory of native .so symbol files for offline symbolization (ignored for snapshot capture)")

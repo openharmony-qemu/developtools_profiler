@@ -1885,7 +1885,7 @@ void PrintMetricsLine(const ProcessMetrics& metrics)
 {
     auto fmtMb = [](long long kb) -> std::string {
         char buf[HEX_BUF_SIZE];
-        int ret = snprintf(buf, sizeof(buf), "%.2f", kb / 1024.0);
+        int ret = snprintf(buf, sizeof(buf), "%.2f", static_cast<double>(kb) / 1024.0);
         if (ret < 0) {
             buf[0] = '\0';
         }
