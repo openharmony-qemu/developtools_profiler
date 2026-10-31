@@ -746,19 +746,17 @@ std::map<std::string, long long> listDirFileSizes(const std::string& dir,
 // Polls every 2s; gives up after `timeout_s`. Only complete files are pulled
 // (per "pull only after completion"). The local paths of the pulled files are
 // appended to `files` and a human-readable outcome is written to `status`.
-void pollAndPullSnapshot(const std::string& resultDir,
-    const std::string& targetDir,
+/**
+ * Poll for stable snapshot files in resultDir.
+ * Candidates: new files or files whose size changed vs baseline.
+ */
+static void PollForStableSnapshots(const std::string& resultDir,
     const std::map<std::string, long long>& baseline,
-    long long timeoutS,
-    std::vector<std::string>& files,
-    std::string& status,
-    const std::string& role = "")
+    long long timeoutS, std::map<std::string, long long>& stable)
 {
     const int intervalS = 2;
     auto start = ClockType::now();
-
-    std::map<std::string, long long> prevSizes;  // candidates' sizes from prior poll
-    std::map<std::string, long long> stable;      // candidates confirmed complete
+    std::map<std::string, long long> prevSizes;
     int pollNum = 0;
 
     while (stable.empty()) {
@@ -772,7 +770,6 @@ void pollAndPullSnapshot(const std::string& resultDir,
         }
 
         const auto current = listDirFileSizes(resultDir, "hidumper-jsheap");
-        // Candidates: new files or files whose size changed vs baseline.
         std::map<std::string, long long> candidates;
         for (const auto& kv : current) {
             auto it = baseline.find(kv.first);
@@ -783,8 +780,7 @@ void pollAndPullSnapshot(const std::string& resultDir,
 
         if (candidates.empty()) {
             std::cout << "[Snapshot check] #" << pollNum << " (" << elapsedS <<
-                      "s): no new files\n" <<
-                      std::flush;
+                      "s): no new files\n" << std::flush;
             prevSizes.clear();
         } else {
             bool allStable = true;
@@ -797,8 +793,7 @@ void pollAndPullSnapshot(const std::string& resultDir,
                 }
                 std::cout << "[Snapshot check] #" << pollNum << " (" << elapsedS <<
                           "s): " << kv.first << " " << (kv.second / BYTES_PER_KB) << "KB" <<
-                          (s ? " stable" : " generating") << "\n" <<
-                          std::flush;
+                          (s ? " stable" : " generating") << "\n" << std::flush;
             }
             if (allStable) {
                 stable = candidates;
@@ -813,15 +808,17 @@ void pollAndPullSnapshot(const std::string& resultDir,
         const int sleepS = static_cast<int>(std::min<long long>(intervalS, remain));
         SleepTicks(sleepS * TICKS_PER_SECOND, []() { return false; });
     }
+}
 
-    if (stable.empty()) {
-        status = "Timeout: snapshot file generation not detected as complete (" + resultDir + ")";
-        return;
-    }
-
-    // Pull the completed snapshot file(s) into the capture's own directory so
-    // results don't land flat in the top-level output dir (mirrors the analysis
-    // subcommands).
+/// Pull completed snapshot files into the capture's own directory.
+// Pull the completed snapshot file(s) into the capture's own directory so
+// results don't land flat in the top-level output dir (mirrors the analysis
+// subcommands).
+static void PullCompletedSnapshots(const std::string& resultDir,
+    const std::string& targetDir, const std::string& role,
+    const std::map<std::string, long long>& stable,
+    std::vector<std::string>& files, std::string& status)
+{
     std::error_code ecMkdir;
     fs::create_directories(PathFromUtf8(targetDir), ecMkdir);
 
@@ -841,6 +838,25 @@ void pollAndPullSnapshot(const std::string& resultDir,
         }
     }
     status = files.size() > pulledBefore ? "complete" : "snapshot file export failed";
+}
+
+void pollAndPullSnapshot(const std::string& resultDir,
+    const std::string& targetDir,
+    const std::map<std::string, long long>& baseline,
+    long long timeoutS,
+    std::vector<std::string>& files,
+    std::string& status,
+    const std::string& role = "")
+{
+    std::map<std::string, long long> stable;
+    PollForStableSnapshots(resultDir, baseline, timeoutS, stable);
+
+    if (stable.empty()) {
+        status = "Timeout: snapshot file generation not detected as complete (" + resultDir + ")";
+        return;
+    }
+
+    PullCompletedSnapshots(resultDir, targetDir, role, stable, files, status);
 }
 
 // ── Automated app launch / fresh-restart via the `aa` tool ─────────────

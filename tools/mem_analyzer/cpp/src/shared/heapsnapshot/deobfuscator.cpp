@@ -534,6 +534,70 @@ std::string DeobfuscateOneString(const std::string& value,
 //  仅解析并改写顶层 "strings" 字符串数组，nodes / edges / meta 等其余字段
 //  按原始字节流式拷贝，避免大快照全量 json::parse + dump 导致的内存峰值。
 // ============================================================================
+/**
+ * Parse the strings array from a heapsnapshot file.
+ * Steps 3-4: read array text and parse as JSON (with sanitize fallback).
+ */
+static bool ParseStringsArray(std::ifstream& in, size_t openBracket, size_t closeBracket,
+    const std::string& inputPath, json& stringsArr)
+{
+    // 3. 读取 strings 数组文本 [open_bracket, close_bracket]
+    std::string arrText = ReadByteRange(in, openBracket, closeBracket + 1);
+
+    // 4. 解析 strings 数组（首次失败则对控制字符做 sanitize 后重试）
+    bool parsed = false;
+    try {
+        stringsArr = json::parse(arrText);
+        parsed = true;
+    } catch (const std::exception&) {
+        try {
+            stringsArr = json::parse(SanitizeControlChars(arrText));
+            parsed = true;
+        } catch (const std::exception& e) {
+            log::Loge("Error: Failed to parse \"strings\" array in ", inputPath, " as JSON: ", e.what());
+        }
+    }
+    if (!parsed || !stringsArr.is_array()) {
+        log::Loge("Error: \"strings\" is not an array in heapsnapshot file: ", inputPath);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Write deobfuscated output: header + new strings + tail.
+ * Step 7: write output file.
+ */
+static bool WriteDeobfuscatedOutput(std::ifstream& in, const std::string& outputPath,
+    size_t openBracket, size_t closeBracket, size_t fileSize,
+    const std::string& newArr)
+{
+    // 7. 写出输出文件：[0, open_bracket) + 新 strings 数组 + (close_bracket, end)
+    std::ofstream out(mem_analyzer::PathFromUtf8(outputPath), std::ios::binary);
+    if (!out) {
+        log::Loge("Error: Failed to open output file for writing: ", outputPath);
+        return false;
+    }
+    if (!CopyByteRange(in, out, 0, openBracket)) {
+        log::Loge("Error: Failed to copy snapshot header to output: ", outputPath);
+        return false;
+    }
+    out.write(newArr.data(), newArr.size());
+    if (!out.good()) {
+        log::Loge("Error: Failed to write deobfuscated strings to output: ", outputPath);
+        return false;
+    }
+    if (!CopyByteRange(in, out, closeBracket + 1, fileSize)) {
+        log::Loge("Error: Failed to copy snapshot tail to output: ", outputPath);
+        return false;
+    }
+    if (!out.good()) {
+        log::Loge("Error: Failed to finalize output file: ", outputPath);
+        return false;
+    }
+    return true;
+}
+
 bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& outputPath,
     const SourceMapIndex* smap, const NameCacheIndex* ncache)
 {
@@ -575,25 +639,8 @@ bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& ou
         return false;
     }
 
-    // 3. 读取 strings 数组文本 [open_bracket, close_bracket]
-    std::string arrText = ReadByteRange(in, openBracket, closeBracket + 1);
-
-    // 4. 解析 strings 数组（首次失败则对控制字符做 sanitize 后重试）
     json stringsArr;
-    bool parsed = false;
-    try {
-        stringsArr = json::parse(arrText);
-        parsed = true;
-    } catch (const std::exception&) {
-        try {
-            stringsArr = json::parse(SanitizeControlChars(arrText));
-            parsed = true;
-        } catch (const std::exception& e) {
-            log::Loge("Error: Failed to parse \"strings\" array in ", inputPath, " as JSON: ", e.what());
-        }
-    }
-    if (!parsed || !stringsArr.is_array()) {
-        log::Loge("Error: \"strings\" is not an array in heapsnapshot file: ", inputPath);
+    if (!ParseStringsArray(in, openBracket, closeBracket, inputPath, stringsArr)) {
         return false;
     }
 
@@ -611,27 +658,7 @@ bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& ou
     // 6. 重新序列化 strings 数组（紧凑格式）
     std::string newArr = stringsArr.dump();
 
-    // 7. 写出输出文件：[0, open_bracket) + 新 strings 数组 + (close_bracket, end)
-    std::ofstream out(mem_analyzer::PathFromUtf8(outputPath), std::ios::binary);
-    if (!out) {
-        log::Loge("Error: Failed to open output file for writing: ", outputPath);
-        return false;
-    }
-    if (!CopyByteRange(in, out, 0, openBracket)) {
-        log::Loge("Error: Failed to copy snapshot header to output: ", outputPath);
-        return false;
-    }
-    out.write(newArr.data(), newArr.size());
-    if (!out.good()) {
-        log::Loge("Error: Failed to write deobfuscated strings to output: ", outputPath);
-        return false;
-    }
-    if (!CopyByteRange(in, out, closeBracket + 1, fileSize)) {
-        log::Loge("Error: Failed to copy snapshot tail to output: ", outputPath);
-        return false;
-    }
-    if (!out.good()) {
-        log::Loge("Error: Failed to finalize output file: ", outputPath);
+    if (!WriteDeobfuscatedOutput(in, outputPath, openBracket, closeBracket, fileSize, newArr)) {
         return false;
     }
 
