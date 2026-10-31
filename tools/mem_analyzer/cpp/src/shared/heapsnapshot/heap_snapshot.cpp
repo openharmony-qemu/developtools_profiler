@@ -1539,12 +1539,12 @@ RefChainKey FnvContinue(const RefChainKey& prev, const std::string& name)
     return RefChainKey{h1, h2};
 }
 
-void ResolveChainHashForNode(uint32_t u, uint32_t p, int N,
+void ResolveChainHashForNode(uint32_t u, uint32_t p, int n,
     std::vector<RefChainKey>& chainHash,
     const std::vector<std::string>& extNames,
     const std::vector<uint8_t>& chainHashComputed)
 {
-    if (p == INVALID_NODE || p >= static_cast<uint32_t>(N)) {
+    if (p == INVALID_NODE || p >= static_cast<uint32_t>(n)) {
         chainHash[u] = RefChainKey{};  // 不可达 => {0,0}
     } else if (p == u) {
         chainHash[u] = FnvSeed(extNames[u]);  // root：种子

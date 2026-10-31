@@ -820,7 +820,9 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     // symbols and would otherwise lose their leak size from the ranking), so the
     // leak size stays visible. Only the noise filter is bypassed for recovery;
     // recovered symbols are gated by an orphan-specific threshold.
-    auto buildFiltered = [&allSymbols, &config, &callStacks, &totalLeakSize, &recoveredOwner, &dataDict](Scope filterScope) -> std::pair<std::vector<SymbolData*>, int> {
+    auto buildFiltered = [&allSymbols, &config, &callStacks, &totalLeakSize,
+                           &recoveredOwner, &dataDict](Scope filterScope) ->
+                           std::pair<std::vector<SymbolData*>, int> {
         std::vector<SymbolData*> filtered;
         int orgCount = 0;
 
@@ -979,7 +981,8 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     };
 
     // leak_mode: 收集非 top N 覆盖的栈 -> other, 追加到对应 top_symbols 分类
-    auto appendOther = [&config, &topN, &callStacks, &dataDict](std::vector<TopSymbolInfo>& targetVec, const std::vector<SymbolData>& finalSymbols) {
+    auto appendOther = [&config, &topN, &callStacks, &dataDict](std::vector<TopSymbolInfo>& targetVec,
+                       const std::vector<SymbolData>& finalSymbols) {
         if (!config.leakMode) {
             return;
         }
@@ -1115,7 +1118,9 @@ static FilepageSplit AnalyzeFilepages(
         // detail 模式下 data_dict 的 sub_type 值可能带 "FilePage:" 前缀，输出时剥离
         info.filename = NormalizeFilepageFilename(info.filename, mode);
         if (mmapTotalSize > 0) {
-            info.percentage = std::round(static_cast<double>(info.size) * PERCENT_PRECISION_SCALE / static_cast<double>(mmapTotalSize)) / PERCENT_SCALE;
+            info.percentage = std::round(static_cast<double>(info.size) *
+                PERCENT_PRECISION_SCALE /
+                static_cast<double>(mmapTotalSize)) / PERCENT_SCALE;
         }
         // 文件级分类：任意栈的任意帧是应用符号 → app 类；否则 system 类
         bool isApp = false;

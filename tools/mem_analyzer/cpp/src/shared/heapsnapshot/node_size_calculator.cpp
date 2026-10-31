@@ -823,7 +823,7 @@ struct BfsContext {
     uint32_t nodeCount;
 
     /// Look up an edge's name from the string table.
-    const std::string& getEdgeName(size_t ptr) const
+    const std::string& GetEdgeName(size_t ptr) const
     {
         uint32_t nameIdx = edges[ptr + static_cast<size_t>(edgeNameOff)];
         return (nameIdx < strings.size()) ? strings[nameIdx] : EMPTY_STRING;
@@ -1018,7 +1018,7 @@ static void RunLayeredBfs(
                 // WeakMap edges: keys are weakly referenced; skip the forward direction
                 // where the edge name contains "@<key_id>) ->" and key_id == target.id
                 {
-                    const std::string& en = ctx.getEdgeName(ptr);
+                    const std::string& en = ctx.GetEdgeName(ptr);
                     if (IsEdgeNameBlocked(en)) {
                         continue;
                     }
@@ -1032,8 +1032,9 @@ static void RunLayeredBfs(
                             } catch (const std::exception&) {
                                 // 越界/非法 key id：不当作 WeakMap key 匹配
                             }
-                            uint32_t childId = ctx.nodes[static_cast<size_t>(child) * static_cast<size_t>(ctx.nodeFieldsCount) +
-                                                       static_cast<size_t>(ctx.idOff)];
+                            uint32_t childId = ctx.nodes[static_cast<size_t>(child) *
+                                static_cast<size_t>(ctx.nodeFieldsCount) +
+                                static_cast<size_t>(ctx.idOff)];
                             if (keyId == childId) {
                                 continue;
                             }
@@ -1048,7 +1049,7 @@ static void RunLayeredBfs(
 
                 // Internal edge named "code" — V8 internal, not meaningful for leak analysis
                 if (ctx.internalType >= 0 && t == ctx.internalType) {
-                    const std::string& en = ctx.getEdgeName(ptr);
+                    const std::string& en = ctx.GetEdgeName(ptr);
                     if (en == "code") {
                         continue;
                     }
@@ -1088,7 +1089,7 @@ static void RunLayeredBfs(
 
                 // Edge name in grey list → defer
                 {
-                    const std::string& en = ctx.getEdgeName(ptr);
+                    const std::string& en = ctx.GetEdgeName(ptr);
                     if (edgeNameGreyList.count(en)) {
                         isLowPriority = true;
                     }

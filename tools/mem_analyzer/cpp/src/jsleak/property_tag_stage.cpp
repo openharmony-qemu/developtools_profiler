@@ -108,7 +108,8 @@ std::string PropertyTagStage::CheckDestoryedTag(uint32_t uNi, const HeapSnapshot
     return foundEdgeName;
 }
 
-BaseClassInfo PropertyTagStage::FindConcernType(uint32_t uNi, const std::vector<BaseClassInfo>& baseClasses, const HeapSnapshot& heap)
+BaseClassInfo PropertyTagStage::FindConcernType(uint32_t uNi,
+    const std::vector<BaseClassInfo>& baseClasses, const HeapSnapshot& heap)
 {
     if (baseClasses.empty()) {
         return {};

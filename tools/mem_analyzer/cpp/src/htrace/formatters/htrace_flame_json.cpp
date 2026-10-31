@@ -235,7 +235,10 @@ SymbolDataEntry BuildSymbolDataEntryFromContextLight(const TopSymbolInfo& ts,
     SymbolDataEntry entry;
 
     double percentage = totalExistingSize > 0 ?
-        std::round(static_cast<double>(ts.totalLeakSize) / static_cast<double>(totalExistingSize) * PERCENT_PRECISION_SCALE) / static_cast<double>(PERCENT_SCALE) :
+        std::round(static_cast<double>(ts.totalLeakSize) /
+            static_cast<double>(totalExistingSize) *
+            PERCENT_PRECISION_SCALE) /
+            static_cast<double>(PERCENT_SCALE) :
         0.0;
     std::string lib = ts.libs.empty() ? "" : ts.libs[0];
     entry.info = json{
