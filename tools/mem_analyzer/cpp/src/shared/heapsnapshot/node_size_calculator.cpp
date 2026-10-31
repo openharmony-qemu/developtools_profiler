@@ -892,21 +892,19 @@ static bool IsCppRootsNode(const BfsContext& ctx, uint32_t idx)
     return ctx.GetNodeName(idx) == "C++ roots" && ctx.GetNodeType(idx) == "synthetic";
 }
 
-// ============================================================================
-//  Collect root nodes (high-priority + low-priority)
-//  Matches the reference implementation's getRootNodeList with prioritize:true.
-//  High-priority roots are processed first; low-priority roots are only used
-//  as a fallback when the normal queue is empty.
-//  Root classification:
-//    High-priority:
-//      - Node 0 (SyntheticRoot): always
-//      - id == 0 or id == 1
-//      - type == "native" && name starts with "Window"
-//      - type == "synthetic" && name == "(GC roots)"
-//    Low-priority:
-//      - type == "synthetic" && name is Blink roots
-//      - (synthetic || native) && name == "Pending activities"
-// ============================================================================
+/// Collect root nodes (high-priority + low-priority).
+/// Matches the reference implementation's getRootNodeList with prioritize:true.
+/// High-priority roots are processed first; low-priority roots are only used
+/// as a fallback when the normal queue is empty.
+/// Root classification:
+///   High-priority:
+///     - Node 0 (SyntheticRoot): always
+///     - id == 0 or id == 1
+///     - type == "native" && name starts with "Window"
+///     - type == "synthetic" && name == "(GC roots)"
+///   Low-priority:
+///     - type == "synthetic" && name is Blink roots
+///     - (synthetic || native) && name == "Pending activities"
 static void CollectShortestPathRoots(
     const BfsContext& ctx,
     std::vector<uint32_t>& highPri,

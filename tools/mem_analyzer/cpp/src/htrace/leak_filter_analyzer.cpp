@@ -120,12 +120,12 @@ void ApplyLeakAddrFilter(TraceDB& db, const std::unordered_set<uint64_t>& leaks)
         " / ", total, " stacks (", removed, " filtered by addr).");
 }
 
-// -l 分析模式（不带 -p）：
-//   L2 __emutls_get_address 排除 → L3 栈分 app/system（arkweb 例外）→
-//   按 scope 走 analyze_call_stacks(leak_mode)：
-//     app-only/system-only 各跑一遍；app-and-system 跑两遍（app+system）；mixed 不分栈跑一遍。
-//   每组 top N + other（非 top N 覆盖的栈合并火焰图）。
-//   组装 HtraceAnalysisOutput，from=htrace-analysis。L1 已由 apply_leak_addr_filter 完成。
+/// -l 分析模式（不带 -p）：
+///   L2 __emutls_get_address 排除 → L3 栈分 app/system（arkweb 例外）→
+///   按 scope 走 analyze_call_stacks(leak_mode)：
+///     app-only/system-only 各跑一遍；app-and-system 跑两遍（app+system）；mixed 不分栈跑一遍。
+///   每组 top N + other（非 top N 覆盖的栈合并火焰图）。
+///   组装 HtraceAnalysisOutput，from=htrace-analysis。L1 已由 apply_leak_addr_filter 完成。
 HtraceAnalysisOutput HtraceLeakAnalyze(TraceDB& db, const RunContext& ctx)
 {
     auto* clist = std::get_if<CompressedCallStackList>(&db.stacks);

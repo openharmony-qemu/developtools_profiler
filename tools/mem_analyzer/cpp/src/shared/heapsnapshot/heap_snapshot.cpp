@@ -781,9 +781,8 @@ static size_t FindMatchingCloseBracket(const std::string& text, size_t start)
 }
 
 /// Sanitize a JSON string array buffer for nlohmann::json compatibility.
-/// Two transformations are applied:
-///   1. Control characters (U+0000-U+001F, except \t \n \r) are escaped as \u00XX
-///   2. Orphan surrogate pairs (\uD800-\uDFFF) are replaced with \uFFFD
+/// Control characters (U+0000-U+001F, except \t \n \r) are escaped as \u00XX,
+/// and orphan surrogate pairs (\uD800-\uDFFF) are replaced with \uFFFD.
 /// The sanitization is done in-place on a copy; the original buffer is unchanged.
 static std::string SanitizeJsonStringArray(const std::string& strBuf)
 {
@@ -1156,15 +1155,13 @@ static void ParseStringsTable(HeapSnapshot& snapshot, std::ifstream& file,
     }
 }
 
-// ============================================================================
-//  Phase 5: build CSR indices + node_id map
-//  Builds two indexing structures:
-//    - first_edge_pointers: CSR (Compressed Sparse Row) for forward edges.
-//      For node i, edges start at first_edge_pointers[i] and end at
-//      first_edge_pointers[i+1].  Each edge occupies edge_fields_count uint32s.
-//    - node_id_to_idx: unordered_map from node id to node index.
-//      Used for O(1) lookup of nodes by their numeric id.
-// ============================================================================
+/// Phase 5: build CSR indices + node_id map.
+/// Builds two indexing structures:
+///   - first_edge_pointers: CSR (Compressed Sparse Row) for forward edges.
+///     For node i, edges start at first_edge_pointers[i] and end at
+///     first_edge_pointers[i+1].  Each edge occupies edge_fields_count uint32s.
+///   - node_id_to_idx: unordered_map from node id to node index.
+///     Used for O(1) lookup of nodes by their numeric id.
 static void BuildCsrAndIdMap(HeapSnapshot& snapshot)
 {
     // ---- Build forward CSR ----
@@ -1241,16 +1238,14 @@ static void ComputePathsAndRetained(HeapSnapshot& snapshot)
     }
 }
 
-// ============================================================================
-//  HeapSnapshot::from_file — main entry point
-//  Orchestrates the six-phase pipeline:
-//    1. Parse snapshot metadata (field offsets, type values)
-//    2. Stream-parse nodes array
-//    3. Stream-parse edges array
-//    4. Parse strings table (JSON with fallback sanitization)
-//    5. Build CSR indices and node_id_to_idx map
-//    6. Compute shortest paths and retained sizes
-// ============================================================================
+/// HeapSnapshot::from_file — main entry point.
+/// Orchestrates the six-phase pipeline:
+///   1. Parse snapshot metadata (field offsets, type values)
+///   2. Stream-parse nodes array
+///   3. Stream-parse edges array
+///   4. Parse strings table (JSON with fallback sanitization)
+///   5. Build CSR indices and node_id_to_idx map
+///   6. Compute shortest paths and retained sizes
 
 HeapSnapshot HeapSnapshot::FromFile(const std::string& path)
 {

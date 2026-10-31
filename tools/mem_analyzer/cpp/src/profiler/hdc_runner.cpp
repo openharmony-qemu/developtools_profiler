@@ -462,14 +462,14 @@ std::string LocalRecvPath(const std::string& outputDir, const std::string& remot
             .lexically_normal());
 }
 
-// Mark an exported snapshot with the role it was captured for by inserting
-// `-<role>` before the extension:
-//   hidumper-jsheap-123-123-1788535089196.rawheap
-//     -> hidumper-jsheap-123-123-1788535089196-start.rawheap
-// The role has to live in the file name because every snapshot of a continuous
-// session is pulled flat into the session directory (no role subdirectories).
-// An empty `role` leaves the path untouched; if the rename fails the original
-// path is kept so the file is still reported and analyzed.
+/// Mark an exported snapshot with the role it was captured for by inserting
+/// `-<role>` before the extension:
+///   hidumper-jsheap-123-123-1788535089196.rawheap
+///     -> hidumper-jsheap-123-123-1788535089196-start.rawheap
+/// The role has to live in the file name because every snapshot of a continuous
+/// session is pulled flat into the session directory (no role subdirectories).
+/// An empty `role` leaves the path untouched; if the rename fails the original
+/// path is kept so the file is still reported and analyzed.
 std::string MarkSnapshotRole(const std::string& path, const std::string& role)
 {
     if (role.empty()) {
