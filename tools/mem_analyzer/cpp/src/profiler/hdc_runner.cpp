@@ -1079,6 +1079,17 @@ static std::string FindNewZipCandidate(
     return candidate;
 }
 
+/// Print zip poll status line with stability indicator.
+static void PrintZipPollStatus(int pollIdx, long long elapsedPoll,
+    const std::string& candidate, long long curSizeKb, int stableCount)
+{
+    const char* state = stableCount >= STABLE_SAMPLE_THRESHOLD ? " stable" :
+        (stableCount == 1 ? " stabilizing" : " generating");
+    std::cout << "[hiprofiler wait] #" << pollIdx << " (" << elapsedPoll <<
+        "s): new zip candidate " << candidate << " size=" << curSizeKb <<
+        "KB" << state << "\n" << std::flush;
+}
+
 std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baseline,
     const std::string& dir, long long timeoutS)
 {
@@ -1114,21 +1125,13 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
             if (sit != sizes.end()) {
                 curSize = sit->second;
             }
-
             if (curSize > 0 && curSize == prevSize) {
                 ++stableCount;
             } else {
                 stableCount = (curSize > 0) ? 1 : 0;
             }
             prevSize = curSize;
-
-            std::cout << "[hiprofiler wait] #" << i <<
-                      " (" << elapsedPoll << "s): new zip candidate " << candidate <<
-                      " size=" << (curSize / BYTES_PER_KB) << "KB" <<
-                      (stableCount >= STABLE_SAMPLE_THRESHOLD ? " stable" :
-                          (stableCount == 1 ? " stabilizing" : " generating")) <<
-                      "\n" << std::flush;
-
+            PrintZipPollStatus(i, elapsedPoll, candidate, curSize / BYTES_PER_KB, stableCount);
             if (stableCount >= STABLE_SAMPLE_THRESHOLD) {
                 std::cout << "Detected new hiprofiler_data zip after " << i <<
                           " polls: " << candidate <<
@@ -1151,6 +1154,16 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
 // other pids, are both handled correctly because we only ever look at the exact
 // file this run produced. Returns the full device path, or empty string when
 // the file never appeared (or `pid` is empty).
+/// Print nativeleaks poll status line with stability indicator.
+static void PrintNativeleaksPollStatus(int pollIdx, long long elapsedPoll,
+    const std::string& filename, long long curSizeKb, int stableCount)
+{
+    const char* state = stableCount >= STABLE_SAMPLE_THRESHOLD ? " stable" :
+        (stableCount == 1 ? " stabilizing" : " generating");
+    std::cout << "[nativeleaks wait] #" << pollIdx << " (" << elapsedPoll << "s): " <<
+        filename << " size=" << curSizeKb << "KB" << state << "\n" << std::flush;
+}
+
 std::string WaitForNativeleaksFile(const std::string& pid, const std::string& dir, long long timeoutS)
 {
     if (pid.empty()) {
@@ -1173,8 +1186,6 @@ std::string WaitForNativeleaksFile(const std::string& pid, const std::string& di
             break;
         }
 
-        // Pass the full filename as the prefix so list_dir_fileSizes matches
-        // only that one file (rfind(prefix, 0) == 0), ignoring other pids'.
         const auto current = listDirFileSizes(dir, filename);
         long long curSize = 0;
         const auto it = current.find(filename);
@@ -1195,13 +1206,7 @@ std::string WaitForNativeleaksFile(const std::string& pid, const std::string& di
                 stableCount = 1;
             }
             prevSize = curSize;
-
-            std::cout << "[nativeleaks wait] #" << i << " (" << elapsedPoll << "s): " <<
-                      filename << " size=" << (curSize / BYTES_PER_KB) << "KB" <<
-                      (stableCount >= STABLE_SAMPLE_THRESHOLD ? " stable" :
-                          (stableCount == 1 ? " stabilizing" : " generating")) <<
-                      "\n" << std::flush;
-
+            PrintNativeleaksPollStatus(i, elapsedPoll, filename, curSize / BYTES_PER_KB, stableCount);
             if (stableCount >= STABLE_SAMPLE_THRESHOLD) {
                 std::cout << "Detected nativeleaks orphan-snapshot file after " << i <<
                           " polls: " << filename << "\n" << std::flush;
