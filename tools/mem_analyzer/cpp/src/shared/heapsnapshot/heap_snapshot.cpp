@@ -88,19 +88,27 @@ inline bool IsNumericString(const std::string& s)
     return true;
 }
 
-std::string FormatPropNamesSection(const std::vector<std::string>& propNames)
+std::string FormatJsObjectExtName(const std::string& ctorName,
+                                  uint32_t edgeCount,
+                                  const std::vector<std::string>& propNames)
 {
-    if (propNames.empty()) {
-        return {};
-    }
     std::ostringstream oss;
-    oss << ", prop=";
-    for (size_t i = 0; i < propNames.size(); ++i) {
-        if (i > 0) {
-            oss << ",";
-        }
-        oss << propNames[i];
+    if (!ctorName.empty()) {
+        oss << "JSObject(ctor=" << ctorName << ", ";
+    } else {
+        oss << "JSObject(";
     }
+    oss << "len=" << edgeCount;
+    if (!propNames.empty()) {
+        oss << ", prop=";
+        for (size_t i = 0; i < propNames.size(); ++i) {
+            if (i > 0) {
+                oss << ",";
+            }
+            oss << propNames[i];
+        }
+    }
+    oss << ")";
     return oss.str();
 }
 
@@ -160,17 +168,8 @@ std::string HeapSnapshot::GetJsObjectExtName(uint32_t nodeIndex) const
         added.insert(en);
     }
 
-    std::ostringstream oss;
-    if (!ctorName.empty()) {
-        oss << "JSObject(ctor=" << ctorName << ", ";
-    } else {
-        oss << "JSObject(";
-    }
     uint32_t edgeCount = GetNodeEdgeCount(nodeIndex);
-    oss << "len=" << edgeCount;
-    oss << FormatPropNamesSection(propNames);
-    oss << ")";
-    return oss.str();
+    return FormatJsObjectExtName(ctorName, edgeCount, propNames);
 }
 
 // 获取 String 扩展名
