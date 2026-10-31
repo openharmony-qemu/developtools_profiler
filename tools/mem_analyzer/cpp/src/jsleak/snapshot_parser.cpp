@@ -26,6 +26,26 @@
 
 namespace mem_analyzer {
 
+namespace {
+// Step 1: rawheap → heapsnapshot（输出到 convert 子目录，父目录由转换函数创建）
+std::string ConvertRawheap(const std::string& filePath, const std::string& tempBase)
+{
+    log::Logi("  Converting rawheap to heapsnapshot...");
+    std::string heapsnapshotFile = platform::JoinPath(
+        platform::JoinPath(tempBase, "convert"),
+        platform::Stem(filePath) + ".heapsnapshot");
+    std::string convertErr;
+    if (!RawheapToHeapsnapshot(filePath, heapsnapshotFile, &convertErr)) {
+        if (!convertErr.empty()) {
+            log::Loge("Error: ", convertErr);
+        }
+        throw std::runtime_error("Failed to convert the file " + filePath +
+                                 " to heapsnapshot format!");
+    }
+    return heapsnapshotFile;
+}
+} // namespace
+
 HeapSnapshot JsleakParse(const std::string& filePath, const RunContext& ctx)
 {
     std::string heapsnapshotFile = filePath;
@@ -46,20 +66,9 @@ HeapSnapshot JsleakParse(const std::string& filePath, const RunContext& ctx)
         const std::string& tempBase = tempDir.Valid() ? tempDir.Path() : ctx.output.outDir;
         std::string source = filePath;
 
-        // Step 1: rawheap → heapsnapshot（输出到 convert 子目录，父目录由转换函数创建）
+        // Step 1: rawheap → heapsnapshot
         if (fromRawheap) {
-            log::Logi("  Converting rawheap to heapsnapshot...");
-            heapsnapshotFile = platform::JoinPath(
-                platform::JoinPath(tempBase, "convert"),
-                platform::Stem(filePath) + ".heapsnapshot");
-            std::string convertErr;
-            if (!RawheapToHeapsnapshot(filePath, heapsnapshotFile, &convertErr)) {
-                if (!convertErr.empty()) {
-                    log::Loge("Error: ", convertErr);
-                }
-                throw std::runtime_error("Failed to convert the file " + filePath +
-                                         " to heapsnapshot format!");
-            }
+            heapsnapshotFile = ConvertRawheap(filePath, tempBase);
             source = heapsnapshotFile;
         }
 
