@@ -155,6 +155,7 @@ private:
     // ── Internal helpers ─────────────────────────────────────
     Option* FindOptionByName(const std::string& name);
     void ConsumeArgs(const std::vector<std::string>& args, size_t start);
+    void ConsumeOption(const std::vector<std::string>& args, size_t& i);
     void ApplyDefaults();
     /// Resolve alias → primary subcommand name, or return name unchanged
     std::string ResolveSubcommand(const std::string& name) const;
