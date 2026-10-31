@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cli/command.hpp"
+#include "cli/command.h"
 #include <algorithm>
 
 namespace mem_analyzer {

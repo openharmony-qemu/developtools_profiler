@@ -12,10 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "shared/heapsnapshot/source_map.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
-#include "utils/file_utils.hpp"  // path_from_utf8/path_to_utf8: Windows wide-path 安全
+#include "shared/heapsnapshot/source_map.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
+#include "utils/file_utils.h"  // path_from_utf8/path_to_utf8: Windows wide-path 安全
 #include "nlohmann/json.hpp"
 #include <algorithm>
 #include <cctype>

@@ -12,11 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "shared/heapsnapshot/rawheap_converter.hpp"
+#include "shared/heapsnapshot/rawheap_converter.h"
 
-#include "utils/file_utils.hpp"
-#include "utils/logger.hpp"
-#include "utils/platform.hpp"
+#include "utils/file_utils.h"
+#include "utils/logger.h"
+#include "utils/platform.h"
 
 #include <filesystem>
 #include <system_error>

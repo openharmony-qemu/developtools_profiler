@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "formatter/html/components/chart_module.hpp"
+#include "formatter/html/components/chart_module.h"
 
 namespace mem_analyzer {
 

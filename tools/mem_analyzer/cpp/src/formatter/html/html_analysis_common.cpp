@@ -12,9 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "formatter/html/html_analysis_common.hpp"
-#include "config_mgr/htrace_config_mgr.hpp"
-#include "htrace/htrace_analyzer.hpp"
+#include "formatter/html/html_analysis_common.h"
+#include "config_mgr/htrace_config_mgr.h"
+#include "htrace/htrace_analyzer.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>

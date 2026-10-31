@@ -12,11 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "htrace/leak_filter_analyzer.hpp"
-#include "shared/htrace_model/htrace_data.hpp"
-#include "htrace/htrace_analyzer.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
+#include "htrace/leak_filter_analyzer.h"
+#include "shared/htrace_model/htrace_data.h"
+#include "htrace/htrace_analyzer.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
 #include <cstdlib>
 #include <string>
 #include <vector>

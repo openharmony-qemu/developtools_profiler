@@ -12,16 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "htrace/htrace_parser.hpp"
-#include "htrace/htrace_processor.hpp"
-#include "utils/file_utils.hpp"
-#include "shared/htrace_model/htrace_reader.hpp"
-#include "shared/htrace_model/trace_streamer_runner.hpp"
-#include "utils/platform.hpp"
-#include "utils/temp_dir.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
-#include "utils/timer.hpp"
+#include "htrace/htrace_parser.h"
+#include "htrace/htrace_processor.h"
+#include "utils/file_utils.h"
+#include "shared/htrace_model/htrace_reader.h"
+#include "shared/htrace_model/trace_streamer_runner.h"
+#include "utils/platform.h"
+#include "utils/temp_dir.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
+#include "utils/timer.h"
 #include <chrono>
 #include <cstring>
 #include <ctime>

@@ -12,10 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "jsleak/snapshot_analyzer.hpp"
-#include "jsleak/property_tag_stage.hpp"
-#include "jsleak/ref_chain_stage.hpp"
-#include "config_mgr/preview_features_mgr.hpp"
+#include "jsleak/snapshot_analyzer.h"
+#include "jsleak/property_tag_stage.h"
+#include "jsleak/ref_chain_stage.h"
+#include "config_mgr/preview_features_mgr.h"
 #include <chrono>
 #include <memory>
 #include <unordered_set>

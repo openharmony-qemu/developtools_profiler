@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "utils/terminal_style.hpp"
+#include "utils/terminal_style.h"
 
 #include <cstdio>
 

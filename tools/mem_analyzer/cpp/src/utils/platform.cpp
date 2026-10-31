@@ -12,12 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "utils/platform.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/process_spinner.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
-#include "utils/temp_dir.hpp"
+#include "utils/platform.h"
+#include "utils/file_utils.h"
+#include "utils/process_spinner.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
+#include "utils/temp_dir.h"
 #include <cstdlib>
 #include <sstream>
 #include <filesystem>

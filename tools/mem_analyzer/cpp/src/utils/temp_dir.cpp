@@ -12,10 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "utils/temp_dir.hpp"
-#include "utils/file_utils.hpp"  // for path_from_utf8, path_to_utf8
-#include "utils/logger.hpp"
-#include "utils/platform.hpp"    // for create_directories, remove_all
+#include "utils/temp_dir.h"
+#include "utils/file_utils.h"  // for path_from_utf8, path_to_utf8
+#include "utils/logger.h"
+#include "utils/platform.h"    // for create_directories, remove_all
 #include <filesystem>
 #include <sstream>
 #include <iomanip>

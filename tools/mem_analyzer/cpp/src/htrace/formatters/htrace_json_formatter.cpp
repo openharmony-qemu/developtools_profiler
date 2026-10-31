@@ -12,10 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "htrace/formatters/htrace_json_formatter.hpp"
-#include "htrace/htrace_category.hpp"
-#include "formatter/json/json_writer.hpp"
-#include "formatter/json/output_meta.hpp"
+#include "htrace/formatters/htrace_json_formatter.h"
+#include "htrace/htrace_category.h"
+#include "formatter/json/json_writer.h"
+#include "formatter/json/output_meta.h"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>

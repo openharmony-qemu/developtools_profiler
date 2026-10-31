@@ -12,18 +12,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "htrace/htrace_module.hpp"
+#include "htrace/htrace_module.h"
 
-#include "core/format_resolver.hpp"
-#include "htrace/formatters/htrace_analysis_json_formatter.hpp"
-#include "htrace/formatters/htrace_html_formatter.hpp"
-#include "htrace/formatters/htrace_parse_json_formatter.hpp"
-#include "htrace/htrace_analyzer.hpp"
-#include "htrace/leak_filter_analyzer.hpp"
-#include "htrace/htrace_parser.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
-#include "utils/timer.hpp"
+#include "core/format_resolver.h"
+#include "htrace/formatters/htrace_analysis_json_formatter.h"
+#include "htrace/formatters/htrace_html_formatter.h"
+#include "htrace/formatters/htrace_parse_json_formatter.h"
+#include "htrace/htrace_analyzer.h"
+#include "htrace/leak_filter_analyzer.h"
+#include "htrace/htrace_parser.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
+#include "utils/timer.h"
 
 #include <iostream>
 

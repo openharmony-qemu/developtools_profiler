@@ -12,9 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "shared/htrace_model/htrace_reader.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/logger.hpp"
+#include "shared/htrace_model/htrace_reader.h"
+#include "utils/file_utils.h"
+#include "utils/logger.h"
 
 #include <algorithm>
 #include <cstdint>

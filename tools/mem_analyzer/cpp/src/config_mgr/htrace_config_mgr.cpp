@@ -12,9 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "config_mgr/htrace_config_mgr.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/platform.hpp"
+#include "config_mgr/htrace_config_mgr.h"
+#include "utils/file_utils.h"
+#include "utils/platform.h"
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <iostream>

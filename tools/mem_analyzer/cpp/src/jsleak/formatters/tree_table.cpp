@@ -12,9 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "jsleak/formatters/tree_table.hpp"
+#include "jsleak/formatters/tree_table.h"
 
-#include "formatter/html/html_analysis_common.hpp"
+#include "formatter/html/html_analysis_common.h"
 
 #include <algorithm>
 #include <cstdint>

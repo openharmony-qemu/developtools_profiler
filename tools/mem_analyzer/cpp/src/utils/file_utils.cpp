@@ -12,11 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "utils/file_utils.hpp"
+#include "utils/file_utils.h"
 #include <cerrno>
 #include <system_error>
 #include <iostream>
-#include "utils/platform.hpp"
+#include "utils/platform.h"
 
 namespace fs = std::filesystem;
 

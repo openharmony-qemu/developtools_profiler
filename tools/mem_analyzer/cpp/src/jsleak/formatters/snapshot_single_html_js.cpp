@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "jsleak/formatters/snapshot_single_html_js.hpp"
+#include "jsleak/formatters/snapshot_single_html_js.h"
 
 namespace mem_analyzer {
 

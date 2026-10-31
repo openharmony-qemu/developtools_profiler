@@ -12,14 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "jsleak/snapshot_parser.hpp"
-#include "shared/heapsnapshot/deobfuscator.hpp"
-#include "shared/heapsnapshot/rawheap_converter.hpp"
-#include "utils/platform.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/temp_dir.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
+#include "jsleak/snapshot_parser.h"
+#include "shared/heapsnapshot/deobfuscator.h"
+#include "shared/heapsnapshot/rawheap_converter.h"
+#include "utils/platform.h"
+#include "utils/file_utils.h"
+#include "utils/temp_dir.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
 
 #include <iostream>
 #include <stdexcept>

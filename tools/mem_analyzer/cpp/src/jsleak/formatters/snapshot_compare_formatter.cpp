@@ -12,14 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "jsleak/formatters/snapshot_compare_formatter.hpp"
-#include "formatter/html/report_skeleton.hpp"
-#include "formatter/html/components/chart_module.hpp"
-#include "jsleak/formatters/tree_table.hpp"
-#include "jsleak/formatters/report_common.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/logger.hpp"
-#include "utils/platform.hpp"
+#include "jsleak/formatters/snapshot_compare_formatter.h"
+#include "formatter/html/report_skeleton.h"
+#include "formatter/html/components/chart_module.h"
+#include "jsleak/formatters/tree_table.h"
+#include "jsleak/formatters/report_common.h"
+#include "utils/file_utils.h"
+#include "utils/logger.h"
+#include "utils/platform.h"
 
 #include <fstream>
 #include <sstream>

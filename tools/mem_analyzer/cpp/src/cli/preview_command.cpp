@@ -12,10 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cli/command.hpp"
-#include "config_mgr/preview_features_mgr.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
+#include "cli/command.h"
+#include "config_mgr/preview_features_mgr.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
 
 #include <iostream>
 

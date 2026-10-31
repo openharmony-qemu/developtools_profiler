@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tshandle/tshandle_retained_size.hpp"
+#include "tshandle/tshandle_retained_size.h"
 #include <cmath>
 
 namespace mem_analyzer {

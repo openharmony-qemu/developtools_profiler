@@ -12,18 +12,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "jsleak/snapshot_compare.hpp"
-#include "jsleak/property_tag_stage.hpp"
-#include "jsleak/snapshot_parser.hpp"
+#include "jsleak/snapshot_compare.h"
+#include "jsleak/property_tag_stage.h"
+#include "jsleak/snapshot_parser.h"
 
-#include "config.hpp"
-#include "formatter/json/json_writer.hpp"
-#include "shared/heapsnapshot/heap_snapshot.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/platform.hpp"
+#include "config.h"
+#include "formatter/json/json_writer.h"
+#include "shared/heapsnapshot/heap_snapshot.h"
+#include "utils/file_utils.h"
+#include "utils/platform.h"
 
-#include "jsleak/formatters/icicle_tree.hpp"
-#include "jsleak/formatters/tree_table.hpp"
+#include "jsleak/formatters/icicle_tree.h"
+#include "jsleak/formatters/tree_table.h"
 
 #include "nlohmann/json.hpp"
 

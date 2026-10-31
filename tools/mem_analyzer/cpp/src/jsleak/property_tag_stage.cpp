@@ -12,11 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "jsleak/property_tag_stage.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/platform.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
+#include "jsleak/property_tag_stage.h"
+#include "utils/file_utils.h"
+#include "utils/platform.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>

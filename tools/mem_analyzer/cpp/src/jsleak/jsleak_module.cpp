@@ -12,18 +12,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "jsleak/jsleak_module.hpp"
+#include "jsleak/jsleak_module.h"
 
-#include "core/format_resolver.hpp"
-#include "jsleak/formatters/snapshot_compare_formatter.hpp"
-#include "jsleak/formatters/snapshot_single_html_formatter.hpp"
-#include "jsleak/formatters/snapshot_single_json_formatter.hpp"
-#include "jsleak/snapshot_analyzer.hpp"
-#include "jsleak/snapshot_compare.hpp"
-#include "jsleak/snapshot_parser.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
-#include "utils/timer.hpp"
+#include "core/format_resolver.h"
+#include "jsleak/formatters/snapshot_compare_formatter.h"
+#include "jsleak/formatters/snapshot_single_html_formatter.h"
+#include "jsleak/formatters/snapshot_single_json_formatter.h"
+#include "jsleak/snapshot_analyzer.h"
+#include "jsleak/snapshot_compare.h"
+#include "jsleak/snapshot_parser.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
+#include "utils/timer.h"
 
 #include <iostream>
 

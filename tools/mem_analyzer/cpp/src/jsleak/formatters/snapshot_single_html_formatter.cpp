@@ -12,21 +12,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "jsleak/formatters/snapshot_single_html_formatter.hpp"
-#include "jsleak/formatters/snapshot_single_html_body.hpp"
-#include "jsleak/formatters/snapshot_single_html_js.hpp"
-#include "jsleak/formatters/icicle_tree.hpp"
-#include "formatter/html/html_analysis_common.hpp"
-#include "formatter/html/components/chart_module.hpp"
-#include "formatter/html/components/help_tooltip.hpp"
-#include "formatter/html/components/navigation_bar.hpp"
-#include "jsleak/formatters/report_common.hpp"
-#include "jsleak/formatters/tree_table.hpp"
-#include "formatter/html/report_skeleton.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/logger.hpp"
-#include "utils/platform.hpp"
-#include "utils/timer.hpp"
+#include "jsleak/formatters/snapshot_single_html_formatter.h"
+#include "jsleak/formatters/snapshot_single_html_body.h"
+#include "jsleak/formatters/snapshot_single_html_js.h"
+#include "jsleak/formatters/icicle_tree.h"
+#include "formatter/html/html_analysis_common.h"
+#include "formatter/html/components/chart_module.h"
+#include "formatter/html/components/help_tooltip.h"
+#include "formatter/html/components/navigation_bar.h"
+#include "jsleak/formatters/report_common.h"
+#include "jsleak/formatters/tree_table.h"
+#include "formatter/html/report_skeleton.h"
+#include "utils/file_utils.h"
+#include "utils/logger.h"
+#include "utils/platform.h"
+#include "utils/timer.h"
 
 #include <algorithm>
 #include <cmath>

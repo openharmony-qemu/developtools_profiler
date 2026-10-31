@@ -12,12 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cli/command.hpp"
-#include "cli/pipeline_runner.hpp"
-#include "config.hpp"
-#include "core/module_registry.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
+#include "cli/command.h"
+#include "cli/pipeline_runner.h"
+#include "config.h"
+#include "core/module_registry.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
 
 namespace mem_analyzer {
 namespace {

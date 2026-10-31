@@ -12,10 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "shared/htrace_model/trace_streamer_runner.hpp"
+#include "shared/htrace_model/trace_streamer_runner.h"
 
-#include "utils/logger.hpp"
-#include "utils/platform.hpp"
+#include "utils/logger.h"
+#include "utils/platform.h"
 
 #include <string>
 #include <vector>

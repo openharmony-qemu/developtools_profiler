@@ -12,17 +12,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "htrace/formatters/htrace_html_formatter.hpp"
-#include "htrace/htrace_category.hpp"
-#include "htrace/formatters/htrace_flame_json.hpp"
-#include "formatter/html/analysis_html_formatter_base.hpp"
-#include "formatter/html/html_analysis_common.hpp"
-#include "formatter/html/components/help_tooltip.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/platform.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
-#include "utils/timer.hpp"
+#include "htrace/formatters/htrace_html_formatter.h"
+#include "htrace/htrace_category.h"
+#include "htrace/formatters/htrace_flame_json.h"
+#include "formatter/html/analysis_html_formatter_base.h"
+#include "formatter/html/html_analysis_common.h"
+#include "formatter/html/components/help_tooltip.h"
+#include "utils/file_utils.h"
+#include "utils/platform.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
+#include "utils/timer.h"
 #include <cmath>
 #include <ctime>
 #include <iomanip>

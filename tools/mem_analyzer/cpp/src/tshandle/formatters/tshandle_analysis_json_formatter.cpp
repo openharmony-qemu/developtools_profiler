@@ -12,15 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tshandle/formatters/tshandle_analysis_json_formatter.hpp"
-#include "formatter/json/json_stream_writer.hpp"
-#include "formatter/json/json_writer.hpp"
-#include "formatter/json/output_meta.hpp"
-#include "tshandle/formatters/tshandle_call_graph.hpp"
-#include "tshandle/tshandle_analyzer.hpp"
-#include "utils/platform.hpp"
-#include "utils/logger.hpp"
-#include "utils/timer.hpp"
+#include "tshandle/formatters/tshandle_analysis_json_formatter.h"
+#include "formatter/json/json_stream_writer.h"
+#include "formatter/json/json_writer.h"
+#include "formatter/json/output_meta.h"
+#include "tshandle/formatters/tshandle_call_graph.h"
+#include "tshandle/tshandle_analyzer.h"
+#include "utils/platform.h"
+#include "utils/logger.h"
+#include "utils/timer.h"
 #include <cmath>
 #include <iomanip>
 #include <sstream>

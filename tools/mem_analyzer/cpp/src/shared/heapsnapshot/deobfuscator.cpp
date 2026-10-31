@@ -12,12 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "shared/heapsnapshot/deobfuscator.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/string_utils.hpp"
-#include "utils/platform.hpp"
+#include "shared/heapsnapshot/deobfuscator.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
+#include "utils/file_utils.h"
+#include "utils/string_utils.h"
+#include "utils/platform.h"
 #include "nlohmann/json.hpp"
 #include <filesystem>
 #include <fstream>

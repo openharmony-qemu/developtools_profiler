@@ -16,15 +16,15 @@
 #include <string>
 #include <vector>
 
-#include "cli/cli_parser.hpp"
-#include "cli/command.hpp"
-#include "cli/pipeline_runner.hpp"
-#include "config_mgr/preview_features_mgr.hpp"
-#include "core/module_registry.hpp"
-#include "utils/logger.hpp"
-#include "utils/temp_dir.hpp"
-#include "utils/terminal_style.hpp"
-#include "utils/version.hpp"
+#include "cli/cli_parser.h"
+#include "cli/command.h"
+#include "cli/pipeline_runner.h"
+#include "config_mgr/preview_features_mgr.h"
+#include "core/module_registry.h"
+#include "utils/logger.h"
+#include "utils/temp_dir.h"
+#include "utils/terminal_style.h"
+#include "utils/version.h"
 
 #if defined(_WIN32)
 #include <windows.h>

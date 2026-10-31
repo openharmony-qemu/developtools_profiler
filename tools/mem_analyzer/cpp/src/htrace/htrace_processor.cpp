@@ -12,13 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "htrace/htrace_processor.hpp"
-#include "htrace/htrace_category.hpp"
-#include "utils/platform.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/logger.hpp"
-#include "utils/timer.hpp"
-#include "shared/htrace_model/htrace_db_helper.hpp"
+#include "htrace/htrace_processor.h"
+#include "htrace/htrace_category.h"
+#include "utils/platform.h"
+#include "utils/file_utils.h"
+#include "utils/logger.h"
+#include "utils/timer.h"
+#include "shared/htrace_model/htrace_db_helper.h"
 #include <sqlite3.h>
 #include <stdexcept>
 #include <iostream>

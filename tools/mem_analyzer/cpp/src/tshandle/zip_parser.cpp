@@ -12,20 +12,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tshandle/zip_parser.hpp"
-#include "tshandle/arkts_analyzer.hpp"
-#include "utils/platform.hpp"
-#include "utils/zip_utils.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/timer.hpp"
-#include "utils/temp_dir.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
-#include "shared/htrace_model/htrace_reader.hpp"
-#include "shared/htrace_model/trace_streamer_runner.hpp"
-#include "shared/heapsnapshot/deobfuscator.hpp"
-#include "shared/heapsnapshot/rawheap_converter.hpp"
-#include "formatter/json/json_writer.hpp"
+#include "tshandle/zip_parser.h"
+#include "tshandle/arkts_analyzer.h"
+#include "utils/platform.h"
+#include "utils/zip_utils.h"
+#include "utils/file_utils.h"
+#include "utils/timer.h"
+#include "utils/temp_dir.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
+#include "shared/htrace_model/htrace_reader.h"
+#include "shared/htrace_model/trace_streamer_runner.h"
+#include "shared/heapsnapshot/deobfuscator.h"
+#include "shared/heapsnapshot/rawheap_converter.h"
+#include "formatter/json/json_writer.h"
 #include <iostream>
 #include <chrono>
 #include <cstring>

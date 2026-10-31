@@ -12,9 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "utils/zip_utils.hpp"
+#include "utils/zip_utils.h"
 
-#include "utils/file_utils.hpp"
+#include "utils/file_utils.h"
 
 #include <cstdint>
 #include <filesystem>

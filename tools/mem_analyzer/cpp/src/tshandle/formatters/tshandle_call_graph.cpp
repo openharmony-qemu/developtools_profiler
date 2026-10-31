@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tshandle/formatters/tshandle_call_graph.hpp"
-#include "config_mgr/htrace_config_mgr.hpp"
+#include "tshandle/formatters/tshandle_call_graph.h"
+#include "config_mgr/htrace_config_mgr.h"
 #include <algorithm>
 #include <charconv>
 #include <cmath>

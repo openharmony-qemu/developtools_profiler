@@ -12,18 +12,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tshandle/formatters/tshandle_html_formatter.hpp"
-#include "config_mgr/htrace_config_mgr.hpp"
-#include "formatter/html/analysis_html_formatter_base.hpp"
-#include "formatter/html/html_analysis_common.hpp"
-#include "tshandle/formatters/tshandle_call_graph.hpp"
-#include "tshandle/tshandle_processor.hpp"
-#include "tshandle/tshandle_analyzer.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/platform.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
-#include "utils/timer.hpp"
+#include "tshandle/formatters/tshandle_html_formatter.h"
+#include "config_mgr/htrace_config_mgr.h"
+#include "formatter/html/analysis_html_formatter_base.h"
+#include "formatter/html/html_analysis_common.h"
+#include "tshandle/formatters/tshandle_call_graph.h"
+#include "tshandle/tshandle_processor.h"
+#include "tshandle/tshandle_analyzer.h"
+#include "utils/file_utils.h"
+#include "utils/platform.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
+#include "utils/timer.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>

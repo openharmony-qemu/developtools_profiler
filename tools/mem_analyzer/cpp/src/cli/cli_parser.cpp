@@ -12,9 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cli/cli_parser.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
+#include "cli/cli_parser.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
 #include <cerrno>
 #include <climits>
 #include <cstdlib>

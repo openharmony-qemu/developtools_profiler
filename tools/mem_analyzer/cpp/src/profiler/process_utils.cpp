@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "profiler/process_utils.hpp"
+#include "profiler/process_utils.h"
 
 #include <cstdlib>
 #include <algorithm>
@@ -21,8 +21,8 @@
 #include <cstring>
 #include <filesystem>
 
-#include "utils/file_utils.hpp"
-#include "utils/platform.hpp"
+#include "utils/file_utils.h"
+#include "utils/platform.h"
 
 #if defined(_WIN32)
 #include <windows.h>

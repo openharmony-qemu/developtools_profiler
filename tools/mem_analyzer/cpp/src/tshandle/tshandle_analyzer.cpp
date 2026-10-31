@@ -12,10 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tshandle/tshandle_analyzer.hpp"
-#include "config_mgr/htrace_config_mgr.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
+#include "tshandle/tshandle_analyzer.h"
+#include "config_mgr/htrace_config_mgr.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>

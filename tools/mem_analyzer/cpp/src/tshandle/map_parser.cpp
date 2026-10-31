@@ -12,9 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tshandle/map_parser.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/logger.hpp"
+#include "tshandle/map_parser.h"
+#include "utils/file_utils.h"
+#include "utils/logger.h"
 #include <cstring>
 #include <cstdlib>
 #include <fstream>

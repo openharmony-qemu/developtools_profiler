@@ -39,12 +39,12 @@
 
 #include "profiler/hdc_runner.h"
 #include "profiler/hdc_target.h"
-#include "profiler/process_utils.hpp"
-#include "profiler/string_utils.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/logger.hpp"
-#include "utils/platform.hpp"
-#include "utils/terminal_style.hpp"
+#include "profiler/process_utils.h"
+#include "profiler/string_utils.h"
+#include "utils/file_utils.h"
+#include "utils/logger.h"
+#include "utils/platform.h"
+#include "utils/terminal_style.h"
 
 namespace mem_analyzer {
 

@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "utils/process_spinner.hpp"
-#include "utils/terminal_style.hpp"
+#include "utils/process_spinner.h"
+#include "utils/terminal_style.h"
 #include <iostream>
 #include <iomanip>
 #include <sstream>

@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "jsleak/formatters/report_common.hpp"
+#include "jsleak/formatters/report_common.h"
 
 namespace mem_analyzer {
 

@@ -12,9 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "formatter/html/components/version.hpp"
+#include "formatter/html/components/version.h"
 
-#include "utils/version.hpp"
+#include "utils/version.h"
 
 namespace mem_analyzer {
 

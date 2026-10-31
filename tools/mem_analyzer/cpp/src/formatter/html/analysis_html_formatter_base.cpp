@@ -12,10 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "formatter/html/analysis_html_formatter_base.hpp"
-#include "formatter/html/components/navigation_bar.hpp"
-#include "formatter/html/components/chart_module.hpp"
-#include "formatter/html/components/version.hpp"
+#include "formatter/html/analysis_html_formatter_base.h"
+#include "formatter/html/components/navigation_bar.h"
+#include "formatter/html/components/chart_module.h"
+#include "formatter/html/components/version.h"
 
 using namespace mem_analyzer::htmlAnalysis;
 

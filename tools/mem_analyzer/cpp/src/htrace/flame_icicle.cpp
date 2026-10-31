@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "htrace/flame_icicle.hpp"
-#include "utils/timer.hpp"
+#include "htrace/flame_icicle.h"
+#include "utils/timer.h"
 #include <algorithm>
 #include <cstdio>
 

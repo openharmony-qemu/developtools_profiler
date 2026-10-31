@@ -18,9 +18,9 @@
 #include <cctype>
 #include <sstream>
 
-#include "profiler/process_utils.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
+#include "profiler/process_utils.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
 
 namespace mem_analyzer {
 namespace {

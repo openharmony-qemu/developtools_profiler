@@ -12,10 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "formatter/json/output_meta.hpp"
+#include "formatter/json/output_meta.h"
 
-#include "formatter/json/json_writer.hpp"
-#include "utils/version.hpp"
+#include "formatter/json/json_writer.h"
+#include "utils/version.h"
 
 #include <chrono>
 

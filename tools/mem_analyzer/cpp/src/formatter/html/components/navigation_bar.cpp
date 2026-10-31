@@ -12,9 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "formatter/html/components/navigation_bar.hpp"
+#include "formatter/html/components/navigation_bar.h"
 #include <vector>
-#include "formatter/html/html_analysis_common.hpp"
+#include "formatter/html/html_analysis_common.h"
 
 using namespace mem_analyzer::htmlAnalysis;
 

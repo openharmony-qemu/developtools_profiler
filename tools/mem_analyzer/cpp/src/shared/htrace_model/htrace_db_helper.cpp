@@ -12,9 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "shared/htrace_model/htrace_db_helper.hpp"
-#include "utils/logger.hpp"
-#include "utils/platform.hpp"
+#include "shared/htrace_model/htrace_db_helper.h"
+#include "utils/logger.h"
+#include "utils/platform.h"
 #include <cstdlib>
 #include <iostream>
 #include <string>

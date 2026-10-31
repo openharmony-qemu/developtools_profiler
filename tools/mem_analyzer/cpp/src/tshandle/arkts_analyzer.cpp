@@ -12,13 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tshandle/arkts_analyzer.hpp"
-#include "tshandle/tshandle_retained_size.hpp"
-#include "config.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
-#include "utils/timer.hpp"
+#include "tshandle/arkts_analyzer.h"
+#include "tshandle/tshandle_retained_size.h"
+#include "config.h"
+#include "utils/file_utils.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
+#include "utils/timer.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -77,7 +77,7 @@ static std::string NormalizeAddr(const std::string& raw)
 }
 
 // ---------------------------------------------------------------------------
-//  BuildNativeRefResult — local struct (avoids conflict with heap_snapshot.hpp)
+//  BuildNativeRefResult — local struct (avoids conflict with heap_snapshot.h)
 // ---------------------------------------------------------------------------
 
 struct BuildNativeRefResult {

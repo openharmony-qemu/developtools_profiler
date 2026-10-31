@@ -12,15 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "htrace/formatters/htrace_analysis_json_formatter.hpp"
-#include "formatter/json/json_stream_writer.hpp"
-#include "formatter/json/json_writer.hpp"
-#include "htrace/formatters/htrace_json_formatter.hpp"
-#include "htrace/htrace_category.hpp"
-#include "utils/platform.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
-#include "utils/timer.hpp"
+#include "htrace/formatters/htrace_analysis_json_formatter.h"
+#include "formatter/json/json_stream_writer.h"
+#include "formatter/json/json_writer.h"
+#include "htrace/formatters/htrace_json_formatter.h"
+#include "htrace/htrace_category.h"
+#include "utils/platform.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
+#include "utils/timer.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>

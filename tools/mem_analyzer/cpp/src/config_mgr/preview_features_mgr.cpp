@@ -12,9 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "config_mgr/preview_features_mgr.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/platform.hpp"
+#include "config_mgr/preview_features_mgr.h"
+#include "utils/file_utils.h"
+#include "utils/platform.h"
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <vector>

@@ -12,11 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "shared/heapsnapshot/heap_snapshot.hpp"
-#include "shared/heapsnapshot/node_size_calculator.hpp"
-#include "utils/timer.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
+#include "shared/heapsnapshot/heap_snapshot.h"
+#include "shared/heapsnapshot/node_size_calculator.h"
+#include "utils/timer.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
 #include "nlohmann/json.hpp"
 #include <algorithm>
 #include <cctype>
@@ -30,7 +30,7 @@
 #include <thread>
 #include <regex>
 #include <unordered_set>
-#include "utils/file_utils.hpp"
+#include "utils/file_utils.h"
 
 using json = nlohmann::ordered_json;
 

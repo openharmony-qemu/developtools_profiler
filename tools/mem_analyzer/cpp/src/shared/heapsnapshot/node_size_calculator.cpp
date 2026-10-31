@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 #define CRT_SECURE_NO_WARNINGS
-#include "shared/heapsnapshot/node_size_calculator.hpp"
-#include "utils/timer.hpp"
+#include "shared/heapsnapshot/node_size_calculator.h"
+#include "utils/timer.h"
 #include <algorithm>
 #include <iostream>
 #include <cstring>

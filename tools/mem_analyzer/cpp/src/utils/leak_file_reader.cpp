@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "utils/leak_file_reader.hpp"
-#include "utils/file_utils.hpp"  // open_ifstream: Windows wide-path 安全
+#include "utils/leak_file_reader.h"
+#include "utils/file_utils.h"  // open_ifstream: Windows wide-path 安全
 #include <fstream>
 #include <stdexcept>
 #include <cstring>

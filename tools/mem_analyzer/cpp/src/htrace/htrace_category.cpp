@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "htrace/htrace_category.hpp"
+#include "htrace/htrace_category.h"
 
 #include <stdexcept>
 

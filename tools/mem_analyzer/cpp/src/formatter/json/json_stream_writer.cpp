@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "formatter/json/json_stream_writer.hpp"
-#include "utils/file_utils.hpp"
+#include "formatter/json/json_stream_writer.h"
+#include "utils/file_utils.h"
 #include <iomanip>
 #include <sstream>
 

@@ -12,11 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cli/pipeline_runner.hpp"
+#include "cli/pipeline_runner.h"
 
-#include "utils/platform.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
+#include "utils/platform.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
 
 #include <iostream>
 

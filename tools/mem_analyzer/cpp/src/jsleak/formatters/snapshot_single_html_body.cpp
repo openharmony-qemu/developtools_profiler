@@ -12,11 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "jsleak/formatters/snapshot_single_html_body.hpp"
-#include "jsleak/formatters/icicle_tree.hpp"
-#include "jsleak/formatters/tree_table.hpp"
-#include "formatter/html/html_analysis_common.hpp"
-#include "utils/file_utils.hpp"
+#include "jsleak/formatters/snapshot_single_html_body.h"
+#include "jsleak/formatters/icicle_tree.h"
+#include "jsleak/formatters/tree_table.h"
+#include "formatter/html/html_analysis_common.h"
+#include "utils/file_utils.h"
 
 #include <algorithm>
 #include <cmath>

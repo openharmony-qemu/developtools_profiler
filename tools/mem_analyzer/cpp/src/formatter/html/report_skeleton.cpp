@@ -12,11 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "formatter/html/report_skeleton.hpp"
+#include "formatter/html/report_skeleton.h"
 
-#include "formatter/html/components/help_tooltip.hpp"
-#include "formatter/html/components/navigation_bar.hpp"
-#include "formatter/html/components/version.hpp"
+#include "formatter/html/components/help_tooltip.h"
+#include "formatter/html/components/navigation_bar.h"
+#include "formatter/html/components/version.h"
 
 #include <ostream>
 

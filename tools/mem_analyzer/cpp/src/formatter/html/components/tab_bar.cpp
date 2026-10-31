@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "formatter/html/components/tab_bar.hpp"
+#include "formatter/html/components/tab_bar.h"
 
 namespace mem_analyzer {
 

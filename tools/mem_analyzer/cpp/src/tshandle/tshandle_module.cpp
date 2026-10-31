@@ -12,17 +12,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tshandle/tshandle_module.hpp"
+#include "tshandle/tshandle_module.h"
 
-#include "core/format_resolver.hpp"
-#include "tshandle/formatters/tshandle_analysis_json_formatter.hpp"
-#include "tshandle/formatters/tshandle_formatter.hpp"
-#include "tshandle/formatters/tshandle_html_formatter.hpp"
-#include "tshandle/tshandle_analyzer.hpp"
-#include "tshandle/zip_parser.hpp"
-#include "utils/logger.hpp"
-#include "utils/terminal_style.hpp"
-#include "utils/timer.hpp"
+#include "core/format_resolver.h"
+#include "tshandle/formatters/tshandle_analysis_json_formatter.h"
+#include "tshandle/formatters/tshandle_formatter.h"
+#include "tshandle/formatters/tshandle_html_formatter.h"
+#include "tshandle/tshandle_analyzer.h"
+#include "tshandle/zip_parser.h"
+#include "utils/logger.h"
+#include "utils/terminal_style.h"
+#include "utils/timer.h"
 
 #include <iostream>
 

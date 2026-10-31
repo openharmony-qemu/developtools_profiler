@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 #include "profiler/config_loader.h"
-#include "profiler/process_utils.hpp"
+#include "profiler/process_utils.h"
 
 #include <cstdlib>
 #include <filesystem>
@@ -22,8 +22,8 @@
 #include <system_error>
 #include <vector>
 
-#include "utils/platform.hpp"
-#include "utils/file_utils.hpp"
+#include "utils/platform.h"
+#include "utils/file_utils.h"
 
 namespace mem_analyzer {
 

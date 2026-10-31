@@ -12,15 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "core/module_registry.hpp"
+#include "core/module_registry.h"
 
 #include <algorithm>
 #include <cctype>
 #include <memory>
 
-#include "htrace/htrace_module.hpp"
-#include "jsleak/jsleak_module.hpp"
-#include "tshandle/tshandle_module.hpp"
+#include "htrace/htrace_module.h"
+#include "jsleak/jsleak_module.h"
+#include "tshandle/tshandle_module.h"
 
 namespace mem_analyzer {
 namespace {
