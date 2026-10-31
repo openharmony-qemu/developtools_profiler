@@ -88,6 +88,30 @@ inline bool IsNumericString(const std::string& s)
     return true;
 }
 
+std::string FormatPropNamesSection(const std::vector<std::string>& propNames)
+{
+    if (propNames.empty()) {
+        return {};
+    }
+    std::ostringstream oss;
+    oss << ", prop=";
+    for (size_t i = 0; i < propNames.size(); ++i) {
+        if (i > 0) {
+            oss << ",";
+        }
+        oss << propNames[i];
+    }
+    return oss.str();
+}
+
+void AppendCtrlCharEscape(std::string& out, unsigned char uc)
+{
+    const char* hex = "0123456789abcdef";
+    out += "\\u00";
+    out += hex[(uc >> HEX_UPPER_NIBBLE_SHIFT) & 0xF];
+    out += hex[uc & 0xF];
+}
+
 } // anonymous namespace
 
 // 获取 JSObject 扩展名
@@ -144,15 +168,7 @@ std::string HeapSnapshot::GetJsObjectExtName(uint32_t nodeIndex) const
     }
     uint32_t edgeCount = GetNodeEdgeCount(nodeIndex);
     oss << "len=" << edgeCount;
-    if (!propNames.empty()) {
-        oss << ", prop=";
-        for (size_t i = 0; i < propNames.size(); ++i) {
-            if (i > 0) {
-                oss << ",";
-            }
-            oss << propNames[i];
-        }
-    }
+    oss << FormatPropNamesSection(propNames);
     oss << ")";
     return oss.str();
 }
@@ -810,10 +826,7 @@ static std::string SanitizeJsonStringArray(const std::string& strBuf)
                 // Escape control characters (except \t, \n, \r)
                 unsigned char uc = static_cast<unsigned char>(sc);
                 if (uc < 0x20 && uc != '\t' && uc != '\n' && uc != '\r') {
-                    const char* hex = "0123456789abcdef";
-                    sanitized += "\\u00";
-                    sanitized += hex[(uc >> HEX_UPPER_NIBBLE_SHIFT) & 0xF];
-                    sanitized += hex[uc & 0xF];
+                    AppendCtrlCharEscape(sanitized, uc);
                     i++;
                 } else {
                     sanitized += sc;
@@ -1526,6 +1539,22 @@ RefChainKey FnvContinue(const RefChainKey& prev, const std::string& name)
     }
     return RefChainKey{h1, h2};
 }
+
+void ResolveChainHashForNode(uint32_t u, uint32_t p, int N,
+    std::vector<RefChainKey>& chainHash,
+    const std::vector<std::string>& extNames,
+    const std::vector<uint8_t>& chainHashComputed)
+{
+    if (p == INVALID_NODE || p >= static_cast<uint32_t>(N)) {
+        chainHash[u] = RefChainKey{};  // 不可达 => {0,0}
+    } else if (p == u) {
+        chainHash[u] = FnvSeed(extNames[u]);  // root：种子
+    } else if (chainHashComputed[p]) {
+        chainHash[u] = FnvContinue(chainHash[p], extNames[u]);
+    } else {
+        chainHash[u] = RefChainKey{};  // p 未算（环/异常）兜底
+    }
+}
 } // anonymous namespace
 
 RefChainKey HeapSnapshot::RefChainHash(uint32_t nodeIndex) const
@@ -1576,15 +1605,7 @@ RefChainKey HeapSnapshot::RefChainHash(uint32_t nodeIndex) const
             for (auto it = path.rbegin(); it != path.rend(); ++it) {
                 const uint32_t u = *it;
                 const uint32_t p = pathParentIndex[u];
-                if (p == invalid || p >= static_cast<uint32_t>(N)) {
-                    chainHash_[u] = RefChainKey{};  // 不可达 => {0,0}
-                } else if (p == u) {
-                    chainHash_[u] = FnvSeed(extNames_[u]);  // root：种子
-                } else if (chainHashComputed_[p]) {
-                    chainHash_[u] = FnvContinue(chainHash_[p], extNames_[u]);
-                } else {
-                    chainHash_[u] = RefChainKey{};  // p 未算（环/异常）兜底
-                }
+                ResolveChainHashForNode(u, p, N, chainHash_, extNames_, chainHashComputed_);
                 chainHashComputed_[u] = 1;
             }
         }
