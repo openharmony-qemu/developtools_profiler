@@ -171,6 +171,7 @@ package_platform() {
         info "  + mem-analyzer.exe"
     elif [ -f "${build_dir}/mem-analyzer" ]; then
         cp "${build_dir}/mem-analyzer" "${release_dir}/mem-analyzer"
+        chmod +x "${release_dir}/mem-analyzer"
         info "  + mem-analyzer"
     else
         error "mem-analyzer binary not found in ${build_dir}"
@@ -227,6 +228,9 @@ package_platform() {
     local ts_src="${PROJECT_ROOT}/third_party/bin/trace_streamer_binary/${ts_name}"
     if [ -f "${ts_src}" ]; then
         cp "${ts_src}" "${release_dir}/third_party/bin/trace_streamer_binary/"
+        if [ "${plat}" != "win64" ]; then
+            chmod +x "${release_dir}/third_party/bin/trace_streamer_binary/${ts_name}"
+        fi
         info "  + third_party/bin/trace_streamer_binary/${ts_name}"
     else
         warn "  trace_streamer_binary/${ts_name} not found, skipping"
@@ -254,6 +258,9 @@ package_platform() {
     fi
     if [ -f "${rh_src}" ]; then
         cp "${rh_src}" "${release_dir}/third_party/bin/rawheaptranslator/${rh_dir}/"
+        if [ "${plat}" != "win64" ]; then
+            chmod +x "${release_dir}/third_party/bin/rawheaptranslator/${rh_dir}/rawheap_translator"
+        fi
         info "  + third_party/bin/rawheaptranslator/${rh_dir}/$(basename ${rh_src})"
     else
         warn "  rawheaptranslator/${rh_dir}/rawheap_translator not found, skipping"
