@@ -310,6 +310,7 @@ static std::unordered_map<std::string, std::vector<BaseClassInfo>>
 
 void PropertyTagStage::LoadPropertyTagConfig()
 {
+    // 内置默认：配置文件缺失或解析失败时兜底
     static const std::unordered_map<std::string, std::vector<BaseClassInfo>> DEFAULTS = {
         {"isDeleting_", {{"ViewBuildNodeBase", "Component"}}},
         {"_isDisposed", {{"BuilderNode", "BuilderNode"}, {"RenderNode", "RenderNode"}, {"FrameNode", "FrameNode"}}},
@@ -319,6 +320,7 @@ void PropertyTagStage::LoadPropertyTagConfig()
 
     const std::string rel = "config/jsleak/jsleak_config.json";
 
+    // 固定目录：可执行文件同级的 config/jsleak/jsleak_config.json
     std::string configPath;
     const std::string exeDir = platform::GetExecutableDir();
     if (!exeDir.empty()) {
@@ -338,6 +340,7 @@ void PropertyTagStage::LoadPropertyTagConfig()
             ifs >> j;
         }
 
+        // 外层域 propertyTag：表明以下均为属性标签阶段参数
         const json* root = nullptr;
         if (j.contains("propertyTag") && j["propertyTag"].is_object()) {
             root = &j["propertyTag"];
@@ -350,6 +353,7 @@ void PropertyTagStage::LoadPropertyTagConfig()
             propertyTagBaseClasses = DEFAULTS;
         }
 
+        // 默认展示类型（可缺省）
         if (root && root->contains("defaultDisplayType") && (*root)["defaultDisplayType"].is_string()) {
             defaultDisplayType = (*root)["defaultDisplayType"].get<std::string>();
         } else {

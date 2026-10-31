@@ -119,6 +119,9 @@ CaptureCommand ProcessTemplate(const std::string& configFilePath, const Profiler
 {
     CaptureCommand result;
 
+    // 1. Read the entire file at config_file_path into a std::string content.
+    //    Use binary mode to preserve newlines exactly (the file has `\`
+    //    line continuations and a heredoc).
     std::ifstream ifs(PathFromUtf8(configFilePath), std::ios::binary);
     if (!ifs.is_open()) {
         result.ok = false;
@@ -128,17 +131,45 @@ CaptureCommand ProcessTemplate(const std::string& configFilePath, const Profiler
     std::stringstream ss;
     ss << ifs.rdbuf();
     std::string content = ss.str();
+
+    // Normalize CRLF → LF before splitting. These config templates are plain
+    // text that git may check out with CRLF on Windows. Without this, the first
+    // line (`hiprofiler_cmd ...`) keeps a trailing \r, which rides into the
+    // device command via `hdc shell` and is interpreted by the device shell as
+    // an empty argument → hiprofiler_cmd reports "unknown param '\n'" and the
+    // capture never starts. (This was masked before the P0 hardening by
+    // `_popen`→`cmd.exe`, whose parser dropped the stray CR; `CreateProcessW`
+    // passes it through verbatim, so we now normalize at the source.)
     content.erase(std::remove(content.begin(), content.end(), '\r'), content.end());
 
+    // 2. Determine the countdown duration BEFORE replacement, from the ORIGINAL content.
     result.duration = ExtractTemplateDuration(content, opts);
 
+    // 3. Replace placeholders using std::regex.
+    //    Pattern matches `$(X:default)` where X is p, t or ts and default is any
+    //    chars except `)`. `ts` expands to the local time stamp in
+    //    YYYYMMDD_HHMMSS format (e.g. 20260809_232156) — this feeds the
+    //    device-side output file name
+    //    (mem_analyzer_hiprofiler_data_20260809_232156.htrace). (Note: `-o`
+    //    is NOT a placeholder source — the CLI `-o` is the local receive dir,
+    //    while the config's literal `-o` is the device-side result path
+    //    extracted separately below.)
     std::string out = ReplaceTemplatePlaceholders(content, opts, result.processName);
     result.content = out;
 
+    // 4. Split content into command (first line) and device config (rest).
+    //    Hiprofiler commands have a multi-line format where the first line is
+    //    the hiprofiler_cmd invocation and the remaining lines are the config
+    //    content to be written to a file on the device. Snapshot commands are
+    //    single-line (just the hidumper command).
     SplitCommandAndConfig(out, result);
 
+    // 5. Extract the hiprofiler_cmd `-o <remote_path>` argument from the
+    //    command line (first line). Only scan the command tokens, stop at any
+    //    token starting with `-` after `-o`'s value has been consumed.
     result.remoteOutputPath = ExtractRemoteOutputPath(result.command);
 
+    // 6. Set result.ok = true and return.
     result.ok = true;
     return result;
 }

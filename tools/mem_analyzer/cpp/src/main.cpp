@@ -113,6 +113,8 @@ static void SaveCommandLine(int argc, char** argv, std::string& out)
 
 /**
  * Register all subcommands from the module registry into the CLI parser.
+ * 子命令全部来自注册表：新增子命令无需改动本文件。
+ * Bind 由 add_subcommand 同步调用，故 lambda 捕获引用是安全的。
  */
 static void RegisterSubcommands(mem_analyzer::CliParser& app,
     mem_analyzer::GlobalOptions& global)
@@ -148,6 +150,9 @@ static void LoadPreviewFeatures()
     }
 }
 
+// ============================================================================
+//  main
+// ============================================================================
 int main(int argc, char** argv)
 {
 #if defined(_WIN32)
@@ -158,6 +163,7 @@ int main(int argc, char** argv)
 
     mem_analyzer::style::Init();
 
+    // 模块能力表一致性自检：正常构建下零输出，仅在不一致时告警（不改变退出码）。
     for (const auto& issue : mem_analyzer::ModuleRegistry::SelfCheck()) {
         mem_analyzer::log::Logw("Warning: module capability inconsistency: ", issue);
     }
@@ -184,6 +190,7 @@ int main(int argc, char** argv)
 
     LoadPreviewFeatures();
 
+    // Save original command line（供输出 meta 使用）
     SaveCommandLine(argc, argv, global.commandLine);
 
     int ret = 0;

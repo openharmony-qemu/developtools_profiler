@@ -202,8 +202,10 @@ HtraceAnalysisOutput HtraceLeakAnalyze(TraceDB& db, const RunContext& ctx)
     acfg.scope = scope;
     acfg.category = ctx.htrace.category;
 
+    // L2: __emutls_get_address 帧排除
     FilterEmutlsFrames(*clist);
 
+    // L3: 栈分 app/system（mixed 不分，直接用全部栈）
     std::vector<CompressedCallStack> appStacks;
     std::vector<CompressedCallStack> systemStacks;
     if (scope != Scope::MIXED) {
@@ -220,7 +222,7 @@ HtraceAnalysisOutput HtraceLeakAnalyze(TraceDB& db, const RunContext& ctx)
     } else if (scopeStr == "mixed") {
         acfg.forceScope = Scope::MIXED;
         output = AnalyzeCallStacks(clist->stacks, clist->dict, acfg);
-    } else {
+    } else {  // app-and-system（默认）：走两遍
         acfg.forceScope = Scope::APP_ONLY;
         auto appOut = AnalyzeCallStacks(appStacks, clist->dict, acfg);
         acfg.forceScope = Scope::SYSTEM_ONLY;
@@ -228,6 +230,7 @@ HtraceAnalysisOutput HtraceLeakAnalyze(TraceDB& db, const RunContext& ctx)
         output = MergeAppSystemOutput(std::move(appOut), std::move(sysOut));
     }
 
+    // 填 metadata（照 htrace_analyze）
     output.dataDict = std::move(clist->dict);
     output.mode = std::move(db.meta.mode);
     output.processName = std::move(db.meta.processName);

@@ -309,6 +309,16 @@ static std::string DecorateDeviceError(const std::string& hdcText,
  */
 static bool AutoResolveDeviceTarget(std::string& msg)
 {
+    // (3) not given: silently probe the device count.
+    // The multi-device verdict needs no complete parse: two id-shaped keys already prove
+    // that at least two devices are attached, and a further line we could not classify
+    // cannot take that back. Requiring `unparsed_lines == 0` here used to let any hdc
+    // chatter line (banner / dated log) drop us into the untargeted path, where every
+    // command fails and the user is shown a misleading "could not parse version".
+    // For the same reason a "[Fail]" line in the listing does NOT veto this verdict: two
+    // parsed ids are stronger evidence than one failed line, and letting "[Fail]" win
+    // would send untargeted commands to a two-device setup — the exact hazard the gate
+    // exists to prevent.
     auto t = HdcListTargets();
     if (!t.spawnFailed && t.keys.size() >= MULTI_DEVICE_THRESHOLD) {
         std::string text = HdcProbe("");
@@ -318,29 +328,53 @@ static bool AutoResolveDeviceTarget(std::string& msg)
         msg = DecorateDeviceError(text, t.keys, "");
         return false;
     }
+    // One candidate, but the listing is not trustworthy (an unrecognized entry, or hdc
+    // reported a failure while still listing a device): a second device could be hiding
+    // in it. Both "pin the only id" and "run untargeted" would be guesses, and the latter
+    // hands the device choice back to hdc, so ask the user to name the device instead.
+    // Note this must come *after* the >=2 verdict above, which stays the more specific
+    // message when the count already proves multiple devices.
     if (!t.spawnFailed && t.keys.size() == 1 && (t.unparsedLines > 0 || t.sawFail)) {
         msg = std::string(AMBIGUOUS_LIST_MSG) + "\n";
         AppendUnparsedLines(msg, t);
-        AppendTargetHints(msg, t.keys, "");
+        AppendTargetHints(msg, t.keys, "");   // our wording: skip decorate_device_error()
         return false;
     }
+    // Exactly one usable target: pin its id. Every business command then carries
+    // `-t <id>`, which buys two things: unplugging this device mid-capture makes hdc
+    // answer "[Fail]Not match" instead of silently routing the next command to a
+    // newly attached device, and the pinned key is what arms the early device-loss
+    // detection (note_device_failure() ignores "[Fail]" while no key is pinned).
+    // (hdc's own chatter is skipped by the parser, so it does not block the pin.)
     if (!t.spawnFailed && !t.sawFail && t.unparsedLines == 0 && t.keys.size() == 1) {
         HdcSetConnectKey(t.keys[0]);
         return true;
     }
+    // 0 devices, a failed spawn or "[Fail]": stay untargeted, i.e. keep the pre-change
+    // command form (no -t) and let the existing paths report the problem. When the output
+    // held entries we could not classify we are not actually sure the device count is 0,
+    // so say so instead of silently emitting untargeted commands (this must not fire on a
+    // clean 0-device listing, whose output has to stay byte-identical to the baseline).
     if (!t.spawnFailed && t.keys.empty() && t.unparsedLines > 0) {
         std::string warn = "Warning: 'hdc list targets' returned output this tool cannot recognize; continuing"
             " WITHOUT a pinned target (no -t), so hdc picks the device.\n";
         AppendUnparsedLines(warn, t);
         log::Logw(warn);
     }
-    HdcMarkTargetResolved();
+    HdcMarkTargetResolved();   // must mark here too, or the builders report a missed gate
     return true;
 }
 
 static bool ResolveDeviceTarget(const std::string& rawKey, bool keyProvided, std::string& msg)
 {
+    // Both branches below compare against `hdc list targets` verbatim, so normalize the
+    // user's value once here. A whitespace-only value thereby becomes empty and lands in
+    // branch (1), which is the intended reading of `--device " "`.
     const std::string key = TrimWs(rawKey);
+    // (1) explicit empty value: `--device ""` is a parameter error, not "no device
+    //     selected". hdc's own reaction is surfaced when it reports one; otherwise this
+    //     tool's wording is used. Either way the candidate list is appended, so a user
+    //     with several devices can see the ids to choose from.
     if (keyProvided && key.empty()) {
         auto t = HdcListTargets();
         std::string text = HdcProbe("");
@@ -348,10 +382,14 @@ static bool ResolveDeviceTarget(const std::string& rawKey, bool keyProvided, std
             msg = DecorateDeviceError(text, t.keys, "");
             return false;
         }
+        // Our own wording must skip decorate_device_error(): that one filters the text
+        // down to hdc's "[Fail]" lines, which would drop this message entirely.
         msg = std::string(EMPTY_KEY_MSG) + "\n";
-        AppendTargetHints(msg, t.keys, "");
+        AppendTargetHints(msg, t.keys, "");   // keys is empty when hdc is missing
         return false;
     }
+    // (2) explicit target: it must match a target hdc currently lists, so a key that
+    //     names an unplugged / unauthorized device is caught here rather than later.
     if (keyProvided) {
         auto t = HdcListTargets();
         if (t.spawnFailed) {
@@ -366,6 +404,8 @@ static bool ResolveDeviceTarget(const std::string& rawKey, bool keyProvided, std
             }
         }
         if (!found) {
+            // fail-open: an incomplete parse means the candidate list may be wrong, so
+            // let hdc decide instead of rejecting a possibly valid target locally.
             if (t.unparsedLines > 0) {
                 HdcSetConnectKey(key);
                 return true;
@@ -380,7 +420,7 @@ static bool ResolveDeviceTarget(const std::string& rawKey, bool keyProvided, std
             msg = DecorateDeviceError(text, t.keys, key);
             return false;
         }
-        HdcSetConnectKey(key);
+        HdcSetConnectKey(key);   // matched a listed target
         return true;
     }
     return AutoResolveDeviceTarget(msg);
@@ -695,8 +735,10 @@ static AppQueryResult QueryDeviceApps()
 static bool FindExactAppMatch(const std::vector<AppEntry>& apps,
     const std::string& input, std::string& resolvedPkg)
 {
+    // Exact match first (case-insensitive on package name)
     for (const auto& a : apps) {
         if (ContainsCi(a.package, input) && a.package.size() == input.size()) {
+            // If multiple exact matches on different fields, still prefer package exact
             resolvedPkg = a.package;
             log::Logi("Resolved: ", input, " -> package: ", resolvedPkg,
                 (!a.appName.empty() ? (" (" + a.appName + ")") : std::string()));
@@ -716,8 +758,12 @@ static bool FindExactAppMatch(const std::vector<AppEntry>& apps,
 
 static bool ResolveProcessName(const std::string& input, bool requireApp, std::string& resolvedPkg, bool& isApp)
 {
+    // Any target resolved from the installed-app list is an app; the verbatim
+    // system-process fallbacks below override this to false.
     isApp = true;
     auto q = QueryDeviceApps();
+    // A pinned target reports the device-level failure here, instead of misreading it as
+    // a system process and carrying on with a wrong premise.
     if (q.deviceFailed) {
         log::Loge(q.deviceErr);
         return false;
@@ -740,6 +786,8 @@ static bool ResolveProcessName(const std::string& input, bool requireApp, std::s
         return true;
     }
 
+    // Fuzzy match: substring in app name (label) only.
+    // Package names require exact match to avoid false positives.
     std::vector<const AppEntry*> matches;
     for (const auto& a : apps) {
         if (!a.appName.empty() && ContainsCi(a.appName, input)) {
@@ -749,6 +797,8 @@ static bool ResolveProcessName(const std::string& input, bool requireApp, std::s
 
     if (matches.empty()) {
         if (!requireApp) {
+            // Native capture types can also analyze system processes that are
+            // not installed apps (e.g. system services / daemons).
             resolvedPkg = input;
             isApp = false;
             log::Logi("Resolved: ", input, " -> package: ", resolvedPkg,
@@ -768,6 +818,7 @@ static bool ResolveProcessName(const std::string& input, bool requireApp, std::s
         return true;
     }
 
+    // Multiple matches: list them
     std::string msg = "Error: '" + input + "' matches " + std::to_string(matches.size()) + " apps:\n";
     for (const auto* m : matches) {
         msg += "  " + m->package;

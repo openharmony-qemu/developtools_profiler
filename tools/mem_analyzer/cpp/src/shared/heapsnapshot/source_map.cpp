@@ -290,11 +290,14 @@ bool SourceMapIndex::ResolveOriginalPosition(const std::string& mappings, int ge
         return false;
     }
 
+    // decoded 为 0 基行索引：decoded[i] 对应生成文件第 i+1 行
     int line = generatedLine - 1;
     if (line >= static_cast<int>(decoded.size())) {
         return false;
     }
 
+    // 目标行内取 generatedColumn <= 目标列的最后一个 segment（source map v3
+    // 约定：segment 覆盖 [generatedColumn, 下一个 segment 列) 区间）
     const LineSegments* segments = &decoded[line];
     const Segment* best = nullptr;
     for (const auto& seg : *segments) {
@@ -304,15 +307,16 @@ bool SourceMapIndex::ResolveOriginalPosition(const std::string& mappings, int ge
         if (seg[0] <= generatedColumn) {
             best = &seg;
         } else {
-            break;
+            break;  // segment 按 generatedColumn 递增
         }
     }
+    // 目标行无覆盖段：向前回退到最近一个有映射的行，取该行最末覆盖段
     if (best == nullptr) {
         return FindFallbackPosition(decoded, line - 1, originalLine, originalColumn, outSourceIndex);
     }
 
     AssignBestPosition(*best, originalLine, originalColumn);
-    if (outSourceIndex != nullptr) {
+    if (outSourceIndex != nullptr) { // sourceIndex
         *outSourceIndex = (*best)[1];
     }
     return true;
@@ -445,6 +449,8 @@ void LogLoadedEntries(const std::unordered_map<std::string, SourceMapEntry>& ind
 
 /**
  * Recursively scan a directory for source map files (*.map / sourceMaps.map).
+ * 递归扫描目录：读取 "sourceMaps.map"（merge 文件）及所有 "*.map" 文件
+ * （兼容多模块产物位于子目录的场景）
  */
 static bool ScanDirForMapFiles(const fs::path& dirPath,
     std::unordered_map<std::string, SourceMapEntry>& index, bool& foundAny)
@@ -479,6 +485,7 @@ bool SourceMapIndex::LoadFromDir(const std::string& dir)
 {
     std::error_code ec;
     const fs::path dirPath = mem_analyzer::PathFromUtf8(dir);
+    // 直接指定单个 source map 文件（sourceMaps.map / *.map）时直接加载
     if (fs::is_regular_file(dirPath, ec)) {
         ec.clear();
         if (!IndexMapFile(dir, index_)) {

@@ -390,7 +390,7 @@ static std::string ResolveObfNameFromCandidates(
         if (original.empty()) {
             original = name;
         } else if (original != name) {
-            return {};
+            return {};  // 同一文件下候选原始名不一致，无法唯一还原
         }
     }
     return original;
@@ -405,11 +405,12 @@ bool RestoreFunctionNameInSuffix(const NameCacheIndex* ncache, std::string& valu
     if (line == std::string::npos || line == 0) {
         return false;
     }
+    // 取 '(' 之前最后一个 '#'，其后的子串即为混淆函数名（如 "#d1(" → "d1"）
     const size_t hash = value.rfind('#', line - 1);
     if (hash == std::string::npos || hash + 1 >= line) {
         return false;
     }
-    const size_t nameLen = line - hash - 1;
+    const size_t nameLen = line - hash - 1;  // '#' 与 '(' 之间的函数名长度
     if (nameLen == 0) {
         return false;
     }
@@ -418,6 +419,10 @@ bool RestoreFunctionNameInSuffix(const NameCacheIndex* ncache, std::string& valu
         return false;
     }
 
+    // 反查混淆名候选，用已还原的源码路径做文件上下文过滤，再按原始名去重。
+    // 同一混淆名可能同时命中 IdentifierCache（类名，原始名带 '#' 前缀）与
+    // MemberMethodCache（构造函数与方法名，原始名不带 '#'，如类与构造函数同名），
+    // 比较与替换前统一剥离 '#' 前缀，避免同名不同前缀导致误判无法唯一还原。
     std::vector<NameCacheCandidate> candidates;
     if (!ncache->LookupObfuscatedName(obfName, candidates)) {
         return false;

@@ -240,6 +240,7 @@ const MemRowSpec MEM_ROWS[] = {
 
 /**
  * Match a row label against the MEM_ROWS spec table.
+ * Match the row label against the spec table (first token + the rest).
  */
 static const MemRowSpec* MatchMemRowSpec(const std::string& first, std::istringstream& lss)
 {
@@ -251,7 +252,7 @@ static const MemRowSpec* MatchMemRowSpec(const std::string& first, std::istrings
         for (size_t i = 1; i < s.label.size(); ++i) {
             std::string tok;
             if (!(lss >> tok) || tok != s.label[i]) {
-                matched = false;
+                matched = false;   // e.g. "native heap:" -> "heap:" != "heap"
                 break;
             }
         }
@@ -264,6 +265,8 @@ static const MemRowSpec* MatchMemRowSpec(const std::string& first, std::istrings
 
 /**
  * Collect remaining numeric columns from a line.
+ * Collect the remaining numeric columns of the row. Non-numeric tokens
+ * are skipped; strtoll avoids std::stoll's exceptions per token.
  */
 static std::vector<long long> ExtractRowNumbers(std::istringstream& lss)
 {
@@ -287,11 +290,11 @@ ProcessMetrics ParseHidumperMem(const std::string& output)
     while (std::getline(iss, line)) {
         std::istringstream lss(line);
         std::string first;
-        if (!(lss >> first)) {
+        if (!(lss >> first)) { // blank line
             continue;
         }
         if (!first.empty() && first[0] == '-') {
-            continue;
+            continue; // separator row
         }
         const MemRowSpec* spec = MatchMemRowSpec(first, lss);
         if (!spec) {
@@ -1068,6 +1071,9 @@ void StopHiprofiler()
 // found (the caller then falls back to the -o file).
 /**
  * Find a new zip file not in baseline, with the largest embedded timestamp.
+ * Look for a NEW file not in baseline; among new files pick the one
+ * with the largest embedded timestamp (most likely produced by this
+ * run).
  */
 static std::string FindNewZipCandidate(
     const std::map<std::string, long long>& currentZips,
@@ -1111,7 +1117,7 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
     auto pollStart = ClockType::now();
 
     for (int i = 0; i < timeoutS; ++i) {
-        if (DeviceLost()) {
+        if (DeviceLost()) { // pinned target: device-level failure -> stop polling now
             break;
         }
         const long long elapsedPoll = ElapsedSince(pollStart);
@@ -1119,6 +1125,7 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
             break;
         }
 
+        // Re-scan the directory for any hiprofiler_data_*.zip files.
         const auto currentZips = listHiprofilerZips(dir);
         std::string candidate = FindNewZipCandidate(currentZips, baseline);
 
@@ -1198,6 +1205,8 @@ std::string WaitForNativeleaksFile(const std::string& pid, const std::string& di
             break;
         }
 
+        // Pass the full filename as the prefix so list_dir_fileSizes matches
+        // only that one file (rfind(prefix, 0) == 0), ignoring other pids'.
         const auto current = listDirFileSizes(dir, filename);
         long long curSize = 0;
         const auto it = current.find(filename);
@@ -1534,6 +1543,14 @@ struct PreCaptureState {
 // running); the error is written into `result`.
 /**
  * Manage app launch/state before capture starts.
+ * Automated app-state management (all capture types except -s):
+ *   - app not running, no fresh-start need (-n/-g/-f/-d): launch now
+ *     via `aa start` so it is up when the countdown begins.
+ *   - fresh-start (-l), app running: force-stop + relaunch is deferred
+ *     until the capture session is up (the hook library must load at
+ *     app startup to be traced).
+ *   - fresh-start (-l), app not running: launch is deferred the same way.
+ *   - app running, no fresh-start need: left untouched.
  */
 static void ManageAppState(const HdcRunOptions& opts, PreCaptureState& pre)
 {
@@ -1554,6 +1571,7 @@ static void ManageAppState(const HdcRunOptions& opts, PreCaptureState& pre)
                 log::Logw("Warning: failed to auto-launch '", opts.processName, "'; please start it manually.");
             }
         } else {
+            // System process: never auto-launch; keep the original hint.
             log::Logi("Please start it as soon as possible.");
         }
     } else if (opts.requireFreshStart) {
@@ -1570,6 +1588,9 @@ static void ManageAppState(const HdcRunOptions& opts, PreCaptureState& pre)
 
 /**
  * Collect initial process metrics (memory + fd count) via hdc shell.
+ * Collect an initial sample of the process metrics while hdc is still
+ * free (before the worker occupies the connection), so the first
+ * countdown tick can show them immediately.
  */
 static void CollectInitialMetrics(PreCaptureState& pre)
 {
@@ -1602,10 +1623,26 @@ bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode, PreCaptur
         return true;
     }
 
+    // hiprofiler flow baseline (only for -g / -l via wait_for_zip): capture
+    // the pre-existing hiprofiler_data_*.zip files in /data/local/tmp BEFORE
+    // the command runs. After hdc shell returns hiprofiler may still be writing
+    // the zip asynchronously, so we detect "hiprofiler has finished" by polling
+    // for a NEW zip file that was not present at startup (the embedded
+    // timestamp inside the filename is the authoritative indicator of
+    // hiprofiler completion). Other capture types (-n/-f/-d) don't produce a
+    // hiprofiler_data_*.zip, so they skip this and just pull the -o file.
     if (!opts.remoteOutputPath.empty() && opts.waitForZip) {
         pre.hiprofilerZipBaseline = listHiprofilerZips(HIPROFILER_ZIP_DIR);
     }
 
+    // hiprofiler mode: do the initial process check BEFORE starting the worker
+    // thread. Once the worker's `hdc shell 'hiprofiler_cmd ...'` is running, it
+    // may occupy the hdc connection and serialize other `hdc shell` calls.
+    // We check the process status once here (when hdc is still free). During
+    // the countdown, a background thread periodically tries to refresh the pid
+    // — if hdc is free, the pid updates in real-time; if hdc serializes, the
+    // background thread blocks harmlessly and the countdown uses the last known
+    // pid. Either way, the main countdown thread never blocks.
     if (opts.duration <= 0 || opts.processName.empty()) {
         return true;
     }
