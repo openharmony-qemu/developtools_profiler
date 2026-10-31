@@ -105,6 +105,12 @@ inline bool DecodeVlqValue(const std::string& str, size_t& pos, int& value)
     return true;
 }
 
+void AssignBestPosition(const SourceMapIndex::Segment& seg, int& originalLine, int& originalColumn)
+{
+    originalLine = seg[SEG_IDX_ORIGINAL_LINE] + 1;      // originalLine 0-based → 1-based
+    originalColumn = seg[SEG_IDX_ORIGINAL_COLUMN] + 1;    // originalColumn 0-based → 1-based
+}
+
 } // anonymous namespace
 
 SourceMapIndex::DecodedMappings SourceMapIndex::DecodeVlqMappings(const std::string& mappings)
@@ -296,8 +302,7 @@ bool SourceMapIndex::ResolveOriginalPosition(const std::string& mappings, int ge
         return false;
     }
 
-    originalLine = (*best)[SEG_IDX_ORIGINAL_LINE] + 1;      // originalLine 0-based → 1-based
-    originalColumn = (*best)[SEG_IDX_ORIGINAL_COLUMN] + 1;    // originalColumn 0-based → 1-based
+    AssignBestPosition(*best, originalLine, originalColumn);
     if (outSourceIndex != nullptr) { // sourceIndex
         *outSourceIndex = (*best)[1];
     }
@@ -309,6 +314,17 @@ bool SourceMapIndex::ResolveOriginalPosition(const std::string& mappings, int ge
 // ============================================================================
 
 namespace {
+
+bool ParseJsonRoot(const std::string& content, json& root, const std::string& path)
+{
+    try {
+        root = json::parse(content);
+    } catch (const std::exception& e) {
+        log::Logw("Warning: Failed to parse source map file ", path, ": ", e.what());
+        return false;
+    }
+    return root.is_object();
+}
 
 /// 从单个 map 文件解析顶层条目并入索引；失败返回 false。
 /// 顶层键即混淆 key（如 "entry|entry|1.0.0|src/main/ets/pages/a.ts"），
@@ -323,13 +339,7 @@ bool IndexMapFile(const std::string& path, std::unordered_map<std::string, Sourc
     std::stringstream ss;
     ss << ifs.rdbuf();
     json root;
-    try {
-        root = json::parse(ss.str());
-    } catch (const std::exception& e) {
-        log::Logw("Warning: Failed to parse source map file ", path, ": ", e.what());
-        return false;
-    }
-    if (!root.is_object()) {
+    if (!ParseJsonRoot(ss.str(), root, path)) {
         return false;
     }
 
@@ -410,6 +420,14 @@ void RebuildModuleIndex(const std::unordered_map<std::string, SourceMapEntry>& i
     }
 }
 
+void LogLoadedEntries(const std::unordered_map<std::string, SourceMapEntry>& index,
+    std::unordered_map<std::string, const SourceMapEntry*>& moduleIndex, size_t before,
+    const std::string& dir)
+{
+    log::Logi("  Loaded ", (index.size() - before), " source map entries from: ", dir);
+    RebuildModuleIndex(index, moduleIndex);
+}
+
 } // anonymous namespace
 
 bool SourceMapIndex::LoadFromDir(const std::string& dir)
@@ -472,8 +490,7 @@ bool SourceMapIndex::LoadFromDir(const std::string& dir)
         return false;
     }
 
-    log::Logi("  Loaded ", (index_.size() - before), " source map entries from: ", dir);
-    RebuildModuleIndex(index_, moduleIndex);
+    LogLoadedEntries(index_, moduleIndex, before, dir);
     return true;
 }
 

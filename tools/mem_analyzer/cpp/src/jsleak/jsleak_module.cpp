@@ -29,6 +29,42 @@
 
 namespace mem_analyzer {
 
+namespace {
+
+std::string RunCompareMode(const FormatKeyword& kw, const ModuleRequest& req, const RunContext& ctx)
+{
+    std::string error;
+    if (!JsleakCompareInputsValid(ctx.snapshot.compare.baselineFile,
+        req.filePath, error)) {
+        log::Loge("Error: ", error);
+        return {};
+    }
+    StageTimer timer("process_file");
+    timer.Stage("Parsing baseline");
+    HeapSnapshot baseline = JsleakParse(ctx.snapshot.compare.baselineFile, ctx);
+    timer.Tick("parse_baseline");
+    timer.Stage("Parsing target");
+    HeapSnapshot target = JsleakParse(req.filePath, ctx);
+    timer.Tick("parse_target");
+
+    timer.Stage("Analyzing comparison");
+    json report = JsleakCompareAnalyze(
+        baseline, target, ctx.snapshot.compare.baselineFile, req.filePath,
+        ctx.snapshot.topN, ctx.snapshot.mode);
+    timer.Tick("analysis");
+
+    timer.Stage("Writing output");
+    const std::string& outDir = ctx.output.outDir;
+    std::string out = kw.keyword == "json" ?
+        JsleakWriteCompareJson(report, outDir)
+        : JsleakWriteCompareHtml(report, outDir);
+    timer.Tick("write");
+    timer.Done();
+    return out;
+}
+
+} // namespace
+
 ModuleCapability JsleakModule::Capability() const
 {
     // parse 侧全空 = 该域明确不支持 parse-only（`-p` 会被拒绝）
@@ -52,33 +88,7 @@ std::string JsleakModule::Run(const ModuleRequest& req, const RunContext& ctx) c
         // 对比模式：-b/--baseline 非空时，req.file_path 为目标快照 B。
         // 与单文件路径共用 parse → analyze → write 骨架与格式路由。
         if (!ctx.snapshot.compare.baselineFile.empty()) {
-            std::string error;
-            if (!JsleakCompareInputsValid(ctx.snapshot.compare.baselineFile,
-                req.filePath, error)) {
-                log::Loge("Error: ", error);
-                return {};
-            }
-            StageTimer timer("process_file");
-            timer.Stage("Parsing baseline");
-            HeapSnapshot baseline = JsleakParse(ctx.snapshot.compare.baselineFile, ctx);
-            timer.Tick("parse_baseline");
-            timer.Stage("Parsing target");
-            HeapSnapshot target = JsleakParse(req.filePath, ctx);
-            timer.Tick("parse_target");
-
-            timer.Stage("Analyzing comparison");
-            json report = JsleakCompareAnalyze(
-                baseline, target, ctx.snapshot.compare.baselineFile, req.filePath,
-                ctx.snapshot.topN, ctx.snapshot.mode);
-            timer.Tick("analysis");
-
-            timer.Stage("Writing output");
-            std::string out = kw.keyword == "json" ?
-                       JsleakWriteCompareJson(report, outDir)
-                       : JsleakWriteCompareHtml(report, outDir);
-            timer.Tick("write");
-            timer.Done();
-            return out;
+            return RunCompareMode(kw, req, ctx);
         }
 
         log::Logi("  Parsing...");

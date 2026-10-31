@@ -155,6 +155,27 @@ static void CheckAppSymbol(SymbolData& sd, const std::unordered_map<int, std::st
     sd.isApp = HtraceConfigMgr::Instance().IsAppSymbol(it->second, sd.vaddrNull);
 }
 
+static SymbolData MakeSymbolData(uint64_t key, int fid, const CompressedStackFrame& frame,
+    HtraceEventType chainType)
+{
+    SymbolData sd;
+    sd.uid = key;
+    sd.libId = fid;
+    sd.libIdNull = frame.fileIdNull;
+    sd.type = HtraceEventTypeName(chainType);
+    sd.totalLeakSize = 0;
+    sd.maxDepth = 0;
+    sd.vaddrNull = frame.vaddrNull;
+    if (!frame.vaddrNull) {
+        sd.vaddr = frame.vaddr;
+    }
+    sd.buildIdNull = frame.buildIdNull;
+    if (!frame.buildIdNull) {
+        sd.buildId = frame.buildId;
+    }
+    return sd;
+}
+
 // ===== Build initial symbol data from call stacks =====
 static void BuildSymbolData(
     const std::vector<CompressedCallStack>& callStacks,
@@ -185,22 +206,7 @@ static void BuildSymbolData(
 
             auto it = symbols.find(key);
             if (it == symbols.end()) {
-                SymbolData sd;
-                sd.uid = key;
-                sd.libId = fid;
-                sd.libIdNull = frame.fileIdNull;
-                sd.type = HtraceEventTypeName(chain.type);
-                sd.totalLeakSize = 0;
-                sd.maxDepth = 0;
-                sd.vaddrNull = frame.vaddrNull;
-                if (!frame.vaddrNull) {
-                    sd.vaddr = frame.vaddr;
-                }
-                sd.buildIdNull = frame.buildIdNull;
-                if (!frame.buildIdNull) {
-                    sd.buildId = frame.buildId;
-                }
-                symbols[key] = sd;
+                symbols[key] = MakeSymbolData(key, fid, frame, chain.type);
                 it = symbols.find(key);
             }
 
@@ -678,6 +684,46 @@ static AlgorithmResult RunAlgorithm(
     return algResult;
 }
 
+static void ResolveTopSymbolMeta(const SymbolData& s,
+    const std::vector<CompressedCallStack>& callStacks,
+    const std::unordered_map<int, std::string>& dataDict, TopSymbolInfo& ts)
+{
+    // Resolve symbol/lib from data_dict
+    int sid = static_cast<int>(s.uid >> UID_SHIFT_BITS);
+    int fid = static_cast<int>(s.uid & 0xFFFFFFFF);
+    auto symIt = dataDict.find(sid);
+    ts.symbol = (symIt != dataDict.end()) ? symIt->second : "unknown";
+    auto libIt = dataDict.find(fid);
+    std::string libStr = (libIt != dataDict.end()) ? libIt->second : "unknown";
+    ts.libs = {libStr};
+    // Resolve lib_offset from stored vaddr
+    if (!s.vaddrNull) {
+        char buf[HEX_BUF_SIZE];
+        int ret = snprintf(buf, sizeof(buf), "0x%llx",
+                           static_cast<unsigned long long>(s.vaddr));
+        if (ret < 0) {
+            buf[0] = '\0';
+        }
+        ts.libOffset = buf;
+    } else {
+        ts.libOffset = "";
+    }
+    ts.type = s.type;
+    ts.totalLeakSize = s.totalLeakSize;
+    // Sum existing_count over all chains that contain this symbol (one contribution per chain)
+    ts.totalExistingCount = 0;
+    for (int ci : s.chainIds) {
+        if (ci >= 0 && ci < static_cast<int>(callStacks.size())) {
+            ts.totalExistingCount += callStacks[ci].existingCount;
+        }
+    }
+    ts.isApp = s.isApp;
+    ts.buildIdNull = s.buildIdNull;
+    if (!s.buildIdNull) {
+        ts.buildId = s.buildId;
+    }
+}
+
 // ===== Build flame/icicle graphs and call chains for top-N symbols only =====
 static std::vector<TopSymbolInfo> buildAndEnrich(
     const std::vector<SymbolData>& finalSymbols,
@@ -697,40 +743,7 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
         TopSymbolInfo ts;
         ts.uid = s.uid;
 
-        // Resolve symbol/lib from data_dict
-        int sid = static_cast<int>(s.uid >> UID_SHIFT_BITS);
-        int fid = static_cast<int>(s.uid & 0xFFFFFFFF);
-        auto symIt = dataDict.find(sid);
-        ts.symbol = (symIt != dataDict.end()) ? symIt->second : "unknown";
-        auto libIt = dataDict.find(fid);
-        std::string libStr = (libIt != dataDict.end()) ? libIt->second : "unknown";
-        ts.libs = {libStr};
-        // Resolve lib_offset from stored vaddr
-        if (!s.vaddrNull) {
-            char buf[HEX_BUF_SIZE];
-            int ret = snprintf(buf, sizeof(buf), "0x%llx",
-                               static_cast<unsigned long long>(s.vaddr));
-            if (ret < 0) {
-                buf[0] = '\0';
-            }
-            ts.libOffset = buf;
-        } else {
-            ts.libOffset = "";
-        }
-        ts.type = s.type;
-        ts.totalLeakSize = s.totalLeakSize;
-        // Sum existing_count over all chains that contain this symbol (one contribution per chain)
-        ts.totalExistingCount = 0;
-        for (int ci : s.chainIds) {
-            if (ci >= 0 && ci < static_cast<int>(callStacks.size())) {
-                ts.totalExistingCount += callStacks[ci].existingCount;
-            }
-        }
-        ts.isApp = s.isApp;
-        ts.buildIdNull = s.buildIdNull;
-        if (!s.buildIdNull) {
-            ts.buildId = s.buildId;
-        }
+        ResolveTopSymbolMeta(s, callStacks, dataDict, ts);
 
         // Build flame/icicle graphs with data_dict for ID→string resolution
         ts.flameGraph = BuildFlameGraph(ts.symbol, callStacks, s.chainIds.vector(), s.depthPerChain, dataDict);

@@ -66,6 +66,34 @@ json BuildSummary(const TraceDB& db)
     return summary;
 }
 
+void WriteParseCallstack(JsonStreamWriter& writer, const CompressedCallStack& cs,
+    const DataDict& dict, const std::string& mode)
+{
+    writer.BeginObject();
+    writer.WriteKeyValue("id", std::to_string(cs.id));
+    writer.WriteKeyValue("type", HtraceEventTypeName(cs.type));
+    if (cs.type == HtraceEventType::FILE_PAGE_MSG) {
+        std::string filename = "unknown";
+        auto fit = dict.find(cs.subTypeId);
+        if (fit != dict.end()) {
+            filename = fit->second;
+        }
+        filename = NormalizeFilepageFilename(filename, mode);
+        writer.WriteKeyValue("fileName", filename);
+    }
+    writer.WriteKeyValue("existingSize", std::to_string(cs.existingSize));
+    writer.WriteKeyValue("existingCount", std::to_string(cs.existingCount));
+
+    writer.WriteKey("frames");
+    writer.BeginArray();
+    for (const auto& f : cs.frames) {
+        HtraceWriteCallstackFrame(writer, f, dict);
+    }
+    writer.EndArray();
+
+    writer.EndObject();
+}
+
 } // namespace
 
 std::string HtraceWriteParseJson(const TraceDB& db, const std::string& filePath,
@@ -105,29 +133,7 @@ std::string HtraceWriteParseJson(const TraceDB& db, const std::string& filePath,
     writer.WriteKey("callStacks");
     writer.BeginArray();
     for (const auto& cs : stacks.stacks) {
-        writer.BeginObject();
-        writer.WriteKeyValue("id", std::to_string(cs.id));
-        writer.WriteKeyValue("type", HtraceEventTypeName(cs.type));
-        if (cs.type == HtraceEventType::FILE_PAGE_MSG) {
-            std::string filename = "unknown";
-            auto fit = stacks.dict.find(cs.subTypeId);
-            if (fit != stacks.dict.end()) {
-                filename = fit->second;
-            }
-            filename = NormalizeFilepageFilename(filename, db.meta.mode);
-            writer.WriteKeyValue("fileName", filename);
-        }
-        writer.WriteKeyValue("existingSize", std::to_string(cs.existingSize));
-        writer.WriteKeyValue("existingCount", std::to_string(cs.existingCount));
-
-        writer.WriteKey("frames");
-        writer.BeginArray();
-        for (const auto& f : cs.frames) {
-            HtraceWriteCallstackFrame(writer, f, stacks.dict);
-        }
-        writer.EndArray();
-
-        writer.EndObject();
+        WriteParseCallstack(writer, cs, stacks.dict, db.meta.mode);
     }
     writer.EndArray();
 

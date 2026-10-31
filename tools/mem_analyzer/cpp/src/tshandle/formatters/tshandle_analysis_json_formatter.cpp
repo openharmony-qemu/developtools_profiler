@@ -52,18 +52,17 @@ std::string FormatDuration(long long durationNs)
     return oss.str();
 }
 
-json TraceMetaToJson(const TshandleAnalysisOutput& analysis)
-{
-    struct Totals {
-        long long count = 0;
-        long long memory = 0;
-        long long shallow = 0;
-        long long retained = 0;
-    };
-    Totals globalTotals;
-    Totals localTotals;
+struct Totals {
+    long long count = 0;
+    long long memory = 0;
+    long long shallow = 0;
+    long long retained = 0;
+};
 
-    for (const auto& stack : analysis.callStacks) {
+void AccumulateHandleCounts(const std::vector<ResolvedCallStack>& callStacks,
+    Totals& globalTotals, Totals& localTotals)
+{
+    for (const auto& stack : callStacks) {
         if (stack.type == HtraceEventType::ARK_GLOBAL_HANDLE) {
             ++globalTotals.count;
             globalTotals.memory += stack.existingSize;
@@ -72,6 +71,14 @@ json TraceMetaToJson(const TshandleAnalysisOutput& analysis)
             localTotals.memory += stack.existingSize;
         }
     }
+}
+
+json TraceMetaToJson(const TshandleAnalysisOutput& analysis)
+{
+    Totals globalTotals;
+    Totals localTotals;
+
+    AccumulateHandleCounts(analysis.callStacks, globalTotals, localTotals);
 
     for (const auto& cls : analysis.arktsClasses) {
         for (const auto& instance : cls.instances) {
