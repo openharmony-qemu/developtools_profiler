@@ -984,23 +984,27 @@ static void ResolveEdgeTypes(HeapSnapshot& snapshot, const json& meta)
     snapshot.edgeHiddenType = -1;
     snapshot.edgeElementType = -1;
     snapshot.edgeInternalType = -1;
-    if (meta.contains("edge_types") && snapshot.edgeTypeOffset >= 0) {
-        auto edgeTypes = meta["edge_types"][snapshot.edgeTypeOffset];
-        if (edgeTypes.is_array()) {
-            auto types = edgeTypes.get<std::vector<std::string>>();
-            for (int i = 0; i < static_cast<int>(types.size()); i++) {
-                if (types[i] == "weak") {
-                    snapshot.edgeWeakType = i;
-                } else if (types[i] == "shortcut") {
-                    snapshot.edgeShortcutType = i;
-                } else if (types[i] == "hidden") {
-                    snapshot.edgeHiddenType = i;
-                } else if (types[i] == "element") {
-                    snapshot.edgeElementType = i;
-                } else if (types[i] == "internal") {
-                    snapshot.edgeInternalType = i;
-                }
-            }
+    // Resolve edge type numeric values from meta.edge_types[type_offset]
+    // Typical V8 edge types: ["context","element","property","internal","hidden","shortcut","weak"]
+    if (!meta.contains("edge_types") || snapshot.edgeTypeOffset < 0) {
+        return;
+    }
+    auto edgeTypes = meta["edge_types"][snapshot.edgeTypeOffset];
+    if (!edgeTypes.is_array()) {
+        return;
+    }
+    auto types = edgeTypes.get<std::vector<std::string>>();
+    for (int i = 0; i < static_cast<int>(types.size()); i++) {
+        if (types[i] == "weak") {
+            snapshot.edgeWeakType = i;
+        } else if (types[i] == "shortcut") {
+            snapshot.edgeShortcutType = i;
+        } else if (types[i] == "hidden") {
+            snapshot.edgeHiddenType = i;
+        } else if (types[i] == "element") {
+            snapshot.edgeElementType = i;
+        } else if (types[i] == "internal") {
+            snapshot.edgeInternalType = i;
         }
     }
 }

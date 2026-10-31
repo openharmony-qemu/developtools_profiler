@@ -288,45 +288,54 @@ struct ConfigAccessor {
     const std::map<uint32_t, std::vector<std::string>>& repeatedStrs;
     const std::map<uint32_t, std::vector<std::string>>& repeatedPacked;
 
-    bool asBool(uint32_t n) const {
+    bool AsBool(uint32_t n) const
+    {
         auto it = single.find(n);
         return it != single.end() && it->second->varint != 0;
     }
-    int32_t asInt(uint32_t n) const {
+    int32_t AsInt(uint32_t n) const
+    {
         auto it = single.find(n);
         return it != single.end() ? AsInt32(it->second->varint) : 0;
     }
-    uint32_t asUint(uint32_t n) const {
+    uint32_t AsUint(uint32_t n) const
+    {
         auto it = single.find(n);
         return it != single.end() ? static_cast<uint32_t>(it->second->varint) : 0u;
     }
-    std::string asStr(uint32_t n) const {
+    std::string AsStr(uint32_t n) const
+    {
         auto it = single.find(n);
         return it != single.end() ? it->second->bytes : std::string();
     }
-    std::vector<int32_t> asRepeatedInt(uint32_t n) const {
+    std::vector<int32_t> AsRepeatedInt(uint32_t n) const
+    {
         std::vector<int32_t> r;
         auto it = repeatedPacked.find(n);
         if (it != repeatedPacked.end()) {
-            for (const auto& blob : it->second)
+            for (const auto& blob : it->second) {
                 for (uint64_t v : UnpackPackedVarints(blob)) {
                     r.push_back(AsInt32(v));
                 }
+            }
         }
         return r;
     }
-    std::vector<uint32_t> asRepeatedEnum(uint32_t n) const {
+    std::vector<uint32_t> AsRepeatedEnum(uint32_t n) const
+    {
         std::vector<uint32_t> r;
         auto it = repeatedPacked.find(n);
         if (it != repeatedPacked.end()) {
-            for (const auto& blob : it->second)
+            for (const auto& blob : it->second) {
                 for (uint64_t v : UnpackPackedVarints(blob)) {
                     r.push_back(static_cast<uint32_t>(v));
                 }
+            }
         }
         return r;
     }
-    std::vector<std::string> asRepeatedStr(uint32_t n) const {
+    std::vector<std::string> AsRepeatedStr(uint32_t n) const
+    {
         auto it = repeatedStrs.find(n);
         return it != repeatedStrs.end() ? it->second : std::vector<std::string>();
     }
@@ -357,51 +366,51 @@ static void ClassifyFields(const std::vector<Field>& fields,
 static void AssignConfigFields(HtraceNativeHookConfig& out, const ConfigAccessor& acc)
 {
     uint32_t index = 0;
-    out.pid = acc.asInt(++index);
-    out.saveFile = acc.asBool(++index);
-    out.fileName = acc.asStr(++index);
-    out.filterSize = acc.asInt(++index);
-    out.smbPages = acc.asInt(++index);
-    out.maxStackDepth = acc.asInt(++index);
-    out.processName = acc.asStr(++index);
-    out.mallocDisable = acc.asBool(++index);
-    out.mmapDisable = acc.asBool(++index);
-    out.freeStackReport = acc.asBool(++index);
-    out.munmapStackReport = acc.asBool(++index);
-    out.mallocFreeMatchingInterval = acc.asUint(++index);
-    out.mallocFreeMatchingCnt = acc.asUint(++index);
-    out.stringCompressed = acc.asBool(++index);
-    out.fpUnwind = acc.asBool(++index);
-    out.blocked = acc.asBool(++index);
-    out.recordAccurately = acc.asBool(++index);
-    out.startupMode = acc.asBool(++index);
-    out.memtraceEnable = acc.asBool(++index);
-    out.offlineSymbolization = acc.asBool(++index);
-    out.callframeCompress = acc.asBool(++index);
-    out.statisticsInterval = acc.asUint(++index);
-    out.clock = acc.asStr(++index);
-    out.sampleInterval = acc.asUint(++index);
-    out.responseLibraryMode = acc.asBool(++index);
-    out.expandPids = acc.asRepeatedInt(++index);
-    out.jsStackReport = acc.asInt(++index);
-    out.maxJsStackDepth = acc.asUint(++index);
-    out.filterNapiName = acc.asStr(++index);
-    out.dumpNmd = acc.asBool(++index);
-    out.targetSoName = acc.asStr(++index);
-    out.restraceTag = acc.asRepeatedStr(++index);
-    out.asyncStackEnable = acc.asBool(++index);
-    out.asyncType = acc.asRepeatedEnum(++index);
-    out.uniqueStackTableSize = acc.asUint(++index);
-    out.useFileCacheMode = acc.asBool(++index);
-    out.fileCacheBufferSize = acc.asUint(++index);
-    out.allocatorSamplingEnable = acc.asBool(++index);
-    out.nativeOrphansnapshotsEnable = acc.asBool(++index);
-    out.nestedAsyncStackEnable = acc.asBool(++index);
-    out.filterLibList = acc.asRepeatedStr(++index);
-    out.asyncNestingDepth = acc.asUint(++index);
-    out.asyncTaskStackDepth = acc.asUint(++index);
-    out.arkuiMemTraceEnable = acc.asBool(++index);
-    out.discardDestroyedTraces = acc.asBool(++index);
+    out.pid = acc.AsInt(++index);
+    out.saveFile = acc.AsBool(++index);
+    out.fileName = acc.AsStr(++index);
+    out.filterSize = acc.AsInt(++index);
+    out.smbPages = acc.AsInt(++index);
+    out.maxStackDepth = acc.AsInt(++index);
+    out.processName = acc.AsStr(++index);
+    out.mallocDisable = acc.AsBool(++index);
+    out.mmapDisable = acc.AsBool(++index);
+    out.freeStackReport = acc.AsBool(++index);
+    out.munmapStackReport = acc.AsBool(++index);
+    out.mallocFreeMatchingInterval = acc.AsUint(++index);
+    out.mallocFreeMatchingCnt = acc.AsUint(++index);
+    out.stringCompressed = acc.AsBool(++index);
+    out.fpUnwind = acc.AsBool(++index);
+    out.blocked = acc.AsBool(++index);
+    out.recordAccurately = acc.AsBool(++index);
+    out.startupMode = acc.AsBool(++index);
+    out.memtraceEnable = acc.AsBool(++index);
+    out.offlineSymbolization = acc.AsBool(++index);
+    out.callframeCompress = acc.AsBool(++index);
+    out.statisticsInterval = acc.AsUint(++index);
+    out.clock = acc.AsStr(++index);
+    out.sampleInterval = acc.AsUint(++index);
+    out.responseLibraryMode = acc.AsBool(++index);
+    out.expandPids = acc.AsRepeatedInt(++index);
+    out.jsStackReport = acc.AsInt(++index);
+    out.maxJsStackDepth = acc.AsUint(++index);
+    out.filterNapiName = acc.AsStr(++index);
+    out.dumpNmd = acc.AsBool(++index);
+    out.targetSoName = acc.AsStr(++index);
+    out.restraceTag = acc.AsRepeatedStr(++index);
+    out.asyncStackEnable = acc.AsBool(++index);
+    out.asyncType = acc.AsRepeatedEnum(++index);
+    out.uniqueStackTableSize = acc.AsUint(++index);
+    out.useFileCacheMode = acc.AsBool(++index);
+    out.fileCacheBufferSize = acc.AsUint(++index);
+    out.allocatorSamplingEnable = acc.AsBool(++index);
+    out.nativeOrphansnapshotsEnable = acc.AsBool(++index);
+    out.nestedAsyncStackEnable = acc.AsBool(++index);
+    out.filterLibList = acc.AsRepeatedStr(++index);
+    out.asyncNestingDepth = acc.AsUint(++index);
+    out.asyncTaskStackDepth = acc.AsUint(++index);
+    out.arkuiMemTraceEnable = acc.AsBool(++index);
+    out.discardDestroyedTraces = acc.AsBool(++index);
 }
 
 // 把 NativeHookConfig 字节解析进完整结构体
