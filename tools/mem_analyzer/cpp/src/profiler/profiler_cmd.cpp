@@ -304,7 +304,9 @@ static std::string DecorateDeviceError(const std::string& hdcText,
 }
 
 // Returns true when we may continue; on false, msg holds the full error message.
-/// Auto-detect device target when no explicit key was given.
+/**
+ * Auto-detect device target when no explicit key was given.
+ */
 static bool AutoResolveDeviceTarget(std::string& msg)
 {
     auto t = HdcListTargets();
@@ -687,7 +689,9 @@ static AppQueryResult QueryDeviceApps()
 // system-process fallback), and sets is_app to whether the resolved target is
 // an installed app. Prints diagnostic info and returns false on unresolvable
 // input.
-/// Find exact case-insensitive match on package name or app name.
+/**
+ * Find exact case-insensitive match on package name or app name.
+ */
 static bool FindExactAppMatch(const std::vector<AppEntry>& apps,
     const std::string& input, std::string& resolvedPkg)
 {

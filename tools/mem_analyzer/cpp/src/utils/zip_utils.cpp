@@ -40,7 +40,9 @@ constexpr int BYTES_PER_KB = 1024;
 
 namespace {
 
-/// 校验 zip 条目名是否安全（防 zip-slip）：拒绝绝对路径、盘符、`..` 组件。
+/**
+ * 校验 zip 条目名是否安全（防 zip-slip）：拒绝绝对路径、盘符、`..` 组件。
+ */
 bool IsSafeEntry(const std::string& name)
 {
     if (name.empty()) {
@@ -67,14 +69,18 @@ bool IsSafeEntry(const std::string& name)
     return true;
 }
 
-/// 条目名以 '/' 或 '\' 结尾即视为目录条目。
+/**
+ * 条目名以 '/' 或 '\' 结尾即视为目录条目。
+ */
 bool IsDirEntry(const std::string& name)
 {
     return !name.empty() && (name.back() == '/' || name.back() == '\\');
 }
 
-/// zip 炸弹防护：累计解压字节数上限（4 GiB）。合法 tshandle 数据远小于此，
-/// 恶意/损坏 zip 声明超大 uncompressed_size 时中止。
+/**
+ * zip 炸弹防护：累计解压字节数上限（4 GiB）。合法 tshandle 数据远小于此，
+ * 恶意/损坏 zip 声明超大 uncompressed_size 时中止。
+ */
 constexpr uint64_t MAX_TOTAL_UNCOMPRESSED_BYTES = 4ULL * 1024 * 1024 * 1024;
 
 } // namespace

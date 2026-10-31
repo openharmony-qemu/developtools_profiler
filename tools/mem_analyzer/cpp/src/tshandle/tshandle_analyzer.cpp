@@ -39,10 +39,12 @@ bool CallStackIsApp(const ResolvedCallStack& stack)
     return false;
 }
 
-/// 构建一个 section，只纳入 id 在 valid_stack_ids 中的调用栈。
-/// object.existing_size = 该对象这些调用链分摊到的 retained size（链 size 之和），
-/// total_size 为各对象 size 之和，percentage 相对该 total_size 计算。
-/// 对同一对象，应用作用域链 size + 系统作用域链 size = 该对象全部链 size 之和（拆分前后守恒）。
+/**
+ * 构建一个 section，只纳入 id 在 valid_stack_ids 中的调用栈。
+ * object.existing_size = 该对象这些调用链分摊到的 retained size（链 size 之和），
+ * total_size 为各对象 size 之和，percentage 相对该 total_size 计算。
+ * 对同一对象，应用作用域链 size + 系统作用域链 size = 该对象全部链 size 之和（拆分前后守恒）。
+ */
 TshandleTypeSection buildSectionWithStacks(
     HtraceEventType handleType,
     const std::vector<ArkTsClass>& arktsClasses,

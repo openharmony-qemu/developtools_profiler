@@ -22,16 +22,20 @@
 
 namespace mem_analyzer {
 
-/// 一个目标组件基类的配置：name 为技术名（用于继承链包含匹配，也是 concernType 的值），
-/// display_type 为展示类型（可空，空时回退为 name）。
+/**
+ * 一个目标组件基类的配置：name 为技术名（用于继承链包含匹配，也是 concernType 的值），
+ * display_type 为展示类型（可空，空时回退为 name）。
+ */
 struct BaseClassInfo {
     std::string name;
     std::string displayType;
 };
 
-/// 属性标签泄漏分析阶段：沿节点出边查找 isDeleting_ / _isDisposed / isDestroyed
-/// 等「已销毁」标签，命中后沿继承链确定关注类型（concernType），聚合为可疑对象列表。
-/// 与引用链阶段互不相干，独立持有自己的状态与配置。
+/**
+ * 属性标签泄漏分析阶段：沿节点出边查找 isDeleting_ / _isDisposed / isDestroyed
+ * 等「已销毁」标签，命中后沿继承链确定关注类型（concernType），聚合为可疑对象列表。
+ * 与引用链阶段互不相干，独立持有自己的状态与配置。
+ */
 class PropertyTagStage : public JsleakStage {
 public:
     explicit PropertyTagStage(const std::string& jsleakListFile);
@@ -42,7 +46,9 @@ public:
     void Run(const HeapSnapshot& heap) override;
     json ToJson() const override;
 
-    /// Run the property/hash leak rules for a caller-defined subset of nodes.
+    /**
+     * Run the property/hash leak rules for a caller-defined subset of nodes.
+     */
     json Analyze(const HeapSnapshot& heap, const std::function<bool(uint32_t)>& includeNode = {});
 
 private:

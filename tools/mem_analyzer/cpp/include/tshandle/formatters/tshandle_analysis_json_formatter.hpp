@@ -19,9 +19,11 @@
 
 namespace mem_analyzer {
 
-/// analysis JSON 输出（global app/sys + local 三个 section，每个 top object 含 downstreamTree）。
-/// 强类型入参：不再经过 ProcessData / std::any。
-/// 返回写出的文件路径。
+/**
+ * analysis JSON 输出（global app/sys + local 三个 section，每个 top object 含 downstreamTree）。
+ * 强类型入参：不再经过 ProcessData / std::any。
+ * 返回写出的文件路径。
+ */
 std::string TshandleWriteAnalysisJson(const TshandleAnalysisOutput& analysis,
     const std::string& filePath, const RunContext& ctx,
     const std::string& outDir);

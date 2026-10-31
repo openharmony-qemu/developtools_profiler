@@ -526,7 +526,9 @@ public:
     bool done_ = false;             // true when closing ']' has been seen
     std::string overflow_;          // partial number straddling a chunk boundary
 
-    /// Feed one chunk of text. When ']' appears the parser finishes.
+    /**
+     * Feed one chunk of text. When ']' appears the parser finishes.
+     */
     void Feed(const std::string& chunkText)
     {
         if (done_) {
@@ -560,7 +562,9 @@ public:
         }
     }
 
-    /// Must be called after the last chunk to flush pending overflow.
+    /**
+     * Must be called after the last chunk to flush pending overflow.
+     */
     void Done()
     {
         if (done_) {
@@ -576,8 +580,10 @@ public:
     bool IsDone() const { return done_; }
 
 private:
-    /// Parse comma-separated unsigned integers from a string.
-    /// Non-digit characters (commas, whitespace, brackets) terminate numbers.
+    /**
+     * Parse comma-separated unsigned integers from a string.
+     * Non-digit characters (commas, whitespace, brackets) terminate numbers.
+     */
     static void ParseNumbersFromString(const std::string& s, std::vector<uint32_t>& out)
     {
         uint32_t num = 0;
@@ -611,10 +617,12 @@ struct HeaderResult {
     size_t nodesMarkerPos;    // byte offset of "\"nodes\":" in buf
 };
 
-/// Read file header in META_CHUNK-sized chunks until both "\"snapshot\":"
-/// and "\"nodes\":" markers are found.  Returns the accumulated buffer
-/// and the position of the nodes marker.
-/// Throws if markers are not found within META_LIMIT bytes.
+/**
+ * Read file header in META_CHUNK-sized chunks until both "\"snapshot\":"
+ * and "\"nodes\":" markers are found.  Returns the accumulated buffer
+ * and the position of the nodes marker.
+ * Throws if markers are not found within META_LIMIT bytes.
+ */
 static HeaderResult ReadHeader(std::ifstream& file, size_t fileSize)
 {
     size_t limit = std::min<size_t>(fileSize, META_LIMIT);
@@ -641,8 +649,10 @@ static HeaderResult ReadHeader(std::ifstream& file, size_t fileSize)
     throw std::runtime_error("cannot find \"snapshot\" and \"nodes\" fields in file header");
 }
 
-/// Stream-parse a flat numeric JSON array from file starting at byte_offset.
-/// Uses ChunkedUintParser with CHUNK_SIZE (16 MB) chunks.
+/**
+ * Stream-parse a flat numeric JSON array from file starting at byte_offset.
+ * Uses ChunkedUintParser with CHUNK_SIZE (16 MB) chunks.
+ */
 static std::vector<uint32_t> parseArrayChunked(std::ifstream& file, size_t byteOffset, size_t fileSize)
 {
     ChunkedUintParser parser;
@@ -669,10 +679,12 @@ static std::vector<uint32_t> parseArrayChunked(std::ifstream& file, size_t byteO
     return std::move(parser.result);
 }
 
-/// Search for a marker string in the file, scanning in META_CHUNK-sized windows.
-/// To avoid missing markers that straddle chunk boundaries, each window
-/// overlaps the previous one by (marker.length() - 1) bytes.
-/// Returns the absolute byte offset of the marker, or std::string::npos.
+/**
+ * Search for a marker string in the file, scanning in META_CHUNK-sized windows.
+ * To avoid missing markers that straddle chunk boundaries, each window
+ * overlaps the previous one by (marker.length() - 1) bytes.
+ * Returns the absolute byte offset of the marker, or std::string::npos.
+ */
 static size_t FindMarkerInFile(std::ifstream& file, const std::string& marker, size_t startPos, size_t fileSize)
 {
     std::string readBuf(META_CHUNK, '\0');
@@ -707,9 +719,11 @@ static size_t FindMarkerInFile(std::ifstream& file, const std::string& marker, s
     return std::string::npos;
 }
 
-/// Find the position of '[' that starts a JSON array after a given marker.
-/// e.g., find_array_bracket_after(file, "\"nodes\":", start_pos, fileSize)
-/// returns the byte offset of the '[' after the marker.
+/**
+ * Find the position of '[' that starts a JSON array after a given marker.
+ * e.g., find_array_bracket_after(file, "\"nodes\":", start_pos, fileSize)
+ * returns the byte offset of the '[' after the marker.
+ */
 static size_t FindArrayBracketAfter(std::ifstream& file, const std::string& marker, size_t startPos, size_t fileSize)
 {
     size_t markPos = FindMarkerInFile(file, marker, startPos, fileSize);
@@ -742,10 +756,12 @@ static size_t FindArrayBracketAfter(std::ifstream& file, const std::string& mark
 //  surrogates with U+FFFD.
 // ============================================================================
 
-/// Find the matching closing ']' for an opening '[' at position start.
-/// Correctly handles string literals so ']' inside strings is not mistaken
-/// for the array terminator.  Works for flat JSON arrays of strings
-/// (no nested objects/arrays).
+/**
+ * Find the matching closing ']' for an opening '[' at position start.
+ * Correctly handles string literals so ']' inside strings is not mistaken
+ * for the array terminator.  Works for flat JSON arrays of strings
+ * (no nested objects/arrays).
+ */
 static size_t FindMatchingCloseBracket(const std::string& text, size_t start)
 {
     if (start >= text.size() || text[start] != '[') {
@@ -780,10 +796,12 @@ static size_t FindMatchingCloseBracket(const std::string& text, size_t start)
     return std::string::npos;
 }
 
-/// Sanitize a JSON string array buffer for nlohmann::json compatibility.
-/// Control characters (U+0000-U+001F, except \t \n \r) are escaped as \u00XX,
-/// and orphan surrogate pairs (\uD800-\uDFFF) are replaced with \uFFFD.
-/// The sanitization is done in-place on a copy; the original buffer is unchanged.
+/**
+ * Sanitize a JSON string array buffer for nlohmann::json compatibility.
+ * Control characters (U+0000-U+001F, except \t \n \r) are escaped as \u00XX,
+ * and orphan surrogate pairs (\uD800-\uDFFF) are replaced with \uFFFD.
+ * The sanitization is done in-place on a copy; the original buffer is unchanged.
+ */
 static std::string SanitizeJsonStringArray(const std::string& strBuf)
 {
     std::string sanitized;
@@ -839,10 +857,12 @@ static std::string SanitizeJsonStringArray(const std::string& strBuf)
     return sanitized;
 }
 
-/// Read and parse the strings table from file.
-/// The strings array is located at bracket_pos and parsed via JSON.
-/// If the initial parse fails, the buffer is sanitized and retried.
-/// If that also fails, an empty string table is returned as fallback.
+/**
+ * Read and parse the strings table from file.
+ * The strings array is located at bracket_pos and parsed via JSON.
+ * If the initial parse fails, the buffer is sanitized and retried.
+ * If that also fails, an empty string table is returned as fallback.
+ */
 static std::vector<std::string> readStringsArray(std::ifstream& file, size_t bracketPos, size_t fileSize)
 {
     // Read up to 1 MB (META_CHUNK * 16) for the strings array
@@ -1155,13 +1175,15 @@ static void ParseStringsTable(HeapSnapshot& snapshot, std::ifstream& file,
     }
 }
 
-/// Phase 5: build CSR indices + node_id map.
-/// Builds two indexing structures:
-///   - first_edge_pointers: CSR (Compressed Sparse Row) for forward edges.
-///     For node i, edges start at first_edge_pointers[i] and end at
-///     first_edge_pointers[i+1].  Each edge occupies edge_fields_count uint32s.
-///   - node_id_to_idx: unordered_map from node id to node index.
-///     Used for O(1) lookup of nodes by their numeric id.
+/**
+ * Phase 5: build CSR indices + node_id map.
+ * Builds two indexing structures:
+ *   - first_edge_pointers: CSR (Compressed Sparse Row) for forward edges.
+ *     For node i, edges start at first_edge_pointers[i] and end at
+ *     first_edge_pointers[i+1].  Each edge occupies edge_fields_count uint32s.
+ *   - node_id_to_idx: unordered_map from node id to node index.
+ *     Used for O(1) lookup of nodes by their numeric id.
+ */
 static void BuildCsrAndIdMap(HeapSnapshot& snapshot)
 {
     // ---- Build forward CSR ----
@@ -1238,14 +1260,16 @@ static void ComputePathsAndRetained(HeapSnapshot& snapshot)
     }
 }
 
-/// HeapSnapshot::from_file — main entry point.
-/// Orchestrates the six-phase pipeline:
-///   1. Parse snapshot metadata (field offsets, type values)
-///   2. Stream-parse nodes array
-///   3. Stream-parse edges array
-///   4. Parse strings table (JSON with fallback sanitization)
-///   5. Build CSR indices and node_id_to_idx map
-///   6. Compute shortest paths and retained sizes
+/**
+ * HeapSnapshot::from_file — main entry point.
+ * Orchestrates the six-phase pipeline:
+ *   1. Parse snapshot metadata (field offsets, type values)
+ *   2. Stream-parse nodes array
+ *   3. Stream-parse edges array
+ *   4. Parse strings table (JSON with fallback sanitization)
+ *   5. Build CSR indices and node_id_to_idx map
+ *   6. Compute shortest paths and retained sizes
+ */
 
 HeapSnapshot HeapSnapshot::FromFile(const std::string& path)
 {
@@ -1366,9 +1390,11 @@ uint32_t HeapSnapshot::GetNodeEdgeCount(uint32_t nodeIndex) const
     return nodes[base + static_cast<size_t>(nodeEdgeCountOffset)];
 }
 
-/// Extract the ArkInternalHash value from a node's edges.
-/// ArkTS (HarmonyOS) stores internal hash values in edge names matching
-/// "ArkInternalHash", with the target node name containing "Int: <hash>".
+/**
+ * Extract the ArkInternalHash value from a node's edges.
+ * ArkTS (HarmonyOS) stores internal hash values in edge names matching
+ * "ArkInternalHash", with the target node name containing "Int: <hash>".
+ */
 uint32_t HeapSnapshot::GetNodeInternalHash(uint32_t nodeIndex) const
 {
     if (nodeIndex >= static_cast<uint32_t>(nodeCount)) {
@@ -1396,11 +1422,13 @@ uint32_t HeapSnapshot::GetNodeInternalHash(uint32_t nodeIndex) const
     return hash;
 }
 
-/// Format the shortest reference chain from a GC root to the given node.
-/// Walks up via path_parent_index (set by compute_shortest_paths).
-/// Root nodes have path_parent_index[root] == root (self-reference).
-/// Unreachable nodes have path_parent_index == invalid.
-/// Format: "RootNode -> ChildNode -> TargetNode"
+/**
+ * Format the shortest reference chain from a GC root to the given node.
+ * Walks up via path_parent_index (set by compute_shortest_paths).
+ * Root nodes have path_parent_index[root] == root (self-reference).
+ * Unreachable nodes have path_parent_index == invalid.
+ * Format: "RootNode -> ChildNode -> TargetNode"
+ */
 std::string HeapSnapshot::FormatRefChain(uint32_t nodeIndex) const
 {
     constexpr uint32_t invalid = INVALID_NODE;

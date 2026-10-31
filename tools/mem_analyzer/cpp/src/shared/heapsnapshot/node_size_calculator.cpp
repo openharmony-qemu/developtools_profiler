@@ -58,15 +58,19 @@ constexpr uint32_t MIN_DFN_FOR_SEMI_DOM = 2;           // skip root (dfn 0) and 
 //  Low-level array access helpers
 // --------------------------------------------------------------------------
 
-/// Decode the target node index from an edge field pointer.
-/// V8 stores to_node as (nodeIndex * nodeFieldsCount), so we divide.
+/**
+ * Decode the target node index from an edge field pointer.
+ * V8 stores to_node as (nodeIndex * nodeFieldsCount), so we divide.
+ */
 inline uint32_t TargetIndexOf(const std::vector<uint32_t>& edges, size_t ptr, int toNodeOff, int nodeFieldsCount)
 {
     return edges[ptr + static_cast<size_t>(toNodeOff)] / static_cast<uint32_t>(nodeFieldsCount);
 }
 
-/// Read self_size for a node from the flat nodes array.
-/// node_index * node_fields_count + self_size_off
+/**
+ * Read self_size for a node from the flat nodes array.
+ * node_index * node_fields_count + self_size_off
+ */
 inline uint32_t SelfSizeOf(const std::vector<uint32_t>& nodes, uint32_t nodeIndex, int nodeFieldsCount, int selfSizeOff)
 {
     return nodes[static_cast<size_t>(nodeIndex) * static_cast<size_t>(nodeFieldsCount) +
@@ -107,7 +111,9 @@ struct DomContext {
     // ---- Total node count ----
     uint32_t nodeCount;
 
-    /// Look up a node's name from the string table.
+    /**
+     * Look up a node's name from the string table.
+     */
     std::string GetNodeName(uint32_t idx) const
     {
         size_t base = static_cast<size_t>(idx) * static_cast<size_t>(nodeFieldsCount);
@@ -800,7 +806,9 @@ namespace {
 // 不能返回临时对象 ""，否则悬垂）。
 const std::string EMPTY_STRING;
 
-/// Context struct for the BFS, mirroring DomContext for the dominator pipeline.
+/**
+ * Context struct for the BFS, mirroring DomContext for the dominator pipeline.
+ */
 struct BfsContext {
     const std::vector<uint32_t>& edges;
     const std::vector<uint32_t>& nodes;
@@ -822,14 +830,18 @@ struct BfsContext {
     int elementType;
     uint32_t nodeCount;
 
-    /// Look up an edge's name from the string table.
+    /**
+     * Look up an edge's name from the string table.
+     */
     const std::string& GetEdgeName(size_t ptr) const
     {
         uint32_t nameIdx = edges[ptr + static_cast<size_t>(edgeNameOff)];
         return (nameIdx < strings.size()) ? strings[nameIdx] : EMPTY_STRING;
     }
 
-    /// Look up a node's name from the string table.
+    /**
+     * Look up a node's name from the string table.
+     */
     const std::string& GetNodeName(uint32_t idx) const
     {
         if (idx >= nodeCount) {
@@ -840,7 +852,9 @@ struct BfsContext {
         return (ni < strings.size()) ? strings[ni] : EMPTY_STRING;
     }
 
-    /// Look up a node's type name (e.g. "object", "string", "code").
+    /**
+     * Look up a node's type name (e.g. "object", "string", "code").
+     */
     const std::string& GetNodeType(uint32_t idx) const
     {
         if (idx >= nodeCount || nodeTypeNames.empty()) {
@@ -854,14 +868,18 @@ struct BfsContext {
 
 // ---- Block lists (matching the reference implementation's Config) ----
 
-/// Edge name block list: edges with these names are never traversed.
+/**
+ * Edge name block list: edges with these names are never traversed.
+ */
 static bool IsEdgeNameBlocked(const std::string& name)
 {
     return name == "feedback_cell" ||
            name == "part of key -> value pair in ephemeron table";
 }
 
-/// Node name block list: nodes with these names are skipped entirely.
+/**
+ * Node name block list: nodes with these names are skipped entirely.
+ */
 static bool IsNodeNameBlocked(const std::string& name)
 {
     return name == "system / PropertyCell";
@@ -886,25 +904,29 @@ static const std::unordered_set<std::string> nodeNameGreyList = {
     "(Write barrier)", "(Retain maps)", "(Unknown)", "<Synthetic>",
 };
 
-/// Check if a node is a "C++ roots" synthetic node (low priority).
+/**
+ * Check if a node is a "C++ roots" synthetic node (low priority).
+ */
 static bool IsCppRootsNode(const BfsContext& ctx, uint32_t idx)
 {
     return ctx.GetNodeName(idx) == "C++ roots" && ctx.GetNodeType(idx) == "synthetic";
 }
 
-/// Collect root nodes (high-priority + low-priority).
-/// Matches the reference implementation's getRootNodeList with prioritize:true.
-/// High-priority roots are processed first; low-priority roots are only used
-/// as a fallback when the normal queue is empty.
-/// Root classification:
-///   High-priority:
-///     - Node 0 (SyntheticRoot): always
-///     - id == 0 or id == 1
-///     - type == "native" && name starts with "Window"
-///     - type == "synthetic" && name == "(GC roots)"
-///   Low-priority:
-///     - type == "synthetic" && name is Blink roots
-///     - (synthetic || native) && name == "Pending activities"
+/**
+ * Collect root nodes (high-priority + low-priority).
+ * Matches the reference implementation's getRootNodeList with prioritize:true.
+ * High-priority roots are processed first; low-priority roots are only used
+ * as a fallback when the normal queue is empty.
+ * Root classification:
+ *   High-priority:
+ *     - Node 0 (SyntheticRoot): always
+ *     - id == 0 or id == 1
+ *     - type == "native" && name starts with "Window"
+ *     - type == "synthetic" && name == "(GC roots)"
+ *   Low-priority:
+ *     - type == "synthetic" && name is Blink roots
+ *     - (synthetic || native) && name == "Pending activities"
+ */
 static void CollectShortestPathRoots(
     const BfsContext& ctx,
     std::vector<uint32_t>& highPri,

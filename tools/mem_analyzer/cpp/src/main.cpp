@@ -80,7 +80,9 @@ static int RunAutoDetect(const mem_analyzer::GlobalOptions& g)
     return allOk ? 0 : 1;
 }
 
-/// Windows: convert ANSI argv to UTF-8 in-place.
+/**
+ * Windows: convert ANSI argv to UTF-8 in-place.
+ */
 #if defined(_WIN32)
 static void SetupUtf8Args(int argc, char**& argv,
     std::vector<std::string>& storage, std::vector<char*>& ptrs)
@@ -96,7 +98,9 @@ static void SetupUtf8Args(int argc, char**& argv,
 }
 #endif
 
-/// Save the original command line for output metadata.
+/**
+ * Save the original command line for output metadata.
+ */
 static void SaveCommandLine(int argc, char** argv, std::string& out)
 {
     for (int i = 1; i < argc; i++) {
@@ -107,7 +111,9 @@ static void SaveCommandLine(int argc, char** argv, std::string& out)
     }
 }
 
-/// Register all subcommands from the module registry into the CLI parser.
+/**
+ * Register all subcommands from the module registry into the CLI parser.
+ */
 static void RegisterSubcommands(mem_analyzer::CliParser& app,
     mem_analyzer::GlobalOptions& global)
 {
@@ -117,7 +123,9 @@ static void RegisterSubcommands(mem_analyzer::CliParser& app,
     }
 }
 
-/// Apply debug/verbose/keepTemp settings from global options.
+/**
+ * Apply debug/verbose/keepTemp settings from global options.
+ */
 static void ApplyGlobalOptions(mem_analyzer::GlobalOptions& global)
 {
     if (global.debug) {
@@ -129,7 +137,9 @@ static void ApplyGlobalOptions(mem_analyzer::GlobalOptions& global)
     mem_analyzer::TempDir::SetKeep(global.keepTemp);
 }
 
-/// Load preview feature switches (non-fatal on failure).
+/**
+ * Load preview feature switches (non-fatal on failure).
+ */
 static void LoadPreviewFeatures()
 {
     std::string err;

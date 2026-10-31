@@ -19,9 +19,11 @@
 
 namespace mem_analyzer {
 
-/// analysis HTML 输出（global / local handle 两个 Tab + 引用关系图）。
-/// 强类型入参：不再经过 ProcessData / std::any。
-/// 返回写出的文件路径。
+/**
+ * analysis HTML 输出（global / local handle 两个 Tab + 引用关系图）。
+ * 强类型入参：不再经过 ProcessData / std::any。
+ * 返回写出的文件路径。
+ */
 std::string TshandleWriteAnalysisHtml(const TshandleAnalysisOutput& analysis,
     const std::string& filePath, const RunContext& ctx,
     const std::string& outDir);

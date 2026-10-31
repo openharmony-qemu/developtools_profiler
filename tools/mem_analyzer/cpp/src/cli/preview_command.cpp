@@ -22,7 +22,9 @@
 namespace mem_analyzer {
 namespace {
 
-/// 隐藏子命令：预览特性开关（内部使用，不出现在 --help/usage 中）
+/**
+ * 隐藏子命令：预览特性开关（内部使用，不出现在 --help/usage 中）
+ */
 class PreviewCommand final : public ICommand {
     std::string action_;
 

@@ -47,8 +47,10 @@ constexpr size_t SCAN_WIN = 64 * 1024;       // 64 KB — marker 扫描窗口
 constexpr size_t BRACKET_CHUNK = 1024 * 1024; // 1 MB — 匹配 ']' 的扫描块
 constexpr size_t COPY_CHUNK = 4 * 1024 * 1024; // 4 MB — 字节流式拷贝块
 
-/// 在文件中从 start_pos 起流式扫描 marker（如 "\"strings\":"），返回其字节偏移。
-/// 窗口按 (marker.size() - 1) 字节重叠，避免跨块边界遗漏。
+/**
+ * 在文件中从 start_pos 起流式扫描 marker（如 "\"strings\":"），返回其字节偏移。
+ * 窗口按 (marker.size() - 1) 字节重叠，避免跨块边界遗漏。
+ */
 size_t FindMarkerOffset(std::ifstream& file, const std::string& marker, size_t startPos, size_t fileSize)
 {
     std::string buf(SCAN_WIN, '\0');
@@ -78,7 +80,9 @@ size_t FindMarkerOffset(std::ifstream& file, const std::string& marker, size_t s
     return std::string::npos;
 }
 
-/// 从 start_pos 起读取最多 256 字节，返回首个 ch 的字节偏移。
+/**
+ * 从 start_pos 起读取最多 256 字节，返回首个 ch 的字节偏移。
+ */
 size_t FindCharAfter(std::ifstream& file, char ch, size_t startPos, size_t fileSize)
 {
     std::string buf(std::min<size_t>(CHAR_SEARCH_BUF_SIZE, fileSize - startPos), '\0');
@@ -94,8 +98,10 @@ size_t FindCharAfter(std::ifstream& file, char ch, size_t startPos, size_t fileS
     return std::string::npos;
 }
 
-/// 从 open_pos 的 '[' 起流式扫描其匹配的 ']'，正确处理字符串字面量与转义。
-/// 适用于 strings 这种扁平字符串数组（无嵌套对象/数组）。返回 ']' 的字节偏移。
+/**
+ * 从 open_pos 的 '[' 起流式扫描其匹配的 ']'，正确处理字符串字面量与转义。
+ * 适用于 strings 这种扁平字符串数组（无嵌套对象/数组）。返回 ']' 的字节偏移。
+ */
 size_t FindMatchingCloseBracket(std::ifstream& file, size_t openPos, size_t fileSize)
 {
     std::string buf(BRACKET_CHUNK, '\0');
@@ -133,7 +139,9 @@ size_t FindMatchingCloseBracket(std::ifstream& file, size_t openPos, size_t file
     return std::string::npos;
 }
 
-/// 读取 [start, end) 字节范围为字符串。
+/**
+ * 读取 [start, end) 字节范围为字符串。
+ */
 std::string ReadByteRange(std::ifstream& file, size_t start, size_t end)
 {
     if (end <= start) {
@@ -147,7 +155,9 @@ std::string ReadByteRange(std::ifstream& file, size_t start, size_t end)
     return buf;
 }
 
-/// 将输入文件 [start, end) 字节流式拷贝到输出流。
+/**
+ * 将输入文件 [start, end) 字节流式拷贝到输出流。
+ */
 bool CopyByteRange(std::ifstream& in, std::ofstream& out, size_t start, size_t end)
 {
     if (end <= start) {
@@ -173,9 +183,11 @@ bool CopyByteRange(std::ifstream& in, std::ofstream& out, size_t start, size_t e
     return true;
 }
 
-/// 对 JSON 文本做 sanitize：把 U+0000-U+001F 控制字符替换为空格，
-/// 使 nlohmann::json 能够解析（参考 heap_snapshot.cpp read_strings_array 思路）。
-/// 仅在首次解析失败时作为降级手段使用。
+/**
+ * 对 JSON 文本做 sanitize：把 U+0000-U+001F 控制字符替换为空格，
+ * 使 nlohmann::json 能够解析（参考 heap_snapshot.cpp read_strings_array 思路）。
+ * 仅在首次解析失败时作为降级手段使用。
+ */
 std::string SanitizeControlChars(const std::string& text)
 {
     std::string sanitized;
@@ -191,12 +203,14 @@ std::string SanitizeControlChars(const std::string& text)
     return sanitized;
 }
 
-/// 解析 heapsnapshot 中的 ArkTS 模块路径串，形如
-///   [<bundle>/][@scope/]<module>@<version>/<rel_path>
-/// （如 "com.xxx/entry@1.0.0/src/main/ets/web/a.ts" 或
-///    "com.xxx/@douyin/camera_impl@1.0.0/src/main/ets/camera/a.ts"，
-///    bundle 前缀与 @scope 前缀均可省略）。
-/// 成功时返回 true 并填充 module / version / rel_path。
+/**
+ * 解析 heapsnapshot 中的 ArkTS 模块路径串，形如
+ *   [<bundle>/][@scope/]<module>@<version>/<rel_path>
+ * （如 "com.xxx/entry@1.0.0/src/main/ets/web/a.ts" 或
+ *    "com.xxx/@douyin/camera_impl@1.0.0/src/main/ets/camera/a.ts"，
+ *    bundle 前缀与 @scope 前缀均可省略）。
+ * 成功时返回 true 并填充 module / version / rel_path。
+ */
 bool ParseArktsModulePath(const std::string& pathPart, std::string& module, std::string& version, std::string& relPath)
 {
     const size_t atPos = pathPart.rfind('@');
@@ -276,15 +290,17 @@ void SelectNameCacheCandidate(const std::vector<NameCacheCandidate>& candidates,
     }
 }
 
-/// 用官方 nameCache 行号范围修正源码行号（参考官方"异常堆栈解析原理"文档）。
-/// nameCache 的 IdentifierCache/MemberMethodCache 条目格式为
-/// "原始方法名:起始行:结束行"（源码 1-based 双闭区间）。官方算法：
-/// 1. 名称匹配：'#' 代表上下级关系，匹配时保留最后一级名称；
-/// 2. 行号过滤：同名候选存在多个时，用行号范围（双闭区间）包含还原行号的条目。
-/// 快照 VM 记录的行号是函数首条执行语句所在行（构造函数因字段初始化提升，
-/// 记录落在字段声明区），当还原行号不在该方法的行号范围内时，
-/// 修正为定义起始行最贴近还原行号的候选。函数名可能是混淆名（开启属性混淆）
-/// 或原始名（未开启时），两者都查。未修正返回 false（保持 sourceMap 映射结果）。
+/**
+ * 用官方 nameCache 行号范围修正源码行号（参考官方"异常堆栈解析原理"文档）。
+ * nameCache 的 IdentifierCache/MemberMethodCache 条目格式为
+ * "原始方法名:起始行:结束行"（源码 1-based 双闭区间）。官方算法：
+ * 1. 名称匹配：'#' 代表上下级关系，匹配时保留最后一级名称；
+ * 2. 行号过滤：同名候选存在多个时，用行号范围（双闭区间）包含还原行号的条目。
+ * 快照 VM 记录的行号是函数首条执行语句所在行（构造函数因字段初始化提升，
+ * 记录落在字段声明区），当还原行号不在该方法的行号范围内时，
+ * 修正为定义起始行最贴近还原行号的候选。函数名可能是混淆名（开启属性混淆）
+ * 或原始名（未开启时），两者都查。未修正返回 false（保持 sourceMap 映射结果）。
+ */
 bool RefineLineByNameCache(const NameCacheIndex* ncache, const std::string& sourcePath,
     const std::string& suffix, int& origLine)
 {
@@ -343,13 +359,15 @@ bool RefineLineByNameCache(const NameCacheIndex* ncache, const std::string& sour
     return true;
 }
 
-/// 还原 VM 函数标记串 "path#funcName(line:N)[module]" 后缀中的混淆函数名。
-/// 快照中该类字符串形如 "entry@1.0.0/src/main/ets/pages/WebPage.ts#g1(line:24)[entry]"，
-/// 路径部分经 sourceMap 还原后为 "entry/src/main/ets/pages/WebPage.ets#g1(line:24)[entry]"，
-/// 但其中的函数名（如 g1/d1/a1）仍是混淆名。此处按文件上下文过滤 nameCache 候选，
-/// 候选去重后仅一种原始名时才替换，保证不会误还原。
-/// Filter name cache candidates by source path and deduplicate by original name.
-/// Returns the unique original name, or empty if no match or ambiguous.
+/**
+ * 还原 VM 函数标记串 "path#funcName(line:N)[module]" 后缀中的混淆函数名。
+ * 快照中该类字符串形如 "entry@1.0.0/src/main/ets/pages/WebPage.ts#g1(line:24)[entry]"，
+ * 路径部分经 sourceMap 还原后为 "entry/src/main/ets/pages/WebPage.ets#g1(line:24)[entry]"，
+ * 但其中的函数名（如 g1/d1/a1）仍是混淆名。此处按文件上下文过滤 nameCache 候选，
+ * 候选去重后仅一种原始名时才替换，保证不会误还原。
+ * Filter name cache candidates by source path and deduplicate by original name.
+ * Returns the unique original name, or empty if no match or ambiguous.
+ */
 static std::string ResolveObfNameFromCandidates(
     const std::vector<NameCacheCandidate>& candidates,
     const std::string& ctxPath, const std::string& obfName)
@@ -445,8 +463,10 @@ void ResolveSuffixLineMapping(std::string& suffix,
     }
 }
 
-/// 对单个 strings 数组元素做反混淆还原（混淆路径→源码路径、混淆名→原始名）。
-/// 返回还原后的字符串；发生替换时递增 replaced。
+/**
+ * 对单个 strings 数组元素做反混淆还原（混淆路径→源码路径、混淆名→原始名）。
+ * 返回还原后的字符串；发生替换时递增 replaced。
+ */
 std::string DeobfuscateOneString(const std::string& value,
     const SourceMapIndex* smap,
     const NameCacheIndex* ncache,

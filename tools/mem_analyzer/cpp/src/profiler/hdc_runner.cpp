@@ -238,7 +238,9 @@ const MemRowSpec MEM_ROWS[] = {
 
 }  // namespace
 
-/// Match a row label against the MEM_ROWS spec table.
+/**
+ * Match a row label against the MEM_ROWS spec table.
+ */
 static const MemRowSpec* MatchMemRowSpec(const std::string& first, std::istringstream& lss)
 {
     for (const auto& s : MEM_ROWS) {
@@ -260,7 +262,9 @@ static const MemRowSpec* MatchMemRowSpec(const std::string& first, std::istrings
     return nullptr;
 }
 
-/// Collect remaining numeric columns from a line.
+/**
+ * Collect remaining numeric columns from a line.
+ */
 static std::vector<long long> ExtractRowNumbers(std::istringstream& lss)
 {
     std::vector<long long> nums;
@@ -471,14 +475,16 @@ std::string LocalRecvPath(const std::string& outputDir, const std::string& remot
             .lexically_normal());
 }
 
-/// Mark an exported snapshot with the role it was captured for by inserting
-/// `-<role>` before the extension:
-///   hidumper-jsheap-123-123-1788535089196.rawheap
-///     -> hidumper-jsheap-123-123-1788535089196-start.rawheap
-/// The role has to live in the file name because every snapshot of a continuous
-/// session is pulled flat into the session directory (no role subdirectories).
-/// An empty `role` leaves the path untouched; if the rename fails the original
-/// path is kept so the file is still reported and analyzed.
+/**
+ * Mark an exported snapshot with the role it was captured for by inserting
+ * `-<role>` before the extension:
+ *   hidumper-jsheap-123-123-1788535089196.rawheap
+ *     -> hidumper-jsheap-123-123-1788535089196-start.rawheap
+ * The role has to live in the file name because every snapshot of a continuous
+ * session is pulled flat into the session directory (no role subdirectories).
+ * An empty `role` leaves the path untouched; if the rename fails the original
+ * path is kept so the file is still reported and analyzed.
+ */
 std::string MarkSnapshotRole(const std::string& path, const std::string& role)
 {
     if (role.empty()) {
@@ -1060,7 +1066,9 @@ void StopHiprofiler()
 // the authoritative indicator that hiprofiler finished writing it. Returns
 // the full device path of the detected zip, or an empty string when none was
 // found (the caller then falls back to the -o file).
-/// Find a new zip file not in baseline, with the largest embedded timestamp.
+/**
+ * Find a new zip file not in baseline, with the largest embedded timestamp.
+ */
 static std::string FindNewZipCandidate(
     const std::map<std::string, long long>& currentZips,
     const std::map<std::string, long long>& baseline)
@@ -1079,7 +1087,9 @@ static std::string FindNewZipCandidate(
     return candidate;
 }
 
-/// Print zip poll status line with stability indicator.
+/**
+ * Print zip poll status line with stability indicator.
+ */
 static void PrintZipPollStatus(int pollIdx, long long elapsedPoll,
     const std::string& candidate, long long curSizeKb, int stableCount)
 {
@@ -1154,7 +1164,9 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
 // other pids, are both handled correctly because we only ever look at the exact
 // file this run produced. Returns the full device path, or empty string when
 // the file never appeared (or `pid` is empty).
-/// Print nativeleaks poll status line with stability indicator.
+/**
+ * Print nativeleaks poll status line with stability indicator.
+ */
 static void PrintNativeleaksPollStatus(int pollIdx, long long elapsedPoll,
     const std::string& filename, long long curSizeKb, int stableCount)
 {
@@ -1520,7 +1532,9 @@ struct PreCaptureState {
 // can later identify the files this run generated (new / size-changed).
 // Returns false when the capture must abort (e.g. snapshot target not
 // running); the error is written into `result`.
-/// Manage app launch/state before capture starts.
+/**
+ * Manage app launch/state before capture starts.
+ */
 static void ManageAppState(const HdcRunOptions& opts, PreCaptureState& pre)
 {
     const std::string runningPid = GetProcessPid(opts.processName);
@@ -1554,7 +1568,9 @@ static void ManageAppState(const HdcRunOptions& opts, PreCaptureState& pre)
     }
 }
 
-/// Collect initial process metrics (memory + fd count) via hdc shell.
+/**
+ * Collect initial process metrics (memory + fd count) via hdc shell.
+ */
 static void CollectInitialMetrics(PreCaptureState& pre)
 {
     if (!pre.wasRunningAtStart) {

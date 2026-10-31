@@ -20,8 +20,10 @@
 
 namespace mem_analyzer {
 
-/// 引用链聚合阶段：按谓词筛选节点后沿最短引用链聚合，按累计 retained size 降序输出。
-/// top-chain 与 napi-wrap 都是它的实例，仅 target_class / top_k / exclude 不同。
+/**
+ * 引用链聚合阶段：按谓词筛选节点后沿最短引用链聚合，按累计 retained size 降序输出。
+ * top-chain 与 napi-wrap 都是它的实例，仅 target_class / top_k / exclude 不同。
+ */
 class RefChainStage : public JsleakStage {
 public:
     RefChainStage(std::string mode,

@@ -24,7 +24,9 @@
 
 namespace mem_analyzer {
 
-/// Extract countdown duration from content or opts.
+/**
+ * Extract countdown duration from content or opts.
+ */
 static long long ExtractTemplateDuration(const std::string& content,
     const ProfilerOptions& opts)
 {
@@ -43,7 +45,9 @@ static long long ExtractTemplateDuration(const std::string& content,
     return 0;
 }
 
-/// Replace $(p:...)/$(t:...)/$(ts:...) placeholders in template content.
+/**
+ * Replace $(p:...)/$(t:...)/$(ts:...) placeholders in template content.
+ */
 static std::string ReplaceTemplatePlaceholders(const std::string& content,
     const ProfilerOptions& opts, std::string& processName)
 {
@@ -74,7 +78,9 @@ static std::string ReplaceTemplatePlaceholders(const std::string& content,
     return out;
 }
 
-/// Split content into command (first line) and device config (rest).
+/**
+ * Split content into command (first line) and device config (rest).
+ */
 static void SplitCommandAndConfig(const std::string& out, CaptureCommand& result)
 {
     const auto firstNl = out.find('\n');
@@ -87,7 +93,9 @@ static void SplitCommandAndConfig(const std::string& out, CaptureCommand& result
     }
 }
 
-/// Extract the hiprofiler_cmd -o <remote_path> argument from command line.
+/**
+ * Extract the hiprofiler_cmd -o <remote_path> argument from command line.
+ */
 static std::string ExtractRemoteOutputPath(const std::string& command)
 {
     std::istringstream iss(command);

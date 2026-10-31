@@ -27,11 +27,13 @@ namespace mem_analyzer {
 
 namespace {
 
-/// 按「最短引用链」聚合一批节点，返回聚合信息列表，并按累计 retained size 降序排列。
-/// predicate 决定节点是否入选；exclude_chains 命中的引用链直接跳过。
-/// top_k 有值时只保留累计 retained size 最大的前 K 条（两遍扫描：第一遍统计
-/// 大小选出 top K，第二遍才收集 nodeIDs，避免为非 top 链保存大量节点 ID）；
-/// top_k 为空时单遍聚合全部引用链。
+/**
+ * 按「最短引用链」聚合一批节点，返回聚合信息列表，并按累计 retained size 降序排列。
+ * predicate 决定节点是否入选；exclude_chains 命中的引用链直接跳过。
+ * top_k 有值时只保留累计 retained size 最大的前 K 条（两遍扫描：第一遍统计
+ * 大小选出 top K，第二遍才收集 nodeIDs，避免为非 top 链保存大量节点 ID）；
+ * top_k 为空时单遍聚合全部引用链。
+ */
 template <typename Pred> std::vector<RefChainInfo> collectRefChains(const HeapSnapshot& heap,
     Pred&& predicate,
     const std::optional<size_t>& topK,

@@ -18,16 +18,24 @@
 namespace mem_analyzer {
 namespace style {
 
-/// Enable ANSI escape processing on Windows (call once at startup).
+/**
+ * Enable ANSI escape processing on Windows (call once at startup).
+ */
 void Init();
 
-/// True if stdout is a terminal (not piped/redirected).
+/**
+ * True if stdout is a terminal (not piped/redirected).
+ */
 bool IsTty();
 
-/// True if stderr is a terminal (not piped/redirected).
+/**
+ * True if stderr is a terminal (not piped/redirected).
+ */
 bool IsStderrTty();
 
-/// Wrap text with ANSI color/style. Returns raw text if stderr is not a TTY.
+/**
+ * Wrap text with ANSI color/style. Returns raw text if stderr is not a TTY.
+ */
 std::string Green(const std::string& text);
 std::string Red(const std::string& text);
 std::string Yellow(const std::string& text);

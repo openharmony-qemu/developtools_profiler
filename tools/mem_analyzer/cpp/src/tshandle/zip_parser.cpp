@@ -124,10 +124,12 @@ static std::string FindHtraceFileInDir(
     return "";
 }
 
-/// 若配置了反混淆索引（--sourcemap 与 --namecache），将解出的
-/// heapsnapshot 还原为源码路径/行号，返回用于后续分析的快照路径；
-/// 未配置或还原失败时降级返回原始快照路径。
-/// 反混淆产物与中间 heapsnapshot 均写入 output_dir（系统 TempDir），由调用方清理。
+/**
+ * 若配置了反混淆索引（--sourcemap 与 --namecache），将解出的
+ * heapsnapshot 还原为源码路径/行号，返回用于后续分析的快照路径；
+ * 未配置或还原失败时降级返回原始快照路径。
+ * 反混淆产物与中间 heapsnapshot 均写入 output_dir（系统 TempDir），由调用方清理。
+ */
 static std::string DeobfuscateZipSnapshot(const std::string& heapsnapshotPath,
     const std::string& outputDir,
     const std::string& sourcemapDir,

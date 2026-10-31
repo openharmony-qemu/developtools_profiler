@@ -53,7 +53,9 @@ struct TshandleTypeSection {
     json ToJson() const;
 };
 
-/// 一个 handle 类型按调用链符号作用域（应用 / 系统）拆分后的两个 section。
+/**
+ * 一个 handle 类型按调用链符号作用域（应用 / 系统）拆分后的两个 section。
+ */
 struct TshandleHandleSections {
     TshandleTypeSection app;
     TshandleTypeSection sys;
@@ -78,9 +80,11 @@ TshandleAnalysisOutput AnalyzeTshandleData(
     const std::vector<ArkTsClass>& arktsClasses,
     int topN);
 
-/// tshandle 分析步骤（global / local 两个 handle 类型的聚合）。
-/// 强类型入参/出参：不再经过 ProcessData / std::any。
-/// 会消费 `parse_result`（其 call_stacks 与 arkts_classes 被移出）。
+/**
+ * tshandle 分析步骤（global / local 两个 handle 类型的聚合）。
+ * 强类型入参/出参：不再经过 ProcessData / std::any。
+ * 会消费 `parse_result`（其 call_stacks 与 arkts_classes 被移出）。
+ */
 TshandleAnalysisOutput TshandleAnalyze(TshandleParseResult& parseResult, const RunContext& ctx);
 
 } // namespace mem_analyzer

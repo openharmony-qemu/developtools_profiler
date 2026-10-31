@@ -36,9 +36,11 @@ bool EndsWithIgnoreCase(const std::string &str, const std::string &suffix);
 //  On non-Windows, pass through as-is.
 // ============================================================================
 
-/// Convert a path string to a wide string on Windows.
-/// On Windows, tries CP_UTF8 first, falls back to CP_ACP (current ANSI code page).
-/// On non-Windows, returns empty (not used).
+/**
+ * Convert a path string to a wide string on Windows.
+ * On Windows, tries CP_UTF8 first, falls back to CP_ACP (current ANSI code page).
+ * On non-Windows, returns empty (not used).
+ */
 std::wstring WidenPath(const std::string& path);
 
 // ============================================================================
@@ -48,7 +50,9 @@ std::wstring WidenPath(const std::string& path);
 //  Use these helpers to go UTF-8 ↔ wide explicitly.
 // ============================================================================
 
-/// Construct fs::path from a UTF-8 std::string (wide-path safe on Windows).
+/**
+ * Construct fs::path from a UTF-8 std::string (wide-path safe on Windows).
+ */
 inline fs::path PathFromUtf8(const std::string& s)
 {
 #if defined(_WIN32)
@@ -58,7 +62,9 @@ inline fs::path PathFromUtf8(const std::string& s)
 #endif
 }
 
-/// Convert fs::path to a UTF-8 std::string (wide-path safe on Windows).
+/**
+ * Convert fs::path to a UTF-8 std::string (wide-path safe on Windows).
+ */
 inline std::string PathToUtf8(const fs::path& p)
 {
 #if defined(_WIN32)
@@ -83,8 +89,10 @@ inline std::string PathToUtf8(const fs::path& p)
 //  bypassing the narrow-locale encoding trap on Windows.
 // ============================================================================
 
-/// Open an input file stream with UTF-8 path support.
-/// The returned stream behaves exactly like std::ifstream.
+/**
+ * Open an input file stream with UTF-8 path support.
+ * The returned stream behaves exactly like std::ifstream.
+ */
 inline std::ifstream OpenIfstream(const std::string& path, std::ios::openmode mode = std::ios::in)
 {
     std::ifstream ifs(PathFromUtf8(path), mode);
@@ -95,7 +103,9 @@ inline std::ifstream OpenIfstream(const std::string& path, std::ios::openmode mo
     return ifs;
 }
 
-/// Open an output file stream with UTF-8 path support.
+/**
+ * Open an output file stream with UTF-8 path support.
+ */
 inline std::ofstream OpenOfstream(const std::string& path, std::ios::openmode mode = std::ios::out)
 {
     std::ofstream ofs(PathFromUtf8(path), mode);
@@ -106,9 +116,11 @@ inline std::ofstream OpenOfstream(const std::string& path, std::ios::openmode mo
     return ofs;
 }
 
-/// Open a file with UTF-8 path support, returns raw FILE*.
-/// Caller must fclose() the returned pointer.
-/// Returns nullptr on failure (check errno).
+/**
+ * Open a file with UTF-8 path support, returns raw FILE*.
+ * Caller must fclose() the returned pointer.
+ * Returns nullptr on failure (check errno).
+ */
 inline FILE* OpenFileRaw(const std::string& path, const char* modeCstr)
 {
     auto wpath = PathFromUtf8(path);

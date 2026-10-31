@@ -67,10 +67,12 @@ static int ParseInt(const std::string& s)
     return static_cast<int>(val);
 }
 
-/// 解析逗号/空格分隔的选项名列表（如 "-d,--out-dir" 或 "--sourcemap"）：
-/// 短名（-x）存入 short_name，长名（--xxx）存入 long_name；
-/// 同名 token 重复出现时只保留第一个。实际注册最多一个短名加一个长名，
-/// 因此无需额外的多别名（extra_names）与去重收集逻辑。
+/**
+ * 解析逗号/空格分隔的选项名列表（如 "-d,--out-dir" 或 "--sourcemap"）：
+ * 短名（-x）存入 short_name，长名（--xxx）存入 long_name；
+ * 同名 token 重复出现时只保留第一个。实际注册最多一个短名加一个长名，
+ * 因此无需额外的多别名（extra_names）与去重收集逻辑。
+ */
 static void ParseOptionNames(const std::string& names, std::string& shortName, std::string& longName)
 {
     size_t start = 0;

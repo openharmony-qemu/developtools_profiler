@@ -26,7 +26,9 @@ namespace mem_analyzer {
 // Forward declarations
 struct RetainedSizeResult;
 
-/// 引用链聚合的分组 key：128-bit 指纹（lo/hi 两个 64-bit lane）。
+/**
+ * 引用链聚合的分组 key：128-bit 指纹（lo/hi 两个 64-bit lane）。
+ */
 struct RefChainKey {
     uint64_t lo = 0;
     uint64_t hi = 0;
@@ -36,7 +38,9 @@ struct RefChainKey {
     }
 };
 
-/// 引用链聚合 key 的桶哈希（把 128-bit 混合成单个 size_t bucket 索引）。
+/**
+ * 引用链聚合 key 的桶哈希（把 128-bit 混合成单个 size_t bucket 索引）。
+ */
 constexpr int MIX_SHIFT_1 = 30;
 constexpr int MIX_SHIFT_2 = 27;
 constexpr int MIX_SHIFT_3 = 31;
@@ -66,7 +70,9 @@ public:
     HeapSnapshot() : extNamesOnce_(std::make_unique<std::once_flag>()),
         chainHashOnce_(std::make_unique<std::once_flag>()) {}
 
-    /// Node field offsets (discovered from meta.node_fields)
+    /**
+     * Node field offsets (discovered from meta.node_fields)
+     */
     int nodeTypeOffset = -1;        // type field index within node record
     int nodeNameOffset = -1;        // name field index (string table index)
     int nodeIdOffset = -1;          // id field index
@@ -94,11 +100,15 @@ public:
     int nodeCount = 0;
     int edgeCount = 0;
 
-    /// nodeId → nodeIndex lookup
+    /**
+     * nodeId → nodeIndex lookup
+     */
     std::unordered_map<uint32_t, uint32_t> nodeIdToIdx;
 
-    /// SyntheticRoot 节点索引缓存（from_file 阶段一次性定位），
-    /// 使 get_total_heap_size 由 O(N) 扫描降为 O(1)。UINT32_MAX = 未找到。
+    /**
+     * SyntheticRoot 节点索引缓存（from_file 阶段一次性定位），
+     * 使 get_total_heap_size 由 O(N) 扫描降为 O(1)。UINT32_MAX = 未找到。
+     */
     uint32_t syntheticRootIndex = UINT32_MAX;
 
     // ========================================================================
@@ -106,23 +116,35 @@ public:
     //  Populated during from_file.
     // ========================================================================
 
-    /// Retained sizes per node index: self_size + dominated descendants' retained sizes
-    /// (self_size only; native_size is NOT added — see node_size_calculator.cpp).
+    /**
+     * Retained sizes per node index: self_size + dominated descendants' retained sizes
+     * (self_size only; native_size is NOT added — see node_size_calculator.cpp).
+     */
     std::vector<double> retainedSizes;
 
-    /// Immediate dominator per node index (UINT32_MAX = unreachable).
+    /**
+     * Immediate dominator per node index (UINT32_MAX = unreachable).
+     */
     std::vector<uint32_t> dominators;
 
-    /// Shortest-path parent node index (UINT32_MAX = root or unreachable).
+    /**
+     * Shortest-path parent node index (UINT32_MAX = root or unreachable).
+     */
     std::vector<uint32_t> pathParentIndex;
 
-    /// Shortest-path incoming edge field start (UINT32_MAX = root).
+    /**
+     * Shortest-path incoming edge field start (UINT32_MAX = root).
+     */
     std::vector<uint32_t> pathEdgeStart;
 
-    /// 1 if reachable from GC root.
+    /**
+     * 1 if reachable from GC root.
+     */
     std::vector<uint8_t> reachable;
 
-    /// Get retained size for a node (dominator-based; self_size only, native_size excluded).
+    /**
+     * Get retained size for a node (dominator-based; self_size only, native_size excluded).
+     */
     double GetRetainedSize(uint32_t nodeIndex) const
     {
         if (nodeIndex < retainedSizes.size()) {
@@ -131,7 +153,9 @@ public:
         return 0.0;
     }
 
-    /// Get the shallow/self size stored on a node.
+    /**
+     * Get the shallow/self size stored on a node.
+     */
     uint32_t GetNodeSelfSize(uint32_t nodeIndex) const
     {
         if (nodeSelfSizeOffset < 0 || nodeIndex >= static_cast<uint32_t>(nodeCount)) {
@@ -141,7 +165,9 @@ public:
                      static_cast<size_t>(nodeSelfSizeOffset)];
     }
 
-    /// Get numeric id for a node.
+    /**
+     * Get numeric id for a node.
+     */
     uint32_t GetNodeId(uint32_t nodeIndex) const
     {
         if (nodeIdOffset < 0 || nodeIndex >= static_cast<uint32_t>(nodeCount)) {
@@ -151,22 +177,30 @@ public:
                      static_cast<size_t>(nodeIdOffset)];
     }
 
-    /// Format shortest reference chain as "RootNode -> NodeA -> TargetNode"
-    /// matching TS's getSimpleRefChain() format.
+    /**
+     * Format shortest reference chain as "RootNode -> NodeA -> TargetNode"
+     * matching TS's getSimpleRefChain() format.
+     */
     std::string FormatRefChain(uint32_t nodeIndex) const;
 
-    /// Return the shortest reference chain frame names (root -> target) as a list.
-    /// Shares the same path collection as format_ref_chain, but emits structured
-    /// frame names instead of a joined " -> " string.
+    /**
+     * Return the shortest reference chain frame names (root -> target) as a list.
+     * Shares the same path collection as format_ref_chain, but emits structured
+     * frame names instead of a joined " -> " string.
+     */
     std::vector<std::string> FormatRefChainFrames(uint32_t nodeIndex) const;
 
-    /// 计算最短引用链的 128-bit 稳定标识（对 target->root 的扩展名序列做双路
-    /// FNV hash），不可达返回 {0,0}。作为引用链聚合的分组 key。
-    /// 注意：必须 hash 扩展名（名字/类型）序列，而非 node_index（具体对象）序列，
-    /// 否则会把「走同一类型路径的多个对象」错误拆成多条单节点链。
+    /**
+     * 计算最短引用链的 128-bit 稳定标识（对 target->root 的扩展名序列做双路
+     * FNV hash），不可达返回 {0,0}。作为引用链聚合的分组 key。
+     * 注意：必须 hash 扩展名（名字/类型）序列，而非 node_index（具体对象）序列，
+     * 否则会把「走同一类型路径的多个对象」错误拆成多条单节点链。
+     */
     RefChainKey RefChainHash(uint32_t nodeIndex) const;
 
-    /// Result of getNodeById
+    /**
+     * Result of getNodeById
+     */
     struct NodeView {
         uint32_t nodeIndex;
         uint32_t id;
@@ -174,28 +208,40 @@ public:
         uint32_t selfSize;
     };
 
-    /// Lookup a node by its numeric id
+    /**
+     * Lookup a node by its numeric id
+     */
     NodeView GetNodeById(uint32_t id) const;
 
-    /// Get node name from strings table
+    /**
+     * Get node name from strings table
+     */
     std::string GetNodeName(uint32_t nodeIndex) const;
 
     // Get ArkInternalHash value from node's edge (returns 0 if not found)
     uint32_t GetNodeInternalHash(uint32_t nodeIndex) const;
 
-    /// Build HeapSnapshot from a .heapsnapshot file
+    /**
+     * Build HeapSnapshot from a .heapsnapshot file
+     */
     static HeapSnapshot FromFile(const std::string& path);
 
-    /// Get type name for node at node_index (e.g. "object", "string", "number")
+    /**
+     * Get type name for node at node_index (e.g. "object", "string", "number")
+     */
     std::string GetNodeTypeName(uint32_t nodeIndex) const;
 
-    /// Number of outgoing edges for a given node
+    /**
+     * Number of outgoing edges for a given node
+     */
     uint32_t GetNodeEdgeCount(uint32_t nodeIndex) const;
 
     // 获取节点的扩展名称
     const std::string& GetExtendedNodeName(uint32_t nodeIndex) const;
 
-    /// Per-edge info exposed via for_each_edge callback
+    /**
+     * Per-edge info exposed via for_each_edge callback
+     */
     struct EdgeInfo {
         uint32_t type;              // numeric type index (matches edge_types meta)
         uint32_t nameOrIndex;     // edge name (string table index) or numeric index
@@ -203,8 +249,10 @@ public:
         uint32_t toNodeId;        // target node id (decoded from to_node)
     };
 
-    /// Iterate outgoing edges of node at node_index.
-    /// Callback receives (const EdgeInfo&, size_t local_edge_index).
+    /**
+     * Iterate outgoing edges of node at node_index.
+     * Callback receives (const EdgeInfo&, size_t local_edge_index).
+     */
     template<typename Fn>
     void ForEachEdge(uint32_t nodeIndex, Fn&& fn) const
     {

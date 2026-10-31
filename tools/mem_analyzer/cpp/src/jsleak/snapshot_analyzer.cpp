@@ -33,8 +33,10 @@ json RefChainToJson(const RefChainInfo& chain)
     return item;
 }
 
-/// 把「引用链 → 聚合信息」列表序列化为数组，元素含 chain/nodeIds/totalRetainedSize，
-/// 并保持传入顺序。
+/**
+ * 把「引用链 → 聚合信息」列表序列化为数组，元素含 chain/nodeIds/totalRetainedSize，
+ * 并保持传入顺序。
+ */
 json RefChainsToJson(const std::vector<RefChainInfo>& chains)
 {
     nlohmann::ordered_json arr = nlohmann::ordered_json::array();
@@ -44,7 +46,9 @@ json RefChainsToJson(const std::vector<RefChainInfo>& chains)
     return arr;
 }
 
-/// 同上，输入为以引用链名称为 key 的 map（propertyTagObjects 的 referenceChains）。
+/**
+ * 同上，输入为以引用链名称为 key 的 map（propertyTagObjects 的 referenceChains）。
+ */
 json RefChainsToJson(const std::unordered_map<std::string, RefChainInfo>& chains)
 {
     nlohmann::ordered_json arr = nlohmann::ordered_json::array();

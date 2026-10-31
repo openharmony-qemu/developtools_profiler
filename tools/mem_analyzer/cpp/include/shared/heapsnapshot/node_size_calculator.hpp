@@ -41,13 +41,17 @@ RetainedSizeResult ComputeNodeSizes(const HeapSnapshot& snapshot,
     bool excludeWeakEdges = true,
     bool excludeShortcutEdges = true);
 
-/// One step in the shortest reference chain from GC root to a node.
+/**
+ * One step in the shortest reference chain from GC root to a node.
+ */
 struct PathEdgeRecord {
     uint32_t parentNodeIndex;      // parent in shortest path (UINT32_MAX = root)
     uint32_t edgeFieldStart;       // edge field start index in edges array (UINT32_MAX = root)
 };
 
-/// Result of compute_shortest_paths.
+/**
+ * Result of compute_shortest_paths.
+ */
 struct ShortestPathsResult {
     std::vector<PathEdgeRecord> pathEdges;  // per nodeIndex
     uint32_t reachableCount;

@@ -18,7 +18,9 @@
 
 namespace mem_analyzer {
 
-/// 判断字符串是否全为数字（非空且每个字符都是 0-9）。
+/**
+ * 判断字符串是否全为数字（非空且每个字符都是 0-9）。
+ */
 inline bool AllDigits(const std::string& s)
 {
     if (s.empty()) {
@@ -32,9 +34,11 @@ inline bool AllDigits(const std::string& s)
     return true;
 }
 
-/// 判断源码路径是否与 nameCache 顶层 key（原始文件路径）匹配：
-/// nameCache 顶层 key 无模块前缀（如 "src/main/ets/web/a.ets"），而还原后的
-/// 源码路径常带 "module/" 前缀（如 "entry/src/main/ets/web/a.ets"），按路径后缀匹配。
+/**
+ * 判断源码路径是否与 nameCache 顶层 key（原始文件路径）匹配：
+ * nameCache 顶层 key 无模块前缀（如 "src/main/ets/web/a.ets"），而还原后的
+ * 源码路径常带 "module/" 前缀（如 "entry/src/main/ets/web/a.ets"），按路径后缀匹配。
+ */
 inline bool SourcePathMatches(const std::string& src, const std::string& filePath)
 {
     if (src == filePath) {

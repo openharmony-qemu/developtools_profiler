@@ -72,7 +72,9 @@ std::string ProgramToken(const std::string& cmd)
 // earlier on PATH and a real `.exe` further down, a naive direct spawn would silently run
 // a DIFFERENT program than the shell — and than the one the user means. Pure filesystem
 // lookups, so it cannot recurse into capture_command(). Empty when nothing matches.
-/// Parse PATHEXT environment variable into a list of extensions.
+/**
+ * Parse PATHEXT environment variable into a list of extensions.
+ */
 static std::vector<std::string> ParsePathExtensions()
 {
     std::vector<std::string> exts;

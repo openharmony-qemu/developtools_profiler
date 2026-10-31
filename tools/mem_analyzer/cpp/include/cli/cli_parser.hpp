@@ -24,7 +24,9 @@
 
 namespace mem_analyzer {
 
-/// Exception thrown by CliParser on parse errors or --help request.
+/**
+ * Exception thrown by CliParser on parse errors or --help request.
+ */
 class CliError : public std::runtime_error {
 public:
     bool isHelp;
@@ -54,23 +56,29 @@ public:
     explicit CliParser(const std::string& description);
 
     // ── Option registration (return *this for chaining) ──────
-    /// `provided`（可选）：命中该选项时被置为 true，用于区分「用户显式传入」与
-    /// 「使用默认值」，无需在解析后再反查 parser。
+    /**
+     * `provided`（可选）：命中该选项时被置为 true，用于区分「用户显式传入」与
+     * 「使用默认值」，无需在解析后再反查 parser。
+     */
     CliParser& AddOption(const std::string& names, std::string& target, const std::string& desc,
         bool* provided = nullptr);
     CliParser& AddSwitch(const std::string& names, bool& target, const std::string& desc);
     CliParser& AddOption(const std::string& names, int& target, const std::string& desc, bool* provided = nullptr);
 
-    /// Group options registered afterwards under `group` for help output.
-    /// An empty group restores the default "OPTIONS" section. Options are
-    /// rendered in registration order within each group; groups appear in
-    /// the order their first option was registered.
+    /**
+     * Group options registered afterwards under `group` for help output.
+     * An empty group restores the default "OPTIONS" section. Options are
+     * rendered in registration order within each group; groups appear in
+     * the order their first option was registered.
+     */
     CliParser& SetOptionGroup(const std::string& group);
 
-    /// Override the argument part of the USAGE line (e.g.
-    /// "-p <process_name> <capture_type> [options]"). Rendered as
-    /// "<program> <args>". Empty (default) keeps the auto-generated
-    /// "[subcommand] [options] <files>" form.
+    /**
+     * Override the argument part of the USAGE line (e.g.
+     * "-p <process_name> <capture_type> [options]"). Rendered as
+     * "<program> <args>". Empty (default) keeps the auto-generated
+     * "[subcommand] [options] <files>" form.
+     */
     CliParser& SetUsage(const std::string& args);
 
     // ── Positional args ──────────────────────────────────────
@@ -78,12 +86,16 @@ public:
     CliParser& AddPositional(const std::string& name, std::string& target, const std::string& desc);
 
     // ── Subcommands ──────────────────────────────────────────
-    /// Add subcommand + alias, return sub-parser reference.
-    /// `hidden=true` 时该子命令仍可被解析与分发，但不出现在 --help 的
-    /// USAGE / SUBCOMMANDS 中。
+    /**
+     * Add subcommand + alias, return sub-parser reference.
+     * `hidden=true` 时该子命令仍可被解析与分发，但不出现在 --help 的
+     * USAGE / SUBCOMMANDS 中。
+     */
     CliParser& AddSubcommand(const std::string& name, const std::string& desc,
         const std::string& alias = "", bool hidden = false);
-    /// Add subcommand with setup callback, return parent for chaining
+    /**
+     * Add subcommand with setup callback, return parent for chaining
+     */
     template<typename Fn>
     CliParser& AddSubcommand(const std::string& name, const std::string& desc,
         const std::string& alias, bool hidden, Fn setup)
@@ -98,7 +110,9 @@ public:
 
     // ── Query ────────────────────────────────────────────────
     bool IsSubcommand(const std::string& name) const;
-    /// 本次解析命中的子命令主名（别名已归一化为主名）；未命中子命令时为空串。
+    /**
+     * 本次解析命中的子命令主名（别名已归一化为主名）；未命中子命令时为空串。
+     */
     const std::string& MatchedSubcommand() const { return matchedSubcommand_; }
 
     // ── Error/help handling (mimics CLI::App::exit) ──────────
@@ -157,9 +171,13 @@ private:
     void ConsumeArgs(const std::vector<std::string>& args, size_t start);
     void ConsumeOption(const std::vector<std::string>& args, size_t& i);
     void ApplyDefaults();
-    /// Resolve alias → primary subcommand name, or return name unchanged
+    /**
+     * Resolve alias → primary subcommand name, or return name unchanged
+     */
     std::string ResolveSubcommand(const std::string& name) const;
-    /// Find subcommand entry by name or alias, returns nullptr if not found
+    /**
+     * Find subcommand entry by name or alias, returns nullptr if not found
+     */
     const SubcommandEntry* FindSubcommand(const std::string& name) const;
 };
 

@@ -259,7 +259,9 @@ void PropertyTagStage::LoadJsleakListFile(const std::string& filePath)
     }
 }
 
-/// Parse base class info from a JSON item (string or object form).
+/**
+ * Parse base class info from a JSON item (string or object form).
+ */
 static std::vector<BaseClassInfo> ParseBaseClassList(const json& item)
 {
     std::vector<BaseClassInfo> bases;
@@ -283,7 +285,9 @@ static std::vector<BaseClassInfo> ParseBaseClassList(const json& item)
     return bases;
 }
 
-/// Parse the tags array from a propertyTag JSON root.
+/**
+ * Parse the tags array from a propertyTag JSON root.
+ */
 static std::unordered_map<std::string, std::vector<BaseClassInfo>>
     ParsePropertyTagEntries(const json& root)
 {

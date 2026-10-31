@@ -22,16 +22,20 @@
 
 namespace mem_analyzer {
 
-/// Symbol resolution dictionary: int ID → string.
-/// Used for lazy resolution of symbol/file/build IDs in stack frames.
+/**
+ * Symbol resolution dictionary: int ID → string.
+ * Used for lazy resolution of symbol/file/build IDs in stack frames.
+ */
 using DataDict = std::unordered_map<int, std::string>;
 
 // ============================================================================
 //  HtraceEventType — core event type enum (used by htrace pipeline)
 // ============================================================================
 
-/// Enum for htrace event types.
-/// Maps to the "type" field in native_hook_statistic and event_type pairs in native_hook.
+/**
+ * Enum for htrace event types.
+ * Maps to the "type" field in native_hook_statistic and event_type pairs in native_hook.
+ */
 enum class HtraceEventType : int {
     UNKNOWN = -1,
     MALLOC = 0,
@@ -141,9 +145,11 @@ inline std::string NormalizeFilepageFilename(std::string name, const std::string
 //  StackFrame hierarchy
 // ============================================================================
 
-/// Base class for stack frames.
-/// Records depth and whether the frame is in resolved (string) or
-/// compressed (int ID) form.
+/**
+ * Base class for stack frames.
+ * Records depth and whether the frame is in resolved (string) or
+ * compressed (int ID) form.
+ */
 struct StackFrame {
     int depth = 0;
     bool resolved = false;
@@ -153,8 +159,10 @@ struct StackFrame {
     bool IsResolved() const { return resolved; }
 };
 
-/// Frame with fully resolved string fields.
-/// Used by: tshandle parser (pre-resolved), or after resolve() from CompressedStackFrame.
+/**
+ * Frame with fully resolved string fields.
+ * Used by: tshandle parser (pre-resolved), or after resolve() from CompressedStackFrame.
+ */
 struct ResolvedStackFrame : StackFrame {
     std::string symbol;       // function / symbol name (with offset)
     std::string lib;          // library / file path
@@ -164,9 +172,11 @@ struct ResolvedStackFrame : StackFrame {
     ResolvedStackFrame() { resolved = true; }
 };
 
-/// Frame with compressed int-ID representation for lazy resolution.
-/// Used by: htrace parser (avoids string allocation for large datasets).
-/// Flame/icicle graph construction uses int IDs for memory-efficient O(1) lookup.
+/**
+ * Frame with compressed int-ID representation for lazy resolution.
+ * Used by: htrace parser (avoids string allocation for large datasets).
+ * Flame/icicle graph construction uses int IDs for memory-efficient O(1) lookup.
+ */
 struct CompressedStackFrame : StackFrame {
     int symbolId = 0;
     int fileId = 0;
@@ -178,7 +188,9 @@ struct CompressedStackFrame : StackFrame {
 
     CompressedStackFrame() { resolved = false; }
 
-    /// Convert this frame to resolved form using a DataDict.
+    /**
+     * Convert this frame to resolved form using a DataDict.
+     */
     ResolvedStackFrame Resolve(const DataDict& dict) const;
 };
 
@@ -186,7 +198,9 @@ struct CompressedStackFrame : StackFrame {
 //  CallStack hierarchy — homogeneous frame type per instance
 // ============================================================================
 
-/// Common fields shared by all call stack types.
+/**
+ * Common fields shared by all call stack types.
+ */
 struct CallStack {
     long long id = 0;
     HtraceEventType type = HtraceEventType::UNKNOWN;
@@ -197,18 +211,24 @@ struct CallStack {
     std::shared_ptr<std::vector<std::string>> existingAddrs;  // tshandle: address list for ArkTS node mapping
 };
 
-/// Call stack with fully resolved string frames.
-/// Used by: tshandle pipeline, or after resolve() from CompressedCallStack.
+/**
+ * Call stack with fully resolved string frames.
+ * Used by: tshandle pipeline, or after resolve() from CompressedCallStack.
+ */
 struct ResolvedCallStack : CallStack {
     std::vector<ResolvedStackFrame> frames;
 };
 
-/// Call stack with compressed int-ID frames for lazy resolution.
-/// Used by: htrace pipeline (avoids string allocation before analysis).
+/**
+ * Call stack with compressed int-ID frames for lazy resolution.
+ * Used by: htrace pipeline (avoids string allocation before analysis).
+ */
 struct CompressedCallStack : CallStack {
     std::vector<CompressedStackFrame> frames;
 
-    /// Convert all frames to resolved form using a DataDict.
+    /**
+     * Convert all frames to resolved form using a DataDict.
+     */
     ResolvedCallStack Resolve(const DataDict& dict) const;
 };
 
@@ -216,8 +236,10 @@ struct CompressedCallStack : CallStack {
 //  TraceMeta — trace-level metadata (common to htrace and tshandle)
 // ============================================================================
 
-/// Trace-level metadata common to all pipeline types.
-/// Replaces the ad-hoc TraceRange / TshandleTraceMeta structures.
+/**
+ * Trace-level metadata common to all pipeline types.
+ * Replaces the ad-hoc TraceRange / TshandleTraceMeta structures.
+ */
 struct TraceMeta {
     // ── Time range ──
     long long startTimeMs = 0;   // trace start, millisecond timestamp
@@ -236,46 +258,62 @@ struct TraceMeta {
 //  TraceDB — parsed trace database abstraction
 // ============================================================================
 
-/// Compressed call stacks with their resolution dictionary.
-/// DataDict is bundled here — only the compressed form needs it.
+/**
+ * Compressed call stacks with their resolution dictionary.
+ * DataDict is bundled here — only the compressed form needs it.
+ */
 struct CompressedCallStackList {
     DataDict dict;
     std::vector<CompressedCallStack> stacks;
 
-    /// Resolve all stacks to resolved form using the embedded DataDict.
+    /**
+     * Resolve all stacks to resolved form using the embedded DataDict.
+     */
     struct ResolvedCallStackList Resolve() const;
 };
 
-/// Resolved call stacks — strings are already populated, no DataDict needed.
+/**
+ * Resolved call stacks — strings are already populated, no DataDict needed.
+ */
 struct ResolvedCallStackList {
     std::vector<ResolvedCallStack> stacks;
 };
 
-/// List of call stacks, either compressed (+DataDict) or resolved (no DataDict).
+/**
+ * List of call stacks, either compressed (+DataDict) or resolved (no DataDict).
+ */
 using CallStackList = std::variant<CompressedCallStackList, ResolvedCallStackList>;
 
-/// Abstract representation of a parsed trace database.
-/// Contains:
-///   - stacks : call stacks — compressed with DataDict (htrace) or resolved (tshandle)
-///   - meta   : trace-level metadata (time range, process name, mode)
-/// This is the output of the parsing stage — agnostic to htrace vs tshandle.
-/// Downstream analyzers and formatters consume TraceDB uniformly.
+/**
+ * Abstract representation of a parsed trace database.
+ * Contains:
+ *   - stacks : call stacks — compressed with DataDict (htrace) or resolved (tshandle)
+ *   - meta   : trace-level metadata (time range, process name, mode)
+ * This is the output of the parsing stage — agnostic to htrace vs tshandle.
+ * Downstream analyzers and formatters consume TraceDB uniformly.
+ */
 struct TraceDB {
     CallStackList stacks;
     TraceMeta meta;
 
     // ── Queries ──
 
-    /// True if this DB contains compressed (int-ID) call stacks.
+    /**
+     * True if this DB contains compressed (int-ID) call stacks.
+     */
     bool IsCompressed() const;
 
-    /// Total number of call stacks.
+    /**
+     * Total number of call stacks.
+     */
     size_t StackCount() const;
 
     // ── Resolution ──
 
-    /// If compressed, resolve all stacks in-place and replace with resolved form.
-    /// No-op if already resolved.
+    /**
+     * If compressed, resolve all stacks in-place and replace with resolved form.
+     * No-op if already resolved.
+     */
     void ResolveStacks();
 };
 

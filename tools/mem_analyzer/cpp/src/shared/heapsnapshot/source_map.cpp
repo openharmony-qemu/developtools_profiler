@@ -55,7 +55,9 @@ constexpr size_t SEG_IDX_ORIGINAL_LINE = 2;
 constexpr size_t SEG_IDX_ORIGINAL_COLUMN = 3;
 constexpr size_t SEG_IDX_NAME_INDEX = 4;
 
-/// Base64 字符 → 6 位数值，非法字符返回 -1。
+/**
+ * Base64 字符 → 6 位数值，非法字符返回 -1。
+ */
 int Base64Value(char c)
 {
     if (c >= 'A' && c <= 'Z') {
@@ -76,7 +78,9 @@ int Base64Value(char c)
     return -1;
 }
 
-/// 解码一个 VLQ 值，成功返回 true 并填充 value，失败返回 false。
+/**
+ * 解码一个 VLQ 值，成功返回 true 并填充 value，失败返回 false。
+ */
 bool DecodeVlqValue(const std::string& str, size_t& pos, int& value)
 {
     int result = 0;
@@ -246,7 +250,9 @@ bool SourceMapIndex::ResolveOriginalLine(const std::string& mappings, int genera
     return true;
 }
 
-/// Search backward from startLine for the last segment with a valid mapping.
+/**
+ * Search backward from startLine for the last segment with a valid mapping.
+ */
 static bool FindFallbackPosition(const SourceMapIndex::DecodedMappings& decoded,
     int startLine, int& originalLine, int& originalColumn, int* outSourceIndex)
 {
@@ -329,9 +335,11 @@ bool ParseJsonRoot(const std::string& content, json& root, const std::string& pa
     return root.is_object();
 }
 
-/// 从单个 map 文件解析顶层条目并入索引；失败返回 false。
-/// 顶层键即混淆 key（如 "entry|entry|1.0.0|src/main/ets/pages/a.ts"），
-/// 值含 sources/file/entry-package-info/package-info 字段。
+/**
+ * 从单个 map 文件解析顶层条目并入索引；失败返回 false。
+ * 顶层键即混淆 key（如 "entry|entry|1.0.0|src/main/ets/pages/a.ts"），
+ * 值含 sources/file/entry-package-info/package-info 字段。
+ */
 bool IndexMapFile(const std::string& path, std::unordered_map<std::string, SourceMapEntry>& index)
 {
     // 用户路径可能含中文，需按 UTF-8 构造 fs::path（Windows 宽路径安全）
@@ -393,9 +401,11 @@ bool IndexMapFile(const std::string& path, std::unordered_map<std::string, Sourc
 
 namespace {
 
-/// 重建二级索引：module|version|rel_path → 条目。
-/// 混淆 key 格式为 "<bundle>|<module>|<version>|<rel_path>"，
-/// 以第 2 段 module（而非第 1 段 bundle）作为匹配键的一部分。
+/**
+ * 重建二级索引：module|version|rel_path → 条目。
+ * 混淆 key 格式为 "<bundle>|<module>|<version>|<rel_path>"，
+ * 以第 2 段 module（而非第 1 段 bundle）作为匹配键的一部分。
+ */
 void RebuildModuleIndex(const std::unordered_map<std::string, SourceMapEntry>& index,
     std::unordered_map<std::string, const SourceMapEntry*>& moduleIndex)
 {
@@ -433,7 +443,9 @@ void LogLoadedEntries(const std::unordered_map<std::string, SourceMapEntry>& ind
 
 } // anonymous namespace
 
-/// Recursively scan a directory for source map files (*.map / sourceMaps.map).
+/**
+ * Recursively scan a directory for source map files (*.map / sourceMaps.map).
+ */
 static bool ScanDirForMapFiles(const fs::path& dirPath,
     std::unordered_map<std::string, SourceMapEntry>& index, bool& foundAny)
 {

@@ -19,8 +19,10 @@
 
 namespace mem_analyzer {
 
-/// parse-only JSON 输出。强类型入参：不再经过 ProcessData / std::any。
-/// 返回写出的文件路径。
+/**
+ * parse-only JSON 输出。强类型入参：不再经过 ProcessData / std::any。
+ * 返回写出的文件路径。
+ */
 std::string HtraceWriteParseJson(const TraceDB& db, const std::string& filePath,
     const RunContext& ctx, const std::string& outDir);
 

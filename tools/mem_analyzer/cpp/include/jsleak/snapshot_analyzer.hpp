@@ -43,9 +43,11 @@ json RefChainToJson(const RefChainInfo& chain);
 json RefChainsToJson(const std::vector<RefChainInfo>& chains);
 json RefChainsToJson(const std::unordered_map<std::string, RefChainInfo>& chains);
 
-/// 一个可独立开关的 jsleak 分析阶段。各阶段持有自己的状态与配置，实现
-/// run（分析 + 统计打印）与 to_json（产出结果 json）。协调器统一按
-/// mode/preview 过滤并调用，阶段本身不感知开关。
+/**
+ * 一个可独立开关的 jsleak 分析阶段。各阶段持有自己的状态与配置，实现
+ * run（分析 + 统计打印）与 to_json（产出结果 json）。协调器统一按
+ * mode/preview 过滤并调用，阶段本身不感知开关。
+ */
 struct JsleakStage {
     virtual ~JsleakStage() = default;
     virtual const std::string& Mode() const = 0;   // "property-tag" / "top-chain"；"all" 表示仅 -m all 运行
@@ -55,11 +57,13 @@ struct JsleakStage {
     virtual json ToJson() const = 0;
 };
 
-/// jsleak 分析步骤：按 `mode` 与预览开关过滤各阶段，产出结果 json
-/// （含 parsedAt / sourceFile / totalHeapSize 与各阶段结果）。
-/// **注意（P4-d 有意保留）**：分析层仍**提前 JSON 化**——各阶段结果在分析阶段即写成
-/// `json`，writer 只做重组。改掉它会动分析层与输出层的数据协议，不在本期范围内。
-/// 强类型入参/出参：不再经过 ProcessData / std::any。
+/**
+ * jsleak 分析步骤：按 `mode` 与预览开关过滤各阶段，产出结果 json
+ * （含 parsedAt / sourceFile / totalHeapSize 与各阶段结果）。
+ * **注意（P4-d 有意保留）**：分析层仍**提前 JSON 化**——各阶段结果在分析阶段即写成
+ * `json`，writer 只做重组。改掉它会动分析层与输出层的数据协议，不在本期范围内。
+ * 强类型入参/出参：不再经过 ProcessData / std::any。
+ */
 json JsleakAnalyze(const HeapSnapshot& heap, const std::string& filePath, const RunContext& ctx);
 
 } // namespace mem_analyzer

@@ -120,13 +120,15 @@ void ApplyLeakAddrFilter(TraceDB& db, const std::unordered_set<uint64_t>& leaks)
         " / ", total, " stacks (", removed, " filtered by addr).");
 }
 
-/// -l 分析模式（不带 -p）：
-///   L2 __emutls_get_address 排除 → L3 栈分 app/system（arkweb 例外）→
-///   按 scope 走 analyze_call_stacks(leak_mode)：
-///     app-only/system-only 各跑一遍；app-and-system 跑两遍（app+system）；mixed 不分栈跑一遍。
-///   每组 top N + other（非 top N 覆盖的栈合并火焰图）。
-///   组装 HtraceAnalysisOutput，from=htrace-analysis。L1 已由 apply_leak_addr_filter 完成。
-/// L2: filter out stacks containing __emutls_get_address frames.
+/**
+ * -l 分析模式（不带 -p）：
+ *   L2 __emutls_get_address 排除 → L3 栈分 app/system（arkweb 例外）→
+ *   按 scope 走 analyze_call_stacks(leak_mode)：
+ *     app-only/system-only 各跑一遍；app-and-system 跑两遍（app+system）；mixed 不分栈跑一遍。
+ *   每组 top N + other（非 top N 覆盖的栈合并火焰图）。
+ *   组装 HtraceAnalysisOutput，from=htrace-analysis。L1 已由 apply_leak_addr_filter 完成。
+ * L2: filter out stacks containing __emutls_get_address frames.
+ */
 static size_t FilterEmutlsFrames(CompressedCallStackList& clist)
 {
     size_t total = clist.stacks.size();
@@ -145,7 +147,9 @@ static size_t FilterEmutlsFrames(CompressedCallStackList& clist)
     return removed;
 }
 
-/// L3: split stacks into app/system vectors (mixed scope skips this).
+/**
+ * L3: split stacks into app/system vectors (mixed scope skips this).
+ */
 static void SplitAppSystemStacks(CompressedCallStackList& clist,
     std::vector<CompressedCallStack>& appStacks,
     std::vector<CompressedCallStack>& systemStacks)
@@ -160,7 +164,9 @@ static void SplitAppSystemStacks(CompressedCallStackList& clist,
     log::Logok("  Leak L3: app=", appStacks.size(), ", system=", systemStacks.size());
 }
 
-/// Merge app-only and system-only analysis outputs into a combined result.
+/**
+ * Merge app-only and system-only analysis outputs into a combined result.
+ */
 static HtraceAnalysisOutput MergeAppSystemOutput(
     HtraceAnalysisOutput appOut, HtraceAnalysisOutput sysOut)
 {

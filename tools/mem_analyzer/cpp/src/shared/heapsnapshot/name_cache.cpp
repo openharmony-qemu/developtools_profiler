@@ -35,10 +35,12 @@ namespace {
 
 constexpr size_t MIN_NAMECACHE_FILENAME_LEN = 8;
 
-/// 解析 nameCache 缓存条目 key 的 ":start:end" 行号后缀。
-/// 形如 "方法#成员#变量" / "#类名:start:end" / "方法名:start:end" / 普通变量名。
-/// 成功解析后缀时返回 true，name 为去掉后缀的原始名，start_line/end_line 为行号；
-/// 无后缀时返回 false，name 原样保留，行号为 -1/-1。
+/**
+ * 解析 nameCache 缓存条目 key 的 ":start:end" 行号后缀。
+ * 形如 "方法#成员#变量" / "#类名:start:end" / "方法名:start:end" / 普通变量名。
+ * 成功解析后缀时返回 true，name 为去掉后缀的原始名，start_line/end_line 为行号；
+ * 无后缀时返回 false，name 原样保留，行号为 -1/-1。
+ */
 bool ParseLineSuffix(const std::string& key, std::string& name, int& startLine, int& endLine)
 {
     startLine = -1;
@@ -73,11 +75,13 @@ bool ParseLineSuffix(const std::string& key, std::string& name, int& startLine, 
     return true;
 }
 
-/// 将单个缓存对象（IdentifierCache/MemberMethodCache/PropertyCache）的
-/// 键值对反查入索引：value（混淆名）→ key（原始名，解析行号后缀）。
-/// 同时建立 原始名 → 候选 的正向索引（未开启属性混淆时快照中的方法名即为原始名）。
-/// 官方约定：key 中 '#' 代表上下级关系（如 "Class#method#__function"），
-/// 匹配时保留最后一级名称，故额外以最后一级名称建立别名索引。
+/**
+ * 将单个缓存对象（IdentifierCache/MemberMethodCache/PropertyCache）的
+ * 键值对反查入索引：value（混淆名）→ key（原始名，解析行号后缀）。
+ * 同时建立 原始名 → 候选 的正向索引（未开启属性混淆时快照中的方法名即为原始名）。
+ * 官方约定：key 中 '#' 代表上下级关系（如 "Class#method#__function"），
+ * 匹配时保留最后一级名称，故额外以最后一级名称建立别名索引。
+ */
 void IndexCacheObject(const json& obj, const std::string& filePath,
     std::unordered_map<std::string, std::vector<NameCacheCandidate>>& byObfuscated,
     std::unordered_map<std::string, std::vector<NameCacheCandidate>>& byOriginal)

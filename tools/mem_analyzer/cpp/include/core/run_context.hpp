@@ -49,8 +49,10 @@ struct TshandleOptions {
     int topN = defaults::TSHANDLE_TOP_N;
 };
 
-/// 快照对比运行参数（jsleak 域的对比模式）。baseline_file 非空 = 对比模式：
-/// req.file_path 为目标快照 B，本字段为 -b/--baseline 指定的基线快照 A。
+/**
+ * 快照对比运行参数（jsleak 域的对比模式）。baseline_file 非空 = 对比模式：
+ * req.file_path 为目标快照 B，本字段为 -b/--baseline 指定的基线快照 A。
+ */
 struct SnapshotCompareOptions {
     std::string baselineFile;
 };
@@ -82,8 +84,10 @@ struct RunContext {
     SnapshotOptions snapshot;
 };
 
-/// 兜底默认上下文：仅用于 ctx 未被设置的异常路径，避免空指针解引用。
-/// 默认值与 Config 的历史默认保持一致。
+/**
+ * 兜底默认上下文：仅用于 ctx 未被设置的异常路径，避免空指针解引用。
+ * 默认值与 Config 的历史默认保持一致。
+ */
 inline const RunContext& DefaultRunContext()
 {
     static const RunContext ctx{};

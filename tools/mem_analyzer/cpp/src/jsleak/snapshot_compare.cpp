@@ -185,7 +185,9 @@ void ResolveRepresentatives(const HeapSnapshot& heap,
     }
 }
 
-/// Check if a node should be skipped during indexing (survived in other snapshot or non-retainer).
+/**
+ * Check if a node should be skipped during indexing (survived in other snapshot or non-retainer).
+ */
 static bool ShouldSkipForIndex(const HeapSnapshot& heap, uint32_t index,
     uint64_t selfSize, const std::string& type,
     const HeapSnapshot& other)

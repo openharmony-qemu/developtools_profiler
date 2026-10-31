@@ -19,7 +19,9 @@
 
 namespace mem_analyzer {
 
-/// 预览特性描述（name 同时作为特性 id，供 enabled() 查询）
+/**
+ * 预览特性描述（name 同时作为特性 id，供 enabled() 查询）
+ */
 struct PreviewFeatureInfo {
     std::string name;
     std::string description;
@@ -37,32 +39,48 @@ class PreviewFeaturesMgr {
 public:
     static PreviewFeaturesMgr& Instance();
 
-    /// 加载配置文件（文件不存在时视为全部关闭）。失败时填充 err 并返回 false
+    /**
+     * 加载配置文件（文件不存在时视为全部关闭）。失败时填充 err 并返回 false
+     */
     bool Load(std::string& err);
 
-    /// 指定预览特性是否使能；未登记的 id 恒为 false
+    /**
+     * 指定预览特性是否使能；未登记的 id 恒为 false
+     */
     bool Enabled(const std::string& featureId) const;
 
-    /// 使能/关闭全部已登记预览特性并持久化
+    /**
+     * 使能/关闭全部已登记预览特性并持久化
+     */
     bool SetEnabled(bool enabled, std::string& err);
 
-    /// 受管控的特性清单（名称、描述）；新增预览特性时在此登记
+    /**
+     * 受管控的特性清单（名称、描述）；新增预览特性时在此登记
+     */
     static const std::vector<PreviewFeatureInfo>& Registry();
 
-    /// 配置文件的路径（已在 resolve_config_path 中确定）
+    /**
+     * 配置文件的路径（已在 resolve_config_path 中确定）
+     */
     std::string ConfigPath() const { return configPath_; }
 
 private:
     PreviewFeaturesMgr() = default;
 
-    /// 解析配置文件路径：优先已存在的 config/preview_features.json
-    /// （当前目录 → 可执行文件父目录 → 可执行文件目录），否则落在可执行文件目录的 config/ 下
+    /**
+     * 解析配置文件路径：优先已存在的 config/preview_features.json
+     * （当前目录 → 可执行文件父目录 → 可执行文件目录），否则落在可执行文件目录的 config/ 下
+     */
     static std::string ResolveConfigPath();
 
-    /// 将当前状态写入配置文件（含目录创建）
+    /**
+     * 将当前状态写入配置文件（含目录创建）
+     */
     bool Save(std::string& err) const;
 
-    /// 当前已使能的特性 id（仅包含 registry 中登记过的 id）
+    /**
+     * 当前已使能的特性 id（仅包含 registry 中登记过的 id）
+     */
     std::unordered_set<std::string> enabledFeatures_;
     std::string configPath_;
 };
