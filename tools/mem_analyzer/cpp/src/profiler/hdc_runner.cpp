@@ -1332,6 +1332,90 @@ struct CaptureState {
 // (snapshot_hidumper_cmd.txt) uses. This is reliable on all HarmonyOS versions.
 // Fallback: `ps -ef` for systems where `pidof` is unavailable.
 // Returns the PID if found, empty string otherwise.
+/// Primary: pidof (same as device-side template, fast & reliable)
+static std::string TryGetPidByPidof(const std::string& processName)
+{
+    std::string cmd = HdcShell("pidof " + proc::ShellQuoteDevice(processName)) + " 2>&1";
+    CapturedCmd cap = CaptureCommand(cmd, 5000);
+    // Pinned target: an hdc [Fail] means the DEVICE failed
+    // (unplugged / unauthorized), not "process not running". Surface the hdc
+    // text once and bail out instead of misparsing it as a missing process.
+    if (NoteDeviceFailure(cap.output)) {
+        return "";
+    }
+    if (cap.spawned && !cap.timedOut) {
+        std::istringstream iss(cap.output);
+        std::string pid;
+        iss >> pid;
+        if (!pid.empty() && pid.find_first_not_of("0123456789") == std::string::npos) {
+            return pid;
+        }
+    }
+    return "";
+}
+
+/// Fallback: ps -ef (Linux-style, may not be available on all devices)
+static std::string TryGetPidByPs(const std::string& processName)
+{
+    std::string cmd = HdcShell("ps -ef") + " 2>&1";
+    CapturedCmd cap = CaptureCommand(cmd);
+    if (NoteDeviceFailure(cap.output)) {
+        return "";
+    }
+    if (!cap.spawned) {
+        return "";
+    }
+
+    std::string suffixPid;
+    std::istringstream iss(cap.output);
+    std::string line;
+    while (std::getline(iss, line)) {
+        if (line.empty()) {
+            continue;
+        }
+        if (line.find("UID") == 0) {
+            continue;
+        }
+
+        std::istringstream lss(line);
+        std::string pid;
+        std::string tok;
+        for (int col = 0; col < PS_FIELD_COUNT; ++col) {
+            if (!(lss >> tok)) {
+                pid.clear();
+                break;
+            }
+            if (col == 1) {
+                pid = tok;
+            }
+        }
+        if (pid.empty()) {
+            continue;
+        }
+        if (pid.find_first_not_of("0123456789") != std::string::npos) {
+            continue;
+        }
+        std::string cmdField;
+        std::getline(lss, cmdField);
+        const auto cmdStart = cmdField.find_first_not_of(" \t");
+        if (cmdStart == std::string::npos) {
+            continue;
+        }
+        cmdField = cmdField.substr(cmdStart);
+        if (cmdField == processName) {
+            return pid;
+        }
+
+        if (suffixPid.empty() &&
+            cmdField.size() > processName.size() &&
+            cmdField.compare(0, processName.size(), processName) == 0 &&
+            cmdField[processName.size()] == ':') {
+            suffixPid = pid;
+        }
+    }
+    return suffixPid;
+}
+
 std::string GetProcessPid(const std::string& processName)
 {
     if (processName.empty()) {
@@ -1339,85 +1423,13 @@ std::string GetProcessPid(const std::string& processName)
     }
 
     // 1) Primary: pidof (same as device-side template, fast & reliable)
-    {
-        std::string cmd = HdcShell("pidof " + proc::ShellQuoteDevice(processName)) + " 2>&1";
-        CapturedCmd cap = CaptureCommand(cmd, 5000);
-        // Pinned target: an hdc [Fail] means the DEVICE failed
-        // (unplugged / unauthorized), not "process not running". Surface the hdc
-        // text once and bail out instead of misparsing it as a missing process.
-        if (NoteDeviceFailure(cap.output)) {
-            return "";
-        }
-        if (cap.spawned && !cap.timedOut) {
-            std::istringstream iss(cap.output);
-            std::string pid;
-            iss >> pid;
-            if (!pid.empty() && pid.find_first_not_of("0123456789") == std::string::npos) {
-                return pid;
-            }
-        }
+    std::string pid = TryGetPidByPidof(processName);
+    if (!pid.empty()) {
+        return pid;
     }
 
     // 2) Fallback: ps -ef (Linux-style, may not be available on all devices)
-    {
-        std::string cmd = HdcShell("ps -ef") + " 2>&1";
-        CapturedCmd cap = CaptureCommand(cmd);
-        if (NoteDeviceFailure(cap.output)) {
-            return "";
-        }
-        if (!cap.spawned) {
-            return "";
-        }
-
-        std::string suffixPid;
-        std::istringstream iss(cap.output);
-        std::string line;
-        while (std::getline(iss, line)) {
-            if (line.empty()) {
-                continue;
-            }
-            if (line.find("UID") == 0) {
-                continue;
-            }
-
-            std::istringstream lss(line);
-            std::string pid;
-            std::string tok;
-            for (int col = 0; col < PS_FIELD_COUNT; ++col) {
-                if (!(lss >> tok)) {
-                    pid.clear();
-                    break;
-                }
-                if (col == 1) {
-                    pid = tok;
-                }
-            }
-            if (pid.empty()) {
-                continue;
-            }
-            if (pid.find_first_not_of("0123456789") != std::string::npos) {
-                continue;
-            }
-            std::string cmdField;
-            std::getline(lss, cmdField);
-            const auto cmdStart = cmdField.find_first_not_of(" \t");
-            if (cmdStart == std::string::npos) {
-                continue;
-            }
-            cmdField = cmdField.substr(cmdStart);
-            if (cmdField == processName) {
-                return pid;
-            }
-
-            if (suffixPid.empty() &&
-                cmdField.size() > processName.size() &&
-                cmdField.compare(0, processName.size(), processName) == 0 &&
-                cmdField[processName.size()] == ':') {
-                suffixPid = pid;
-            }
-        }
-        return suffixPid;
-    }
+    return TryGetPidByPs(processName);
 }
 
 std::string GetProcessPidFast(const std::string& processName, long long timeoutMs, bool* reliable)

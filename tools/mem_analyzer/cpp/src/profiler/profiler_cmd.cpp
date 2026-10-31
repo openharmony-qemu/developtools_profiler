@@ -52,9 +52,35 @@ constexpr int STREAM_POLL_INTERVAL_MS = 20;
 // Stderr is merged into stdout via STARTUPINFO hStdError = hStdOutput pipe.
 // The caller must NOT append "2>&1" to the command (it is handled internally).
 // Returns the exit code, or -1 if the command could not be launched.
-int RunCommandStreaming(const std::string& cmd)
-{
 #if defined(_WIN32)
+/// Drain available output from a pipe handle to stdout.
+static void DrainPipeOutput(HANDLE hRead)
+{
+    for (;;) {
+        DWORD avail = 0;
+        if (!PeekNamedPipe(hRead, nullptr, 0, nullptr, &avail, nullptr)) {
+            break;
+        }
+        if (avail == 0) {
+            break;
+        }
+        char buf[4096];
+        DWORD n = 0;
+        if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
+            &n, nullptr) || n == 0) break;
+        std::cout.write(buf, n);
+        std::cout.flush();
+    }
+}
+
+/// Windows: stream command output via CreateProcessW + anonymous pipe.
+// Run the command directly via CreateProcessW — no cmd.exe /c shell.
+// This avoids cmd.exe's first/last-quote stripping behavior which
+// corrupts command lines with multiple quoted arguments.
+// Strip any trailing "2>&1" that the caller may have appended (it's
+// redundant since STARTUPINFO already merges stderr into stdout).
+static int RunCommandStreamingWindows(const std::string& cmd)
+{
     SECURITY_ATTRIBUTES sa{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
     HANDLE hRead = nullptr;
     HANDLE hWrite = nullptr;
@@ -74,11 +100,6 @@ int RunCommandStreaming(const std::string& cmd)
     si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
     PROCESS_INFORMATION pi{};
 
-    // Run the command directly via CreateProcessW — no cmd.exe /c shell.
-    // This avoids cmd.exe's first/last-quote stripping behavior which
-    // corrupts command lines with multiple quoted arguments.
-    // Strip any trailing "2>&1" that the caller may have appended (it's
-    // redundant since STARTUPINFO already merges stderr into stdout).
     std::string cleanCmd = cmd;
     if (cleanCmd.size() >= SHELL_REDIRECT_SUFFIX_LEN &&
         cleanCmd.substr(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN) == " 2>&1") {
@@ -95,32 +116,14 @@ int RunCommandStreaming(const std::string& cmd)
     }
     CloseHandle(hWrite);
 
-    auto drainAvailable = [&hRead]() {
-        for (;;) {
-            DWORD avail = 0;
-            if (!PeekNamedPipe(hRead, nullptr, 0, nullptr, &avail, nullptr)) {
-                break;
-            }
-            if (avail == 0) {
-                break;
-            }
-            char buf[4096];
-            DWORD n = 0;
-            if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
-                &n, nullptr) || n == 0) break;
-            std::cout.write(buf, n);
-            std::cout.flush();
-        }
-    };
-
     for (;;) {
-        drainAvailable();
+        DrainPipeOutput(hRead);
         if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) {
             break;
         }
         Sleep(STREAM_POLL_INTERVAL_MS);
     }
-    drainAvailable();
+    DrainPipeOutput(hRead);
     CloseHandle(hRead);
     WaitForSingleObject(pi.hProcess, INFINITE);
     DWORD code = 0;
@@ -128,7 +131,11 @@ int RunCommandStreaming(const std::string& cmd)
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
     return static_cast<int>(code);
+}
 #else
+/// POSIX: stream command output via fork + pipe.
+static int RunCommandStreamingPosix(const std::string& cmd)
+{
     auto sp = proc::SpawnPiped(cmd);
     if (!sp.Ok()) {
         return -1;
@@ -146,6 +153,15 @@ int RunCommandStreaming(const std::string& cmd)
         return WEXITSTATUS(st);
     }
     return -1;
+}
+#endif
+
+int RunCommandStreaming(const std::string& cmd)
+{
+#if defined(_WIN32)
+    return RunCommandStreamingWindows(cmd);
+#else
+    return RunCommandStreamingPosix(cmd);
 #endif
 }
 
