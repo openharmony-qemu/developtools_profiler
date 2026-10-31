@@ -137,6 +137,7 @@ static json TraceMetaToJson(const TraceMeta& meta)
 static void MergeArktsClasses(const std::vector<ArkTsClass>& classes,
     std::unordered_map<std::string, ArkTsClass>& mergedMap, std::vector<std::string>& order)
 {
+    // 1. Merge buckets by clean JSON name
     for (const auto& cls : classes) {
         std::string jsonName = cls.name;
         if (jsonName.find("JSSharedObject(") == 0) {

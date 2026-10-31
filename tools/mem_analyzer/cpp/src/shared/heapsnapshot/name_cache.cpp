@@ -113,6 +113,7 @@ void IndexCacheObject(const json& obj, const std::string& filePath,
 void CollectNameCacheFiles(const fs::path& dirPath, std::vector<std::string>& files)
 {
     std::error_code ec;
+    // 递归扫描目录：文件名包含 "nameCache" 的 *.json 全部加载合并（兼容多模块产物）
     for (const auto& entry : fs::recursive_directory_iterator(dirPath, ec)) {
         if (ec) {
             break;
@@ -143,6 +144,7 @@ bool NameCacheIndex::LoadFromDir(const std::string& dir)
     std::error_code ec;
     std::vector<std::string> files;
     const fs::path dirPath = mem_analyzer::PathFromUtf8(dir);
+    // 直接指定 nameCache.json 文件本身
     if (fs::is_regular_file(dirPath, ec)) {
         files.push_back(dir);
     } else {

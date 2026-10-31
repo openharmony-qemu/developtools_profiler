@@ -256,7 +256,7 @@ void CliParser::ConsumeOption(const std::vector<std::string>& args, size_t& i)
         throw CliError("Unknown option: " + optName);
     }
 
-    // 标记该选项被显式指定（如 -t），供上层区分「用户传入」与「默认值」。
+    // 标记该选项被显式指定（带 -t），供上层区分「用户传入」与「默认值」
     if (opt->provided) {
         *opt->provided = true;
     }

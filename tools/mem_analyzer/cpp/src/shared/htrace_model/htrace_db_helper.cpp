@@ -73,6 +73,7 @@ bool QueryInt64(sqlite3* db, const char* sql, long long& out)
 
 void QueryProcessName(sqlite3* db, const std::string& hookTable, TraceMeta& meta)
 {
+    // Process name (from hook table's ipid → process.name)
     const std::string ipidSql =
         "SELECT DISTINCT ipid FROM " + hookTable + " WHERE ipid IS NOT NULL LIMIT 1";
     sqlite3_stmt* ipidStmt = nullptr;

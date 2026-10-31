@@ -178,13 +178,15 @@ std::string BuildStatisticSql(const std::vector<HtraceEventType>& allowedTypes, 
         "SELECT ranked.callchain_id, ranked.type, ranked.ts, ranked.sub_type_id, "
         "(ranked.apply_size - ranked.release_size) as total_size, "
         "(ranked.apply_count - ranked.release_count) as total_count, ";
+    // 隔离：仅 -l(need_addrs) 才 JOIN data_dict 取地址（依赖 addr_id 列）；
+    // 非 -l 用 NULL 占位列，不碰 addr_id，SQL 结构与 master 等价、不依赖该列存在。
     sql += needAddrs ? "b.data as existing_addrs " : "NULL as existing_addrs ";
     sql += "FROM ("
         "  SELECT *, ROW_NUMBER() OVER (PARTITION BY callchain_id, type ORDER BY ts DESC) as rn "
         "  FROM native_hook_statistic WHERE type IN (";
     sql += typeIn;
-    sql += ") ";
-    sql += ") ranked ";
+    sql += ") ";  // 闭合 IN (...)
+    sql += ") ranked ";  // 闭合子查询 FROM (...) + 别名
     if (needAddrs) {
         sql += "LEFT JOIN data_dict b ON ranked.addr_id = b.id ";
     }
