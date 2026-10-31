@@ -249,6 +249,33 @@ bool ParseArktsModulePath(const std::string& pathPart, std::string& module, std:
     return !relPath.empty();
 }
 
+void SelectNameCacheCandidate(const std::vector<NameCacheCandidate>& candidates,
+    const std::string& sourcePath, int origLine,
+    const NameCacheCandidate*& hit, const NameCacheCandidate*& fallback)
+{
+    for (const auto& cand : candidates) {
+        if (cand.startLine <= 0 || cand.endLine < cand.startLine) {
+            continue;
+        }
+        if (!SourcePathMatches(sourcePath, cand.filePath)) {
+            continue;
+        }
+        if (origLine >= cand.startLine && origLine <= cand.endLine) {
+            hit = &cand;
+            break;
+        }
+        if (fallback == nullptr) {
+            fallback = &cand;
+        } else if (cand.startLine <= origLine) {
+            if (fallback->startLine > origLine || cand.startLine > fallback->startLine) {
+                fallback = &cand;
+            }
+        } else if (fallback->startLine > origLine && cand.startLine < fallback->startLine) {
+            fallback = &cand;
+        }
+    }
+}
+
 /// 用官方 nameCache 行号范围修正源码行号（参考官方"异常堆栈解析原理"文档）。
 /// nameCache 的 IdentifierCache/MemberMethodCache 条目格式为
 /// "原始方法名:起始行:结束行"（源码 1-based 双闭区间）。官方算法：
@@ -308,27 +335,7 @@ bool RefineLineByNameCache(const NameCacheIndex* ncache, const std::string& sour
     // 优先取 start_line <= 还原行号中最大者，否则取最小 start_line
     const NameCacheCandidate* hit = nullptr;
     const NameCacheCandidate* fallback = nullptr;
-    for (const auto& cand : candidates) {
-        if (cand.startLine <= 0 || cand.endLine < cand.startLine) {
-            continue;
-        }
-        if (!SourcePathMatches(sourcePath, cand.filePath)) {
-            continue;
-        }
-        if (origLine >= cand.startLine && origLine <= cand.endLine) {
-            hit = &cand;
-            break;
-        }
-        if (fallback == nullptr) {
-            fallback = &cand;
-        } else if (cand.startLine <= origLine) {
-            if (fallback->startLine > origLine || cand.startLine > fallback->startLine) {
-                fallback = &cand;
-            }
-        } else if (fallback->startLine > origLine && cand.startLine < fallback->startLine) {
-            fallback = &cand;
-        }
-    }
+    SelectNameCacheCandidate(candidates, sourcePath, origLine, hit, fallback);
     if (hit != nullptr || fallback == nullptr) {
         return false;
     }
@@ -401,6 +408,38 @@ bool RestoreFunctionNameInSuffix(const NameCacheIndex* ncache, std::string& valu
     return true;
 }
 
+void ResolveSuffixLineMapping(std::string& suffix,
+    const SourceMapIndex* smap, const NameCacheIndex* ncache,
+    const SourceMapEntry* entry)
+{
+    // 映射 (line:N)：取 N，若该行在 mappings 中有映射则替换为源码行号
+    const std::string linePrefix = "(line:";
+    const size_t lp = suffix.find(linePrefix);
+    if (lp != std::string::npos) {
+        const size_t numBegin = lp + linePrefix.size();
+        const size_t numEnd = suffix.find(')', numBegin);
+        if (numEnd != std::string::npos) {
+            const std::string numStr = suffix.substr(numBegin, numEnd - numBegin);
+            if (AllDigits(numStr)) {
+                int genLine = 0;
+                // 快照损坏时可能为超长数字串，stoi 抛异常则跳过行号映射
+                try {
+                    genLine = std::stoi(numStr);
+                } catch (const std::exception&) {
+                    genLine = -1;
+                }
+                if (genLine > 0) {
+                    int origLine = genLine;
+                    smap->ResolveOriginalLine(entry->mappings, genLine, origLine);
+                    RefineLineByNameCache(ncache, entry->sourcePath, suffix, origLine);
+                    suffix.replace(lp, numEnd - lp + 1,
+                        "(line:" + std::to_string(origLine) + ")");
+                }
+            }
+        }
+    }
+}
+
 /// 对单个 strings 数组元素做反混淆还原（混淆路径→源码路径、混淆名→原始名）。
 /// 返回还原后的字符串；发生替换时递增 replaced。
 std::string DeobfuscateOneString(const std::string& value,
@@ -438,32 +477,7 @@ std::string DeobfuscateOneString(const std::string& value,
             }
             if (entry != nullptr && !entry->sourcePath.empty()) {
                 std::string suffix = (hashPos == std::string::npos) ? "" : result.substr(hashPos);
-                // 映射 (line:N)：取 N，若该行在 mappings 中有映射则替换为源码行号
-                const std::string linePrefix = "(line:";
-                const size_t lp = suffix.find(linePrefix);
-                if (lp != std::string::npos) {
-                    const size_t numBegin = lp + linePrefix.size();
-                    const size_t numEnd = suffix.find(')', numBegin);
-                    if (numEnd != std::string::npos) {
-                        const std::string numStr = suffix.substr(numBegin, numEnd - numBegin);
-                        if (AllDigits(numStr)) {
-                            int genLine = 0;
-                            // 快照损坏时可能为超长数字串，stoi 抛异常则跳过行号映射
-                            try {
-                                genLine = std::stoi(numStr);
-                            } catch (const std::exception&) {
-                                genLine = -1;
-                            }
-                            if (genLine > 0) {
-                                int origLine = genLine;
-                                smap->ResolveOriginalLine(entry->mappings, genLine, origLine);
-                                RefineLineByNameCache(ncache, entry->sourcePath, suffix, origLine);
-                                suffix.replace(lp, numEnd - lp + 1,
-                                    "(line:" + std::to_string(origLine) + ")");
-                            }
-                        }
-                    }
-                }
+                ResolveSuffixLineMapping(suffix, smap, ncache, entry);
                 result = entry->sourcePath + suffix;
                 replaced++;
             }

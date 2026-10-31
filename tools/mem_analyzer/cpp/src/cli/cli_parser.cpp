@@ -247,6 +247,38 @@ void CliParser::ApplyDefaults()
 // Internal: consume remaining args (options + positionals)
 // ═══════════════════════════════════════════════════════════════
 
+void CliParser::ConsumeOption(const std::vector<std::string>& args, size_t& i)
+{
+    std::string optName = args[i];
+    // Check if this is a known option
+    Option* opt = FindOptionByName(optName);
+    if (!opt) {
+        throw CliError("Unknown option: " + optName);
+    }
+
+    // 标记该选项被显式指定（如 -t），供上层区分「用户传入」与「默认值」。
+    if (opt->provided) {
+        *opt->provided = true;
+    }
+
+    if (opt->type == Option::BOOL) {
+        *static_cast<bool*>(opt->target) = true;
+        i++;
+    } else {
+        // STRING or INT: need a value argument
+        if (i + 1 >= args.size()) {
+            throw CliError("Option " + optName + " requires a value");
+        }
+        const std::string& val = args[i + 1];
+        if (opt->type == Option::STRING) {
+            *static_cast<std::string*>(opt->target) = val;
+        } else {
+            *static_cast<int*>(opt->target) = ParseInt(val);
+        }
+        i += OPTION_VALUE_ARG_COUNT;
+    }
+}
+
 void CliParser::ConsumeArgs(const std::vector<std::string>& args, size_t start)
 {
     size_t i = start;
@@ -276,34 +308,7 @@ void CliParser::ConsumeArgs(const std::vector<std::string>& args, size_t start)
 
         // Option (starts with -)
         if (arg.size() > 1 && arg[0] == '-') {
-            std::string optName = arg;
-            // Check if this is a known option
-            Option* opt = FindOptionByName(optName);
-            if (!opt) {
-                throw CliError("Unknown option: " + optName);
-            }
-
-            // 标记该选项被显式指定（如 -t），供上层区分「用户传入」与「默认值」。
-            if (opt->provided) {
-                *opt->provided = true;
-            }
-
-            if (opt->type == Option::BOOL) {
-                *static_cast<bool*>(opt->target) = true;
-                i++;
-            } else {
-                // STRING or INT: need a value argument
-                if (i + 1 >= args.size()) {
-                    throw CliError("Option " + optName + " requires a value");
-                }
-                const std::string& val = args[i + 1];
-                if (opt->type == Option::STRING) {
-                    *static_cast<std::string*>(opt->target) = val;
-                } else {
-                    *static_cast<int*>(opt->target) = ParseInt(val);
-                }
-                i += OPTION_VALUE_ARG_COUNT;
-            }
+            ConsumeOption(args, i);
             continue;
         }
 

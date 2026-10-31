@@ -134,13 +134,9 @@ static json TraceMetaToJson(const TraceMeta& meta)
     };
 }
 
-// Convert ArkTsClass vector to JSON
-static json ArktsClassesToJson(const std::vector<ArkTsClass>& classes)
+static void MergeArktsClasses(const std::vector<ArkTsClass>& classes,
+    std::unordered_map<std::string, ArkTsClass>& mergedMap, std::vector<std::string>& order)
 {
-    // 1. Merge buckets by clean JSON name
-    std::unordered_map<std::string, ArkTsClass> mergedMap;
-    std::vector<std::string> order; // Preserve insertion order
-    
     for (const auto& cls : classes) {
         std::string jsonName = cls.name;
         if (jsonName.find("JSSharedObject(") == 0) {
@@ -150,7 +146,7 @@ static json ArktsClassesToJson(const std::vector<ArkTsClass>& classes)
         } else if (jsonName.find("string(size:") == 0) {
             jsonName = "(unknown)";
         }
-        
+
         auto it = mergedMap.find(jsonName);
         if (it == mergedMap.end()) {
             ArkTsClass newCls;
@@ -166,6 +162,15 @@ static json ArktsClassesToJson(const std::vector<ArkTsClass>& classes)
             it->second.instances.insert(it->second.instances.end(), cls.instances.begin(), cls.instances.end());
         }
     }
+}
+
+// Convert ArkTsClass vector to JSON
+static json ArktsClassesToJson(const std::vector<ArkTsClass>& classes)
+{
+    // 1. Merge buckets by clean JSON name
+    std::unordered_map<std::string, ArkTsClass> mergedMap;
+    std::vector<std::string> order; // Preserve insertion order
+    MergeArktsClasses(classes, mergedMap, order);
 
     // Sort the keys alphabetically to perfectly match the legacy std::map output order
     std::sort(order.begin(), order.end());

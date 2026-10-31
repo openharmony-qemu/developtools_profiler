@@ -41,6 +41,40 @@ namespace mem_analyzer {
  *  extension) starts with it (case-insensitively) are considered — used so the
  *  .txt fallback only picks a js_map*.txt address file, not an arbitrary .txt.
  */
+static std::string MatchFileEntry(const fs::directory_entry& entry, const std::string& ext,
+    const std::string& namePrefix)
+{
+    if (entry.is_regular_file()) {
+        auto path = PathToUtf8(entry.path());
+        auto fileExt = PathToUtf8(entry.path().extension());
+        // Normalize extension to lowercase for comparison
+        for (auto& c : fileExt) {
+            c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+        }
+        std::string targetExt = ext;
+        for (auto& c : targetExt) {
+            c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+        }
+        if (fileExt == targetExt) {
+            if (!namePrefix.empty()) {
+                std::string stem = PathToUtf8(entry.path().stem());
+                for (auto& c : stem) {
+                    c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+                }
+                std::string lowerPrefix = namePrefix;
+                for (auto& c : lowerPrefix) {
+                    c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+                }
+                if (stem.rfind(lowerPrefix, 0) != 0) {
+                    return "";
+                }
+            }
+            return path;
+        }
+    }
+    return "";
+}
+
 static std::string FindFileInDir(const std::string& dir, const std::string& ext, const std::string& namePrefix = "")
 {
     if (!platform::DirectoryExists(dir)) {
@@ -48,63 +82,16 @@ static std::string FindFileInDir(const std::string& dir, const std::string& ext,
     }
     auto dirPath = PathFromUtf8(dir);
     for (const auto& entry : fs::directory_iterator(dirPath)) {
-        if (entry.is_regular_file()) {
-            auto path = PathToUtf8(entry.path());
-            auto fileExt = PathToUtf8(entry.path().extension());
-            // Normalize extension to lowercase for comparison
-            for (auto& c : fileExt) {
-                c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-            }
-            std::string targetExt = ext;
-            for (auto& c : targetExt) {
-                c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-            }
-            if (fileExt == targetExt) {
-                if (!namePrefix.empty()) {
-                    std::string stem = PathToUtf8(entry.path().stem());
-                    for (auto& c : stem) {
-                        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-                    }
-                    std::string lowerPrefix = namePrefix;
-                    for (auto& c : lowerPrefix) {
-                        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-                    }
-                    if (stem.rfind(lowerPrefix, 0) != 0) {
-                        continue;
-                    }
-                }
-                return path;
-            }
+        std::string matched = MatchFileEntry(entry, ext, namePrefix);
+        if (!matched.empty()) {
+            return matched;
         }
     }
     // Also search subdirectories
     for (const auto& entry : fs::recursive_directory_iterator(dirPath)) {
-        if (entry.is_regular_file()) {
-            auto path = PathToUtf8(entry.path());
-            auto fileExt = PathToUtf8(entry.path().extension());
-            for (auto& c : fileExt) {
-                c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-            }
-            std::string targetExt = ext;
-            for (auto& c : targetExt) {
-                c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-            }
-            if (fileExt == targetExt) {
-                if (!namePrefix.empty()) {
-                    std::string stem = PathToUtf8(entry.path().stem());
-                    for (auto& c : stem) {
-                        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-                    }
-                    std::string lowerPrefix = namePrefix;
-                    for (auto& c : lowerPrefix) {
-                        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-                    }
-                    if (stem.rfind(lowerPrefix, 0) != 0) {
-                        continue;
-                    }
-                }
-                return path;
-            }
+        std::string matched = MatchFileEntry(entry, ext, namePrefix);
+        if (!matched.empty()) {
+            return matched;
         }
     }
     return "";
