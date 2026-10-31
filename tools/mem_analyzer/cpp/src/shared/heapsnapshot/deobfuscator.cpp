@@ -348,38 +348,12 @@ bool RefineLineByNameCache(const NameCacheIndex* ncache, const std::string& sour
 /// 路径部分经 sourceMap 还原后为 "entry/src/main/ets/pages/WebPage.ets#g1(line:24)[entry]"，
 /// 但其中的函数名（如 g1/d1/a1）仍是混淆名。此处按文件上下文过滤 nameCache 候选，
 /// 候选去重后仅一种原始名时才替换，保证不会误还原。
-bool RestoreFunctionNameInSuffix(const NameCacheIndex* ncache, std::string& value)
+/// Filter name cache candidates by source path and deduplicate by original name.
+/// Returns the unique original name, or empty if no match or ambiguous.
+static std::string ResolveObfNameFromCandidates(
+    const std::vector<NameCacheCandidate>& candidates,
+    const std::string& ctxPath, const std::string& obfName)
 {
-    if (ncache == nullptr) {
-        return false;
-    }
-    const size_t line = value.find("(line:");
-    if (line == std::string::npos || line == 0) {
-        return false;
-    }
-    // 取 '(' 之前最后一个 '#'，其后的子串即为混淆函数名（如 "#d1(" → "d1"）
-    const size_t hash = value.rfind('#', line - 1);
-    if (hash == std::string::npos || hash + 1 >= line) {
-        return false;
-    }
-    const size_t nameLen = line - hash - 1;  // '#' 与 '(' 之间的函数名长度
-    if (nameLen == 0) {
-        return false;
-    }
-    const std::string obfName = value.substr(hash + 1, nameLen);
-    if (obfName.empty()) {
-        return false;
-    }
-
-    // 反查混淆名候选，用已还原的源码路径做文件上下文过滤，再按原始名去重。
-    // 同一混淆名可能同时命中 IdentifierCache（类名，原始名带 '#' 前缀）与
-    // MemberMethodCache（构造函数与方法名，原始名不带 '#'，如类与构造函数同名），
-    // 比较与替换前统一剥离 '#' 前缀，避免同名不同前缀导致误判无法唯一还原。
-    std::vector<NameCacheCandidate> candidates;
-    if (!ncache->LookupObfuscatedName(obfName, candidates)) {
-        return false;
-    }
-    const std::string ctxPath = value.substr(0, hash);
     std::string original;
     for (const auto& cand : candidates) {
         if (cand.original.empty()) {
@@ -398,9 +372,40 @@ bool RestoreFunctionNameInSuffix(const NameCacheIndex* ncache, std::string& valu
         if (original.empty()) {
             original = name;
         } else if (original != name) {
-            return false;  // 同一文件下候选原始名不一致，无法唯一还原
+            return {};
         }
     }
+    return original;
+}
+
+bool RestoreFunctionNameInSuffix(const NameCacheIndex* ncache, std::string& value)
+{
+    if (ncache == nullptr) {
+        return false;
+    }
+    const size_t line = value.find("(line:");
+    if (line == std::string::npos || line == 0) {
+        return false;
+    }
+    const size_t hash = value.rfind('#', line - 1);
+    if (hash == std::string::npos || hash + 1 >= line) {
+        return false;
+    }
+    const size_t nameLen = line - hash - 1;
+    if (nameLen == 0) {
+        return false;
+    }
+    const std::string obfName = value.substr(hash + 1, nameLen);
+    if (obfName.empty()) {
+        return false;
+    }
+
+    std::vector<NameCacheCandidate> candidates;
+    if (!ncache->LookupObfuscatedName(obfName, candidates)) {
+        return false;
+    }
+    const std::string ctxPath = value.substr(0, hash);
+    std::string original = ResolveObfNameFromCandidates(candidates, ctxPath, obfName);
     if (original.empty()) {
         return false;
     }

@@ -238,6 +238,43 @@ const MemRowSpec MEM_ROWS[] = {
 
 }  // namespace
 
+/// Match a row label against the MEM_ROWS spec table.
+static const MemRowSpec* MatchMemRowSpec(const std::string& first, std::istringstream& lss)
+{
+    for (const auto& s : MEM_ROWS) {
+        if (s.label[0] != first) {
+            continue;
+        }
+        bool matched = true;
+        for (size_t i = 1; i < s.label.size(); ++i) {
+            std::string tok;
+            if (!(lss >> tok) || tok != s.label[i]) {
+                matched = false;
+                break;
+            }
+        }
+        if (matched) {
+            return &s;
+        }
+    }
+    return nullptr;
+}
+
+/// Collect remaining numeric columns from a line.
+static std::vector<long long> ExtractRowNumbers(std::istringstream& lss)
+{
+    std::vector<long long> nums;
+    std::string v;
+    while (lss >> v) {
+        char* end = nullptr;
+        long long val = std::strtoll(v.c_str(), &end, 10);
+        if (end != v.c_str() && *end == '\0') {
+            nums.push_back(val);
+        }
+    }
+    return nums;
+}
+
 ProcessMetrics ParseHidumperMem(const std::string& output)
 {
     ProcessMetrics m;
@@ -246,45 +283,17 @@ ProcessMetrics ParseHidumperMem(const std::string& output)
     while (std::getline(iss, line)) {
         std::istringstream lss(line);
         std::string first;
-        if (!(lss >> first)) { // blank line
+        if (!(lss >> first)) {
             continue;
         }
         if (!first.empty() && first[0] == '-') {
-            continue; // separator row
+            continue;
         }
-        // Match the row label against the spec table (first token + the rest).
-        const MemRowSpec* spec = nullptr;
-        for (const auto& s : MEM_ROWS) {
-            if (s.label[0] != first) {
-                continue;
-            }
-            bool matched = true;
-            for (size_t i = 1; i < s.label.size(); ++i) {
-                std::string tok;
-                if (!(lss >> tok) || tok != s.label[i]) {
-                    matched = false;   // e.g. "native heap:" -> "heap:" != "heap"
-                    break;
-                }
-            }
-            if (matched) {
-                spec = &s;
-                break;
-            }
-        }
+        const MemRowSpec* spec = MatchMemRowSpec(first, lss);
         if (!spec) {
             continue;
         }
-        // Collect the remaining numeric columns of the row. Non-numeric tokens
-        // are skipped; strtoll avoids std::stoll's exceptions per token.
-        std::vector<long long> nums;
-        std::string v;
-        while (lss >> v) {
-            char* end = nullptr;
-            long long val = std::strtoll(v.c_str(), &end, 10);
-            if (end != v.c_str() && *end == '\0') {
-                nums.push_back(val);
-            }
-        }
+        auto nums = ExtractRowNumbers(lss);
         if (nums.empty()) {
             continue;
         }

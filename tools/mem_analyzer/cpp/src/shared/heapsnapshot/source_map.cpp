@@ -246,6 +246,32 @@ bool SourceMapIndex::ResolveOriginalLine(const std::string& mappings, int genera
     return true;
 }
 
+/// Search backward from startLine for the last segment with a valid mapping.
+static bool FindFallbackPosition(const SourceMapIndex::DecodedMappings& decoded,
+    int startLine, int& originalLine, int& originalColumn, int* outSourceIndex)
+{
+    for (int l = startLine; l >= 0; --l) {
+        if (decoded[l].empty()) {
+            continue;
+        }
+        const SourceMapIndex::Segment* last = nullptr;
+        for (const auto& seg : decoded[l]) {
+            if (seg.size() > SEG_IDX_ORIGINAL_COLUMN) {
+                last = &seg;
+            }
+        }
+        if (last != nullptr) {
+            originalLine = (*last)[SEG_IDX_ORIGINAL_LINE] + 1;
+            originalColumn = (*last)[SEG_IDX_ORIGINAL_COLUMN] + 1;
+            if (outSourceIndex != nullptr) {
+                *outSourceIndex = (*last)[1];
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 bool SourceMapIndex::ResolveOriginalPosition(const std::string& mappings, int generatedLine,
     int generatedColumn, int& originalLine,
     int& originalColumn, int* outSourceIndex) const
@@ -258,14 +284,11 @@ bool SourceMapIndex::ResolveOriginalPosition(const std::string& mappings, int ge
         return false;
     }
 
-    // decoded 为 0 基行索引：decoded[i] 对应生成文件第 i+1 行
     int line = generatedLine - 1;
     if (line >= static_cast<int>(decoded.size())) {
         return false;
     }
 
-    // 目标行内取 generatedColumn <= 目标列的最后一个 segment（source map v3
-    // 约定：segment 覆盖 [generatedColumn, 下一个 segment 列) 区间）
     const LineSegments* segments = &decoded[line];
     const Segment* best = nullptr;
     for (const auto& seg : *segments) {
@@ -275,35 +298,15 @@ bool SourceMapIndex::ResolveOriginalPosition(const std::string& mappings, int ge
         if (seg[0] <= generatedColumn) {
             best = &seg;
         } else {
-            break;  // segment 按 generatedColumn 递增
+            break;
         }
     }
     if (best == nullptr) {
-        // 目标行无覆盖段：向前回退到最近一个有映射的行，取该行最末覆盖段
-        for (int l = line - 1; l >= 0; --l) {
-            if (decoded[l].empty()) {
-                continue;
-            }
-            const Segment* last = nullptr;
-            for (const auto& seg : decoded[l]) {
-                if (seg.size() > SEG_IDX_ORIGINAL_COLUMN) {
-                    last = &seg;
-                }
-            }
-            if (last != nullptr) {
-                originalLine = (*last)[SEG_IDX_ORIGINAL_LINE] + 1;
-                originalColumn = (*last)[SEG_IDX_ORIGINAL_COLUMN] + 1;
-                if (outSourceIndex != nullptr) {
-                    *outSourceIndex = (*last)[1];
-                }
-                return true;
-            }
-        }
-        return false;
+        return FindFallbackPosition(decoded, line - 1, originalLine, originalColumn, outSourceIndex);
     }
 
     AssignBestPosition(*best, originalLine, originalColumn);
-    if (outSourceIndex != nullptr) { // sourceIndex
+    if (outSourceIndex != nullptr) {
         *outSourceIndex = (*best)[1];
     }
     return true;

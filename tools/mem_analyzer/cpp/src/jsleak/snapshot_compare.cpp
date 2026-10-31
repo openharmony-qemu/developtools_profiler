@@ -185,6 +185,22 @@ void ResolveRepresentatives(const HeapSnapshot& heap,
     }
 }
 
+/// Check if a node should be skipped during indexing (survived in other snapshot or non-retainer).
+static bool ShouldSkipForIndex(const HeapSnapshot& heap, uint32_t index,
+    uint64_t selfSize, const std::string& type,
+    const HeapSnapshot& other)
+{
+    const uint32_t nodeId = heap.GetNodeId(index);
+    if (nodeId != UINT32_MAX &&
+        other.nodeIdToIdx.find(nodeId) != other.nodeIdToIdx.end()) {
+        return true;
+    }
+    if (selfSize == 0 || !IsRetainerType(type)) {
+        return true;
+    }
+    return false;
+}
+
 SnapshotIndex BuildIndex(const HeapSnapshot& heap, const HeapSnapshot& other)
 {
     SnapshotIndex out;
@@ -202,19 +218,11 @@ SnapshotIndex BuildIndex(const HeapSnapshot& heap, const HeapSnapshot& other)
             continue;
         }
         ++out.reachableCount;
-        // Snapshot comparison is identity based: an object that has the same
-        // node ID in both snapshots survived the interval and must not
-        // contribute to either side of the diff, even when its retained size
-        // or display name changed.
-        const uint32_t nodeId = heap.GetNodeId(index);
-        if (nodeId != UINT32_MAX &&
-            other.nodeIdToIdx.find(nodeId) != other.nodeIdToIdx.end()) {
-            continue;
-        }
         const std::string type = heap.GetNodeTypeName(index);
-        if (selfSize == 0 || !IsRetainerType(type)) {
+        if (ShouldSkipForIndex(heap, index, selfSize, type, other)) {
             continue;
         }
+        const uint32_t nodeId = heap.GetNodeId(index);
 
         auto inserted = identityCache.emplace(index, std::pair<std::string, std::string>{});
         if (inserted.second) {
@@ -238,10 +246,6 @@ SnapshotIndex BuildIndex(const HeapSnapshot& heap, const HeapSnapshot& other)
             group.representativeId = heap.GetNodeId(index);
         }
     }
-    // Representative details are resolved once per group after aggregation.
-    // Computing the shortest reference path and dominator ancestry for every
-    // node would be O(N * depth); only one representative per group needs
-    // them, so this pass is O(groups * depth).
     ResolveRepresentatives(heap, out.groups, identityCache);
     if (out.totalHeapSize == 0) {
         out.totalHeapSize = out.totalSelfSize;
