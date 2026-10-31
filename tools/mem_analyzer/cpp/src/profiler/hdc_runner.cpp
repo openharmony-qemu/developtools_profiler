@@ -1060,6 +1060,25 @@ void StopHiprofiler()
 // the authoritative indicator that hiprofiler finished writing it. Returns
 // the full device path of the detected zip, or an empty string when none was
 // found (the caller then falls back to the -o file).
+/// Find a new zip file not in baseline, with the largest embedded timestamp.
+static std::string FindNewZipCandidate(
+    const std::map<std::string, long long>& currentZips,
+    const std::map<std::string, long long>& baseline)
+{
+    std::string candidate;
+    long long candidateTs = -1;
+    for (const auto& kv : currentZips) {
+        if (baseline.count(kv.first)) {
+            continue;
+        }
+        if (kv.second > candidateTs) {
+            candidate = kv.first;
+            candidateTs = kv.second;
+        }
+    }
+    return candidate;
+}
+
 std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baseline,
     const std::string& dir, long long timeoutS)
 {
@@ -1071,7 +1090,7 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
     auto pollStart = ClockType::now();
 
     for (int i = 0; i < timeoutS; ++i) {
-        if (DeviceLost()) { // pinned target: device-level failure -> stop polling now
+        if (DeviceLost()) {
             break;
         }
         const long long elapsedPoll = ElapsedSince(pollStart);
@@ -1079,23 +1098,8 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
             break;
         }
 
-        // Re-scan the directory for any hiprofiler_data_*.zip files.
         const auto currentZips = listHiprofilerZips(dir);
-
-        std::string candidate;
-        long long candidateTs = -1;
-        // Look for a NEW file not in baseline; among new files pick the one
-        // with the largest embedded timestamp (most likely produced by this
-        // run).
-        for (const auto& kv : currentZips) {
-            if (baseline.count(kv.first)) {
-                continue;
-            }
-            if (kv.second > candidateTs) {
-                candidate = kv.first;
-                candidateTs = kv.second;
-            }
-        }
+        std::string candidate = FindNewZipCandidate(currentZips, baseline);
 
         if (candidate.empty()) {
             prevSize = -1;
@@ -1511,6 +1515,54 @@ struct PreCaptureState {
 // can later identify the files this run generated (new / size-changed).
 // Returns false when the capture must abort (e.g. snapshot target not
 // running); the error is written into `result`.
+/// Manage app launch/state before capture starts.
+static void ManageAppState(const HdcRunOptions& opts, PreCaptureState& pre)
+{
+    const std::string runningPid = GetProcessPid(opts.processName);
+    const bool wasRunning = !runningPid.empty();
+    if (wasRunning) {
+        log::Logi("Target process '", opts.processName, "' is running, pid:", runningPid);
+    } else {
+        log::Logw("Target process '", opts.processName, "' is not running.");
+    }
+
+    if (!wasRunning && !opts.requireFreshStart) {
+        if (opts.isApp) {
+            log::Logi("Auto-launching '", opts.processName, "' via aa start...");
+            if (LaunchDeviceAppAndWait(opts.processName)) {
+                log::Logi("'", opts.processName, "' is running.");
+            } else {
+                log::Logw("Warning: failed to auto-launch '", opts.processName, "'; please start it manually.");
+            }
+        } else {
+            log::Logi("Please start it as soon as possible.");
+        }
+    } else if (opts.requireFreshStart) {
+        log::Logi("This capture type requires a FRESH START: the app will be force-stopped "
+                  "and relaunched automatically once the capture session is ready.");
+    }
+
+    pre.initialPid = GetProcessPid(opts.processName);
+    pre.wasRunningAtStart = !pre.initialPid.empty();
+    if (!wasRunning && pre.wasRunningAtStart) {
+        log::Logi("Target process '", opts.processName, "' is now running, pid:", pre.initialPid);
+    }
+}
+
+/// Collect initial process metrics (memory + fd count) via hdc shell.
+static void CollectInitialMetrics(PreCaptureState& pre)
+{
+    if (!pre.wasRunningAtStart) {
+        return;
+    }
+    CapturedCmd memCap = CaptureCommand(
+        HdcShell("hidumper --mem " + proc::ShellQuoteDevice(pre.initialPid)) + " 2>&1");
+    pre.initialMetrics = ParseHidumperMem(memCap.output);
+    CapturedCmd lsofCap = CaptureCommand(
+        HdcShell("lsof -p " + proc::ShellQuoteDevice(pre.initialPid)) + " 2>&1");
+    pre.initialMetrics.fdCount = CountLsofFds(lsofCap.output);
+}
+
 bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode, PreCaptureState& pre, RunResult& result)
 {
     if (snapshotMode) {
@@ -1529,79 +1581,16 @@ bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode, PreCaptur
         return true;
     }
 
-    // hiprofiler flow baseline (only for -g / -l via wait_for_zip): capture
-    // the pre-existing hiprofiler_data_*.zip files in /data/local/tmp BEFORE
-    // the command runs. After hdc shell returns hiprofiler may still be writing
-    // the zip asynchronously, so we detect "hiprofiler has finished" by polling
-    // for a NEW zip file that was not present at startup (the embedded
-    // timestamp inside the filename is the authoritative indicator of
-    // hiprofiler completion). Other capture types (-n/-f/-d) don't produce a
-    // hiprofiler_data_*.zip, so they skip this and just pull the -o file.
     if (!opts.remoteOutputPath.empty() && opts.waitForZip) {
         pre.hiprofilerZipBaseline = listHiprofilerZips(HIPROFILER_ZIP_DIR);
     }
 
-    // hiprofiler mode: do the initial process check BEFORE starting the worker
-    // thread. Once the worker's `hdc shell 'hiprofiler_cmd ...'` is running, it
-    // may occupy the hdc connection and serialize other `hdc shell` calls.
-    // We check the process status once here (when hdc is still free). During
-    // the countdown, a background thread periodically tries to refresh the pid
-    // — if hdc is free, the pid updates in real-time; if hdc serializes, the
-    // background thread blocks harmlessly and the countdown uses the last known
-    // pid. Either way, the main countdown thread never blocks.
     if (opts.duration <= 0 || opts.processName.empty()) {
         return true;
     }
 
-    // Automated app-state management (all capture types except -s):
-    //   - app not running, no fresh-start need (-n/-g/-f/-d): launch now
-    //     via `aa start` so it is up when the countdown begins.
-    //   - fresh-start (-l), app running: force-stop + relaunch is deferred
-    //     until the capture session is up (the hook library must load at
-    //     app startup to be traced).
-    //   - fresh-start (-l), app not running: launch is deferred the same way.
-    //   - app running, no fresh-start need: left untouched.
-    const std::string runningPid = GetProcessPid(opts.processName);
-    const bool wasRunning = !runningPid.empty();
-    if (wasRunning) {
-        log::Logi("Target process '", opts.processName, "' is running, pid:", runningPid);
-    } else {
-        log::Logw("Target process '", opts.processName, "' is not running.");
-    }
-
-    if (!wasRunning && !opts.requireFreshStart) {
-        if (opts.isApp) {
-            log::Logi("Auto-launching '", opts.processName, "' via aa start...");
-            if (LaunchDeviceAppAndWait(opts.processName)) {
-                log::Logi("'", opts.processName, "' is running.");
-            } else {
-                log::Logw("Warning: failed to auto-launch '", opts.processName, "'; please start it manually.");
-            }
-        } else {
-            // System process: never auto-launch; keep the original hint.
-            log::Logi("Please start it as soon as possible.");
-        }
-    } else if (opts.requireFreshStart) {
-        log::Logi("This capture type requires a FRESH START: the app will be force-stopped "
-                  "and relaunched automatically once the capture session is ready.");
-    }
-
-    pre.initialPid = GetProcessPid(opts.processName);
-    pre.wasRunningAtStart = !pre.initialPid.empty();
-    if (!wasRunning && pre.wasRunningAtStart) {
-        log::Logi("Target process '", opts.processName, "' is now running, pid:", pre.initialPid);
-    }
-    // Collect an initial sample of the process metrics while hdc is still
-    // free (before the worker occupies the connection), so the first
-    // countdown tick can show them immediately.
-    if (pre.wasRunningAtStart) {
-        CapturedCmd memCap = CaptureCommand(
-            HdcShell("hidumper --mem " + proc::ShellQuoteDevice(pre.initialPid)) + " 2>&1");
-        pre.initialMetrics = ParseHidumperMem(memCap.output);
-        CapturedCmd lsofCap = CaptureCommand(
-            HdcShell("lsof -p " + proc::ShellQuoteDevice(pre.initialPid)) + " 2>&1");
-        pre.initialMetrics.fdCount = CountLsofFds(lsofCap.output);
-    }
+    ManageAppState(opts, pre);
+    CollectInitialMetrics(pre);
     std::cout << std::flush;
     return true;
 }

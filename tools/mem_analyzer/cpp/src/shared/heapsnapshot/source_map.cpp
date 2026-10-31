@@ -433,11 +433,40 @@ void LogLoadedEntries(const std::unordered_map<std::string, SourceMapEntry>& ind
 
 } // anonymous namespace
 
+/// Recursively scan a directory for source map files (*.map / sourceMaps.map).
+static bool ScanDirForMapFiles(const fs::path& dirPath,
+    std::unordered_map<std::string, SourceMapEntry>& index, bool& foundAny)
+{
+    bool parseOk = false;
+    std::error_code ec;
+    for (const auto& entry : fs::recursive_directory_iterator(dirPath, ec)) {
+        if (ec) {
+            break;
+        }
+        if (!entry.is_regular_file()) {
+            continue;
+        }
+        const std::string filename = mem_analyzer::PathToUtf8(entry.path().filename());
+        const std::string fullPath = mem_analyzer::PathToUtf8(entry.path());
+        bool isMap = filename == "sourceMaps.map";
+        if (!isMap && mem_analyzer::PathToUtf8(entry.path().extension()) == ".map") {
+            isMap = true;
+        }
+        if (!isMap) {
+            continue;
+        }
+        foundAny = true;
+        if (IndexMapFile(fullPath, index)) {
+            parseOk = true;
+        }
+    }
+    return parseOk;
+}
+
 bool SourceMapIndex::LoadFromDir(const std::string& dir)
 {
     std::error_code ec;
     const fs::path dirPath = mem_analyzer::PathFromUtf8(dir);
-    // 直接指定单个 source map 文件（sourceMaps.map / *.map）时直接加载
     if (fs::is_regular_file(dirPath, ec)) {
         ec.clear();
         if (!IndexMapFile(dir, index_)) {
@@ -456,33 +485,7 @@ bool SourceMapIndex::LoadFromDir(const std::string& dir)
 
     size_t before = index_.size();
     bool foundAny = false;
-    bool parseOk = false;
-
-    // 递归扫描目录：读取 "sourceMaps.map"（merge 文件）及所有 "*.map" 文件
-    // （兼容多模块产物位于子目录的场景）
-    for (const auto& entry : fs::recursive_directory_iterator(dirPath, ec)) {
-        if (ec) {
-            break;
-        }
-        if (!entry.is_regular_file()) {
-            continue;
-        }
-        const std::string filename = mem_analyzer::PathToUtf8(entry.path().filename());
-        const std::string fullPath = mem_analyzer::PathToUtf8(entry.path());
-
-        bool isMap = filename == "sourceMaps.map";
-        if (!isMap && mem_analyzer::PathToUtf8(entry.path().extension()) == ".map") {
-            isMap = true;
-        }
-        if (!isMap) {
-            continue;
-        }
-
-        foundAny = true;
-        if (IndexMapFile(fullPath, index_)) {
-            parseOk = true;
-        }
-    }
+    bool parseOk = ScanDirForMapFiles(dirPath, index_, foundAny);
 
     if (!foundAny) {
         log::Logw("Warning: No source map file (sourceMaps.map / *.map) found in: ", dir);
