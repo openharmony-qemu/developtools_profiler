@@ -117,6 +117,27 @@ static void RegisterSubcommands(mem_analyzer::CliParser& app,
     }
 }
 
+/// Apply debug/verbose/keepTemp settings from global options.
+static void ApplyGlobalOptions(mem_analyzer::GlobalOptions& global)
+{
+    if (global.debug) {
+        global.verbose = true;
+        global.keepTemp = true;
+    }
+    mem_analyzer::log::SetLevel(global.verbose ? mem_analyzer::log::Level::LOG_DEBUG :
+                                                 mem_analyzer::log::Level::LOG_INFO);
+    mem_analyzer::TempDir::SetKeep(global.keepTemp);
+}
+
+/// Load preview feature switches (non-fatal on failure).
+static void LoadPreviewFeatures()
+{
+    std::string err;
+    if (!mem_analyzer::PreviewFeaturesMgr::Instance().Load(err)) {
+        mem_analyzer::log::Logw("Warning: preview features: ", err);
+    }
+}
+
 int main(int argc, char** argv)
 {
 #if defined(_WIN32)
@@ -144,25 +165,14 @@ int main(int argc, char** argv)
         return app.Exit(e);
     }
 
-    if (global.debug) {
-        global.verbose = true;
-        global.keepTemp = true;
-    }
-    mem_analyzer::log::SetLevel(global.verbose ? mem_analyzer::log::Level::LOG_DEBUG :
-                                                 mem_analyzer::log::Level::LOG_INFO);
-    mem_analyzer::TempDir::SetKeep(global.keepTemp);
+    ApplyGlobalOptions(global);
 
     if (global.showVersion) {
         std::cout << "mem-analyzer version " << mem_analyzer::GetVersion() << std::endl;
         return 0;
     }
 
-    {
-        std::string err;
-        if (!mem_analyzer::PreviewFeaturesMgr::Instance().Load(err)) {
-            mem_analyzer::log::Logw("Warning: preview features: ", err);
-        }
-    }
+    LoadPreviewFeatures();
 
     SaveCommandLine(argc, argv, global.commandLine);
 
