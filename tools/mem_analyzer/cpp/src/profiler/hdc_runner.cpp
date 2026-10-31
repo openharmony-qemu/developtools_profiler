@@ -2186,6 +2186,69 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
 // and skew the sampled state. A permission failure aborts the capture early
 // instead — the background threads are detached and finish on their own (they
 // only reference the heap-allocated shared state, so this is safe).
+/// Join or detach background threads based on permission failure state.
+// worker.join() frees the hdc connection, so any blocked pid-checker call
+// completes promptly after. On a permission failure the worker's `hdc
+// shell` may still be running the full capture duration on the device, so
+// joining would idle-block here — detach it (and the other background
+// threads) instead; they only reference the heap-allocated shared state
+// and terminate when the process exits.
+static void JoinOrDetachThreads(std::thread& worker, std::thread& pidChecker,
+    std::thread& freshRestartThread, bool permissionFailed)
+{
+    if (permissionFailed) {
+        worker.detach();
+        if (pidChecker.joinable()) {
+            pidChecker.detach();
+        }
+        if (freshRestartThread.joinable()) {
+            freshRestartThread.detach();
+        }
+    } else {
+        worker.join();
+        if (pidChecker.joinable()) {
+            pidChecker.join();
+        }
+        if (freshRestartThread.joinable()) {
+            freshRestartThread.join();
+        }
+    }
+}
+
+/// Wait for hiprofiler post-capture finalization with progress output.
+// After the capture countdown expires, hiprofiler_cmd on the device
+// typically continues running for a while to do post-capture cleanup
+// (StopSession / DestroySession, flush buffers, write the zip file,
+// etc.). The `done` flag is still false at this point, and
+// worker.join() below would block silently — which looks like a hang
+// to the user. So we keep printing a "finalizing" line every 5s with
+// the total elapsed time until the worker thread actually finishes.
+// Snapshot mode is unaffected: its loop above waits on `done` directly,
+// so when we reach here `done` is already true and this block is skipped.
+// A permission failure is also unaffected: the capture was already aborted,
+// so there is nothing to finalize and we must not idle until the
+// device-side command runs out.
+static void WaitForFinalization(ClockType::time_point start,
+    const std::shared_ptr<CaptureState>& state)
+{
+    if (!state->done.load() && !g_interruptRequested &&
+        !state->permissionFailed.load()) {
+        log::Logi("Capture duration finished; hiprofiler is finalizing output "
+                  "(stopping session, flushing data)...");
+        int finalizeWait = 0;
+        while (!state->done.load() && !g_interruptRequested) {
+            const long long total = ElapsedSince(start);
+            std::cout << "Finalizing... total " << total << "s elapsed " <<
+                "(post-capture wait: " << finalizeWait << "s)\n" << std::flush;
+            SleepTicks(PROGRESS_INTERVAL_TICKS, [&state]() {
+                return state->done.load() || g_interruptRequested;
+            });
+            finalizeWait += PROGRESS_INTERVAL_S;
+        }
+        log::Logi("hiprofiler post-capture processing complete.");
+    }
+}
+
 void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
     ClockType::time_point start, bool asyncStartMode,
     std::thread& worker, std::thread& pidChecker,
@@ -2254,78 +2317,15 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
         // after. A permission failure aborts the capture early instead; the
         // background threads are detached and finish on their own (they only
         // reference the heap-allocated shared state, so this is safe).
-        if (state->permissionFailed.load()) {
-            worker.detach();
-            if (pidChecker.joinable()) {
-                pidChecker.detach();
-            }
-            if (freshRestartThread.joinable()) {
-                freshRestartThread.detach();
-            }
-        } else {
-            worker.join();
-            if (pidChecker.joinable()) {
-                pidChecker.join();
-            }
-            if (freshRestartThread.joinable()) {
-                freshRestartThread.join();
-            }
-        }
+        JoinOrDetachThreads(worker, pidChecker, freshRestartThread,
+                            state->permissionFailed.load());
         return;
     }
 
-    // After the capture countdown expires, hiprofiler_cmd on the device
-    // typically continues running for a while to do post-capture cleanup
-    // (StopSession / DestroySession, flush buffers, write the zip file,
-    // etc.). The `done` flag is still false at this point, and
-    // worker.join() below would block silently — which looks like a hang
-    // to the user. So we keep printing a "finalizing" line every 5s with
-    // the total elapsed time until the worker thread actually finishes.
-    // Snapshot mode is unaffected: its loop above waits on `done` directly,
-    // so when we reach here `done` is already true and this block is skipped.
-    // A permission failure is also unaffected: the capture was already aborted,
-    // so there is nothing to finalize and we must not idle until the
-    // device-side command runs out.
-    if (!state->done.load() && !g_interruptRequested &&
-        !state->permissionFailed.load()) {
-        log::Logi("Capture duration finished; hiprofiler is finalizing output "
-                  "(stopping session, flushing data)...");
-        int finalizeWait = 0;
-        while (!state->done.load() && !g_interruptRequested) {
-            const long long total = ElapsedSince(start);
-            std::cout << "Finalizing... total " << total << "s elapsed " <<
-                "(post-capture wait: " << finalizeWait << "s)\n" << std::flush;
-            SleepTicks(PROGRESS_INTERVAL_TICKS, [&state]() {
-                return state->done.load() || g_interruptRequested;
-            });
-            finalizeWait += PROGRESS_INTERVAL_S;
-        }
-        log::Logi("hiprofiler post-capture processing complete.");
-    }
+    WaitForFinalization(start, state);
 
-    // worker.join() frees the hdc connection, so any blocked pid-checker call
-    // completes promptly after. On a permission failure the worker's `hdc
-    // shell` may still be running the full capture duration on the device, so
-    // joining would idle-block here — detach it (and the other background
-    // threads) instead; they only reference the heap-allocated shared state
-    // and terminate when the process exits.
-    if (state->permissionFailed.load()) {
-        worker.detach();
-        if (pidChecker.joinable()) {
-            pidChecker.detach();
-        }
-        if (freshRestartThread.joinable()) {
-            freshRestartThread.detach();
-        }
-    } else {
-        worker.join();
-        if (pidChecker.joinable()) {
-            pidChecker.join();
-        }
-        if (freshRestartThread.joinable()) {
-            freshRestartThread.join();
-        }
-    }
+    JoinOrDetachThreads(worker, pidChecker, freshRestartThread,
+                        state->permissionFailed.load());
 }
 
 // ── result assembly: end snapshot, result-file pull, cleanup ─────────────────
@@ -2334,6 +2334,88 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
 // (including a permission abort), pull the result file(s) and remove the local
 // temp config file. The end-of-capture smaps/lsof snapshot is exported in
 // stop_and_join_threads, before `hiprofiler_cmd stop` runs.
+/**
+ * Pull hiprofiler result file (zip or -o file) and optional nativeleaks file.
+ * hiprofiler export flow.
+ * wait_for_zip (only -g / -l): The hiprofiler_cmd process on the
+ * device may continue writing the hiprofiler_data_*.zip file for a
+ * few seconds AFTER `hdc shell` has returned. We poll /data/local/tmp
+ * for up to 3 seconds for a NEW zip (not in the pre-command baseline)
+ * whose size is stable across two consecutive samples. If found, we
+ * prefer the zip over the -o file; otherwise we fall back to the -o
+ * file.
+ * !wait_for_zip (-n / -f / -d): these capture types don't produce a
+ * hiprofiler_data_*.zip, so we just pull the -o file directly.
+ */
+static void PullHiprofilerResult(const HdcRunOptions& opts,
+    const std::map<std::string, long long>& hiprofilerZipBaseline,
+    const std::string& nativeleaksPid, RunResult& result)
+{
+    std::string fileToPull = opts.remoteOutputPath;
+
+    if (opts.waitForZip) {
+        const long long hiprofilerWaitTimeoutS = 3;
+        const std::string newZipPath = WaitForHiprofilerZip(
+            hiprofilerZipBaseline, HIPROFILER_ZIP_DIR, hiprofilerWaitTimeoutS);
+        if (!newZipPath.empty()) {
+            fileToPull = newZipPath;
+        } else {
+            std::string msg = "No new hiprofiler_data zip detected within " +
+                              std::to_string(hiprofilerWaitTimeoutS) +
+                              "s; falling back to -o file: " + opts.remoteOutputPath;
+            // Same chain as the "Device failure detected" line below: wait_for_hiprofiler_zip()
+            // stops early on device_lost(), so an unplugged device shows up HERE as well, and
+            // "no new zip" is meaningless without knowing which device. Conditional because
+            // this path can also be reached untargeted (see the gate's Legacy branch).
+            if (!HdcConnectKey().empty()) {
+                msg += " [device: " + HdcConnectKey() + "]";
+            }
+            log::Loge(msg);
+        }
+    }
+
+    result.pullAttempted = true;
+    PullOutcome po = PullFile(fileToPull, opts.outputDir);
+    result.pullOk = po.ok;
+    result.pullExitCode = po.exitCode;
+    result.pullOutput = po.output;
+    result.pulledFile = LocalRecvPath(opts.outputDir, fileToPull);
+
+    // nativeleaks: also pull the orphan-snapshot file written alongside
+    // the .htrace. It may appear a few seconds after hiprofiler_cmd
+    // returns, so poll for it like wait_for_hiprofiler_zip, then pull it
+    // into the session dir so `trace -l <leaks> <htrace>` can use both.
+    if (opts.pullNativeleaks && result.pullOk) {
+        // leaks 文件名按 pid 命名（memleak-native-orphansnapshot-<pid>.txt）。
+        // nativeleaks_pid 是采集前 pid；空（进程采集前未运行、被 aa start
+        // 拉起）则实时取，此时进程必在运行（hiprofiler_cmd 刚结束）。
+        std::string pid = nativeleaksPid;
+        if (pid.empty()) {
+            pid = GetProcessPid(opts.processName);
+        }
+        const long long leaksWaitTimeoutS = 10;
+        const std::string leaksRemote = WaitForNativeleaksFile(
+            pid, HIPROFILER_ZIP_DIR, leaksWaitTimeoutS);
+        if (!leaksRemote.empty()) {
+            PullOutcome lpo = PullFile(leaksRemote, opts.outputDir);
+            if (lpo.ok) {
+                result.pulledLeaksFile = LocalRecvPath(opts.outputDir, leaksRemote);
+                log::Logok("Nativeleaks file exported: ", result.pulledLeaksFile);
+            } else {
+                log::Loge("Nativeleaks file export failed: ", leaksRemote,
+                    " (exit code ", lpo.exitCode, ")\n", lpo.output);
+            }
+        } else {
+            std::string msg = "No new nativeleaks orphan-snapshot file detected within " +
+                std::to_string(leaksWaitTimeoutS) + "s";
+            if (!HdcConnectKey().empty()) {
+                msg += " [device: " + HdcConnectKey() + "]";
+            }
+            log::Loge(msg);
+        }
+    }
+}
+
 void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
     ClockType::time_point start, bool snapshotMode,
     bool asyncStartMode,
@@ -2393,79 +2475,7 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
             result.elapsed = ElapsedSince(start);
         }
     } else if (result.ok && !opts.remoteOutputPath.empty()) {
-        // hiprofiler export flow.
-        // wait_for_zip (only -g / -l): The hiprofiler_cmd process on the
-        // device may continue writing the hiprofiler_data_*.zip file for a
-        // few seconds AFTER `hdc shell` has returned. We poll /data/local/tmp
-        // for up to 3 seconds for a NEW zip (not in the pre-command baseline)
-        // whose size is stable across two consecutive samples. If found, we
-        // prefer the zip over the -o file; otherwise we fall back to the -o
-        // file.
-        // !wait_for_zip (-n / -f / -d): these capture types don't produce a
-        // hiprofiler_data_*.zip, so we just pull the -o file directly.
-        std::string fileToPull = opts.remoteOutputPath;
-
-        if (opts.waitForZip) {
-            const long long hiprofilerWaitTimeoutS = 3;
-            const std::string newZipPath = WaitForHiprofilerZip(
-                hiprofilerZipBaseline, HIPROFILER_ZIP_DIR, hiprofilerWaitTimeoutS);
-            if (!newZipPath.empty()) {
-                fileToPull = newZipPath;
-            } else {
-                std::string msg = "No new hiprofiler_data zip detected within " +
-                                  std::to_string(hiprofilerWaitTimeoutS) +
-                                  "s; falling back to -o file: " + opts.remoteOutputPath;
-                // Same chain as the "Device failure detected" line below: wait_for_hiprofiler_zip()
-                // stops early on device_lost(), so an unplugged device shows up HERE as well, and
-                // "no new zip" is meaningless without knowing which device. Conditional because
-                // this path can also be reached untargeted (see the gate's Legacy branch).
-                if (!HdcConnectKey().empty()) {
-                    msg += " [device: " + HdcConnectKey() + "]";
-                }
-                log::Loge(msg);
-            }
-        }
-
-        result.pullAttempted = true;
-        PullOutcome po = PullFile(fileToPull, opts.outputDir);
-        result.pullOk = po.ok;
-        result.pullExitCode = po.exitCode;
-        result.pullOutput = po.output;
-        result.pulledFile = LocalRecvPath(opts.outputDir, fileToPull);
-
-        // nativeleaks: also pull the orphan-snapshot file written alongside
-        // the .htrace. It may appear a few seconds after hiprofiler_cmd
-        // returns, so poll for it like wait_for_hiprofiler_zip, then pull it
-        // into the session dir so `trace -l <leaks> <htrace>` can use both.
-        if (opts.pullNativeleaks && result.pullOk) {
-            // leaks 文件名按 pid 命名（memleak-native-orphansnapshot-<pid>.txt）。
-            // nativeleaks_pid 是采集前 pid；空（进程采集前未运行、被 aa start
-            // 拉起）则实时取，此时进程必在运行（hiprofiler_cmd 刚结束）。
-            std::string pid = nativeleaksPid;
-            if (pid.empty()) {
-                pid = GetProcessPid(opts.processName);
-            }
-            const long long leaksWaitTimeoutS = 10;
-            const std::string leaksRemote = WaitForNativeleaksFile(
-                pid, HIPROFILER_ZIP_DIR, leaksWaitTimeoutS);
-            if (!leaksRemote.empty()) {
-                PullOutcome lpo = PullFile(leaksRemote, opts.outputDir);
-                if (lpo.ok) {
-                    result.pulledLeaksFile = LocalRecvPath(opts.outputDir, leaksRemote);
-                    log::Logok("Nativeleaks file exported: ", result.pulledLeaksFile);
-                } else {
-                    log::Loge("Nativeleaks file export failed: ", leaksRemote,
-                        " (exit code ", lpo.exitCode, ")\n", lpo.output);
-                }
-            } else {
-                std::string msg = "No new nativeleaks orphan-snapshot file detected within " +
-                    std::to_string(leaksWaitTimeoutS) + "s";
-                if (!HdcConnectKey().empty()) {
-                    msg += " [device: " + HdcConnectKey() + "]";
-                }
-                log::Loge(msg);
-            }
-        }
+        PullHiprofilerResult(opts, hiprofilerZipBaseline, nativeleaksPid, result);
     }
 
     // Clean up the local temp config file if it was created.
