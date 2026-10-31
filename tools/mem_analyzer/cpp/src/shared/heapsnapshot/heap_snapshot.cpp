@@ -931,6 +931,104 @@ static std::vector<std::string> readStringsArray(std::ifstream& file, size_t bra
 //    - edge_types / node_types arrays → numeric type values
 //  Also returns the byte position of the nodes array bracket for Phase 2.
 // ============================================================================
+/**
+ * Discover node field offsets by name.
+ * Typical V8 node_fields: ["type","name","id","self_size","edge_count","trace_node_id","detachedness"]
+ */
+static void DiscoverNodeFieldOffsets(HeapSnapshot& snapshot,
+    const std::vector<std::string>& nodeFields)
+{
+    for (int i = 0; i < static_cast<int>(nodeFields.size()); i++) {
+        if (nodeFields[i] == "type") {
+            snapshot.nodeTypeOffset = i;
+        } else if (nodeFields[i] == "name") {
+            snapshot.nodeNameOffset = i;
+        } else if (nodeFields[i] == "id") {
+            snapshot.nodeIdOffset = i;
+        } else if (nodeFields[i] == "self_size") {
+            snapshot.nodeSelfSizeOffset = i;
+        } else if (nodeFields[i] == "native_size") {
+            snapshot.nodeNativeSizeOffset = i;
+        } else if (nodeFields[i] == "edge_count") {
+            snapshot.nodeEdgeCountOffset = i;
+        }
+    }
+}
+
+/**
+ * Discover edge field offsets by name.
+ * Typical V8 edge_fields: ["type","name_or_index","to_node"]
+ */
+static void DiscoverEdgeFieldOffsets(HeapSnapshot& snapshot,
+    const std::vector<std::string>& edgeFields)
+{
+    for (int i = 0; i < static_cast<int>(edgeFields.size()); i++) {
+        if (edgeFields[i] == "type") {
+            snapshot.edgeTypeOffset = i;
+        } else if (edgeFields[i] == "name_or_index") {
+            snapshot.edgeNameOrIndexOffset = i;
+        } else if (edgeFields[i] == "to_node") {
+            snapshot.edgeToNodeOffset = i;
+        }
+    }
+}
+
+/**
+ * Resolve edge type numeric values from meta.edge_types[type_offset].
+ * Typical V8 edge types: ["context","element","property","internal","hidden","shortcut","weak"]
+ */
+static void ResolveEdgeTypes(HeapSnapshot& snapshot, const json& meta)
+{
+    snapshot.edgeWeakType = -1;
+    snapshot.edgeShortcutType = -1;
+    snapshot.edgeHiddenType = -1;
+    snapshot.edgeElementType = -1;
+    snapshot.edgeInternalType = -1;
+    if (meta.contains("edge_types") && snapshot.edgeTypeOffset >= 0) {
+        auto edgeTypes = meta["edge_types"][snapshot.edgeTypeOffset];
+        if (edgeTypes.is_array()) {
+            auto types = edgeTypes.get<std::vector<std::string>>();
+            for (int i = 0; i < static_cast<int>(types.size()); i++) {
+                if (types[i] == "weak") {
+                    snapshot.edgeWeakType = i;
+                } else if (types[i] == "shortcut") {
+                    snapshot.edgeShortcutType = i;
+                } else if (types[i] == "hidden") {
+                    snapshot.edgeHiddenType = i;
+                } else if (types[i] == "element") {
+                    snapshot.edgeElementType = i;
+                } else if (types[i] == "internal") {
+                    snapshot.edgeInternalType = i;
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Validate metadata field completeness.
+ * 元数据完整性校验：缺失必填字段会让下游用 -1（转成 SIZE_MAX）当数组下标越界读，
+ * edge_fields 为空则会在边解析处除以 0。畸形/异构生成器产出的快照挡在这里。
+ */
+static void ValidateMetaFields(const HeapSnapshot& snapshot)
+{
+    if (snapshot.edgeFieldsCount <= 0) {
+        throw std::runtime_error("invalid snapshot metadata: empty edge_fields");
+    }
+    if (snapshot.nodeTypeOffset < 0 || snapshot.nodeNameOffset < 0 ||
+        snapshot.nodeIdOffset < 0 || snapshot.nodeSelfSizeOffset < 0 ||
+        snapshot.nodeEdgeCountOffset < 0) {
+        throw std::runtime_error(
+            "invalid snapshot metadata: missing required node field "
+            "(type/name/id/self_size/edge_count)");
+    }
+    if (snapshot.edgeTypeOffset < 0 || snapshot.edgeNameOrIndexOffset < 0 ||
+        snapshot.edgeToNodeOffset < 0) {
+        throw std::runtime_error(
+            "invalid snapshot metadata: missing required edge field (type/name_or_index/to_node)");
+    }
+}
+
 static void ParseSnapshotMeta(HeapSnapshot& snapshot,
     const std::string& headBuf,
     size_t nodesMarkerPos,
@@ -977,80 +1075,10 @@ static void ParseSnapshotMeta(HeapSnapshot& snapshot,
         throw std::runtime_error("invalid snapshot metadata: empty node_fields");
     }
 
-    // Discover node field offsets by name
-    // Typical V8 node_fields: ["type","name","id","self_size","edge_count","trace_node_id","detachedness"]
-    for (int i = 0; i < static_cast<int>(nodeFields.size()); i++) {
-        if (nodeFields[i] == "type") {
-            snapshot.nodeTypeOffset = i;
-        } else if (nodeFields[i] == "name") {
-            snapshot.nodeNameOffset = i;
-        } else if (nodeFields[i] == "id") {
-            snapshot.nodeIdOffset = i;
-        } else if (nodeFields[i] == "self_size") {
-            snapshot.nodeSelfSizeOffset = i;
-        } else if (nodeFields[i] == "native_size") {
-            snapshot.nodeNativeSizeOffset = i;
-        } else if (nodeFields[i] == "edge_count") {
-            snapshot.nodeEdgeCountOffset = i;
-        }
-    }
-
-    // Discover edge field offsets by name
-    // Typical V8 edge_fields: ["type","name_or_index","to_node"]
-    for (int i = 0; i < static_cast<int>(edgeFields.size()); i++) {
-        if (edgeFields[i] == "type") {
-            snapshot.edgeTypeOffset = i;
-        } else if (edgeFields[i] == "name_or_index") {
-            snapshot.edgeNameOrIndexOffset = i;
-        } else if (edgeFields[i] == "to_node") {
-            snapshot.edgeToNodeOffset = i;
-        }
-    }
-
-    // 元数据完整性校验：缺失必填字段会让下游用 -1（转成 SIZE_MAX）当数组下标越界读，
-    // edge_fields 为空则会在边解析处除以 0。畸形/异构生成器产出的快照挡在这里。
-    if (snapshot.edgeFieldsCount <= 0) {
-        throw std::runtime_error("invalid snapshot metadata: empty edge_fields");
-    }
-    if (snapshot.nodeTypeOffset < 0 || snapshot.nodeNameOffset < 0 ||
-        snapshot.nodeIdOffset < 0 || snapshot.nodeSelfSizeOffset < 0 ||
-        snapshot.nodeEdgeCountOffset < 0) {
-        throw std::runtime_error(
-            "invalid snapshot metadata: missing required node field "
-            "(type/name/id/self_size/edge_count)");
-    }
-    if (snapshot.edgeTypeOffset < 0 || snapshot.edgeNameOrIndexOffset < 0 ||
-        snapshot.edgeToNodeOffset < 0) {
-        throw std::runtime_error(
-            "invalid snapshot metadata: missing required edge field (type/name_or_index/to_node)");
-    }
-
-    // Resolve edge type numeric values from meta.edge_types[type_offset]
-    // Typical V8 edge types: ["context","element","property","internal","hidden","shortcut","weak"]
-    snapshot.edgeWeakType = -1;
-    snapshot.edgeShortcutType = -1;
-    snapshot.edgeHiddenType = -1;
-    snapshot.edgeElementType = -1;
-    snapshot.edgeInternalType = -1;
-    if (meta.contains("edge_types") && snapshot.edgeTypeOffset >= 0) {
-        auto edgeTypes = meta["edge_types"][snapshot.edgeTypeOffset];
-        if (edgeTypes.is_array()) {
-            auto types = edgeTypes.get<std::vector<std::string>>();
-            for (int i = 0; i < static_cast<int>(types.size()); i++) {
-                if (types[i] == "weak") {
-                    snapshot.edgeWeakType = i;
-                } else if (types[i] == "shortcut") {
-                    snapshot.edgeShortcutType = i;
-                } else if (types[i] == "hidden") {
-                    snapshot.edgeHiddenType = i;
-                } else if (types[i] == "element") {
-                    snapshot.edgeElementType = i;
-                } else if (types[i] == "internal") {
-                    snapshot.edgeInternalType = i;
-                }
-            }
-        }
-    }
+    DiscoverNodeFieldOffsets(snapshot, nodeFields);
+    DiscoverEdgeFieldOffsets(snapshot, edgeFields);
+    ValidateMetaFields(snapshot);
+    ResolveEdgeTypes(snapshot, meta);
 
     // Parse node type names from meta.node_types[type_offset]
     // Typical V8 node types: ["hidden","array","string","object","code","closure",...]

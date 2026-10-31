@@ -282,6 +282,128 @@ bool DecodePlugin(const uint8_t* buf, size_t size, PluginData& out)
     return true;
 }
 
+/// Field accessor helpers for protobuf config decoding.
+struct ConfigAccessor {
+    const std::map<uint32_t, const Field*>& single;
+    const std::map<uint32_t, std::vector<std::string>>& repeatedStrs;
+    const std::map<uint32_t, std::vector<std::string>>& repeatedPacked;
+
+    bool asBool(uint32_t n) const {
+        auto it = single.find(n);
+        return it != single.end() && it->second->varint != 0;
+    }
+    int32_t asInt(uint32_t n) const {
+        auto it = single.find(n);
+        return it != single.end() ? AsInt32(it->second->varint) : 0;
+    }
+    uint32_t asUint(uint32_t n) const {
+        auto it = single.find(n);
+        return it != single.end() ? static_cast<uint32_t>(it->second->varint) : 0u;
+    }
+    std::string asStr(uint32_t n) const {
+        auto it = single.find(n);
+        return it != single.end() ? it->second->bytes : std::string();
+    }
+    std::vector<int32_t> asRepeatedInt(uint32_t n) const {
+        std::vector<int32_t> r;
+        auto it = repeatedPacked.find(n);
+        if (it != repeatedPacked.end()) {
+            for (const auto& blob : it->second)
+                for (uint64_t v : UnpackPackedVarints(blob)) {
+                    r.push_back(AsInt32(v));
+                }
+        }
+        return r;
+    }
+    std::vector<uint32_t> asRepeatedEnum(uint32_t n) const {
+        std::vector<uint32_t> r;
+        auto it = repeatedPacked.find(n);
+        if (it != repeatedPacked.end()) {
+            for (const auto& blob : it->second)
+                for (uint64_t v : UnpackPackedVarints(blob)) {
+                    r.push_back(static_cast<uint32_t>(v));
+                }
+        }
+        return r;
+    }
+    std::vector<std::string> asRepeatedStr(uint32_t n) const {
+        auto it = repeatedStrs.find(n);
+        return it != repeatedStrs.end() ? it->second : std::vector<std::string>();
+    }
+};
+
+/// Classify parsed fields into single/repeated maps.
+static void ClassifyFields(const std::vector<Field>& fields,
+    std::map<uint32_t, const Field*>& single,
+    std::map<uint32_t, std::vector<std::string>>& repeatedStrs,
+    std::map<uint32_t, std::vector<std::string>>& repeatedPacked)
+{
+    for (const auto& f : fields) {
+        if (!InSchema(f.number)) {
+            continue;
+        }
+        Kind kind = SchemaKind(f.number);
+        if (kind == Kind::K_REPEATED_STRING) {
+            repeatedStrs[f.number].push_back(f.bytes);
+        } else if (kind == Kind::K_REPEATED_INT || kind == Kind::K_REPEATED_ENUM) {
+            repeatedPacked[f.number].push_back(f.bytes);
+        } else {
+            single[f.number] = &f;
+        }
+    }
+}
+
+/// Assign all config fields from accessor by field number.
+static void AssignConfigFields(HtraceNativeHookConfig& out, const ConfigAccessor& acc)
+{
+    uint32_t index = 0;
+    out.pid = acc.asInt(++index);
+    out.saveFile = acc.asBool(++index);
+    out.fileName = acc.asStr(++index);
+    out.filterSize = acc.asInt(++index);
+    out.smbPages = acc.asInt(++index);
+    out.maxStackDepth = acc.asInt(++index);
+    out.processName = acc.asStr(++index);
+    out.mallocDisable = acc.asBool(++index);
+    out.mmapDisable = acc.asBool(++index);
+    out.freeStackReport = acc.asBool(++index);
+    out.munmapStackReport = acc.asBool(++index);
+    out.mallocFreeMatchingInterval = acc.asUint(++index);
+    out.mallocFreeMatchingCnt = acc.asUint(++index);
+    out.stringCompressed = acc.asBool(++index);
+    out.fpUnwind = acc.asBool(++index);
+    out.blocked = acc.asBool(++index);
+    out.recordAccurately = acc.asBool(++index);
+    out.startupMode = acc.asBool(++index);
+    out.memtraceEnable = acc.asBool(++index);
+    out.offlineSymbolization = acc.asBool(++index);
+    out.callframeCompress = acc.asBool(++index);
+    out.statisticsInterval = acc.asUint(++index);
+    out.clock = acc.asStr(++index);
+    out.sampleInterval = acc.asUint(++index);
+    out.responseLibraryMode = acc.asBool(++index);
+    out.expandPids = acc.asRepeatedInt(++index);
+    out.jsStackReport = acc.asInt(++index);
+    out.maxJsStackDepth = acc.asUint(++index);
+    out.filterNapiName = acc.asStr(++index);
+    out.dumpNmd = acc.asBool(++index);
+    out.targetSoName = acc.asStr(++index);
+    out.restraceTag = acc.asRepeatedStr(++index);
+    out.asyncStackEnable = acc.asBool(++index);
+    out.asyncType = acc.asRepeatedEnum(++index);
+    out.uniqueStackTableSize = acc.asUint(++index);
+    out.useFileCacheMode = acc.asBool(++index);
+    out.fileCacheBufferSize = acc.asUint(++index);
+    out.allocatorSamplingEnable = acc.asBool(++index);
+    out.nativeOrphansnapshotsEnable = acc.asBool(++index);
+    out.nestedAsyncStackEnable = acc.asBool(++index);
+    out.filterLibList = acc.asRepeatedStr(++index);
+    out.asyncNestingDepth = acc.asUint(++index);
+    out.asyncTaskStackDepth = acc.asUint(++index);
+    out.arkuiMemTraceEnable = acc.asBool(++index);
+    out.discardDestroyedTraces = acc.asBool(++index);
+}
+
 // 把 NativeHookConfig 字节解析进完整结构体
 bool DecodeConfig(const std::string& data, HtraceNativeHookConfig& out)
 {
@@ -296,109 +418,10 @@ bool DecodeConfig(const std::string& data, HtraceNativeHookConfig& out)
     std::map<uint32_t, std::vector<std::string>> repeatedStrs;
     std::map<uint32_t, std::vector<std::string>> repeatedPacked;
 
-    for (const auto& f : fields) {
-        if (!InSchema(f.number)) {
-            continue;
-        }
-        Kind kind = SchemaKind(f.number);
-        if (kind == Kind::K_REPEATED_STRING) {
-            repeatedStrs[f.number].push_back(f.bytes);
-        } else if (kind == Kind::K_REPEATED_INT || kind == Kind::K_REPEATED_ENUM) {
-            repeatedPacked[f.number].push_back(f.bytes);
-        } else {
-            single[f.number] = &f;
-        }
-    }
+    ClassifyFields(fields, single, repeatedStrs, repeatedPacked);
 
-    auto asBool = [&single](uint32_t n) {
-        auto it = single.find(n);
-        return it != single.end() && it->second->varint != 0;
-    };
-    auto asInt = [&single](uint32_t n) {
-        auto it = single.find(n);
-        return it != single.end() ? AsInt32(it->second->varint) : 0;
-    };
-    auto asUint = [&single](uint32_t n) {
-        auto it = single.find(n);
-        return it != single.end() ? static_cast<uint32_t>(it->second->varint) : 0u;
-    };
-    auto asStr = [&single](uint32_t n) {
-        auto it = single.find(n);
-        return it != single.end() ? it->second->bytes : std::string();
-    };
-    auto asRepeatedInt = [&repeatedPacked](uint32_t n) {
-        std::vector<int32_t> r;
-        auto it = repeatedPacked.find(n);
-        if (it != repeatedPacked.end()) {
-            for (const auto& blob : it->second)
-                for (uint64_t v : UnpackPackedVarints(blob)) {
-                    r.push_back(AsInt32(v));
-                }
-        }
-        return r;
-    };
-    auto asRepeatedEnum = [&repeatedPacked](uint32_t n) {
-        std::vector<uint32_t> r;
-        auto it = repeatedPacked.find(n);
-        if (it != repeatedPacked.end()) {
-            for (const auto& blob : it->second)
-                for (uint64_t v : UnpackPackedVarints(blob)) {
-                    r.push_back(static_cast<uint32_t>(v));
-                }
-        }
-        return r;
-    };
-    auto asRepeatedStr = [&repeatedStrs](uint32_t n) {
-        auto it = repeatedStrs.find(n);
-        return it != repeatedStrs.end() ? it->second : std::vector<std::string>();
-    };
-
-    uint32_t index = 0;
-    out.pid = asInt(++index);
-    out.saveFile = asBool(++index);
-    out.fileName = asStr(++index);
-    out.filterSize = asInt(++index);
-    out.smbPages = asInt(++index);
-    out.maxStackDepth = asInt(++index);
-    out.processName = asStr(++index);
-    out.mallocDisable = asBool(++index);
-    out.mmapDisable = asBool(++index);
-    out.freeStackReport = asBool(++index);
-    out.munmapStackReport = asBool(++index);
-    out.mallocFreeMatchingInterval = asUint(++index);
-    out.mallocFreeMatchingCnt = asUint(++index);
-    out.stringCompressed = asBool(++index);
-    out.fpUnwind = asBool(++index);
-    out.blocked = asBool(++index);
-    out.recordAccurately = asBool(++index);
-    out.startupMode = asBool(++index);
-    out.memtraceEnable = asBool(++index);
-    out.offlineSymbolization = asBool(++index);
-    out.callframeCompress = asBool(++index);
-    out.statisticsInterval = asUint(++index);
-    out.clock = asStr(++index);
-    out.sampleInterval = asUint(++index);
-    out.responseLibraryMode = asBool(++index);
-    out.expandPids = asRepeatedInt(++index);
-    out.jsStackReport = asInt(++index);
-    out.maxJsStackDepth = asUint(++index);
-    out.filterNapiName = asStr(++index);
-    out.dumpNmd = asBool(++index);
-    out.targetSoName = asStr(++index);
-    out.restraceTag = asRepeatedStr(++index);
-    out.asyncStackEnable = asBool(++index);
-    out.asyncType = asRepeatedEnum(++index);
-    out.uniqueStackTableSize = asUint(++index);
-    out.useFileCacheMode = asBool(++index);
-    out.fileCacheBufferSize = asUint(++index);
-    out.allocatorSamplingEnable = asBool(++index);
-    out.nativeOrphansnapshotsEnable = asBool(++index);
-    out.nestedAsyncStackEnable = asBool(++index);
-    out.filterLibList = asRepeatedStr(++index);
-    out.asyncNestingDepth = asUint(++index);
-    out.asyncTaskStackDepth = asUint(++index);
-    out.arkuiMemTraceEnable = asBool(++index);
-    out.discardDestroyedTraces = asBool(++index);
+    ConfigAccessor acc{single, repeatedStrs, repeatedPacked};
+    AssignConfigFields(out, acc);
 
     return true;
 }
