@@ -85,6 +85,77 @@ constexpr uint64_t MAX_TOTAL_UNCOMPRESSED_BYTES = 4ULL * 1024 * 1024 * 1024;
 
 } // namespace
 
+/// Process a single zip entry. Returns true to continue, false on error.
+static bool ExtractOneEntry(unzFile uf, const std::string& destDir,
+    uint64_t& totalWritten, std::string& error)
+{
+    unz_file_info64 fi;
+    if (unzGetCurrentFileInfo64(uf, &fi, nullptr, 0, nullptr, 0, nullptr, 0) != UNZ_OK) {
+        return true;
+    }
+    std::vector<char> nameBuf(static_cast<size_t>(fi.size_filename) + 1, '\0');
+    if (unzGetCurrentFileInfo64(uf, &fi, nameBuf.data(),
+                                static_cast<uLong>(nameBuf.size()),
+                                nullptr, 0, nullptr, 0) != UNZ_OK) {
+        return true;
+    }
+    const std::string entryName(nameBuf.data(), static_cast<size_t>(fi.size_filename));
+
+    if (!IsSafeEntry(entryName)) {
+        error = "Unsafe entry path in ZIP: " + entryName;
+        return false;
+    }
+
+    const fs::path outPath = PathFromUtf8(destDir) / PathFromUtf8(entryName);
+
+    if (IsDirEntry(entryName)) {
+        std::error_code ec;
+        fs::create_directories(outPath, ec);
+        return true;
+    }
+
+    std::error_code ec;
+    fs::create_directories(outPath.parent_path(), ec);
+
+    if (fi.uncompressed_size > MAX_TOTAL_UNCOMPRESSED_BYTES - totalWritten) {
+        error = "ZIP entry exceeds decompressed size limit: " + entryName;
+        return false;
+    }
+
+    if (unzOpenCurrentFile(uf) != UNZ_OK) {
+        error = "Failed to open entry in ZIP: " + entryName;
+        return false;
+    }
+
+    std::ofstream out(outPath, std::ios::binary);
+    if (!out) {
+        unzCloseCurrentFile(uf);
+        error = "Failed to create output file: " + entryName;
+        return false;
+    }
+
+    std::vector<char> buf(UNZIP_BUF_SIZE_KB * BYTES_PER_KB);
+    int n = 0;
+    while ((n = unzReadCurrentFile(uf, buf.data(), static_cast<unsigned>(buf.size()))) > 0) {
+        out.write(buf.data(), n);
+        totalWritten += static_cast<uint64_t>(n);
+        if (totalWritten > MAX_TOTAL_UNCOMPRESSED_BYTES) {
+            out.close();
+            unzCloseCurrentFile(uf);
+            error = "ZIP decompressed size exceeds limit: " + entryName;
+            return false;
+        }
+    }
+    out.close();
+    unzCloseCurrentFile(uf);
+
+    if (n < 0) {
+        error = "Failed to decompress entry: " + entryName;
+        return false;
+    }
+    return true;
+}
+
 bool ExtractZip(const std::string& zipPath, const std::string& destDir, std::string& error)
 {
     unzFile uf = nullptr;
@@ -110,74 +181,8 @@ bool ExtractZip(const std::string& zipPath, const std::string& destDir, std::str
     uint64_t totalWritten = 0;  // 累计解压字节数（zip 炸弹防护）
 
     do {
-        unz_file_info64 fi;
-        if (unzGetCurrentFileInfo64(uf, &fi, nullptr, 0, nullptr, 0, nullptr, 0) != UNZ_OK) {
-            continue;
-        }
-        std::vector<char> nameBuf(static_cast<size_t>(fi.size_filename) + 1, '\0');
-        if (unzGetCurrentFileInfo64(uf, &fi, nameBuf.data(),
-                                    static_cast<uLong>(nameBuf.size()),
-                                    nullptr, 0, nullptr, 0) != UNZ_OK) {
-            continue;
-        }
-        const std::string entryName(nameBuf.data(), static_cast<size_t>(fi.size_filename));
-
-        if (!IsSafeEntry(entryName)) {
+        if (!ExtractOneEntry(uf, destDir, totalWritten, error)) {
             unzClose(uf);
-            error = "Unsafe entry path in ZIP: " + entryName;
-            return false;
-        }
-
-        const fs::path outPath = PathFromUtf8(destDir) / PathFromUtf8(entryName);
-
-        if (IsDirEntry(entryName)) {
-            std::error_code ec;
-            fs::create_directories(outPath, ec);
-            continue;
-        }
-
-        std::error_code ec;
-        fs::create_directories(outPath.parent_path(), ec);
-
-        if (fi.uncompressed_size > MAX_TOTAL_UNCOMPRESSED_BYTES - totalWritten) {
-            unzClose(uf);
-            error = "ZIP entry exceeds decompressed size limit: " + entryName;
-            return false;
-        }
-
-        if (unzOpenCurrentFile(uf) != UNZ_OK) {
-            unzClose(uf);
-            error = "Failed to open entry in ZIP: " + entryName;
-            return false;
-        }
-
-        std::ofstream out(outPath, std::ios::binary);
-        if (!out) {
-            unzCloseCurrentFile(uf);
-            unzClose(uf);
-            error = "Failed to create output file: " + entryName;
-            return false;
-        }
-
-        std::vector<char> buf(UNZIP_BUF_SIZE_KB * BYTES_PER_KB);
-        int n = 0;
-        while ((n = unzReadCurrentFile(uf, buf.data(), static_cast<unsigned>(buf.size()))) > 0) {
-            out.write(buf.data(), n);
-            totalWritten += static_cast<uint64_t>(n);
-            if (totalWritten > MAX_TOTAL_UNCOMPRESSED_BYTES) {
-                out.close();
-                unzCloseCurrentFile(uf);
-                unzClose(uf);
-                error = "ZIP decompressed size exceeds limit: " + entryName;
-                return false;
-            }
-        }
-        out.close();
-        unzCloseCurrentFile(uf);
-
-        if (n < 0) {
-            unzClose(uf);
-            error = "Failed to decompress entry: " + entryName;
             return false;
         }
     } while (unzGoToNextFile(uf) == UNZ_OK);

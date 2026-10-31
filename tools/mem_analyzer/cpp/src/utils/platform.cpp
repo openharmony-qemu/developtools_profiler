@@ -398,6 +398,76 @@ int RunProcessWithSpinner(const std::string& exe, const std::vector<std::string>
     return ret;
 }
 
+/// Decode a 2-byte UTF-8 sequence. Returns new index (i+1 on error, i+2 on success).
+static size_t DecodeTwoByteUtf8(const std::string& input, size_t i, std::string& result)
+{
+    if (i + 1 >= input.size()) {
+        result += '?';
+        return i + 1;
+    }
+    unsigned char c = (unsigned char)input[i];
+    unsigned char c2 = (unsigned char)input[i+1];
+    if ((c2 & 0xC0) != 0x80) {
+        result += '?';
+        return i + 1;
+    }
+    // Check for overlong: 0xC0 0x80 = U+0000 (overlong)
+    if ((c & 0x1E) == 0) {
+        result += '?';
+        return i + 1;
+    }
+    result.append(input, i, UTF8_TWO_BYTE_LEN);
+    return i + UTF8_TWO_BYTE_LEN;
+}
+
+/// Decode a 3-byte UTF-8 sequence. Returns new index (i+1 on error, i+3 on success).
+static size_t DecodeThreeByteUtf8(const std::string& input, size_t i, std::string& result)
+{
+    if (i + UTF8_THREE_BYTE_LEN - 1 >= input.size()) {
+        result += '?';
+        return i + 1;
+    }
+    unsigned char c = (unsigned char)input[i];
+    unsigned char c2 = (unsigned char)input[i+1];
+    unsigned char c3 = (unsigned char)input[i+2];
+    if ((c2 & 0xC0) != 0x80 || (c3 & 0xC0) != 0x80) {
+        result += '?';
+        return i + 1;
+    }
+    // Check for surrogates (U+D800-U+DFFF)
+    int cp = ((c & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F);
+    if (cp >= 0xD800 && cp <= 0xDFFF) {
+        result += '?';
+        return i + 1;
+    }
+    result.append(input, i, UTF8_THREE_BYTE_LEN);
+    return i + UTF8_THREE_BYTE_LEN;
+}
+
+/// Decode a 4-byte UTF-8 sequence. Returns new index (i+1 on error, i+4 on success).
+static size_t DecodeFourByteUtf8(const std::string& input, size_t i, std::string& result)
+{
+    if (i + UTF8_MAX_BYTES - 1 >= input.size()) {
+        result += '?';
+        return i + 1;
+    }
+    unsigned char c = (unsigned char)input[i];
+    unsigned char c2 = (unsigned char)input[i+1];
+    unsigned char c3 = (unsigned char)input[i+2];
+    unsigned char c4 = (unsigned char)input[i+3];
+    if ((c2 & 0xC0) != 0x80 || (c3 & 0xC0) != 0x80 || (c4 & 0xC0) != 0x80) {
+        result += '?';
+        return i + 1;
+    }
+    int cp = ((c & 0x07) << 18) | ((c2 & 0x3F) << 12) | ((c3 & 0x3F) << 6) | (c4 & 0x3F);
+    if (cp > 0x10FFFF) {
+        result += '?';
+        return i + 1;
+    }
+    result.append(input, i, UTF8_MAX_BYTES);
+    return i + UTF8_MAX_BYTES;
+}
+
 std::string SanitizeUtf8(const std::string& input)
 {
     std::string result;
@@ -405,7 +475,6 @@ std::string SanitizeUtf8(const std::string& input)
     size_t i = 0;
     while (i < input.size()) {
         unsigned char c = (unsigned char)input[i];
-        // Check if this is a valid UTF-8 start byte
         if (c <= 0x7F) {
             // Single byte (0xxxxxxx) - always valid
             if (c == 0) {
@@ -417,71 +486,13 @@ std::string SanitizeUtf8(const std::string& input)
             i++;
         } else if ((c & 0xE0) == 0xC0) {
             // Two-byte sequence (110xxxxx 10xxxxxx)
-            if (i + 1 >= input.size()) {
-                result += '?';
-                i++;
-                continue;
-            }
-            unsigned char c2 = (unsigned char)input[i+1];
-            if ((c2 & 0xC0) != 0x80) {
-                result += '?';
-                i++;
-                continue;
-            }
-            // Check for overlong: 0xC0 0x80 = U+0000 (overlong)
-            if ((c & 0x1E) == 0) {
-                result += '?';
-                i++;
-                continue;
-            }
-            result.append(input, i, UTF8_TWO_BYTE_LEN);
-            i += UTF8_TWO_BYTE_LEN;
+            i = DecodeTwoByteUtf8(input, i, result);
         } else if ((c & 0xF0) == 0xE0) {
             // Three-byte sequence (1110xxxx 10xxxxxx 10xxxxxx)
-            if (i + UTF8_THREE_BYTE_LEN - 1 >= input.size()) {
-                result += '?';
-                i++;
-                continue;
-            }
-            unsigned char c2 = (unsigned char)input[i+1];
-            unsigned char c3 = (unsigned char)input[i+2];
-            if ((c2 & 0xC0) != 0x80 || (c3 & 0xC0) != 0x80) {
-                result += '?';
-                i++;
-                continue;
-            }
-            // Check for surrogates (U+D800-U+DFFF)
-            int cp = ((c & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F);
-            if (cp >= 0xD800 && cp <= 0xDFFF) {
-                result += '?';
-                i++;
-                continue;
-            }
-            result.append(input, i, UTF8_THREE_BYTE_LEN);
-            i += UTF8_THREE_BYTE_LEN;
+            i = DecodeThreeByteUtf8(input, i, result);
         } else if ((c & 0xF8) == 0xF0) {
             // Four-byte sequence (11110xxx 10xxxxxx 10xxxxxx 10xxxxxx)
-            if (i + UTF8_MAX_BYTES - 1 >= input.size()) {
-                result += '?';
-                i++;
-                continue;
-            }
-            unsigned char c2 = (unsigned char)input[i+1];
-            unsigned char c3 = (unsigned char)input[i+2];
-            unsigned char c4 = (unsigned char)input[i+3];
-            if ((c2 & 0xC0) != 0x80 || (c3 & 0xC0) != 0x80 || (c4 & 0xC0) != 0x80) {
-                result += '?';
-                i++;
-                continue;
-            }
-            int cp = ((c & 0x07) << 18) | ((c2 & 0x3F) << 12) | ((c3 & 0x3F) << 6) | (c4 & 0x3F);
-            if (cp > 0x10FFFF) {
-                result += '?';
-                i++;
-                continue;
-            }
-            result.append(input, i, UTF8_MAX_BYTES);
-            i += UTF8_MAX_BYTES;
+            i = DecodeFourByteUtf8(input, i, result);
         } else {
             // Invalid start byte (10xxxxxx or 11111xxx)
             result += '?';

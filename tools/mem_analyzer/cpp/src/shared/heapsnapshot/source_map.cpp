@@ -117,6 +117,49 @@ void AssignBestPosition(const SourceMapIndex::Segment& seg, int& originalLine, i
 
 } // anonymous namespace
 
+/// Decode all VLQ field values from a segment substring.
+static std::vector<int> DecodeSegmentValues(const std::string& seg)
+{
+    std::vector<int> raw;
+    size_t p = 0;
+    while (p < seg.size()) {
+        int value = 0;
+        if (!DecodeVlqValue(seg, p, value)) {
+            break;
+        }
+        raw.push_back(value);
+    }
+    return raw;
+}
+
+/// Accumulate relative VLQ values into absolute segment fields.
+static std::vector<int> AccumulateSegment(const std::vector<int>& raw,
+    int64_t& generatedColumn, int64_t& sourceIndex,
+    int64_t& originalLine, int64_t& originalColumn,
+    int64_t& nameIndex, int (*clamp)(int64_t))
+{
+    std::vector<int> segment;
+    generatedColumn += raw[0];
+    segment.push_back(clamp(generatedColumn));
+    if (raw.size() > 1) {
+        sourceIndex += raw[1];
+        segment.push_back(clamp(sourceIndex));
+    }
+    if (raw.size() > SEG_IDX_ORIGINAL_LINE) {
+        originalLine += raw[SEG_IDX_ORIGINAL_LINE];
+        segment.push_back(clamp(originalLine));
+    }
+    if (raw.size() > SEG_IDX_ORIGINAL_COLUMN) {
+        originalColumn += raw[SEG_IDX_ORIGINAL_COLUMN];
+        segment.push_back(clamp(originalColumn));
+    }
+    if (raw.size() > SEG_IDX_NAME_INDEX) {
+        nameIndex += raw[SEG_IDX_NAME_INDEX];
+        segment.push_back(clamp(nameIndex));
+    }
+    return segment;
+}
+
 SourceMapIndex::DecodedMappings SourceMapIndex::DecodeVlqMappings(const std::string& mappings)
 {
     // source map v3 的 mappings 采用相对（delta）编码：段内每个字段相对
@@ -157,37 +200,16 @@ SourceMapIndex::DecodedMappings SourceMapIndex::DecodeVlqMappings(const std::str
         const size_t segEnd = (end == std::string::npos) ? mappings.size() : end;
         if (segEnd > pos) {
             // 解码该 segment 内的全部 VLQ 字段（相对值）
-            const std::string seg = mappings.substr(pos, segEnd - pos);
-            std::vector<int> raw;
-            size_t p = 0;
-            while (p < seg.size()) {
-                int value = 0;
-                if (!DecodeVlqValue(seg, p, value)) {
-                    break;
-                }
-                raw.push_back(value);
-            }
+            auto raw = DecodeSegmentValues(mappings.substr(pos, segEnd - pos));
             if (!raw.empty()) {
                 // 将相对值累加为绝对值（64 位累加，输出时收敛到 int 范围）
-                std::vector<int> segment;
-                generatedColumn += raw[0];
-                segment.push_back(clampInt(generatedColumn));
-                if (raw.size() > 1) {
-                    sourceIndex += raw[1];
-                    segment.push_back(clampInt(sourceIndex));
-                }
-                if (raw.size() > SEG_IDX_ORIGINAL_LINE) {
-                    originalLine += raw[SEG_IDX_ORIGINAL_LINE];
-                    segment.push_back(clampInt(originalLine));
-                }
-                if (raw.size() > SEG_IDX_ORIGINAL_COLUMN) {
-                    originalColumn += raw[SEG_IDX_ORIGINAL_COLUMN];
-                    segment.push_back(clampInt(originalColumn));
-                }
-                if (raw.size() > SEG_IDX_NAME_INDEX) {
-                    nameIndex += raw[SEG_IDX_NAME_INDEX];
-                    segment.push_back(clampInt(nameIndex));
-                }
+                auto segment = AccumulateSegment(raw, generatedColumn, sourceIndex,
+                    originalLine, originalColumn, nameIndex,
+                    [](int64_t v) -> int {
+                        if (v > INT32_MAX) return INT32_MAX;
+                        if (v < INT32_MIN) return INT32_MIN;
+                        return static_cast<int>(v);
+                    });
                 decoded[line].push_back(std::move(segment));
             }
         }
