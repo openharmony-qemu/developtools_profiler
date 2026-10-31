@@ -255,19 +255,11 @@ static std::string ResolvePathArg(const std::string& arg)
     return ec ? arg : PathToUtf8(ap.lexically_normal());
 }
 
-int RunProcess(const std::string& exe, const std::vector<std::string>& args, int outputFd)
-{
-    // On macOS the child is started from inside its own directory
-    // ("cd <exe_dir> && DYLD_LIBRARY_PATH=."), so relative path args must be
-    // made absolute or they would resolve against the wrong directory. On
-    // other platforms this is a harmless no-op (relative == absolute here).
-    std::vector<std::string> absArgs;
-    absArgs.reserve(args.size());
-    for (const auto& a : args) {
-        absArgs.push_back(ResolvePathArg(a));
-    }
-    bool redirect = outputFd >= 0;
 #if defined(_WIN32)
+/// Windows process launch via CreateProcessW.
+static int RunProcessWindows(const std::string& exe,
+    const std::vector<std::string>& absArgs, bool redirect, int outputFd)
+{
     std::wstring wexe = WidenPath(exe);
     std::wstring cmdline = wexe;
     for (const auto& a : absArgs) {
@@ -305,9 +297,14 @@ int RunProcess(const std::string& exe, const std::vector<std::string>& args, int
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
     return static_cast<int>(exitCode);
+}
 #else
-    // POSIX（macOS / Linux）：fork + execv，参数数组不经 shell 解析，
-    // 文件路径中的 `"` / `$()` / 反引号 / `;` 等元字符不再被解释（消除命令注入）。
+/// POSIX process launch via fork + execv.
+// POSIX（macOS / Linux）：fork + execv，参数数组不经 shell 解析，
+// 文件路径中的 `"` / `$()` / 反引号 / `;` 等元字符不再被解释（消除命令注入）。
+static int RunProcessPosix(const std::string& exe,
+    const std::vector<std::string>& absArgs, bool redirect, int outputFd)
+{
     std::string program = exe;
 #if defined(__APPLE__)
     auto exePath = PathFromUtf8(exe);
@@ -352,6 +349,25 @@ int RunProcess(const std::string& exe, const std::vector<std::string>& args, int
         return WEXITSTATUS(status);
     }
     return -1;
+}
+#endif
+
+int RunProcess(const std::string& exe, const std::vector<std::string>& args, int outputFd)
+{
+    // On macOS the child is started from inside its own directory
+    // ("cd <exe_dir> && DYLD_LIBRARY_PATH=."), so relative path args must be
+    // made absolute or they would resolve against the wrong directory. On
+    // other platforms this is a harmless no-op (relative == absolute here).
+    std::vector<std::string> absArgs;
+    absArgs.reserve(args.size());
+    for (const auto& a : args) {
+        absArgs.push_back(ResolvePathArg(a));
+    }
+    bool redirect = outputFd >= 0;
+#if defined(_WIN32)
+    return RunProcessWindows(exe, absArgs, redirect, outputFd);
+#else
+    return RunProcessPosix(exe, absArgs, redirect, outputFd);
 #endif
 }
 

@@ -201,6 +201,32 @@ std::string HeapSnapshot::GetStringExtName(uint32_t nodeIndex) const
 // 沿 hclass → Proto 交替上溯，提取 stateMgmt 包装对象背后被包装的类名。
 // skip_markers：原型名命中其中任一子串即视为「仍是包装层」，跳过并继续上溯。
 // 返回被包装的类名；返回空表示链上未找到可用类名。
+/**
+ * Classify a proto name during stateMgmt wrapped class resolution.
+ * Returns 1 if it's a .ts source (caller should return protoName immediately),
+ * 0 otherwise (resultProto updated, caller continues loop).
+ */
+static int ClassifyProtoName(const std::string& protoName,
+    const std::vector<std::string>& skipMarkers, std::string& resultProto)
+{
+    if (protoName.find('#') != std::string::npos && protoName.find(".ts") != std::string::npos) {
+        return 1;
+    }
+    bool isWrapper = false;
+    for (const std::string& marker : skipMarkers) {
+        if (protoName.find(marker) != std::string::npos) {
+            isWrapper = true;
+            break;
+        }
+    }
+    if (isWrapper) {
+        resultProto.clear();
+    } else if (resultProto.empty()) {
+        resultProto = protoName;
+    }
+    return 0;
+}
+
 std::string HeapSnapshot::ResolveStateMgmtWrappedClass(
     uint32_t nodeIndex, const std::vector<std::string>& skipMarkers) const
 {
@@ -235,20 +261,8 @@ std::string HeapSnapshot::ResolveStateMgmtWrappedClass(
                 if (en == "Proto" || en == "__proto__") {
                     uint32_t proto = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
                     std::string protoName = GetNodeName(proto);
-                    if (protoName.find('#') != std::string::npos && protoName.find(".ts") != std::string::npos) {
+                    if (ClassifyProtoName(protoName, skipMarkers, resultProto)) {
                         return protoName;
-                    }
-                    bool isWrapper = false;
-                    for (const std::string& marker : skipMarkers) {
-                        if (protoName.find(marker) != std::string::npos) {
-                            isWrapper = true;
-                            break;
-                        }
-                    }
-                    if (isWrapper) {
-                        resultProto.clear();
-                    } else if (resultProto.empty()) {
-                        resultProto = protoName;
                     }
                     cur = proto;
                     lookingForHclass = true;
