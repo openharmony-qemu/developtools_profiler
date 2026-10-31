@@ -86,22 +86,7 @@ struct EventTypeMapping {
  * Returns the default event type configurations.
  * Extend this vector to support additional event types.
  */
-inline std::vector<EventTypeMapping> DefaultEventMappings()
-{
-    return {
-        {"AllocEvent", HtraceEventType::MALLOC},
-        {"MmapEvent", HtraceEventType::MMAP_ANON, SubTypeCondition::IS_NULL},      // MAP_ANONYMOUS: sub_type_id IS NULL
-        // file/page mapping: sub_type_id IS NOT NULL
-        {"MmapEvent", HtraceEventType::FILE_PAGE_MSG, SubTypeCondition::IS_NOT_NULL},
-        {"FD_Open_Event", HtraceEventType::HP_FD},
-        {"THREAD_Create_Event", HtraceEventType::HP_THREAD},
-        {"ASHMEM_Alloc_Event", HtraceEventType::ASHMEM},
-        {"ION_Alloc_Event", HtraceEventType::HP_DMA},
-        {"ARK_GLOBAL_HANDLE_Alloc_Event", HtraceEventType::ARK_GLOBAL_HANDLE},
-        {"ARK_LOCAL_HANDLE_Alloc_Event", HtraceEventType::ARK_LOCAL_HANDLE},
-        // Future: {"MapAllocEvent", HtraceEventType::MAP_ALLOC}, etc.
-    };
-}
+std::vector<EventTypeMapping> DefaultEventMappings();
 
 /**
  * Process a trace_streamer-generated SQLite DB file.

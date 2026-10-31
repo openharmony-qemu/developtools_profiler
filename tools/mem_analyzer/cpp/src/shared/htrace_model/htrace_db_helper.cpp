@@ -69,6 +69,57 @@ bool QueryInt64(sqlite3* db, const char* sql, long long& out)
 {
     return QueryScalar(db, sql, ReadInt64, &out);
 }
+
+void ResolveProcessName(sqlite3* db, int ipid, TraceMeta& meta)
+{
+    sqlite3_stmt* pstmt = nullptr;
+    const char* psql = "SELECT name FROM process WHERE id = ?";
+    if (sqlite3_prepare_v2(db, psql, -1, &pstmt, nullptr) == SQLITE_OK) {
+        StmtGuard pguard(pstmt);
+        sqlite3_bind_int(pstmt, 1, ipid);
+        if (sqlite3_step(pstmt) == SQLITE_ROW) {
+            const auto* rawName =
+                reinterpret_cast<const char*>(sqlite3_column_text(pstmt, 0));
+            if (rawName) {
+                meta.processName = platform::SanitizeUtf8(rawName);
+            }
+        }
+    }
+}
+
+void QueryTimeRange(sqlite3* db, TraceMeta& meta)
+{
+    sqlite3_stmt* stmt = nullptr;
+    const char* sql = "SELECT start_ts, end_ts FROM trace_range LIMIT 1";
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return;
+    }
+    StmtGuard guard(stmt);
+    if (sqlite3_step(stmt) != SQLITE_ROW) {
+        return;
+    }
+    if (sqlite3_column_type(stmt, 0) == SQLITE_NULL ||
+        sqlite3_column_type(stmt, 1) == SQLITE_NULL) {
+        return;
+    }
+    const long long startTs = sqlite3_column_int64(stmt, 0);
+    const long long endTs = sqlite3_column_int64(stmt, 1);
+    if (startTs < 0 || endTs < startTs) {
+        return;
+    }
+    meta.durationNs = endTs - startTs;
+
+    long long bootTs = 0;
+    long long realTs = 0;
+    if (!QueryInt64(db, "SELECT ts FROM clock_snapshot WHERE clock_name = 'boottime' LIMIT 1", bootTs) ||
+        !QueryInt64(db, "SELECT ts FROM clock_snapshot WHERE clock_name = 'realtime' LIMIT 1", realTs) ||
+        bootTs == 0 || realTs == 0) {
+        return;
+    }
+    const long long offsetNs = realTs - bootTs;
+    meta.startTimeMs = (startTs + offsetNs + 500000LL) / 1000000LL;
+    meta.endTimeMs = (endTs + offsetNs + 500000LL) / 1000000LL;
+}
 } // namespace
 
 void QueryProcessName(sqlite3* db, const std::string& hookTable, TraceMeta& meta)
@@ -81,19 +132,7 @@ void QueryProcessName(sqlite3* db, const std::string& hookTable, TraceMeta& meta
         StmtGuard guard(ipidStmt);
         if (sqlite3_step(ipidStmt) == SQLITE_ROW) {
             const int ipid = sqlite3_column_int(ipidStmt, 0);
-            sqlite3_stmt* pstmt = nullptr;
-            const char* psql = "SELECT name FROM process WHERE id = ?";
-            if (sqlite3_prepare_v2(db, psql, -1, &pstmt, nullptr) == SQLITE_OK) {
-                StmtGuard pguard(pstmt);
-                sqlite3_bind_int(pstmt, 1, ipid);
-                if (sqlite3_step(pstmt) == SQLITE_ROW) {
-                    const auto* rawName =
-                        reinterpret_cast<const char*>(sqlite3_column_text(pstmt, 0));
-                    if (rawName) {
-                        meta.processName = platform::SanitizeUtf8(rawName);
-                    }
-                }
-            }
+            ResolveProcessName(db, ipid, meta);
         }
     }
 }
@@ -107,30 +146,7 @@ TraceMeta QueryTraceMeta(sqlite3* db)
     }
 
     // Time range
-    sqlite3_stmt* stmt = nullptr;
-    const char* sql = "SELECT start_ts, end_ts FROM trace_range LIMIT 1";
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
-        StmtGuard guard(stmt);
-        if (sqlite3_step(stmt) == SQLITE_ROW &&
-            sqlite3_column_type(stmt, 0) != SQLITE_NULL &&
-            sqlite3_column_type(stmt, 1) != SQLITE_NULL) {
-            const long long startTs = sqlite3_column_int64(stmt, 0);
-            const long long endTs = sqlite3_column_int64(stmt, 1);
-            if (startTs >= 0 && endTs >= startTs) {
-                meta.durationNs = endTs - startTs;
-
-                long long bootTs = 0;
-                long long realTs = 0;
-                if (QueryInt64(db, "SELECT ts FROM clock_snapshot WHERE clock_name = 'boottime' LIMIT 1", bootTs) &&
-                    QueryInt64(db, "SELECT ts FROM clock_snapshot WHERE clock_name = 'realtime' LIMIT 1", realTs) &&
-                    bootTs != 0 && realTs != 0) {
-                    const long long offsetNs = realTs - bootTs;
-                    meta.startTimeMs = (startTs + offsetNs + 500000LL) / 1000000LL;
-                    meta.endTimeMs = (endTs + offsetNs + 500000LL) / 1000000LL;
-                }
-            }
-        }
-    }
+    QueryTimeRange(db, meta);
 
     // Mode detection: statistic / detail / (empty for both or none)
     long long statCount = 0;

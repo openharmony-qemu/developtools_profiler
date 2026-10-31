@@ -39,6 +39,33 @@ bool IsRegistered(const std::string& featureId)
     }
     return false;
 }
+
+void LoadEnabledFeatures(const json& j, std::unordered_set<std::string>& enabledFeatures)
+{
+    if (!j.contains("enabled")) {
+        return;
+    }
+    const auto& enabled = j["enabled"];
+    if (enabled.is_boolean()) {
+        // 兼容旧格式：布尔值表示「全部预览特性」的总开关
+        if (enabled.get<bool>()) {
+            for (const auto& f : PreviewFeaturesMgr::Registry()) {
+                enabledFeatures.insert(f.name);
+            }
+        }
+    } else if (enabled.is_array()) {
+        // 仅保留 registry 中登记过的 id，避免配置残留导致误判
+        for (const auto& item : enabled) {
+            if (!item.is_string()) {
+                continue;
+            }
+            const std::string id = item.get<std::string>();
+            if (IsRegistered(id)) {
+                enabledFeatures.insert(id);
+            }
+        }
+    }
+}
 } // namespace
 
 // ===== Singleton =====
@@ -89,30 +116,7 @@ bool PreviewFeaturesMgr::Load(std::string& err)
         auto ifs = OpenIfstream(configPath_);
         json j;
         ifs >> j;
-        if (!j.contains("enabled")) {
-            return true;
-        }
-
-        const auto& enabled = j["enabled"];
-        if (enabled.is_boolean()) {
-            // 兼容旧格式：布尔值表示「全部预览特性」的总开关
-            if (enabled.get<bool>()) {
-                for (const auto& f : Registry()) {
-                    enabledFeatures_.insert(f.name);
-                }
-            }
-        } else if (enabled.is_array()) {
-            // 仅保留 registry 中登记过的 id，避免配置残留导致误判
-            for (const auto& item : enabled) {
-                if (!item.is_string()) {
-                    continue;
-                }
-                const std::string id = item.get<std::string>();
-                if (IsRegistered(id)) {
-                    enabledFeatures_.insert(id);
-                }
-            }
-        }
+        LoadEnabledFeatures(j, enabledFeatures_);
     } catch (const std::exception& e) {
         err = "failed to read " + configPath_ + ": " + e.what();
         return false;

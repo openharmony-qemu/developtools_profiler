@@ -33,6 +33,23 @@ namespace mem_analyzer {
 
 constexpr int COL_SUB_TYPE_ID = 3;
 
+std::vector<EventTypeMapping> DefaultEventMappings()
+{
+    return {
+        {"AllocEvent", HtraceEventType::MALLOC},
+        {"MmapEvent", HtraceEventType::MMAP_ANON, SubTypeCondition::IS_NULL},      // MAP_ANONYMOUS: sub_type_id IS NULL
+        // file/page mapping: sub_type_id IS NOT NULL
+        {"MmapEvent", HtraceEventType::FILE_PAGE_MSG, SubTypeCondition::IS_NOT_NULL},
+        {"FD_Open_Event", HtraceEventType::HP_FD},
+        {"THREAD_Create_Event", HtraceEventType::HP_THREAD},
+        {"ASHMEM_Alloc_Event", HtraceEventType::ASHMEM},
+        {"ION_Alloc_Event", HtraceEventType::HP_DMA},
+        {"ARK_GLOBAL_HANDLE_Alloc_Event", HtraceEventType::ARK_GLOBAL_HANDLE},
+        {"ARK_LOCAL_HANDLE_Alloc_Event", HtraceEventType::ARK_LOCAL_HANDLE},
+        // Future: {"MapAllocEvent", HtraceEventType::MAP_ALLOC}, etc.
+    };
+}
+
 // ── Helper: 计算某 category（+是否过滤）下仍启用的 HtraceEventType ──
 static std::vector<HtraceEventType> AllowedEventTypes(const std::string& category, bool filterCategory)
 {
