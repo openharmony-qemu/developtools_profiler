@@ -1355,6 +1355,50 @@ static std::string TryGetPidByPidof(const std::string& processName)
 }
 
 /// Fallback: ps -ef (Linux-style, may not be available on all devices)
+/**
+ * Parse one ps -ef line for a matching process.
+ * Returns 1 if exact match found (pid set), 0 if no match (suffixPid maybe updated), -1 to skip line.
+ */
+static int ParsePsLine(const std::string& line, const std::string& processName,
+    std::string& pid, std::string& suffixPid)
+{
+    if (line.empty() || line.find("UID") == 0) {
+        return -1;
+    }
+    std::istringstream lss(line);
+    std::string tok;
+    pid.clear();
+    for (int col = 0; col < PS_FIELD_COUNT; ++col) {
+        if (!(lss >> tok)) {
+            pid.clear();
+            break;
+        }
+        if (col == 1) {
+            pid = tok;
+        }
+    }
+    if (pid.empty() || pid.find_first_not_of("0123456789") != std::string::npos) {
+        return 0;
+    }
+    std::string cmdField;
+    std::getline(lss, cmdField);
+    const auto cmdStart = cmdField.find_first_not_of(" \t");
+    if (cmdStart == std::string::npos) {
+        return 0;
+    }
+    cmdField = cmdField.substr(cmdStart);
+    if (cmdField == processName) {
+        return 1;
+    }
+    if (suffixPid.empty() &&
+        cmdField.size() > processName.size() &&
+        cmdField.compare(0, processName.size(), processName) == 0 &&
+        cmdField[processName.size()] == ':') {
+        suffixPid = pid;
+    }
+    return 0;
+}
+
 static std::string TryGetPidByPs(const std::string& processName)
 {
     std::string cmd = HdcShell("ps -ef") + " 2>&1";
@@ -1370,47 +1414,10 @@ static std::string TryGetPidByPs(const std::string& processName)
     std::istringstream iss(cap.output);
     std::string line;
     while (std::getline(iss, line)) {
-        if (line.empty()) {
-            continue;
-        }
-        if (line.find("UID") == 0) {
-            continue;
-        }
-
-        std::istringstream lss(line);
         std::string pid;
-        std::string tok;
-        for (int col = 0; col < PS_FIELD_COUNT; ++col) {
-            if (!(lss >> tok)) {
-                pid.clear();
-                break;
-            }
-            if (col == 1) {
-                pid = tok;
-            }
-        }
-        if (pid.empty()) {
-            continue;
-        }
-        if (pid.find_first_not_of("0123456789") != std::string::npos) {
-            continue;
-        }
-        std::string cmdField;
-        std::getline(lss, cmdField);
-        const auto cmdStart = cmdField.find_first_not_of(" \t");
-        if (cmdStart == std::string::npos) {
-            continue;
-        }
-        cmdField = cmdField.substr(cmdStart);
-        if (cmdField == processName) {
+        int result = ParsePsLine(line, processName, pid, suffixPid);
+        if (result == 1) {
             return pid;
-        }
-
-        if (suffixPid.empty() &&
-            cmdField.size() > processName.size() &&
-            cmdField.compare(0, processName.size(), processName) == 0 &&
-            cmdField[processName.size()] == ':') {
-            suffixPid = pid;
         }
     }
     return suffixPid;

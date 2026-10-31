@@ -679,25 +679,21 @@ json FilterLeakReferenceChains(const json& chains, const std::vector<uint32_t>& 
     return result;
 }
 
-json BuildChangedLeakObjects(const json& baselineLeaks, const json& targetLeaks, size_t topN)
-{
-    std::set<std::string> names;
-    for (auto it = baselineLeaks.begin(); it != baselineLeaks.end(); ++it) {
-        names.insert(it.key());
-    }
-    for (auto it = targetLeaks.begin(); it != targetLeaks.end(); ++it) {
-        names.insert(it.key());
-    }
+// Totals are stored as unsigned JSON numbers; read them as uint64_t and
+// derive the signed delta via two's-complement wrap-around, which is exact
+// for any realistic heap size and never throws on oversized values.
+struct LeakDelta {
+    std::string name;
+    json entry;
+    int64_t sizeDelta = 0;
+    std::string change;
+};
 
-    // Totals are stored as unsigned JSON numbers; read them as uint64_t and
-    // derive the signed delta via two's-complement wrap-around, which is exact
-    // for any realistic heap size and never throws on oversized values.
-    struct LeakDelta {
-        std::string name;
-        json entry;
-        int64_t sizeDelta = 0;
-        std::string change;
-    };
+/// Build leak deltas for all names present in either snapshot.
+static std::vector<LeakDelta> BuildLeakDeltas(
+    const json& baselineLeaks, const json& targetLeaks,
+    const std::set<std::string>& names)
+{
     std::vector<LeakDelta> deltas;
     deltas.reserve(names.size());
     for (const auto& name : names) {
@@ -743,8 +739,13 @@ json BuildChangedLeakObjects(const json& baselineLeaks, const json& targetLeaks,
         entry["change"] = change;
         deltas.push_back({name, std::move(entry), sizeDelta, change});
     }
+    return deltas;
+}
 
-    // Same per-direction budget as the object path: top_n positive + top_n negative.
+/// Sort deltas by absolute size and select top N per direction.
+// Same per-direction budget as the object path: top_n positive + top_n negative.
+static json SelectTopLeakDeltas(std::vector<LeakDelta>& deltas, size_t topN)
+{
     std::sort(deltas.begin(), deltas.end(), [](const LeakDelta& lhs, const LeakDelta& rhs) {
         const int64_t ls = std::abs(lhs.sizeDelta);
         const int64_t rs = std::abs(rhs.sizeDelta);
@@ -772,6 +773,20 @@ json BuildChangedLeakObjects(const json& baselineLeaks, const json& targetLeaks,
         result[delta.name] = std::move(delta.entry);
     }
     return result;
+}
+
+json BuildChangedLeakObjects(const json& baselineLeaks, const json& targetLeaks, size_t topN)
+{
+    std::set<std::string> names;
+    for (auto it = baselineLeaks.begin(); it != baselineLeaks.end(); ++it) {
+        names.insert(it.key());
+    }
+    for (auto it = targetLeaks.begin(); it != targetLeaks.end(); ++it) {
+        names.insert(it.key());
+    }
+
+    auto deltas = BuildLeakDeltas(baselineLeaks, targetLeaks, names);
+    return SelectTopLeakDeltas(deltas, topN);
 }
 
 } // namespace
