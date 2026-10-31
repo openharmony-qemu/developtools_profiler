@@ -85,6 +85,31 @@ constexpr uint64_t MAX_TOTAL_UNCOMPRESSED_BYTES = 4ULL * 1024 * 1024 * 1024;
 
 } // namespace
 
+/// Write decompressed zip entry data to output file with bomb protection.
+static bool WriteZipEntryData(unzFile uf, std::ofstream& out,
+    uint64_t& totalWritten, const std::string& entryName, std::string& error)
+{
+    std::vector<char> buf(UNZIP_BUF_SIZE_KB * BYTES_PER_KB);
+    int n = 0;
+    while ((n = unzReadCurrentFile(uf, buf.data(), static_cast<unsigned>(buf.size()))) > 0) {
+        out.write(buf.data(), n);
+        totalWritten += static_cast<uint64_t>(n);
+        if (totalWritten > MAX_TOTAL_UNCOMPRESSED_BYTES) {
+            out.close();
+            unzCloseCurrentFile(uf);
+            error = "ZIP decompressed size exceeds limit: " + entryName;
+            return false;
+        }
+    }
+    out.close();
+    unzCloseCurrentFile(uf);
+    if (n < 0) {
+        error = "Failed to decompress entry: " + entryName;
+        return false;
+    }
+    return true;
+}
+
 /// Process a single zip entry. Returns true to continue, false on error.
 static bool ExtractOneEntry(unzFile uf, const std::string& destDir,
     uint64_t& totalWritten, std::string& error)
@@ -134,26 +159,7 @@ static bool ExtractOneEntry(unzFile uf, const std::string& destDir,
         return false;
     }
 
-    std::vector<char> buf(UNZIP_BUF_SIZE_KB * BYTES_PER_KB);
-    int n = 0;
-    while ((n = unzReadCurrentFile(uf, buf.data(), static_cast<unsigned>(buf.size()))) > 0) {
-        out.write(buf.data(), n);
-        totalWritten += static_cast<uint64_t>(n);
-        if (totalWritten > MAX_TOTAL_UNCOMPRESSED_BYTES) {
-            out.close();
-            unzCloseCurrentFile(uf);
-            error = "ZIP decompressed size exceeds limit: " + entryName;
-            return false;
-        }
-    }
-    out.close();
-    unzCloseCurrentFile(uf);
-
-    if (n < 0) {
-        error = "Failed to decompress entry: " + entryName;
-        return false;
-    }
-    return true;
+    return WriteZipEntryData(uf, out, totalWritten, entryName, error);
 }
 
 bool ExtractZip(const std::string& zipPath, const std::string& destDir, std::string& error)
