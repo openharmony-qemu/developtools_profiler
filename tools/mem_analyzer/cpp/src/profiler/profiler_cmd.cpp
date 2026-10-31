@@ -756,45 +756,15 @@ static bool FindExactAppMatch(const std::vector<AppEntry>& apps,
     return false;
 }
 
-static bool ResolveProcessName(const std::string& input, bool requireApp, std::string& resolvedPkg, bool& isApp)
+/**
+ * Resolve from fuzzy match results. Returns true on unique match or system-process fallback.
+ * Fuzzy match: substring in app name (label) only.
+ * Package names require exact match to avoid false positives.
+ */
+static bool ResolveFuzzyMatch(const std::string& input, bool requireApp,
+    const std::vector<const AppEntry*>& matches,
+    std::string& resolvedPkg, bool& isApp)
 {
-    // Any target resolved from the installed-app list is an app; the verbatim
-    // system-process fallbacks below override this to false.
-    isApp = true;
-    auto q = QueryDeviceApps();
-    // A pinned target reports the device-level failure here, instead of misreading it as
-    // a system process and carrying on with a wrong premise.
-    if (q.deviceFailed) {
-        log::Loge(q.deviceErr);
-        return false;
-    }
-    const auto& apps = q.apps;
-    if (apps.empty()) {
-        if (!requireApp) {
-            resolvedPkg = input;
-            isApp = false;
-            log::Logi("Resolved: ", input, " -> package: ", resolvedPkg,
-                " (unable to query apps; treated as a system process)");
-            return true;
-        }
-        log::Loge("Error: unable to query device apps via 'bm dump -a -l'.\n"
-            "Please ensure a device is connected and try again.");
-        return false;
-    }
-
-    if (FindExactAppMatch(apps, input, resolvedPkg)) {
-        return true;
-    }
-
-    // Fuzzy match: substring in app name (label) only.
-    // Package names require exact match to avoid false positives.
-    std::vector<const AppEntry*> matches;
-    for (const auto& a : apps) {
-        if (!a.appName.empty() && ContainsCi(a.appName, input)) {
-            matches.push_back(&a);
-        }
-    }
-
     if (matches.empty()) {
         if (!requireApp) {
             // Native capture types can also analyze system processes that are
@@ -830,6 +800,46 @@ static bool ResolveProcessName(const std::string& input, bool requireApp, std::s
     msg += "Please provide a more specific name.";
     log::Loge(msg);
     return false;
+}
+
+static bool ResolveProcessName(const std::string& input, bool requireApp, std::string& resolvedPkg, bool& isApp)
+{
+    // Any target resolved from the installed-app list is an app; the verbatim
+    // system-process fallbacks below override this to false.
+    isApp = true;
+    auto q = QueryDeviceApps();
+    // A pinned target reports the device-level failure here, instead of misreading it as
+    // a system process and carrying on with a wrong premise.
+    if (q.deviceFailed) {
+        log::Loge(q.deviceErr);
+        return false;
+    }
+    const auto& apps = q.apps;
+    if (apps.empty()) {
+        if (!requireApp) {
+            resolvedPkg = input;
+            isApp = false;
+            log::Logi("Resolved: ", input, " -> package: ", resolvedPkg,
+                " (unable to query apps; treated as a system process)");
+            return true;
+        }
+        log::Loge("Error: unable to query device apps via 'bm dump -a -l'.\n"
+            "Please ensure a device is connected and try again.");
+        return false;
+    }
+
+    if (FindExactAppMatch(apps, input, resolvedPkg)) {
+        return true;
+    }
+
+    std::vector<const AppEntry*> matches;
+    for (const auto& a : apps) {
+        if (!a.appName.empty() && ContainsCi(a.appName, input)) {
+            matches.push_back(&a);
+        }
+    }
+
+    return ResolveFuzzyMatch(input, requireApp, matches, resolvedPkg, isApp);
 }
 
 // Make `name` usable as a single path component: for system processes the

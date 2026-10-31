@@ -97,6 +97,65 @@ static bool IsProtobufAddrFile(const uint8_t* data, size_t size)
     return data[PROTO_DATA_TYPE_OFFSET] == 0x09 || data[PROTO_DATA_TYPE_OFFSET] == 0x10;
 }
 
+/// Parse handle and nodeId fields from a protobuf entry.
+struct ProtoEntryFields {
+    uint64_t handleAddress = 0;
+    uint64_t nodeId = 0;
+    bool hasHandle = false;
+    bool hasNode = false;
+};
+static ProtoEntryFields ParseEntryFields(const uint8_t* data, size_t entryEnd, size_t& offset)
+{
+    ProtoEntryFields f;
+    while (offset < entryEnd) {
+        uint64_t fieldTag = 0;
+        if (!ReadVarint(data, entryEnd, offset, fieldTag)) {
+            break;
+        }
+        int fn = static_cast<int>(fieldTag >> 3);
+        int wt = static_cast<int>(fieldTag & 0x07);
+        if (fn == 1 && wt == 1) {
+            if (offset + PROTO_FIXED64_BYTES > entryEnd) {
+                break;
+            }
+            uint64_t val = 0;
+            std::memcpy(&val, data + offset, PROTO_FIXED64_BYTES);
+            f.handleAddress = val;
+            f.hasHandle = true;
+            offset += PROTO_FIXED64_BYTES;
+        } else if (fn == PROTO_FIELD_NODE_ID && wt == 0) {
+            if (!ReadVarint(data, entryEnd, offset, f.nodeId)) {
+                break;
+            }
+            f.hasNode = true;
+        } else {
+            offset = SkipProtobufField(data, entryEnd, offset, wt);
+        }
+    }
+    return f;
+}
+
+/// Record address-to-nodeId mapping with duplicate detection.
+static void RecordAddrNodeMapping(ParseAddrResult& result,
+    uint64_t handleAddress, uint64_t nodeId)
+{
+    std::ostringstream oss;
+    oss << std::hex << handleAddress;
+    std::string key = oss.str();
+    uint32_t nid = static_cast<uint32_t>(nodeId);
+    auto existing = result.addrToNodeId.find(key);
+    if (existing != result.addrToNodeId.end()) {
+        if (existing->second != nid) {
+            result.duplicateCount++;
+            result.dupKeys.push_back(key);
+            result.dupOriginalAddrs.push_back("0x" + key);
+            result.dupNodeIds.push_back({existing->second, nid});
+        }
+    } else {
+        result.addrToNodeId[key] = nid;
+    }
+}
+
 static ParseAddrResult ParseProtobufAddrToNodeId(const uint8_t* data, size_t size)
 {
     ParseAddrResult result;
@@ -123,55 +182,11 @@ static ParseAddrResult ParseProtobufAddrToNodeId(const uint8_t* data, size_t siz
             }
             size_t entryEnd = offset + static_cast<size_t>(len);
 
-            uint64_t handleAddress = 0;
-            uint64_t nodeId = 0;
-            bool hasHandle = false;
-            bool hasNode = false;
-
-            while (offset < entryEnd) {
-                uint64_t fieldTag = 0;
-                if (!ReadVarint(data, entryEnd, offset, fieldTag)) {
-                    break;
-                }
-                int fn = static_cast<int>(fieldTag >> 3);
-                int wt = static_cast<int>(fieldTag & 0x07);
-
-                if (fn == 1 && wt == 1) {
-                    if (offset + PROTO_FIXED64_BYTES > entryEnd) {
-                        break;
-                    }
-                    uint64_t val = 0;
-                    std::memcpy(&val, data + offset, PROTO_FIXED64_BYTES);
-                    handleAddress = val;
-                    hasHandle = true;
-                    offset += PROTO_FIXED64_BYTES;
-                } else if (fn == PROTO_FIELD_NODE_ID && wt == 0) {
-                    if (!ReadVarint(data, entryEnd, offset, nodeId)) {
-                        break;
-                    }
-                    hasNode = true;
-                } else {
-                    offset = SkipProtobufField(data, entryEnd, offset, wt);
-                }
-            }
+            auto fields = ParseEntryFields(data, entryEnd, offset);
             offset = entryEnd;
 
-            if (hasHandle && hasNode) {
-                std::ostringstream oss;
-                oss << std::hex << handleAddress;
-                std::string key = oss.str();
-                uint32_t nid = static_cast<uint32_t>(nodeId);
-                auto existing = result.addrToNodeId.find(key);
-                if (existing != result.addrToNodeId.end()) {
-                    if (existing->second != nid) {
-                        result.duplicateCount++;
-                        result.dupKeys.push_back(key);
-                        result.dupOriginalAddrs.push_back("0x" + key);
-                        result.dupNodeIds.push_back({existing->second, nid});
-                    }
-                } else {
-                    result.addrToNodeId[key] = nid;
-                }
+            if (fields.hasHandle && fields.hasNode) {
+                RecordAddrNodeMapping(result, fields.handleAddress, fields.nodeId);
             }
         } else {
             offset = SkipProtobufField(data, size, offset, wireType);

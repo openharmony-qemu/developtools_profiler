@@ -215,37 +215,74 @@ struct PostOrderResult {
     uint32_t rootPo;                          // post-order index of root (always node_count-1)
 };
 
+constexpr uint32_t PAGE_OBJECT_FLAG = 1;
+
+/// Edge filter: combines isEssentialEdge (weak + non-root shortcut) with page-flag exclusion.
+static bool IsTraversableEdge(const DomContext& ctx,
+    const std::vector<uint32_t>& pageFlags,
+    uint32_t sourceNode, size_t ptr)
+{
+    int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edgeTypeOff)]);
+    // isEssentialEdge: weak edges are always excluded;
+    // shortcut edges are excluded from non-root nodes
+    if (ctx.weakType >= 0 && t == ctx.weakType) {
+        return false;
+    }
+    if (ctx.shortcutType >= 0 && t == ctx.shortcutType && sourceNode != ROOT) {
+        return false;
+    }
+    // Page-flag exclusion: skip edges from non-page-owned to page-owned nodes.
+    uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
+    if (sourceNode != ROOT && child < ctx.nodeCount &&
+        (pageFlags[child] & PAGE_OBJECT_FLAG) &&
+        !(pageFlags[sourceNode] & PAGE_OBJECT_FLAG)) {
+        return false;
+    }
+    return true;
+}
+
+/// Normalize post-order: assign indices to ALL nodes (reachable, unreachable, root).
+static void NormalizePostOrder(PostOrderResult& po,
+    const DomContext& ctx, uint32_t reachableCount)
+{
+    // ---- Normalize: assign post-order indices to ALL nodes ----
+    // The LT algorithm and retained-size propagation require every node to have
+    // a valid post-order index.  Unreachable nodes are placed after reachable
+    // ones, and root is placed at the very end (highest index).
+    std::vector<uint32_t> newPo(ctx.nodeCount, 0);
+    uint32_t newPoIdx = 0;
+
+    // 1) Reachable non-root nodes (keep existing relative order)
+    for (uint32_t i = 0; i < reachableCount; i++) {
+        uint32_t ni = po.postOrder[i];
+        if (ni != ROOT) {
+            newPo[newPoIdx] = ni;
+            po.nodeIndex2PostOrder[ni] = static_cast<int>(newPoIdx);
+            newPoIdx++;
+        }
+    }
+
+    // 2) Unreachable nodes (not visited, not root)
+    for (uint32_t ni = 0; ni < ctx.nodeCount; ni++) {
+        if (!po.visited[ni] && ni != ROOT) {
+            newPo[newPoIdx] = ni;
+            po.nodeIndex2PostOrder[ni] = static_cast<int>(newPoIdx);
+            newPoIdx++;
+        }
+    }
+
+    // 3) Root at the VERY END (highest post-order index)
+    po.nodeIndex2PostOrder[ROOT] = static_cast<int>(newPoIdx);
+    newPo[newPoIdx] = ROOT;
+    newPoIdx++;
+
+    po.postOrder = std::move(newPo);
+    po.reachableCount = reachableCount;
+    po.rootPo = ctx.nodeCount - 1;
+}
+
 static PostOrderResult ComputeDfsPostOrder(DomContext& ctx, const std::vector<uint32_t>& pageFlags, StageTimer& timer)
 {
-    constexpr uint32_t pageObjectFlag = 1;
-
-    // ---- Edge filter for DFS reachability ----
-    // Combines isEssentialEdge (weak + non-root shortcut) with page-flag exclusion.
-    // This is identical to the filter used in the LT DFS (Step 3a).
-    auto isTraversable = [&ctx, &pageFlags](uint32_t sourceNode, size_t ptr) -> bool {
-        int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edgeTypeOff)]);
-
-        // isEssentialEdge: weak edges are always excluded;
-        // shortcut edges are excluded from non-root nodes
-        if (ctx.weakType >= 0 && t == ctx.weakType) {
-            return false;
-        }
-        if (ctx.shortcutType >= 0 && t == ctx.shortcutType && sourceNode != ROOT) {
-            return false;
-        }
-
-        // Page-flag exclusion: skip edges from non-page-owned to page-owned nodes.
-        // The debugger may inject additional references into page objects;
-        // these should not affect the dominance relation.
-        uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
-        if (sourceNode != ROOT && child < ctx.nodeCount &&
-            (pageFlags[child] & pageObjectFlag) &&
-            !(pageFlags[sourceNode] & pageObjectFlag)) {
-            return false;
-        }
-        return true;
-    };
-
     PostOrderResult po;
     po.visited.assign(ctx.nodeCount, 0);
     po.postOrder.assign(ctx.nodeCount, 0);
@@ -274,7 +311,7 @@ static PostOrderResult ComputeDfsPostOrder(DomContext& ctx, const std::vector<ui
         while (sCur[i] < end) {
             size_t ptr = sCur[i];
             sCur[i] += static_cast<uint32_t>(ctx.edgeFieldsCount);
-            if (!isTraversable(node, ptr)) {
+            if (!IsTraversableEdge(ctx, pageFlags, node, ptr)) {
                 continue;
             }
 
@@ -298,43 +335,7 @@ static PostOrderResult ComputeDfsPostOrder(DomContext& ctx, const std::vector<ui
         }
     }
 
-    // ---- Normalize: assign post-order indices to ALL nodes ----
-    // The LT algorithm and retained-size propagation require every node to have
-    // a valid post-order index.  Unreachable nodes are placed after reachable
-    // ones, and root is placed at the very end (highest index).
-    {
-        std::vector<uint32_t> newPo(ctx.nodeCount, 0);
-        uint32_t newPoIdx = 0;
-
-        // 1) Reachable non-root nodes (keep existing relative order)
-        for (uint32_t i = 0; i < reachableCount; i++) {
-            uint32_t ni = po.postOrder[i];
-            if (ni != ROOT) {
-                newPo[newPoIdx] = ni;
-                po.nodeIndex2PostOrder[ni] = static_cast<int>(newPoIdx);
-                newPoIdx++;
-            }
-        }
-
-        // 2) Unreachable nodes (not visited, not root)
-        for (uint32_t ni = 0; ni < ctx.nodeCount; ni++) {
-            if (!po.visited[ni] && ni != ROOT) {
-                newPo[newPoIdx] = ni;
-                po.nodeIndex2PostOrder[ni] = static_cast<int>(newPoIdx);
-                newPoIdx++;
-            }
-        }
-
-        // 3) Root at the VERY END (highest post-order index)
-        po.nodeIndex2PostOrder[ROOT] = static_cast<int>(newPoIdx);
-        newPo[newPoIdx] = ROOT;
-        newPoIdx++;
-
-        po.postOrder = std::move(newPo);
-    }
-
-    po.reachableCount = reachableCount;
-    po.rootPo = ctx.nodeCount - 1;  // root is always at the highest PO index
+    NormalizePostOrder(po, ctx, reachableCount);
     timer.Tick("dfs_po", std::to_string(reachableCount) + " reachable");
     return po;
 }
