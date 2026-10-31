@@ -225,6 +225,26 @@ static std::string NormalizeAddr(const std::string& raw)
 //  parse_addr_to_node_id
 // ============================================================================
 
+static std::string TrimLineForParsing(const std::string& line)
+{
+    size_t start = line.find_first_not_of(" \t\r\n");
+    if (start == std::string::npos) {
+        return "";
+    }
+    size_t end = line.find_last_not_of(" \t\r\n");
+    std::string trimmed = line.substr(start, end - start + 1);
+    if (trimmed.empty()) {
+        return "";
+    }
+    if (trimmed[0] == '#') {
+        return "";
+    }
+    if (trimmed.size() >= COMMENT_PREFIX_LEN && trimmed[0] == '/' && trimmed[1] == '/') {
+        return "";
+    }
+    return trimmed;
+}
+
 ParseAddrResult ParseAddrToNodeId(const std::string& content)
 {
     ParseAddrResult result;
@@ -232,19 +252,8 @@ ParseAddrResult ParseAddrToNodeId(const std::string& content)
     std::string line;
 
     while (std::getline(stream, line)) {
-        size_t start = line.find_first_not_of(" \t\r\n");
-        if (start == std::string::npos) {
-            continue;
-        }
-        size_t end = line.find_last_not_of(" \t\r\n");
-        std::string trimmed = line.substr(start, end - start + 1);
+        std::string trimmed = TrimLineForParsing(line);
         if (trimmed.empty()) {
-            continue;
-        }
-        if (trimmed[0] == '#') {
-            continue;
-        }
-        if (trimmed.size() >= COMMENT_PREFIX_LEN && trimmed[0] == '/' && trimmed[1] == '/') {
             continue;
         }
 

@@ -95,6 +95,20 @@ struct BuildNativeRefResult {
     std::vector<long long> invalidDetailCallstackIds;
 };
 
+static void FlattenNodeByCs(
+    std::unordered_map<uint32_t, std::unordered_map<long long, mem_analyzer::NativeRefEntry>>& nodeByCs,
+    BuildNativeRefResult& result)
+{
+    for (auto& [nodeId, byCs] : nodeByCs) {
+        std::vector<mem_analyzer::NativeRefEntry> entries;
+        entries.reserve(byCs.size());
+        for (auto& [csId, entry] : byCs) {
+            entries.push_back(std::move(entry));
+        }
+        result.nodeNativeRef[nodeId] = std::move(entries);
+    }
+}
+
 /**
  * Build nativeRef from callStacks.existingAddrs.
  * Reference: TS buildNativeRefFromCallStacks
@@ -159,15 +173,7 @@ static BuildNativeRefResult BuildNativeRef(
         }
     }
 
-    // flatten node_by_cs into result.node_native_ref
-    for (auto& [nodeId, byCs] : nodeByCs) {
-        std::vector<mem_analyzer::NativeRefEntry> entries;
-        entries.reserve(byCs.size());
-        for (auto& [csId, entry] : byCs) {
-            entries.push_back(std::move(entry));
-        }
-        result.nodeNativeRef[nodeId] = std::move(entries);
-    }
+    FlattenNodeByCs(nodeByCs, result);
 
     return result;
 }

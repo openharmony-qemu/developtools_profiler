@@ -110,12 +110,39 @@ void IndexCacheObject(const json& obj, const std::string& filePath,
 
 } // anonymous namespace
 
+void CollectNameCacheFiles(const fs::path& dirPath, std::vector<std::string>& files)
+{
+    std::error_code ec;
+    for (const auto& entry : fs::recursive_directory_iterator(dirPath, ec)) {
+        if (ec) {
+            break;
+        }
+        if (!entry.is_regular_file()) {
+            continue;
+        }
+        const std::string filename = mem_analyzer::PathToUtf8(entry.path().filename());
+        if (filename.size() < MIN_NAMECACHE_FILENAME_LEN) {
+            continue;
+        }
+        std::string lower = filename;
+        std::transform(lower.begin(), lower.end(), lower.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (lower.find("namecache") == std::string::npos) {
+            continue;
+        }
+        const std::string ext = mem_analyzer::PathToUtf8(entry.path().extension());
+        if (ext != ".json" && ext != ".JSON") {
+            continue;
+        }
+        files.push_back(mem_analyzer::PathToUtf8(entry.path()));
+    }
+}
+
 bool NameCacheIndex::LoadFromDir(const std::string& dir)
 {
     std::error_code ec;
     std::vector<std::string> files;
     const fs::path dirPath = mem_analyzer::PathFromUtf8(dir);
-    // 直接指定 nameCache.json 文件本身
     if (fs::is_regular_file(dirPath, ec)) {
         files.push_back(dir);
     } else {
@@ -124,30 +151,7 @@ bool NameCacheIndex::LoadFromDir(const std::string& dir)
             log::Logw("Warning: nameCache file or directory not found: ", dir);
             return false;
         }
-        // 递归扫描目录：文件名包含 "nameCache" 的 *.json 全部加载合并（兼容多模块产物）
-        for (const auto& entry : fs::recursive_directory_iterator(dirPath, ec)) {
-            if (ec) {
-                break;
-            }
-            if (!entry.is_regular_file()) {
-                continue;
-            }
-            const std::string filename = mem_analyzer::PathToUtf8(entry.path().filename());
-            if (filename.size() < MIN_NAMECACHE_FILENAME_LEN) {
-                continue;
-            }
-            std::string lower = filename;
-            std::transform(lower.begin(), lower.end(), lower.begin(),
-                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-            if (lower.find("namecache") == std::string::npos) {
-                continue;
-            }
-            const std::string ext = mem_analyzer::PathToUtf8(entry.path().extension());
-            if (ext != ".json" && ext != ".JSON") {
-                continue;
-            }
-            files.push_back(mem_analyzer::PathToUtf8(entry.path()));
-        }
+        CollectNameCacheFiles(dirPath, files);
     }
 
     if (files.empty()) {
