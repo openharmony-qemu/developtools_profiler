@@ -31,21 +31,12 @@ using json = nlohmann::ordered_json;
 namespace mem_analyzer {
 
 /** Only types in this set are processed; all others are skipped entirely. */
-const std::unordered_set<HtraceEventType>& HtraceEnabledTypes()
+inline const std::unordered_set<HtraceEventType>& HtraceEnabledTypes()
 {
     static const std::unordered_set<HtraceEventType> enabled = {
-        HtraceEventType::MALLOC,
-        HtraceEventType::MMAP_ANON,
-        HtraceEventType::FILE_PAGE_MSG,
-        HtraceEventType::HP_FD,
-        HtraceEventType::HP_THREAD,
-        // HtraceEventType::GPU_VK,
-        // HtraceEventType::GPU_GLES,
-        // HtraceEventType::GPU_CL,
-        HtraceEventType::ASHMEM,
-        HtraceEventType::HP_DMA,
-        HtraceEventType::ARK_GLOBAL_HANDLE,
-        HtraceEventType::ARK_LOCAL_HANDLE,
+        HtraceEventType::MALLOC, HtraceEventType::MMAP_ANON, HtraceEventType::FILE_PAGE_MSG, HtraceEventType::HP_FD,
+        HtraceEventType::HP_THREAD, HtraceEventType::ASHMEM, HtraceEventType::HP_DMA,
+        HtraceEventType::ARK_GLOBAL_HANDLE, HtraceEventType::ARK_LOCAL_HANDLE,
     };
     return enabled;
 }
@@ -57,21 +48,12 @@ inline bool HtraceIsEnabledType(HtraceEventType type)
 }
 
 /** Only types in this set have their size counted toward totalExistingSize; others treat size as 0. */
-const std::unordered_set<HtraceEventType>& HtraceCountSizeTypes()
+inline const std::unordered_set<HtraceEventType>& HtraceCountSizeTypes()
 {
     static const std::unordered_set<HtraceEventType> count = {
-        HtraceEventType::MALLOC,
-        HtraceEventType::MMAP_ANON,
-        HtraceEventType::FILE_PAGE_MSG,
-        HtraceEventType::HP_FD,
-        HtraceEventType::HP_THREAD,
-        // HtraceEventType::GPU_VK,
-        // HtraceEventType::GPU_GLES,
-        // HtraceEventType::GPU_CL,
-        HtraceEventType::ASHMEM,
-        HtraceEventType::HP_DMA,
-        HtraceEventType::ARK_GLOBAL_HANDLE,
-        HtraceEventType::ARK_LOCAL_HANDLE,
+        HtraceEventType::MALLOC, HtraceEventType::MMAP_ANON, HtraceEventType::FILE_PAGE_MSG, HtraceEventType::HP_FD,
+        HtraceEventType::HP_THREAD, HtraceEventType::ASHMEM, HtraceEventType::HP_DMA,
+        HtraceEventType::ARK_GLOBAL_HANDLE, HtraceEventType::ARK_LOCAL_HANDLE,
     };
     return count;
 }
@@ -104,7 +86,7 @@ struct EventTypeMapping {
  * Returns the default event type configurations.
  * Extend this vector to support additional event types.
  */
-std::vector<EventTypeMapping> DefaultEventMappings()
+inline std::vector<EventTypeMapping> DefaultEventMappings()
 {
     return {
         {"AllocEvent", HtraceEventType::MALLOC},
