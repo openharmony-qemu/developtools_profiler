@@ -288,8 +288,7 @@ static std::vector<BaseClassInfo> ParseBaseClassList(const json& item)
 /**
  * Parse the tags array from a propertyTag JSON root.
  */
-static std::unordered_map<std::string, std::vector<BaseClassInfo>>
-    ParsePropertyTagEntries(const json& root)
+static std::unordered_map<std::string, std::vector<BaseClassInfo>> ParsePropertyTagEntries(const json& root)
 {
     std::unordered_map<std::string, std::vector<BaseClassInfo>> parsed;
     for (const auto& item : root["tags"]) {

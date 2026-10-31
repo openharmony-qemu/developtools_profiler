@@ -361,8 +361,11 @@ std::string BuildTopTableRows(const std::vector<SymbolDataEntry>& symbols, size_
         std::string pctStr = pctSS.str();
 
         rowStrs.push_back("<tr>\n"
-            "  <td><a onclick=\"showDetail(" + std::to_string(idx) + "); return false;\" class=\"detail-link\">\u8be6\u60c5</a></td>\n" +
-            std::string(countMode ? "" : "  <td class=\"top-size-val\">" + FormatSizeText(static_cast<double>(existingSize), false) + "</td>\n") +
+            "  <td><a onclick=\"showDetail(" +
+            std::to_string(idx) +
+            "); return false;\" class=\"detail-link\">\u8be6\u60c5</a></td>\n" +
+            std::string(countMode ? "" : "  <td class=\"top-size-val\">" +
+            FormatSizeText(static_cast<double>(existingSize), false) + "</td>\n") +
             "  <td class=\"top-count-val\">" + std::to_string(existingCount) + "</td>\n"
             "  <td class=\"top-pct-val\">" + pctStr + "%</td>\n"
             "  <td class=\"top-func\"><b>" + EscapeHtml(shortFuncName) + "</b></td>\n"
@@ -468,7 +471,8 @@ std::string BuildDetailSections(const std::vector<SymbolDataEntry>& symbols,
 {
     std::vector<std::string> sectionStrs;
     for (size_t i = 0; i < symbols.size(); i++) {
-        sectionStrs.push_back(BuildDetailSectionContent(symbols[i], startIndex + i, totalExistingSize, true, countMode));
+        sectionStrs.push_back(
+            BuildDetailSectionContent(symbols[i], startIndex + i, totalExistingSize, true, countMode));
     }
     std::string sections;
     for (size_t i = 0; i < sectionStrs.size(); i++) {

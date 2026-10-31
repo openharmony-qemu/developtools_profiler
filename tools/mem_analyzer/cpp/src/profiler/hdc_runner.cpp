@@ -1144,7 +1144,6 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
         // Re-scan the directory for any hiprofiler_data_*.zip files.
         const auto currentZips = listHiprofilerZips(dir);
         std::string candidate = FindNewZipCandidate(currentZips, baseline);
-
         if (candidate.empty()) {
             prevSize = -1;
             stableCount = 0;

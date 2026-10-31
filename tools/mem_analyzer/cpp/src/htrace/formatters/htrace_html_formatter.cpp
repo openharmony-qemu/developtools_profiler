@@ -498,8 +498,8 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
     };
 
     std::vector<TabGroup>& streamTarget = multipart ? streamGroups : groups;
-    AnalysisHtmlFormatterBase::FillHTMLTemplateStreamedDirect(
-        out, streamTarget, totalExistingSize, tabBarHTML, tabContentHTML, metaDataItemsHTML, title, fillTree, countMode);
+    AnalysisHtmlFormatterBase::FillHTMLTemplateStreamedDirect(out, streamTarget, totalExistingSize, tabBarHTML,
+        tabContentHTML, metaDataItemsHTML, title, fillTree, countMode);
 
     timer.Tick("total");
 }

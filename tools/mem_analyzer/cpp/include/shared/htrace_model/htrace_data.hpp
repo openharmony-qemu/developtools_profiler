@@ -63,7 +63,7 @@ enum class HtraceEventType : int {
 };
 
 /** Returns the human-readable name for an HtraceEventType. */
-inline const char* HtraceEventTypeName(HtraceEventType type)
+const char* HtraceEventTypeName(HtraceEventType type)
 {
     switch (type) {
         case HtraceEventType::UNKNOWN: return "unknown";
@@ -94,7 +94,7 @@ inline const char* HtraceEventTypeName(HtraceEventType type)
 }
 
 /** Returns the HtraceEventType value for a name string, or UNKNOWN if not recognized. */
-inline HtraceEventType HtraceEventTypeFromName(const std::string& name)
+HtraceEventType HtraceEventTypeFromName(const std::string& name)
 {
     if (name == "unknown") {
         return HtraceEventType::UNKNOWN;

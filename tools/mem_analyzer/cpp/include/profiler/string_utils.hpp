@@ -23,7 +23,7 @@ namespace mem_analyzer {
 // Case-insensitive substring search (ASCII): true when `needle` occurs in
 // `haystack`. Used e.g. to match user input against device app names/packages
 // and to detect permission-related error markers in hdc output.
-inline bool ContainsCi(const std::string& haystack, const std::string& needle)
+bool ContainsCi(const std::string& haystack, const std::string& needle)
 {
     if (needle.empty()) {
         return true;

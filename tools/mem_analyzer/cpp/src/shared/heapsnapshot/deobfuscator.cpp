@@ -657,7 +657,6 @@ bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& ou
 
     // 6. 重新序列化 strings 数组（紧凑格式）
     std::string newArr = stringsArr.dump();
-
     if (!WriteDeobfuscatedOutput(in, outputPath, openBracket, closeBracket, fileSize, newArr)) {
         return false;
     }
