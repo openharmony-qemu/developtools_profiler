@@ -31,7 +31,7 @@ using json = nlohmann::ordered_json;
 namespace mem_analyzer {
 
 /** Only types in this set are processed; all others are skipped entirely. */
-inline const std::unordered_set<HtraceEventType>& HtraceEnabledTypes()
+const std::unordered_set<HtraceEventType>& HtraceEnabledTypes()
 {
     static const std::unordered_set<HtraceEventType> enabled = {
         HtraceEventType::MALLOC,
@@ -57,7 +57,7 @@ inline bool HtraceIsEnabledType(HtraceEventType type)
 }
 
 /** Only types in this set have their size counted toward totalExistingSize; others treat size as 0. */
-inline const std::unordered_set<HtraceEventType>& HtraceCountSizeTypes()
+const std::unordered_set<HtraceEventType>& HtraceCountSizeTypes()
 {
     static const std::unordered_set<HtraceEventType> count = {
         HtraceEventType::MALLOC,
@@ -104,7 +104,7 @@ struct EventTypeMapping {
  * Returns the default event type configurations.
  * Extend this vector to support additional event types.
  */
-inline std::vector<EventTypeMapping> DefaultEventMappings()
+std::vector<EventTypeMapping> DefaultEventMappings()
 {
     return {
         {"AllocEvent", HtraceEventType::MALLOC},

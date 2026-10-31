@@ -56,7 +56,7 @@ constexpr size_t SEG_IDX_ORIGINAL_COLUMN = 3;
 constexpr size_t SEG_IDX_NAME_INDEX = 4;
 
 /// Base64 字符 → 6 位数值，非法字符返回 -1。
-inline int Base64Value(char c)
+int Base64Value(char c)
 {
     if (c >= 'A' && c <= 'Z') {
         return c - 'A';
@@ -77,7 +77,7 @@ inline int Base64Value(char c)
 }
 
 /// 解码一个 VLQ 值，成功返回 true 并填充 value，失败返回 false。
-inline bool DecodeVlqValue(const std::string& str, size_t& pos, int& value)
+bool DecodeVlqValue(const std::string& str, size_t& pos, int& value)
 {
     int result = 0;
     int shift = 0;
