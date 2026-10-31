@@ -80,28 +80,53 @@ static int RunAutoDetect(const mem_analyzer::GlobalOptions& g)
     return allOk ? 0 : 1;
 }
 
-// ============================================================================
-//  main
-// ============================================================================
+/// Windows: convert ANSI argv to UTF-8 in-place.
+#if defined(_WIN32)
+static void SetupUtf8Args(int argc, char**& argv,
+    std::vector<std::string>& storage, std::vector<char*>& ptrs)
+{
+    SetConsoleOutputCP(CP_UTF8);
+    storage.reserve(argc);
+    ptrs.reserve(argc);
+    for (int i = 0; i < argc; i++) {
+        storage.push_back(AcpToUtf8(argv[i]));
+        ptrs.push_back(&storage.back()[0]);
+    }
+    argv = ptrs.data();
+}
+#endif
+
+/// Save the original command line for output metadata.
+static void SaveCommandLine(int argc, char** argv, std::string& out)
+{
+    for (int i = 1; i < argc; i++) {
+        if (i > 1) {
+            out += " ";
+        }
+        out += argv[i];
+    }
+}
+
+/// Register all subcommands from the module registry into the CLI parser.
+static void RegisterSubcommands(mem_analyzer::CliParser& app,
+    mem_analyzer::GlobalOptions& global)
+{
+    for (const auto& cmd : mem_analyzer::CommandRegistry::All()) {
+        app.AddSubcommand(cmd->Name(), cmd->Description(), cmd->Alias(), cmd->Hidden(),
+            [&cmd, &global](mem_analyzer::CliParser& sub) { cmd->Bind(sub, global); });
+    }
+}
+
 int main(int argc, char** argv)
 {
 #if defined(_WIN32)
-    SetConsoleOutputCP(CP_UTF8);
-
     std::vector<std::string> utf8ArgvStorage;
     std::vector<char*> utf8ArgvPtrs;
-    utf8ArgvStorage.reserve(argc);
-    utf8ArgvPtrs.reserve(argc);
-    for (int i = 0; i < argc; i++) {
-        utf8ArgvStorage.push_back(AcpToUtf8(argv[i]));
-        utf8ArgvPtrs.push_back(&utf8ArgvStorage.back()[0]);
-    }
-    argv = utf8ArgvPtrs.data();
+    SetupUtf8Args(argc, argv, utf8ArgvStorage, utf8ArgvPtrs);
 #endif
 
     mem_analyzer::style::Init();
 
-    // 模块能力表一致性自检：正常构建下零输出，仅在不一致时告警（不改变退出码）。
     for (const auto& issue : mem_analyzer::ModuleRegistry::SelfCheck()) {
         mem_analyzer::log::Logw("Warning: module capability inconsistency: ", issue);
     }
@@ -111,13 +136,7 @@ int main(int argc, char** argv)
 
     mem_analyzer::GlobalOptions global;
     mem_analyzer::BindGlobalOptions(app, global);
-
-    // 子命令全部来自注册表：新增子命令无需改动本文件。
-    // Bind 由 add_subcommand 同步调用，故 lambda 捕获引用是安全的。
-    for (const auto& cmd : mem_analyzer::CommandRegistry::All()) {
-        app.AddSubcommand(cmd->Name(), cmd->Description(), cmd->Alias(), cmd->Hidden(),
-            [&cmd, &global](mem_analyzer::CliParser& sub) { cmd->Bind(sub, global); });
-    }
+    RegisterSubcommands(app, global);
 
     try {
         app.Parse(argc, argv);
@@ -130,7 +149,7 @@ int main(int argc, char** argv)
         global.keepTemp = true;
     }
     mem_analyzer::log::SetLevel(global.verbose ? mem_analyzer::log::Level::LOG_DEBUG :
-                                                mem_analyzer::log::Level::LOG_INFO);
+                                                 mem_analyzer::log::Level::LOG_INFO);
     mem_analyzer::TempDir::SetKeep(global.keepTemp);
 
     if (global.showVersion) {
@@ -138,7 +157,6 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    // Load preview feature switches (all disabled by default); failure is not fatal
     {
         std::string err;
         if (!mem_analyzer::PreviewFeaturesMgr::Instance().Load(err)) {
@@ -146,17 +164,7 @@ int main(int argc, char** argv)
         }
     }
 
-    // Save original command line（供输出 meta 使用）
-    {
-        std::string cmd;
-        for (int i = 1; i < argc; i++) {
-            if (i > 1) {
-                cmd += " ";
-            }
-            cmd += argv[i];
-        }
-        global.commandLine = cmd;
-    }
+    SaveCommandLine(argc, argv, global.commandLine);
 
     int ret = 0;
     if (auto cmd = mem_analyzer::CommandRegistry::Find(app.MatchedSubcommand())) {

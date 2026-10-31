@@ -72,16 +72,9 @@ std::string ProgramToken(const std::string& cmd)
 // earlier on PATH and a real `.exe` further down, a naive direct spawn would silently run
 // a DIFFERENT program than the shell — and than the one the user means. Pure filesystem
 // lookups, so it cannot recurse into capture_command(). Empty when nothing matches.
-std::string ResolveProgram(const std::string& prog)
+/// Parse PATHEXT environment variable into a list of extensions.
+static std::vector<std::string> ParsePathExtensions()
 {
-    if (prog.empty()) {
-        return {};
-    }
-    const char* pathEnv = std::getenv("PATH");
-    if (pathEnv == nullptr) {
-        return {};
-    }
-
     std::vector<std::string> exts;
     if (const char* extEnv = std::getenv("PATHEXT"); extEnv != nullptr) {
         const std::string all(extEnv);
@@ -101,6 +94,20 @@ std::string ResolveProgram(const std::string& prog)
     if (exts.empty()) {
         exts = {".COM", ".EXE", ".BAT", ".CMD"};
     }
+    return exts;
+}
+
+std::string ResolveProgram(const std::string& prog)
+{
+    if (prog.empty()) {
+        return {};
+    }
+    const char* pathEnv = std::getenv("PATH");
+    if (pathEnv == nullptr) {
+        return {};
+    }
+
+    auto exts = ParsePathExtensions();
 
     const std::string dirs(pathEnv);
     size_t b = 0;

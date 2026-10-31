@@ -259,9 +259,53 @@ void PropertyTagStage::LoadJsleakListFile(const std::string& filePath)
     }
 }
 
+/// Parse base class info from a JSON item (string or object form).
+static std::vector<BaseClassInfo> ParseBaseClassList(const json& item)
+{
+    std::vector<BaseClassInfo> bases;
+    if (!item.contains("baseClasses") || !item["baseClasses"].is_array()) {
+        return bases;
+    }
+    for (const auto& b : item["baseClasses"]) {
+        BaseClassInfo info;
+        if (b.is_string()) {
+            info.name = b.get<std::string>();
+        } else if (b.is_object() && b.contains("name") && b["name"].is_string()) {
+            info.name = b["name"].get<std::string>();
+            if (b.contains("displayType") && b["displayType"].is_string()) {
+                info.displayType = b["displayType"].get<std::string>();
+            }
+        }
+        if (!info.name.empty()) {
+            bases.push_back(std::move(info));
+        }
+    }
+    return bases;
+}
+
+/// Parse the tags array from a propertyTag JSON root.
+static std::unordered_map<std::string, std::vector<BaseClassInfo>>
+    ParsePropertyTagEntries(const json& root)
+{
+    std::unordered_map<std::string, std::vector<BaseClassInfo>> parsed;
+    for (const auto& item : root["tags"]) {
+        if (!item.is_object()) {
+            continue;
+        }
+        if (!item.contains("propertyName") || !item["propertyName"].is_string()) {
+            continue;
+        }
+        const std::string tag = item["propertyName"].get<std::string>();
+        if (tag.empty()) {
+            continue;
+        }
+        parsed[tag] = ParseBaseClassList(item);
+    }
+    return parsed;
+}
+
 void PropertyTagStage::LoadPropertyTagConfig()
 {
-    // 内置默认：配置文件缺失或解析失败时兜底
     static const std::unordered_map<std::string, std::vector<BaseClassInfo>> DEFAULTS = {
         {"isDeleting_", {{"ViewBuildNodeBase", "Component"}}},
         {"_isDisposed", {{"BuilderNode", "BuilderNode"}, {"RenderNode", "RenderNode"}, {"FrameNode", "FrameNode"}}},
@@ -271,7 +315,6 @@ void PropertyTagStage::LoadPropertyTagConfig()
 
     const std::string rel = "config/jsleak/jsleak_config.json";
 
-    // 固定目录：可执行文件同级的 config/jsleak/jsleak_config.json
     std::string configPath;
     const std::string exeDir = platform::GetExecutableDir();
     if (!exeDir.empty()) {
@@ -291,51 +334,18 @@ void PropertyTagStage::LoadPropertyTagConfig()
             ifs >> j;
         }
 
-        // 外层域 propertyTag：表明以下均为属性标签阶段参数
         const json* root = nullptr;
         if (j.contains("propertyTag") && j["propertyTag"].is_object()) {
             root = &j["propertyTag"];
         }
 
         if (root && root->contains("tags") && (*root)["tags"].is_array()) {
-            std::unordered_map<std::string, std::vector<BaseClassInfo>> parsed;
-            for (const auto& item : (*root)["tags"]) {
-                if (!item.is_object()) {
-                    continue;
-                }
-                if (!item.contains("propertyName") || !item["propertyName"].is_string()) {
-                    continue;
-                }
-                const std::string tag = item["propertyName"].get<std::string>();
-                if (tag.empty()) {
-                    continue;
-                }
-
-                std::vector<BaseClassInfo> bases;
-                if (item.contains("baseClasses") && item["baseClasses"].is_array()) {
-                    for (const auto& b : item["baseClasses"]) {
-                        BaseClassInfo info;
-                        if (b.is_string()) {
-                            info.name = b.get<std::string>();
-                        } else if (b.is_object() && b.contains("name") && b["name"].is_string()) {
-                            info.name = b["name"].get<std::string>();
-                            if (b.contains("displayType") && b["displayType"].is_string()) {
-                                info.displayType = b["displayType"].get<std::string>();
-                            }
-                        }
-                        if (!info.name.empty()) {
-                            bases.push_back(std::move(info));
-                        }
-                    }
-                }
-                parsed[tag] = std::move(bases);
-            }
+            auto parsed = ParsePropertyTagEntries(*root);
             propertyTagBaseClasses = parsed.empty() ? DEFAULTS : std::move(parsed);
         } else {
             propertyTagBaseClasses = DEFAULTS;
         }
 
-        // 默认展示类型（可缺省）
         if (root && root->contains("defaultDisplayType") && (*root)["defaultDisplayType"].is_string()) {
             defaultDisplayType = (*root)["defaultDisplayType"].get<std::string>();
         } else {

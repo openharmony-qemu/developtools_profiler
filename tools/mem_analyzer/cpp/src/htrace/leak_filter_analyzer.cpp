@@ -126,6 +126,59 @@ void ApplyLeakAddrFilter(TraceDB& db, const std::unordered_set<uint64_t>& leaks)
 ///     app-only/system-only 各跑一遍；app-and-system 跑两遍（app+system）；mixed 不分栈跑一遍。
 ///   每组 top N + other（非 top N 覆盖的栈合并火焰图）。
 ///   组装 HtraceAnalysisOutput，from=htrace-analysis。L1 已由 apply_leak_addr_filter 完成。
+/// L2: filter out stacks containing __emutls_get_address frames.
+static size_t FilterEmutlsFrames(CompressedCallStackList& clist)
+{
+    size_t total = clist.stacks.size();
+    std::vector<CompressedCallStack> kept;
+    kept.reserve(total);
+    for (auto& cs : clist.stacks) {
+        if (HasEmutlsFrame(cs, clist.dict)) {
+            continue;
+        }
+        kept.push_back(std::move(cs));
+    }
+    size_t removed = total - kept.size();
+    clist.stacks = std::move(kept);
+    log::Logok("  Leak L2: kept ", clist.stacks.size(),
+        " / ", total, " stacks (", removed, " filtered by emutls).");
+    return removed;
+}
+
+/// L3: split stacks into app/system vectors (mixed scope skips this).
+static void SplitAppSystemStacks(CompressedCallStackList& clist,
+    std::vector<CompressedCallStack>& appStacks,
+    std::vector<CompressedCallStack>& systemStacks)
+{
+    for (auto& cs : clist.stacks) {
+        if (HasAppSoFrame(cs, clist.dict)) {
+            appStacks.push_back(std::move(cs));
+        } else {
+            systemStacks.push_back(std::move(cs));
+        }
+    }
+    log::Logok("  Leak L3: app=", appStacks.size(), ", system=", systemStacks.size());
+}
+
+/// Merge app-only and system-only analysis outputs into a combined result.
+static HtraceAnalysisOutput MergeAppSystemOutput(
+    HtraceAnalysisOutput appOut, HtraceAnalysisOutput sysOut)
+{
+    HtraceAnalysisOutput output;
+    output.topSymbols.mode = "app-and-system";
+    output.topSymbols.app = std::move(appOut.topSymbols.app);
+    output.topSymbols.system = std::move(sysOut.topSymbols.system);
+    output.totalLeakSize = appOut.totalLeakSize + sysOut.totalLeakSize;
+    output.stats.orgSetSize = appOut.stats.orgSetSize + sysOut.stats.orgSetSize;
+    output.stats.filteredSetSize = appOut.stats.filteredSetSize + sysOut.stats.filteredSetSize;
+    output.stats.finalSetSize = appOut.stats.finalSetSize + sysOut.stats.finalSetSize;
+    output.stats.equivalentGroups = appOut.stats.equivalentGroups + sysOut.stats.equivalentGroups;
+    output.stats.upApproxRemoved = appOut.stats.upApproxRemoved + sysOut.stats.upApproxRemoved;
+    output.stats.downApproxRemoved = appOut.stats.downApproxRemoved + sysOut.stats.downApproxRemoved;
+    output.stats.representationAdded = appOut.stats.representationAdded + sysOut.stats.representationAdded;
+    return output;
+}
+
 HtraceAnalysisOutput HtraceLeakAnalyze(TraceDB& db, const RunContext& ctx)
 {
     auto* clist = std::get_if<CompressedCallStackList>(&db.stacks);
@@ -143,33 +196,12 @@ HtraceAnalysisOutput HtraceLeakAnalyze(TraceDB& db, const RunContext& ctx)
     acfg.scope = scope;
     acfg.category = ctx.htrace.category;
 
-    // L2: __emutls_get_address 帧排除
-    size_t total = clist->stacks.size();
-    std::vector<CompressedCallStack> kept;
-    kept.reserve(total);
-    for (auto& cs : clist->stacks) {
-        if (HasEmutlsFrame(cs, clist->dict)) {
-            continue;
-        }
-        kept.push_back(std::move(cs));
-    }
-    size_t l2Removed = total - kept.size();
-    clist->stacks = std::move(kept);
-    log::Logok("  Leak L2: kept ", clist->stacks.size(),
-        " / ", total, " stacks (", l2Removed, " filtered by emutls).");
+    FilterEmutlsFrames(*clist);
 
-    // L3: 栈分 app/system（mixed 不分，直接用全部栈）
     std::vector<CompressedCallStack> appStacks;
     std::vector<CompressedCallStack> systemStacks;
     if (scope != Scope::MIXED) {
-        for (auto& cs : clist->stacks) {
-            if (HasAppSoFrame(cs, clist->dict)) {
-                appStacks.push_back(std::move(cs));
-            } else {
-                systemStacks.push_back(std::move(cs));
-            }
-        }
-        log::Logok("  Leak L3: app=", appStacks.size(), ", system=", systemStacks.size());
+        SplitAppSystemStacks(*clist, appStacks, systemStacks);
     }
 
     HtraceAnalysisOutput output;
@@ -182,25 +214,14 @@ HtraceAnalysisOutput HtraceLeakAnalyze(TraceDB& db, const RunContext& ctx)
     } else if (scopeStr == "mixed") {
         acfg.forceScope = Scope::MIXED;
         output = AnalyzeCallStacks(clist->stacks, clist->dict, acfg);
-    } else {  // app-and-system（默认）：走两遍
+    } else {
         acfg.forceScope = Scope::APP_ONLY;
         auto appOut = AnalyzeCallStacks(appStacks, clist->dict, acfg);
         acfg.forceScope = Scope::SYSTEM_ONLY;
         auto sysOut = AnalyzeCallStacks(systemStacks, clist->dict, acfg);
-        output.topSymbols.mode = "app-and-system";
-        output.topSymbols.app = std::move(appOut.topSymbols.app);
-        output.topSymbols.system = std::move(sysOut.topSymbols.system);
-        output.totalLeakSize = appOut.totalLeakSize + sysOut.totalLeakSize;
-        output.stats.orgSetSize = appOut.stats.orgSetSize + sysOut.stats.orgSetSize;
-        output.stats.filteredSetSize = appOut.stats.filteredSetSize + sysOut.stats.filteredSetSize;
-        output.stats.finalSetSize = appOut.stats.finalSetSize + sysOut.stats.finalSetSize;
-        output.stats.equivalentGroups = appOut.stats.equivalentGroups + sysOut.stats.equivalentGroups;
-        output.stats.upApproxRemoved = appOut.stats.upApproxRemoved + sysOut.stats.upApproxRemoved;
-        output.stats.downApproxRemoved = appOut.stats.downApproxRemoved + sysOut.stats.downApproxRemoved;
-        output.stats.representationAdded = appOut.stats.representationAdded + sysOut.stats.representationAdded;
+        output = MergeAppSystemOutput(std::move(appOut), std::move(sysOut));
     }
 
-    // 填 metadata（照 htrace_analyze）
     output.dataDict = std::move(clist->dict);
     output.mode = std::move(db.meta.mode);
     output.processName = std::move(db.meta.processName);
