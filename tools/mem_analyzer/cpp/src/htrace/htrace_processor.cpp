@@ -171,18 +171,9 @@ void OpenHtraceContext(HtraceParseContext& ctx, const std::string& dbPath, Stage
     timer.Tick("data_dict");
 }
 
-// statistic 模式：按 (callchain_id, type) 分区聚合，每条链在每个 type 下取最新一条。
-void LoadStatisticStacks(HtraceParseContext& ctx,
-    const std::vector<HtraceEventType>& allowedTypes,
-    bool needAddrs,
-    CompressedCallStackList& stacks)
+std::string BuildStatisticSql(const std::vector<HtraceEventType>& allowedTypes, bool needAddrs)
 {
-    sqlite3* db = ctx.db;
-    TraceMeta& meta = ctx.meta;
-
     std::string typeIn = BuildTypeInList(allowedTypes);
-    // 隔离：仅 -l(need_addrs) 才 JOIN data_dict 取地址（依赖 addr_id 列）；
-    // 非 -l 用 NULL 占位列，不碰 addr_id，SQL 结构与 master 等价、不依赖该列存在。
     std::string sql =
         "SELECT ranked.callchain_id, ranked.type, ranked.ts, ranked.sub_type_id, "
         "(ranked.apply_size - ranked.release_size) as total_size, "
@@ -192,13 +183,26 @@ void LoadStatisticStacks(HtraceParseContext& ctx,
         "  SELECT *, ROW_NUMBER() OVER (PARTITION BY callchain_id, type ORDER BY ts DESC) as rn "
         "  FROM native_hook_statistic WHERE type IN (";
     sql += typeIn;
-    sql += ") ";           // 闭合 IN (...)
-    sql += ") ranked ";    // 闭合子查询 FROM (...) + 别名
+    sql += ") ";
+    sql += ") ranked ";
     if (needAddrs) {
         sql += "LEFT JOIN data_dict b ON ranked.addr_id = b.id ";
     }
     sql += "WHERE ranked.rn = 1 AND (ranked.apply_size - ranked.release_size) != 0 "
         "ORDER BY total_size DESC";
+    return sql;
+}
+
+// statistic 模式：按 (callchain_id, type) 分区聚合，每条链在每个 type 下取最新一条。
+void LoadStatisticStacks(HtraceParseContext& ctx,
+    const std::vector<HtraceEventType>& allowedTypes,
+    bool needAddrs,
+    CompressedCallStackList& stacks)
+{
+    sqlite3* db = ctx.db;
+    TraceMeta& meta = ctx.meta;
+
+    std::string sql = BuildStatisticSql(allowedTypes, needAddrs);
 
     std::vector<std::tuple<int, int, int, int, long long, long long, std::string>> statisticGroups;
     sqlite3_stmt* stmt = nullptr;
@@ -232,7 +236,7 @@ void LoadStatisticStacks(HtraceParseContext& ctx,
     std::string chainSelect =
         "SELECT callchain_id FROM ("
         "  SELECT *, ROW_NUMBER() OVER (PARTITION BY callchain_id, type ORDER BY ts DESC) AS rn "
-        "  FROM native_hook_statistic WHERE type IN (" + typeIn + ") "
+        "  FROM native_hook_statistic WHERE type IN (" + BuildTypeInList(allowedTypes) + ") "
         ") WHERE rn = 1 AND (apply_size - release_size) != 0";
     auto framesByChain = ReadFrames(db, chainSelect);
 

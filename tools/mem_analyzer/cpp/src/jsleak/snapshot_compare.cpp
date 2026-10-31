@@ -170,6 +170,21 @@ std::string FormatShortestReferencePath(
     return result;
 }
 
+void ResolveRepresentatives(const HeapSnapshot& heap,
+    std::unordered_map<std::string, Aggregate>& groups,
+    std::unordered_map<uint32_t, std::pair<std::string, std::string>>& identityCache)
+{
+    for (auto& entry : groups) {
+        Aggregate& group = entry.second;
+        if (group.representative == UINT32_MAX) {
+            continue;
+        }
+        group.dominatorAncestors =
+            dominatorAncestorKeys(heap, group.representative, identityCache);
+        group.path = FormatShortestReferencePath(heap, group.representative, identityCache);
+    }
+}
+
 SnapshotIndex BuildIndex(const HeapSnapshot& heap, const HeapSnapshot& other)
 {
     SnapshotIndex out;
@@ -227,15 +242,7 @@ SnapshotIndex BuildIndex(const HeapSnapshot& heap, const HeapSnapshot& other)
     // Computing the shortest reference path and dominator ancestry for every
     // node would be O(N * depth); only one representative per group needs
     // them, so this pass is O(groups * depth).
-    for (auto& entry : out.groups) {
-        Aggregate& group = entry.second;
-        if (group.representative == UINT32_MAX) {
-            continue;
-        }
-        group.dominatorAncestors =
-            dominatorAncestorKeys(heap, group.representative, identityCache);
-        group.path = FormatShortestReferencePath(heap, group.representative, identityCache);
-    }
+    ResolveRepresentatives(heap, out.groups, identityCache);
     if (out.totalHeapSize == 0) {
         out.totalHeapSize = out.totalSelfSize;
     }

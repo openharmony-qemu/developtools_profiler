@@ -71,6 +71,32 @@ bool QueryInt64(sqlite3* db, const char* sql, long long& out)
 }
 } // namespace
 
+void QueryProcessName(sqlite3* db, const std::string& hookTable, TraceMeta& meta)
+{
+    const std::string ipidSql =
+        "SELECT DISTINCT ipid FROM " + hookTable + " WHERE ipid IS NOT NULL LIMIT 1";
+    sqlite3_stmt* ipidStmt = nullptr;
+    if (sqlite3_prepare_v2(db, ipidSql.c_str(), -1, &ipidStmt, nullptr) == SQLITE_OK) {
+        StmtGuard guard(ipidStmt);
+        if (sqlite3_step(ipidStmt) == SQLITE_ROW) {
+            const int ipid = sqlite3_column_int(ipidStmt, 0);
+            sqlite3_stmt* pstmt = nullptr;
+            const char* psql = "SELECT name FROM process WHERE id = ?";
+            if (sqlite3_prepare_v2(db, psql, -1, &pstmt, nullptr) == SQLITE_OK) {
+                StmtGuard pguard(pstmt);
+                sqlite3_bind_int(pstmt, 1, ipid);
+                if (sqlite3_step(pstmt) == SQLITE_ROW) {
+                    const auto* rawName =
+                        reinterpret_cast<const char*>(sqlite3_column_text(pstmt, 0));
+                    if (rawName) {
+                        meta.processName = platform::SanitizeUtf8(rawName);
+                    }
+                }
+            }
+        }
+    }
+}
+
 // ── query_trace_meta ──────────────────────────────────────────────
 TraceMeta QueryTraceMeta(sqlite3* db)
 {
@@ -122,29 +148,7 @@ TraceMeta QueryTraceMeta(sqlite3* db)
         return meta;
     }
 
-    // Process name (from hook table's ipid → process.name)
-    const std::string ipidSql =
-        "SELECT DISTINCT ipid FROM " + hookTable + " WHERE ipid IS NOT NULL LIMIT 1";
-    sqlite3_stmt* ipidStmt = nullptr;
-    if (sqlite3_prepare_v2(db, ipidSql.c_str(), -1, &ipidStmt, nullptr) == SQLITE_OK) {
-        StmtGuard guard(ipidStmt);
-        if (sqlite3_step(ipidStmt) == SQLITE_ROW) {
-            const int ipid = sqlite3_column_int(ipidStmt, 0);
-            sqlite3_stmt* pstmt = nullptr;
-            const char* psql = "SELECT name FROM process WHERE id = ?";
-            if (sqlite3_prepare_v2(db, psql, -1, &pstmt, nullptr) == SQLITE_OK) {
-                StmtGuard pguard(pstmt);
-                sqlite3_bind_int(pstmt, 1, ipid);
-                if (sqlite3_step(pstmt) == SQLITE_ROW) {
-                    const auto* rawName =
-                        reinterpret_cast<const char*>(sqlite3_column_text(pstmt, 0));
-                    if (rawName) {
-                        meta.processName = platform::SanitizeUtf8(rawName);
-                    }
-                }
-            }
-        }
-    }
+    QueryProcessName(db, hookTable, meta);
 
     return meta;
 }
