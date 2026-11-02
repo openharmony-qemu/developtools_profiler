@@ -1700,6 +1700,131 @@ bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode, PreCaptur
 
 // ── background threads ──────────────────────────────
 
+// 逐行消费子进程输出：写入共享缓冲，async 模式下即时回显到控制台。
+void ConsumeChildStream(FILE* fp, const std::shared_ptr<CaptureState>& state, bool asyncStartMode)
+{
+    char buf[4096];
+    while (fgets(buf, sizeof(buf), fp) != nullptr) {
+        {
+            std::lock_guard<std::mutex> lock(state->mtx);
+            state->output.append(buf);
+        }
+        // Async start mode: stream the `hiprofiler_cmd start` transcript
+        // to the console line-by-line, the moment it arrives. The device
+        // may delay part of the output (e.g. a startup error ~1s in), so
+        // batching would make errors feel missing — print immediately,
+        // exactly like running the command in a terminal window.
+        if (asyncStartMode) {
+            std::cout << ConsoleStartLine(buf) << std::flush;
+        }
+    }
+}
+
+#if defined(_WIN32)
+// 把管道读端包装成 FILE*，保持 fgets 逐行读取的原语义。
+void ConsumeWindowsProcess(HANDLE hRead, PROCESS_INFORMATION pi,
+                           const std::shared_ptr<CaptureState>& state, bool asyncStartMode)
+{
+    int fd = _open_osfhandle(reinterpret_cast<intptr_t>(hRead), _O_RDONLY);
+    if (fd == -1) {
+        CloseHandle(hRead);
+        state->spawnFailed = true;
+        state->done = true;
+        return;
+    }
+    FILE* fp = _fdopen(fd, "r");
+    if (!fp) {
+        _close(fd);
+        state->spawnFailed = true;
+        state->done = true;
+        return;
+    }
+
+    ConsumeChildStream(fp, state, asyncStartMode);
+    (void)fclose(fp);  // 关闭 fd，进而关闭底层 h_read 句柄
+
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    DWORD code = 0;
+    GetExitCodeProcess(pi.hProcess, &code);
+    state->exitCode = static_cast<int>(code);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+}
+
+// 无 shell 执行：CreateProcessW 直接解析命令行（MSVCRT 规则，不经 cmd.exe），
+// 宽字符避免中文进程名的 ANSI 乱码；管道合并 stderr 到 stdout，
+// 消除 cmd.exe 对 `&|<>^` 等元字符的解释（主机命令注入）。
+void SpawnWorkerWindows(const std::shared_ptr<CaptureState>& state, const std::string& cmd,
+                        bool asyncStartMode)
+{
+    SECURITY_ATTRIBUTES sa{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
+    HANDLE hRead = nullptr;
+    HANDLE hWrite = nullptr;
+    if (!CreatePipe(&hRead, &hWrite, &sa, 0)) {
+        state->spawnFailed = true;
+        state->done = true;
+        return;
+    }
+    if (!SetHandleInformation(hRead, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
+        CloseHandle(hRead);
+        CloseHandle(hWrite);
+        state->spawnFailed = true;
+        state->done = true;
+        return;
+    }
+    STARTUPINFOW si{ sizeof(STARTUPINFOW) };
+    si.dwFlags = STARTF_USESTDHANDLES;
+    si.hStdOutput = hWrite;
+    si.hStdError = hWrite;
+    si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+    PROCESS_INFORMATION pi{};
+
+    // 去掉尾部 " 2>&1"：stderr 已由上面的 STARTF_USESTDHANDLES 合并进 stdout。
+    std::string cleanCmd = cmd;
+    if (cleanCmd.size() >= SHELL_REDIRECT_SUFFIX_LEN &&
+        cleanCmd.substr(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN) == " 2>&1") {
+        cleanCmd.resize(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN);
+    }
+    std::wstring wcmdline = WidenPath(cleanCmd);
+    if (!CreateProcessW(nullptr, wcmdline.data(), nullptr, nullptr, TRUE, 0,
+                        nullptr, nullptr, &si, &pi)) {
+        CloseHandle(hRead);
+        CloseHandle(hWrite);
+        state->spawnFailed = true;
+        state->done = true;
+        return;
+    }
+    CloseHandle(hWrite);
+
+    ConsumeWindowsProcess(hRead, pi, state, asyncStartMode);
+}
+#endif
+
+#if !defined(_WIN32)
+void SpawnWorkerPosix(const std::shared_ptr<CaptureState>& state, const std::string& cmd,
+                      bool asyncStartMode)
+{
+    auto sp = proc::SpawnPiped(cmd);
+    if (!sp.Ok()) {
+        state->spawnFailed = true;
+        state->done = true;
+        return;
+    }
+    FILE* fp = fdopen(sp.readFd, "r");
+    if (!fp) {
+        close(sp.readFd);
+        state->spawnFailed = true;
+        state->done = true;
+        return;
+    }
+    ConsumeChildStream(fp, state, asyncStartMode);
+    (void)fclose(fp);
+    int st = 0;
+    waitpid(sp.pid, &st, 0);
+    state->exitCode = WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+}
+#endif
+
 // Worker thread: runs the hdc command and streams its output into the shared
 // `output` buffer as it arrives (instead of capturing it all once at the
 // end), so the countdown loop can surface the device-side `hiprofiler_cmd
@@ -1709,111 +1834,10 @@ bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode, PreCaptur
 std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::string& cmd, bool asyncStartMode)
 {
     return std::thread([state, cmd, asyncStartMode]() {
-        // 逐行消费子进程输出：写入共享缓冲，async 模式下即时回显到控制台。
-        auto consumeStream = [&state, &asyncStartMode](FILE* fp) {
-            char buf[4096];
-            while (fgets(buf, sizeof(buf), fp) != nullptr) {
-                {
-                    std::lock_guard<std::mutex> lock(state->mtx);
-                    state->output.append(buf);
-                }
-                // Async start mode: stream the `hiprofiler_cmd start` transcript
-                // to the console line-by-line, the moment it arrives. The device
-                // may delay part of the output (e.g. a startup error ~1s in), so
-                // batching would make errors feel missing — print immediately,
-                // exactly like running the command in a terminal window.
-                if (asyncStartMode) {
-                    std::cout << ConsoleStartLine(buf) << std::flush;
-                }
-            }
-        };
 #if defined(_WIN32)
-        // 无 shell 执行：CreateProcessW 直接解析命令行（MSVCRT 规则，不经 cmd.exe），
-        // 宽字符避免中文进程名的 ANSI 乱码；管道合并 stderr 到 stdout，
-        // 消除 cmd.exe 对 `&|<>^` 等元字符的解释（主机命令注入）。
-        SECURITY_ATTRIBUTES sa{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
-        HANDLE hRead = nullptr;
-        HANDLE hWrite = nullptr;
-        if (!CreatePipe(&hRead, &hWrite, &sa, 0)) {
-            state->spawnFailed = true;
-            state->done = true;
-            return;
-        }
-        if (!SetHandleInformation(hRead, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
-            CloseHandle(hRead);
-            CloseHandle(hWrite);
-            state->spawnFailed = true;
-            state->done = true;
-            return;
-        }
-        STARTUPINFOW si{ sizeof(STARTUPINFOW) };
-        si.dwFlags = STARTF_USESTDHANDLES;
-        si.hStdOutput = hWrite;
-        si.hStdError = hWrite;
-        si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-        PROCESS_INFORMATION pi{};
-
-        // 去掉尾部 " 2>&1"：stderr 已由上面的 STARTF_USESTDHANDLES 合并进 stdout。
-        std::string cleanCmd = cmd;
-        if (cleanCmd.size() >= SHELL_REDIRECT_SUFFIX_LEN &&
-            cleanCmd.substr(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN) == " 2>&1") {
-            cleanCmd.resize(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN);
-        }
-        std::wstring wcmdline = WidenPath(cleanCmd);
-        if (!CreateProcessW(nullptr, wcmdline.data(), nullptr, nullptr, TRUE, 0,
-                            nullptr, nullptr, &si, &pi)) {
-            CloseHandle(hRead);
-            CloseHandle(hWrite);
-            state->spawnFailed = true;
-            state->done = true;
-            return;
-        }
-        CloseHandle(hWrite);
-
-        // 把管道读端包装成 FILE*，保持 fgets 逐行读取的原语义。
-        int fd = _open_osfhandle(reinterpret_cast<intptr_t>(hRead), _O_RDONLY);
-        if (fd == -1) {
-            CloseHandle(hRead);
-            state->spawnFailed = true;
-            state->done = true;
-            return;
-        }
-        FILE* fp = _fdopen(fd, "r");
-        if (!fp) {
-            _close(fd);
-            state->spawnFailed = true;
-            state->done = true;
-            return;
-        }
-
-        consumeStream(fp);
-        (void)fclose(fp);  // 关闭 fd，进而关闭底层 h_read 句柄
-
-        WaitForSingleObject(pi.hProcess, INFINITE);
-        DWORD code = 0;
-        GetExitCodeProcess(pi.hProcess, &code);
-        state->exitCode = static_cast<int>(code);
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
+        SpawnWorkerWindows(state, cmd, asyncStartMode);
 #else
-        auto sp = proc::SpawnPiped(cmd);
-        if (!sp.Ok()) {
-            state->spawnFailed = true;
-            state->done = true;
-            return;
-        }
-        FILE* fp = fdopen(sp.readFd, "r");
-        if (!fp) {
-            close(sp.readFd);
-            state->spawnFailed = true;
-            state->done = true;
-            return;
-        }
-        consumeStream(fp);
-        (void)fclose(fp);
-        int st = 0;
-        waitpid(sp.pid, &st, 0);
-        state->exitCode = WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+        SpawnWorkerPosix(state, cmd, asyncStartMode);
 #endif
         state->done = true;
     });

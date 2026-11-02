@@ -159,6 +159,183 @@ bool IsScriptShim(const std::string& path)
     return endsWithCi(".bat") || endsWithCi(".cmd");
 }
 
+void DrainAvailable(HANDLE hRead, std::string& output)
+{
+    for (;;) {
+        DWORD avail = 0;
+        if (!PeekNamedPipe(hRead, nullptr, 0, nullptr, &avail, nullptr)) {
+            break;
+        }
+        if (avail == 0) {
+            break;
+        }
+        char buf[4096];
+        DWORD n = 0;
+        if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
+            &n, nullptr) || n == 0) {
+            break;
+        }
+        output.append(buf, n);
+    }
+}
+
+// Create an inheritable pipe for the child's stdout.
+bool CreateChildPipeWindows(HANDLE& hRead, HANDLE& hWrite)
+{
+    SECURITY_ATTRIBUTES sa{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
+    if (!CreatePipe(&hRead, &hWrite, &sa, 0)) {
+        return false;
+    }
+    if (!SetHandleInformation(hWrite, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
+        CloseHandle(hRead);
+        CloseHandle(hWrite);
+        return false;
+    }
+    return true;
+}
+
+// Run a real executable DIRECTLY, without a shell. `cmd.exe /c` re-tokenizes the line
+// with cmd's own rules, which do NOT match the MSVCRT escaping shell_quote() produces:
+// cmd.exe has no `\"` escape (its `"` merely toggles quoting), so a quoted value such
+// as `a" & calc` escapes the quotes and runs as a separate command, and `%VAR%` would
+// be expanded even inside quotes. A direct CreateProcess parses the line exactly the
+// way shell_quote() assumes. (`run_command_streaming()` in profiler_cmd.cpp already
+// spawns this way for the same reason.)
+// The program is resolved first and its absolute path is substituted, so the direct
+// spawn cannot pick a different file than the shell would (see resolve_program()).
+// A `.bat`/`.cmd` shim (or an unresolvable program) is intentionally NOT run: doing so
+// would require cmd.exe, whose re-tokenization reopens the injection hole above.
+// stderr is redirected into the pipe via si.hStdError, so callers' trailing " 2>&1" is
+// redundant — and without a shell it would reach the program as a literal argument, so
+// it must be dropped from the direct form.
+std::string ResolveSpawnLineWindows(const std::string& cmd)
+{
+    std::string direct = cmd;
+    if (direct.size() >= SHELL_REDIRECT_SUFFIX_LEN &&
+        direct.compare(direct.size() - SHELL_REDIRECT_SUFFIX_LEN, SHELL_REDIRECT_SUFFIX_LEN, " 2>&1") == 0) {
+        direct.resize(direct.size() - SHELL_REDIRECT_SUFFIX_LEN);
+    }
+    const std::string tok = ProgramToken(direct);
+    const std::string prog = ResolveProgram(tok);
+    if (!prog.empty() && !IsScriptShim(prog)) {
+        return prog + direct.substr(tok.size());
+    }
+    return {};
+}
+
+// Unbounded: drain until EOF, then wait for the process.
+void ReadUnboundedWindows(HANDLE hRead, PROCESS_INFORMATION pi, CapturedCmd& cap)
+{
+    std::string output;
+    for (;;) {
+        DWORD avail = 0;
+        if (!PeekNamedPipe(hRead, nullptr, 0, nullptr, &avail, nullptr)) {
+            break;
+        }
+        if (avail == 0) {
+            if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) {
+                break;
+            }
+            Sleep(IDLE_POLL_INTERVAL_MS);
+            continue;
+        }
+        char buf[4096];
+        DWORD n = 0;
+        if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
+            &n, nullptr) || n == 0) {
+            break;
+        }
+        output.append(buf, n);
+    }
+    CloseHandle(hRead);
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    DWORD code = 0;
+    GetExitCodeProcess(pi.hProcess, &code);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    cap.output = std::move(output);
+    cap.exitCode = static_cast<int>(code);
+}
+
+// Bounded read.
+void ReadBoundedWindows(HANDLE hRead, PROCESS_INFORMATION pi, long long timeoutMs, CapturedCmd& cap)
+{
+    std::string output;
+    const auto deadline = std::chrono::steady_clock::now() +
+                          std::chrono::milliseconds(timeoutMs);
+    bool timedOut = false;
+    for (;;) {
+        DrainAvailable(hRead, output);
+        if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) {
+            break;
+        }
+        if (std::chrono::steady_clock::now() >= deadline) {
+            timedOut = true;
+            break;
+        }
+        Sleep(BOUNDED_POLL_INTERVAL_MS);
+    }
+    DrainAvailable(hRead, output);
+    CloseHandle(hRead);
+
+    if (timedOut) {
+        cap.timedOut = true;
+        TerminateProcess(pi.hProcess, 1);
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        cap.exitCode = -1;
+    } else {
+        DWORD code = 0;
+        GetExitCodeProcess(pi.hProcess, &code);
+        cap.exitCode = static_cast<int>(code);
+    }
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    cap.output = std::move(output);
+}
+
+CapturedCmd CaptureCommandWindows(const std::string& cmd, long long timeoutMs)
+{
+    CapturedCmd cap;
+    HANDLE hRead = nullptr;
+    HANDLE hWrite = nullptr;
+    if (!CreateChildPipeWindows(hRead, hWrite)) {
+        return cap;
+    }
+
+    STARTUPINFOW si{ sizeof(STARTUPINFOW) };
+    si.dwFlags = STARTF_USESTDHANDLES;
+    si.hStdOutput = hWrite;
+    // Route stderr into the same pipe so shell/diagnostic messages cannot
+    // leak onto the user's terminal (callers no longer rely on 2>&1 to
+    // suppress them).
+    si.hStdError = hWrite;
+    si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+    PROCESS_INFORMATION pi{};
+
+    const std::string resolvedLine = ResolveSpawnLineWindows(cmd);
+    bool started = false;
+    if (!resolvedLine.empty()) {
+        std::wstring wresolved = WidenPath(resolvedLine);
+        started = CreateProcessW(nullptr, wresolved.data(), nullptr,
+            nullptr, TRUE, 0, nullptr, nullptr, &si, &pi) != 0;
+    }
+
+    if (!started) {
+        CloseHandle(hRead);
+        CloseHandle(hWrite);
+        return cap;
+    }
+    CloseHandle(hWrite);
+    cap.spawned = true;
+
+    if (timeoutMs <= 0) {
+        ReadUnboundedWindows(hRead, pi, cap);
+        return cap;
+    }
+    ReadBoundedWindows(hRead, pi, timeoutMs, cap);
+    return cap;
+}
+
 } // namespace
 #endif
 
@@ -188,184 +365,48 @@ SpawnedProc SpawnPiped(const std::string& cmd)
     close(fds[1]);
     return {pid, fds[0]};
 }
-#endif
 
-CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
+namespace {
+
+// Give the child a brief chance to exit, then force-kill it.
+void KillChildPosix(pid_t pid, CapturedCmd& cap)
 {
-    CapturedCmd cap;
-#if defined(_WIN32)
-    // Create an inheritable pipe for the child's stdout.
-    SECURITY_ATTRIBUTES sa{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
-    HANDLE hRead = nullptr;
-    HANDLE hWrite = nullptr;
-    if (!CreatePipe(&hRead, &hWrite, &sa, 0)) {
-        return cap;
-    }
-    if (!SetHandleInformation(hWrite, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
-        CloseHandle(hRead);
-        CloseHandle(hWrite);
-        return cap;
-    }
-
-    STARTUPINFOW si{ sizeof(STARTUPINFOW) };
-    si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdOutput = hWrite;
-    // Route stderr into the same pipe so shell/diagnostic messages cannot
-    // leak onto the user's terminal (callers no longer rely on 2>&1 to
-    // suppress them).
-    si.hStdError = hWrite;
-    si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-    PROCESS_INFORMATION pi{};
-    // Run a real executable DIRECTLY, without a shell. `cmd.exe /c` re-tokenizes the line
-    // with cmd's own rules, which do NOT match the MSVCRT escaping shell_quote() produces:
-    // cmd.exe has no `\"` escape (its `"` merely toggles quoting), so a quoted value such
-    // as `a" & calc` escapes the quotes and runs as a separate command, and `%VAR%` would
-    // be expanded even inside quotes. A direct CreateProcess parses the line exactly the
-    // way shell_quote() assumes. (`run_command_streaming()` in profiler_cmd.cpp already
-    // spawns this way for the same reason.)
-    // The program is resolved first and its absolute path is substituted, so the direct
-    // spawn cannot pick a different file than the shell would (see resolve_program()).
-    // A `.bat`/`.cmd` shim (or an unresolvable program) is intentionally NOT run: doing so
-    // would require cmd.exe, whose re-tokenization reopens the injection hole above.
-    // stderr is redirected into the pipe via si.hStdError, so callers' trailing " 2>&1" is
-    // redundant — and without a shell it would reach the program as a literal argument, so
-    // it must be dropped from the direct form.
-    std::string direct = cmd;
-    if (direct.size() >= SHELL_REDIRECT_SUFFIX_LEN &&
-        direct.compare(direct.size() - SHELL_REDIRECT_SUFFIX_LEN, SHELL_REDIRECT_SUFFIX_LEN, " 2>&1") == 0) {
-        direct.resize(direct.size() - SHELL_REDIRECT_SUFFIX_LEN);
-    }
-    const std::string tok = ProgramToken(direct);
-    const std::string prog = ResolveProgram(tok);
-    std::string resolvedLine;
-    if (!prog.empty() && !IsScriptShim(prog)) {
-        resolvedLine = prog + direct.substr(tok.size());
-    }
-
-    bool started = false;
-    if (!resolvedLine.empty()) {
-        std::wstring wresolved = WidenPath(resolvedLine);
-        started = CreateProcessW(nullptr, wresolved.data(), nullptr,
-            nullptr, TRUE, 0, nullptr, nullptr, &si, &pi) != 0;
-    }
-    if (!started) {
-        CloseHandle(hRead);
-        CloseHandle(hWrite);
-        return cap;
-    }
-    CloseHandle(hWrite);
-    cap.spawned = true;
-
-    std::string output;
-    auto drainAvailable = [&hRead, &output]() {
-        for (;;) {
-            DWORD avail = 0;
-            if (!PeekNamedPipe(hRead, nullptr, 0, nullptr, &avail, nullptr)) {
-                break;
-            }
-            if (avail == 0) {
-                break;
-            }
-            char buf[4096];
-            DWORD n = 0;
-            if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
-                &n, nullptr) || n == 0) {
-                break;
-            }
-            output.append(buf, n);
-        }
-    };
-
-    if (timeoutMs <= 0) {
-        // Unbounded: drain until EOF, then wait for the process.
-        for (;;) {
-            DWORD avail = 0;
-            if (!PeekNamedPipe(hRead, nullptr, 0, nullptr, &avail, nullptr)) {
-                break;
-            }
-            if (avail == 0) {
-                if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) {
-                    break;
-                }
-                Sleep(IDLE_POLL_INTERVAL_MS);
-                continue;
-            }
-            char buf[4096];
-            DWORD n = 0;
-            if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
-                &n, nullptr) || n == 0) {
-                break;
-            }
-            output.append(buf, n);
-        }
-        CloseHandle(hRead);
-        WaitForSingleObject(pi.hProcess, INFINITE);
-        DWORD code = 0;
-        GetExitCodeProcess(pi.hProcess, &code);
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
-        cap.output = std::move(output);
-        cap.exitCode = static_cast<int>(code);
-        return cap;
-    }
-
-    // Bounded read.
-    const auto deadline = std::chrono::steady_clock::now() +
-                          std::chrono::milliseconds(timeoutMs);
-    bool timedOut = false;
-    for (;;) {
-        drainAvailable();
-        if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) {
+    cap.timedOut = true;
+    kill(pid, SIGTERM);
+    int st = 0;
+    for (int i = 0; i < KILL_GRACE_RETRIES; ++i) {
+        if (waitpid(pid, &st, WNOHANG) == pid) {
             break;
         }
-        if (std::chrono::steady_clock::now() >= deadline) {
-            timedOut = true;
-            break;
-        }
-        Sleep(BOUNDED_POLL_INTERVAL_MS);
+        usleep(KILL_GRACE_SLEEP_US);
     }
-    drainAvailable();
-    CloseHandle(hRead);
+    if (waitpid(pid, &st, WNOHANG) != pid) {
+        kill(pid, SIGKILL);
+        waitpid(pid, &st, 0);
+    }
+    cap.exitCode = -1;
+}
 
-    if (timedOut) {
-        cap.timedOut = true;
-        TerminateProcess(pi.hProcess, 1);
-        WaitForSingleObject(pi.hProcess, INFINITE);
-        cap.exitCode = -1;
-    } else {
-        DWORD code = 0;
-        GetExitCodeProcess(pi.hProcess, &code);
-        cap.exitCode = static_cast<int>(code);
-    }
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-    cap.output = std::move(output);
-    return cap;
-#else
-    // POSIX: spawn via fork+pipe+execl (shared helper); bounded read can
-    // terminate the child on timeout (unlike pclose which blocks).
-    auto sp = SpawnPiped(cmd);
-    if (!sp.Ok()) {
-        return cap;
-    }
-    cap.spawned = true;
-
+void ReadUnboundedPosix(const SpawnedProc& sp, CapturedCmd& cap)
+{
     std::string output;
     char buf[4096];
-    if (timeoutMs <= 0) {
-        ssize_t n = 0;
-        while ((n = read(sp.readFd, buf, sizeof(buf))) > 0) {
-            output.append(buf, static_cast<size_t>(n));
-        }
-        close(sp.readFd);
-        int st = 0;
-        waitpid(sp.pid, &st, 0);
-        cap.output = std::move(output);
-        cap.exitCode = WIFEXITED(st) ? WEXITSTATUS(st) : -1;
-        return cap;
+    ssize_t n = 0;
+    while ((n = read(sp.readFd, buf, sizeof(buf))) > 0) {
+        output.append(buf, static_cast<size_t>(n));
     }
+    close(sp.readFd);
+    int st = 0;
+    waitpid(sp.pid, &st, 0);
+    cap.output = std::move(output);
+    cap.exitCode = WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+}
 
-    // Bounded read: poll for readability until EOF or the deadline passes.
+// Bounded read: poll for readability until EOF or the deadline passes.
+void ReadBoundedPosix(const SpawnedProc& sp, long long timeoutMs, CapturedCmd& cap)
+{
+    std::string output;
+    char buf[4096];
     const auto deadline = std::chrono::steady_clock::now() +
                           std::chrono::milliseconds(timeoutMs);
     bool timedOut = false;
@@ -403,28 +444,43 @@ CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
     close(sp.readFd);
 
     if (timedOut) {
-        cap.timedOut = true;
-        // Give the child a brief chance to exit, then force-kill it.
-        kill(sp.pid, SIGTERM);
-        int st = 0;
-        for (int i = 0; i < KILL_GRACE_RETRIES; ++i) {
-            if (waitpid(sp.pid, &st, WNOHANG) == sp.pid) {
-                break;
-            }
-            usleep(KILL_GRACE_SLEEP_US);
-        }
-        if (waitpid(sp.pid, &st, WNOHANG) != sp.pid) {
-            kill(sp.pid, SIGKILL);
-            waitpid(sp.pid, &st, 0);
-        }
-        cap.exitCode = -1;
+        KillChildPosix(sp.pid, cap);
     } else {
         int st = 0;
         waitpid(sp.pid, &st, 0);
         cap.exitCode = WIFEXITED(st) ? WEXITSTATUS(st) : -1;
     }
     cap.output = std::move(output);
+}
+
+// POSIX: spawn via fork+pipe+execl (shared helper); bounded read can
+// terminate the child on timeout (unlike pclose which blocks).
+CapturedCmd CaptureCommandPosix(const std::string& cmd, long long timeoutMs)
+{
+    CapturedCmd cap;
+    auto sp = SpawnPiped(cmd);
+    if (!sp.Ok()) {
+        return cap;
+    }
+    cap.spawned = true;
+
+    if (timeoutMs <= 0) {
+        ReadUnboundedPosix(sp, cap);
+        return cap;
+    }
+    ReadBoundedPosix(sp, timeoutMs, cap);
     return cap;
+}
+
+} // namespace
+#endif
+
+CapturedCmd CaptureCommand(const std::string& cmd, long long timeoutMs)
+{
+#if defined(_WIN32)
+    return CaptureCommandWindows(cmd, timeoutMs);
+#else
+    return CaptureCommandPosix(cmd, timeoutMs);
 #endif
 }
 
