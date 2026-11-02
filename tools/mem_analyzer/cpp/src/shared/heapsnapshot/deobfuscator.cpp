@@ -611,24 +611,35 @@ static bool WriteDeobfuscatedOutput(std::ifstream& in, const std::string& output
     return true;
 }
 
-bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& outputPath,
-    const SourceMapIndex* smap, const NameCacheIndex* ncache)
+namespace {
+size_t OpenInputFile(const std::string& inputPath, std::ifstream& in)
 {
     std::error_code ec;
     if (!fs::is_regular_file(mem_analyzer::PathFromUtf8(inputPath), ec)) {
         log::Loge("Error: Heapsnapshot file not found: ", inputPath);
-        return false;
+        return 0;
     }
-
-    std::ifstream in(mem_analyzer::PathFromUtf8(inputPath), std::ios::binary);
+    in.open(mem_analyzer::PathFromUtf8(inputPath), std::ios::binary);
     if (!in) {
         log::Loge("Error: Failed to open heapsnapshot file: ", inputPath);
-        return false;
+        return 0;
     }
     in.seekg(0, std::ios::end);
     const size_t fileSize = static_cast<size_t>(in.tellg());
     if (fileSize == 0) {
         log::Loge("Error: Heapsnapshot file is empty: ", inputPath);
+        return 0;
+    }
+    return fileSize;
+}
+} // namespace
+
+bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& outputPath,
+    const SourceMapIndex* smap, const NameCacheIndex* ncache)
+{
+    std::ifstream in;
+    const size_t fileSize = OpenInputFile(inputPath, in);
+    if (fileSize == 0) {
         return false;
     }
 
