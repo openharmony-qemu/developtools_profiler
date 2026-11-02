@@ -391,8 +391,7 @@ static void BuildChainCache(
 }
 
 namespace {
-size_t GetOrCreatePairIdx(std::unordered_map<int, size_t>& idxMap,
-    std::vector<std::pair<int, InnerMap>>& vec, int key)
+size_t GetOrCreatePairIdx(std::unordered_map<int, size_t>& idxMap, std::vector<std::pair<int, InnerMap>>& vec, int key)
 {
     auto it = idxMap.find(key);
     if (it != idxMap.end()) {
