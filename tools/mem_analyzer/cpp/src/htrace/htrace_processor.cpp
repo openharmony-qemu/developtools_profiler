@@ -154,6 +154,21 @@ std::vector<std::string> splitCommaSeparated(const std::string& s)
     return parts;
 }
 
+void VerifyDataDictColumnType(sqlite3_stmt* stmt, bool& typeChecked)
+{
+    if (typeChecked) {
+        return;
+    }
+    // Verify id column type is INTEGER before processing
+    int colType = sqlite3_column_type(stmt, 0);
+    if (colType != SQLITE_INTEGER) {
+        throw std::runtime_error(
+            "data_dict.id column type is not INTEGER (got type " +
+            std::to_string(colType) + "), int overflow risk");
+    }
+    typeChecked = true;
+}
+
 // 打开 db + 读 meta + data_dict（就地填充 ctx）。
 void OpenHtraceContext(HtraceParseContext& ctx, const std::string& dbPath, StageTimer& timer)
 {
@@ -166,18 +181,9 @@ void OpenHtraceContext(HtraceParseContext& ctx, const std::string& dbPath, Stage
     sqlite3_stmt* stmt = nullptr;
     if (sqlite3_prepare_v2(ctx.db, dsql.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
         StmtGuard guard(stmt);
-        // Verify id column type is INTEGER before processing
         bool typeChecked = false;
         while (sqlite3_step(stmt) == SQLITE_ROW) {
-            if (!typeChecked) {
-                int colType = sqlite3_column_type(stmt, 0);
-                if (colType != SQLITE_INTEGER) {
-                    throw std::runtime_error(
-                        "data_dict.id column type is not INTEGER (got type " +
-                        std::to_string(colType) + "), int overflow risk");
-                }
-                typeChecked = true;
-            }
+            VerifyDataDictColumnType(stmt, typeChecked);
             int id = sqlite3_column_int(stmt, 0);
             auto data = (const char*)sqlite3_column_text(stmt, 1);
             if (data) {

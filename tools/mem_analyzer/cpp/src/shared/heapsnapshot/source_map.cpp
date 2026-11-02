@@ -204,12 +204,7 @@ SourceMapIndex::DecodedMappings SourceMapIndex::DecodeVlqMappings(const std::str
             if (!raw.empty()) {
                 // 将相对值累加为绝对值（64 位累加，输出时收敛到 int 范围）
                 auto segment = AccumulateSegment(raw, generatedColumn, sourceIndex,
-                    originalLine, originalColumn, nameIndex,
-                    [](int64_t v) -> int {
-                        if (v > INT32_MAX) return INT32_MAX;
-                        if (v < INT32_MIN) return INT32_MIN;
-                        return static_cast<int>(v);
-                    });
+                    originalLine, originalColumn, nameIndex, clampInt);
                 decoded[line].push_back(std::move(segment));
             }
         }
@@ -361,6 +356,29 @@ bool ParseJsonRoot(const std::string& content, json& root, const std::string& pa
     return root.is_object();
 }
 
+// sources：可能是数组（source map v3 标准）或单字符串；完整保存数组，
+// 同时用 sources[0] 填充便捷字段 source_path
+void ParseSources(const json& value, SourceMapEntry& entry)
+{
+    if (!value.contains("sources")) {
+        return;
+    }
+    const json& sources = value["sources"];
+    if (sources.is_array()) {
+        for (const auto& s : sources) {
+            if (s.is_string()) {
+                entry.sources.push_back(s.get<std::string>());
+            }
+        }
+        if (!entry.sources.empty()) {
+            entry.sourcePath = entry.sources.front();
+        }
+    } else if (sources.is_string()) {
+        entry.sources.push_back(sources.get<std::string>());
+        entry.sourcePath = entry.sources.front();
+    }
+}
+
 /**
  * 从单个 map 文件解析顶层条目并入索引；失败返回 false。
  * 顶层键即混淆 key（如 "entry|entry|1.0.0|src/main/ets/pages/a.ts"），
@@ -388,24 +406,7 @@ bool IndexMapFile(const std::string& path, std::unordered_map<std::string, Sourc
         }
 
         SourceMapEntry entry;
-        // sources：可能是数组（source map v3 标准）或单字符串；完整保存数组，
-        // 同时用 sources[0] 填充便捷字段 source_path
-        if (value.contains("sources")) {
-            const json& sources = value["sources"];
-            if (sources.is_array()) {
-                for (const auto& s : sources) {
-                    if (s.is_string()) {
-                        entry.sources.push_back(s.get<std::string>());
-                    }
-                }
-                if (!entry.sources.empty()) {
-                    entry.sourcePath = entry.sources.front();
-                }
-            } else if (sources.is_string()) {
-                entry.sources.push_back(sources.get<std::string>());
-                entry.sourcePath = entry.sources.front();
-            }
-        }
+        ParseSources(value, entry);
         if (value.contains("file") && value["file"].is_string()) {
             entry.file = value["file"].get<std::string>();
         }

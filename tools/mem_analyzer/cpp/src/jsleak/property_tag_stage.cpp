@@ -26,6 +26,18 @@ namespace mem_analyzer {
 
 namespace {
 constexpr int VISITED_SET_INITIAL_CAPACITY = 16;
+
+void ParseLeakObjList(const json& j, std::unordered_set<uint32_t>& hashSet)
+{
+    if (!j.contains("leakObjList") || !j["leakObjList"].is_array()) {
+        return;
+    }
+    for (const auto& obj : j["leakObjList"]) {
+        if (obj.contains("hash")) {
+            hashSet.insert(obj["hash"].get<uint32_t>());
+        }
+    }
+}
 } // namespace
 
 PropertyTagStage::PropertyTagStage(const std::string& jsleakListFile)
@@ -247,13 +259,7 @@ void PropertyTagStage::LoadJsleakListFile(const std::string& filePath)
     }
     try {
         json j = json::parse(file);
-        if (j.contains("leakObjList") && j["leakObjList"].is_array()) {
-            for (const auto& obj : j["leakObjList"]) {
-                if (obj.contains("hash")) {
-                    jsleakHashSet.insert(obj["hash"].get<uint32_t>());
-                }
-            }
-        }
+        ParseLeakObjList(j, jsleakHashSet);
     } catch (const std::exception& e) {
         log::Logw("Warning: Failed to parse jsleaklist file: ", e.what());
     }

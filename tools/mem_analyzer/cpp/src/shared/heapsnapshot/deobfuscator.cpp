@@ -102,6 +102,26 @@ size_t FindCharAfter(std::ifstream& file, char ch, size_t startPos, size_t fileS
  * 从 open_pos 的 '[' 起流式扫描其匹配的 ']'，正确处理字符串字面量与转义。
  * 适用于 strings 这种扁平字符串数组（无嵌套对象/数组）。返回 ']' 的字节偏移。
  */
+bool ProcessBracketChar(char c, size_t pos, bool& inString, bool& escaped, size_t& closePos)
+{
+    if (inString) {
+        if (escaped) {
+            escaped = false;
+        } else if (c == '\\') {
+            escaped = true;
+        } else if (c == '"') {
+            inString = false;
+        }
+    } else if (c == '"') {
+        inString = true;
+        escaped = false;
+    } else if (c == ']') {
+        closePos = pos;
+        return true;
+    }
+    return false;
+}
+
 size_t FindMatchingCloseBracket(std::ifstream& file, size_t openPos, size_t fileSize)
 {
     std::string buf(BRACKET_CHUNK, '\0');
@@ -118,20 +138,9 @@ size_t FindMatchingCloseBracket(std::ifstream& file, size_t openPos, size_t file
             break;
         }
         for (size_t i = 0; i < bytes; ++i) {
-            char c = buf[i];
-            if (inString) {
-                if (escaped) {
-                    escaped = false;
-                } else if (c == '\\') {
-                    escaped = true;
-                } else if (c == '"') {
-                    inString = false;
-                }
-            } else if (c == '"') {
-                inString = true;
-                escaped = false;
-            } else if (c == ']') {
-                return pos + i;
+            size_t closePos;
+            if (ProcessBracketChar(buf[i], pos + i, inString, escaped, closePos)) {
+                return closePos;
             }
         }
         pos += bytes;
@@ -436,6 +445,18 @@ bool RestoreFunctionNameInSuffix(const NameCacheIndex* ncache, std::string& valu
     return true;
 }
 
+int ParseGenLine(const std::string& numStr)
+{
+    if (!AllDigits(numStr)) {
+        return -1;
+    }
+    try {
+        return std::stoi(numStr);
+    } catch (const std::exception&) {
+        return -1;
+    }
+}
+
 void ResolveSuffixLineMapping(std::string& suffix,
     const SourceMapIndex* smap, const NameCacheIndex* ncache,
     const SourceMapEntry* entry)
@@ -448,21 +469,13 @@ void ResolveSuffixLineMapping(std::string& suffix,
         const size_t numEnd = suffix.find(')', numBegin);
         if (numEnd != std::string::npos) {
             const std::string numStr = suffix.substr(numBegin, numEnd - numBegin);
-            if (AllDigits(numStr)) {
-                int genLine = 0;
-                // 快照损坏时可能为超长数字串，stoi 抛异常则跳过行号映射
-                try {
-                    genLine = std::stoi(numStr);
-                } catch (const std::exception&) {
-                    genLine = -1;
-                }
-                if (genLine > 0) {
-                    int origLine = genLine;
-                    smap->ResolveOriginalLine(entry->mappings, genLine, origLine);
-                    RefineLineByNameCache(ncache, entry->sourcePath, suffix, origLine);
-                    suffix.replace(lp, numEnd - lp + 1,
-                        "(line:" + std::to_string(origLine) + ")");
-                }
+            int genLine = ParseGenLine(numStr);
+            if (genLine > 0) {
+                int origLine = genLine;
+                smap->ResolveOriginalLine(entry->mappings, genLine, origLine);
+                RefineLineByNameCache(ncache, entry->sourcePath, suffix, origLine);
+                suffix.replace(lp, numEnd - lp + 1,
+                    "(line:" + std::to_string(origLine) + ")");
             }
         }
     }

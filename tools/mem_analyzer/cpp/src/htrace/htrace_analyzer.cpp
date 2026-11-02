@@ -177,6 +177,19 @@ static SymbolData MakeSymbolData(uint64_t key, int fid, const CompressedStackFra
 }
 
 // ===== Build initial symbol data from call stacks =====
+static SymbolData& GetOrCreateSymbol(
+    std::unordered_map<uint64_t, SymbolData>& symbols,
+    uint64_t key, int fid, const CompressedStackFrame& frame,
+    HtraceEventType chainType)
+{
+    auto it = symbols.find(key);
+    if (it == symbols.end()) {
+        symbols[key] = MakeSymbolData(key, fid, frame, chainType);
+        it = symbols.find(key);
+    }
+    return it->second;
+}
+
 static void BuildSymbolData(
     const std::vector<CompressedCallStack>& callStacks,
     std::unordered_map<uint64_t, SymbolData>& symbols,
@@ -203,24 +216,18 @@ static void BuildSymbolData(
             }
 
             uint64_t key = MakeUid(sid, fid);
-
-            auto it = symbols.find(key);
-            if (it == symbols.end()) {
-                symbols[key] = MakeSymbolData(key, fid, frame, chain.type);
-                it = symbols.find(key);
-            }
-
-            auto& sd = it->second;
+            auto& sd = GetOrCreateSymbol(symbols, key, fid, frame, chain.type);
             int depth = frame.depth;
 
-            if (depthSeen.find(key) == depthSeen.end()) {
-                depthSeen.insert(key);
-                sd.chainIds.push_back(ci);
-                sd.depthPerChain[ci] = depth;
-                sd.totalLeakSize += size;
-                if (depth > sd.maxDepth) {
-                    sd.maxDepth = depth;
-                }
+            if (depthSeen.find(key) != depthSeen.end()) {
+                continue;
+            }
+            depthSeen.insert(key);
+            sd.chainIds.push_back(ci);
+            sd.depthPerChain[ci] = depth;
+            sd.totalLeakSize += size;
+            if (depth > sd.maxDepth) {
+                sd.maxDepth = depth;
             }
         }
     }

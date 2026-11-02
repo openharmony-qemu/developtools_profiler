@@ -770,6 +770,26 @@ static size_t FindArrayBracketAfter(std::ifstream& file, const std::string& mark
 //  surrogates with U+FFFD.
 // ============================================================================
 
+// Skip string literal starting at pos (after opening '"'), return position after closing '"'
+static size_t SkipStringLiteral(const std::string& text, size_t pos)
+{
+    // Skip string literal — handle escape sequences
+    while (pos < text.size()) {
+        if (text[pos] == '\\') {
+            pos += ESCAPE_CHAR_SKIP_LEN;
+            continue;
+        }  // skip escaped char
+        if (text[pos] == '"') {
+            break; // end of string
+        }
+        pos++;
+    }
+    if (pos >= text.size()) { // unterminated string
+        return std::string::npos;
+    }
+    return pos + 1;
+}
+
 /**
  * Find the matching closing ']' for an opening '[' at position start.
  * Correctly handles string literals so ']' inside strings is not mistaken
@@ -785,22 +805,10 @@ static size_t FindMatchingCloseBracket(const std::string& text, size_t start)
     while (pos < text.size()) {
         char c = text[pos];
         if (c == '"') {
-            // Skip string literal — handle escape sequences
-            pos++;
-            while (pos < text.size()) {
-                if (text[pos] == '\\') {
-                    pos += ESCAPE_CHAR_SKIP_LEN;
-                    continue;
-                }  // skip escaped char
-                if (text[pos] == '"') {
-                    break; // end of string
-                }
-                pos++;
-            }
-            if (pos >= text.size()) { // unterminated string
+            pos = SkipStringLiteral(text, pos + 1);
+            if (pos == std::string::npos) {
                 return std::string::npos;
             }
-            pos++;
         } else if (c == ']') {
             return pos;  // found matching bracket
         } else {
@@ -1436,6 +1444,19 @@ uint32_t HeapSnapshot::GetNodeEdgeCount(uint32_t nodeIndex) const
     return nodes[base + static_cast<size_t>(nodeEdgeCountOffset)];
 }
 
+static uint32_t ExtractInternalHash(const std::string& targetNodeName, const std::regex& pattern)
+{
+    std::smatch matches;
+    if (!std::regex_search(targetNodeName, matches, pattern)) {
+        return 0;
+    }
+    try {
+        return std::stoi(matches[1].str());
+    } catch (const std::exception&) {
+        return 0;  // 越界/非法 ArkInternalHash 值按 0 处理
+    }
+}
+
 /**
  * Extract the ArkInternalHash value from a node's edges.
  * ArkTS (HarmonyOS) stores internal hash values in edge names matching
@@ -1448,20 +1469,12 @@ uint32_t HeapSnapshot::GetNodeInternalHash(uint32_t nodeIndex) const
     }
     uint32_t hash = 0;
     static const std::regex pattern(R"(Int:\s*(\d+))");
-    std::smatch matches;
 
-    ForEachEdge(nodeIndex, [this, &hash, &matches](const EdgeInfo &edge, size_t) {
+    ForEachEdge(nodeIndex, [this, &hash, &pattern](const EdgeInfo &edge, size_t) {
         if (edge.nameOrIndex < static_cast<uint32_t>(strings.size())) {
             std::string edgeName = strings[edge.nameOrIndex];
             if (edgeName == "ArkInternalHash") {
-                std::string targetNodeName = GetNodeName(edge.toNode);
-                if (std::regex_search(targetNodeName, matches, pattern)) {
-                    try {
-                        hash = std::stoi(matches[1].str());
-                    } catch (const std::exception&) {
-                        hash = 0;  // 越界/非法 ArkInternalHash 值按 0 处理
-                    }
-                }
+                hash = ExtractInternalHash(GetNodeName(edge.toNode), pattern);
             }
         }
     });

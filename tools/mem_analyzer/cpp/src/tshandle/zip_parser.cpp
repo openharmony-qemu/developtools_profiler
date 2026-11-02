@@ -41,38 +41,45 @@ namespace mem_analyzer {
  *  extension) starts with it (case-insensitively) are considered — used so the
  *  .txt fallback only picks a js_map*.txt address file, not an arbitrary .txt.
  */
+static bool StemStartsWith(const fs::directory_entry& entry, const std::string& namePrefix)
+{
+    if (namePrefix.empty()) {
+        return true;
+    }
+    std::string stem = PathToUtf8(entry.path().stem());
+    for (auto& c : stem) {
+        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+    }
+    std::string lowerPrefix = namePrefix;
+    for (auto& c : lowerPrefix) {
+        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+    }
+    return stem.rfind(lowerPrefix, 0) == 0;
+}
+
 static std::string MatchFileEntry(const fs::directory_entry& entry, const std::string& ext,
     const std::string& namePrefix)
 {
-    if (entry.is_regular_file()) {
-        auto path = PathToUtf8(entry.path());
-        auto fileExt = PathToUtf8(entry.path().extension());
-        // Normalize extension to lowercase for comparison
-        for (auto& c : fileExt) {
-            c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-        }
-        std::string targetExt = ext;
-        for (auto& c : targetExt) {
-            c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-        }
-        if (fileExt == targetExt) {
-            if (!namePrefix.empty()) {
-                std::string stem = PathToUtf8(entry.path().stem());
-                for (auto& c : stem) {
-                    c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-                }
-                std::string lowerPrefix = namePrefix;
-                for (auto& c : lowerPrefix) {
-                    c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-                }
-                if (stem.rfind(lowerPrefix, 0) != 0) {
-                    return "";
-                }
-            }
-            return path;
-        }
+    if (!entry.is_regular_file()) {
+        return "";
     }
-    return "";
+    auto path = PathToUtf8(entry.path());
+    auto fileExt = PathToUtf8(entry.path().extension());
+    // Normalize extension to lowercase for comparison
+    for (auto& c : fileExt) {
+        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+    }
+    std::string targetExt = ext;
+    for (auto& c : targetExt) {
+        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+    }
+    if (fileExt != targetExt) {
+        return "";
+    }
+    if (!StemStartsWith(entry, namePrefix)) {
+        return "";
+    }
+    return path;
 }
 
 static std::string FindFileInDir(const std::string& dir, const std::string& ext, const std::string& namePrefix = "")
