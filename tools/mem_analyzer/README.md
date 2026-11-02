@@ -2,7 +2,7 @@
 
 内存分析命令行工具，基于 C++17 实现，用于分析 HarmonyOS 系统的各类内存泄漏。
 
-> **如果你是二进制使用者**，可前往[mem-analyzer releases](https://gitcode.com/ancimoon/developtools_dfx_mem_analyzer/releases)下载工具，使用说明请阅读 [docs/usage.md](docs/usage.md) — 完整命令行参考、所有子命令的选项说明、使用示例和常见场景。
+> **如果你是二进制使用者**，可前往[mem-analyzer releases](https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer/releases)下载工具，使用说明请阅读 [docs/usage.md](docs/usage.md) — 完整命令行参考、所有子命令的选项说明、使用示例和常见场景。
 
 ---
 

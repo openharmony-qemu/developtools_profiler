@@ -686,7 +686,7 @@ mem-analyzer profiler -c snapshot -o com.example.app
 受限于权限管理，在macOS上运行，需授权运行mem-analyzer，或者自行编译运行。
 
 ### 方式1：移除隔离属性
-1. 下载发布的[mem-analyzer二进制文件](https://gitcode.com/ancimoon/developtools_dfx_mem_analyzer/releases)
+1. 下载发布的[mem-analyzer二进制文件](https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer/releases)
 2. 解压二进制文件到任意目录，例如 `~/Documents/mem-analyzer/`
 3. 打开“终端”，切换到解压目录，移除隔离属性
 ```bash 
@@ -697,7 +697,7 @@ xattr -rd com.apple.quarantine ./
 
 ### 方式2：授权运行mem-analyzer
 
-1. 下载发布的[mem-analyzer二进制文件](https://gitcode.com/ancimoon/developtools_dfx_mem_analyzer/releases)
+1. 下载发布的[mem-analyzer二进制文件](https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer/releases)
 2. 解压二进制文件到任意目录，例如 `~/Documents/mem-analyzer/`
 3. 打开“终端”，切换到解压目录，运行mem-analyzer
 ```bash 
@@ -733,7 +733,7 @@ cd ~/Documents/mem-analyzer/
 3. 使用脚本编译代码，并手动运行mem-analyzer
 ```bash
 # 编译代码，编译脚本会校验环境，提示用户下载依赖项
-./relase-mac.sh
+./release-mac.sh
 # 编译完成后，在cpp目录下有`mem-analyzer-x.x.x-macos-xx`目录，进入该目录，运行mem-analyzer
 cd mem-analyzer-x.x.x-macos-xx/
 ./mem-analyzer
@@ -744,5 +744,5 @@ cd mem-analyzer-x.x.x-macos-xx/
 
 | 文档                                                                                                    | 内容                        |
 | ----------------------------------------------------------------------------------------------------- | ------------------------- |
-| [README.md](https://gitcode.com/ancimoon/developtools_dfx_mem_analyzer/blob/master/README.md)         | 项目概述、架构说明、构建指南。(注意版本对应关系) |
-| [cpp/README.md](https://gitcode.com/ancimoon/developtools_dfx_mem_analyzer/blob/master/cpp/README.md) | C++ 引擎详细文档。(注意版本对应关系)     |
+| [README.md](https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer/blob/master/README.md)         | 项目概述、架构说明、构建指南。(注意版本对应关系) |
+| [cpp/README.md](https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer/blob/master/cpp/README.md) | C++ 引擎详细文档。(注意版本对应关系)     |

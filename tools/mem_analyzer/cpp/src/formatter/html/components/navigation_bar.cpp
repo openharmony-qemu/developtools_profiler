@@ -229,7 +229,7 @@ std::string NavBarDocContent()
     <div class="doc-subcategory">
       <h3 class="doc-subcategory-title">日志解析及分析工具</h3>
       <ul class="doc-links">
-        <li><a href="https://gitcode.com/ancimoon/developtools_dfx_mem_analyzer" target="_blank">资源泄漏日志采集&分析工具-mem-analyzer</a></li>
+        <li><a href="https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer" target="_blank">资源泄漏日志采集&分析工具-mem-analyzer</a></li>
         <li><a href="https://developer.huawei.com/consumer/cn/forum/topic/0204223139430059948?fid=0109140870620153026" target="_blank">mem-analyzer工具概览和使用指导</a></li>
         <li><a href="https://gitcode.com/openharmony-sig/developtools_dfx_skills" target="_blank">AI自动化扫描与分析工具</a></li>
         <li><a href="https://mp.weixin.qq.com/s/NNBLp_LPl2hSNchsdEXBag" target="_blank">HarmonyOS故障定位Skills</a></li>
@@ -341,19 +341,19 @@ std::string NavBarHelpCenterContent()
   </div>
 
   <div class="help-section help-links">
-    <a class="help-link" href="https://gitcode.com/ancimoon/developtools_dfx_mem_analyzer/releases" target="_blank">
+    <a class="help-link" href="https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer/releases" target="_blank">
       <span class="help-link-label">工具下载</span>
-      <span class="help-link-url">https://gitcode.com/ancimoon/developtools_dfx_mem_analyzer/releases</span>
+      <span class="help-link-url">https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer/releases</span>
       <span class="help-chevron" aria-hidden="true"></span>
     </a>
-    <a class="help-link" href="https://gitcode.com/ancimoon/developtools_dfx_mem_analyzer/blob/master/docs/usage.md" target="_blank">
+    <a class="help-link" href="https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer/blob/master/docs/usage.md" target="_blank">
       <span class="help-link-label">使用手册</span>
-      <span class="help-link-url">https://gitcode.com/ancimoon/developtools_dfx_mem_analyzer/blob/master/docs/usage.md</span>
+      <span class="help-link-url">https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer/blob/master/docs/usage.md</span>
       <span class="help-chevron" aria-hidden="true"></span>
     </a>
-    <a class="help-link" href="https://gitcode.com/ancimoon/developtools_dfx_mem_analyzer" target="_blank">
+    <a class="help-link" href="https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer" target="_blank">
       <span class="help-link-label">源码下载</span>
-      <span class="help-link-url">https://gitcode.com/ancimoon/developtools_dfx_mem_analyzer</span>
+      <span class="help-link-url">https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer</span>
       <span class="help-chevron" aria-hidden="true"></span>
     </a>
   </div>
@@ -363,7 +363,7 @@ std::string NavBarHelpCenterContent()
 
     <div class="help-support-block">
       <h3>问题反馈</h3>
-      <p class="help-desc">工具问题、功能易用性反馈、新功能诉求等，欢迎直接到【项目讨论】板块<a href="https://gitcode.com/ancimoon/developtools_dfx_mem_analyzer/discussions/type" target="_blank">https://gitcode.com/ancimoon/developtools_dfx_mem_analyzer/discussions/type</a>按类型发起讨论，收到您的反馈后，我们将第一时间分析并解决问题，以帮助更好地优化工具产品。</p>
+      <p class="help-desc">工具问题、功能易用性反馈、新功能诉求等，欢迎直接到【项目讨论】板块<a href="https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer/discussions/type" target="_blank">https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer/discussions/type</a>按类型发起讨论，收到您的反馈后，我们将第一时间分析并解决问题，以帮助更好地优化工具产品。</p>
     </div>
   </div>
 </div>
