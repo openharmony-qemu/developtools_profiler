@@ -1529,8 +1529,8 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
         return EXIT_CONFIG_FAILED;
     }
 
-    const bool continuousSnapshot =
-        (configOption == "snapshot") && opt.durationSpecified;
+    // 8. Run hdc. The target was already echoed right after the gate (step 3.45).
+    const bool continuousSnapshot = (configOption == "snapshot") && opt.durationSpecified;
     const std::string outputDir =
         BuildSessionOutputPath(configOption, processName, outputDirVal, opt);
     if (outputDir.empty()) {
