@@ -260,7 +260,6 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
         // 3. Query call stacks
         timer.Stage("Querying call stacks");
         auto groups = QueryCallStackGroups(db, isStatistics);
-
         if (groups.empty()) {
             throw std::runtime_error("No ARK handle call stacks found");
         }

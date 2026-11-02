@@ -133,10 +133,7 @@ bool DeviceLost()
 // Whole seconds elapsed since `start`.
 long long ElapsedSince(ClockType::time_point start)
 {
-    return static_cast<long long>(
-        std::chrono::duration_cast<std::chrono::seconds>(
-            ClockType::now() - start)
-            .count());
+    return static_cast<long long>(std::chrono::duration_cast<std::chrono::seconds>(ClockType::now() - start).count());
 }
 
 // Sleep in 100ms ticks for at most `ticks` iterations, returning as soon as
@@ -174,8 +171,7 @@ std::string ConsoleStartLine(const std::string& line)
                 key = "Ctrl+C";
                 break;  // Linux
         }
-        return std::string("Capture stops when the countdown ends, or press ") +
-               key + " to stop early.\n";
+        return std::string("Capture stops when the countdown ends, or press ") + key + " to stop early.\n";
     }
     return line;
 }
@@ -372,15 +368,8 @@ ProcessMetrics SampleProcessMetrics(const std::string& pid, long long timeoutMs 
 // fast before a capture / poll loop runs to completion.
 std::string DetectPermissionError(const std::string& output)
 {
-    static const char* markers[] = {
-        "permission check failed",
-        "debug-signed application",
-        "permission denied",
-        "operation not permitted",
-        "no permission",
-        "not permitted",
-        "access denied",
-    };
+    static const char* markers[] = { "permission check failed", "debug-signed application", "permission denied",
+        "operation not permitted", "no permission", "not permitted", "access denied", };
     std::istringstream iss(output);
     std::vector<std::string> lines;
     std::string line;
@@ -431,18 +420,14 @@ std::string DetectPermissionError(const std::string& output)
 // The captured output is written to <output_dir>/<prefix>_<timestamp>.txt
 // (binary mode). Returns the local path on success, or an empty string on
 // failure (unable to launch hdc / empty output / cannot open the file).
-std::string ExportProcessFile(const std::string& pid,
-    const std::string& outputDir,
-    const std::string& prefix,
+std::string ExportProcessFile(const std::string& pid, const std::string& outputDir, const std::string& prefix,
     std::string* permissionError = nullptr)
 {
-    const std::string deviceCmd =
-        (prefix == "fds") ? ("lsof -p " + proc::ShellQuoteDevice(pid)) :
-            ("hidumper --mem-smaps " + proc::ShellQuoteDevice(pid));
+    const std::string deviceCmd = (prefix == "fds") ? ("lsof -p " + proc::ShellQuoteDevice(pid)) :
+        ("hidumper --mem-smaps " + proc::ShellQuoteDevice(pid));
     // Timeout so a stalled device query cannot leave the export thread (and
     // thus the join at stop time) blocked forever.
-    CapturedCmd cap = CaptureCommand(
-        HdcShell(deviceCmd) + " 2>&1", 10000);
+    CapturedCmd cap = CaptureCommand(HdcShell(deviceCmd) + " 2>&1", 10000);
     if (NoteDeviceFailure(cap.output)) {
         return "";
     }
@@ -457,9 +442,7 @@ std::string ExportProcessFile(const std::string& pid,
         *permissionError = DetectPermissionError(cap.output);
     }
     const std::string localPath = PathToUtf8(
-        (PathFromUtf8(outputDir) /
-        (prefix + "_" + CurrentTimestamp() + ".txt"))
-            .lexically_normal());
+        (PathFromUtf8(outputDir) / (prefix + "_" + CurrentTimestamp() + ".txt")).lexically_normal());
     // UTF-8 path -> wide path on Windows (path_from_utf8 is a no-op elsewhere).
     std::ofstream ofs(PathFromUtf8(localPath), std::ios::binary);
     if (!ofs.is_open()) {
@@ -473,9 +456,7 @@ std::string ExportProcessFile(const std::string& pid,
 // <output_dir>/<basename(remote)>, lexically normalized.
 std::string LocalRecvPath(const std::string& outputDir, const std::string& remote)
 {
-    return PathToUtf8(
-        (PathFromUtf8(outputDir) / PathFromUtf8(remote).filename())
-            .lexically_normal());
+    return PathToUtf8((PathFromUtf8(outputDir) / PathFromUtf8(remote).filename()).lexically_normal());
 }
 
 /**
@@ -494,8 +475,7 @@ std::string MarkSnapshotRole(const std::string& path, const std::string& role)
         return path;
     }
     const fs::path p = PathFromUtf8(path);
-    const fs::path renamed =
-        p.parent_path() / (PathToUtf8(p.stem()) + "-" + role + PathToUtf8(p.extension()));
+    const fs::path renamed = p.parent_path() / (PathToUtf8(p.stem()) + "-" + role + PathToUtf8(p.extension()));
     std::error_code ec;
     fs::rename(p, renamed, ec);
     if (ec) {
@@ -539,8 +519,7 @@ PullOutcome PullFile(const std::string& remote, const std::string& localDir)
     // local result file, marks the pull as failed.
     const bool failedMsg = po.output.find("[Fail]") != std::string::npos ||
         po.output.find("Error opening file") != std::string::npos ||
-        po.output.find("no such file") != std::string::npos ||
-        po.output.find("No such file") != std::string::npos;
+        po.output.find("no such file") != std::string::npos || po.output.find("No such file") != std::string::npos;
     bool fileOk = false;
     {
         const std::string local = LocalRecvPath(localDir, remote);
@@ -761,9 +740,8 @@ static bool CheckFileStability(const std::string& name, long long currentSize,
     long long prevSize, int pollNum, long long elapsedS)
 {
     const bool stable = (prevSize >= 0 && prevSize == currentSize && currentSize > 0);
-    std::cout << "[Snapshot check] #" << pollNum << " (" << elapsedS <<
-        "s): " << name << " " << (currentSize / BYTES_PER_KB) << "KB" <<
-        (stable ? " stable" : " generating") << "\n" << std::flush;
+    std::cout << "[Snapshot check] #" << pollNum << " (" << elapsedS << "s): " << name << " " <<
+        (currentSize / BYTES_PER_KB) << "KB" << (stable ? " stable" : " generating") << "\n" << std::flush;
     return stable;
 }
 
@@ -1308,13 +1286,11 @@ bool HandleSnapshotCommandFailure(RunResult& result)
     result.ok = false;
     result.snapshotAttempted = true;
     if (!perr.empty()) {
-        result.error =
-            "permission check failed: the target app cannot be tuned on this "
+        result.error = "permission check failed: the target app cannot be tuned on this "
             "device (release-signed app on a non-root phone)";
         result.snapshotStatus = "permission check failed: " + perr;
     } else {
-        result.error = "snapshot export command failed (exit code " +
-                       std::to_string(result.exitCode) + ")";
+        result.error = "snapshot export command failed (exit code " + std::to_string(result.exitCode) + ")";
         result.snapshotStatus = result.error;
     }
     return true;
@@ -1507,9 +1483,7 @@ std::string GetProcessPidFast(const std::string& processName, long long timeoutM
     // (reliable). Any other output (e.g. "sh: pidof: not found", garbled
     // text) means the query itself failed — mark it unreliable so the caller
     // can keep the previously known PID instead of misreporting.
-    const bool blank =
-        cap.output.empty() ||
-        cap.output.find_first_not_of(" \t\r\n") == std::string::npos;
+    const bool blank = cap.output.empty() || cap.output.find_first_not_of(" \t\r\n") == std::string::npos;
     if (reliable) {
         *reliable = blank;
     }
@@ -1642,11 +1616,9 @@ static void CollectInitialMetrics(PreCaptureState& pre)
     if (!pre.wasRunningAtStart) {
         return;
     }
-    CapturedCmd memCap = CaptureCommand(
-        HdcShell("hidumper --mem " + proc::ShellQuoteDevice(pre.initialPid)) + " 2>&1");
+    CapturedCmd memCap = CaptureCommand(HdcShell("hidumper --mem " + proc::ShellQuoteDevice(pre.initialPid)) + " 2>&1");
     pre.initialMetrics = ParseHidumperMem(memCap.output);
-    CapturedCmd lsofCap = CaptureCommand(
-        HdcShell("lsof -p " + proc::ShellQuoteDevice(pre.initialPid)) + " 2>&1");
+    CapturedCmd lsofCap = CaptureCommand(HdcShell("lsof -p " + proc::ShellQuoteDevice(pre.initialPid)) + " 2>&1");
     pre.initialMetrics.fdCount = CountLsofFds(lsofCap.output);
 }
 
@@ -1657,8 +1629,7 @@ bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode, PreCaptur
             const std::string pid = GetProcessPid(opts.processName);
             if (pid.empty()) {
                 result.ok = false;
-                result.error = "target process '" + opts.processName +
-                               "' is not running; please start the app first";
+                result.error = "target process '" + opts.processName + "' is not running; please start the app first";
                 return false;
             }
             log::Logi("Target process '", opts.processName, "' is running, pid:", pid);
@@ -1891,11 +1862,8 @@ static void PublishMetrics(const std::shared_ptr<CaptureState>& state, const std
 // block for the entire capture — that's fine, the countdown just uses the last
 // known pid. The thread is joined after worker.join() (when hdc is freed), so
 // any blocked call completes quickly at that point.
-std::thread SpawnPidChecker(const std::shared_ptr<CaptureState>& state,
-    const std::string& processName,
-    const std::string& initialPid,
-    const ProcessMetrics& initialMetrics,
-    bool ignoreDone)
+std::thread SpawnPidChecker(const std::shared_ptr<CaptureState>& state, const std::string& processName,
+    const std::string& initialPid, const ProcessMetrics& initialMetrics, bool ignoreDone)
 {
     // Seed the shared pid/metrics state with the pre-countdown sample so the
     // first countdown tick can display it immediately (before the background
@@ -1972,8 +1940,7 @@ std::thread SpawnFreshRestart(const std::shared_ptr<CaptureState>& state, const 
             return;
         }
         state->freshRestartActive = true;
-        log::Logi("Capture session ready; force-stopping and relaunching '",
-            processName, "' for a fresh start...");
+        log::Logi("Capture session ready; force-stopping and relaunching '", processName, "' for a fresh start...");
         ForceStopDeviceApp(processName);
         // Wait for the process to actually exit before relaunching.
         for (int i = 0; i < FRESH_RESTART_EXIT_WAIT_ITERS; ++i) {  // up to 10s
@@ -2018,21 +1985,13 @@ void PrintMetricsLine(const ProcessMetrics& metrics)
     // Two lines, indented under the "Remaining ...s" line: the core
     // categories, then the secondary ones plus fd count, so a single
     // countdown tick stays readable on a normal terminal width.
-    std::cout << "    PSS: " << fmtMb(metrics.pssKb) <<
-              " MB | Native heap: " << fmtMb(metrics.nativeHeapKb) <<
-              " MB | ArkTS heap: " << fmtMb(metrics.arktsHeapKb) <<
-              " MB | DMA(ION): " << fmtMb(metrics.dmaGraphKb) <<
-              " MB | AnonPage other: " << fmtMb(metrics.anonPageOtherKb) <<
-              " MB | GL: " << fmtMb(metrics.glKb) <<
-              " MB\n" <<
-              "    ArkWeb-pa heap: " << fmtMb(metrics.arkwebPaKb) <<
-              " MB | .so: " << fmtMb(metrics.soKb) <<
-              " MB | .hap: " << fmtMb(metrics.hapKb) <<
-              " MB | FilePage other: " << fmtMb(metrics.filePageOtherKb) <<
-              " MB | FD: " <<
-              (metrics.fdCount >= 0 ? std::to_string(metrics.fdCount) : "-") <<
-              "\n" <<
-              std::flush;
+    std::cout << "    PSS: " << fmtMb(metrics.pssKb) << " MB | Native heap: " << fmtMb(metrics.nativeHeapKb) <<
+        " MB | ArkTS heap: " << fmtMb(metrics.arktsHeapKb) << " MB | DMA(ION): " << fmtMb(metrics.dmaGraphKb) <<
+        " MB | AnonPage other: " << fmtMb(metrics.anonPageOtherKb) << " MB | GL: " << fmtMb(metrics.glKb) <<
+        " MB\n" << "    ArkWeb-pa heap: " << fmtMb(metrics.arkwebPaKb) <<
+        " MB | .so: " << fmtMb(metrics.soKb) << " MB | .hap: " << fmtMb(metrics.hapKb) <<
+        " MB | FilePage other: " << fmtMb(metrics.filePageOtherKb) << " MB | FD: " <<
+        (metrics.fdCount >= 0 ? std::to_string(metrics.fdCount) : "-") << "\n" << std::flush;
 }
 
 // Export a start-of-capture smaps/lsof snapshot once the process is running
@@ -2076,8 +2035,7 @@ void maybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
                 std::lock_guard<std::mutex> lock(state->mtx);
                 result.smapsExportedFiles.push_back(path);
             }
-            log::Logok(smapsPrefix == "fds" ? "FD snapshot exported" : "Smaps exported",
-                ": ", path);
+            log::Logok(smapsPrefix == "fds" ? "FD snapshot exported" : "Smaps exported", ": ", path);
         } else {
             log::Logw("Warning: failed to export ", smapsPrefix, " at capture start");
         }
@@ -2114,8 +2072,7 @@ static bool CheckPermissionFailure(const std::shared_ptr<CaptureState>& state)
             std::lock_guard<std::mutex> lock(state->mtx);
             perr = state->permissionErrorMsg;
         }
-        log::Loge("\n", perr,
-            "\nThe target app cannot be tuned on this device "
+        log::Loge("\n", perr, "\nThe target app cannot be tuned on this device "
             "(release-signed app on a non-root phone); aborting the capture.");
         return true;
     }
@@ -2126,12 +2083,9 @@ static void PrintCountdownStatus(int roundNo, long long remain, const std::strin
     bool running, const std::shared_ptr<CaptureState>& state)
 {
     std::cout << "[" << roundNo << "] Remaining " << remain << "s, " <<
-              (running ? "target process is running pid:" + pid :
-                          (state->freshRestartActive.load() ?
-                                 "target process is being relaunched by the tool" :
-                                 "target process not running, please start it as soon as possible")) <<
-              "\n" <<
-              std::flush;
+        (running ? "target process is running pid:" + pid : (state->freshRestartActive.load() ?
+        "target process is being relaunched by the tool" :
+        "target process not running, please start it as soon as possible")) << "\n" << std::flush;
     if (running) {
         // Show live memory/fd metrics gathered by the pid checker
         // (non-blocking read of shared state).
@@ -2149,8 +2103,7 @@ static void PrintCountdownStatus(int roundNo, long long remain, const std::strin
 static void WaitForSnapshotExport(const std::shared_ptr<CaptureState>& state)
 {
     log::Logi("Running snapshot export command...");
-    while (!state->done.load() && !g_interruptRequested &&
-           !DeviceLost()) {
+    while (!state->done.load() && !g_interruptRequested && !DeviceLost()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(POLL_INTERVAL_MS));
     }
 }
@@ -2232,12 +2185,10 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
                 !state->pidChanged.load() && !state->freshRestartTriggered.load();
             if (freshStartWarning) {
                 std::cout << "[" << ++roundNo << "] Remaining " << remain << "s, " <<
-                          "WARNING: target process '" << opts.processName << "' is already running!" <<
-                          " pid:" << pid << "\n" <<
-                          "         This capture type requires a FRESH START.\n" <<
-                          "         Please force-stop the app and restart it NOW.\n" <<
-                          "\n" <<
-                          std::flush;
+                    "WARNING: target process '" << opts.processName << "' is already running!" <<
+                    " pid:" << pid << "\n" <<
+                    "         This capture type requires a FRESH START.\n" <<
+                    "         Please force-stop the app and restart it NOW.\n" << "\n" << std::flush;
             } else {
                 PrintCountdownStatus(++roundNo, remain, pid, running, state);
             }
@@ -2437,8 +2388,7 @@ static void PullNativeleaksFile(const HdcRunOptions& opts,
             result.pulledLeaksFile = LocalRecvPath(opts.outputDir, leaksRemote);
             log::Logok("Nativeleaks file exported: ", result.pulledLeaksFile);
         } else {
-            log::Loge("Nativeleaks file export failed: ", leaksRemote,
-                " (exit code ", lpo.exitCode, ")\n", lpo.output);
+            log::Loge("Nativeleaks file export failed: ", leaksRemote, " (exit code ", lpo.exitCode, ")\n", lpo.output);
         }
     } else {
         std::string msg = "No new nativeleaks orphan-snapshot file detected within " +
@@ -2480,9 +2430,8 @@ static void PullHiprofilerResult(const HdcRunOptions& opts,
         if (!newZipPath.empty()) {
             fileToPull = newZipPath;
         } else {
-            std::string msg = "No new hiprofiler_data zip detected within " +
-                              std::to_string(hiprofilerWaitTimeoutS) +
-                              "s; falling back to -o file: " + opts.remoteOutputPath;
+            std::string msg = "No new hiprofiler_data zip detected within " + std::to_string(hiprofilerWaitTimeoutS) +
+                "s; falling back to -o file: " + opts.remoteOutputPath;
             // Same chain as the "Device failure detected" line below: wait_for_hiprofiler_zip()
             // stops early on device_lost(), so an unplugged device shows up HERE as well, and
             // "no new zip" is meaningless without knowing which device. Conditional because
@@ -2538,8 +2487,7 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
     const bool permissionAbort = !snapshotMode && state->permissionFailed.load();
     if (permissionAbort) {
         result.ok = false;
-        result.error =
-            "permission check failed: the target app cannot be tuned on this "
+        result.error = "permission check failed: the target app cannot be tuned on this "
             "device (release-signed app on a non-root phone)";
     }
 
@@ -2624,8 +2572,7 @@ bool exportSnapshotOnce(const HdcRunOptions& opts,
         return false;
     }
     if (cap.exitCode != 0) {
-        err = "snapshot export command failed (exit code " +
-              std::to_string(cap.exitCode) + ")";
+        err = "snapshot export command failed (exit code " + std::to_string(cap.exitCode) + ")";
         status = err;
         return false;
     }
@@ -2800,10 +2747,8 @@ static void RunSnapshotMonitoringLoop(const HdcRunOptions& opts, const std::stri
             }
         }
         std::cout << "[" << ++roundNo << "] Remaining " << remain << "s, " <<
-                  (pid.empty() ?
-                          "target process not running, please start it as soon as possible" :
-                          "target process is running pid:" + pid) <<
-                  "\n" << std::flush;
+            (pid.empty() ? "target process not running, please start it as soon as possible" :
+            "target process is running pid:" + pid) << "\n" << std::flush;
         if (metrics.valid) {
             PrintMetricsLine(metrics);
         }

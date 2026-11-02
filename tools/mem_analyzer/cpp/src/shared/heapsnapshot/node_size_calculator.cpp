@@ -1121,7 +1121,6 @@ static BfsEdgeAction ClassifyBfsEdge(const BfsContext& ctx, uint32_t cur,
 
     // ---- Priority checks (isLessPreferableEdge / isLessPreferableNode) ----
     bool isLowPriority = IsLowPriorityEdge(ctx, ptr, child);
-
     if (isLowPriority) {
         return BfsEdgeAction::ENQUEUE_DEFERRED;
     }
