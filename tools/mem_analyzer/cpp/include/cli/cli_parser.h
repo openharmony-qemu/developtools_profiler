@@ -175,6 +175,9 @@ private:
     void PrintUsageSection(std::ostream& os) const;
     void PrintOptionsSection(std::ostream& os) const;
     void PrintSubcommandsSection(std::ostream& os) const;
+    std::string FormatOptionLine(const Option* opt) const;
+    void PrintSubcommandUsage(std::ostream& os, const std::string& name,
+        const SubcommandEntry& entry) const;
     void ApplyDefaults();
     /**
      * Resolve alias → primary subcommand name, or return name unchanged

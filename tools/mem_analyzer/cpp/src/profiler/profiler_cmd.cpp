@@ -594,6 +594,28 @@ struct AppQueryResult {
     std::string deviceErr;
 };
 
+// Extract a string value for a JSON key from a flat JSON string.
+std::string ExtractJsonLabel(const std::string& jsonStr, size_t start, const std::string& key)
+{
+    auto keyPos = jsonStr.find("\"" + key + "\"", start);
+    if (keyPos == std::string::npos) {
+        return "";
+    }
+    auto colon = jsonStr.find(':', keyPos);
+    if (colon == std::string::npos) {
+        return "";
+    }
+    auto val = jsonStr.find('"', colon + 1);
+    if (val == std::string::npos) {
+        return "";
+    }
+    auto end = jsonStr.find('"', val + 1);
+    if (end == std::string::npos) {
+        return "";
+    }
+    return jsonStr.substr(val + 1, end - val - 1);
+}
+
 // Try JSON format first: [{...}, ...]
 bool ParseAppsFromJson(const std::string& output, std::vector<AppEntry>& apps)
 {
@@ -624,31 +646,12 @@ bool ParseAppsFromJson(const std::string& output, std::vector<AppEntry>& apps)
         entry.package = jsonStr.substr(valStart + 1, valEnd - valStart - 1);
 
         // Extract app name (may be "label", "appName", or "name")
-        auto extractLabel = [&jsonStr, &valEnd](const std::string& key) -> std::string {
-            auto keyPos = jsonStr.find("\"" + key + "\"", valEnd);
-            if (keyPos == std::string::npos) {
-                return "";
-            }
-            auto colon = jsonStr.find(':', keyPos);
-            if (colon == std::string::npos) {
-                return "";
-            }
-            auto val = jsonStr.find('"', colon + 1);
-            if (val == std::string::npos) {
-                return "";
-            }
-            auto end = jsonStr.find('"', val + 1);
-            if (end == std::string::npos) {
-                return "";
-            }
-            return jsonStr.substr(val + 1, end - val - 1);
-        };
-        entry.appName = extractLabel("label");
+        entry.appName = ExtractJsonLabel(jsonStr, valEnd, "label");
         if (entry.appName.empty()) {
-            entry.appName = extractLabel("appName");
+            entry.appName = ExtractJsonLabel(jsonStr, valEnd, "appName");
         }
         if (entry.appName.empty()) {
-            entry.appName = extractLabel("name");
+            entry.appName = ExtractJsonLabel(jsonStr, valEnd, "name");
         }
         if (!entry.package.empty()) {
             apps.push_back(std::move(entry));
@@ -656,6 +659,24 @@ bool ParseAppsFromJson(const std::string& output, std::vector<AppEntry>& apps)
         pos = valEnd + 1;
     }
     return !apps.empty();
+}
+
+// Parse "pkg:AppName" or bare package name line.
+bool ParsePkgAppNameLine(const std::string& line, AppEntry& current)
+{
+    if (line.find('.') == std::string::npos || line.find(' ') != std::string::npos) {
+        return false;
+    }
+    auto colon2 = line.find(':');
+    if (colon2 != std::string::npos) {
+        // Format: com.example.app:App Name
+        current.package = line.substr(0, colon2);
+        current.appName = line.substr(colon2 + 1);
+        return true;
+    }
+    // Just a package name line
+    current.package = line;
+    return true;
 }
 
 // Fallback: line-by-line key-value parsing.
@@ -682,19 +703,7 @@ void ParseAppsFromKeyValue(const std::string& output, std::vector<AppEntry>& app
         if (sep == std::string::npos || sep == 0 || sep >= line.size() - 1) {
             // Check for "pkg:AppName" format (no space after colon)
             // Line itself might be a package name
-            if (line.find('.') != std::string::npos && line.find(' ') == std::string::npos) {
-                auto colon2 = line.find(':');
-                if (colon2 != std::string::npos) {
-                    // Format: com.example.app:App Name
-                    current.package = line.substr(0, colon2);
-                    current.appName = line.substr(colon2 + 1);
-                    apps.push_back(std::move(current));
-                    current = AppEntry{};
-                } else {
-                    // Just a package name line
-                    current.package = line;
-                }
-            }
+            ParsePkgAppNameLine(line, current);
             continue;
         }
         std::string key = line.substr(0, sep);

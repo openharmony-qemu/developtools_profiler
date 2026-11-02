@@ -440,6 +440,23 @@ int CliParser::Exit(const std::exception& e) const
 // print_help()
 // ═══════════════════════════════════════════════════════════════
 
+void CliParser::PrintSubcommandUsage(std::ostream& os, const std::string& name,
+    const SubcommandEntry& entry) const
+{
+    os << "  " << programName_ << " " << name;
+    // Use subcommand's own usage_args if set, else generate from positionals
+    const auto& subUsage = entry.parser->GetUsageArgs();
+    if (!subUsage.empty()) {
+        os << " " << subUsage << "\n";
+    } else {
+        os << " [options]";
+        for (const auto& p : entry.parser->positionals_) {
+            os << " <" << p.name << ">";
+        }
+        os << "\n";
+    }
+}
+
 void CliParser::PrintUsageSection(std::ostream& os) const
 {
     // Usage line
@@ -468,22 +485,58 @@ void CliParser::PrintUsageSection(std::ostream& os) const
                 if (entry.hidden) { // hidden subcommands are omitted from help
                     continue;
                 }
-                os << "  " << programName_ << " " << name;
-                // Use subcommand's own usage_args if set, else generate from positionals
-                const auto& subUsage = entry.parser->GetUsageArgs();
-                if (!subUsage.empty()) {
-                    os << " " << subUsage << "\n";
-                } else {
-                    os << " [options]";
-                    for (const auto& p : entry.parser->positionals_) {
-                        os << " <" << p.name << ">";
-                    }
-                    os << "\n";
-                }
+                PrintSubcommandUsage(os, name, entry);
             }
         }
     }
     os << "\n";
+}
+
+std::string CliParser::FormatOptionLine(const Option* opt) const
+{
+    // Compute display name
+    std::string display;
+    if (!opt->shortName.empty()) {
+        display = opt->shortName;
+    }
+    if (!opt->longName.empty()) {
+        if (!display.empty()) {
+            display += ", ";
+        }
+        display += opt->longName;
+    }
+
+    // Type indicator
+    std::string typeStr;
+    switch (opt->type) {
+        case Option::STRING:
+            typeStr = " TEXT";
+            break;
+        case Option::INT:
+            typeStr = " INT";
+            break;
+        case Option::BOOL:
+            typeStr = "";
+            break;
+    }
+
+    std::string optLine = "  " + display + typeStr;
+    // Pad to 32 chars
+    if (optLine.size() < HELP_COLUMN_WIDTH) {
+        optLine.append(HELP_COLUMN_WIDTH - optLine.size(), ' ');
+    } else {
+        optLine += "\n" + std::string(HELP_WRAP_INDENT, ' ');
+    }
+
+    // Description + default
+    if (!opt->description.empty()) {
+        optLine += opt->description;
+    }
+    if (!opt->defaultStr.empty() && opt->type != Option::BOOL) {
+        optLine += " (default: " + opt->defaultStr + ")";
+    }
+    optLine += "\n";
+    return optLine;
 }
 
 void CliParser::PrintOptionsSection(std::ostream& os) const
@@ -502,50 +555,7 @@ void CliParser::PrintOptionsSection(std::ostream& os) const
         for (const auto& [title, opts] : groups) {
             os << title << ":\n";
             for (const Option* opt : opts) {
-                // Compute display name
-                std::string display;
-                if (!opt->shortName.empty()) {
-                    display = opt->shortName;
-                }
-                if (!opt->longName.empty()) {
-                    if (!display.empty()) {
-                        display += ", ";
-                    }
-                    display += opt->longName;
-                }
-
-                // Type indicator
-                std::string typeStr;
-                switch (opt->type) {
-                    case Option::STRING:
-                        typeStr = " TEXT";
-                        break;
-                    case Option::INT:
-                        typeStr = " INT";
-                        break;
-                    case Option::BOOL:
-                        typeStr = "";
-                        break;
-                }
-
-                std::string optLine = "  " + display + typeStr;
-                // Pad to 32 chars
-                if (optLine.size() < HELP_COLUMN_WIDTH) {
-                    optLine.append(HELP_COLUMN_WIDTH - optLine.size(), ' ');
-                } else {
-                    optLine += "\n" + std::string(HELP_WRAP_INDENT, ' ');
-                }
-
-                os << optLine;
-
-                // Description + default
-                if (!opt->description.empty()) {
-                    os << opt->description;
-                }
-                if (!opt->defaultStr.empty() && opt->type != Option::BOOL) {
-                    os << " (default: " << opt->defaultStr << ")";
-                }
-                os << "\n";
+                os << FormatOptionLine(opt);
             }
         }
         os << "  -h, --help" << std::string(HELP_FLAG_PADDING, ' ') << "Print this help message\n";
