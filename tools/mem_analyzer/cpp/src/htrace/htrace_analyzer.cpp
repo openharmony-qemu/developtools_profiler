@@ -390,7 +390,8 @@ static void BuildChainCache(
     }
 }
 
-static size_t GetOrCreatePairIdx(std::unordered_map<int, size_t>& idxMap,
+namespace {
+size_t GetOrCreatePairIdx(std::unordered_map<int, size_t>& idxMap,
     std::vector<std::pair<int, InnerMap>>& vec, int key)
 {
     auto it = idxMap.find(key);
@@ -402,6 +403,7 @@ static size_t GetOrCreatePairIdx(std::unordered_map<int, size_t>& idxMap,
     idxMap[key] = newIdx;
     return newIdx;
 }
+} // namespace
 
 static void BuildApproxPairs(
     std::vector<std::pair<int, std::vector<std::pair<int, int>>>>& chainCacheVec,

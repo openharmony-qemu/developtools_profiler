@@ -1119,6 +1119,47 @@ static BfsEdgeAction ClassifyBfsEdge(const BfsContext& ctx, uint32_t cur,
 //    4. Fallback to postpone queue when normal queue is empty
 //    5. Fallback to low-priority roots when both are empty
 // ============================================================================
+struct BfsLayerState {
+    std::vector<uint8_t>& queued;
+    std::vector<std::pair<uint32_t, size_t>>& postponeQueue;
+    std::vector<uint32_t>& nextQueue;
+    ShortestPathsResult& result;
+};
+
+static void ProcessCurrentLayer(BfsContext& ctx, std::vector<uint32_t>& curQueue,
+    BfsLayerState& state)
+{
+    constexpr uint32_t invalid = 0xFFFFFFFF;
+    while (!curQueue.empty()) {
+        uint32_t cur = curQueue.back();
+        curQueue.pop_back();
+        size_t begin = ctx.firstEdgePointers[cur];
+        size_t end = ctx.firstEdgePointers[static_cast<size_t>(cur) + 1];
+        for (size_t ptr = begin; ptr < end; ptr += static_cast<size_t>(ctx.edgeFieldsCount)) {
+            uint32_t child = ctx.edges[ptr + static_cast<size_t>(ctx.toNodeOff)] /
+                            static_cast<uint32_t>(ctx.nodeFieldsCount);
+            if (child >= ctx.nodeCount) {
+                continue;
+            }
+            BfsEdgeAction action = ClassifyBfsEdge(ctx, cur, ptr, child, state.queued[child] != 0);
+            if (action == BfsEdgeAction::Skip) {
+                continue;
+            }
+            // ---- Enqueue ----
+            if (action == BfsEdgeAction::EnqueueDeferred) {
+                // Deferred: add to postpone queue (queued but no path edge yet)
+                state.postponeQueue.emplace_back(cur, ptr);
+                state.queued[child] = 1;
+            } else {
+                // Normal priority: assign path edge and add to next layer
+                state.result.pathEdges[child] = {cur, static_cast<uint32_t>(ptr)};
+                state.nextQueue.push_back(child);
+                state.queued[child] = 1;
+            }
+        }
+    }
+}
+
 static void RunLayeredBfs(
     BfsContext& ctx,
     std::vector<uint32_t>& highPriRoots,
@@ -1151,38 +1192,8 @@ static void RunLayeredBfs(
         std::vector<uint32_t> nextQueue;
 
         // ---- Process current layer (LIFO) ----
-        while (!curQueue.empty()) {
-            uint32_t cur = curQueue.back();
-            curQueue.pop_back();
-
-            size_t begin = ctx.firstEdgePointers[cur];
-            size_t end = ctx.firstEdgePointers[static_cast<size_t>(cur) + 1];
-
-            for (size_t ptr = begin; ptr < end; ptr += static_cast<size_t>(ctx.edgeFieldsCount)) {
-                uint32_t child = ctx.edges[ptr + static_cast<size_t>(ctx.toNodeOff)] /
-                                static_cast<uint32_t>(ctx.nodeFieldsCount);
-                if (child >= ctx.nodeCount) {
-                    continue;
-                }
-
-                BfsEdgeAction action = ClassifyBfsEdge(ctx, cur, ptr, child, queued[child] != 0);
-                if (action == BfsEdgeAction::Skip) {
-                    continue;
-                }
-
-                // ---- Enqueue ----
-                if (action == BfsEdgeAction::EnqueueDeferred) {
-                    // Deferred: add to postpone queue (queued but no path edge yet)
-                    postponeQueue.emplace_back(cur, ptr);
-                    queued[child] = 1;
-                } else {
-                    // Normal priority: assign path edge and add to next layer
-                    result.pathEdges[child] = {cur, static_cast<uint32_t>(ptr)};
-                    nextQueue.push_back(child);
-                    queued[child] = 1;
-                }
-            }
-        }
+        BfsLayerState state{queued, postponeQueue, nextQueue, result};
+        ProcessCurrentLayer(ctx, curQueue, state);
 
         // ---- Fallback 1: process postponed queue ----
         // When no normal-priority nodes were found in this layer,
