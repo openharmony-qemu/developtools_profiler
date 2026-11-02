@@ -963,6 +963,251 @@ constexpr int EXIT_API_CHECK_FAILED = 2;
 
 } // namespace
 
+namespace {
+
+static int HandleListApps()
+{
+    auto q = QueryDeviceApps();
+    if (q.deviceFailed) {
+        log::Loge(q.deviceErr);
+        return EXIT_CONFIG_FAILED;
+    }
+    const auto& apps = q.apps;
+    if (apps.empty()) {
+        log::Loge("No apps found or unable to query device.");
+        return EXIT_CONFIG_FAILED;
+    }
+    std::cout << "Installed apps (" << apps.size() << "):\n";
+    for (const auto& a : apps) {
+        std::cout << "  " << a.package;
+        if (!a.appName.empty()) {
+            std::cout << "  (" << a.appName << ")";
+        }
+        std::cout << "\n";
+    }
+    return 0;
+}
+
+static std::string BuildSessionOutputPath(const std::string& configOption,
+    const std::string& processName, const std::string& outputDirVal,
+    const ProfilerCliOptions& opt)
+{
+    // Result output: one capture owns one session directory,
+    //   <output_dir>/[<device-id>/]<capture type>-[session-]<target>-<timestamp>/
+    // e.g. out/nativeheap-com.example.app-20260911_211900/, so the capture type
+    // and target are visible in the path and every capture type follows the
+    // same layout instead of a directory named after the device-side result
+    // file (which is the same for most hiprofiler types). The device-side file
+    // keeps its own name; the directory timestamp is the host time from
+    // current_timestamp(), unrelated to any timestamp the device puts in the
+    // file name.
+    // The session is nested under the device id — exactly the value `hdc -t` receives —
+    // only when the user named the device with `--device`. An auto-pinned single device
+    // deliberately does NOT add that layer: the user never asked for a per-device
+    // partition, so `-d <dir>` (or the default `out`) keeps the flat shape it had before
+    // the feature existed. When `--device` IS given, captures aimed at different devices
+    // can never share one folder and a report stays attributable to its device. The key
+    // is used as a single path component, so characters that are illegal in one are
+    // replaced (see as_path_segment). The untargeted legacy paths (0 devices, an
+    // unclassifiable line shape, hdc missing or failing) stay flat as well, and those
+    // abort before any directory is created.
+    // snapshot with an explicit -t keeps monitoring for the whole duration
+    // (start/end + peak-triggered snapshots) instead of exporting once. Both
+    // modes share the capture type, so the continuous one carries a `session`
+    // segment to tell them apart in the directory name alone.
+    const bool continuousSnapshot =
+        (configOption == "snapshot") && opt.durationSpecified;
+    const std::string sessionName =
+        configOption + (continuousSnapshot ? "-session" : "") + "-" +
+        AsPathSegment(processName) + "-" + CurrentTimestamp();
+    const std::string deviceSegment =
+        (opt.connectKeyProvided && !HdcConnectKey().empty()) ?
+            AsPathSegment(HdcConnectKey()) :
+            std::string();
+    const std::string sessionPath =
+        deviceSegment.empty() ? sessionName :
+                               platform::JoinPath(deviceSegment, sessionName);
+    const std::string outputDir = platform::JoinPath(outputDirVal, sessionPath);
+    // create_directories also reports false for an existing directory.
+    if (!platform::CreateDirectories(outputDir) && !platform::DirectoryExists(outputDir)) {
+        log::Loge("Error: cannot create the output directory: ", outputDir);
+        return "";
+    }
+    return outputDir;
+}
+
+static bool ReportCaptureResults(const RunResult& rr, const std::string& snapshotPrefix)
+{
+    // 9. Report results.
+    // `output_streamed` means the transcript was already printed to the console
+    // in real time (async `hiprofiler_cmd start`), so don't print it again.
+    if (!rr.output.empty() && !rr.outputStreamed) {
+        std::cout << rr.output;
+        if (rr.output.back() != '\n') {
+            std::cout << '\n';
+        }
+    }
+    log::Logi("Elapsed: ", rr.elapsed, "s");
+
+    if (rr.snapshotAttempted) {
+        log::Logi("Snapshot status: ", rr.snapshotStatus);
+        for (const auto& f : rr.snapshotPulledFiles) {
+            log::Logok("Snapshot file exported: ", f);
+        }
+    } else if (rr.pullAttempted) {
+        if (rr.pullOk) {
+            log::Logok("Result file exported: ", rr.pulledFile);
+        } else {
+            // `hdc file recv` exits 0 even when the remote file is missing,
+            // so the captured output holds the real reason (e.g. "[Fail]Error
+            // opening file: ..."); prefer it over the exit code.
+            if (!rr.pullOutput.empty()) {
+                log::Loge("Result file export failed:\n", rr.pullOutput);
+            } else {
+                log::Loge("Result file export failed: (exit code ", rr.pullExitCode, ")");
+            }
+            return false;
+        }
+    }
+
+    // Summarize the per-process snapshot files exported during the capture
+    // (hidumper --mem-smaps for -n/-g/-l/-d, lsof for -f). The paths were
+    // already printed at the moment of export; this consolidates them.
+    if (!rr.smapsExportedFiles.empty()) {
+        const char* label = (snapshotPrefix == "fds") ?
+                                "FD snapshot exported" :
+                                "Smaps exported";
+        for (const auto& f : rr.smapsExportedFiles) {
+            log::Logi(label, ": ", f);
+        }
+    }
+    return true;
+}
+
+static void FindBaselineAndTargetSnapshots(const std::vector<std::string>& snapshotFiles,
+    std::string& baselineFile, std::string& targetFile)
+{
+    for (const auto& f : snapshotFiles) {
+        const std::string stem = platform::Stem(f);
+        if (stem.empty()) {
+            continue;
+        }
+        const std::string startSfx = "-start";
+        const std::string endSfx = "-end";
+        if (baselineFile.empty() &&
+            stem.size() >= startSfx.size() &&
+            stem.compare(stem.size() - startSfx.size(),
+                startSfx.size(), startSfx) == 0) {
+            baselineFile = f;
+        } else if (targetFile.empty() &&
+            stem.size() >= endSfx.size() &&
+            stem.compare(stem.size() - endSfx.size(),
+                endSfx.size(), endSfx) == 0) {
+            targetFile = f;
+        }
+    }
+
+    // Fallback: if either was not located by role suffix, use file
+    // modification timestamps — earliest = start (baseline),
+    // latest = end (target).
+    if (!baselineFile.empty() && !targetFile.empty()) {
+        return;
+    }
+    log::Logi("Role suffix not found on all snapshots; "
+        "falling back to file modification timestamps.");
+    fs::file_time_type minTime = fs::file_time_type::max();
+    fs::file_time_type maxTime = fs::file_time_type::min();
+    std::string earliest;
+    std::string latest;
+    for (const auto& f : snapshotFiles) {
+        std::error_code ec;
+        const auto t = fs::last_write_time(PathFromUtf8(f), ec);
+        if (ec) {
+            continue;
+        }
+        if (t < minTime) {
+            minTime = t;
+            earliest = f;
+        }
+        if (t > maxTime) {
+            maxTime = t;
+            latest = f;
+        }
+    }
+    if (baselineFile.empty()) {
+        baselineFile = earliest;
+    }
+    if (targetFile.empty()) {
+        targetFile = latest;
+    }
+}
+
+static void GenerateComparisonReport(const std::vector<std::string>& snapshotFiles,
+    const std::string& outputDir, const ProfilerCliOptions& opt)
+{
+    // Continuous snapshot sessions (snapshot -t) produce start + peak + end
+    // snapshots. With -o, generate a single comparison report (start=baseline,
+    // end=target) via jsleak -b, instead of per-file reports.
+    std::string baselineFile;
+    std::string targetFile;
+    FindBaselineAndTargetSnapshots(snapshotFiles, baselineFile, targetFile);
+
+    if (baselineFile.empty() || targetFile.empty() ||
+        baselineFile == targetFile) {
+        log::Loge("Comparison report: could not locate start/end snapshots ",
+            "(baseline=", baselineFile.empty() ? "<missing>" : baselineFile,
+            ", target=", targetFile.empty() ? "<missing>" : targetFile, ").");
+        return;
+    }
+
+    log::Logi("Generating comparison report: baseline=start, target=end");
+
+    const std::string binary = ResolveMemAnalyzerBinary();
+
+    // jsleak -b <baseline> <target> -d <output_dir>
+    std::string cmd = proc::ShellQuote(binary) +
+        " jsleak -b " + proc::ShellQuote(baselineFile) +
+        " " + proc::ShellQuote(targetFile) +
+        " -d " + proc::ShellQuote(outputDir);
+    // Forward ArkTS deobfuscation options (same as per-file path).
+    if (!opt.sourcemapDir.empty()) {
+        cmd += " --sourcemap " + proc::ShellQuote(opt.sourcemapDir);
+    }
+    if (!opt.nameObfuscation.empty()) {
+        cmd += " --namecache " + proc::ShellQuote(opt.nameObfuscation);
+    }
+
+    log::Logd("Command: ", cmd);
+    int rc = RunCommandStreaming(cmd + " 2>&1");
+    if (rc < 0) {
+        log::Loge("Comparison report generation failed: unable to launch ", binary);
+    } else if (rc != 0) {
+        log::Loge("Comparison report generation failed: exited with code ", rc);
+    } else {
+        // The jsleak compare subcommand nests its output under
+        // <output_dir>/<target-stem>/, writing
+        // <baseline-stem>-vs-<target-stem>.html there. Lift it up.
+        const std::string targetStem = platform::Stem(targetFile);
+        const std::string baselineStem = platform::Stem(baselineFile);
+        if (!targetStem.empty()) {
+            FlattenReportDir(outputDir, targetStem);
+        }
+        const std::string htmlName =
+            (baselineStem.empty() ? "baseline" : baselineStem) + "-vs-" +
+            (targetStem.empty() ? "target" : targetStem) + ".html";
+        const std::string htmlPath = platform::JoinPath(outputDir, htmlName);
+        log::Logok("Comparison report generated: ", htmlPath);
+        if (platform::FileExists(htmlPath)) {
+            platform::OpenWithDefaultApp(htmlPath);
+        } else {
+            log::Loge("Comparison report HTML not found at: ", htmlPath,
+                " (the capture may have contained no data).");
+        }
+    }
+}
+
+} // namespace
+
 int RunProfilerCmd(const ProfilerCliOptions& opt)
 {
     // 1. Determine config path and load config.
@@ -1012,25 +1257,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
 
     // 3.5 Handle --list-apps early (before capture type validation).
     if (flagListApps) {
-        auto q = QueryDeviceApps();
-        if (q.deviceFailed) {
-            log::Loge(q.deviceErr);
-            return EXIT_CONFIG_FAILED;
-        }
-        const auto& apps = q.apps;
-        if (apps.empty()) {
-            log::Loge("No apps found or unable to query device.");
-            return EXIT_CONFIG_FAILED;
-        }
-        std::cout << "Installed apps (" << apps.size() << "):\n";
-        for (const auto& a : apps) {
-            std::cout << "  " << a.package;
-            if (!a.appName.empty()) {
-                std::cout << "  (" << a.appName << ")";
-            }
-            std::cout << "\n";
-        }
-        return 0;
+        return HandleListApps();
     }
 
     // 4. Resolve category string to capture type.
@@ -1106,45 +1333,11 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
         return EXIT_CONFIG_FAILED;
     }
 
-    // Result output: one capture owns one session directory,
-    //   <output_dir>/[<device-id>/]<capture type>-[session-]<target>-<timestamp>/
-    // e.g. out/nativeheap-com.example.app-20260911_211900/, so the capture type
-    // and target are visible in the path and every capture type follows the
-    // same layout instead of a directory named after the device-side result
-    // file (which is the same for most hiprofiler types). The device-side file
-    // keeps its own name; the directory timestamp is the host time from
-    // current_timestamp(), unrelated to any timestamp the device puts in the
-    // file name.
-    // The session is nested under the device id — exactly the value `hdc -t` receives —
-    // only when the user named the device with `--device`. An auto-pinned single device
-    // deliberately does NOT add that layer: the user never asked for a per-device
-    // partition, so `-d <dir>` (or the default `out`) keeps the flat shape it had before
-    // the feature existed. When `--device` IS given, captures aimed at different devices
-    // can never share one folder and a report stays attributable to its device. The key
-    // is used as a single path component, so characters that are illegal in one are
-    // replaced (see as_path_segment). The untargeted legacy paths (0 devices, an
-    // unclassifiable line shape, hdc missing or failing) stay flat as well, and those
-    // abort before any directory is created.
-    // snapshot with an explicit -t keeps monitoring for the whole duration
-    // (start/end + peak-triggered snapshots) instead of exporting once. Both
-    // modes share the capture type, so the continuous one carries a `session`
-    // segment to tell them apart in the directory name alone.
     const bool continuousSnapshot =
         (configOption == "snapshot") && opt.durationSpecified;
-    const std::string sessionName =
-        configOption + (continuousSnapshot ? "-session" : "") + "-" +
-        AsPathSegment(processName) + "-" + CurrentTimestamp();
-    const std::string deviceSegment =
-        (opt.connectKeyProvided && !HdcConnectKey().empty()) ?
-            AsPathSegment(HdcConnectKey()) :
-            std::string();
-    const std::string sessionPath =
-        deviceSegment.empty() ? sessionName :
-                               platform::JoinPath(deviceSegment, sessionName);
-    const std::string outputDir = platform::JoinPath(outputDirVal, sessionPath);
-    // create_directories also reports false for an existing directory.
-    if (!platform::CreateDirectories(outputDir) && !platform::DirectoryExists(outputDir)) {
-        log::Loge("Error: cannot create the output directory: ", outputDir);
+    const std::string outputDir =
+        BuildSessionOutputPath(configOption, processName, outputDirVal, opt);
+    if (outputDir.empty()) {
         return EXIT_DIR_CREATE_FAILED;
     }
 
@@ -1178,163 +1371,14 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
         return EXIT_PROFILER_FAILED;
     }
 
-    // 9. Report results.
-    // `output_streamed` means the transcript was already printed to the console
-    // in real time (async `hiprofiler_cmd start`), so don't print it again.
-    if (!rr.output.empty() && !rr.outputStreamed) {
-        std::cout << rr.output;
-        if (rr.output.back() != '\n') {
-            std::cout << '\n';
-        }
-    }
-    log::Logi("Elapsed: ", rr.elapsed, "s");
-
-    if (rr.snapshotAttempted) {
-        log::Logi("Snapshot status: ", rr.snapshotStatus);
-        for (const auto& f : rr.snapshotPulledFiles) {
-            log::Logok("Snapshot file exported: ", f);
-        }
-    } else if (rr.pullAttempted) {
-        if (rr.pullOk) {
-            log::Logok("Result file exported: ", rr.pulledFile);
-        } else {
-            // `hdc file recv` exits 0 even when the remote file is missing,
-            // so the captured output holds the real reason (e.g. "[Fail]Error
-            // opening file: ..."); prefer it over the exit code.
-            if (!rr.pullOutput.empty()) {
-                log::Loge("Result file export failed:\n", rr.pullOutput);
-            } else {
-                log::Loge("Result file export failed: (exit code ", rr.pullExitCode, ")");
-            }
-            return EXIT_EXPORT_FAILED;
-        }
-    }
-
-    // Summarize the per-process snapshot files exported during the capture
-    // (hidumper --mem-smaps for -n/-g/-l/-d, lsof for -f). The paths were
-    // already printed at the moment of export; this consolidates them.
-    if (!rr.smapsExportedFiles.empty()) {
-        const char* label = (std::string(capture->snapshotPrefix) == "fds") ?
-                                "FD snapshot exported" :
-                                "Smaps exported";
-        for (const auto& f : rr.smapsExportedFiles) {
-            log::Logi(label, ": ", f);
-        }
+    if (!ReportCaptureResults(rr, std::string(capture->snapshotPrefix))) {
+        return EXIT_EXPORT_FAILED;
     }
 
     // 10. Generate HTML analysis report if --report is set.
     if (flagReport) {
-        // Continuous snapshot sessions (snapshot -t) produce start + peak + end
-        // snapshots. With -o, generate a single comparison report (start=baseline,
-        // end=target) via jsleak -b, instead of per-file reports.
         if (continuousSnapshot && !rr.snapshotPulledFiles.empty()) {
-            std::string baselineFile;
-            std::string targetFile;
-            for (const auto& f : rr.snapshotPulledFiles) {
-                const std::string stem = platform::Stem(f);
-                if (stem.empty()) {
-                    continue;
-                }
-                const std::string startSfx = "-start";
-                const std::string endSfx = "-end";
-                if (baselineFile.empty() &&
-                    stem.size() >= startSfx.size() &&
-                    stem.compare(stem.size() - startSfx.size(),
-                        startSfx.size(), startSfx) == 0) {
-                    baselineFile = f;
-                } else if (targetFile.empty() &&
-                    stem.size() >= endSfx.size() &&
-                    stem.compare(stem.size() - endSfx.size(),
-                        endSfx.size(), endSfx) == 0) {
-                    targetFile = f;
-                }
-            }
-
-            // Fallback: if either was not located by role suffix, use file
-            // modification timestamps — earliest = start (baseline),
-            // latest = end (target).
-            if (baselineFile.empty() || targetFile.empty()) {
-                log::Logi("Role suffix not found on all snapshots; "
-                    "falling back to file modification timestamps.");
-                fs::file_time_type minTime = fs::file_time_type::max();
-                fs::file_time_type maxTime = fs::file_time_type::min();
-                std::string earliest;
-                std::string latest;
-                for (const auto& f : rr.snapshotPulledFiles) {
-                    std::error_code ec;
-                    const auto t = fs::last_write_time(PathFromUtf8(f), ec);
-                    if (ec) {
-                        continue;
-                    }
-                    if (t < minTime) {
-                        minTime = t;
-                        earliest = f;
-                    }
-                    if (t > maxTime) {
-                        maxTime = t;
-                        latest = f;
-                    }
-                }
-                if (baselineFile.empty()) {
-                    baselineFile = earliest;
-                }
-                if (targetFile.empty()) {
-                    targetFile = latest;
-                }
-            }
-
-            if (baselineFile.empty() || targetFile.empty() ||
-                baselineFile == targetFile) {
-                log::Loge("Comparison report: could not locate start/end snapshots ",
-                    "(baseline=", baselineFile.empty() ? "<missing>" : baselineFile,
-                    ", target=", targetFile.empty() ? "<missing>" : targetFile, ").");
-                return rr.exitCode;
-            }
-
-            log::Logi("Generating comparison report: baseline=start, target=end");
-
-            const std::string binary = ResolveMemAnalyzerBinary();
-
-            // jsleak -b <baseline> <target> -d <output_dir>
-            std::string cmd = proc::ShellQuote(binary) +
-                " jsleak -b " + proc::ShellQuote(baselineFile) +
-                " " + proc::ShellQuote(targetFile) +
-                " -d " + proc::ShellQuote(outputDir);
-            // Forward ArkTS deobfuscation options (same as per-file path).
-            if (!opt.sourcemapDir.empty()) {
-                cmd += " --sourcemap " + proc::ShellQuote(opt.sourcemapDir);
-            }
-            if (!opt.nameObfuscation.empty()) {
-                cmd += " --namecache " + proc::ShellQuote(opt.nameObfuscation);
-            }
-
-            log::Logd("Command: ", cmd);
-            int rc = RunCommandStreaming(cmd + " 2>&1");
-            if (rc < 0) {
-                log::Loge("Comparison report generation failed: unable to launch ", binary);
-            } else if (rc != 0) {
-                log::Loge("Comparison report generation failed: exited with code ", rc);
-            } else {
-                // The jsleak compare subcommand nests its output under
-                // <output_dir>/<target-stem>/, writing
-                // <baseline-stem>-vs-<target-stem>.html there. Lift it up.
-                const std::string targetStem = platform::Stem(targetFile);
-                const std::string baselineStem = platform::Stem(baselineFile);
-                if (!targetStem.empty()) {
-                    FlattenReportDir(outputDir, targetStem);
-                }
-                const std::string htmlName =
-                    (baselineStem.empty() ? "baseline" : baselineStem) + "-vs-" +
-                    (targetStem.empty() ? "target" : targetStem) + ".html";
-                const std::string htmlPath = platform::JoinPath(outputDir, htmlName);
-                log::Logok("Comparison report generated: ", htmlPath);
-                if (platform::FileExists(htmlPath)) {
-                    platform::OpenWithDefaultApp(htmlPath);
-                } else {
-                    log::Loge("Comparison report HTML not found at: ", htmlPath,
-                        " (the capture may have contained no data).");
-                }
-            }
+            GenerateComparisonReport(rr.snapshotPulledFiles, outputDir, opt);
             return rr.exitCode;
         }
 

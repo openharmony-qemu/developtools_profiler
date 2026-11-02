@@ -161,10 +161,8 @@ static void ComputePageFlags(DomContext& ctx, std::vector<uint32_t>& pageFlags, 
         // is not a real page object and should not propagate page flags.
         if (ctx.elementType >= 0 && t == ctx.elementType) {
             uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
-            if (child < ctx.nodeCount) {
-                if (ctx.GetNodeName(child) == "(Document DOM trees)") {
-                    continue;
-                }
+            if (child < ctx.nodeCount && ctx.GetNodeName(child) == "(Document DOM trees)") {
+                continue;
             }
         }
 
@@ -188,10 +186,11 @@ static void ComputePageFlags(DomContext& ctx, std::vector<uint32_t>& pageFlags, 
                 continue;
             }
             uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
-            if (child < ctx.nodeCount && !(pageFlags[child] & pageObjectFlag)) {
-                pageFlags[child] |= pageObjectFlag;
-                stack[sp++] = child;
+            if (child >= ctx.nodeCount || (pageFlags[child] & pageObjectFlag)) {
+                continue;
             }
+            pageFlags[child] |= pageObjectFlag;
+            stack[sp++] = child;
         }
     }
     timer.Tick("page_flags");
@@ -1035,6 +1034,78 @@ static bool IsLowPriorityEdge(const BfsContext& ctx, size_t ptr, uint32_t child)
     return isLowPriority;
 }
 
+enum class BfsEdgeAction {
+    Skip,
+    EnqueueNormal,
+    EnqueueDeferred,
+};
+
+static BfsEdgeAction ClassifyBfsEdge(const BfsContext& ctx, uint32_t cur,
+    size_t ptr, uint32_t child, bool alreadyQueued)
+{
+    int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edgeTypeOff)]);
+
+    // ---- Basic edge-type exclusions ----
+    if (ctx.weakType >= 0 && t == ctx.weakType) {
+        return BfsEdgeAction::Skip;
+    }
+    if (ctx.shortcutType >= 0 && t == ctx.shortcutType && cur != 0) {
+        return BfsEdgeAction::Skip;
+    }
+    if (ctx.hiddenType >= 0 && t == ctx.hiddenType) {
+        return BfsEdgeAction::Skip;
+    }
+
+    // ---- isMeaningfulEdge checks (matching the reference implementation) ----
+    if (cur == child) { // self-reference
+        return BfsEdgeAction::Skip;
+    }
+
+    // Edge name block list + WeakMap key edge check
+    if (ShouldSkipWeakMapEdge(ctx, ptr, child)) {
+        return BfsEdgeAction::Skip;
+    }
+
+    // Already queued — prevents multi-parent targeting
+    if (alreadyQueued) {
+        return BfsEdgeAction::Skip;
+    }
+
+    // Internal edge named "code" — V8 internal, not meaningful for leak analysis
+    if (ctx.internalType >= 0 && t == ctx.internalType) {
+        const std::string& en = ctx.GetEdgeName(ptr);
+        if (en == "code") {
+            return BfsEdgeAction::Skip;
+        }
+    }
+
+    // Element edge to (map descriptors): only specific indices are meaningful.
+    // In V8, (map descriptors) are fixed-length arrays; only elements at
+    // index < 2 or index % 3 != 1 hold representative references.
+    if (ctx.elementType >= 0 && t == ctx.elementType) {
+        const std::string& childName = ctx.GetNodeName(child);
+        if (childName == "(map descriptors)") {
+            uint32_t index = ctx.edges[ptr + static_cast<size_t>(ctx.edgeNameOff)];
+            if (index >= MAP_DESC_SKIP_THRESHOLD || index % MAP_DESC_FIELDS_PER_ENTRY == 1) {
+                return BfsEdgeAction::Skip;
+            }
+        }
+    }
+
+    // ---- isMeaningfulNode check (applied to the TARGET node) ----
+    if (ShouldSkipTargetNode(ctx, child)) {
+        return BfsEdgeAction::Skip;
+    }
+
+    // ---- Priority checks (isLessPreferableEdge / isLessPreferableNode) ----
+    bool isLowPriority = IsLowPriorityEdge(ctx, ptr, child);
+
+    if (isLowPriority) {
+        return BfsEdgeAction::EnqueueDeferred;
+    }
+    return BfsEdgeAction::EnqueueNormal;
+}
+
 // ============================================================================
 //  Run layered BFS from roots
 //  Implements the reference implementation's annotateShortestPaths:
@@ -1086,71 +1157,19 @@ static void RunLayeredBfs(
             size_t end = ctx.firstEdgePointers[static_cast<size_t>(cur) + 1];
 
             for (size_t ptr = begin; ptr < end; ptr += static_cast<size_t>(ctx.edgeFieldsCount)) {
-                int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edgeTypeOff)]);
-
-                // ---- Basic edge-type exclusions ----
-                if (ctx.weakType >= 0 && t == ctx.weakType) {
-                    continue;
-                }
-                if (ctx.shortcutType >= 0 && t == ctx.shortcutType && cur != 0) {
-                    continue;
-                }
-                if (ctx.hiddenType >= 0 && t == ctx.hiddenType) {
-                    continue;
-                }
-
                 uint32_t child = ctx.edges[ptr + static_cast<size_t>(ctx.toNodeOff)] /
                                 static_cast<uint32_t>(ctx.nodeFieldsCount);
                 if (child >= ctx.nodeCount) {
                     continue;
                 }
 
-                // ---- isMeaningfulEdge checks (matching the reference implementation) ----
-                if (cur == child) { // self-reference
+                BfsEdgeAction action = ClassifyBfsEdge(ctx, cur, ptr, child, queued[child] != 0);
+                if (action == BfsEdgeAction::Skip) {
                     continue;
                 }
-
-                // Edge name block list + WeakMap key edge check
-                if (ShouldSkipWeakMapEdge(ctx, ptr, child)) {
-                    continue;
-                }
-
-                // Already queued — prevents multi-parent targeting
-                if (queued[child]) {
-                    continue;
-                }
-
-                // Internal edge named "code" — V8 internal, not meaningful for leak analysis
-                if (ctx.internalType >= 0 && t == ctx.internalType) {
-                    const std::string& en = ctx.GetEdgeName(ptr);
-                    if (en == "code") {
-                        continue;
-                    }
-                }
-
-                // Element edge to (map descriptors): only specific indices are meaningful.
-                // In V8, (map descriptors) are fixed-length arrays; only elements at
-                // index < 2 or index % 3 != 1 hold representative references.
-                if (ctx.elementType >= 0 && t == ctx.elementType) {
-                    const std::string& childName = ctx.GetNodeName(child);
-                    if (childName == "(map descriptors)") {
-                        uint32_t index = ctx.edges[ptr + static_cast<size_t>(ctx.edgeNameOff)];
-                        if (index >= MAP_DESC_SKIP_THRESHOLD || index % MAP_DESC_FIELDS_PER_ENTRY == 1) {
-                            continue;
-                        }
-                    }
-                }
-
-                // ---- isMeaningfulNode check (applied to the TARGET node) ----
-                if (ShouldSkipTargetNode(ctx, child)) {
-                    continue;
-                }
-
-                // ---- Priority checks (isLessPreferableEdge / isLessPreferableNode) ----
-                bool isLowPriority = IsLowPriorityEdge(ctx, ptr, child);
 
                 // ---- Enqueue ----
-                if (isLowPriority) {
+                if (action == BfsEdgeAction::EnqueueDeferred) {
                     // Deferred: add to postpone queue (queued but no path edge yet)
                     postponeQueue.emplace_back(cur, ptr);
                     queued[child] = 1;

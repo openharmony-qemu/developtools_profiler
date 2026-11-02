@@ -127,6 +127,7 @@ struct HtraceAnalysisOutput {
     TraceMeta traceMeta;
 
     json ToJson() const;
+    json SymbolsOf(const ScopeResult& scope) const;
 };
 
 struct AnalysisConfig {

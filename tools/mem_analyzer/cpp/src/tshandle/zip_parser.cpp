@@ -156,6 +156,49 @@ static std::string DeobfuscateZipSnapshot(const std::string& heapsnapshotPath,
     return outputPath;
 }
 
+static void ProcessRawheapSection(const RunContext& ctx, const std::string& rawheapPath,
+    const std::string& addrPath, const TempDir& tempDir, TshandleParseResult& parseResult)
+{
+    try {
+        auto rawheapName = platform::Stem(rawheapPath);
+        // rawheap→heapsnapshot 中间产物放入系统 TempDir（RAII 自动清理），不再落 out 目录
+        auto heapsnapshotPath = platform::JoinPath(tempDir.Path(), rawheapName + ".heapsnapshot");
+
+        std::string convertErr;
+        if (!RawheapToHeapsnapshot(rawheapPath, heapsnapshotPath, &convertErr)) {
+            log::Logw("    Warning: ", convertErr);
+        } else {
+            log::Logok("    Heap snapshot generated: ", heapsnapshotPath);
+
+            // 指定了 --sourcemap 或 --namecache 时，先还原快照（源码路径/行号）再做类分析
+            std::string analyzeSnapshot =
+                DeobfuscateZipSnapshot(heapsnapshotPath, tempDir.Path(),
+                    ctx.resources.sourcemapDir,
+                    ctx.resources.nameCacheDir);
+
+            auto tArktsStart = std::chrono::steady_clock::now();
+            ArkTsAnalyzeResult arktsResult = AnalyzeArktsClasses(
+                analyzeSnapshot, addrPath, parseResult.CallStacks());
+            auto tArktsEnd = std::chrono::steady_clock::now();
+            auto arktsMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                tArktsEnd - tArktsStart).count();
+            log::Logok("  Analyzed ArkTS classes (", arktsMs, "ms). ",
+                arktsResult.arktsClasses.size(), " classes.");
+
+            parseResult.arktsClasses = std::move(arktsResult.arktsClasses);
+
+            // Write anomaly report BEFORE moving anomaly data
+            platform::CreateDirectories(ctx.output.outDir);
+            WriteAnomalyReport(ctx.output.outDir, arktsResult);
+
+            parseResult.anomalyCounts = arktsResult.anomalyCounts;
+            parseResult.anomalyLines = std::move(arktsResult.anomalyLines);
+        }
+    } catch (const std::exception& e) {
+        log::Logw("    Warning: rawheap processing failed: ", e.what());
+    }
+}
+
 TshandleParseResult TshandleParse(const std::string& filePath, const RunContext& ctx)
 {
     StageTimer timer("Parse zip");
@@ -237,44 +280,7 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
     // ── Step 5: Run rawheap_translator (optional) ────────────────
     log::Logi("  [4/4] Processing rawheap (if available)...");
     if (!rawheapPath.empty()) {
-        try {
-            auto rawheapName = platform::Stem(rawheapPath);
-            // rawheap→heapsnapshot 中间产物放入系统 TempDir（RAII 自动清理），不再落 out 目录
-            auto heapsnapshotPath = platform::JoinPath(tempDir.Path(), rawheapName + ".heapsnapshot");
-
-            std::string convertErr;
-            if (!RawheapToHeapsnapshot(rawheapPath, heapsnapshotPath, &convertErr)) {
-                log::Logw("    Warning: ", convertErr);
-            } else {
-                log::Logok("    Heap snapshot generated: ", heapsnapshotPath);
-
-                // 指定了 --sourcemap 或 --namecache 时，先还原快照（源码路径/行号）再做类分析
-                std::string analyzeSnapshot =
-                    DeobfuscateZipSnapshot(heapsnapshotPath, tempDir.Path(),
-                        ctx.resources.sourcemapDir,
-                        ctx.resources.nameCacheDir);
-
-                auto tArktsStart = std::chrono::steady_clock::now();
-                ArkTsAnalyzeResult arktsResult = AnalyzeArktsClasses(
-                    analyzeSnapshot, addrPath, parseResult.CallStacks());
-                auto tArktsEnd = std::chrono::steady_clock::now();
-                auto arktsMs = std::chrono::duration_cast<std::chrono::milliseconds>(
-                    tArktsEnd - tArktsStart).count();
-                log::Logok("  Analyzed ArkTS classes (", arktsMs, "ms). ",
-                    arktsResult.arktsClasses.size(), " classes.");
-
-                parseResult.arktsClasses = std::move(arktsResult.arktsClasses);
-
-                // Write anomaly report BEFORE moving anomaly data
-                platform::CreateDirectories(ctx.output.outDir);
-                WriteAnomalyReport(ctx.output.outDir, arktsResult);
-
-                parseResult.anomalyCounts = arktsResult.anomalyCounts;
-                parseResult.anomalyLines = std::move(arktsResult.anomalyLines);
-            }
-        } catch (const std::exception& e) {
-            log::Logw("    Warning: rawheap processing failed: ", e.what());
-        }
+        ProcessRawheapSection(ctx, rawheapPath, addrPath, tempDir, parseResult);
     } else {
         log::LogiMinor("    No rawheap file, skipping.");
     }

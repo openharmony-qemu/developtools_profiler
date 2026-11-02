@@ -357,34 +357,24 @@ static bool CanApproximate(long long value,
     return value > counterpartTotal * config.approRatioThreshold / PERCENT_SCALE;
 }
 
-static ApproxResult CalcApproximations(
-    const std::vector<SymbolData*>& filtered,
-    const std::vector<CompressedCallStack>& callStacks,
-    const AnalysisConfig& config)
-{
-    int n = static_cast<int>(filtered.size());
-
-    // Build uid → index map (int keys for all internal lookups)
-    std::unordered_map<uint64_t, int> symIndex;
-    symIndex.reserve(n);
-    for (int i = 0; i < n; i++) {
-        symIndex[filtered[i]->uid] = i;
-    }
-
-    // contrib: insertion order = first time each 'deep' is encountered during pair iteration
+// contrib: insertion order = first time each 'deep' is encountered during pair iteration
+// alloc: insertion order = first time each 'shallow' is encountered
+struct ApproxPairMaps {
     std::vector<std::pair<int, InnerMap>> contrib;          // (deep_idx, InnerMap)
     std::unordered_map<int, size_t> contribIdx;             // deep_idx → position in contrib
-    // alloc: insertion order = first time each 'shallow' is encountered
     std::vector<std::pair<int, InnerMap>> alloc;             // (shallow_idx, InnerMap)
     std::unordered_map<int, size_t> allocIdx;               // shallow_idx → position in alloc
+};
 
-    // Chain cache: (chain_id, vector of (sym_idx, depth))
-    std::vector<std::pair<int, std::vector<std::pair<int, int>>>> chainCacheVec;
-    std::unordered_map<int, size_t> chainCacheIdx;
-
+static void BuildChainCache(
+    const std::vector<SymbolData*>& filtered,
+    const std::unordered_map<uint64_t, int>& symIndex,
+    std::vector<std::pair<int, std::vector<std::pair<int, int>>>>& chainCacheVec,
+    std::unordered_map<int, size_t>& chainCacheIdx)
+{
     // Build chain cache (iterates filtered in sorted order to match TS Map insertion order)
     for (auto* sd : filtered) {
-        int symIdx = symIndex[sd->uid];
+        int symIdx = symIndex.at(sd->uid);
         for (int ci : sd->chainIds) {
             size_t idx;
             auto it = chainCacheIdx.find(ci);
@@ -398,7 +388,14 @@ static ApproxResult CalcApproximations(
             chainCacheVec[idx].second.emplace_back(symIdx, sd->depthPerChain.at(ci));
         }
     }
+}
 
+static void BuildApproxPairs(
+    std::vector<std::pair<int, std::vector<std::pair<int, int>>>>& chainCacheVec,
+    const std::vector<CompressedCallStack>& callStacks,
+    const std::vector<SymbolData*>& filtered,
+    ApproxPairMaps& maps)
+{
     // Pair building — all keys are int now, O(1) hash/comparison
     for (auto& [ci, chainSyms] : chainCacheVec) {
         if (chainSyms.size() < MIN_PAIR_SYMBOLS) {
@@ -426,26 +423,32 @@ static ApproxResult CalcApproximations(
                 int deepIdx = chainSyms[j].first;
 
                 // contrib: insert deep in insertion order
-                auto cIt = contribIdx.find(deepIdx);
-                if (cIt == contribIdx.end()) {
-                    contribIdx[deepIdx] = contrib.size();
-                    contrib.emplace_back(deepIdx, InnerMap());
-                    cIt = contribIdx.find(deepIdx);
+                auto cIt = maps.contribIdx.find(deepIdx);
+                if (cIt == maps.contribIdx.end()) {
+                    maps.contribIdx[deepIdx] = maps.contrib.size();
+                    maps.contrib.emplace_back(deepIdx, InnerMap());
+                    cIt = maps.contribIdx.find(deepIdx);
                 }
-                contrib[cIt->second].second.Add(shallowIdx, leak);
+                maps.contrib[cIt->second].second.Add(shallowIdx, leak);
 
                 // alloc: insert shallow in insertion order
-                auto aIt = allocIdx.find(shallowIdx);
-                if (aIt == allocIdx.end()) {
-                    allocIdx[shallowIdx] = alloc.size();
-                    alloc.emplace_back(shallowIdx, InnerMap());
-                    aIt = allocIdx.find(shallowIdx);
+                auto aIt = maps.allocIdx.find(shallowIdx);
+                if (aIt == maps.allocIdx.end()) {
+                    maps.allocIdx[shallowIdx] = maps.alloc.size();
+                    maps.alloc.emplace_back(shallowIdx, InnerMap());
+                    aIt = maps.allocIdx.find(shallowIdx);
                 }
-                alloc[aIt->second].second.Add(deepIdx, leak);
+                maps.alloc[aIt->second].second.Add(deepIdx, leak);
             }
         }
     }
+}
 
+static void SortApproxMaps(
+    const std::vector<SymbolData*>& filtered,
+    std::vector<std::pair<int, InnerMap>>& contrib,
+    std::vector<std::pair<int, InnerMap>>& alloc)
+{
     // Sort contrib/alloc and their inner maps deterministically by uid
     for (auto& [deepIdx, cMap] : contrib) {
         std::sort(cMap.items.begin(), cMap.items.end(),
@@ -467,60 +470,80 @@ static ApproxResult CalcApproximations(
         [&filtered](const auto& a, const auto& b) {
             return filtered[a.first]->uid < filtered[b.first]->uid;
         });
+}
 
+static void AddApproxEntry(
+    std::vector<std::pair<uint64_t, std::vector<uint64_t>>>& approx,
+    std::unordered_map<uint64_t, size_t>& idx,
+    uint64_t outerUid, uint64_t innerUid)
+{
+    auto it = idx.find(outerUid);
+    if (it == idx.end()) {
+        idx[outerUid] = approx.size();
+        approx.emplace_back(outerUid, std::vector<uint64_t>());
+        it = idx.find(outerUid);
+    }
+    approx[it->second].second.push_back(innerUid);
+}
+
+static void EvaluateApprox(
+    const std::vector<SymbolData*>& filtered,
+    const std::vector<std::pair<int, InnerMap>>& pairs,
+    const AnalysisConfig& config,
+    bool isUp,
+    ApproxResult& result)
+{
     // Evaluation — lookup total_leak_size directly from filtered array by index
+    for (auto& [outerIdx, map] : pairs) {
+        long long totalOuter = filtered[outerIdx]->totalLeakSize;
+        if (totalOuter <= 0) {
+            continue;
+        }
+        for (auto& [innerIdx, value] : map) {
+            long long totalInner = filtered[innerIdx]->totalLeakSize;
+            if (totalInner <= 0) {
+                continue;
+            }
+            if (!CanApproximate(value, totalOuter, totalInner, config)) {
+                continue;
+            }
+            uint64_t outerUid = filtered[outerIdx]->uid;
+            uint64_t innerUid = filtered[innerIdx]->uid;
+            if (isUp) {
+                AddApproxEntry(result.upApprox, result.upIdx, outerUid, innerUid);
+            } else {
+                AddApproxEntry(result.downApprox, result.downIdx, outerUid, innerUid);
+            }
+        }
+    }
+}
+
+static ApproxResult CalcApproximations(
+    const std::vector<SymbolData*>& filtered,
+    const std::vector<CompressedCallStack>& callStacks,
+    const AnalysisConfig& config)
+{
+    int n = static_cast<int>(filtered.size());
+
+    // Build uid → index map (int keys for all internal lookups)
+    std::unordered_map<uint64_t, int> symIndex;
+    symIndex.reserve(n);
+    for (int i = 0; i < n; i++) {
+        symIndex[filtered[i]->uid] = i;
+    }
+
+    // Chain cache: (chain_id, vector of (sym_idx, depth))
+    std::vector<std::pair<int, std::vector<std::pair<int, int>>>> chainCacheVec;
+    std::unordered_map<int, size_t> chainCacheIdx;
+    BuildChainCache(filtered, symIndex, chainCacheVec, chainCacheIdx);
+
+    ApproxPairMaps maps;
+    BuildApproxPairs(chainCacheVec, callStacks, filtered, maps);
+    SortApproxMaps(filtered, maps.contrib, maps.alloc);
+
     ApproxResult result;
-
-    for (auto& [deepIdx, cMap] : contrib) {
-        long long totalDeep = filtered[deepIdx]->totalLeakSize;
-        if (totalDeep <= 0) {
-            continue;
-        }
-
-        for (auto& [shallowIdx, value] : cMap) {
-            long long totalShallow = filtered[shallowIdx]->totalLeakSize;
-            if (totalShallow <= 0) {
-                continue;
-            }
-            if (CanApproximate(value, totalDeep, totalShallow, config)) {
-                auto& deepUid = filtered[deepIdx]->uid;
-                auto& shallowUid = filtered[shallowIdx]->uid;
-                auto uIt = result.upIdx.find(deepUid);
-                if (uIt == result.upIdx.end()) {
-                    result.upIdx[deepUid] = result.upApprox.size();
-                    result.upApprox.emplace_back(deepUid, std::vector<uint64_t>());
-                    uIt = result.upIdx.find(deepUid);
-                }
-                result.upApprox[uIt->second].second.push_back(shallowUid);
-            }
-        }
-    }
-
-    for (auto& [shallowIdx, aMap] : alloc) {
-        long long totalShallow = filtered[shallowIdx]->totalLeakSize;
-        if (totalShallow <= 0) {
-            continue;
-        }
-
-        for (auto& [deepIdx, value] : aMap) {
-            long long totalDeep = filtered[deepIdx]->totalLeakSize;
-            if (totalDeep <= 0) {
-                continue;
-            }
-            if (CanApproximate(value, totalShallow, totalDeep, config)) {
-                auto& shallowUid = filtered[shallowIdx]->uid;
-                auto& deepUid = filtered[deepIdx]->uid;
-                auto dIt = result.downIdx.find(shallowUid);
-                if (dIt == result.downIdx.end()) {
-                    result.downIdx[shallowUid] = result.downApprox.size();
-                    result.downApprox.emplace_back(shallowUid, std::vector<uint64_t>());
-                    dIt = result.downIdx.find(shallowUid);
-                }
-                result.downApprox[dIt->second].second.push_back(deepUid);
-            }
-        }
-    }
-
+    EvaluateApprox(filtered, maps.contrib, config, true, result);
+    EvaluateApprox(filtered, maps.alloc, config, false, result);
     return result;
 }
 
@@ -530,23 +553,15 @@ struct AlgorithmResult {
     AlgorithmStats stats;
 };
 
-static AlgorithmResult RunAlgorithm(
-    const std::vector<SymbolData*>& filtered,
-    const std::vector<CompressedCallStack>& callStacks,
-    const AnalysisConfig& config)
+struct EquivRefs {
+    std::unordered_map<uint64_t, uint64_t> equivRefMap;
+    int removedEquiv = 0;
+};
+
+static EquivRefs FindEquivRefs(
+    const std::vector<std::vector<SymbolData*>>& equivGroups,
+    std::unordered_set<uint64_t>& removedUids)
 {
-    StageTimer timer("Algo");
-
-    AlgorithmResult algResult;
-    int orgSetSize = 0;     // set by caller
-    int filteredSetSize = static_cast<int>(filtered.size());
-
-    // 4.2: Track removed symbols (no deep copy of SymbolData)
-    std::unordered_set<uint64_t> removedUids;
-
-    // 4.3: Equivalent symbols
-    timer.Stage("Finding equivalent groups");
-    auto equivGroups = findEquivalentGroups(filtered);
     std::unordered_map<uint64_t, uint64_t> equivRefMap;
     int removedEquiv = 0;
     for (auto& group : equivGroups) {
@@ -567,16 +582,15 @@ static AlgorithmResult RunAlgorithm(
             }
         }
     }
-    timer.Tick("equiv");
+    return {std::move(equivRefMap), removedEquiv};
+}
 
-    // 4.5: Calculate approximations on filtered set
-    timer.Stage("Calculating approximations");
-    auto approx = CalcApproximations(filtered, callStacks, config);
-    timer.Tick("approx");
-
+static void FilterApproxRemoved(
+    const ApproxResult& approx,
+    std::unordered_set<uint64_t>& removedUids,
+    int& downRemoved, int& upRemoved)
+{
     // 4.6: Filter using approximations (order-independent fixed-point iteration)
-    int downRemoved = 0;
-    int upRemoved = 0;
     bool changed = true;
     while (changed) {
         changed = false;
@@ -607,34 +621,45 @@ static AlgorithmResult RunAlgorithm(
             }
         }
     }
+}
 
+static bool HasSurvivingApprox(
+    uint64_t uid,
+    const ApproxResult& approx,
+    const std::unordered_set<uint64_t>& removedUids)
+{
+    auto uIt = approx.upIdx.find(uid);
+    if (uIt != approx.upIdx.end() && uIt->second < approx.upApprox.size()) {
+        for (auto& u : approx.upApprox[uIt->second].second) {
+            if (!removedUids.count(u)) {
+                return true;
+            }
+        }
+    }
+    auto dIt = approx.downIdx.find(uid);
+    if (dIt != approx.downIdx.end() && dIt->second < approx.downApprox.size()) {
+        for (auto& d : approx.downApprox[dIt->second].second) {
+            if (!removedUids.count(d)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+static int CheckRepresentation(
+    const std::vector<SymbolData*>& filtered,
+    const ApproxResult& approx,
+    const std::unordered_map<uint64_t, uint64_t>& equivRefMap,
+    std::unordered_set<uint64_t>& removedUids)
+{
     // 4.7: Check representation
     int representationAdded = 0;
     for (auto* s : filtered) {
         if (!removedUids.count(s->uid)) {
             continue;
         }
-        bool inSurviving = false;
-        auto uIt = approx.upIdx.find(s->uid);
-        if (uIt != approx.upIdx.end() && uIt->second < approx.upApprox.size()) {
-            for (auto& u : approx.upApprox[uIt->second].second) {
-                if (!removedUids.count(u)) {
-                    inSurviving = true;
-                    break;
-                }
-            }
-        }
-        if (!inSurviving) {
-            auto dIt = approx.downIdx.find(s->uid);
-            if (dIt != approx.downIdx.end() && dIt->second < approx.downApprox.size()) {
-                for (auto& d : approx.downApprox[dIt->second].second) {
-                    if (!removedUids.count(d)) {
-                        inSurviving = true;
-                        break;
-                    }
-                }
-            }
-        }
+        bool inSurviving = HasSurvivingApprox(s->uid, approx, removedUids);
         if (!inSurviving) {
             auto eqIt = equivRefMap.find(s->uid);
             if (eqIt != equivRefMap.end() && !removedUids.count(eqIt->second)) {
@@ -646,29 +671,79 @@ static AlgorithmResult RunAlgorithm(
             representationAdded++;
         }
     }
+    return representationAdded;
+}
 
+static std::vector<SymbolData> BuildFinalSymbols(
+    const std::vector<SymbolData*>& filtered,
+    const std::unordered_set<uint64_t>& removedUids)
+{
     // 4.8: Build final result — only copy surviving symbols
+    std::vector<SymbolData> finalSymbols;
     for (auto* s : filtered) {
         if (!removedUids.count(s->uid)) {
-            algResult.finalSymbols.push_back(*s);
+            finalSymbols.push_back(*s);
         }
     }
-    std::stable_sort(algResult.finalSymbols.begin(), algResult.finalSymbols.end(),
+    std::stable_sort(finalSymbols.begin(), finalSymbols.end(),
         [](const auto& a, const auto& b) {
             if (a.totalLeakSize != b.totalLeakSize) {
                 return a.totalLeakSize > b.totalLeakSize;
             }
             return a.uid < b.uid;
         });
+    return finalSymbols;
+}
+
+static int CountEquivGroups(const std::vector<std::vector<SymbolData*>>& equivGroups)
+{
+    int count = 0;
+    for (auto& g : equivGroups) {
+        if (g.size() > 1) {
+            count++;
+        }
+    }
+    return count;
+}
+
+static AlgorithmResult RunAlgorithm(
+    const std::vector<SymbolData*>& filtered,
+    const std::vector<CompressedCallStack>& callStacks,
+    const AnalysisConfig& config)
+{
+    StageTimer timer("Algo");
+
+    AlgorithmResult algResult;
+    int orgSetSize = 0;     // set by caller
+    int filteredSetSize = static_cast<int>(filtered.size());
+
+    // 4.2: Track removed symbols (no deep copy of SymbolData)
+    std::unordered_set<uint64_t> removedUids;
+
+    // 4.3: Equivalent symbols
+    timer.Stage("Finding equivalent groups");
+    auto equivGroups = findEquivalentGroups(filtered);
+    auto equivRefs = FindEquivRefs(equivGroups, removedUids);
+    timer.Tick("equiv");
+
+    // 4.5: Calculate approximations on filtered set
+    timer.Stage("Calculating approximations");
+    auto approx = CalcApproximations(filtered, callStacks, config);
+    timer.Tick("approx");
+
+    // 4.6: Filter using approximations (order-independent fixed-point iteration)
+    int downRemoved = 0;
+    int upRemoved = 0;
+    FilterApproxRemoved(approx, removedUids, downRemoved, upRemoved);
+
+    // 4.7: Check representation
+    int representationAdded = CheckRepresentation(filtered, approx, equivRefs.equivRefMap, removedUids);
+
+    algResult.finalSymbols = BuildFinalSymbols(filtered, removedUids);
     timer.Tick("filter",
         std::to_string(filteredSetSize) + " in, " + std::to_string(algResult.finalSymbols.size()) + " out");
 
-    int equivGroupCount = 0;
-    for (auto& g : equivGroups) {
-        if (g.size() > 1) {
-            equivGroupCount++;
-        }
-    }
+    int equivGroupCount = CountEquivGroups(equivGroups);
 
     algResult.stats = {
         orgSetSize,
@@ -760,22 +835,8 @@ static std::vector<TopSymbolInfo> buildAndEnrich(
     return result;
 }
 
-// ===== Core analysis (no mmap split) =====
-static HtraceAnalysisOutput AnalyzeCallStacksCore(
-    const std::vector<CompressedCallStack>& callStacks,
-    const std::unordered_map<int, std::string>& dataDict,
-    AnalysisConfig config)
+static void LoadAlgorithmConfig(AnalysisConfig& config)
 {
-    StageTimer timer("Analysis");
-
-    Scope scope = config.useForceScope ? config.forceScope : config.scope;
-    std::string scopeStr = ScopeToString(scope);
-    int topN = config.topN;
-
-    // 单轨 category 的 JSON 嵌套键（来自描述符表 tracks[0].json_key，如 "nativeHeaps"/"dmas"）。
-    // 多轨（mmap）已按 is_multipart 分叉、不经过此函数；这里只服务单轨。
-    const std::string& symbolTrackKey = HtraceCategory(config.category).tracks[0].jsonKey;
-
     // Lazy-load htrace config
     auto& htraceCfg = HtraceConfigMgr::Instance();
     if (!htraceCfg.IsLoaded()) {
@@ -798,6 +859,323 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     if (HtraceCategory(config.category).countMode) {
         config.lowThreshold = 0;
     }
+}
+
+static void ResolveSymbolNames(const SymbolData& sd,
+    const std::unordered_map<int, std::string>& dataDict,
+    std::string& libFile, std::string& symName)
+{
+    std::string libName;
+    if (sd.libIdNull) {
+        libName = "unknown";
+    } else {
+        auto lit = dataDict.find(sd.libId);
+        if (lit != dataDict.end()) {
+            libName = lit->second;
+        }
+    }
+    libFile = libName.substr(libName.find_last_of("/\\") + 1);
+    int sid = static_cast<int>(sd.uid >> UID_SHIFT_BITS);
+    auto sit = dataDict.find(sid);
+    symName = (sit != dataDict.end()) ? sit->second : "";
+}
+
+static bool ScopeOk(const SymbolData& sd, const AnalysisConfig& config, Scope filterScope)
+{
+    if (config.leakMode) { // -l: L3 已分栈，整组符号定性，跳过 isApp 过滤
+        return true;
+    }
+    if (filterScope == Scope::APP_ONLY && !sd.isApp) {
+        return false;
+    }
+    if (filterScope == Scope::SYSTEM_ONLY && sd.isApp) {
+        return false;
+    }
+    return true;
+}
+
+static bool IsNoiseSymbol(const SymbolData& sd,
+    const std::unordered_map<int, std::string>& dataDict, Scope filterScope)
+{
+    std::string libFile;
+    std::string symName;
+    ResolveSymbolNames(sd, dataDict, libFile, symName);
+    return HtraceConfigMgr::Instance().ShouldFilter(libFile, symName, filterScope);
+}
+
+static bool IsOrphanRecoverableSym(const SymbolData& sd,
+    const std::unordered_map<int, std::string>& dataDict, Scope filterScope)
+{
+    std::string libFile;
+    std::string symName;
+    ResolveSymbolNames(sd, dataDict, libFile, symName);
+    return HtraceConfigMgr::Instance().IsOrphanRecoverable(libFile, symName, filterScope);
+}
+
+struct CoreCtx {
+    const std::vector<CompressedCallStack>& callStacks;
+    const std::unordered_map<int, std::string>& dataDict;
+    const AnalysisConfig& config;
+    int topN;
+    const std::string& symbolTrackKey;
+    std::unordered_map<uint64_t, SymbolData>& allSymbols;
+    long long totalLeakSize;
+    std::deque<SymbolData>& recoveredOwner;
+};
+
+static bool IsChainOrphan(
+    const CompressedCallStack& chain,
+    const CoreCtx& ctx,
+    Scope filterScope)
+{
+    bool hasScopeSym = false;
+    bool hasSurvivor = false;
+    for (const auto& frame : chain.frames) {
+        if (frame.symbolId == 0) {
+            continue;
+        }
+        uint64_t key = MakeUid(frame.symbolId, frame.fileIdNull ? -1 : frame.fileId);
+        auto it = ctx.allSymbols.find(key);
+        if (it == ctx.allSymbols.end()) {
+            continue;
+        }
+        const SymbolData& sd = it->second;
+        // 幸存者看整条链：任何 scope 的非噪声符号都意味着泄漏未丢失
+        if (!IsNoiseSymbol(sd, ctx.dataDict, filterScope)) {
+            hasSurvivor = true;
+            break;
+        }
+        // 只有当前 scope 的符号才计入 has_scope_sym（决定恢复归属）
+        if (ScopeOk(sd, ctx.config, filterScope)) {
+            hasScopeSym = true;
+        }
+    }
+    return hasScopeSym && !hasSurvivor;
+}
+
+static void AggregateOrphanSymbols(
+    const CompressedCallStack& chain,
+    const CoreCtx& ctx,
+    Scope filterScope,
+    std::unordered_map<uint64_t, long long>& orphanAgg,
+    std::unordered_map<uint64_t, const SymbolData*>& orphanSrc)
+{
+    // Orphan: aggregate each recoverable in-scope frame's leak size
+    // (restricted to this stack; dedup'd by uid).
+    std::unordered_set<uint64_t> depthSeen;
+    long long size = chain.existingSize;
+    for (const auto& frame : chain.frames) {
+        if (frame.symbolId == 0) {
+            continue;
+        }
+        int fid = frame.fileIdNull ? -1 : frame.fileId;
+        uint64_t key = MakeUid(frame.symbolId, fid);
+        auto it = ctx.allSymbols.find(key);
+        if (it == ctx.allSymbols.end()) {
+            continue;
+        }
+        const SymbolData& src = it->second;
+        if (!ScopeOk(src, ctx.config, filterScope)) {
+            continue;
+        }
+        if (!IsOrphanRecoverableSym(src, ctx.dataDict, filterScope)) {
+            continue;
+        }
+        if (depthSeen.find(key) != depthSeen.end()) {
+            continue;
+        }
+        depthSeen.insert(key);
+        orphanAgg[key] += size;
+        orphanSrc[key] = &src;
+    }
+}
+
+static void RecoverOrphans(
+    const CoreCtx& ctx,
+    Scope filterScope,
+    std::vector<SymbolData*>& filtered)
+{
+    // Pass 2: recover orphan stacks. An orphan stack has at least one
+    // in-scope frame but none that survives the noise filter. Its symbols
+    // are re-added so the algorithm can merge and approximate them as
+    // usual. Whether a symbol is worth recovering is decided by its leak
+    // size aggregated across orphan stacks (an adaptive fraction of the
+    // total leak size, capped); once recovered, the symbol keeps its
+    // full-chain data (chain_ids / total_leak_size) rather than being
+    // restricted to orphan chains, so its reported size stays accurate.
+    std::unordered_map<uint64_t, long long> orphanAgg;         // uid -> 孤儿栈内聚合泄漏量
+    std::unordered_map<uint64_t, const SymbolData*> orphanSrc; // uid -> 原始符号（完整范围）
+    for (int ci = 0; ci < static_cast<int>(ctx.callStacks.size()); ci++) {
+        const auto& chain = ctx.callStacks[ci];
+        long long size = chain.existingSize;
+        if (size <= 0) {
+            continue;
+        }
+        if (!IsChainOrphan(chain, ctx, filterScope)) {
+            continue;
+        }
+        AggregateOrphanSymbols(chain, ctx, filterScope, orphanAgg, orphanSrc);
+    }
+
+    // 孤儿栈兜底显著度门槛 = min(总泄漏量 × orphan_rel_ratio/100, orphan_rel_cap)。
+    // 只有孤儿栈内聚合泄漏量达到门槛的符号才恢复，避免引入碎片化干扰。
+    long long orphanThreshold = ctx.totalLeakSize * ctx.config.orphanRelRatio / PERCENT_SCALE;
+    if (orphanThreshold > ctx.config.orphanRelCap) {
+        orphanThreshold = ctx.config.orphanRelCap;
+    }
+
+    for (auto& kv : orphanAgg) {
+        if (kv.second < orphanThreshold) {
+            continue;
+        }
+        // 完整复制原始符号（保留完整 chain_ids / total_leak_size）。
+        ctx.recoveredOwner.push_back(*orphanSrc[kv.first]);
+        filtered.push_back(&ctx.recoveredOwner.back());
+    }
+}
+
+// Helper: filter symbols by scope and thresholds, return sorted pointer list.
+// Also recovers "orphan" stacks (stacks whose in-scope frames are all noise
+// symbols and would otherwise lose their leak size from the ranking), so the
+// leak size stays visible. Only the noise filter is bypassed for recovery;
+// recovered symbols are gated by an orphan-specific threshold.
+static std::pair<std::vector<SymbolData*>, int> BuildFiltered(
+    const CoreCtx& ctx, Scope filterScope)
+{
+    std::vector<SymbolData*> filtered;
+    int orgCount = 0;
+
+    // Pass 1: symbol-level scope + noise + low_threshold filtering.
+    for (auto& kv : ctx.allSymbols) {
+        SymbolData& sd = kv.second;
+        if (!ScopeOk(sd, ctx.config, filterScope)) {
+            continue;
+        }
+        orgCount++;
+        if (IsNoiseSymbol(sd, ctx.dataDict, filterScope)) {
+            continue;
+        }
+        // -l(leak_mode): 跳过 low_threshold 过滤，保留所有泄漏符号
+        if (ctx.config.leakMode || sd.totalLeakSize >= ctx.config.lowThreshold) {
+            filtered.push_back(&sd);
+        }
+    }
+
+    RecoverOrphans(ctx, filterScope, filtered);
+
+    std::stable_sort(filtered.begin(), filtered.end(),
+        [](const auto* a, const auto* b) {
+            if (a->totalLeakSize != b->totalLeakSize) {
+                return a->totalLeakSize > b->totalLeakSize;
+            }
+            return a->uid < b->uid;
+        });
+    return {filtered, orgCount};
+}
+
+// leak_mode: 收集非 top N 覆盖的栈 -> other, 追加到对应 top_symbols 分类
+static void AppendOther(
+    const AnalysisConfig& config,
+    const std::vector<CompressedCallStack>& callStacks,
+    const std::unordered_map<int, std::string>& dataDict,
+    std::vector<TopSymbolInfo>& targetVec,
+    const std::vector<SymbolData>& finalSymbols)
+{
+    if (!config.leakMode) {
+        return;
+    }
+    int limit = std::min(static_cast<int>(finalSymbols.size()), config.topN);
+    std::unordered_set<int> covered;
+    for (int i = 0; i < limit; i++) {
+        for (int ci : finalSymbols[i].chainIds) {
+            covered.insert(ci);
+        }
+    }
+    std::vector<int> otherIds;
+    long long otherLeak = 0;
+    long long otherCount = 0;
+    for (int ci = 0; ci < static_cast<int>(callStacks.size()); ci++) {
+        if (covered.count(ci)) {
+            continue;
+        }
+        if (callStacks[ci].existingSize <= 0) {
+            continue;
+        }
+        otherIds.push_back(ci);
+        otherLeak += callStacks[ci].existingSize;
+        otherCount += callStacks[ci].existingCount;
+    }
+    if (otherIds.empty()) {
+        return;
+    }
+    TopSymbolInfo ts;
+    ts.symbol = OTHER_SYMBOL;
+    ts.totalLeakSize = otherLeak;
+    ts.totalExistingCount = otherCount;
+    ts.icicleGraph = BuildMergedIcicle(callStacks, otherIds, dataDict);
+    targetVec.push_back(std::move(ts));
+}
+
+static void ProcessSingleScope(
+    HtraceAnalysisOutput& output,
+    const CoreCtx& ctx,
+    Scope filterScope,
+    const std::string& modeStr,
+    ScopeResult& scopeField)
+{
+    auto [filtered, orgCount] = BuildFiltered(ctx, filterScope);
+    auto result = RunAlgorithm(filtered, ctx.callStacks, ctx.config);
+    output.topSymbols.mode = modeStr;
+    auto syms = buildAndEnrich(result.finalSymbols, ctx.callStacks, ctx.dataDict, ctx.topN);
+    AppendOther(ctx.config, ctx.callStacks, ctx.dataDict, syms, result.finalSymbols);
+    scopeField.sections.push_back(MakeSymbolSection(std::move(syms), ctx.symbolTrackKey.c_str()));
+    output.stats = result.stats;
+    output.stats.orgSetSize = orgCount;
+}
+
+static void ProcessAppAndSystem(
+    HtraceAnalysisOutput& output,
+    const CoreCtx& ctx)
+{
+    auto [appFiltered, appOrg] = BuildFiltered(ctx, Scope::APP_ONLY);
+    auto [sysFiltered, sysOrg] = BuildFiltered(ctx, Scope::SYSTEM_ONLY);
+    auto appResult = RunAlgorithm(appFiltered, ctx.callStacks, ctx.config);
+    auto sysResult = RunAlgorithm(sysFiltered, ctx.callStacks, ctx.config);
+    output.topSymbols.mode = "app-and-system";
+    auto appSyms = buildAndEnrich(appResult.finalSymbols, ctx.callStacks, ctx.dataDict, ctx.topN);
+    AppendOther(ctx.config, ctx.callStacks, ctx.dataDict, appSyms, appResult.finalSymbols);
+    output.topSymbols.app.sections.push_back(
+        MakeSymbolSection(std::move(appSyms), ctx.symbolTrackKey.c_str()));
+    auto sysSyms = buildAndEnrich(sysResult.finalSymbols, ctx.callStacks, ctx.dataDict, ctx.topN);
+    AppendOther(ctx.config, ctx.callStacks, ctx.dataDict, sysSyms, sysResult.finalSymbols);
+    output.topSymbols.system.sections.push_back(
+        MakeSymbolSection(std::move(sysSyms), ctx.symbolTrackKey.c_str()));
+    output.stats.orgSetSize = appOrg + sysOrg;
+    output.stats.filteredSetSize = appResult.stats.filteredSetSize + sysResult.stats.filteredSetSize;
+    output.stats.finalSetSize = appResult.stats.finalSetSize + sysResult.stats.finalSetSize;
+    output.stats.equivalentGroups = appResult.stats.equivalentGroups + sysResult.stats.equivalentGroups;
+    output.stats.upApproxRemoved = appResult.stats.upApproxRemoved + sysResult.stats.upApproxRemoved;
+    output.stats.downApproxRemoved = appResult.stats.downApproxRemoved + sysResult.stats.downApproxRemoved;
+    output.stats.representationAdded = appResult.stats.representationAdded + sysResult.stats.representationAdded;
+}
+
+// ===== Core analysis (no mmap split) =====
+static HtraceAnalysisOutput AnalyzeCallStacksCore(
+    const std::vector<CompressedCallStack>& callStacks,
+    const std::unordered_map<int, std::string>& dataDict,
+    AnalysisConfig config)
+{
+    StageTimer timer("Analysis");
+
+    Scope scope = config.useForceScope ? config.forceScope : config.scope;
+    std::string scopeStr = ScopeToString(scope);
+    int topN = config.topN;
+
+    // 单轨 category 的 JSON 嵌套键（来自描述符表 tracks[0].json_key，如 "nativeHeaps"/"dmas"）。
+    // 多轨（mmap）已按 is_multipart 分叉、不经过此函数；这里只服务单轨。
+    const std::string& symbolTrackKey = HtraceCategory(config.category).tracks[0].jsonKey;
+
+    LoadAlgorithmConfig(config);
 
     // Build symbol data
     timer.Stage("Building symbol data from call stacks");
@@ -814,256 +1192,17 @@ static HtraceAnalysisOutput AnalyzeCallStacksCore(
     // push_back does not invalidate pointers to existing elements).
     std::deque<SymbolData> recoveredOwner;
 
-    // Helper: filter symbols by scope and thresholds, return sorted pointer list.
-    // Also recovers "orphan" stacks (stacks whose in-scope frames are all noise
-    // symbols and would otherwise lose their leak size from the ranking), so the
-    // leak size stays visible. Only the noise filter is bypassed for recovery;
-    // recovered symbols are gated by an orphan-specific threshold.
-    auto buildFiltered = [&allSymbols, &config, &callStacks, &totalLeakSize,
-                           &recoveredOwner, &dataDict](Scope filterScope) ->
-                           std::pair<std::vector<SymbolData*>, int> {
-        std::vector<SymbolData*> filtered;
-        int orgCount = 0;
-
-        auto scopeOk = [&config, &filterScope](const SymbolData& sd) {
-            if (config.leakMode) { // -l: L3 已分栈，整组符号定性，跳过 isApp 过滤
-                return true;
-            }
-            if (filterScope == Scope::APP_ONLY && !sd.isApp) {
-                return false;
-            }
-            if (filterScope == Scope::SYSTEM_ONLY && sd.isApp) {
-                return false;
-            }
-            return true;
-        };
-        auto resolveNames = [&dataDict](const SymbolData& sd, std::string& libFile, std::string& symName) {
-            std::string libName;
-            if (sd.libIdNull) {
-                libName = "unknown";
-            } else {
-                auto lit = dataDict.find(sd.libId);
-                if (lit != dataDict.end()) {
-                    libName = lit->second;
-                }
-            }
-            libFile = libName.substr(libName.find_last_of("/\\") + 1);
-            int sid = static_cast<int>(sd.uid >> UID_SHIFT_BITS);
-            auto sit = dataDict.find(sid);
-            symName = (sit != dataDict.end()) ? sit->second : "";
-        };
-        auto isNoise = [&resolveNames, &filterScope](const SymbolData& sd) {
-            std::string libFile;
-            std::string symName;
-            resolveNames(sd, libFile, symName);
-            return HtraceConfigMgr::Instance().ShouldFilter(libFile, symName, filterScope);
-        };
-        auto isOrphanRecoverable = [&resolveNames, &filterScope](const SymbolData& sd) {
-            std::string libFile;
-            std::string symName;
-            resolveNames(sd, libFile, symName);
-            return HtraceConfigMgr::Instance().IsOrphanRecoverable(libFile, symName, filterScope);
-        };
-
-        // Pass 1: symbol-level scope + noise + low_threshold filtering.
-        for (auto& kv : allSymbols) {
-            SymbolData& sd = kv.second;
-            if (!scopeOk(sd)) {
-                continue;
-            }
-            orgCount++;
-            if (isNoise(sd)) {
-                continue;
-            }
-            // -l(leak_mode): 跳过 low_threshold 过滤，保留所有泄漏符号
-            if (config.leakMode || sd.totalLeakSize >= config.lowThreshold) {
-                filtered.push_back(&sd);
-            }
-        }
-
-        // Pass 2: recover orphan stacks. An orphan stack has at least one
-        // in-scope frame but none that survives the noise filter. Its symbols
-        // are re-added so the algorithm can merge and approximate them as
-        // usual. Whether a symbol is worth recovering is decided by its leak
-        // size aggregated across orphan stacks (an adaptive fraction of the
-        // total leak size, capped); once recovered, the symbol keeps its
-        // full-chain data (chain_ids / total_leak_size) rather than being
-        // restricted to orphan chains, so its reported size stays accurate.
-        std::unordered_map<uint64_t, long long> orphanAgg;         // uid -> 孤儿栈内聚合泄漏量
-        std::unordered_map<uint64_t, const SymbolData*> orphanSrc; // uid -> 原始符号（完整范围）
-        for (int ci = 0; ci < static_cast<int>(callStacks.size()); ci++) {
-            const auto& chain = callStacks[ci];
-            long long size = chain.existingSize;
-            if (size <= 0) {
-                continue;
-            }
-
-            bool hasScopeSym = false;
-            bool hasSurvivor = false;
-            for (const auto& frame : chain.frames) {
-                if (frame.symbolId == 0) {
-                    continue;
-                }
-                uint64_t key = MakeUid(frame.symbolId, frame.fileIdNull ? -1 : frame.fileId);
-                auto it = allSymbols.find(key);
-                if (it == allSymbols.end()) {
-                    continue;
-                }
-                const SymbolData& sd = it->second;
-                // 幸存者看整条链：任何 scope 的非噪声符号都意味着泄漏未丢失
-                if (!isNoise(sd)) {
-                    hasSurvivor = true;
-                    break;
-                }
-                // 只有当前 scope 的符号才计入 has_scope_sym（决定恢复归属）
-                if (scopeOk(sd)) {
-                    hasScopeSym = true;
-                }
-            }
-            if (!hasScopeSym || hasSurvivor) {
-                continue;
-            }
-
-            // Orphan: aggregate each recoverable in-scope frame's leak size
-            // (restricted to this stack; dedup'd by uid).
-            std::unordered_set<uint64_t> depthSeen;
-            for (const auto& frame : chain.frames) {
-                if (frame.symbolId == 0) {
-                    continue;
-                }
-                int fid = frame.fileIdNull ? -1 : frame.fileId;
-                uint64_t key = MakeUid(frame.symbolId, fid);
-                auto it = allSymbols.find(key);
-                if (it == allSymbols.end()) {
-                    continue;
-                }
-                const SymbolData& src = it->second;
-                if (!scopeOk(src)) {
-                    continue;
-                }
-                if (!isOrphanRecoverable(src)) {
-                    continue;
-                }
-                if (depthSeen.find(key) != depthSeen.end()) {
-                    continue;
-                }
-                depthSeen.insert(key);
-                orphanAgg[key] += size;
-                orphanSrc[key] = &src;
-            }
-        }
-
-        // 孤儿栈兜底显著度门槛 = min(总泄漏量 × orphan_rel_ratio/100, orphan_rel_cap)。
-        // 只有孤儿栈内聚合泄漏量达到门槛的符号才恢复，避免引入碎片化干扰。
-        long long orphanThreshold = totalLeakSize * config.orphanRelRatio / PERCENT_SCALE;
-        if (orphanThreshold > config.orphanRelCap) {
-            orphanThreshold = config.orphanRelCap;
-        }
-
-        for (auto& kv : orphanAgg) {
-            if (kv.second < orphanThreshold) {
-                continue;
-            }
-            // 完整复制原始符号（保留完整 chain_ids / total_leak_size）。
-            recoveredOwner.push_back(*orphanSrc[kv.first]);
-            filtered.push_back(&recoveredOwner.back());
-        }
-
-        std::stable_sort(filtered.begin(), filtered.end(),
-            [](const auto* a, const auto* b) {
-                if (a->totalLeakSize != b->totalLeakSize) {
-                    return a->totalLeakSize > b->totalLeakSize;
-                }
-                return a->uid < b->uid;
-            });
-        return {filtered, orgCount};
-    };
-
-    // leak_mode: 收集非 top N 覆盖的栈 -> other, 追加到对应 top_symbols 分类
-    auto appendOther = [&config, &topN, &callStacks, &dataDict](std::vector<TopSymbolInfo>& targetVec,
-                       const std::vector<SymbolData>& finalSymbols) {
-        if (!config.leakMode) {
-            return;
-        }
-        int limit = std::min(static_cast<int>(finalSymbols.size()), topN);
-        std::unordered_set<int> covered;
-        for (int i = 0; i < limit; i++) {
-            for (int ci : finalSymbols[i].chainIds) {
-                covered.insert(ci);
-            }
-        }
-        std::vector<int> otherIds;
-        long long otherLeak = 0;
-        long long otherCount = 0;
-        for (int ci = 0; ci < static_cast<int>(callStacks.size()); ci++) {
-            if (covered.count(ci)) {
-                continue;
-            }
-            if (callStacks[ci].existingSize <= 0) {
-                continue;
-            }
-            otherIds.push_back(ci);
-            otherLeak += callStacks[ci].existingSize;
-            otherCount += callStacks[ci].existingCount;
-        }
-        if (otherIds.empty()) {
-            return;
-        }
-        TopSymbolInfo ts;
-        ts.symbol = OTHER_SYMBOL;
-        ts.totalLeakSize = otherLeak;
-        ts.totalExistingCount = otherCount;
-        ts.icicleGraph = BuildMergedIcicle(callStacks, otherIds, dataDict);
-        targetVec.push_back(std::move(ts));
-    };
+    CoreCtx ctx{callStacks, dataDict, config, topN, symbolTrackKey, allSymbols, totalLeakSize, recoveredOwner};
 
     if (scopeStr == "app-only") {
-        auto [appFiltered, appOrg] = buildFiltered(Scope::APP_ONLY);
-        auto result = RunAlgorithm(appFiltered, callStacks, config);
-        output.topSymbols.mode = "app-only";
-        auto appSyms = buildAndEnrich(result.finalSymbols, callStacks, dataDict, topN);
-        appendOther(appSyms, result.finalSymbols);
-        output.topSymbols.app.sections.push_back(MakeSymbolSection(std::move(appSyms), symbolTrackKey.c_str()));
-        output.stats = result.stats;
-        output.stats.orgSetSize = appOrg;
+        ProcessSingleScope(output, ctx, Scope::APP_ONLY, "app-only", output.topSymbols.app);
     } else if (scopeStr == "system-only") {
-        auto [sysFiltered, sysOrg] = buildFiltered(Scope::SYSTEM_ONLY);
-        auto result = RunAlgorithm(sysFiltered, callStacks, config);
-        output.topSymbols.mode = "system-only";
-        auto sysSyms = buildAndEnrich(result.finalSymbols, callStacks, dataDict, topN);
-        appendOther(sysSyms, result.finalSymbols);
-        output.topSymbols.system.sections.push_back(MakeSymbolSection(std::move(sysSyms), symbolTrackKey.c_str()));
-        output.stats = result.stats;
-        output.stats.orgSetSize = sysOrg;
+        ProcessSingleScope(output, ctx, Scope::SYSTEM_ONLY, "system-only", output.topSymbols.system);
     } else if (scopeStr == "mixed") {
-        auto [mixedFiltered, mixedOrg] = buildFiltered(Scope::MIXED);
-        auto result = RunAlgorithm(mixedFiltered, callStacks, config);
-        output.topSymbols.mode = "mixed";
-        auto mixedSyms = buildAndEnrich(result.finalSymbols, callStacks, dataDict, topN);
-        appendOther(mixedSyms, result.finalSymbols);
-        output.topSymbols.mixed.sections.push_back(MakeSymbolSection(std::move(mixedSyms), symbolTrackKey.c_str()));
-        output.stats = result.stats;
-        output.stats.orgSetSize = mixedOrg;
+        ProcessSingleScope(output, ctx, Scope::MIXED, "mixed", output.topSymbols.mixed);
     } else {
         // app-and-system (default)
-        auto [appFiltered, appOrg] = buildFiltered(Scope::APP_ONLY);
-        auto [sysFiltered, sysOrg] = buildFiltered(Scope::SYSTEM_ONLY);
-        auto appResult = RunAlgorithm(appFiltered, callStacks, config);
-        auto sysResult = RunAlgorithm(sysFiltered, callStacks, config);
-        output.topSymbols.mode = "app-and-system";
-        auto appSyms = buildAndEnrich(appResult.finalSymbols, callStacks, dataDict, topN);
-        appendOther(appSyms, appResult.finalSymbols);
-        output.topSymbols.app.sections.push_back(MakeSymbolSection(std::move(appSyms), symbolTrackKey.c_str()));
-        auto sysSyms = buildAndEnrich(sysResult.finalSymbols, callStacks, dataDict, topN);
-        appendOther(sysSyms, sysResult.finalSymbols);
-        output.topSymbols.system.sections.push_back(MakeSymbolSection(std::move(sysSyms), symbolTrackKey.c_str()));
-        output.stats.orgSetSize = appOrg + sysOrg;
-        output.stats.filteredSetSize = appResult.stats.filteredSetSize + sysResult.stats.filteredSetSize;
-        output.stats.finalSetSize = appResult.stats.finalSetSize + sysResult.stats.finalSetSize;
-        output.stats.equivalentGroups = appResult.stats.equivalentGroups + sysResult.stats.equivalentGroups;
-        output.stats.upApproxRemoved = appResult.stats.upApproxRemoved + sysResult.stats.upApproxRemoved;
-        output.stats.downApproxRemoved = appResult.stats.downApproxRemoved + sysResult.stats.downApproxRemoved;
-        output.stats.representationAdded = appResult.stats.representationAdded + sysResult.stats.representationAdded;
+        ProcessAppAndSystem(output, ctx);
     }
 
     return output;
@@ -1240,6 +1379,19 @@ static json TopSymbolInfoToJson(const TopSymbolInfo& ts, const std::unordered_ma
     return j;
 }
 
+json HtraceAnalysisOutput::SymbolsOf(const ScopeResult& scope) const
+{
+    json arr = json::array();
+    for (const auto& s : scope.sections) {
+        for (const auto& r : s.rows) {
+            if (const auto* ts = std::get_if<TopSymbolInfo>(&r)) {
+                arr.push_back(TopSymbolInfoToJson(*ts, this->dataDict));
+            }
+        }
+    }
+    return arr;
+}
+
 json HtraceAnalysisOutput::ToJson() const
 {
     json j = {
@@ -1259,25 +1411,14 @@ json HtraceAnalysisOutput::ToJson() const
     top["mode"] = topSymbols.mode;
     // Only include arrays relevant to the mode (matching TS behavior)
     // app-and-system: app + system; app-only: app; system-only: system; mixed: mixed
-    auto symbolsOf = [this](const ScopeResult& scope) {
-        json arr = json::array();
-        for (const auto& s : scope.sections) {
-            for (const auto& r : s.rows) {
-                if (const auto* ts = std::get_if<TopSymbolInfo>(&r)) {
-                    arr.push_back(TopSymbolInfoToJson(*ts, this->dataDict));
-                }
-            }
-        }
-        return arr;
-    };
     if (topSymbols.mode == "app-only" || topSymbols.mode == "app-and-system") {
-        top["app"] = symbolsOf(topSymbols.app);
+        top["app"] = SymbolsOf(topSymbols.app);
     }
     if (topSymbols.mode == "system-only" || topSymbols.mode == "app-and-system") {
-        top["system"] = symbolsOf(topSymbols.system);
+        top["system"] = SymbolsOf(topSymbols.system);
     }
     if (topSymbols.mode == "mixed") {
-        top["mixed"] = symbolsOf(topSymbols.mixed);
+        top["mixed"] = SymbolsOf(topSymbols.mixed);
     }
     j["topSymbols"] = top;
 
