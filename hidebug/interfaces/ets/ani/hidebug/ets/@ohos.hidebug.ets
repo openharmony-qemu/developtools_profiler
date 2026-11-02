@@ -209,6 +209,12 @@ export default namespace hidebug {
     return new bigint(getAppVMObjectUsedSizeAdapter());
   }
 
+  native function getAppSharedHeapObjectUsedSizeAdapter(): long;
+
+  export function getAppSharedHeapObjectUsedSize(): bigint {
+    return new bigint(getAppSharedHeapObjectUsedSizeAdapter());
+  }
+
   export interface MemoryLimit {
     rssLimit: bigint;
     vssLimit: bigint;

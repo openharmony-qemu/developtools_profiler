@@ -1294,4 +1294,22 @@ describe("HidebugJsTest", function () {
             expect(false).assertTrue();
         }
     })
+
+    /**
+     * @tc.name: HidebugJsTest_057
+     * @tc.desc: getAppSharedHeapObjectUsedSize
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_057', 0, function () {
+        console.info("---------------------------HidebugJsTest_057----------------------------------");
+        try {
+            let ret = hidebug.getAppSharedHeapObjectUsedSize();
+            console.info(`HidebugJsTest_057 getAppSharedHeapObjectUsedSize ret：: ${ret}`);
+            expect(ret >= 0).assertTrue();
+        } catch (error) {
+            console.error(error.code);
+            console.error(error.message);
+            expect().assertFail();
+        }
+    })
 })
