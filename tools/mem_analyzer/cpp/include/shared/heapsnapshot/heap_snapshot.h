@@ -311,6 +311,13 @@ private:
 
     // 获取 SourceTextModule 扩展名
     std::string GetSourceTextModuleExtName(uint32_t nodeIndex) const;
+    void FindModuleExportNodes(uint32_t nodeIndex, uint32_t& localExportEntries,
+        uint32_t& nameDictNode) const;
+    std::string FindModuleName(uint32_t nameDictNode) const;
+    std::string FindExportName(uint32_t entryNode, uint32_t nameDictNode) const;
+    std::string FindDefaultExportName(uint32_t nameDictNode) const;
+    std::vector<std::string> CollectExportNames(uint32_t localExportEntries,
+        uint32_t nameDictNode) const;
 
     // 计算单个节点的扩展名（不查缓存、不递归调用 get_extended_node_name）。
     // 由 get_extended_node_name 在预构建阶段串行调用。

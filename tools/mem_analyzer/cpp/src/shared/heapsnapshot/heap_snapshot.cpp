@@ -326,107 +326,9 @@ std::string HeapSnapshot::GetStateMgmtExtName(uint32_t nodeIndex, const std::str
 }
 
 // 获取 SourceTextModule 扩展名
-std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t nodeIndex) const
+static std::string FormatSourceTextModuleResult(uint32_t exportCount,
+    const std::string& moduleName, const std::vector<std::string>& exportNames)
 {
-    uint32_t localExportEntriesNode = INVALID_NODE;
-    uint32_t nameDictNode = INVALID_NODE;
-
-    size_t begin = firstEdgePointers[nodeIndex];
-    size_t end = firstEdgePointers[nodeIndex + 1];
-    for (size_t ptr = begin; ptr < end; ptr += edgeFieldsCount) {
-        uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
-        if (nameIdx >= strings.size()) {
-            continue;
-        }
-        const std::string& en = strings[nameIdx];
-        if (en == "LocalExportEntries") {
-            localExportEntriesNode = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
-        } else if (en == "NameDictionary") {
-            nameDictNode = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
-        }
-        if (localExportEntriesNode != INVALID_NODE && nameDictNode != INVALID_NODE) {
-            break;
-        }
-    }
-
-    std::string moduleName;
-    if (nameDictNode != INVALID_NODE && nameDictNode < static_cast<uint32_t>(nodeCount)) {
-        size_t dBegin = firstEdgePointers[nameDictNode];
-        size_t dEnd = firstEdgePointers[nameDictNode + 1];
-        for (size_t ptr = dBegin; ptr < dEnd; ptr += edgeFieldsCount) {
-            uint32_t child = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
-            if (child < static_cast<uint32_t>(nodeCount)) {
-                std::string childName = GetNodeName(child);
-                if (childName.find('#') != std::string::npos) {
-                    moduleName = childName.substr(0, childName.find('#'));
-                    break;
-                }
-            }
-        }
-    }
-
-    uint32_t exportCount = 0;
-    if (localExportEntriesNode != INVALID_NODE && localExportEntriesNode < static_cast<uint32_t>(nodeCount)) {
-        exportCount = GetNodeEdgeCount(localExportEntriesNode);
-        if (exportCount > 0) {
-            exportCount -= 1;
-        }
-    }
-
-    std::vector<std::string> exportNames;
-    exportNames.reserve(MAX_EXPORT_NAMES);
-    if (localExportEntriesNode != INVALID_NODE && localExportEntriesNode < static_cast<uint32_t>(nodeCount)) {
-        size_t eBegin = firstEdgePointers[localExportEntriesNode];
-        size_t eEnd = firstEdgePointers[localExportEntriesNode + 1];
-        for (size_t ptr = eBegin; ptr < eEnd && exportNames.size() < MAX_EXPORT_NAMES; ptr += edgeFieldsCount) {
-            uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
-            if (nameIdx < strings.size() && IsNumericString(strings[nameIdx])) {
-                uint32_t entryNode = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
-                if (entryNode >= static_cast<uint32_t>(nodeCount)) {
-                    continue;
-                }
-                size_t e2Begin = firstEdgePointers[entryNode];
-                size_t e2End = firstEdgePointers[entryNode + 1];
-                for (size_t ptr2 = e2Begin; ptr2 < e2End; ptr2 += edgeFieldsCount) {
-                    uint32_t enameIdx = edges[ptr2 + edgeNameOrIndexOffset];
-                    if (enameIdx < strings.size() && strings[enameIdx] == "ExportName") {
-                        uint32_t exportNameNode = edges[ptr2 + edgeToNodeOffset] / nodeFieldsCount;
-                        if (exportNameNode < static_cast<uint32_t>(nodeCount)) {
-                            std::string ename = GetNodeName(exportNameNode);
-                            if (ename == "default" || ename.empty()) {
-                                if (nameDictNode != INVALID_NODE) {
-                                    size_t dBegin2 = firstEdgePointers[nameDictNode];
-                                    size_t dEnd2 = firstEdgePointers[nameDictNode + 1];
-                                    for (size_t ptr3 = dBegin2; ptr3 < dEnd2; ptr3 += edgeFieldsCount) {
-                                        uint32_t keyIdx = edges[ptr3 + edgeNameOrIndexOffset];
-                                        if (keyIdx < strings.size() &&
-                                            (strings[keyIdx] == "0" || strings[keyIdx] == "1")) {
-                                            uint32_t targetNode = edges[ptr3 + edgeToNodeOffset] / nodeFieldsCount;
-                                            if (targetNode < static_cast<uint32_t>(nodeCount)) {
-                                                std::string extName = GetJsObjectExtName(targetNode);
-                                                // get_js_object_ext_name 总是返回 "JSObject(...)"（:98/:100），
-                                                // 裸 "JSObject" 永远不会出现；按前缀判断才能真正跳过无信息对象。
-                                                if (extName.rfind("JSObject(", 0) != 0 &&
-                                                    extName != "JSSharedObject" &&
-                                                    extName.rfind("JSSharedObject(", 0) != 0) {
-                                                    exportNames.push_back(extName);
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            } else {
-                                exportNames.push_back(ename);
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
     std::ostringstream oss;
     oss << "SourceTextModule(nums=" << exportCount;
     if (!moduleName.empty()) {
@@ -445,6 +347,155 @@ std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t nodeIndex) const
     }
     oss << ")";
     return oss.str();
+}
+
+void HeapSnapshot::FindModuleExportNodes(uint32_t nodeIndex,
+    uint32_t& localExportEntries, uint32_t& nameDictNode) const
+{
+    localExportEntries = INVALID_NODE;
+    nameDictNode = INVALID_NODE;
+    size_t begin = firstEdgePointers[nodeIndex];
+    size_t end = firstEdgePointers[nodeIndex + 1];
+    for (size_t ptr = begin; ptr < end; ptr += edgeFieldsCount) {
+        uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
+        if (nameIdx >= strings.size()) {
+            continue;
+        }
+        const std::string& en = strings[nameIdx];
+        if (en == "LocalExportEntries") {
+            localExportEntries = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
+        } else if (en == "NameDictionary") {
+            nameDictNode = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
+        }
+        if (localExportEntries != INVALID_NODE && nameDictNode != INVALID_NODE) {
+            break;
+        }
+    }
+}
+
+std::string HeapSnapshot::FindModuleName(uint32_t nameDictNode) const
+{
+    if (nameDictNode == INVALID_NODE || nameDictNode >= static_cast<uint32_t>(nodeCount)) {
+        return "";
+    }
+    size_t dBegin = firstEdgePointers[nameDictNode];
+    size_t dEnd = firstEdgePointers[nameDictNode + 1];
+    for (size_t ptr = dBegin; ptr < dEnd; ptr += edgeFieldsCount) {
+        uint32_t child = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
+        if (child >= static_cast<uint32_t>(nodeCount)) {
+            continue;
+        }
+        std::string childName = GetNodeName(child);
+        if (childName.find('#') != std::string::npos) {
+            return childName.substr(0, childName.find('#'));
+        }
+    }
+    return "";
+}
+
+std::string HeapSnapshot::FindDefaultExportName(uint32_t nameDictNode) const
+{
+    if (nameDictNode == INVALID_NODE) {
+        return "";
+    }
+    size_t dBegin = firstEdgePointers[nameDictNode];
+    size_t dEnd = firstEdgePointers[nameDictNode + 1];
+    for (size_t ptr = dBegin; ptr < dEnd; ptr += edgeFieldsCount) {
+        uint32_t keyIdx = edges[ptr + edgeNameOrIndexOffset];
+        if (keyIdx >= strings.size()) {
+            continue;
+        }
+        if (strings[keyIdx] != "0" && strings[keyIdx] != "1") {
+            continue;
+        }
+        uint32_t targetNode = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
+        if (targetNode >= static_cast<uint32_t>(nodeCount)) {
+            continue;
+        }
+        std::string extName = GetJsObjectExtName(targetNode);
+        // get_js_object_ext_name 总是返回 "JSObject(...)"（:98/:100），
+        // 裸 "JSObject" 永远不会出现；按前缀判断才能真正跳过无信息对象。
+        if (extName.rfind("JSObject(", 0) != 0 &&
+            extName != "JSSharedObject" &&
+            extName.rfind("JSSharedObject(", 0) != 0) {
+            return extName;
+        }
+    }
+    return "";
+}
+
+std::string HeapSnapshot::FindExportName(uint32_t entryNode, uint32_t nameDictNode) const
+{
+    size_t e2Begin = firstEdgePointers[entryNode];
+    size_t e2End = firstEdgePointers[entryNode + 1];
+    for (size_t ptr2 = e2Begin; ptr2 < e2End; ptr2 += edgeFieldsCount) {
+        uint32_t enameIdx = edges[ptr2 + edgeNameOrIndexOffset];
+        if (enameIdx >= strings.size() || strings[enameIdx] != "ExportName") {
+            continue;
+        }
+        uint32_t exportNameNode = edges[ptr2 + edgeToNodeOffset] / nodeFieldsCount;
+        if (exportNameNode >= static_cast<uint32_t>(nodeCount)) {
+            continue;
+        }
+        std::string ename = GetNodeName(exportNameNode);
+        if (ename == "default" || ename.empty()) {
+            return FindDefaultExportName(nameDictNode);
+        }
+        return ename;
+    }
+    return "";
+}
+
+std::vector<std::string> HeapSnapshot::CollectExportNames(
+    uint32_t localExportEntries, uint32_t nameDictNode) const
+{
+    std::vector<std::string> exportNames;
+    exportNames.reserve(MAX_EXPORT_NAMES);
+    if (localExportEntries == INVALID_NODE ||
+        localExportEntries >= static_cast<uint32_t>(nodeCount)) {
+        return exportNames;
+    }
+    size_t eBegin = firstEdgePointers[localExportEntries];
+    size_t eEnd = firstEdgePointers[localExportEntries + 1];
+    for (size_t ptr = eBegin; ptr < eEnd && exportNames.size() < MAX_EXPORT_NAMES;
+         ptr += edgeFieldsCount) {
+        uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
+        if (nameIdx >= strings.size() || !IsNumericString(strings[nameIdx])) {
+            continue;
+        }
+        uint32_t entryNode = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
+        if (entryNode >= static_cast<uint32_t>(nodeCount)) {
+            continue;
+        }
+        std::string ename = FindExportName(entryNode, nameDictNode);
+        if (ename.empty()) {
+            continue;
+        }
+        exportNames.push_back(ename);
+    }
+    return exportNames;
+}
+
+std::string HeapSnapshot::GetSourceTextModuleExtName(uint32_t nodeIndex) const
+{
+    uint32_t localExportEntriesNode = INVALID_NODE;
+    uint32_t nameDictNode = INVALID_NODE;
+    FindModuleExportNodes(nodeIndex, localExportEntriesNode, nameDictNode);
+
+    std::string moduleName = FindModuleName(nameDictNode);
+
+    uint32_t exportCount = 0;
+    if (localExportEntriesNode != INVALID_NODE &&
+        localExportEntriesNode < static_cast<uint32_t>(nodeCount)) {
+        exportCount = GetNodeEdgeCount(localExportEntriesNode);
+        if (exportCount > 0) {
+            exportCount -= 1;
+        }
+    }
+
+    std::vector<std::string> exportNames = CollectExportNames(localExportEntriesNode, nameDictNode);
+
+    return FormatSourceTextModuleResult(exportCount, moduleName, exportNames);
 }
 
 // 获取节点的扩展名称
