@@ -1475,7 +1475,7 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
 {
     CmdConfig cfg;
     int earlyExit = LoadAndValidateConfig(opt, cfg);
-    if (earlyExit != 0) {
+    if (earlyExit != 0 || opt.flagListApps) {
         return earlyExit;
     }
 
