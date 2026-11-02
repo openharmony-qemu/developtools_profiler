@@ -649,6 +649,64 @@ std::string MakeDevicePath(const std::string& dir, const std::string& name)
     return full;
 }
 
+static void ParseLsLineSize(const std::string& line,
+    const std::string& namePrefix, const std::string& nameSuffix,
+    std::map<std::string, long long>& files)
+{
+    // Expected line (one of):
+    //   "-rw-r--r-- 1 root root 56789 Aug  2 20:53 name"
+    //   "-rw-r--r-- 1 root root 56789 2026-08-02 20:53 name"
+    std::istringstream lss(line);
+    std::string perm;
+    lss >> perm;
+    if (perm.empty() || perm[0] != '-') {
+        return; // skip dirs / "total" / blank
+    }
+    std::string links;
+    std::string owner;
+    std::string group;
+    std::string sizeStr;
+    if (!(lss >> links >> owner >> group >> sizeStr)) {
+        return;
+    }
+    long long size = 0;
+    try {
+        size = std::stoll(sizeStr);
+    } catch (...) {
+        return;
+    }
+    std::string dateOrMon;
+    if (!(lss >> dateOrMon)) { // Skip the date/time fields (ISO = 2, traditional = 3; see header).
+        return;
+    }
+    std::string discard;
+    if (dateOrMon.find('-') != std::string::npos) {
+        lss >> discard;              // time (HH:MM)
+    } else {
+        lss >> discard >> discard;   // day, time
+    }
+    std::string name;
+    std::getline(lss, name);
+    const auto first = name.find_first_not_of(" \t");
+    if (first == std::string::npos) {
+        return;
+    }
+    const auto last = name.find_last_not_of(" \t\r\n");
+    name = name.substr(first, last - first + 1);
+    // Only track files matching the expected name pattern; ignore
+    // unrelated files that may exist in the same device directory.
+    if (name.rfind(namePrefix, 0) != 0) {
+        return;
+    }
+    if (!nameSuffix.empty() &&
+        (name.size() < nameSuffix.size() ||
+            name.compare(name.size() - nameSuffix.size(), nameSuffix.size(),
+                nameSuffix) != 0)) {
+        return;
+    }
+    files[name] = size;
+}
+
 // List the regular files in a device directory with their sizes (bytes), via
 // `hdc shell 'ls -l <dir>'`. Returns a name->size map; empty on error /
 // nonexistent / empty dir. Directory entries, the "total N" header and blank
@@ -678,58 +736,7 @@ std::map<std::string, long long> listDirFileSizes(const std::string& dir,
     std::istringstream iss(cap.output);
     std::string line;
     while (std::getline(iss, line)) {
-        // Expected line (one of):
-        //   "-rw-r--r-- 1 root root 56789 Aug  2 20:53 name"
-        //   "-rw-r--r-- 1 root root 56789 2026-08-02 20:53 name"
-        std::istringstream lss(line);
-        std::string perm;
-        lss >> perm;
-        if (perm.empty() || perm[0] != '-') {
-            continue; // skip dirs / "total" / blank
-        }
-        std::string links;
-        std::string owner;
-        std::string group;
-        std::string sizeStr;
-        if (!(lss >> links >> owner >> group >> sizeStr)) {
-            continue;
-        }
-        long long size = 0;
-        try {
-            size = std::stoll(sizeStr);
-        } catch (...) {
-            continue;
-        }
-        std::string dateOrMon;
-        if (!(lss >> dateOrMon)) { // Skip the date/time fields (ISO = 2, traditional = 3; see header).
-            continue;
-        }
-        std::string discard;
-        if (dateOrMon.find('-') != std::string::npos) {
-            lss >> discard;              // time (HH:MM)
-        } else {
-            lss >> discard >> discard;   // day, time
-        }
-        std::string name;
-        std::getline(lss, name);
-        const auto first = name.find_first_not_of(" \t");
-        if (first == std::string::npos) {
-            continue;
-        }
-        const auto last = name.find_last_not_of(" \t\r\n");
-        name = name.substr(first, last - first + 1);
-        // Only track files matching the expected name pattern; ignore
-        // unrelated files that may exist in the same device directory.
-        if (name.rfind(namePrefix, 0) != 0) {
-            continue;
-        }
-        if (!nameSuffix.empty() &&
-            (name.size() < nameSuffix.size() ||
-                name.compare(name.size() - nameSuffix.size(), nameSuffix.size(),
-                    nameSuffix) != 0)) {
-            continue;
-        }
-        files[name] = size;
+        ParseLsLineSize(line, namePrefix, nameSuffix, files);
     }
     return files;
 }
@@ -2115,6 +2122,49 @@ static void PrintCountdownStatus(int roundNo, long long remain, const std::strin
     }
 }
 
+static void WaitForSnapshotExport(const std::shared_ptr<CaptureState>& state)
+{
+    log::Logi("Running snapshot export command...");
+    while (!state->done.load() && !g_interruptRequested &&
+           !DeviceLost()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(POLL_INTERVAL_MS));
+    }
+}
+
+static bool ShouldStopCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
+    ClockType::time_point start, bool asyncStartMode, long long& remain)
+{
+    remain = opts.duration - ElapsedSince(start);
+    if (remain <= 0) {
+        return true;
+    }
+    if (g_interruptRequested) {
+        log::Logw("Interrupted (Ctrl+C); stopping hiprofiler and saving data...");
+        return true;
+    }
+    if (CheckDeviceLost(state)) {
+        return true;
+    }
+    // Sync mode: the hiprofiler_cmd runs until it finishes on its own
+    // (done drives the loop). Async start mode: the command stays
+    // attached until we send stop, so the countdown is time-driven.
+    if (!asyncStartMode && state->done.load()) {
+        return true;
+    }
+    // If `start` failed to spawn, exited on its own (a start that fails
+    // exits immediately; a successful one stays attached until stop), or
+    // its transcript reports failure, abort the countdown instead of
+    // waiting out the full duration.
+    if (asyncStartMode &&
+        (state->spawnFailed || (state->done.load() && CaptureStartFailed(state)))) {
+        return true;
+    }
+    if (CheckPermissionFailure(state)) {
+        return true;
+    }
+    return false;
+}
+
 // ── main wait loop ───────────────────────────────
 
 // Wait while showing progress.
@@ -2131,11 +2181,7 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
     RunResult& result)
 {
     if (snapshotMode) {
-        log::Logi("Running snapshot export command...");
-        while (!state->done.load() && !g_interruptRequested &&
-               !DeviceLost()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(POLL_INTERVAL_MS));
-        }
+        WaitForSnapshotExport(state);
         return;
     }
     if (opts.duration <= 0) {
@@ -2144,35 +2190,13 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
 
     int roundNo = 0;  // monotonically increasing per-tick sequence number
     while (true) {
-        const long long remain = opts.duration - ElapsedSince(start);
-        if (remain <= 0) {
+        long long remain = 0;
+        if (ShouldStopCapture(opts, state, start, asyncStartMode, remain)) {
             break;
         }
-        if (g_interruptRequested) {
-            log::Logw("Interrupted (Ctrl+C); stopping hiprofiler and saving data...");
-            break;
-        }
-        if (CheckDeviceLost(state)) {
-            break;
-        }
-        // Sync mode: the hiprofiler_cmd runs until it finishes on its own
-        // (done drives the loop). Async start mode: the command stays
-        // attached until we send stop, so the countdown is time-driven.
-        if (!asyncStartMode && state->done.load()) {
-            break;
-        }
-        // If `start` failed to spawn, exited on its own (a start that fails
-        // exits immediately; a successful one stays attached until stop), or
-        // its transcript reports failure, abort the countdown instead of
-        // waiting out the full duration.
-        if (asyncStartMode &&
-            (state->spawnFailed || (state->done.load() && CaptureStartFailed(state)))) {
-            break;
-        }
-        if (CheckPermissionFailure(state)) {
-            break;
-        }
-        if (!opts.processName.empty()) {
+        if (opts.processName.empty()) {
+            std::cout << "[" << ++roundNo << "] Remaining " << remain << "s\n" << std::flush;
+        } else {
             // Read the latest known pid (non-blocking).
             std::string pid;
             {
@@ -2180,8 +2204,9 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
                 pid = state->latestPid;
             }
             const bool running = !pid.empty();
-            if (running && opts.requireFreshStart && pre.wasRunningAtStart &&
-                !state->pidChanged.load() && !state->freshRestartTriggered.load()) {
+            const bool freshStartWarning = running && opts.requireFreshStart && pre.wasRunningAtStart &&
+                !state->pidChanged.load() && !state->freshRestartTriggered.load();
+            if (freshStartWarning) {
                 std::cout << "[" << ++roundNo << "] Remaining " << remain << "s, " <<
                           "WARNING: target process '" << opts.processName << "' is already running!" <<
                           " pid:" << pid << "\n" <<
@@ -2191,13 +2216,11 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
                           std::flush;
             } else {
                 PrintCountdownStatus(++roundNo, remain, pid, running, state);
-                if (running) {
-                    maybeStartSnapshotExport(state, opts.outputDir, opts.smapsPrefix, opts.requireFreshStart, pid,
-                        startExported, startExportThread, result);
-                }
             }
-        } else {
-            std::cout << "[" << ++roundNo << "] Remaining " << remain << "s\n" << std::flush;
+            if (!freshStartWarning && running) {
+                maybeStartSnapshotExport(state, opts.outputDir, opts.smapsPrefix, opts.requireFreshStart, pid,
+                    startExported, startExportThread, result);
+            }
         }
         // Sleep up to 5s, waking every 100ms to stop promptly when hdc
         // finishes mid-interval, when the start command fails, when the

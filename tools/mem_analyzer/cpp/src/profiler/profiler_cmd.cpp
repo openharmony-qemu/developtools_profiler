@@ -1212,41 +1212,212 @@ static void GenerateComparisonReport(const std::vector<std::string>& snapshotFil
     }
 }
 
-} // namespace
+static const OptionPath* FindConfigOption(const CmdConfig& cfg, const std::string& configOption)
+{
+    for (const auto& op : cfg.optionPathMap) {
+        if (op.option == configOption) {
+            return &op;
+        }
+    }
+    return nullptr;
+}
 
-int RunProfilerCmd(const ProfilerCliOptions& opt)
+static bool ResolveTarget(std::string& processName, bool requireApp, bool& isApp)
+{
+    std::string resolved;
+    if (!ResolveProcessName(processName, requireApp, resolved, isApp)) {
+        return false;
+    }
+    processName = resolved;
+    return true;
+}
+
+// 4. Resolve category string to capture type.
+static const CaptureTypeInfo* ResolveCaptureCategory(const std::string& category,
+    const std::string& processName)
+{
+    std::string errMsg;
+    const CaptureTypeInfo* capture = ResolveCategory(category, errMsg);
+    if (!capture) {
+        log::Loge("Error:", errMsg);
+        return nullptr;
+    }
+    if (processName.empty()) {
+        log::Loge("Error: <bundle> is required for capture.");
+        return nullptr;
+    }
+    return capture;
+}
+
+static ProfilerOptions BuildProfilerOptions(const std::string& processName, int durationVal,
+    const std::string& outputDirVal, const std::string& configOption)
+{
+    ProfilerOptions popts;
+    popts.p = processName;
+    if (durationVal > 0) {
+        popts.t = durationVal;
+    } else {
+        // Default to 120s when -t is not given, instead of finishing immediately.
+        popts.t = DEFAULT_CAPTURE_DURATION_S;
+    }
+    popts.o = outputDirVal;
+    popts.configOption = configOption;
+    return popts;
+}
+
+static HdcRunOptions BuildHdcRunOptions(const CaptureCommand& cc, const CaptureTypeInfo& capture,
+    const std::string& outputDir)
+{
+    HdcRunOptions runOpts;
+    runOpts.content = cc.command;
+    runOpts.duration = cc.duration;
+    runOpts.outputDir = outputDir;
+    runOpts.remoteOutputPath = cc.remoteOutputPath;
+    runOpts.processName = cc.processName;
+    runOpts.waitForZip = capture.waitForZip;
+    runOpts.pullNativeleaks = (std::string(capture.flag) == "nativeleaks");
+    runOpts.deviceConfigContent = cc.deviceConfigContent;
+    runOpts.smapsPrefix = capture.snapshotPrefix;
+    return runOpts;
+}
+
+// Name the pinned device when there is one: rr.error is hdc text and does not always
+// mention the target, and by now the `Device:` echo is well above this line.
+static void ReportHdcFailure(const RunResult& rr)
+{
+    std::string innerErr = "hdc execution failed: " + rr.error;
+    if (!HdcConnectKey().empty()) {
+        innerErr += " [device: " + HdcConnectKey() + "]";
+    }
+    log::Loge(innerErr);
+    if (!rr.output.empty() && !rr.outputStreamed) {
+        std::cout << rr.output;
+    }
+}
+
+// Collect the file(s) to analyze.
+static std::vector<std::string> CollectReportFiles(const RunResult& rr)
+{
+    std::vector<std::string> reportFiles;
+    if (rr.snapshotAttempted) {
+        reportFiles = rr.snapshotPulledFiles;
+    } else if (rr.pullAttempted && rr.pullOk && !rr.pulledFile.empty()) {
+        reportFiles.push_back(rr.pulledFile);
+    }
+    return reportFiles;
+}
+
+// nativeleaks: feed the orphan-snapshot file to `trace -l`
+// alongside the .htrace so the L1/L2/L3 leak filtering runs.
+static std::string BuildLeaksArg(const std::string& configOption, const RunResult& rr)
+{
+    std::string leaksArg;
+    if (configOption == "nativeleaks") {
+        if (!rr.pulledLeaksFile.empty()) {
+            leaksArg = " -l " + proc::ShellQuote(rr.pulledLeaksFile);
+        } else {
+            // leaks 文件未获取（超时/设备掉线）：明确告知用户本次
+            // 未做 -l 泄漏过滤，仅输出普通 nativeheap 报告，避免
+            // 静默降级让用户误以为泄漏过滤已运行。
+            log::Logw("Warning: nativeleaks orphan-snapshot file was not captured; "
+                      "running trace WITHOUT -l leak filtering (plain nativeheap "
+                      "analysis only). Re-run the capture if leak filtering is needed.");
+        }
+    }
+    return leaksArg;
+}
+
+// 转发反混淆选项给 jsleak 报告子命令，还原混淆的符号/路径后再分析
+static void AppendReportOptions(std::string& cmd, const ProfilerCliOptions& opt, const std::string& subcmd)
+{
+    if (!opt.sourcemapDir.empty()) {
+        cmd += " --sourcemap " + proc::ShellQuote(opt.sourcemapDir);
+    }
+    if (!opt.nameObfuscation.empty()) {
+        cmd += " --namecache " + proc::ShellQuote(opt.nameObfuscation);
+    }
+    // native .so 符号反解只对 trace/tshandle 分析有意义（jsleak 走 ArkTS 反混淆）
+    if (!opt.soDir.empty() && (subcmd == "trace" || subcmd == "tshandle")) {
+        cmd += " --so-dir " + proc::ShellQuote(opt.soDir);
+    }
+}
+
+// The analysis subcommand nests its output under
+// <output_dir>/<source_name>/, where source_name is the input
+// file stem. That level is redundant here: the capture file
+// already lives in its own session directory, so lift
+// everything the run produced next to it and report the
+// final location (the subprocess printed the old one).
+static void FinalizeReport(const std::string& outputDir, const std::string& file)
+{
+    std::string base = platform::Stem(file);
+    if (base.empty()) {
+        base = "output";
+    }
+    FlattenReportDir(outputDir, base);
+
+    const std::string htmlPath = platform::JoinPath(outputDir, base + ".html");
+    log::Logok("Report generated: ", htmlPath);
+    if (platform::FileExists(htmlPath)) {
+        // Open the generated HTML in the default browser.
+        platform::OpenWithDefaultApp(htmlPath);
+    } else {
+        log::Loge("Report HTML not found at: ", htmlPath,
+            " (the capture may have contained no data).");
+    }
+}
+
+// Determine the subcommand and extra args from the capture type.
+static void GenerateHtmlReports(const std::vector<std::string>& reportFiles,
+    const CaptureTypeInfo& capture, const std::string& outputDir,
+    const RunResult& rr, const ProfilerCliOptions& opt)
+{
+    const std::string subcmd = capture.reportSubcmd;
+    const std::string extraArgs = capture.reportExtra;
+
+    const std::string binary = ResolveMemAnalyzerBinary();
+
+    for (const auto& f : reportFiles) {
+        // Every capture file of a session lives directly in the session
+        // directory, so analyzing it there keeps the report inside the
+        // session tree. The analysis subcommand writes it one level
+        // deeper, under <dir>/<stem>/, which is undone below.
+        const std::string leaksArg = BuildLeaksArg(capture.flag, rr);
+        std::string cmd = proc::ShellQuote(binary) +
+            " " + subcmd + extraArgs + leaksArg +
+            " " + proc::ShellQuote(f) +
+            " -d " + proc::ShellQuote(outputDir);
+        AppendReportOptions(cmd, opt, subcmd);
+
+        log::Logd("Generating report: ", cmd);
+        int rc = RunCommandStreaming(cmd + " 2>&1");
+        if (rc < 0) {
+            log::Loge("Report generation failed: unable to launch ", binary);
+        } else if (rc != 0) {
+            log::Loge("Report generation failed: exited with code ", rc);
+        } else {
+            FinalizeReport(outputDir, f);
+        }
+    }
+}
+
+static int LoadAndValidateConfig(const ProfilerCliOptions& opt, CmdConfig& cfg)
 {
     // 1. Determine config path and load config.
     std::string configPath = ResolveConfigPath();
-    CmdConfig cfg;
     std::string err;
     if (!LoadCmdConfig(configPath, cfg, err)) {
         log::Loge("Failed to load config: ", err);
         return EXIT_CONFIG_FAILED;
     }
-
-    // 2. The options were already parsed by the main CliParser (see main.cpp),
-    // so --help/validation are handled by the shared CLI architecture.
-
-    // 3. Local copies of the parsed options.
-    std::string processName = opt.processName;
-    int durationVal = opt.duration;
-    std::string outputDirVal = opt.outputDir;
-    std::string category = opt.category;
-    bool flagReport = opt.flagReport;
-    bool flagListApps = opt.flagListApps;
-
     // 3.4 Target device gate: decides the target before ANY hdc command (including
     //     --list-apps) — see resolve_device_target(). It prints nothing on the
     //     untargeted paths, which keeps 0-device output byte-identical.
-    {
-        std::string gateMsg;
-        if (!ResolveDeviceTarget(opt.connectKey, opt.connectKeyProvided, gateMsg)) {
-            log::Loge(gateMsg);
-            return EXIT_CONFIG_FAILED;
-        }
+    std::string gateMsg;
+    if (!ResolveDeviceTarget(opt.connectKey, opt.connectKeyProvided, gateMsg)) {
+        log::Loge(gateMsg);
+        return EXIT_CONFIG_FAILED;
     }
-
     // 3.45 Echo the target once, right after resolution: printed whenever a device
     //      actually drives the run — an explicit `--device` or the only attached device
     //      the gate pinned. This is the only place it is printed, so it leads every
@@ -1260,21 +1431,67 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
     if (!HdcConnectKey().empty()) {
         log::Logi("Device: ", HdcConnectKey());
     }
-
     // 3.5 Handle --list-apps early (before capture type validation).
-    if (flagListApps) {
+    if (opt.flagListApps) {
         return HandleListApps();
     }
+    return 0;
+}
+
+static int ExecuteAndReport(const HdcRunOptions& runOpts, const CaptureTypeInfo& capture,
+    const ProfilerCliOptions& opt, bool flagReport, bool continuousSnapshot)
+{
+    RunResult rr = RunHdc(runOpts);
+    if (!rr.ok) {
+        ReportHdcFailure(rr);
+        return EXIT_PROFILER_FAILED;
+    }
+
+    if (!ReportCaptureResults(rr, std::string(capture.snapshotPrefix))) {
+        return EXIT_EXPORT_FAILED;
+    }
+
+    // 10. Generate HTML analysis report if --report is set.
+    if (flagReport) {
+        if (continuousSnapshot && !rr.snapshotPulledFiles.empty()) {
+            GenerateComparisonReport(rr.snapshotPulledFiles, runOpts.outputDir, opt);
+            return rr.exitCode;
+        }
+
+        std::vector<std::string> reportFiles = CollectReportFiles(rr);
+        if (reportFiles.empty()) {
+            log::Loge("Report: no captured file available to analyze.");
+        } else {
+            GenerateHtmlReports(reportFiles, capture, runOpts.outputDir, rr, opt);
+        }
+    }
+
+    return rr.exitCode;
+}
+
+} // namespace
+
+int RunProfilerCmd(const ProfilerCliOptions& opt)
+{
+    CmdConfig cfg;
+    int earlyExit = LoadAndValidateConfig(opt, cfg);
+    if (earlyExit != 0) {
+        return earlyExit;
+    }
+
+    // 2. The options were already parsed by the main CliParser (see main.cpp),
+    // so --help/validation are handled by the shared CLI architecture.
+
+    // 3. Local copies of the parsed options.
+    std::string processName = opt.processName;
+    int durationVal = opt.duration;
+    std::string outputDirVal = opt.outputDir;
+    std::string category = opt.category;
+    bool flagReport = opt.flagReport;
 
     // 4. Resolve category string to capture type.
-    std::string errMsg;
-    const CaptureTypeInfo* capture = ResolveCategory(category, errMsg);
+    const CaptureTypeInfo* capture = ResolveCaptureCategory(category, processName);
     if (!capture) {
-        log::Loge("Error:", errMsg);
-        return EXIT_CONFIG_FAILED;
-    }
-    if (processName.empty()) {
-        log::Loge("Error: <bundle> is required for capture.");
         return EXIT_CONFIG_FAILED;
     }
     const std::string configOption = capture->flag;
@@ -1288,52 +1505,25 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
     //     ArkTS types (-s/-g/-l) require an installed app; native types
     //     (-n/-f/-d) may also target system processes not in the app list.
     bool isApp = true;  // whether the resolved target is an installed app
-    {
-        std::string resolved;
-        const bool requireApp = capture->requireApp;
-        if (!ResolveProcessName(processName, requireApp, resolved, isApp)) {
-            return EXIT_PROFILER_FAILED;
-        }
-        processName = resolved;
+    if (!ResolveTarget(processName, capture->requireApp, isApp)) {
+        return EXIT_PROFILER_FAILED;
     }
 
     // 5. Resolve config option to its template file path.
-    std::string configFile;
-    std::string resultDir;
-    bool requireFreshStart = false;
-    int minApiVersion = 0;
-    for (const auto& op : cfg.optionPathMap) {
-        if (op.option == configOption) {
-            configFile = op.path;
-            resultDir = op.resultDir;
-            requireFreshStart = op.requireFreshStart;
-            minApiVersion = op.minApiVersion;
-            break;
-        }
-    }
-    if (configFile.empty()) {
+    const OptionPath* found = FindConfigOption(cfg, configOption);
+    if (!found) {
         log::Loge("Unknown config option: ", configOption);
         return EXIT_CONFIG_FAILED;
     }
 
     // 6. API version check.
-    if (!CheckApiVersion(minApiVersion)) {
+    if (!CheckApiVersion(found->minApiVersion)) {
         return EXIT_API_CHECK_FAILED;
     }
 
     // 7. Process template.
-    ProfilerOptions popts;
-    popts.p = processName;
-    if (durationVal > 0) {
-        popts.t = durationVal;
-    } else {
-        // Default to 120s when -t is not given, instead of finishing immediately.
-        popts.t = DEFAULT_CAPTURE_DURATION_S;
-    }
-    popts.o = outputDirVal;
-    popts.configOption = configOption;
-
-    CaptureCommand cc = ProcessTemplate(configFile, popts);
+    ProfilerOptions popts = BuildProfilerOptions(processName, durationVal, outputDirVal, configOption);
+    CaptureCommand cc = ProcessTemplate(found->path, popts);
     if (!cc.ok) {
         log::Loge("Failed to process config file:", cc.error);
         return EXIT_CONFIG_FAILED;
@@ -1348,133 +1538,12 @@ int RunProfilerCmd(const ProfilerCliOptions& opt)
     }
 
     // 8. Run hdc. The target was already echoed right after the gate (step 3.45).
-    HdcRunOptions runOpts;
-    runOpts.content = cc.command;
-    runOpts.duration = cc.duration;
-    runOpts.outputDir = outputDir;
-    runOpts.remoteOutputPath = cc.remoteOutputPath;
-    runOpts.processName = cc.processName;
-    runOpts.resultDir = resultDir;
-    runOpts.requireFreshStart = requireFreshStart;
-    runOpts.waitForZip = capture->waitForZip;
-    runOpts.pullNativeleaks = (configOption == "nativeleaks");
-    runOpts.deviceConfigContent = cc.deviceConfigContent;
-    runOpts.smapsPrefix = capture->snapshotPrefix;
+    HdcRunOptions runOpts = BuildHdcRunOptions(cc, *capture, outputDir);
+    runOpts.resultDir = found->resultDir;
+    runOpts.requireFreshStart = found->requireFreshStart;
     runOpts.isApp = isApp;
     runOpts.continuousSnapshot = continuousSnapshot;
-    RunResult rr = RunHdc(runOpts);
-    if (!rr.ok) {
-        // Name the pinned device when there is one: rr.error is hdc text and does not always
-        // mention the target, and by now the `Device:` echo is well above this line.
-        std::string innerErr = "hdc execution failed: " + rr.error;
-        if (!HdcConnectKey().empty()) {
-            innerErr += " [device: " + HdcConnectKey() + "]";
-        }
-        log::Loge(innerErr);
-        if (!rr.output.empty() && !rr.outputStreamed) {
-            std::cout << rr.output;
-        }
-        return EXIT_PROFILER_FAILED;
-    }
-
-    if (!ReportCaptureResults(rr, std::string(capture->snapshotPrefix))) {
-        return EXIT_EXPORT_FAILED;
-    }
-
-    // 10. Generate HTML analysis report if --report is set.
-    if (flagReport) {
-        if (continuousSnapshot && !rr.snapshotPulledFiles.empty()) {
-            GenerateComparisonReport(rr.snapshotPulledFiles, outputDir, opt);
-            return rr.exitCode;
-        }
-
-        // Collect the file(s) to analyze.
-        std::vector<std::string> reportFiles;
-        if (rr.snapshotAttempted) {
-            reportFiles = rr.snapshotPulledFiles;
-        } else if (rr.pullAttempted && rr.pullOk && !rr.pulledFile.empty()) {
-            reportFiles.push_back(rr.pulledFile);
-        }
-
-        if (reportFiles.empty()) {
-            log::Loge("Report: no captured file available to analyze.");
-        } else {
-            // Determine the subcommand and extra args from the capture type.
-            const std::string subcmd = capture->reportSubcmd;
-            const std::string extraArgs = capture->reportExtra;
-
-            const std::string binary = ResolveMemAnalyzerBinary();
-
-            for (const auto& f : reportFiles) {
-                // Every capture file of a session lives directly in the session
-                // directory, so analyzing it there keeps the report inside the
-                // session tree. The analysis subcommand writes it one level
-                // deeper, under <dir>/<stem>/, which is undone below.
-                // nativeleaks: feed the orphan-snapshot file to `trace -l`
-                // alongside the .htrace so the L1/L2/L3 leak filtering runs.
-                std::string leaksArg;
-                if (configOption == "nativeleaks") {
-                    if (!rr.pulledLeaksFile.empty()) {
-                        leaksArg = " -l " + proc::ShellQuote(rr.pulledLeaksFile);
-                    } else {
-                        // leaks 文件未获取（超时/设备掉线）：明确告知用户本次
-                        // 未做 -l 泄漏过滤，仅输出普通 nativeheap 报告，避免
-                        // 静默降级让用户误以为泄漏过滤已运行。
-                        log::Logw("Warning: nativeleaks orphan-snapshot file was not captured; "
-                                  "running trace WITHOUT -l leak filtering (plain nativeheap "
-                                  "analysis only). Re-run the capture if leak filtering is needed.");
-                    }
-                }
-                std::string cmd = proc::ShellQuote(binary) +
-                    " " + subcmd + extraArgs + leaksArg +
-                    " " + proc::ShellQuote(f) +
-                    " -d " + proc::ShellQuote(outputDir);
-                // 转发反混淆选项给 jsleak 报告子命令，还原混淆的符号/路径后再分析
-                if (!opt.sourcemapDir.empty()) {
-                    cmd += " --sourcemap " + proc::ShellQuote(opt.sourcemapDir);
-                }
-                if (!opt.nameObfuscation.empty()) {
-                    cmd += " --namecache " + proc::ShellQuote(opt.nameObfuscation);
-                }
-                // native .so 符号反解只对 trace/tshandle 分析有意义（jsleak 走 ArkTS 反混淆）
-                if (!opt.soDir.empty() && (subcmd == "trace" || subcmd == "tshandle")) {
-                    cmd += " --so-dir " + proc::ShellQuote(opt.soDir);
-                }
-
-                log::Logd("Generating report: ", cmd);
-                int rc = RunCommandStreaming(cmd + " 2>&1");
-                if (rc < 0) {
-                    log::Loge("Report generation failed: unable to launch ", binary);
-                } else if (rc != 0) {
-                    log::Loge("Report generation failed: exited with code ", rc);
-                } else {
-                    // The analysis subcommand nests its output under
-                    // <output_dir>/<source_name>/, where source_name is the input
-                    // file stem. That level is redundant here: the capture file
-                    // already lives in its own session directory, so lift
-                    // everything the run produced next to it and report the
-                    // final location (the subprocess printed the old one).
-                    std::string base = platform::Stem(f);
-                    if (base.empty()) {
-                        base = "output";
-                    }
-                    FlattenReportDir(outputDir, base);
-
-                    const std::string htmlPath = platform::JoinPath(outputDir, base + ".html");
-                    log::Logok("Report generated: ", htmlPath);
-                    if (platform::FileExists(htmlPath)) {
-                        // Open the generated HTML in the default browser.
-                        platform::OpenWithDefaultApp(htmlPath);
-                    } else {
-                        log::Loge("Report HTML not found at: ", htmlPath,
-                            " (the capture may have contained no data).");
-                    }
-                }
-            }
-        }
-    }
-
-    return rr.exitCode;
+    return ExecuteAndReport(runOpts, *capture, opt, flagReport, continuousSnapshot);
 }
 
 } // namespace mem_analyzer

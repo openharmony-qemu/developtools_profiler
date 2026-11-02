@@ -76,75 +76,85 @@ static std::unordered_map<int, std::string> LoadDataDict(sqlite3* db)
     return dataDict;
 }
 
+static void QueryStatisticGroups(sqlite3* db, std::vector<ChainGroup>& groups)
+{
+    // ── Statistic mode: native_hook_statistic WHERE type IN (17, 18) ──
+    const char* stackSql =
+        "SELECT a.callchain_id, a.type, b.data AS existing_addrs,"
+        "  (a.apply_size - a.release_size) AS existing_size"
+        "  FROM ("
+        "    SELECT ranked.*, ROW_NUMBER() OVER ("
+        "      PARTITION BY ranked.callchain_id ORDER BY ranked.ts DESC"
+        "    ) AS rn"
+        "    FROM native_hook_statistic ranked"
+        "  ) a"
+        "  INNER JOIN data_dict b ON a.addr_id = b.id"
+        "  WHERE a.rn = 1 AND a.type IN (17, 18)"
+        "    AND (a.apply_size - a.release_size) > 0"
+        "  ORDER BY existing_size DESC";
+
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, stackSql, -1, &stmt, nullptr) == SQLITE_OK) {
+        StmtGuard guard(stmt);
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            ChainGroup g;
+            g.callchainId = sqlite3_column_int(stmt, 0);
+            g.type = sqlite3_column_int(stmt, 1);
+            auto existingAddrsStr = (const char*)sqlite3_column_text(stmt, 2);
+            if (existingAddrsStr) {
+                g.existingAddrs = split(existingAddrsStr, ',');
+            }
+            g.existingSize = sqlite3_column_int64(stmt, COL_EXISTING_SIZE);
+            groups.push_back(g);
+        }
+    } else {
+        log::Loge("Error: prepare stastics failed:sql=", stackSql, ", err=", sqlite3_errmsg(db));
+    }
+}
+
+static void QueryDetailGroups(sqlite3* db, std::vector<ChainGroup>& groups)
+{
+    // ── Detail mode: native_hook with ARK handle events ──
+    const char* stackSql =
+        "SELECT a.callchain_id,"
+        "  CASE a.event_type"
+        "    WHEN 'ARK_GLOBAL_HANDLE_Alloc_Event' THEN 17"
+        "    WHEN 'ARK_LOCAL_HANDLE_Alloc_Event' THEN 18"
+        "    ELSE 0"
+        "  END AS type,"
+        "  GROUP_CONCAT('0x' || printf('%x', a.addr), ',') AS existing_addrs,"
+        "  SUM(a.heap_size) AS existing_size"
+        "  FROM native_hook a"
+        "  WHERE a.event_type = 'ARK_LOCAL_HANDLE_Alloc_Event'"
+        "     OR (a.event_type = 'ARK_GLOBAL_HANDLE_Alloc_Event' AND a.end_ts IS NULL)"
+        "  GROUP BY a.callchain_id"
+        "  ORDER BY existing_size DESC";
+
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, stackSql, -1, &stmt, nullptr) == SQLITE_OK) {
+        StmtGuard guard(stmt);
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            ChainGroup g;
+            g.callchainId = sqlite3_column_int(stmt, 0);
+            g.type = sqlite3_column_int(stmt, 1);
+            auto existingAddrsStr = (const char*)sqlite3_column_text(stmt, 2);
+            g.existingAddrs = existingAddrsStr ? split(existingAddrsStr, ',') : std::vector<std::string>{};
+            g.existingSize = sqlite3_column_int64(stmt, COL_EXISTING_SIZE);
+            groups.push_back(g);
+        }
+    } else {
+        log::Loge("Error: prepare detail failed:sql=", stackSql, ", err=", sqlite3_errmsg(db));
+    }
+}
+
 static std::vector<ChainGroup> QueryCallStackGroups(sqlite3* db, bool isStatistics)
 {
     std::vector<ChainGroup> groups;
 
     if (isStatistics) {
-        // ── Statistic mode: native_hook_statistic WHERE type IN (17, 18) ──
-        const char* stackSql =
-            "SELECT a.callchain_id, a.type, b.data AS existing_addrs,"
-            "  (a.apply_size - a.release_size) AS existing_size"
-            "  FROM ("
-            "    SELECT ranked.*, ROW_NUMBER() OVER ("
-            "      PARTITION BY ranked.callchain_id ORDER BY ranked.ts DESC"
-            "    ) AS rn"
-            "    FROM native_hook_statistic ranked"
-            "  ) a"
-            "  INNER JOIN data_dict b ON a.addr_id = b.id"
-            "  WHERE a.rn = 1 AND a.type IN (17, 18)"
-            "    AND (a.apply_size - a.release_size) > 0"
-            "  ORDER BY existing_size DESC";
-
-        sqlite3_stmt* stmt = nullptr;
-        if (sqlite3_prepare_v2(db, stackSql, -1, &stmt, nullptr) == SQLITE_OK) {
-            StmtGuard guard(stmt);
-            while (sqlite3_step(stmt) == SQLITE_ROW) {
-                ChainGroup g;
-                g.callchainId = sqlite3_column_int(stmt, 0);
-                g.type = sqlite3_column_int(stmt, 1);
-                auto existingAddrsStr = (const char*)sqlite3_column_text(stmt, 2);
-                if (existingAddrsStr) {
-                    g.existingAddrs = split(existingAddrsStr, ',');
-                }
-                g.existingSize = sqlite3_column_int64(stmt, COL_EXISTING_SIZE);
-                groups.push_back(g);
-            }
-        } else {
-            log::Loge("Error: prepare stastics failed:sql=", stackSql, ", err=", sqlite3_errmsg(db));
-        }
+        QueryStatisticGroups(db, groups);
     } else {
-        // ── Detail mode: native_hook with ARK handle events ──
-        const char* stackSql =
-            "SELECT a.callchain_id,"
-            "  CASE a.event_type"
-            "    WHEN 'ARK_GLOBAL_HANDLE_Alloc_Event' THEN 17"
-            "    WHEN 'ARK_LOCAL_HANDLE_Alloc_Event' THEN 18"
-            "    ELSE 0"
-            "  END AS type,"
-            "  GROUP_CONCAT('0x' || printf('%x', a.addr), ',') AS existing_addrs,"
-            "  SUM(a.heap_size) AS existing_size"
-            "  FROM native_hook a"
-            "  WHERE a.event_type = 'ARK_LOCAL_HANDLE_Alloc_Event'"
-            "     OR (a.event_type = 'ARK_GLOBAL_HANDLE_Alloc_Event' AND a.end_ts IS NULL)"
-            "  GROUP BY a.callchain_id"
-            "  ORDER BY existing_size DESC";
-
-        sqlite3_stmt* stmt = nullptr;
-        if (sqlite3_prepare_v2(db, stackSql, -1, &stmt, nullptr) == SQLITE_OK) {
-            StmtGuard guard(stmt);
-            while (sqlite3_step(stmt) == SQLITE_ROW) {
-                ChainGroup g;
-                g.callchainId = sqlite3_column_int(stmt, 0);
-                g.type = sqlite3_column_int(stmt, 1);
-                auto existingAddrsStr = (const char*)sqlite3_column_text(stmt, 2);
-                g.existingAddrs = existingAddrsStr ? split(existingAddrsStr, ',') : std::vector<std::string>{};
-                g.existingSize = sqlite3_column_int64(stmt, COL_EXISTING_SIZE);
-                groups.push_back(g);
-            }
-        } else {
-            log::Loge("Error: prepare detail failed:sql=", stackSql, ", err=", sqlite3_errmsg(db));
-        }
+        QueryDetailGroups(db, groups);
     }
 
     return groups;

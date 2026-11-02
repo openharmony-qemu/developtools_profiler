@@ -404,187 +404,180 @@ static ReverseCSR BuildReverseCsr(DomContext& ctx, StageTimer& timer)
     return {std::move(revStart), std::move(revAdj), std::move(revEdgePtr), revTotal};
 }
 
-// ============================================================================
-//  Step 3: Lengauer-Tarjan dominator algorithm
-//  Reference: "A Fast Algorithm for Finding Dominators in a Flowgraph"
-//  by Thomas Lengauer and Robert Endre Tarjan, ACM TOPLAS 1979.
-//  The algorithm has three sub-steps:
-//    3a) DFS to number nodes (1-based dfn), building the spanning tree
-//    3b) Compute semi-dominators in reverse dfn order, using DSU for eval
-//    3c) Finalize immediate dominators in forward dfn order
-//  Edge filtering for the semi-dominator pass matches the TS reference:
-//    - isEssentialEdge (weak + non-root shortcut)
-//    - self-reference
-//    - page-flag exclusion (non-page-owned -> page-owned)
-// ============================================================================
-static std::vector<uint32_t> computeLtDominators(
-    DomContext& ctx,
-    const std::vector<uint32_t>& pageFlags,
-    const ReverseCSR& rev,
-    StageTimer& timer)
+// ---- LT working arrays (1-indexed: index 0 = invalid) ----
+// lt_dfn[v]        : DFS number of node v (0 = unvisited)
+// lt_vertex[dfn]   : node index for a given DFS number
+// lt_parent[v]     : parent of v in the DFS spanning tree
+// lt_semi[v]       : semi-dominator of v (stored as DFS number)
+// lt_idom[v]       : immediate dominator of v (stored as node index)
+// lt_ancestor[v]   : DSU ancestor pointer (0 = root of DSU tree)
+// lt_label[v]      : DSU label: node with minimal semi on the path to ancestor
+// lt_bucket_head[v]: head of linked list of nodes whose semi-dominator is v
+struct LtState {
+    std::vector<uint32_t> dfn;
+    std::vector<uint32_t> vertex;
+    std::vector<uint32_t> parent;
+    std::vector<int> semi;
+    std::vector<uint32_t> idom;
+    std::vector<uint32_t> ancestor;
+    std::vector<uint32_t> label;
+    std::vector<uint32_t> bucketHead;
+    std::vector<uint32_t> bucketNext;
+    std::vector<uint32_t> compressPath;
+    std::vector<uint32_t> dfsStack;
+    std::vector<uint32_t> dfsChildIdx;
+    uint32_t dfsSp = 0;
+    uint32_t dfnCount = 0;
+
+    explicit LtState(uint32_t nodeCount)
+        : dfn(nodeCount, 0), vertex(nodeCount + 1, 0), parent(nodeCount, ROOT),
+          semi(nodeCount, 0), idom(nodeCount, ROOT), ancestor(nodeCount, 0),
+          label(nodeCount, 0), bucketHead(nodeCount, 0), bucketNext(nodeCount, 0),
+          compressPath(nodeCount), dfsStack(nodeCount), dfsChildIdx(nodeCount) {}
+};
+
+// ---- Edge filter for the LT DFS (same as post-order DFS) ----
+static bool IsLtEdgeTraversable(const DomContext& ctx,
+    const std::vector<uint32_t>& pageFlags, uint32_t sourceNode, size_t ptr)
 {
     constexpr uint32_t pageObjectFlag = 1;
+    int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edgeTypeOff)]);
+    if (ctx.weakType >= 0 && t == ctx.weakType) {
+        return false;
+    }
+    if (ctx.shortcutType >= 0 && t == ctx.shortcutType && sourceNode != ROOT) {
+        return false;
+    }
+    uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
+    if (sourceNode != ROOT && child < ctx.nodeCount &&
+        (pageFlags[child] & pageObjectFlag) &&
+        !(pageFlags[sourceNode] & pageObjectFlag)) {
+        return false;
+    }
+    return true;
+}
 
-    // ---- Edge filter for the LT DFS (same as post-order DFS) ----
-    auto isTraversable = [&ctx, &pageFlags](uint32_t sourceNode, size_t ptr) -> bool {
-        int t = static_cast<int>(ctx.edges[ptr + static_cast<size_t>(ctx.edgeTypeOff)]);
-        if (ctx.weakType >= 0 && t == ctx.weakType) {
-            return false;
-        }
-        if (ctx.shortcutType >= 0 && t == ctx.shortcutType && sourceNode != ROOT) {
-            return false;
-        }
-        uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
-        if (sourceNode != ROOT && child < ctx.nodeCount &&
-            (pageFlags[child] & pageObjectFlag) &&
-            !(pageFlags[sourceNode] & pageObjectFlag)) {
-            return false;
-        }
-        return true;
-    };
+// ---- 3a) Iterative DFS to number nodes ----
+// Uses the same is_traversable filter as the post-order DFS.
+// Assigns DFS numbers starting from 1 (root = 1).
+static void LtDfsNumber(const DomContext& ctx,
+    const std::vector<uint32_t>& pageFlags, LtState& lt)
+{
+    lt.dfn[ROOT] = 1;
+    lt.vertex[1] = ROOT;
+    lt.semi[ROOT] = 1;        // semi-dominator of root is itself
+    lt.label[ROOT] = ROOT;    // DSU label: root points to itself
+    lt.dfnCount = 1;
 
-    // ---- LT working arrays (1-indexed: index 0 = invalid) ----
-    // lt_dfn[v]        : DFS number of node v (0 = unvisited)
-    // lt_vertex[dfn]   : node index for a given DFS number
-    // lt_parent[v]     : parent of v in the DFS spanning tree
-    // lt_semi[v]       : semi-dominator of v (stored as DFS number)
-    // lt_idom[v]       : immediate dominator of v (stored as node index)
-    // lt_ancestor[v]   : DSU ancestor pointer (0 = root of DSU tree)
-    // lt_label[v]      : DSU label: node with minimal semi on the path to ancestor
-    // lt_bucket_head[v]: head of linked list of nodes whose semi-dominator is v
-    std::vector<uint32_t> ltDfn(ctx.nodeCount, 0);
-    std::vector<uint32_t> ltVertex(ctx.nodeCount + 1, 0);
-    std::vector<uint32_t> ltParent(ctx.nodeCount, ROOT);
-    std::vector<int> ltSemi(ctx.nodeCount, 0);
-    std::vector<uint32_t> ltIdom(ctx.nodeCount, ROOT);
-    std::vector<uint32_t> ltAncestor(ctx.nodeCount, 0);
-    std::vector<uint32_t> ltLabel(ctx.nodeCount, 0);
-    std::vector<uint32_t> ltBucketHead(ctx.nodeCount, 0);
-    std::vector<uint32_t> ltBucketNext(ctx.nodeCount, 0);
+    lt.dfsStack[0] = ROOT;
+    lt.dfsChildIdx[0] = ctx.firstEdgePointers[ROOT];
+    lt.dfsSp = 1;
 
-    // ---- 3a) Iterative DFS to number nodes ----
-    // Uses the same is_traversable filter as the post-order DFS.
-    // Assigns DFS numbers starting from 1 (root = 1).
-    std::vector<uint32_t> ltDfsStack(ctx.nodeCount);
-    std::vector<uint32_t> ltDfsChildIdx(ctx.nodeCount);
-    uint32_t ltDfsSp = 0;
-    uint32_t ltDfnCount = 0;
-
-    ltDfn[ROOT] = 1;
-    ltVertex[1] = ROOT;
-    ltSemi[ROOT] = 1;        // semi-dominator of root is itself
-    ltLabel[ROOT] = ROOT;    // DSU label: root points to itself
-    ltDfnCount = 1;
-
-    ltDfsStack[0] = ROOT;
-    ltDfsChildIdx[0] = ctx.firstEdgePointers[ROOT];
-    ltDfsSp = 1;
-
-    while (ltDfsSp > 0) {
-        uint32_t top = ltDfsSp - 1;
-        uint32_t node = ltDfsStack[top];
+    while (lt.dfsSp > 0) {
+        uint32_t top = lt.dfsSp - 1;
+        uint32_t node = lt.dfsStack[top];
         size_t end = ctx.firstEdgePointers[static_cast<size_t>(node) + 1];
         bool descended = false;
 
-        while (ltDfsChildIdx[top] < end) {
-            size_t ptr = ltDfsChildIdx[top];
-            ltDfsChildIdx[top] += static_cast<uint32_t>(ctx.edgeFieldsCount);
-            if (!isTraversable(node, ptr)) {
+        while (lt.dfsChildIdx[top] < end) {
+            size_t ptr = lt.dfsChildIdx[top];
+            lt.dfsChildIdx[top] += static_cast<uint32_t>(ctx.edgeFieldsCount);
+            if (!IsLtEdgeTraversable(ctx, pageFlags, node, ptr)) {
                 continue;
             }
 
             uint32_t child = TargetIndexOf(ctx.edges, ptr, ctx.toNodeOff, ctx.nodeFieldsCount);
-            if (child < ctx.nodeCount && ltDfn[child] == 0) {
+            if (child < ctx.nodeCount && lt.dfn[child] == 0) {
                 // First time visiting this child — assign DFS number and tree edge
-                ltDfnCount++;
-                ltDfn[child] = ltDfnCount;
-                ltVertex[ltDfnCount] = child;
-                ltParent[child] = node;
-                ltSemi[child] = static_cast<int>(ltDfnCount);  // initial semi = own dfn
-                ltLabel[child] = child;                           // DSU label = self
+                lt.dfnCount++;
+                lt.dfn[child] = lt.dfnCount;
+                lt.vertex[lt.dfnCount] = child;
+                lt.parent[child] = node;
+                lt.semi[child] = static_cast<int>(lt.dfnCount);  // initial semi = own dfn
+                lt.label[child] = child;                           // DSU label = self
 
-                ltDfsStack[ltDfsSp] = child;
-                ltDfsChildIdx[ltDfsSp] = ctx.firstEdgePointers[child];
-                ltDfsSp++;
+                lt.dfsStack[lt.dfsSp] = child;
+                lt.dfsChildIdx[lt.dfsSp] = ctx.firstEdgePointers[child];
+                lt.dfsSp++;
                 descended = true;
                 break;
             }
         }
 
         if (!descended) {
-            ltDfsSp--;
+            lt.dfsSp--;
         }
     }
+}
 
-    // ---- DSU (Disjoint Set Union) helpers for the LT algorithm ----
-    // These implement the LINK and EVAL operations with path compression.
-    // EVAL(v) returns the node on the path from v to the DSU root
-    // that has the minimal semi-dominator.
+// ---- DSU (Disjoint Set Union) helpers for the LT algorithm ----
+// These implement the LINK and EVAL operations with path compression.
+// EVAL(v) returns the node on the path from v to the DSU root
+// that has the minimal semi-dominator.
 
-    // compress(v): iterative path compression with semi-dominator update.
-    // Replaced the recursive call with an explicit path buffer to avoid stack
-    // overflow on deep dominator-tree chains (large heap / rawheap dumps),
-    // consistent with the iterative DFS used elsewhere in this file.
-    // After compression, lt_label[v] holds the node with minimal semi
-    // on the path from v to the DSU root.
-    std::vector<uint32_t> ltCompressPath(ctx.nodeCount);
-    std::function<void(uint32_t)> ltCompress;
-    ltCompress = [&ltAncestor, &ltCompressPath, &ltSemi, &ltLabel](uint32_t v) {
-        // 1) Walk up the ancestor chain until reaching a node whose ancestor
-        //    is a DSU root (lt_ancestor[lt_ancestor[cur]] == 0), recording
-        //    the path for the post-order update below.
-        uint32_t pathLen = 0;
-        uint32_t cur = v;
-        while (ltAncestor[ltAncestor[cur]] != 0) {
-            ltCompressPath[pathLen++] = cur;
-            cur = ltAncestor[cur];
+// compress(v): iterative path compression with semi-dominator update.
+// Replaced the recursive call with an explicit path buffer to avoid stack
+// overflow on deep dominator-tree chains (large heap / rawheap dumps),
+// consistent with the iterative DFS used elsewhere in this file.
+// After compression, lt_label[v] holds the node with minimal semi
+// on the path from v to the DSU root.
+static void LtCompressState(LtState& lt, uint32_t v)
+{
+    // 1) Walk up the ancestor chain until reaching a node whose ancestor
+    //    is a DSU root (lt_ancestor[lt_ancestor[cur]] == 0), recording
+    //    the path for the post-order update below.
+    uint32_t pathLen = 0;
+    uint32_t cur = v;
+    while (lt.ancestor[lt.ancestor[cur]] != 0) {
+        lt.compressPath[pathLen++] = cur;
+        cur = lt.ancestor[cur];
+    }
+    // 2) Replay the path in reverse so deeper nodes are finalized first,
+    //    mirroring the recursive version's post-return updates.
+    while (pathLen > 0) {
+        uint32_t u = lt.compressPath[--pathLen];
+        uint32_t a = lt.ancestor[u];
+        if (lt.semi[lt.label[a]] < lt.semi[lt.label[u]]) {
+            lt.label[u] = lt.label[a];
         }
-        // 2) Replay the path in reverse so deeper nodes are finalized first,
-        //    mirroring the recursive version's post-return updates.
-        while (pathLen > 0) {
-            uint32_t u = ltCompressPath[--pathLen];
-            uint32_t a = ltAncestor[u];
-            if (ltSemi[ltLabel[a]] < ltSemi[ltLabel[u]]) {
-                ltLabel[u] = ltLabel[a];
-            }
-            ltAncestor[u] = ltAncestor[a];
-        }
-    };
+        lt.ancestor[u] = lt.ancestor[a];
+    }
+}
 
-    // eval(v): returns the node with minimal semi-dominator on the path
-    // from v to the root of its DSU tree.
-    auto ltEval = [&ltAncestor, &ltLabel, &ltSemi, &ltCompress](uint32_t v) -> uint32_t {
-        if (ltAncestor[v] == 0) { // v is a DSU root
-            return ltLabel[v];
-        }
-        ltCompress(v);
-        // After compression, lt_ancestor[v] is the DSU root.
-        // Compare semi of label[ancestor[v]] with label[v].
-        if (ltSemi[ltLabel[ltAncestor[v]]] < ltSemi[ltLabel[v]]) {
-            return ltLabel[ltAncestor[v]];
-        }
-        return ltLabel[v];
-    };
+// eval(v): returns the node with minimal semi-dominator on the path
+// from v to the root of its DSU tree.
+static uint32_t LtEvalState(LtState& lt, uint32_t v)
+{
+    if (lt.ancestor[v] == 0) { // v is a DSU root
+        return lt.label[v];
+    }
+    LtCompressState(lt, v);
+    // After compression, lt_ancestor[v] is the DSU root.
+    // Compare semi of label[ancestor[v]] with label[v].
+    if (lt.semi[lt.label[lt.ancestor[v]]] < lt.semi[lt.label[v]]) {
+        return lt.label[lt.ancestor[v]];
+    }
+    return lt.label[v];
+}
 
-    // link(v, w): makes v the parent of w in the DSU forest.
-    auto ltLink = [&ltAncestor](uint32_t v, uint32_t w) {
-        ltAncestor[w] = v;
-    };
-
-    // ---- 3b) Compute semi-dominators in reverse dfn order ----
-    // Process nodes from highest dfn down to 2 (skip root).
-    // For each node w, examine all its predecessors (from reverse CSR).
-    // The semi-dominator of w is the minimum of:
-    //   eval(pred).semi  for all essential predecessors pred of w
-    for (uint32_t i = ltDfnCount; i >= MIN_DFN_FOR_SEMI_DOM; i--) {
-        uint32_t w = ltVertex[i];  // current node (by descending dfn)
-        int wSemi = ltSemi[w];    // current best semi-dominator
+// ---- 3b) Compute semi-dominators in reverse dfn order ----
+// Process nodes from highest dfn down to 2 (skip root).
+// For each node w, examine all its predecessors (from reverse CSR).
+// The semi-dominator of w is the minimum of:
+//   eval(pred).semi  for all essential predecessors pred of w
+static void LtComputeSemiDominators(const DomContext& ctx,
+    const std::vector<uint32_t>& pageFlags, const ReverseCSR& rev, LtState& lt)
+{
+    constexpr uint32_t pageObjectFlag = 1;
+    for (uint32_t i = lt.dfnCount; i >= MIN_DFN_FOR_SEMI_DOM; i--) {
+        uint32_t w = lt.vertex[i];  // current node (by descending dfn)
+        int wSemi = lt.semi[w];    // current best semi-dominator
 
         size_t rBegin = rev.revStart[w];
         size_t rEnd = rev.revStart[static_cast<size_t>(w) + 1];
         for (size_t r = rBegin; r < rEnd; r++) {
             uint32_t pred = rev.revAdj[r];
-            if (ltDfn[pred] == 0) { // predecessor not in DFS tree
+            if (lt.dfn[pred] == 0) { // predecessor not in DFS tree
                 continue;
             }
 
@@ -613,62 +606,89 @@ static std::vector<uint32_t> computeLtDominators(
 
             // Evaluate the predecessor: find the node with minimal semi-dominator
             // on the path from pred to the DSU root.
-            uint32_t uEval = ltEval(pred);
-            int uSemi = ltSemi[uEval];
+            uint32_t uEval = LtEvalState(lt, pred);
+            int uSemi = lt.semi[uEval];
             if (uSemi < wSemi) {
                 wSemi = uSemi;
             }
         }
 
-        ltSemi[w] = wSemi;
+        lt.semi[w] = wSemi;
 
         // ---- Bucket processing ----
         // Add w to the bucket of its semi-dominator node.
         // Later, when processing the parent of w, we resolve the dominators
         // of all nodes in the parent's bucket.
-        uint32_t semiNode = ltVertex[static_cast<size_t>(wSemi)];
-        ltBucketNext[w] = ltBucketHead[semiNode];
-        ltBucketHead[semiNode] = w;
+        uint32_t semiNode = lt.vertex[static_cast<size_t>(wSemi)];
+        lt.bucketNext[w] = lt.bucketHead[semiNode];
+        lt.bucketHead[semiNode] = w;
 
         // Link w into the DSU forest as a child of its DFS parent
-        ltLink(ltParent[w], w);
+        // link(v, w): makes v the parent of w in the DSU forest.
+        lt.ancestor[w] = lt.parent[w];
 
         // Process the bucket of parent[w]: for each node v in the bucket,
         // compute its immediate dominator using eval.
-        uint32_t p = ltParent[w];
-        uint32_t b = ltBucketHead[p];
+        uint32_t p = lt.parent[w];
+        uint32_t b = lt.bucketHead[p];
         while (b != 0) {
             uint32_t v = b;
-            b = ltBucketNext[v];
-            uint32_t u = ltEval(v);
+            b = lt.bucketNext[v];
+            uint32_t u = LtEvalState(lt, v);
             // If semi(u) < semi(v), then u is a better candidate for idom(v);
             // otherwise the parent p is the idom.
-            ltIdom[v] = (ltSemi[u] < ltSemi[v]) ? u : p;
+            lt.idom[v] = (lt.semi[u] < lt.semi[v]) ? u : p;
         }
-        ltBucketHead[p] = 0;
+        lt.bucketHead[p] = 0;
     }
+}
+
+// ============================================================================
+//  Step 3: Lengauer-Tarjan dominator algorithm
+//  Reference: "A Fast Algorithm for Finding Dominators in a Flowgraph"
+//  by Thomas Lengauer and Robert Endre Tarjan, ACM TOPLAS 1979.
+//  The algorithm has three sub-steps:
+//    3a) DFS to number nodes (1-based dfn), building the spanning tree
+//    3b) Compute semi-dominators in reverse dfn order, using DSU for eval
+//    3c) Finalize immediate dominators in forward dfn order
+//  Edge filtering for the semi-dominator pass matches the TS reference:
+//    - isEssentialEdge (weak + non-root shortcut)
+//    - self-reference
+//    - page-flag exclusion (non-page-owned -> page-owned)
+// ============================================================================
+static std::vector<uint32_t> computeLtDominators(
+    DomContext& ctx,
+    const std::vector<uint32_t>& pageFlags,
+    const ReverseCSR& rev,
+    StageTimer& timer)
+{
+    LtState lt(ctx.nodeCount);
+
+    LtDfsNumber(ctx, pageFlags, lt);
+
+    LtComputeSemiDominators(ctx, pageFlags, rev, lt);
 
     // ---- 3c) Finalize immediate dominators in forward dfn order ----
     // For nodes where idom[w] != vertex[semi[w]], the true idom is the
     // idom of the current idom (implicit dominator resolution).
-    for (uint32_t i = 2; i <= ltDfnCount; i++) {
-        uint32_t w = ltVertex[i];
-        if (ltIdom[w] != ltVertex[static_cast<size_t>(ltSemi[w])]) {
-            ltIdom[w] = ltIdom[ltIdom[w]];
+    for (uint32_t i = 2; i <= lt.dfnCount; i++) {
+        uint32_t w = lt.vertex[i];
+        if (lt.idom[w] != lt.vertex[static_cast<size_t>(lt.semi[w])]) {
+            lt.idom[w] = lt.idom[lt.idom[w]];
         }
     }
-    ltIdom[ROOT] = ROOT;  // root dominates itself
+    lt.idom[ROOT] = ROOT;  // root dominates itself
 
     // ---- Materialize dominators indexed by nodeIndex ----
     // Nodes not reached in the DFS (lt_dfn == 0) are marked UNREACHABLE.
     std::vector<uint32_t> dominators(ctx.nodeCount, UNREACHABLE);
     for (uint32_t i = 0; i < ctx.nodeCount; i++) {
-        if (ltDfn[i] != 0) {
-            dominators[i] = ltIdom[i];
+        if (lt.dfn[i] != 0) {
+            dominators[i] = lt.idom[i];
         }
     }
     dominators[ROOT] = ROOT;
-    timer.Tick("lt_dominator", std::to_string(ltDfnCount) + " dfn");
+    timer.Tick("lt_dominator", std::to_string(lt.dfnCount) + " dfn");
     return dominators;
 }
 

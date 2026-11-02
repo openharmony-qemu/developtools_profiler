@@ -252,6 +252,28 @@ static AggregationResult AggregateByClassName(
     return result;
 }
 
+static void AppendMultiAnomalyLines(std::vector<std::string>& lines,
+    const BuildNativeRefResult& nativeResult)
+{
+    // multi anomalies
+    if (nativeResult.multiKeys.empty()) {
+        return;
+    }
+    lines.push_back("# [multi] existing addr in multiple callStacks (kept first)");
+    for (size_t i = 0; i < nativeResult.multiKeys.size(); i++) {
+        std::ostringstream ss;
+        ss << nativeResult.multiKeys[i] << "\t" <<
+           nativeResult.multiOriginalAddrs[i] << "\tmulti\t";
+        for (size_t j = 0; j < nativeResult.multiCallstackIds[i].size(); j++) {
+            if (j > 0) {
+                ss << ",";
+            }
+            ss << nativeResult.multiCallstackIds[i][j];
+        }
+        lines.push_back(ss.str());
+    }
+}
+
 static std::vector<std::string> BuildAnomalyLines(
     const BuildNativeRefResult& nativeResult,
     const ParseAddrResult& parseResult,
@@ -259,22 +281,7 @@ static std::vector<std::string> BuildAnomalyLines(
 {
     std::vector<std::string> lines;
 
-    // multi anomalies
-    if (!nativeResult.multiKeys.empty()) {
-        lines.push_back("# [multi] existing addr in multiple callStacks (kept first)");
-        for (size_t i = 0; i < nativeResult.multiKeys.size(); i++) {
-            std::ostringstream ss;
-            ss << nativeResult.multiKeys[i] << "\t" <<
-               nativeResult.multiOriginalAddrs[i] << "\tmulti\t";
-            for (size_t j = 0; j < nativeResult.multiCallstackIds[i].size(); j++) {
-                if (j > 0) {
-                    ss << ",";
-                }
-                ss << nativeResult.multiCallstackIds[i][j];
-            }
-            lines.push_back(ss.str());
-        }
-    }
+    AppendMultiAnomalyLines(lines, nativeResult);
 
     // noNode anomalies
     if (!nativeResult.noNodeAddrs.empty()) {
