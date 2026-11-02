@@ -50,6 +50,7 @@
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "res_sched_client.h"
+#include "res_sched_json_client.h"
 #include "res_type.h"
 #include "nlohmann/json.hpp"
 
@@ -1169,7 +1170,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         nlohmann::json payload;
         payload["bundleName"] = hookConfig_.process_name();
         nlohmann::json reply;
-        int32_t ret = OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportSyncEvent(
+        int32_t ret = OHOS::ResourceSchedule::ResSchedJsonClient::GetInstance().ReportSyncEvent(
             OHOS::ResourceSchedule::ResType::SYNC_RES_TYPE_DFX_CTRL_IMAGE_INTERFACE, 0, payload, reply);
         if (ret != 0) {
             PROFILER_LOG_WARN(LOG_CORE, "ReportSyncEvent clear image cache failed, ret=%d", ret);
