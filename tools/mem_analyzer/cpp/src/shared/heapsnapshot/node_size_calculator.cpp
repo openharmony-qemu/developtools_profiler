@@ -1055,9 +1055,9 @@ static bool IsLowPriorityEdge(const BfsContext& ctx, size_t ptr, uint32_t child)
 }
 
 enum class BfsEdgeAction {
-    Skip,
-    EnqueueNormal,
-    EnqueueDeferred,
+    SKIP,
+    ENQUEUE_NORMAL,
+    ENQUEUE_DEFERRED,
 };
 
 static bool IsInternalCodeEdge(const BfsContext& ctx, size_t ptr, int t)
@@ -1072,33 +1072,33 @@ static BfsEdgeAction ClassifyBfsEdge(const BfsContext& ctx, uint32_t cur,
 
     // ---- Basic edge-type exclusions ----
     if (ctx.weakType >= 0 && t == ctx.weakType) {
-        return BfsEdgeAction::Skip;
+        return BfsEdgeAction::SKIP;
     }
     if (ctx.shortcutType >= 0 && t == ctx.shortcutType && cur != 0) {
-        return BfsEdgeAction::Skip;
+        return BfsEdgeAction::SKIP;
     }
     if (ctx.hiddenType >= 0 && t == ctx.hiddenType) {
-        return BfsEdgeAction::Skip;
+        return BfsEdgeAction::SKIP;
     }
 
     // ---- isMeaningfulEdge checks (matching the reference implementation) ----
     if (cur == child) { // self-reference
-        return BfsEdgeAction::Skip;
+        return BfsEdgeAction::SKIP;
     }
 
     // Edge name block list + WeakMap key edge check
     if (ShouldSkipWeakMapEdge(ctx, ptr, child)) {
-        return BfsEdgeAction::Skip;
+        return BfsEdgeAction::SKIP;
     }
 
     // Already queued — prevents multi-parent targeting
     if (alreadyQueued) {
-        return BfsEdgeAction::Skip;
+        return BfsEdgeAction::SKIP;
     }
 
     // Internal edge named "code" — V8 internal, not meaningful for leak analysis
     if (IsInternalCodeEdge(ctx, ptr, t)) {
-        return BfsEdgeAction::Skip;
+        return BfsEdgeAction::SKIP;
     }
 
     // Element edge to (map descriptors): only specific indices are meaningful.
@@ -1109,23 +1109,23 @@ static BfsEdgeAction ClassifyBfsEdge(const BfsContext& ctx, uint32_t cur,
         if (childName == "(map descriptors)") {
             uint32_t index = ctx.edges[ptr + static_cast<size_t>(ctx.edgeNameOff)];
             if (index >= MAP_DESC_SKIP_THRESHOLD || index % MAP_DESC_FIELDS_PER_ENTRY == 1) {
-                return BfsEdgeAction::Skip;
+                return BfsEdgeAction::SKIP;
             }
         }
     }
 
     // ---- isMeaningfulNode check (applied to the TARGET node) ----
     if (ShouldSkipTargetNode(ctx, child)) {
-        return BfsEdgeAction::Skip;
+        return BfsEdgeAction::SKIP;
     }
 
     // ---- Priority checks (isLessPreferableEdge / isLessPreferableNode) ----
     bool isLowPriority = IsLowPriorityEdge(ctx, ptr, child);
 
     if (isLowPriority) {
-        return BfsEdgeAction::EnqueueDeferred;
+        return BfsEdgeAction::ENQUEUE_DEFERRED;
     }
-    return BfsEdgeAction::EnqueueNormal;
+    return BfsEdgeAction::ENQUEUE_NORMAL;
 }
 
 // ============================================================================
@@ -1162,11 +1162,11 @@ static void ProcessCurrentLayer(BfsContext& ctx, std::vector<uint32_t>& curQueue
                 continue;
             }
             BfsEdgeAction action = ClassifyBfsEdge(ctx, cur, ptr, child, state.queued[child] != 0);
-            if (action == BfsEdgeAction::Skip) {
+            if (action == BfsEdgeAction::SKIP) {
                 continue;
             }
             // ---- Enqueue ----
-            if (action == BfsEdgeAction::EnqueueDeferred) {
+            if (action == BfsEdgeAction::ENQUEUE_DEFERRED) {
                 // Deferred: add to postpone queue (queued but no path edge yet)
                 state.postponeQueue.emplace_back(cur, ptr);
                 state.queued[child] = 1;
