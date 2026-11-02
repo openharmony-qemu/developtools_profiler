@@ -463,31 +463,21 @@ void CliParser::PrintUsageSection(std::ostream& os) const
     os << "USAGE:\n";
     if (!usageArgs_.empty()) {
         os << "  " << programName_ << " " << usageArgs_ << "\n";
-    } else {
-        // Auto-detect form (no subcommand)
-        os << "  " << programName_ << " [options]";
-        if (!positionals_.empty()) {
-            for (const auto& p : positionals_) {
-                os << " <" << p.name << ">";
-            }
-        }
         os << "\n";
-        // Subcommand forms
-        bool hasVisibleSub = false;
-        for (const auto& [name, entry] : subcommands_) {
-            if (!entry.hidden) {
-                hasVisibleSub = true;
-                break;
-            }
+        return;
+    }
+    // Auto-detect form (no subcommand)
+    os << "  " << programName_ << " [options]";
+    for (const auto& p : positionals_) {
+        os << " <" << p.name << ">";
+    }
+    os << "\n";
+    // Subcommand forms
+    for (const auto& [name, entry] : subcommands_) {
+        if (entry.hidden) { // hidden subcommands are omitted from help
+            continue;
         }
-        if (hasVisibleSub) {
-            for (const auto& [name, entry] : subcommands_) {
-                if (entry.hidden) { // hidden subcommands are omitted from help
-                    continue;
-                }
-                PrintSubcommandUsage(os, name, entry);
-            }
-        }
+        PrintSubcommandUsage(os, name, entry);
     }
     os << "\n";
 }
@@ -543,24 +533,25 @@ void CliParser::PrintOptionsSection(std::ostream& os) const
 {
     // Options, grouped by their `group` tag (preserving registration order;
     // empty group renders under the default "OPTIONS" section).
-    if (!options_.empty()) {
-        std::vector<std::pair<std::string, std::vector<const Option*>>> groups;
-        for (const auto& opt : options_) {
-            const std::string& g = opt.group.empty() ? "OPTIONS" : opt.group;
-            if (groups.empty() || groups.back().first != g) {
-                groups.emplace_back(g, std::vector<const Option*>{});
-            }
-            groups.back().second.push_back(&opt);
-        }
-        for (const auto& [title, opts] : groups) {
-            os << title << ":\n";
-            for (const Option* opt : opts) {
-                os << FormatOptionLine(opt);
-            }
-        }
-        os << "  -h, --help" << std::string(HELP_FLAG_PADDING, ' ') << "Print this help message\n";
-        os << "\n";
+    if (options_.empty()) {
+        return;
     }
+    std::vector<std::pair<std::string, std::vector<const Option*>>> groups;
+    for (const auto& opt : options_) {
+        const std::string& g = opt.group.empty() ? "OPTIONS" : opt.group;
+        if (groups.empty() || groups.back().first != g) {
+            groups.emplace_back(g, std::vector<const Option*>{});
+        }
+        groups.back().second.push_back(&opt);
+    }
+    for (const auto& [title, opts] : groups) {
+        os << title << ":\n";
+        for (const Option* opt : opts) {
+            os << FormatOptionLine(opt);
+        }
+    }
+    os << "  -h, --help" << std::string(HELP_FLAG_PADDING, ' ') << "Print this help message\n";
+    os << "\n";
 }
 
 void CliParser::PrintSubcommandsSection(std::ostream& os) const

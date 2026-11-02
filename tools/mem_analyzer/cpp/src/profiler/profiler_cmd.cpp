@@ -679,6 +679,16 @@ bool ParsePkgAppNameLine(const std::string& line, AppEntry& current)
     return true;
 }
 
+// Flush current entry to apps if it has a package name.
+void FlushCurrentEntry(AppEntry& current, std::vector<AppEntry>& apps)
+{
+    if (current.package.empty()) {
+        return;
+    }
+    apps.push_back(std::move(current));
+    current = AppEntry{};
+}
+
 // Fallback: line-by-line key-value parsing.
 void ParseAppsFromKeyValue(const std::string& output, std::vector<AppEntry>& apps)
 {
@@ -690,10 +700,7 @@ void ParseAppsFromKeyValue(const std::string& output, std::vector<AppEntry>& app
         auto f = line.find_first_not_of(" \t\r\n");
         if (f == std::string::npos) {
             // Empty line: flush current entry if it has a package name
-            if (!current.package.empty()) {
-                apps.push_back(std::move(current));
-                current = AppEntry{};
-            }
+            FlushCurrentEntry(current, apps);
             continue;
         }
         line = line.substr(f);
@@ -725,9 +732,7 @@ void ParseAppsFromKeyValue(const std::string& output, std::vector<AppEntry>& app
         }
     }
     // Flush last entry
-    if (!current.package.empty()) {
-        apps.push_back(std::move(current));
-    }
+    FlushCurrentEntry(current, apps);
 }
 
 static AppQueryResult QueryDeviceApps()
