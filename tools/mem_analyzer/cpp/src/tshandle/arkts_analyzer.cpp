@@ -335,6 +335,39 @@ static std::vector<std::string> BuildAnomalyLines(
     return lines;
 }
 
+static void PopulateAnomalyData(ArkTsAnalyzeResult& result,
+    const BuildNativeRefResult& nativeResult, const ParseAddrResult& parseResult,
+    int missingNodeCount, const std::vector<uint32_t>& missingNodeIds)
+{
+    // Populate counts
+    result.anomalyCounts.multi = nativeResult.multiCount;
+    result.anomalyCounts.noNode = nativeResult.noNodeCount;
+    result.anomalyCounts.missingNode = missingNodeCount;
+    result.anomalyCounts.invalidAddr = nativeResult.invalidCount;
+    result.anomalyCounts.duplicate = parseResult.duplicateCount;
+    result.anomalyCounts.addrFileInvalid = parseResult.addrFileInvalidCount;
+
+    // Build anomaly lines
+    auto& lines = result.anomalyLines;
+    lines.push_back("# addr anomaly report");
+
+    {
+        std::ostringstream ss;
+        ss << "# summary: multi=" << result.anomalyCounts.multi <<
+           " noNode=" << result.anomalyCounts.noNode <<
+           " missingNode=" << result.anomalyCounts.missingNode <<
+           " invalid=" << result.anomalyCounts.invalidAddr <<
+           " duplicate=" << result.anomalyCounts.duplicate <<
+           " addrFileInvalid=" << result.anomalyCounts.addrFileInvalid;
+        lines.push_back(ss.str());
+    }
+
+    auto sectionLines = BuildAnomalyLines(nativeResult, parseResult, missingNodeIds);
+    for (auto& l : sectionLines) {
+        lines.push_back(std::move(l));
+    }
+}
+
 ArkTsAnalyzeResult AnalyzeArktsClasses(
     const std::string& heapsnapshotPath,
     const std::string& addrFilePath,
@@ -374,34 +407,7 @@ ArkTsAnalyzeResult AnalyzeArktsClasses(
     ApplyTshandleRetainedSizes(callStacks, localRetainedSizeByCallStack);
 
     // ---- 7. Build anomaly report data ----
-
-    // Populate counts
-    result.anomalyCounts.multi = nativeResult.multiCount;
-    result.anomalyCounts.noNode = nativeResult.noNodeCount;
-    result.anomalyCounts.missingNode = missingNodeCount;
-    result.anomalyCounts.invalidAddr = nativeResult.invalidCount;
-    result.anomalyCounts.duplicate = parseResult.duplicateCount;
-    result.anomalyCounts.addrFileInvalid = parseResult.addrFileInvalidCount;
-
-    // Build anomaly lines
-    auto& lines = result.anomalyLines;
-    lines.push_back("# addr anomaly report");
-
-    {
-        std::ostringstream ss;
-        ss << "# summary: multi=" << result.anomalyCounts.multi <<
-           " noNode=" << result.anomalyCounts.noNode <<
-           " missingNode=" << result.anomalyCounts.missingNode <<
-           " invalid=" << result.anomalyCounts.invalidAddr <<
-           " duplicate=" << result.anomalyCounts.duplicate <<
-           " addrFileInvalid=" << result.anomalyCounts.addrFileInvalid;
-        lines.push_back(ss.str());
-    }
-
-    auto sectionLines = BuildAnomalyLines(nativeResult, parseResult, missingNodeIds);
-    for (auto& l : sectionLines) {
-        lines.push_back(std::move(l));
-    }
+    PopulateAnomalyData(result, nativeResult, parseResult, missingNodeCount, missingNodeIds);
 
     // ---- 8. Build result ----
     result.arktsClasses.reserve(classMap.size());

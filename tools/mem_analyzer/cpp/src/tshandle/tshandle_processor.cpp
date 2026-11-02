@@ -210,16 +210,23 @@ static std::vector<ResolvedCallStack> BuildCallStackEntries(
 }
 
 // ── Main processor ─────────────────────────────────────────────────
+static std::string BuildChainSelectSql(bool isStatistics)
+{
+    if (isStatistics) {
+        return "SELECT callchain_id FROM native_hook_statistic WHERE type IN (17, 18)";
+    }
+    return "SELECT callchain_id FROM native_hook "
+           "WHERE event_type = 'ARK_LOCAL_HANDLE_Alloc_Event' "
+           "OR (event_type = 'ARK_GLOBAL_HANDLE_Alloc_Event' AND end_ts IS NULL)";
+}
+
 TraceDB ProcessTshandleDb(const std::string& dbPath)
 {
     if (!platform::FileExists(dbPath)) {
         throw std::runtime_error("DB file not found: " + dbPath);
     }
 
-    sqlite3* db = nullptr;
-    {
-        db = platform::OpenSqlite3Db(dbPath);
-    }
+    sqlite3* db = platform::OpenSqlite3Db(dbPath);
 
     try {
         StageTimer timer("TS DB");
@@ -251,17 +258,7 @@ TraceDB ProcessTshandleDb(const std::string& dbPath)
 
         // 4. Query frames (shared reader; chain filter pushed down via subquery)
         timer.Stage("Querying frames");
-        std::string chainSelect;
-        if (isStatistics) {
-            chainSelect =
-                "SELECT callchain_id FROM native_hook_statistic WHERE type IN (17, 18)";
-        } else {
-            chainSelect =
-                "SELECT callchain_id FROM native_hook "
-                "WHERE event_type = 'ARK_LOCAL_HANDLE_Alloc_Event' "
-                "OR (event_type = 'ARK_GLOBAL_HANDLE_Alloc_Event' AND end_ts IS NULL)";
-        }
-        auto framesByChain = ReadFrames(db, chainSelect);
+        auto framesByChain = ReadFrames(db, BuildChainSelectSql(isStatistics));
         if (framesByChain.empty()) {
             throw std::runtime_error("Failed to query frames");
         }

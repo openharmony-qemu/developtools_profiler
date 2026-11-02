@@ -550,6 +550,13 @@ std::string HeapSnapshot::ComputeExtendedName(uint32_t nodeIndex) const
     return result;
 }
 
+void HeapSnapshot::BuildExtNamesRange(uint32_t begin, uint32_t end) const
+{
+    for (uint32_t i = begin; i < end; ++i) {
+        extNames_[static_cast<size_t>(i)] = ComputeExtendedName(i);
+    }
+}
+
 // 获取节点的扩展名称
 const std::string& HeapSnapshot::GetExtendedNodeName(uint32_t nodeIndex) const
 {
@@ -575,9 +582,7 @@ const std::string& HeapSnapshot::GetExtendedNodeName(uint32_t nodeIndex) const
             const int b = static_cast<int>((static_cast<long long>(n) * t) / threadCount);
             const int e = static_cast<int>((static_cast<long long>(n) * (t + 1)) / threadCount);
             workers.emplace_back([this, b, e]() {
-                for (int i = b; i < e; ++i) {
-                    extNames_[static_cast<size_t>(i)] = ComputeExtendedName(static_cast<uint32_t>(i));
-                }
+                BuildExtNamesRange(static_cast<uint32_t>(b), static_cast<uint32_t>(e));
             });
         }
         for (auto& w : workers) {
@@ -895,6 +900,22 @@ static size_t FindMatchingCloseBracket(const std::string& text, size_t start)
     return std::string::npos;
 }
 
+// Check for orphan surrogate: \uD[89AB]xx or \uD[CDEF]xx
+static bool TryReplaceOrphanSurrogate(const std::string& strBuf, size_t& i, std::string& sanitized)
+{
+    if (i + UNICODE_ESCAPE_TAIL_LEN >= strBuf.size() || strBuf[i + 1] != 'u') {
+        return false;
+    }
+    char h1 = strBuf[i + 2] | 0x20;  // lowercase
+    char h2 = strBuf[i + 3];
+    if (h1 == 'd' && ((h2 >= '8' && h2 <= 'f') || (h2 >= 'A' && h2 <= 'F'))) {
+        sanitized += "\\uFFFD";  // replace with replacement character
+        i += UNICODE_ESCAPE_LEN;
+        return true;
+    }
+    return false;
+}
+
 /**
  * Sanitize a JSON string array buffer for nlohmann::json compatibility.
  * Control characters (U+0000-U+001F, except \t \n \r) are escaped as \u00XX,
@@ -907,15 +928,8 @@ static void SanitizeStringLiteral(const std::string& strBuf, size_t& i, std::str
     while (i < strBuf.size()) {
         char sc = strBuf[i];
         if (sc == '\\') {
-            // Check for orphan surrogate: \uD[89AB]xx or \uD[CDEF]xx
-            if (i + UNICODE_ESCAPE_TAIL_LEN < strBuf.size() && strBuf[i+1] == 'u') {
-                char h1 = strBuf[i+2] | 0x20;  // lowercase
-                char h2 = strBuf[i+3];
-                if (h1 == 'd' && ((h2 >= '8' && h2 <= 'f') || (h2 >= 'A' && h2 <= 'F'))) {
-                    sanitized += "\\uFFFD";  // replace with replacement character
-                    i += UNICODE_ESCAPE_LEN;
-                    continue;
-                }
+            if (TryReplaceOrphanSurrogate(strBuf, i, sanitized)) {
+                continue;
             }
             sanitized += sc;
             i++;
@@ -1720,63 +1734,67 @@ void ResolveChainHashForNode(uint32_t u, uint32_t p, int n,
 }
 } // anonymous namespace
 
+void HeapSnapshot::BuildChainHashTable() const
+{
+    const auto t0 = std::chrono::steady_clock::now();
+    log::Logd("[ref_chain] build chain_hash start node_count=", nodeCount);
+
+    const int N = nodeCount;
+    if (N > 0) { // 触发 ext_names_ 预构建
+        GetExtendedNodeName(0);
+    }
+
+    chainHash_.resize(static_cast<size_t>(N));
+    chainHashComputed_.assign(static_cast<size_t>(N), 0);
+
+    // 复用 scratch：沿父链反向收集未算节点，再反转回填（天然正向拓扑序）。
+    std::vector<uint32_t> path;
+    path.reserve(REF_CHAIN_PATH_RESERVE);
+    const size_t cycleLimit = static_cast<size_t>(N) + 1;
+
+    for (int ni = 0; ni < N; ++ni) {
+        const uint32_t node = static_cast<uint32_t>(ni);
+        if (chainHashComputed_[node]) {
+            continue;
+        }
+
+        path.clear();
+        uint32_t cur = node;
+        while (!chainHashComputed_[cur] && path.size() < cycleLimit) {
+            path.push_back(cur);
+            const uint32_t parent = pathParentIndex[cur];
+            if (parent == INVALID_NODE || parent == cur) {
+                break;
+            }
+            cur = parent;
+        }
+        if (path.size() >= cycleLimit) {
+            log::Logw("[ref_chain] WARN cycle in path_parent_index at node_index=", node);
+        }
+
+        for (auto it = path.rbegin(); it != path.rend(); ++it) {
+            const uint32_t u = *it;
+            const uint32_t p = pathParentIndex[u];
+            ResolveChainHashForNode(u, p, N, chainHash_, extNames_, chainHashComputed_);
+            chainHashComputed_[u] = 1;
+        }
+    }
+
+    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - t0)
+        .count();
+    log::Logd("[ref_chain] build chain_hash done (", ms, "ms)");
+}
+
 RefChainKey HeapSnapshot::RefChainHash(uint32_t nodeIndex) const
 {
-    constexpr uint32_t invalid = INVALID_NODE;
     if (nodeIndex >= static_cast<uint32_t>(nodeCount)) {
         return RefChainKey{};
     }
 
     // 一次性预构建「正向链 hash」表（root → node），之后 O(1) 查表。
     std::call_once(*chainHashOnce_, [this]() {
-        const auto t0 = std::chrono::steady_clock::now();
-        log::Logd("[ref_chain] build chain_hash start node_count=", nodeCount);
-
-        const int N = nodeCount;
-        if (N > 0) { // 触发 ext_names_ 预构建
-            GetExtendedNodeName(0);
-        }
-
-        chainHash_.resize(static_cast<size_t>(N));
-        chainHashComputed_.assign(static_cast<size_t>(N), 0);
-
-        // 复用 scratch：沿父链反向收集未算节点，再反转回填（天然正向拓扑序）。
-        std::vector<uint32_t> path;
-        path.reserve(REF_CHAIN_PATH_RESERVE);
-        const size_t cycleLimit = static_cast<size_t>(N) + 1;
-
-        for (int ni = 0; ni < N; ++ni) {
-            const uint32_t node = static_cast<uint32_t>(ni);
-            if (chainHashComputed_[node]) {
-                continue;
-            }
-
-            path.clear();
-            uint32_t cur = node;
-            while (!chainHashComputed_[cur] && path.size() < cycleLimit) {
-                path.push_back(cur);
-                const uint32_t parent = pathParentIndex[cur];
-                if (parent == invalid || parent == cur) {
-                    break;
-                }
-                cur = parent;
-            }
-            if (path.size() >= cycleLimit) {
-                log::Logw("[ref_chain] WARN cycle in path_parent_index at node_index=", node);
-            }
-
-            for (auto it = path.rbegin(); it != path.rend(); ++it) {
-                const uint32_t u = *it;
-                const uint32_t p = pathParentIndex[u];
-                ResolveChainHashForNode(u, p, N, chainHash_, extNames_, chainHashComputed_);
-                chainHashComputed_[u] = 1;
-            }
-        }
-
-        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - t0)
-            .count();
-        log::Logd("[ref_chain] build chain_hash done (", ms, "ms)");
+        BuildChainHashTable();
     });
 
     return chainHash_[nodeIndex];

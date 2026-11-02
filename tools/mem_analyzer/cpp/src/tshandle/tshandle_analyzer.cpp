@@ -170,12 +170,10 @@ TshandleTypeSection buildSectionWithStacks(
         return left.existingSize > right.existingSize;
     });
 
-    double totalSize = 0.0;
     for (const auto& object : objects) {
-        totalSize += object.existingSize;
+        section.totalSize += object.existingSize;
         section.totalCount += object.count;
     }
-    section.totalSize = totalSize;
 
     if (topN > 0 && objects.size() > static_cast<std::size_t>(topN)) {
         objects.resize(static_cast<std::size_t>(topN));

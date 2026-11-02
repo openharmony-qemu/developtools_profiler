@@ -326,6 +326,9 @@ private:
     // 由 get_extended_node_name 在预构建阶段串行调用。
     std::string ComputeExtendedName(uint32_t nodeIndex) const;
 
+    void BuildExtNamesRange(uint32_t begin, uint32_t end) const;
+    void BuildChainHashTable() const;
+
     // 一次性预构建的扩展名表（按 node_index 索引）。并行阶段只读、无锁。
     // once_flag 用 unique_ptr 持有（once_flag 不可拷贝/移动）。
     mutable std::unique_ptr<std::once_flag> extNamesOnce_;

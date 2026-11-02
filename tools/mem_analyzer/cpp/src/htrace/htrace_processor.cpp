@@ -319,54 +319,56 @@ std::pair<std::string, std::string> BuildDetailSql(const std::vector<EventTypeMa
     return {eventTypeIn, sql};
 }
 
+static bool MatchSubTypeCond(SubTypeCondition cond, int subTypeId)
+{
+    switch (cond) {
+        case SubTypeCondition::ANY:
+            return true;
+        case SubTypeCondition::IS_NULL:
+            return subTypeId == -1;
+        case SubTypeCondition::IS_NOT_NULL:
+            return subTypeId != -1;
+        default:
+            return false;
+    }
+}
+
 void QueryAndAggregateAllocs(sqlite3* db, const std::string& sql,
     const std::vector<EventTypeMapping>& configs,
     const std::map<std::string, std::vector<int>>& allocEventLookup,
     std::vector<std::map<std::pair<int, int>, AllocEntry>>& allocMaps)
 {
     sqlite3_stmt* stmt = nullptr;
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
-        StmtGuard guard(stmt);
-        while (sqlite3_step(stmt) == SQLITE_ROW) {
-            auto eventTypeStr = (const char*)sqlite3_column_text(stmt, 0);
-            if (!eventTypeStr) {
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        return;
+    }
+    StmtGuard guard(stmt);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        auto eventTypeStr = (const char*)sqlite3_column_text(stmt, 0);
+        if (!eventTypeStr) {
+            continue;
+        }
+        int ccid = sqlite3_column_int(stmt, 1);
+        long long heapSize = sqlite3_column_int64(stmt, 2);
+        int subTypeId = -1;
+        if (sqlite3_column_type(stmt, COL_SUB_TYPE_ID) != SQLITE_NULL) {
+            subTypeId = sqlite3_column_int(stmt, COL_SUB_TYPE_ID);
+        }
+
+        auto lookupIt = allocEventLookup.find(eventTypeStr);
+        if (lookupIt == allocEventLookup.end()) { // defensive
+            continue;
+        }
+
+        for (int ci : lookupIt->second) {
+            if (!MatchSubTypeCond(configs[ci].subTypeCond, subTypeId)) {
                 continue;
             }
-            int ccid = sqlite3_column_int(stmt, 1);
-            long long heapSize = sqlite3_column_int64(stmt, 2);
-            int subTypeId = -1;
-            if (sqlite3_column_type(stmt, COL_SUB_TYPE_ID) != SQLITE_NULL) {
-                subTypeId = sqlite3_column_int(stmt, COL_SUB_TYPE_ID);
-            }
-
-            auto lookupIt = allocEventLookup.find(eventTypeStr);
-            if (lookupIt == allocEventLookup.end()) { // defensive
-                continue;
-            }
-
-            for (int ci : lookupIt->second) {
-                const auto& c = configs[ci];
-                bool match = false;
-                switch (c.subTypeCond) {
-                    case SubTypeCondition::ANY:
-                        match = true;
-                        break;
-                    case SubTypeCondition::IS_NULL:
-                        match = (subTypeId == -1);
-                        break;
-                    case SubTypeCondition::IS_NOT_NULL:
-                        match = (subTypeId != -1);
-                        break;
-                }
-                if (!match) {
-                    continue;
-                }
-                auto key = std::make_pair(ccid, subTypeId);
-                auto& entry = allocMaps[ci][key];
-                entry.heapSize += heapSize;
-                entry.count++;
-                entry.subTypeId = subTypeId;
-            }
+            auto key = std::make_pair(ccid, subTypeId);
+            auto& entry = allocMaps[ci][key];
+            entry.heapSize += heapSize;
+            entry.count++;
+            entry.subTypeId = subTypeId;
         }
     }
 }

@@ -588,6 +588,17 @@ static EquivRefs FindEquivRefs(
     return {std::move(equivRefMap), removedEquiv};
 }
 
+static bool HasNonRemovedNeighbor(const std::vector<uint64_t>& neighbors,
+    const std::unordered_set<uint64_t>& removedUids)
+{
+    for (const auto& n : neighbors) {
+        if (!removedUids.count(n)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 static void FilterApproxRemoved(
     const ApproxResult& approx,
     std::unordered_set<uint64_t>& removedUids,
@@ -601,28 +612,20 @@ static void FilterApproxRemoved(
             if (removedUids.count(sym)) {
                 continue;
             }
-            for (auto& ds : downSet) {
-                if (removedUids.count(ds)) {
-                    continue;
-                }
+            if (HasNonRemovedNeighbor(downSet, removedUids)) {
                 removedUids.insert(sym);
                 downRemoved++;
                 changed = true;
-                break;
             }
         }
         for (auto& [sym, upSet] : approx.upApprox) {
             if (removedUids.count(sym)) {
                 continue;
             }
-            for (auto& us : upSet) {
-                if (removedUids.count(us)) {
-                    continue;
-                }
+            if (HasNonRemovedNeighbor(upSet, removedUids)) {
                 removedUids.insert(sym);
                 upRemoved++;
                 changed = true;
-                break;
             }
         }
     }

@@ -2667,38 +2667,43 @@ static void ExportEndSnapshot(const HdcRunOptions& opts, const std::string& comm
     }
 }
 
-// `-c snapshot` with an explicit `-t`: keep monitoring for `duration` seconds
-// like the other capture types (same periodic memory line) and export a
-// snapshot at the start, at the end, and whenever the ArkTS heap stays at least
-// SNAPSHOT_PEAK_GROWTH_KB above its recorded peak for SNAPSHOT_PEAK_TRIGGER
-// consecutive samples. Ctrl+C ends the session and still exports the final
-// snapshot.
-// Artifacts: the start snapshot is exported once at the very beginning and is
-// never overwritten nor removed afterwards (a target restart doesn't re-export
-// it either), and the recorded peak never decreases, so the single peak
-// snapshot that is kept is always the one holding the session's highest ArkTS
-// heap.
-void RunContinuousSnapshot(const HdcRunOptions& opts,
-    const std::string& command,
-    const PreCaptureState& pre,
-    ClockType::time_point start,
-    RunResult& result)
+static void TryExportPeakSnapshot(const HdcRunOptions& opts, const std::string& command,
+    const ProcessMetrics& metrics, long long& arktsPeakKb, int& samplesAbovePeak,
+    bool peakSeeded, std::vector<std::string>& peakFiles, std::string& transcript)
 {
-    result.snapshotAttempted = true;
+    if (!CheckPeakGrowth(metrics, arktsPeakKb, samplesAbovePeak, peakSeeded)) {
+        return;
+    }
+    log::Logi("ArkTS heap stayed above the recorded peak by more than ",
+        (SNAPSHOT_PEAK_GROWTH_KB / KB_PER_MB), " MB for ",
+        samplesAbovePeak,
+        " consecutive samples; exporting a snapshot...");
+    // The peak is lifted as soon as the export is decided, so
+    // that later samples are compared against this new value
+    // even if the export itself fails.
+    arktsPeakKb = metrics.arktsHeapKb;
+    std::vector<std::string> newPeak;
+    std::string peakStatus;
+    std::string peakOutput;
+    std::string peakErr;
+    if (exportSnapshotOnce(opts, command, "peak", newPeak, peakStatus,
+        peakOutput, peakErr)) {
+        // Only one peak snapshot is kept: the new export is
+        // complete, so the previous one can be dropped now.
+        RemoveSnapshotArtifacts(peakFiles);
+        peakFiles = newPeak;
+        transcript += peakOutput;
+        log::Logok("Snapshot exported: ", peakFiles.front(), " (peak)");
+    } else {
+        log::Logw("Warning: snapshot export failed: ", (peakErr.empty() ? peakStatus : peakErr));
+    }
+    samplesAbovePeak = 0;
+}
 
-    std::string pid = pre.initialPid;
-    std::vector<std::string> startFiles;
-    std::vector<std::string> peakFiles;
-    std::vector<std::string> endFiles;
-    std::string transcript;
-
-    // The caller already created this session's directory
-    // (<output_dir>/snapshot-<bundle>-<timestamp>/). Every snapshot of the
-    // session is pulled flat into it and tagged with its role by a file-name
-    // suffix (...-start.rawheap / -peak.rawheap / -end.rawheap) instead of a
-    // role subdirectory: the layout stays shallow while each file remains
-    // self-describing (a plain device timestamp doesn't tell which export it is).
-
+static void RunSnapshotMonitoringLoop(const HdcRunOptions& opts, const std::string& command,
+    ClockType::time_point start, const std::string& initialPid,
+    std::vector<std::string>& peakFiles, std::string& transcript)
+{
     // The recorded peak (the "previous max" the trigger compares against) is
     // seeded from the first valid sample of the monitoring loop below, i.e.
     // after the start-of-session export. It is deliberately not sampled before
@@ -2708,13 +2713,10 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
     // against, which would put the peak out of reach for the whole session.
     // Until it is seeded the trigger stays idle, so the baseline and the
     // compared samples always come from the same (post-GC) regime.
+    std::string pid = initialPid;
     ProcessMetrics metrics;
     long long arktsPeakKb = 0;
     bool peakSeeded = false;
-
-    if (!ExportStartSnapshot(opts, command, result, startFiles, transcript)) {
-        return;
-    }
 
     // ── monitoring loop ──────────────────────────────
     int roundNo = 0;
@@ -2769,38 +2771,52 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
             peakSeeded = true;
         }
 
-        if (CheckPeakGrowth(metrics, arktsPeakKb, samplesAbovePeak, peakSeeded)) {
-            log::Logi("ArkTS heap stayed above the recorded peak by more than ",
-                (SNAPSHOT_PEAK_GROWTH_KB / KB_PER_MB), " MB for ",
-                samplesAbovePeak,
-                " consecutive samples; exporting a snapshot...");
-            // The peak is lifted as soon as the export is decided, so
-            // that later samples are compared against this new value
-            // even if the export itself fails.
-            arktsPeakKb = metrics.arktsHeapKb;
-            std::vector<std::string> newPeak;
-            std::string peakStatus;
-            std::string peakOutput;
-            std::string peakErr;
-            if (exportSnapshotOnce(opts, command, "peak", newPeak, peakStatus,
-                peakOutput, peakErr)) {
-                // Only one peak snapshot is kept: the new export is
-                // complete, so the previous one can be dropped now.
-                RemoveSnapshotArtifacts(peakFiles);
-                peakFiles = newPeak;
-                transcript += peakOutput;
-                log::Logok("Snapshot exported: ", peakFiles.front(), " (peak)");
-            } else {
-                log::Logw("Warning: snapshot export failed: ", (peakErr.empty() ? peakStatus : peakErr));
-            }
-            samplesAbovePeak = 0;
-        }
+        TryExportPeakSnapshot(opts, command, metrics, arktsPeakKb, samplesAbovePeak,
+            peakSeeded, peakFiles, transcript);
 
         // Also wake up when the device is lost, so the check above runs at the
         // next tick instead of sleeping out the remaining interval (pinned target).
         SleepTicks(SNAPSHOT_SAMPLE_INTERVAL_S * TICKS_PER_SECOND,
             []() { return g_interruptRequested != 0 || DeviceLost(); });
     }
+}
+
+// `-c snapshot` with an explicit `-t`: keep monitoring for `duration` seconds
+// like the other capture types (same periodic memory line) and export a
+// snapshot at the start, at the end, and whenever the ArkTS heap stays at least
+// SNAPSHOT_PEAK_GROWTH_KB above its recorded peak for SNAPSHOT_PEAK_TRIGGER
+// consecutive samples. Ctrl+C ends the session and still exports the final
+// snapshot.
+// Artifacts: the start snapshot is exported once at the very beginning and is
+// never overwritten nor removed afterwards (a target restart doesn't re-export
+// it either), and the recorded peak never decreases, so the single peak
+// snapshot that is kept is always the one holding the session's highest ArkTS
+// heap.
+void RunContinuousSnapshot(const HdcRunOptions& opts,
+    const std::string& command,
+    const PreCaptureState& pre,
+    ClockType::time_point start,
+    RunResult& result)
+{
+    result.snapshotAttempted = true;
+
+    std::vector<std::string> startFiles;
+    std::vector<std::string> peakFiles;
+    std::vector<std::string> endFiles;
+    std::string transcript;
+
+    // The caller already created this session's directory
+    // (<output_dir>/snapshot-<bundle>-<timestamp>/). Every snapshot of the
+    // session is pulled flat into it and tagged with its role by a file-name
+    // suffix (...-start.rawheap / -peak.rawheap / -end.rawheap) instead of a
+    // role subdirectory: the layout stays shallow while each file remains
+    // self-describing (a plain device timestamp doesn't tell which export it is).
+
+    if (!ExportStartSnapshot(opts, command, result, startFiles, transcript)) {
+        return;
+    }
+
+    RunSnapshotMonitoringLoop(opts, command, start, pre.initialPid, peakFiles, transcript);
 
     ExportEndSnapshot(opts, command, result, endFiles, transcript);
 

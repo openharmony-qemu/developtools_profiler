@@ -940,6 +940,87 @@ json BuildLeakObjIcicleChart(const json& changedLeakObjects)
     return json(nullptr);
 }
 
+static json BuildCompareIcicleCharts(bool wantChains, bool wantLeaks,
+    const json& pathDeltas, const json& changedLeakObjects)
+{
+    json icicleCharts = json::array();
+    if (wantChains && !pathDeltas.empty()) {
+        auto chart = BuildPathDeltasIcicleChart(pathDeltas);
+        if (!chart.is_null()) {
+            icicleCharts.push_back(std::move(chart));
+        }
+    }
+    if (wantLeaks && !changedLeakObjects.empty()) {
+        auto chart = BuildLeakObjIcicleChart(changedLeakObjects);
+        if (!chart.is_null()) {
+            icicleCharts.push_back(std::move(chart));
+        }
+    }
+    return icicleCharts;
+}
+
+static json BuildCompareMethodology()
+{
+    return {
+        {"objectIdentity", "snapshot node ID; IDs present in both snapshots are excluded "
+                           "before aggregation"},
+        {"pathMatching", "one representative shortest reference path per identity group; "
+                         "new/growth/replaced rows report snapshot B's path (falling back to A "
+                         "when B has none), removed/shrink rows report A's; weak, shortcut, and "
+                         "hidden edges excluded from the path search"},
+        {"retainedMetric", "summed retained size of added or removed nodes per exact "
+                           "extended-name object bucket"},
+        {"logicalGrouping", "dominator ancestry folds generic descendants and zero-count/zero-self "
+                            "carrier ancestors into the changed source-located descendant that "
+                            "explains their retained growth; component retained size is not "
+                            "added again"},
+        {"leakCandidateScope", "leak-rule matches among added and removed node IDs only; "
+                               "surviving node IDs are excluded"},
+        {"leakDetection", "property-tag rules only, as in the single-snapshot ArkUI/ArkTS leak "
+                          "report; JSLeakWatcher hash rules are not applied because comparison "
+                          "loads no leak list"},
+        {"presentationFiltering", "JSON and HTML contain the same top-n logical changes and top-n "
+                                  "changed leak objects per direction; only delta node IDs are "
+                                  "retained; the analysis mode (all/property-tag/top-chain) "
+                                  "selects which sections are produced"}
+    };
+}
+
+static json BuildCompareReport(const std::string& mode,
+    const std::string& baselineFile, const std::string& targetFile,
+    const HeapSnapshot& baseline, const HeapSnapshot& target,
+    json pathDeltas, const json& changedLeakObjects, json icicleCharts, size_t topN)
+{
+    const std::string interpretation =
+        mode == "property-tag" ? "difference-with-property-tag-leak-analysis" :
+        mode == "top-chain"  ? "difference-with-shortest-reference-chain-analysis" :
+                               "difference-with-changed-object-leak-analysis";
+    return {
+        {"schemaVersion", 6},
+        {"reportType", "snapshot-difference"},
+        {"generatedAt", FormatReadableTimestamp(
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count())},
+        {"duration", "未知（快照对比不采集运行时长）"},
+        {"process", "未知（快照文件不含进程信息）"},
+        {"mode", mode},
+        {"inputFormat", SnapshotInputFormat(baselineFile)},
+        {"analysisType", SnapshotInputFormat(baselineFile) + " comparison"},
+        {"interpretation", interpretation},
+        {"baseline", {{"role", "baseline/control"}, {"file", platform::Basename(baselineFile)},
+                       {"heapSize", HeapSizeOf(baseline)}}},
+        {"target", {{"role", "target/treatment"}, {"file", platform::Basename(targetFile)},
+                     {"heapSize", HeapSizeOf(target)}}},
+        {"summary", {{"deltaHeapSize", static_cast<int64_t>(HeapSizeOf(target)) -
+                                        static_cast<int64_t>(HeapSizeOf(baseline))}}},
+        {"pathDeltas", std::move(pathDeltas)},
+        {"leakObjInfo", changedLeakObjects},
+        {"icicleCharts", std::move(icicleCharts)},
+        {"limits", {{"topNPerDirection", topN}}},
+        {"methodology", BuildCompareMethodology()}
+    };
+}
+
 json JsleakCompareAnalyzeImpl(const HeapSnapshot& baseline,
     const HeapSnapshot& target,
     const std::string& baselineFile,
@@ -985,68 +1066,12 @@ json JsleakCompareAnalyzeImpl(const HeapSnapshot& baseline,
 
     // Build icicle chart trees for both sections (same pattern as single-snapshot report):
     // each reference chain becomes a path in a prefix-trie, aggregated by frame sequence.
-    json icicleCharts = json::array();
-    if (wantChains && !pathDeltas.empty()) {
-        auto chart = BuildPathDeltasIcicleChart(pathDeltas);
-        if (!chart.is_null()) {
-            icicleCharts.push_back(std::move(chart));
-        }
-    }
-    if (wantLeaks && !changedLeakObjects.empty()) {
-        auto chart = BuildLeakObjIcicleChart(changedLeakObjects);
-        if (!chart.is_null()) {
-            icicleCharts.push_back(std::move(chart));
-        }
-    }
+    json icicleCharts = BuildCompareIcicleCharts(wantChains, wantLeaks,
+        pathDeltas, changedLeakObjects);
 
-    const std::string interpretation =
-        mode == "property-tag" ? "difference-with-property-tag-leak-analysis" :
-        mode == "top-chain"  ? "difference-with-shortest-reference-chain-analysis" :
-                               "difference-with-changed-object-leak-analysis";
-    return {
-        {"schemaVersion", 6},
-        {"reportType", "snapshot-difference"},
-        {"generatedAt", FormatReadableTimestamp(
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count())},
-        {"duration", "未知（快照对比不采集运行时长）"},
-        {"process", "未知（快照文件不含进程信息）"},
-        {"mode", mode},
-        {"inputFormat", SnapshotInputFormat(baselineFile)},
-        {"analysisType", SnapshotInputFormat(baselineFile) + " comparison"},
-        {"interpretation", interpretation},
-        {"baseline", {{"role", "baseline/control"}, {"file", platform::Basename(baselineFile)},
-                       {"heapSize", HeapSizeOf(baseline)}}},
-        {"target", {{"role", "target/treatment"}, {"file", platform::Basename(targetFile)},
-                     {"heapSize", HeapSizeOf(target)}}},
-        {"summary", {{"deltaHeapSize", static_cast<int64_t>(HeapSizeOf(target)) -
-                                        static_cast<int64_t>(HeapSizeOf(baseline))}}},
-        {"pathDeltas", std::move(pathDeltas)},
-        {"leakObjInfo", changedLeakObjects},
-        {"icicleCharts", std::move(icicleCharts)},
-        {"limits", {{"topNPerDirection", topN}}},
-        {"methodology", {{"objectIdentity", "snapshot node ID; IDs present in both snapshots are excluded "
-                                             "before aggregation"},
-                           {"pathMatching", "one representative shortest reference path per identity group; "
-                                             "new/growth/replaced rows report snapshot B's path (falling back to A "
-                                             "when B has none), removed/shrink rows report A's; weak, shortcut, and "
-                                             "hidden edges excluded from the path search"},
-                          {"retainedMetric", "summed retained size of added or removed nodes per exact "
-                                              "extended-name object bucket"},
-                          {"logicalGrouping", "dominator ancestry folds generic descendants and zero-count/zero-self "
-                                               "carrier ancestors into the changed source-located descendant that "
-                                               "explains their retained growth; component retained size is not "
-                                               "added again"},
-                          {"leakCandidateScope", "leak-rule matches among added and removed node IDs only; "
-                                                  "surviving node IDs are excluded"},
-                           {"leakDetection", "property-tag rules only, as in the single-snapshot ArkUI/ArkTS leak "
-                                              "report; JSLeakWatcher hash rules are not applied because comparison "
-                                              "loads no leak list"},
-                          {"presentationFiltering", "JSON and HTML contain the same top-n logical changes and top-n "
-                                                     "changed leak objects per direction; only delta node IDs are "
-                                                     "retained; the analysis mode (all/property-tag/top-chain) "
-                                                     "selects which sections are produced"}}}
-    };
+    return BuildCompareReport(mode, baselineFile, targetFile,
+        baseline, target, std::move(pathDeltas), changedLeakObjects,
+        std::move(icicleCharts), topN);
 }
 
 } // namespace

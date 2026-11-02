@@ -199,6 +199,49 @@ static void ProcessRawheapSection(const RunContext& ctx, const std::string& rawh
     }
 }
 
+struct ZipFileLocations {
+    std::string htracePath;
+    std::string rawheapPath;
+    std::string addrPath;
+};
+
+static ZipFileLocations LocateZipFiles(const std::string& unzipDir)
+{
+    ZipFileLocations loc;
+    loc.rawheapPath = FindFileInDir(unzipDir, ".rawheap");
+    loc.addrPath = FindFileInDir(unzipDir, ".binpb");
+    if (loc.addrPath.empty()) {
+        loc.addrPath = FindFileInDir(unzipDir, ".txt", "js_map");
+    }
+    loc.htracePath = FindHtraceFileInDir(unzipDir, loc.rawheapPath, loc.addrPath);
+    if (loc.htracePath.empty()) {
+        throw std::runtime_error("No .htrace file found in extracted ZIP");
+    }
+    if (loc.rawheapPath.empty()) {
+        log::Logw("  Warning: No .rawheap file found in ZIP");
+    }
+    if (loc.addrPath.empty()) {
+        log::Logw("  Warning: No js_map file (.binpb/.txt) found in ZIP");
+    }
+    log::Logi("    Found: ", platform::Basename(loc.htracePath),
+        (!loc.rawheapPath.empty() ? ", " + platform::Basename(loc.rawheapPath) : ""),
+        (!loc.addrPath.empty() ? ", " + platform::Basename(loc.addrPath) : ""));
+    return loc;
+}
+
+static std::string ConvertHtraceToDb(const std::string& htracePath,
+    const std::string& tempDirPath, const std::string& soDir)
+{
+    auto htraceName = platform::Stem(htracePath);
+    std::string dbPath = platform::JoinPath(tempDirPath, htraceName + "_trace_streamer.db");
+    std::string streamerErr;
+    if (!RunTraceStreamer(htracePath, dbPath, soDir, &streamerErr)) {
+        throw std::runtime_error(streamerErr.empty() ? "trace_streamer conversion failed" :
+                                                       streamerErr);
+    }
+    return dbPath;
+}
+
 TshandleParseResult TshandleParse(const std::string& filePath, const RunContext& ctx)
 {
     StageTimer timer("Parse zip");
@@ -211,49 +254,23 @@ TshandleParseResult TshandleParse(const std::string& filePath, const RunContext&
     timer.Stage("Extracting ZIP");
     auto unzipDir = platform::JoinPath(tempDir.Path(), "hiprofiler");
     platform::CreateDirectories(unzipDir);
-    {
-        std::string zipErr;
-        if (!zipUtils::ExtractZip(filePath, unzipDir, zipErr)) {
-            throw std::runtime_error(zipErr.empty() ? "Failed to extract ZIP file: " + filePath :
-                                                     zipErr);
-        }
-        log::Logi("    Extracted to: ", unzipDir);
+    std::string zipErr;
+    if (!zipUtils::ExtractZip(filePath, unzipDir, zipErr)) {
+        throw std::runtime_error(zipErr.empty() ? "Failed to extract ZIP file: " + filePath :
+                                                 zipErr);
     }
+    log::Logi("    Extracted to: ", unzipDir);
     timer.Tick("extract");
 
     // ── Step 2: Locate .htrace, .rawheap, js_map files ────────────
-    std::string rawheapPath = FindFileInDir(unzipDir, ".rawheap");
-    std::string addrPath = FindFileInDir(unzipDir, ".binpb");
-    if (addrPath.empty()) {
-        addrPath = FindFileInDir(unzipDir, ".txt", "js_map");
-    }
-    std::string htracePath = FindHtraceFileInDir(unzipDir, rawheapPath, addrPath);
-    if (htracePath.empty()) {
-        throw std::runtime_error("No .htrace file found in extracted ZIP");
-    }
-    if (rawheapPath.empty()) {
-        log::Logw("  Warning: No .rawheap file found in ZIP");
-    }
-    if (addrPath.empty()) {
-        log::Logw("  Warning: No js_map file (.binpb/.txt) found in ZIP");
-    }
-    log::Logi("    Found: ", platform::Basename(htracePath),
-        (!rawheapPath.empty() ? ", " + platform::Basename(rawheapPath) : ""),
-        (!addrPath.empty() ? ", " + platform::Basename(addrPath) : ""));
+    auto loc = LocateZipFiles(unzipDir);
+    const auto& htracePath = loc.htracePath;
+    const auto& rawheapPath = loc.rawheapPath;
+    const auto& addrPath = loc.addrPath;
 
     // ── Step 3: Run trace_streamer → DB ─────────────────────────
     log::Logi("  [2/4] Converting htrace to DB using trace_streamer...");
-    std::string dbPath;
-    {
-        auto htraceName = platform::Stem(htracePath);
-        dbPath = platform::JoinPath(tempDir.Path(), htraceName + "_trace_streamer.db");
-
-        std::string streamerErr;
-        if (!RunTraceStreamer(htracePath, dbPath, ctx.resources.soDir, &streamerErr)) {
-            throw std::runtime_error(streamerErr.empty() ? "trace_streamer conversion failed" :
-                                                           streamerErr);
-        }
-    }
+    auto dbPath = ConvertHtraceToDb(htracePath, tempDir.Path(), ctx.resources.soDir);
     timer.Tick("trace_streamer");
 
     // ── Step 4: Process DB → callStacks (ARK handle events) ─────
