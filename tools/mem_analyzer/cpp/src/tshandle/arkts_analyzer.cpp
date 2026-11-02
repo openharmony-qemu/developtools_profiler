@@ -187,43 +187,24 @@ static BuildNativeRefResult BuildNativeRef(
 
 namespace mem_analyzer {
 
-ArkTsAnalyzeResult AnalyzeArktsClasses(
-    const std::string& heapsnapshotPath,
-    const std::string& addrFilePath,
-    std::vector<ResolvedCallStack>& callStacks)
-{
-    ArkTsAnalyzeResult result;
-
-    StageTimer timer("ArkTS");
-
-    // ---- 1. Read addr file (auto-detect text / protobuf format) ----
-    auto parseResult = ParseAddrFile(addrFilePath);
-    timer.Tick("parse_addr");
-
-    // ---- 3. Load heapsnapshot (retained sizes computed inside from_file) ----
-    timer.Stage("Loading heap snapshot");
-    auto heap = HeapSnapshot::FromFile(heapsnapshotPath);
-    timer.Tick("load_heap", std::to_string(heap.nodeCount) + " nodes, " +
-              std::to_string(heap.edgeCount) + " edges");
-
-    // ---- 5. Build nativeRef from callStacks ----
-    timer.Stage("Building nativeRef");
-    auto nativeResult = BuildNativeRef(callStacks, parseResult.addrToNodeId);
-    timer.Tick("build_native_ref");
-
-    // ---- 6. Aggregate by class name ----
-    timer.Stage("Aggregating by class name");
+struct AggregationResult {
     std::map<std::string, ArkTsClass> classMap;
     int instanceCount = 0;
     int missingNodeCount = 0;
     std::vector<uint32_t> missingNodeIds;
     std::unordered_map<long long, double> localRetainedSizeByCallStack;
+};
 
+static AggregationResult AggregateByClassName(
+    const HeapSnapshot& heap,
+    const BuildNativeRefResult& nativeResult)
+{
+    AggregationResult result;
     for (const auto& [nodeId, nativeRef] : nativeResult.nodeNativeRef) {
         auto node = heap.GetNodeById(nodeId);
         if (node.nodeIndex == 0xFFFFFFFF) {
-            missingNodeCount++;
-            missingNodeIds.push_back(nodeId);
+            result.missingNodeCount++;
+            result.missingNodeIds.push_back(nodeId);
             continue;
         }
 
@@ -245,58 +226,38 @@ ArkTsAnalyzeResult AnalyzeArktsClasses(
             shares.push_back({ref.callStackId, ref.addrs.size()});
         }
         DistributeTshandleRetainedSize(
-            static_cast<double>(retainedSize), shares, localRetainedSizeByCallStack);
+            static_cast<double>(retainedSize), shares, result.localRetainedSizeByCallStack);
 
-        instanceCount++;
+        result.instanceCount++;
         ArkTsInstance inst;
         inst.id = nodeId;
         inst.shallowSize = shallowSize;
         inst.retainedSize = retainedSize;
         inst.nativeRef = nativeRef;
 
-        auto clsIt = classMap.find(name);
-        if (clsIt == classMap.end()) {
+        auto clsIt = result.classMap.find(name);
+        if (clsIt == result.classMap.end()) {
             ArkTsClass cls;
             cls.name = name;
             cls.shallowSize = shallowSize;
             cls.retainedSize = retainedSize;
             cls.instances.push_back(std::move(inst));
-            classMap[name] = std::move(cls);
+            result.classMap[name] = std::move(cls);
         } else {
             clsIt->second.instances.push_back(std::move(inst));
             clsIt->second.shallowSize += shallowSize;
             clsIt->second.retainedSize += retainedSize;
         }
     }
-    timer.Tick("aggregate", std::to_string(classMap.size()) + " classes, " +
-              std::to_string(instanceCount) + " instances");
+    return result;
+}
 
-    ApplyTshandleRetainedSizes(callStacks, localRetainedSizeByCallStack);
-
-    // ---- 7. Build anomaly report data ----
-
-    // Populate counts
-    result.anomalyCounts.multi = nativeResult.multiCount;
-    result.anomalyCounts.noNode = nativeResult.noNodeCount;
-    result.anomalyCounts.missingNode = missingNodeCount;
-    result.anomalyCounts.invalidAddr = nativeResult.invalidCount;
-    result.anomalyCounts.duplicate = parseResult.duplicateCount;
-    result.anomalyCounts.addrFileInvalid = parseResult.addrFileInvalidCount;
-
-    // Build anomaly lines
-    auto& lines = result.anomalyLines;
-    lines.push_back("# addr anomaly report");
-
-    {
-        std::ostringstream ss;
-        ss << "# summary: multi=" << result.anomalyCounts.multi <<
-           " noNode=" << result.anomalyCounts.noNode <<
-           " missingNode=" << result.anomalyCounts.missingNode <<
-           " invalid=" << result.anomalyCounts.invalidAddr <<
-           " duplicate=" << result.anomalyCounts.duplicate <<
-           " addrFileInvalid=" << result.anomalyCounts.addrFileInvalid;
-        lines.push_back(ss.str());
-    }
+static std::vector<std::string> BuildAnomalyLines(
+    const BuildNativeRefResult& nativeResult,
+    const ParseAddrResult& parseResult,
+    const std::vector<uint32_t>& missingNodeIds)
+{
+    std::vector<std::string> lines;
 
     // multi anomalies
     if (!nativeResult.multiKeys.empty()) {
@@ -372,6 +333,77 @@ ArkTsAnalyzeResult AnalyzeArktsClasses(
             ss << addr << "\taddrFileInvalid";
             lines.push_back(ss.str());
         }
+    }
+
+    return lines;
+}
+
+ArkTsAnalyzeResult AnalyzeArktsClasses(
+    const std::string& heapsnapshotPath,
+    const std::string& addrFilePath,
+    std::vector<ResolvedCallStack>& callStacks)
+{
+    ArkTsAnalyzeResult result;
+
+    StageTimer timer("ArkTS");
+
+    // ---- 1. Read addr file (auto-detect text / protobuf format) ----
+    auto parseResult = ParseAddrFile(addrFilePath);
+    timer.Tick("parse_addr");
+
+    // ---- 3. Load heapsnapshot (retained sizes computed inside from_file) ----
+    timer.Stage("Loading heap snapshot");
+    auto heap = HeapSnapshot::FromFile(heapsnapshotPath);
+    timer.Tick("load_heap", std::to_string(heap.nodeCount) + " nodes, " +
+              std::to_string(heap.edgeCount) + " edges");
+
+    // ---- 5. Build nativeRef from callStacks ----
+    timer.Stage("Building nativeRef");
+    auto nativeResult = BuildNativeRef(callStacks, parseResult.addrToNodeId);
+    timer.Tick("build_native_ref");
+
+    // ---- 6. Aggregate by class name ----
+    timer.Stage("Aggregating by class name");
+    auto aggResult = AggregateByClassName(heap, nativeResult);
+    auto& classMap = aggResult.classMap;
+    int instanceCount = aggResult.instanceCount;
+    int missingNodeCount = aggResult.missingNodeCount;
+    auto& missingNodeIds = aggResult.missingNodeIds;
+    auto& localRetainedSizeByCallStack = aggResult.localRetainedSizeByCallStack;
+
+    timer.Tick("aggregate", std::to_string(classMap.size()) + " classes, " +
+              std::to_string(instanceCount) + " instances");
+
+    ApplyTshandleRetainedSizes(callStacks, localRetainedSizeByCallStack);
+
+    // ---- 7. Build anomaly report data ----
+
+    // Populate counts
+    result.anomalyCounts.multi = nativeResult.multiCount;
+    result.anomalyCounts.noNode = nativeResult.noNodeCount;
+    result.anomalyCounts.missingNode = missingNodeCount;
+    result.anomalyCounts.invalidAddr = nativeResult.invalidCount;
+    result.anomalyCounts.duplicate = parseResult.duplicateCount;
+    result.anomalyCounts.addrFileInvalid = parseResult.addrFileInvalidCount;
+
+    // Build anomaly lines
+    auto& lines = result.anomalyLines;
+    lines.push_back("# addr anomaly report");
+
+    {
+        std::ostringstream ss;
+        ss << "# summary: multi=" << result.anomalyCounts.multi <<
+           " noNode=" << result.anomalyCounts.noNode <<
+           " missingNode=" << result.anomalyCounts.missingNode <<
+           " invalid=" << result.anomalyCounts.invalidAddr <<
+           " duplicate=" << result.anomalyCounts.duplicate <<
+           " addrFileInvalid=" << result.anomalyCounts.addrFileInvalid;
+        lines.push_back(ss.str());
+    }
+
+    auto sectionLines = BuildAnomalyLines(nativeResult, parseResult, missingNodeIds);
+    for (auto& l : sectionLines) {
+        lines.push_back(std::move(l));
     }
 
     // ---- 8. Build result ----

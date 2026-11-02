@@ -398,14 +398,12 @@ struct LogicalGrowthResult {
     json groups = json::array();
 };
 
-LogicalGrowthResult BuildLogicalGrowthGroups(json rows, const SnapshotIndex& baseline, const SnapshotIndex& target)
+static void AssignInitialLogicalGroups(
+    json& rows,
+    const std::unordered_map<std::string, size_t>& rowByKey,
+    const SnapshotIndex& baseline,
+    const SnapshotIndex& target)
 {
-    std::unordered_map<std::string, size_t> rowByKey;
-    rowByKey.reserve(rows.size());
-    for (size_t i = 0; i < rows.size(); ++i) {
-        rowByKey[rows[i]["key"].get<std::string>()] = i;
-    }
-
     for (size_t i = 0; i < rows.size(); ++i) {
         auto& row = rows[i];
         const std::string key = row["key"].get<std::string>();
@@ -438,7 +436,13 @@ LogicalGrowthResult BuildLogicalGrowthGroups(json rows, const SnapshotIndex& bas
         row["logicalGroupId"] = rootKey;
         row["includedIn"] = rootKey == key ? json(nullptr) : json(rootKey);
     }
+}
 
+static void ResolveCarrierDescendants(
+    json& rows,
+    const SnapshotIndex& baseline,
+    const SnapshotIndex& target)
+{
     // A stable container can gain retained size solely because a changed
     // descendant now owns more memory. Treat such zero-count/zero-self rows as
     // carriers of the descendant growth instead of separate logical growths.
@@ -498,28 +502,10 @@ LogicalGrowthResult BuildLogicalGrowthGroups(json rows, const SnapshotIndex& bas
             carrier["includedIn"] = bestDescendant;
         }
     }
+}
 
-    // Resolve transitive assignments (component -> carrier -> logical root).
-    for (auto& row : rows) {
-        std::string rootKey = row["logicalGroupId"].get<std::string>();
-        std::set<std::string> visited;
-        while (visited.insert(rootKey).second) {
-            const auto rootIt = rowByKey.find(rootKey);
-            if (rootIt == rowByKey.end()) {
-                break;
-            }
-            const auto& rootRow = rows[rootIt->second];
-            const std::string next = rootRow["logicalGroupId"].get<std::string>();
-            if (next == rootKey) {
-                break;
-            }
-            rootKey = next;
-        }
-        const std::string key = row["key"].get<std::string>();
-        row["logicalGroupId"] = rootKey;
-        row["includedIn"] = rootKey == key ? json(nullptr) : json(rootKey);
-    }
-
+static LogicalGrowthResult AssembleGroupResult(const json& rows)
+{
     LogicalGrowthResult result;
     std::unordered_map<std::string, size_t> groupByKey;
     for (const auto& row : rows) {
@@ -563,6 +549,42 @@ LogicalGrowthResult BuildLogicalGrowthGroups(json rows, const SnapshotIndex& bas
         return lhs["delta"]["selfSize"].get<int64_t>() > rhs["delta"]["selfSize"].get<int64_t>();
     });
     return result;
+}
+
+LogicalGrowthResult BuildLogicalGrowthGroups(json rows, const SnapshotIndex& baseline, const SnapshotIndex& target)
+{
+    std::unordered_map<std::string, size_t> rowByKey;
+    rowByKey.reserve(rows.size());
+    for (size_t i = 0; i < rows.size(); ++i) {
+        rowByKey[rows[i]["key"].get<std::string>()] = i;
+    }
+
+    AssignInitialLogicalGroups(rows, rowByKey, baseline, target);
+
+    ResolveCarrierDescendants(rows, baseline, target);
+
+    // Resolve transitive assignments (component -> carrier -> logical root).
+    for (auto& row : rows) {
+        std::string rootKey = row["logicalGroupId"].get<std::string>();
+        std::set<std::string> visited;
+        while (visited.insert(rootKey).second) {
+            const auto rootIt = rowByKey.find(rootKey);
+            if (rootIt == rowByKey.end()) {
+                break;
+            }
+            const auto& rootRow = rows[rootIt->second];
+            const std::string next = rootRow["logicalGroupId"].get<std::string>();
+            if (next == rootKey) {
+                break;
+            }
+            rootKey = next;
+        }
+        const std::string key = row["key"].get<std::string>();
+        row["logicalGroupId"] = rootKey;
+        row["includedIn"] = rootKey == key ? json(nullptr) : json(rootKey);
+    }
+
+    return AssembleGroupResult(rows);
 }
 
 json SelectLogicalGroups(const json& groups, size_t topN)
@@ -821,6 +843,80 @@ uint64_t HeapSizeOf(const HeapSnapshot& heap)
     return size;
 }
 
+json BuildPathDeltasIcicleChart(const json& pathDeltas)
+{
+    json chainItems = json::array();
+    for (const auto& delta : pathDeltas) {
+        if (!delta.contains("path") || !delta["path"].is_string()) {
+            continue;
+        }
+        std::string pathStr = delta["path"].get<std::string>();
+        if (pathStr.empty()) {
+            continue;
+        }
+        json frames = json::array();
+        size_t start = 0;
+        while (start < pathStr.size()) {
+            size_t sep = pathStr.find(" -> ", start);
+            if (sep == std::string::npos) {
+                frames.push_back(pathStr.substr(start));
+                break;
+            }
+            frames.push_back(pathStr.substr(start, sep - start));
+            start = sep + PATH_SEPARATOR_LEN;
+        }
+        json item;
+        item["chain"] = std::move(frames);
+        item["totalRetainedSize"] = std::abs(
+            delta.value("retainedSizeDelta", static_cast<int64_t>(0)));
+        item["nodeIds"] = delta.value("deltaNodeIds", json::array());
+        chainItems.push_back(std::move(item));
+    }
+    if (!chainItems.empty()) {
+        json tree = BuildRefChainIcicleTree(chainItems, "GC Roots");
+        if (tree.contains("c") && tree["c"].is_array() && !tree["c"].empty()) {
+            const std::string canvasId = "icicleCanvas_pathDeltas";
+            return json({
+                {"id", canvasId},
+                {"tree", tree},
+                {"chartHtml", BuildIcicleChartBody(
+                    canvasId, TreeTableHtml(tree, canvasId))}});
+        }
+    }
+    return json(nullptr);
+}
+
+json BuildLeakObjIcicleChart(const json& changedLeakObjects)
+{
+    json chainItems = json::array();
+    for (const auto& [name, entry] : changedLeakObjects.items()) {
+        for (const auto& chain : entry.value("referenceChains", json::array())) {
+            const json& frames = chain.value("chain", json::array());
+            if (!frames.is_array() || frames.empty()) {
+                continue;
+            }
+            json item;
+            item["chain"] = frames;
+            item["totalRetainedSize"] = std::abs(
+                entry.value("retainedSizeDelta", static_cast<int64_t>(0)));
+            item["nodeIds"] = chain.value("nodeIds", json::array());
+            chainItems.push_back(std::move(item));
+        }
+    }
+    if (!chainItems.empty()) {
+        json tree = BuildRefChainIcicleTree(chainItems, "GC Roots");
+        if (tree.contains("c") && tree["c"].is_array() && !tree["c"].empty()) {
+            const std::string canvasId = "icicleCanvas_leakObj";
+            return json({
+                {"id", canvasId},
+                {"tree", tree},
+                {"chartHtml", BuildIcicleChartBody(
+                    canvasId, TreeTableHtml(tree, canvasId))}});
+        }
+    }
+    return json(nullptr);
+}
+
 json JsleakCompareAnalyzeImpl(const HeapSnapshot& baseline,
     const HeapSnapshot& target,
     const std::string& baselineFile,
@@ -868,71 +964,15 @@ json JsleakCompareAnalyzeImpl(const HeapSnapshot& baseline,
     // each reference chain becomes a path in a prefix-trie, aggregated by frame sequence.
     json icicleCharts = json::array();
     if (wantChains && !pathDeltas.empty()) {
-        json chainItems = json::array();
-        for (const auto& delta : pathDeltas) {
-            if (!delta.contains("path") || !delta["path"].is_string()) {
-                continue;
-            }
-            std::string pathStr = delta["path"].get<std::string>();
-            if (pathStr.empty()) {
-                continue;
-            }
-            json frames = json::array();
-            size_t start = 0;
-            while (start < pathStr.size()) {
-                size_t sep = pathStr.find(" -> ", start);
-                if (sep == std::string::npos) {
-                    frames.push_back(pathStr.substr(start));
-                    break;
-                }
-                frames.push_back(pathStr.substr(start, sep - start));
-                start = sep + PATH_SEPARATOR_LEN;
-            }
-            json item;
-            item["chain"] = std::move(frames);
-            item["totalRetainedSize"] = std::abs(
-                delta.value("retainedSizeDelta", static_cast<int64_t>(0)));
-            item["nodeIds"] = delta.value("deltaNodeIds", json::array());
-            chainItems.push_back(std::move(item));
-        }
-        if (!chainItems.empty()) {
-            json tree = BuildRefChainIcicleTree(chainItems, "GC Roots");
-            if (tree.contains("c") && tree["c"].is_array() && !tree["c"].empty()) {
-                const std::string canvasId = "icicleCanvas_pathDeltas";
-                icicleCharts.push_back({
-                    {"id", canvasId},
-                    {"tree", tree},
-                    {"chartHtml", BuildIcicleChartBody(
-                        canvasId, TreeTableHtml(tree, canvasId))}});
-            }
+        auto chart = BuildPathDeltasIcicleChart(pathDeltas);
+        if (!chart.is_null()) {
+            icicleCharts.push_back(std::move(chart));
         }
     }
     if (wantLeaks && !changedLeakObjects.empty()) {
-        json chainItems = json::array();
-        for (const auto& [name, entry] : changedLeakObjects.items()) {
-            for (const auto& chain : entry.value("referenceChains", json::array())) {
-                const json& frames = chain.value("chain", json::array());
-                if (!frames.is_array() || frames.empty()) {
-                    continue;
-                }
-                json item;
-                item["chain"] = frames;
-                item["totalRetainedSize"] = std::abs(
-                    entry.value("retainedSizeDelta", static_cast<int64_t>(0)));
-                item["nodeIds"] = chain.value("nodeIds", json::array());
-                chainItems.push_back(std::move(item));
-            }
-        }
-        if (!chainItems.empty()) {
-            json tree = BuildRefChainIcicleTree(chainItems, "GC Roots");
-            if (tree.contains("c") && tree["c"].is_array() && !tree["c"].empty()) {
-                const std::string canvasId = "icicleCanvas_leakObj";
-                icicleCharts.push_back({
-                    {"id", canvasId},
-                    {"tree", tree},
-                    {"chartHtml", BuildIcicleChartBody(
-                        canvasId, TreeTableHtml(tree, canvasId))}});
-            }
+        auto chart = BuildLeakObjIcicleChart(changedLeakObjects);
+        if (!chart.is_null()) {
+            icicleCharts.push_back(std::move(chart));
         }
     }
 

@@ -960,6 +960,81 @@ static void CollectShortestPathRoots(
     }
 }
 
+static bool ShouldSkipWeakMapEdge(const BfsContext& ctx, size_t ptr, uint32_t child)
+{
+    // Edge name block list + WeakMap key edge check
+    // WeakMap edges: keys are weakly referenced; skip the forward direction
+    // where the edge name contains "@<key_id>) ->" and key_id == target.id
+    const std::string& en = ctx.GetEdgeName(ptr);
+    if (IsEdgeNameBlocked(en)) {
+        return true;
+    }
+    if (en.find("WeakMap") != std::string::npos) {
+        static const std::regex keyRe(R"(@(\d+)\) ->)");
+        std::smatch match;
+        if (std::regex_search(en, match, keyRe)) {
+            uint32_t keyId = 0xFFFFFFFFu;
+            try {
+                keyId = static_cast<uint32_t>(std::stoul(match[1].str()));
+            } catch (const std::exception&) {
+                // 越界/非法 key id：不当作 WeakMap key 匹配
+            }
+            uint32_t childId = ctx.nodes[static_cast<size_t>(child) *
+                static_cast<size_t>(ctx.nodeFieldsCount) +
+                static_cast<size_t>(ctx.idOff)];
+            if (keyId == childId) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+static bool ShouldSkipTargetNode(const BfsContext& ctx, uint32_t child)
+{
+    // ---- isMeaningfulNode check (applied to the TARGET node) ----
+    const std::string& childName = ctx.GetNodeName(child);
+    if (childName == "system / NativeContext" ||
+        childName == "system / SourcePositionTableWithFrameCache" ||
+        childName == "(map descriptors)") {
+        return true;
+    }
+    if (ctx.GetNodeType(child) == "code") {
+        return true;
+    }
+    if (IsNodeNameBlocked(childName)) {
+        return true;
+    }
+    return false;
+}
+
+static bool IsLowPriorityEdge(const BfsContext& ctx, size_t ptr, uint32_t child)
+{
+    // ---- Priority checks (isLessPreferableEdge / isLessPreferableNode) ----
+    bool isLowPriority = false;
+
+    // Edge name in grey list → defer
+    const std::string& en = ctx.GetEdgeName(ptr);
+    if (edgeNameGreyList.count(en)) {
+        isLowPriority = true;
+    }
+
+    // Node name in grey list → defer
+    if (!isLowPriority) {
+        const std::string& childName = ctx.GetNodeName(child);
+        if (nodeNameGreyList.count(childName)) {
+            isLowPriority = true;
+        }
+    }
+
+    // C++ roots synthetic node → defer
+    if (!isLowPriority && IsCppRootsNode(ctx, child)) {
+        isLowPriority = true;
+    }
+
+    return isLowPriority;
+}
+
 // ============================================================================
 //  Run layered BFS from roots
 //  Implements the reference implementation's annotateShortestPaths:
@@ -1036,31 +1111,8 @@ static void RunLayeredBfs(
                 }
 
                 // Edge name block list + WeakMap key edge check
-                // WeakMap edges: keys are weakly referenced; skip the forward direction
-                // where the edge name contains "@<key_id>) ->" and key_id == target.id
-                {
-                    const std::string& en = ctx.GetEdgeName(ptr);
-                    if (IsEdgeNameBlocked(en)) {
-                        continue;
-                    }
-                    if (en.find("WeakMap") != std::string::npos) {
-                        static const std::regex keyRe(R"(@(\d+)\) ->)");
-                        std::smatch match;
-                        if (std::regex_search(en, match, keyRe)) {
-                            uint32_t keyId = 0xFFFFFFFFu;
-                            try {
-                                keyId = static_cast<uint32_t>(std::stoul(match[1].str()));
-                            } catch (const std::exception&) {
-                                // 越界/非法 key id：不当作 WeakMap key 匹配
-                            }
-                            uint32_t childId = ctx.nodes[static_cast<size_t>(child) *
-                                static_cast<size_t>(ctx.nodeFieldsCount) +
-                                static_cast<size_t>(ctx.idOff)];
-                            if (keyId == childId) {
-                                continue;
-                            }
-                        }
-                    }
+                if (ShouldSkipWeakMapEdge(ctx, ptr, child)) {
+                    continue;
                 }
 
                 // Already queued — prevents multi-parent targeting
@@ -1090,44 +1142,12 @@ static void RunLayeredBfs(
                 }
 
                 // ---- isMeaningfulNode check (applied to the TARGET node) ----
-                {
-                    const std::string& childName = ctx.GetNodeName(child);
-                    if (childName == "system / NativeContext" ||
-                        childName == "system / SourcePositionTableWithFrameCache" ||
-                        childName == "(map descriptors)") {
-                        continue;
-                    }
-                    if (ctx.GetNodeType(child) == "code") {
-                        continue;
-                    }
-                    if (IsNodeNameBlocked(childName)) {
-                        continue;
-                    }
+                if (ShouldSkipTargetNode(ctx, child)) {
+                    continue;
                 }
 
                 // ---- Priority checks (isLessPreferableEdge / isLessPreferableNode) ----
-                bool isLowPriority = false;
-
-                // Edge name in grey list → defer
-                {
-                    const std::string& en = ctx.GetEdgeName(ptr);
-                    if (edgeNameGreyList.count(en)) {
-                        isLowPriority = true;
-                    }
-                }
-
-                // Node name in grey list → defer
-                if (!isLowPriority) {
-                    const std::string& childName = ctx.GetNodeName(child);
-                    if (nodeNameGreyList.count(childName)) {
-                        isLowPriority = true;
-                    }
-                }
-
-                // C++ roots synthetic node → defer
-                if (!isLowPriority && IsCppRootsNode(ctx, child)) {
-                    isLowPriority = true;
-                }
+                bool isLowPriority = IsLowPriorityEdge(ctx, ptr, child);
 
                 // ---- Enqueue ----
                 if (isLowPriority) {

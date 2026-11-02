@@ -38,6 +38,35 @@ void ParseLeakObjList(const json& j, std::unordered_set<uint32_t>& hashSet)
         }
     }
 }
+
+void TryAdvanceByEdge(
+    const HeapSnapshot::EdgeInfo& edge,
+    const HeapSnapshot& heap,
+    uint32_t& cur,
+    bool& advanced,
+    bool& lookingForHclass)
+{
+    if (advanced) {
+        return;
+    }
+    if (edge.nameOrIndex >= static_cast<uint32_t>(heap.strings.size())) {
+        return;
+    }
+    const std::string& edgeName = heap.strings[edge.nameOrIndex];
+    if (lookingForHclass) {
+        if (edgeName == "hclass") {
+            cur = edge.toNode;
+            advanced = true;
+            lookingForHclass = false;
+        }
+    } else {
+        if (edgeName == "Proto" || edgeName == "__proto__") {
+            cur = edge.toNode;
+            advanced = true;
+            lookingForHclass = true;
+        }
+    }
+}
 } // namespace
 
 PropertyTagStage::PropertyTagStage(const std::string& jsleakListFile)
@@ -144,26 +173,7 @@ BaseClassInfo PropertyTagStage::FindConcernType(uint32_t uNi,
         // 沿原型链推进：node → hclass → Proto/__proto__ → 父原型 → hclass → ...
         bool advanced = false;
         heap.ForEachEdge(cur, [&advanced, &cur, &heap, &lookingForHclass](const HeapSnapshot::EdgeInfo& edge, size_t) {
-            if (advanced) {
-                return;
-            }
-            if (edge.nameOrIndex >= static_cast<uint32_t>(heap.strings.size())) {
-                return;
-            }
-            const std::string& edgeName = heap.strings[edge.nameOrIndex];
-            if (lookingForHclass) {
-                if (edgeName == "hclass") {
-                    cur = edge.toNode;
-                    advanced = true;
-                    lookingForHclass = false;
-                }
-            } else {
-                if (edgeName == "Proto" || edgeName == "__proto__") {
-                    cur = edge.toNode;
-                    advanced = true;
-                    lookingForHclass = true;
-                }
-            }
+            TryAdvanceByEdge(edge, heap, cur, advanced, lookingForHclass);
         });
         if (!advanced) {
             break;

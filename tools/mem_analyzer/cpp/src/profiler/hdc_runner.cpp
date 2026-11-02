@@ -750,6 +750,16 @@ std::map<std::string, long long> listDirFileSizes(const std::string& dir,
  * Poll for stable snapshot files in resultDir.
  * Candidates: new files or files whose size changed vs baseline.
  */
+static bool CheckFileStability(const std::string& name, long long currentSize,
+    long long prevSize, int pollNum, long long elapsedS)
+{
+    const bool stable = (prevSize >= 0 && prevSize == currentSize && currentSize > 0);
+    std::cout << "[Snapshot check] #" << pollNum << " (" << elapsedS <<
+        "s): " << name << " " << (currentSize / BYTES_PER_KB) << "KB" <<
+        (stable ? " stable" : " generating") << "\n" << std::flush;
+    return stable;
+}
+
 static void PollForStableSnapshots(const std::string& resultDir,
     const std::map<std::string, long long>& baseline,
     long long timeoutS, std::map<std::string, long long>& stable)
@@ -786,14 +796,8 @@ static void PollForStableSnapshots(const std::string& resultDir,
             bool allStable = true;
             for (const auto& kv : candidates) {
                 auto pit = prevSizes.find(kv.first);
-                const bool s = (pit != prevSizes.end() && pit->second == kv.second &&
-                                kv.second > 0);
-                if (!s) {
-                    allStable = false;
-                }
-                std::cout << "[Snapshot check] #" << pollNum << " (" << elapsedS <<
-                          "s): " << kv.first << " " << (kv.second / BYTES_PER_KB) << "KB" <<
-                          (s ? " stable" : " generating") << "\n" << std::flush;
+                const long long prevSize = (pit != prevSizes.end()) ? pit->second : -1;
+                allStable = CheckFileStability(kv.first, kv.second, prevSize, pollNum, elapsedS) && allStable;
             }
             if (allStable) {
                 stable = candidates;
@@ -1808,6 +1812,47 @@ std::thread SpawnWorker(const std::shared_ptr<CaptureState>& state, const std::s
     });
 }
 
+static void PublishPid(const std::shared_ptr<CaptureState>& state, const std::string& pid, bool reliable)
+{
+    // Publish the pid FIRST so the countdown always has a fresh
+    // process status; the (slower) metrics below never delay it.
+    std::lock_guard<std::mutex> lock(state->pidMtx);
+    if (!pid.empty()) {
+        if (pid != state->latestPid) {
+            state->pidChanged = true;
+        }
+        state->latestPid = pid;
+    } else if (reliable || state->latestPid.empty()) {
+        // pidof confirmed the process is gone, or we never
+        // knew a PID: publish the empty result.
+        if (!state->latestPid.empty()) {
+            state->pidChanged = true;
+        }
+        state->latestPid.clear();
+    }
+    // Unreliable query with a known PID: keep the old value.
+}
+
+static void PublishMetrics(const std::shared_ptr<CaptureState>& state, const std::string& pid)
+{
+    ProcessMetrics metrics;
+    if (!pid.empty()) {
+        // Gather live memory/fd metrics for the countdown display.
+        // Ran outside the lock because hdc calls may block.
+        metrics = SampleProcessMetrics(pid);
+    }
+    std::lock_guard<std::mutex> lock(state->pidMtx);
+    // Only publish a sample that actually parsed. A stalled
+    // hidumper/lsof call (the hdc connection is busy with the
+    // foregrounded capture) yields an invalid sample; dropping
+    // it keeps the last good metrics so the countdown keeps
+    // showing the PSS line instead of going blank for a few
+    // ticks.
+    if (metrics.valid) {
+        state->latestMetrics = metrics;
+    }
+}
+
 // Background process checker: periodically calls get_process_pid_fast (pidof)
 // in a separate thread so the main countdown thread never blocks on hdc.
 // Updates shared state (latest_pid, pid_changed) that the countdown loop reads
@@ -1843,43 +1888,8 @@ std::thread SpawnPidChecker(const std::shared_ptr<CaptureState>& state,
             // queries can briefly fail).
             bool reliable = false;
             std::string pid = GetProcessPidFast(processName, 5000, &reliable);
-            // Publish the pid FIRST so the countdown always has a fresh
-            // process status; the (slower) metrics below never delay it.
-            {
-                std::lock_guard<std::mutex> lock(state->pidMtx);
-                if (!pid.empty()) {
-                    if (pid != state->latestPid) {
-                        state->pidChanged = true;
-                    }
-                    state->latestPid = pid;
-                } else if (reliable || state->latestPid.empty()) {
-                    // pidof confirmed the process is gone, or we never
-                    // knew a PID: publish the empty result.
-                    if (!state->latestPid.empty()) {
-                        state->pidChanged = true;
-                    }
-                    state->latestPid.clear();
-                }
-                // Unreliable query with a known PID: keep the old value.
-            }
-            ProcessMetrics metrics;
-            if (!pid.empty()) {
-                // Gather live memory/fd metrics for the countdown display.
-                // Ran outside the lock because hdc calls may block.
-                metrics = SampleProcessMetrics(pid);
-            }
-            {
-                std::lock_guard<std::mutex> lock(state->pidMtx);
-                // Only publish a sample that actually parsed. A stalled
-                // hidumper/lsof call (the hdc connection is busy with the
-                // foregrounded capture) yields an invalid sample; dropping
-                // it keeps the last good metrics so the countdown keeps
-                // showing the PSS line instead of going blank for a few
-                // ticks.
-                if (metrics.valid) {
-                    state->latestMetrics = metrics;
-                }
-            }
+            PublishPid(state, pid, reliable);
+            PublishMetrics(state, pid);
             // Sleep 5s between checks, in 100ms ticks so we stop promptly.
             SleepTicks(PROGRESS_INTERVAL_TICKS, [state, ignoreDone]() {
                 return state->stopPidCheck.load() || DeviceLost() || (state->done.load() && !ignoreDone);
@@ -2043,6 +2053,68 @@ void maybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
     });
 }
 
+static bool CheckDeviceLost(const std::shared_ptr<CaptureState>& state)
+{
+    // Pinned target: the target device failed at the hdc level (e.g. unplugged
+    // mid-capture). Stop the countdown now instead of idling until the timeout —
+    // note_device_failure() already printed the hdc text once. Untargeted runs
+    // never set this flag, so their behaviour is unchanged.
+    if (DeviceLost()) {
+        // Name the device: the failure belongs to one target, and by the time the line
+        // is read the `Device:` echo is far above (or the log of a second console is
+        // interleaved with this one). device_lost() is only ever true while a key is
+        // pinned (note_device_failure() ignores "[Fail]" otherwise), so the key is
+        // non-empty here and the wording always reads correctly.
+        log::Logw("Device failure detected on ", HdcConnectKey(), "; stopping hiprofiler and saving data...");
+        return true;
+    }
+    return false;
+}
+
+static bool CheckPermissionFailure(const std::shared_ptr<CaptureState>& state)
+{
+    // The first smaps/lsof export found a permission problem: abort the
+    // capture immediately instead of idling through the countdown (a
+    // release app on a non-root phone cannot be tuned; further captures
+    // would only produce meaningless data).
+    if (state->permissionFailed.load()) {
+        std::string perr;
+        {
+            std::lock_guard<std::mutex> lock(state->mtx);
+            perr = state->permissionErrorMsg;
+        }
+        log::Loge("\n", perr,
+            "\nThe target app cannot be tuned on this device "
+            "(release-signed app on a non-root phone); aborting the capture.");
+        return true;
+    }
+    return false;
+}
+
+static void PrintCountdownStatus(int roundNo, long long remain, const std::string& pid,
+    bool running, const std::shared_ptr<CaptureState>& state)
+{
+    std::cout << "[" << roundNo << "] Remaining " << remain << "s, " <<
+              (running ? "target process is running pid:" + pid :
+                          (state->freshRestartActive.load() ?
+                                 "target process is being relaunched by the tool" :
+                                 "target process not running, please start it as soon as possible")) <<
+              "\n" <<
+              std::flush;
+    if (running) {
+        // Show live memory/fd metrics gathered by the pid checker
+        // (non-blocking read of shared state).
+        ProcessMetrics metrics;
+        {
+            std::lock_guard<std::mutex> lock(state->pidMtx);
+            metrics = state->latestMetrics;
+        }
+        if (metrics.valid) {
+            PrintMetricsLine(metrics);
+        }
+    }
+}
+
 // ── main wait loop ───────────────────────────────
 
 // Wait while showing progress.
@@ -2080,17 +2152,7 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
             log::Logw("Interrupted (Ctrl+C); stopping hiprofiler and saving data...");
             break;
         }
-        // Pinned target: the target device failed at the hdc level (e.g. unplugged
-        // mid-capture). Stop the countdown now instead of idling until the timeout —
-        // note_device_failure() already printed the hdc text once. Untargeted runs
-        // never set this flag, so their behaviour is unchanged.
-        if (DeviceLost()) {
-            // Name the device: the failure belongs to one target, and by the time the line
-            // is read the `Device:` echo is far above (or the log of a second console is
-            // interleaved with this one). device_lost() is only ever true while a key is
-            // pinned (note_device_failure() ignores "[Fail]" otherwise), so the key is
-            // non-empty here and the wording always reads correctly.
-            log::Logw("Device failure detected on ", HdcConnectKey(), "; stopping hiprofiler and saving data...");
+        if (CheckDeviceLost(state)) {
             break;
         }
         // Sync mode: the hiprofiler_cmd runs until it finishes on its own
@@ -2107,19 +2169,7 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
             (state->spawnFailed || (state->done.load() && CaptureStartFailed(state)))) {
             break;
         }
-        // The first smaps/lsof export found a permission problem: abort the
-        // capture immediately instead of idling through the countdown (a
-        // release app on a non-root phone cannot be tuned; further captures
-        // would only produce meaningless data).
-        if (state->permissionFailed.load()) {
-            std::string perr;
-            {
-                std::lock_guard<std::mutex> lock(state->mtx);
-                perr = state->permissionErrorMsg;
-            }
-            log::Loge("\n", perr,
-                "\nThe target app cannot be tuned on this device "
-                "(release-signed app on a non-root phone); aborting the capture.");
+        if (CheckPermissionFailure(state)) {
             break;
         }
         if (!opts.processName.empty()) {
@@ -2140,24 +2190,8 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
                           "\n" <<
                           std::flush;
             } else {
-                std::cout << "[" << ++roundNo << "] Remaining " << remain << "s, " <<
-                          (running ? "target process is running pid:" + pid :
-                                      (state->freshRestartActive.load() ?
-                                             "target process is being relaunched by the tool" :
-                                             "target process not running, please start it as soon as possible")) <<
-                          "\n" <<
-                          std::flush;
+                PrintCountdownStatus(++roundNo, remain, pid, running, state);
                 if (running) {
-                    // Show live memory/fd metrics gathered by the pid checker
-                    // (non-blocking read of shared state).
-                    ProcessMetrics metrics;
-                    {
-                        std::lock_guard<std::mutex> lock(state->pidMtx);
-                        metrics = state->latestMetrics;
-                    }
-                    if (metrics.valid) {
-                        PrintMetricsLine(metrics);
-                    }
                     maybeStartSnapshotExport(state, opts.outputDir, opts.smapsPrefix, opts.requireFreshStart, pid,
                         startExported, startExportThread, result);
                 }
@@ -2330,6 +2364,45 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
 
 // ── result assembly: end snapshot, result-file pull, cleanup ─────────────────
 
+static void PullNativeleaksFile(const HdcRunOptions& opts,
+    const std::string& nativeleaksPid, RunResult& result)
+{
+    // nativeleaks: also pull the orphan-snapshot file written alongside
+    // the .htrace. It may appear a few seconds after hiprofiler_cmd
+    // returns, so poll for it like wait_for_hiprofiler_zip, then pull it
+    // into the session dir so `trace -l <leaks> <htrace>` can use both.
+    if (!opts.pullNativeleaks || !result.pullOk) {
+        return;
+    }
+    // leaks 文件名按 pid 命名（memleak-native-orphansnapshot-<pid>.txt）。
+    // nativeleaks_pid 是采集前 pid；空（进程采集前未运行、被 aa start
+    // 拉起）则实时取，此时进程必在运行（hiprofiler_cmd 刚结束）。
+    std::string pid = nativeleaksPid;
+    if (pid.empty()) {
+        pid = GetProcessPid(opts.processName);
+    }
+    const long long leaksWaitTimeoutS = 10;
+    const std::string leaksRemote = WaitForNativeleaksFile(
+        pid, HIPROFILER_ZIP_DIR, leaksWaitTimeoutS);
+    if (!leaksRemote.empty()) {
+        PullOutcome lpo = PullFile(leaksRemote, opts.outputDir);
+        if (lpo.ok) {
+            result.pulledLeaksFile = LocalRecvPath(opts.outputDir, leaksRemote);
+            log::Logok("Nativeleaks file exported: ", result.pulledLeaksFile);
+        } else {
+            log::Loge("Nativeleaks file export failed: ", leaksRemote,
+                " (exit code ", lpo.exitCode, ")\n", lpo.output);
+        }
+    } else {
+        std::string msg = "No new nativeleaks orphan-snapshot file detected within " +
+            std::to_string(leaksWaitTimeoutS) + "s";
+        if (!HdcConnectKey().empty()) {
+            msg += " [device: " + HdcConnectKey() + "]";
+        }
+        log::Loge(msg);
+    }
+}
+
 // Assemble the RunResult: copy the shared transcript, mark success/failure
 // (including a permission abort), pull the result file(s) and remove the local
 // temp config file. The end-of-capture smaps/lsof snapshot is exported in
@@ -2381,39 +2454,7 @@ static void PullHiprofilerResult(const HdcRunOptions& opts,
     result.pullOutput = po.output;
     result.pulledFile = LocalRecvPath(opts.outputDir, fileToPull);
 
-    // nativeleaks: also pull the orphan-snapshot file written alongside
-    // the .htrace. It may appear a few seconds after hiprofiler_cmd
-    // returns, so poll for it like wait_for_hiprofiler_zip, then pull it
-    // into the session dir so `trace -l <leaks> <htrace>` can use both.
-    if (opts.pullNativeleaks && result.pullOk) {
-        // leaks 文件名按 pid 命名（memleak-native-orphansnapshot-<pid>.txt）。
-        // nativeleaks_pid 是采集前 pid；空（进程采集前未运行、被 aa start
-        // 拉起）则实时取，此时进程必在运行（hiprofiler_cmd 刚结束）。
-        std::string pid = nativeleaksPid;
-        if (pid.empty()) {
-            pid = GetProcessPid(opts.processName);
-        }
-        const long long leaksWaitTimeoutS = 10;
-        const std::string leaksRemote = WaitForNativeleaksFile(
-            pid, HIPROFILER_ZIP_DIR, leaksWaitTimeoutS);
-        if (!leaksRemote.empty()) {
-            PullOutcome lpo = PullFile(leaksRemote, opts.outputDir);
-            if (lpo.ok) {
-                result.pulledLeaksFile = LocalRecvPath(opts.outputDir, leaksRemote);
-                log::Logok("Nativeleaks file exported: ", result.pulledLeaksFile);
-            } else {
-                log::Loge("Nativeleaks file export failed: ", leaksRemote,
-                    " (exit code ", lpo.exitCode, ")\n", lpo.output);
-            }
-        } else {
-            std::string msg = "No new nativeleaks orphan-snapshot file detected within " +
-                std::to_string(leaksWaitTimeoutS) + "s";
-            if (!HdcConnectKey().empty()) {
-                msg += " [device: " + HdcConnectKey() + "]";
-            }
-            log::Loge(msg);
-        }
-    }
+    PullNativeleaksFile(opts, nativeleaksPid, result);
 }
 
 void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
@@ -2561,6 +2602,71 @@ void RemoveSnapshotArtifacts(const std::vector<std::string>& files)
     }
 }
 
+static bool ExportStartSnapshot(const HdcRunOptions& opts, const std::string& command,
+    RunResult& result, std::vector<std::string>& startFiles, std::string& transcript)
+{
+    std::string status;
+    std::string output;
+    std::string err;
+    // ── start-of-session snapshot ──────────────────────────
+    log::Logi("Exporting the start-of-session snapshot...");
+    if (!exportSnapshotOnce(opts, command, "start", startFiles, status, output, err)) {
+        result.ok = false;
+        result.error = err.empty() ? status : err;
+        result.snapshotStatus = status.empty() ? err : status;
+        result.output = output;
+        return false;
+    }
+    transcript += output;
+    log::Logok("Snapshot exported: ", startFiles.front(), " (start)");
+    return true;
+}
+
+static bool CheckPeakGrowth(const ProcessMetrics& metrics, long long arktsPeakKb,
+    int& samplesAbovePeak, bool peakSeeded)
+{
+    // ArkTS heap at least SNAPSHOT_PEAK_GROWTH_KB above the recorded peak
+    // for SNAPSHOT_PEAK_TRIGGER consecutive samples: export a snapshot and
+    // lift the peak to it.
+    if (!metrics.valid || !peakSeeded) {
+        return false;
+    }
+    if (metrics.arktsHeapKb > arktsPeakKb + SNAPSHOT_PEAK_GROWTH_KB) {
+        ++samplesAbovePeak;
+        return samplesAbovePeak >= SNAPSHOT_PEAK_TRIGGER;
+    }
+    samplesAbovePeak = 0;
+    return false;
+}
+
+static void ExportEndSnapshot(const HdcRunOptions& opts, const std::string& command,
+    RunResult& result, std::vector<std::string>& endFiles, std::string& transcript)
+{
+    // ── end-of-session snapshot ───────────────────────────
+    // Pinned target: once the device is gone this export is certain to fail — it
+    // would spend one more hdc round-trip (up to SNAPSHOT_COMMAND_TIMEOUT_MS) just to
+    // print a warning. Skip it, keep the snapshots exported above, and record the
+    // device failure as the reason the session ended. Untargeted runs never set the
+    // flag, so their behaviour and output are unchanged.
+    if (DeviceLost()) {
+        result.snapshotStatus = "device failure detected: end-of-session snapshot skipped";
+        return;
+    }
+    log::Logi("Exporting the end-of-session snapshot...");
+    std::string status;
+    std::string output;
+    std::string err;
+    if (exportSnapshotOnce(opts, command, "end", endFiles, status, output, err)) {
+        transcript += output;
+        log::Logok("Snapshot exported: ", endFiles.front(), " (end)");
+        result.snapshotStatus = "complete";
+    } else {
+        const std::string reason = err.empty() ? status : err;
+        log::Logw("Warning: end-of-session snapshot export failed: ", reason);
+        result.snapshotStatus = "complete (end-of-session snapshot failed: " + reason + ")";
+    }
+}
+
 // `-c snapshot` with an explicit `-t`: keep monitoring for `duration` seconds
 // like the other capture types (same periodic memory line) and export a
 // snapshot at the start, at the end, and whenever the ArkTS heap stays at least
@@ -2584,9 +2690,6 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
     std::vector<std::string> startFiles;
     std::vector<std::string> peakFiles;
     std::vector<std::string> endFiles;
-    std::string status;
-    std::string output;
-    std::string err;
     std::string transcript;
 
     // The caller already created this session's directory
@@ -2609,17 +2712,9 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
     long long arktsPeakKb = 0;
     bool peakSeeded = false;
 
-    // ── start-of-session snapshot ──────────────────────────
-    log::Logi("Exporting the start-of-session snapshot...");
-    if (!exportSnapshotOnce(opts, command, "start", startFiles, status, output, err)) {
-        result.ok = false;
-        result.error = err.empty() ? status : err;
-        result.snapshotStatus = status.empty() ? err : status;
-        result.output = output;
+    if (!ExportStartSnapshot(opts, command, result, startFiles, transcript)) {
         return;
     }
-    transcript += output;
-    log::Logok("Snapshot exported: ", startFiles.front(), " (start)");
 
     // ── monitoring loop ──────────────────────────────
     int roundNo = 0;
@@ -2674,41 +2769,31 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
             peakSeeded = true;
         }
 
-        // ArkTS heap at least SNAPSHOT_PEAK_GROWTH_KB above the recorded peak
-        // for SNAPSHOT_PEAK_TRIGGER consecutive samples: export a snapshot and
-        // lift the peak to it.
-        if (metrics.valid && peakSeeded) {
-            if (metrics.arktsHeapKb > arktsPeakKb + SNAPSHOT_PEAK_GROWTH_KB) {
-                ++samplesAbovePeak;
-                if (samplesAbovePeak >= SNAPSHOT_PEAK_TRIGGER) {
-                    log::Logi("ArkTS heap stayed above the recorded peak by more than ",
-                        (SNAPSHOT_PEAK_GROWTH_KB / KB_PER_MB), " MB for ",
-                        samplesAbovePeak,
-                        " consecutive samples; exporting a snapshot...");
-                    // The peak is lifted as soon as the export is decided, so
-                    // that later samples are compared against this new value
-                    // even if the export itself fails.
-                    arktsPeakKb = metrics.arktsHeapKb;
-                    std::vector<std::string> newPeak;
-                    std::string peakStatus;
-                    std::string peakOutput;
-                    std::string peakErr;
-                    if (exportSnapshotOnce(opts, command, "peak", newPeak, peakStatus,
-                        peakOutput, peakErr)) {
-                        // Only one peak snapshot is kept: the new export is
-                        // complete, so the previous one can be dropped now.
-                        RemoveSnapshotArtifacts(peakFiles);
-                        peakFiles = newPeak;
-                        transcript += peakOutput;
-                        log::Logok("Snapshot exported: ", peakFiles.front(), " (peak)");
-                    } else {
-                        log::Logw("Warning: snapshot export failed: ", (peakErr.empty() ? peakStatus : peakErr));
-                    }
-                    samplesAbovePeak = 0;
-                }
+        if (CheckPeakGrowth(metrics, arktsPeakKb, samplesAbovePeak, peakSeeded)) {
+            log::Logi("ArkTS heap stayed above the recorded peak by more than ",
+                (SNAPSHOT_PEAK_GROWTH_KB / KB_PER_MB), " MB for ",
+                samplesAbovePeak,
+                " consecutive samples; exporting a snapshot...");
+            // The peak is lifted as soon as the export is decided, so
+            // that later samples are compared against this new value
+            // even if the export itself fails.
+            arktsPeakKb = metrics.arktsHeapKb;
+            std::vector<std::string> newPeak;
+            std::string peakStatus;
+            std::string peakOutput;
+            std::string peakErr;
+            if (exportSnapshotOnce(opts, command, "peak", newPeak, peakStatus,
+                peakOutput, peakErr)) {
+                // Only one peak snapshot is kept: the new export is
+                // complete, so the previous one can be dropped now.
+                RemoveSnapshotArtifacts(peakFiles);
+                peakFiles = newPeak;
+                transcript += peakOutput;
+                log::Logok("Snapshot exported: ", peakFiles.front(), " (peak)");
             } else {
-                samplesAbovePeak = 0;
+                log::Logw("Warning: snapshot export failed: ", (peakErr.empty() ? peakStatus : peakErr));
             }
+            samplesAbovePeak = 0;
         }
 
         // Also wake up when the device is lost, so the check above runs at the
@@ -2717,26 +2802,7 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
             []() { return g_interruptRequested != 0 || DeviceLost(); });
     }
 
-    // ── end-of-session snapshot ───────────────────────────
-    // Pinned target: once the device is gone this export is certain to fail — it
-    // would spend one more hdc round-trip (up to SNAPSHOT_COMMAND_TIMEOUT_MS) just to
-    // print a warning. Skip it, keep the snapshots exported above, and record the
-    // device failure as the reason the session ended. Untargeted runs never set the
-    // flag, so their behaviour and output are unchanged.
-    if (DeviceLost()) {
-        result.snapshotStatus = "device failure detected: end-of-session snapshot skipped";
-    } else {
-        log::Logi("Exporting the end-of-session snapshot...");
-        if (exportSnapshotOnce(opts, command, "end", endFiles, status, output, err)) {
-            transcript += output;
-            log::Logok("Snapshot exported: ", endFiles.front(), " (end)");
-            result.snapshotStatus = "complete";
-        } else {
-            const std::string reason = err.empty() ? status : err;
-            log::Logw("Warning: end-of-session snapshot export failed: ", reason);
-            result.snapshotStatus = "complete (end-of-session snapshot failed: " + reason + ")";
-        }
-    }
+    ExportEndSnapshot(opts, command, result, endFiles, transcript);
 
     // Kept artifacts: the start snapshot, the latest peak snapshot and the end
     // snapshot.
