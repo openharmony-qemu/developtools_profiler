@@ -594,87 +594,73 @@ struct AppQueryResult {
     std::string deviceErr;
 };
 
-static AppQueryResult QueryDeviceApps()
+// Try JSON format first: [{...}, ...]
+bool ParseAppsFromJson(const std::string& output, std::vector<AppEntry>& apps)
 {
-    AppQueryResult out;
-    std::vector<AppEntry>& apps = out.apps;
-    auto cap = proc::CaptureCommand(HdcShell("bm dump -a -l") + " 2>&1");
-    // A pinned target surfaces the hdc device-level failure verbatim, instead of
-    // misreading it as "no apps / system process". Untargeted runs are untouched.
-    if (!HdcConnectKey().empty() && HdcIsDeviceFailure(cap.output)) {
-        out.deviceFailed = true;
-        out.deviceErr = HdcFailureLines(cap.output);
-        return out;
-    }
-    if (!cap.spawned || cap.exitCode != 0) {
-        return out;
-    }
-
-    const std::string& output = cap.output;
-
-    // Try JSON format first: [{...}, ...]
     auto jsonStart = output.find('[');
     auto jsonEnd = output.rfind(']');
-    if (jsonStart != std::string::npos && jsonEnd != std::string::npos &&
-        jsonEnd > jsonStart) {
-        std::string jsonStr = output.substr(jsonStart, jsonEnd - jsonStart + 1);
-        // Simple JSON parser for the expected structure without nlohmann dep.
-        size_t pos = 0;
-        while ((pos = jsonStr.find("\"bundleName\"", pos)) != std::string::npos) {
-            AppEntry entry;
-            // Extract bundleName value
-            auto colon = jsonStr.find(':', pos);
-            if (colon == std::string::npos) {
-                break;
-            }
-            auto valStart = jsonStr.find('"', colon + 1);
-            if (valStart == std::string::npos) {
-                break;
-            }
-            auto valEnd = jsonStr.find('"', valStart + 1);
-            if (valEnd == std::string::npos) {
-                break;
-            }
-            entry.package = jsonStr.substr(valStart + 1, valEnd - valStart - 1);
-
-            // Extract app name (may be "label", "appName", or "name")
-            auto extractLabel = [&jsonStr, &valEnd](const std::string& key) -> std::string {
-                auto keyPos = jsonStr.find("\"" + key + "\"", valEnd);
-                if (keyPos == std::string::npos) {
-                    return "";
-                }
-                auto colon = jsonStr.find(':', keyPos);
-                if (colon == std::string::npos) {
-                    return "";
-                }
-                auto val = jsonStr.find('"', colon + 1);
-                if (val == std::string::npos) {
-                    return "";
-                }
-                auto end = jsonStr.find('"', val + 1);
-                if (end == std::string::npos) {
-                    return "";
-                }
-                return jsonStr.substr(val + 1, end - val - 1);
-            };
-            entry.appName = extractLabel("label");
-            if (entry.appName.empty()) {
-                entry.appName = extractLabel("appName");
-            }
-            if (entry.appName.empty()) {
-                entry.appName = extractLabel("name");
-            }
-            if (!entry.package.empty()) {
-                apps.push_back(std::move(entry));
-            }
-            pos = valEnd + 1;
-        }
-        if (!apps.empty()) {
-            return out;
-        }
+    if (jsonStart == std::string::npos || jsonEnd == std::string::npos ||
+        jsonEnd <= jsonStart) {
+        return false;
     }
+    std::string jsonStr = output.substr(jsonStart, jsonEnd - jsonStart + 1);
+    // Simple JSON parser for the expected structure without nlohmann dep.
+    size_t pos = 0;
+    while ((pos = jsonStr.find("\"bundleName\"", pos)) != std::string::npos) {
+        AppEntry entry;
+        // Extract bundleName value
+        auto colon = jsonStr.find(':', pos);
+        if (colon == std::string::npos) {
+            break;
+        }
+        auto valStart = jsonStr.find('"', colon + 1);
+        if (valStart == std::string::npos) {
+            break;
+        }
+        auto valEnd = jsonStr.find('"', valStart + 1);
+        if (valEnd == std::string::npos) {
+            break;
+        }
+        entry.package = jsonStr.substr(valStart + 1, valEnd - valStart - 1);
 
-    // Fallback: line-by-line key-value parsing.
+        // Extract app name (may be "label", "appName", or "name")
+        auto extractLabel = [&jsonStr, &valEnd](const std::string& key) -> std::string {
+            auto keyPos = jsonStr.find("\"" + key + "\"", valEnd);
+            if (keyPos == std::string::npos) {
+                return "";
+            }
+            auto colon = jsonStr.find(':', keyPos);
+            if (colon == std::string::npos) {
+                return "";
+            }
+            auto val = jsonStr.find('"', colon + 1);
+            if (val == std::string::npos) {
+                return "";
+            }
+            auto end = jsonStr.find('"', val + 1);
+            if (end == std::string::npos) {
+                return "";
+            }
+            return jsonStr.substr(val + 1, end - val - 1);
+        };
+        entry.appName = extractLabel("label");
+        if (entry.appName.empty()) {
+            entry.appName = extractLabel("appName");
+        }
+        if (entry.appName.empty()) {
+            entry.appName = extractLabel("name");
+        }
+        if (!entry.package.empty()) {
+            apps.push_back(std::move(entry));
+        }
+        pos = valEnd + 1;
+    }
+    return !apps.empty();
+}
+
+// Fallback: line-by-line key-value parsing.
+void ParseAppsFromKeyValue(const std::string& output, std::vector<AppEntry>& apps)
+{
     AppEntry current;
     std::istringstream iss(output);
     std::string line;
@@ -733,6 +719,30 @@ static AppQueryResult QueryDeviceApps()
     if (!current.package.empty()) {
         apps.push_back(std::move(current));
     }
+}
+
+static AppQueryResult QueryDeviceApps()
+{
+    AppQueryResult out;
+    std::vector<AppEntry>& apps = out.apps;
+    auto cap = proc::CaptureCommand(HdcShell("bm dump -a -l") + " 2>&1");
+    // A pinned target surfaces the hdc device-level failure verbatim, instead of
+    // misreading it as "no apps / system process". Untargeted runs are untouched.
+    if (!HdcConnectKey().empty() && HdcIsDeviceFailure(cap.output)) {
+        out.deviceFailed = true;
+        out.deviceErr = HdcFailureLines(cap.output);
+        return out;
+    }
+    if (!cap.spawned || cap.exitCode != 0) {
+        return out;
+    }
+
+    const std::string& output = cap.output;
+
+    if (ParseAppsFromJson(output, apps)) {
+        return out;
+    }
+    ParseAppsFromKeyValue(output, apps);
     return out;
 }
 

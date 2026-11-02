@@ -170,6 +170,11 @@ private:
     Option* FindOptionByName(const std::string& name);
     void ConsumeArgs(const std::vector<std::string>& args, size_t start);
     void ConsumeOption(const std::vector<std::string>& args, size_t& i);
+    void ConsumeVectorArgs(const std::vector<std::string>& args, size_t& i,
+        std::vector<std::string>* vecTarget);
+    void PrintUsageSection(std::ostream& os) const;
+    void PrintOptionsSection(std::ostream& os) const;
+    void PrintSubcommandsSection(std::ostream& os) const;
     void ApplyDefaults();
     /**
      * Resolve alias → primary subcommand name, or return name unchanged

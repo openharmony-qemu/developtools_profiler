@@ -281,6 +281,21 @@ void CliParser::ConsumeOption(const std::vector<std::string>& args, size_t& i)
     }
 }
 
+void CliParser::ConsumeVectorArgs(const std::vector<std::string>& args, size_t& i,
+    std::vector<std::string>* vecTarget)
+{
+    // vector positionals consume remaining non-option args only
+    while (i < args.size()) {
+        const std::string& a = args[i];
+        // Stop at option-like args (they'll be parsed on next iteration)
+        if (a.size() > 1 && a[0] == '-') {
+            break;
+        }
+        vecTarget->push_back(a);
+        i++;
+    }
+}
+
 void CliParser::ConsumeArgs(const std::vector<std::string>& args, size_t start)
 {
     size_t i = start;
@@ -325,16 +340,7 @@ void CliParser::ConsumeArgs(const std::vector<std::string>& args, size_t start)
             }
             auto* vecTarget = nextVectorPos();
             if (vecTarget) {
-                // vector positionals consume remaining non-option args only
-                while (i < args.size()) {
-                    const std::string& a = args[i];
-                    // Stop at option-like args (they'll be parsed on next iteration)
-                    if (a.size() > 1 && a[0] == '-') {
-                        break;
-                    }
-                    vecTarget->push_back(a);
-                    i++;
-                }
+                ConsumeVectorArgs(args, i, vecTarget);
                 positionalIdx++;
                 continue;
             }
@@ -434,14 +440,8 @@ int CliParser::Exit(const std::exception& e) const
 // print_help()
 // ═══════════════════════════════════════════════════════════════
 
-void CliParser::PrintHelp(std::ostream& os) const
+void CliParser::PrintUsageSection(std::ostream& os) const
 {
-    os << description_;
-    if (!version_.empty()) {
-        os << "  version " << version_;
-    }
-    os << "\n\n";
-
     // Usage line
     os << "USAGE:\n";
     if (!usageArgs_.empty()) {
@@ -484,7 +484,10 @@ void CliParser::PrintHelp(std::ostream& os) const
         }
     }
     os << "\n";
+}
 
+void CliParser::PrintOptionsSection(std::ostream& os) const
+{
     // Options, grouped by their `group` tag (preserving registration order;
     // empty group renders under the default "OPTIONS" section).
     if (!options_.empty()) {
@@ -548,23 +551,10 @@ void CliParser::PrintHelp(std::ostream& os) const
         os << "  -h, --help" << std::string(HELP_FLAG_PADDING, ' ') << "Print this help message\n";
         os << "\n";
     }
+}
 
-    // Positionals
-    if (!positionals_.empty()) {
-        os << "ARGUMENTS:\n";
-        for (const auto& p : positionals_) {
-            std::string line = "  " + p.name;
-            if (line.size() < HELP_COLUMN_WIDTH) {
-                line.append(HELP_COLUMN_WIDTH - line.size(), ' ');
-            } else {
-                line += "\n" + std::string(HELP_WRAP_INDENT, ' ');
-            }
-            line += p.description;
-            os << line << "\n";
-        }
-        os << "\n";
-    }
-
+void CliParser::PrintSubcommandsSection(std::ostream& os) const
+{
     // Subcommands
     bool hasVisibleSub = false;
     for (const auto& [name, entry] : subcommands_) {
@@ -593,6 +583,36 @@ void CliParser::PrintHelp(std::ostream& os) const
         os << "\n";
         os << "Use \"" << programName_ << " <command> --help\" for more information about a specific command.\n";
     }
+}
+
+void CliParser::PrintHelp(std::ostream& os) const
+{
+    os << description_;
+    if (!version_.empty()) {
+        os << "  version " << version_;
+    }
+    os << "\n\n";
+
+    PrintUsageSection(os);
+    PrintOptionsSection(os);
+
+    // Positionals
+    if (!positionals_.empty()) {
+        os << "ARGUMENTS:\n";
+        for (const auto& p : positionals_) {
+            std::string line = "  " + p.name;
+            if (line.size() < HELP_COLUMN_WIDTH) {
+                line.append(HELP_COLUMN_WIDTH - line.size(), ' ');
+            } else {
+                line += "\n" + std::string(HELP_WRAP_INDENT, ' ');
+            }
+            line += p.description;
+            os << line << "\n";
+        }
+        os << "\n";
+    }
+
+    PrintSubcommandsSection(os);
 }
 
 // ═══════════════════════════════════════════════════════════════
