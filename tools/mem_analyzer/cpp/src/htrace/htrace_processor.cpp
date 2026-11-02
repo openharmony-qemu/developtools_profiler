@@ -358,13 +358,14 @@ void QueryAndAggregateAllocs(sqlite3* db, const std::string& sql,
                         match = (subTypeId != -1);
                         break;
                 }
-                if (match) {
-                    auto key = std::make_pair(ccid, subTypeId);
-                    auto& entry = allocMaps[ci][key];
-                    entry.heapSize += heapSize;
-                    entry.count++;
-                    entry.subTypeId = subTypeId;
+                if (!match) {
+                    continue;
                 }
+                auto key = std::make_pair(ccid, subTypeId);
+                auto& entry = allocMaps[ci][key];
+                entry.heapSize += heapSize;
+                entry.count++;
+                entry.subTypeId = subTypeId;
             }
         }
     }

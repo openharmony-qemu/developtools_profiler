@@ -1040,6 +1040,11 @@ enum class BfsEdgeAction {
     EnqueueDeferred,
 };
 
+static bool IsInternalCodeEdge(const BfsContext& ctx, size_t ptr, int t)
+{
+    return ctx.internalType >= 0 && t == ctx.internalType && ctx.GetEdgeName(ptr) == "code";
+}
+
 static BfsEdgeAction ClassifyBfsEdge(const BfsContext& ctx, uint32_t cur,
     size_t ptr, uint32_t child, bool alreadyQueued)
 {
@@ -1072,11 +1077,8 @@ static BfsEdgeAction ClassifyBfsEdge(const BfsContext& ctx, uint32_t cur,
     }
 
     // Internal edge named "code" — V8 internal, not meaningful for leak analysis
-    if (ctx.internalType >= 0 && t == ctx.internalType) {
-        const std::string& en = ctx.GetEdgeName(ptr);
-        if (en == "code") {
-            return BfsEdgeAction::Skip;
-        }
+    if (IsInternalCodeEdge(ctx, ptr, t)) {
+        return BfsEdgeAction::Skip;
     }
 
     // Element edge to (map descriptors): only specific indices are meaningful.

@@ -390,6 +390,19 @@ static void BuildChainCache(
     }
 }
 
+static size_t GetOrCreatePairIdx(std::unordered_map<int, size_t>& idxMap,
+    std::vector<std::pair<int, InnerMap>>& vec, int key)
+{
+    auto it = idxMap.find(key);
+    if (it != idxMap.end()) {
+        return it->second;
+    }
+    size_t newIdx = vec.size();
+    vec.emplace_back(key, InnerMap());
+    idxMap[key] = newIdx;
+    return newIdx;
+}
+
 static void BuildApproxPairs(
     std::vector<std::pair<int, std::vector<std::pair<int, int>>>>& chainCacheVec,
     const std::vector<CompressedCallStack>& callStacks,
@@ -423,22 +436,12 @@ static void BuildApproxPairs(
                 int deepIdx = chainSyms[j].first;
 
                 // contrib: insert deep in insertion order
-                auto cIt = maps.contribIdx.find(deepIdx);
-                if (cIt == maps.contribIdx.end()) {
-                    maps.contribIdx[deepIdx] = maps.contrib.size();
-                    maps.contrib.emplace_back(deepIdx, InnerMap());
-                    cIt = maps.contribIdx.find(deepIdx);
-                }
-                maps.contrib[cIt->second].second.Add(shallowIdx, leak);
+                size_t cIdx = GetOrCreatePairIdx(maps.contribIdx, maps.contrib, deepIdx);
+                maps.contrib[cIdx].second.Add(shallowIdx, leak);
 
                 // alloc: insert shallow in insertion order
-                auto aIt = maps.allocIdx.find(shallowIdx);
-                if (aIt == maps.allocIdx.end()) {
-                    maps.allocIdx[shallowIdx] = maps.alloc.size();
-                    maps.alloc.emplace_back(shallowIdx, InnerMap());
-                    aIt = maps.allocIdx.find(shallowIdx);
-                }
-                maps.alloc[aIt->second].second.Add(deepIdx, leak);
+                size_t aIdx = GetOrCreatePairIdx(maps.allocIdx, maps.alloc, shallowIdx);
+                maps.alloc[aIdx].second.Add(deepIdx, leak);
             }
         }
     }
@@ -599,12 +602,13 @@ static void FilterApproxRemoved(
                 continue;
             }
             for (auto& ds : downSet) {
-                if (!removedUids.count(ds)) {
-                    removedUids.insert(sym);
-                    downRemoved++;
-                    changed = true;
-                    break;
+                if (removedUids.count(ds)) {
+                    continue;
                 }
+                removedUids.insert(sym);
+                downRemoved++;
+                changed = true;
+                break;
             }
         }
         for (auto& [sym, upSet] : approx.upApprox) {
@@ -612,12 +616,13 @@ static void FilterApproxRemoved(
                 continue;
             }
             for (auto& us : upSet) {
-                if (!removedUids.count(us)) {
-                    removedUids.insert(sym);
-                    upRemoved++;
-                    changed = true;
-                    break;
+                if (removedUids.count(us)) {
+                    continue;
                 }
+                removedUids.insert(sym);
+                upRemoved++;
+                changed = true;
+                break;
             }
         }
     }

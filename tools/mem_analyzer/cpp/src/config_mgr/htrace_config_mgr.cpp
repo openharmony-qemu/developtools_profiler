@@ -71,23 +71,26 @@ void ParseClassificationRules(const json& root, std::vector<ClassificationRule>&
             }
             if (item.contains("lib_contains") && item["lib_contains"].is_array()) {
                 for (const auto& v : item["lib_contains"]) {
-                    if (v.is_string()) {
-                        rule.libContains.push_back(v.get<std::string>());
+                    if (!v.is_string()) {
+                        continue;
                     }
+                    rule.libContains.push_back(v.get<std::string>());
                 }
             }
             if (item.contains("lib_ends_with") && item["lib_ends_with"].is_array()) {
                 for (const auto& v : item["lib_ends_with"]) {
-                    if (v.is_string()) {
-                        rule.libEndsWith.push_back(v.get<std::string>());
+                    if (!v.is_string()) {
+                        continue;
                     }
+                    rule.libEndsWith.push_back(v.get<std::string>());
                 }
             }
             if (item.contains("lib_ts_pattern") && item["lib_ts_pattern"].is_array()) {
                 for (const auto& v : item["lib_ts_pattern"]) {
-                    if (v.is_string()) {
-                        rule.libTsPattern.push_back(v.get<std::string>());
+                    if (!v.is_string()) {
+                        continue;
                     }
+                    rule.libTsPattern.push_back(v.get<std::string>());
                 }
             }
             if (item.contains("require_no_vaddr") && item["require_no_vaddr"].is_boolean()) {
@@ -110,23 +113,26 @@ void ParseFilterRules(const json& root, std::vector<SymbolFilterRule>& filterRul
             }
             if (item.contains("lib") && item["lib"].is_array()) {
                 for (const auto& v : item["lib"]) {
-                    if (v.is_string()) {
-                        rule.lib.push_back(v.get<std::string>());
+                    if (!v.is_string()) {
+                        continue;
                     }
+                    rule.lib.push_back(v.get<std::string>());
                 }
             }
             if (item.contains("symbol_contains") && item["symbol_contains"].is_array()) {
                 for (const auto& v : item["symbol_contains"]) {
-                    if (v.is_string()) {
-                        rule.symbolContains.push_back(v.get<std::string>());
+                    if (!v.is_string()) {
+                        continue;
                     }
+                    rule.symbolContains.push_back(v.get<std::string>());
                 }
             }
             if (item.contains("symbol_equals") && item["symbol_equals"].is_array()) {
                 for (const auto& v : item["symbol_equals"]) {
-                    if (v.is_string()) {
-                        rule.symbolEquals.push_back(v.get<std::string>());
+                    if (!v.is_string()) {
+                        continue;
                     }
+                    rule.symbolEquals.push_back(v.get<std::string>());
                 }
             }
             if (item.contains("orphan_recoverable") && item["orphan_recoverable"].is_boolean()) {

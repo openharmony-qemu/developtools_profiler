@@ -1084,6 +1084,28 @@ static bool ReportCaptureResults(const RunResult& rr, const std::string& snapsho
     return true;
 }
 
+static void FindSnapshotByTimestamp(const std::vector<std::string>& snapshotFiles,
+    std::string& earliest, std::string& latest)
+{
+    fs::file_time_type minTime = fs::file_time_type::max();
+    fs::file_time_type maxTime = fs::file_time_type::min();
+    for (const auto& f : snapshotFiles) {
+        std::error_code ec;
+        const auto t = fs::last_write_time(PathFromUtf8(f), ec);
+        if (ec) {
+            continue;
+        }
+        if (t < minTime) {
+            minTime = t;
+            earliest = f;
+        }
+        if (t > maxTime) {
+            maxTime = t;
+            latest = f;
+        }
+    }
+}
+
 static void FindBaselineAndTargetSnapshots(const std::vector<std::string>& snapshotFiles,
     std::string& baselineFile, std::string& targetFile)
 {
@@ -1115,25 +1137,9 @@ static void FindBaselineAndTargetSnapshots(const std::vector<std::string>& snaps
     }
     log::Logi("Role suffix not found on all snapshots; "
         "falling back to file modification timestamps.");
-    fs::file_time_type minTime = fs::file_time_type::max();
-    fs::file_time_type maxTime = fs::file_time_type::min();
     std::string earliest;
     std::string latest;
-    for (const auto& f : snapshotFiles) {
-        std::error_code ec;
-        const auto t = fs::last_write_time(PathFromUtf8(f), ec);
-        if (ec) {
-            continue;
-        }
-        if (t < minTime) {
-            minTime = t;
-            earliest = f;
-        }
-        if (t > maxTime) {
-            maxTime = t;
-            latest = f;
-        }
-    }
+    FindSnapshotByTimestamp(snapshotFiles, earliest, latest);
     if (baselineFile.empty()) {
         baselineFile = earliest;
     }
