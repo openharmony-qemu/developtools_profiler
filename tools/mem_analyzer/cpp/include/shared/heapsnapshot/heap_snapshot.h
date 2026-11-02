@@ -301,6 +301,9 @@ private:
     // 沿 hclass → Proto 交替上溯，提取 stateMgmt 包装对象背后被包装的类名。
     // skip_markers 中的名字视为「仍是包装层」，跳过并继续上溯。返回空 = 未命中。
     std::string ResolveStateMgmtWrappedClass(uint32_t nodeIndex, const std::vector<std::string>& skipMarkers) const;
+    uint32_t FindHclassEdge(uint32_t cur) const;
+    uint32_t FindProtoEdge(uint32_t cur, const std::vector<std::string>& skipMarkers,
+        std::string& resultProto, std::string& resultReturn) const;
 
     // 获取 stateMgmt.js#JSObject 的扩展名（同 observedClass 的套路，展开被包装的 ArkTS 类）
     std::string GetStateMgmtJsObjectExtName(uint32_t nodeIndex, const std::string& nodeName) const;

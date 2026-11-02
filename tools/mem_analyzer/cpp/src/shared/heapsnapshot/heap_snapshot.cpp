@@ -227,6 +227,44 @@ static int ClassifyProtoName(const std::string& protoName,
     return 0;
 }
 
+uint32_t HeapSnapshot::FindHclassEdge(uint32_t cur) const
+{
+    size_t begin = firstEdgePointers[cur];
+    size_t end = firstEdgePointers[cur + 1];
+    for (size_t ptr = begin; ptr < end; ptr += edgeFieldsCount) {
+        uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
+        if (nameIdx < strings.size() && strings[nameIdx] == "hclass") {
+            return edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
+        }
+    }
+    return INVALID_NODE;
+}
+
+uint32_t HeapSnapshot::FindProtoEdge(uint32_t cur,
+    const std::vector<std::string>& skipMarkers,
+    std::string& resultProto, std::string& resultReturn) const
+{
+    size_t begin = firstEdgePointers[cur];
+    size_t end = firstEdgePointers[cur + 1];
+    for (size_t ptr = begin; ptr < end; ptr += edgeFieldsCount) {
+        uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
+        if (nameIdx >= strings.size()) {
+            continue;
+        }
+        const std::string& en = strings[nameIdx];
+        if (en != "Proto" && en != "__proto__") {
+            continue;
+        }
+        uint32_t proto = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
+        std::string protoName = GetNodeName(proto);
+        if (ClassifyProtoName(protoName, skipMarkers, resultProto)) {
+            resultReturn = protoName;
+        }
+        return proto;
+    }
+    return INVALID_NODE;
+}
+
 std::string HeapSnapshot::ResolveStateMgmtWrappedClass(
     uint32_t nodeIndex, const std::vector<std::string>& skipMarkers) const
 {
@@ -237,38 +275,26 @@ std::string HeapSnapshot::ResolveStateMgmtWrappedClass(
     bool lookingForHclass = true;
 
     while (cur < static_cast<uint32_t>(nodeCount) && visited.insert(cur).second) {
-        size_t begin = firstEdgePointers[cur];
-        size_t end = firstEdgePointers[cur + 1];
         bool found = false;
 
         if (lookingForHclass) {
-            for (size_t ptr = begin; ptr < end; ptr += edgeFieldsCount) {
-                uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
-                if (nameIdx < strings.size() && strings[nameIdx] == "hclass") {
-                    cur = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
-                    found = true;
-                    lookingForHclass = false;
-                    break;
-                }
+            uint32_t hclassTarget = FindHclassEdge(cur);
+            if (hclassTarget != INVALID_NODE) {
+                cur = hclassTarget;
+                found = true;
+                lookingForHclass = false;
             }
         } else {
-            for (size_t ptr = begin; ptr < end; ptr += edgeFieldsCount) {
-                uint32_t nameIdx = edges[ptr + edgeNameOrIndexOffset];
-                if (nameIdx >= strings.size()) {
-                    continue;
-                }
-                const std::string& en = strings[nameIdx];
-                if (en == "Proto" || en == "__proto__") {
-                    uint32_t proto = edges[ptr + edgeToNodeOffset] / nodeFieldsCount;
-                    std::string protoName = GetNodeName(proto);
-                    if (ClassifyProtoName(protoName, skipMarkers, resultProto)) {
-                        return protoName;
-                    }
-                    cur = proto;
-                    lookingForHclass = true;
-                    found = true;
-                    break;
-                }
+            std::string returnName;
+            uint32_t proto = FindProtoEdge(cur, skipMarkers, resultProto, returnName);
+            if (proto == INVALID_NODE) {
+                // no Proto edge found
+            } else if (!returnName.empty()) {
+                return returnName;
+            } else {
+                cur = proto;
+                lookingForHclass = true;
+                found = true;
             }
         }
         if (!found) {
@@ -875,6 +901,47 @@ static size_t FindMatchingCloseBracket(const std::string& text, size_t start)
  * and orphan surrogate pairs (\uD800-\uDFFF) are replaced with \uFFFD.
  * The sanitization is done in-place on a copy; the original buffer is unchanged.
  */
+// Inside a string literal — copy until closing quote
+static void SanitizeStringLiteral(const std::string& strBuf, size_t& i, std::string& sanitized)
+{
+    while (i < strBuf.size()) {
+        char sc = strBuf[i];
+        if (sc == '\\') {
+            // Check for orphan surrogate: \uD[89AB]xx or \uD[CDEF]xx
+            if (i + UNICODE_ESCAPE_TAIL_LEN < strBuf.size() && strBuf[i+1] == 'u') {
+                char h1 = strBuf[i+2] | 0x20;  // lowercase
+                char h2 = strBuf[i+3];
+                if (h1 == 'd' && ((h2 >= '8' && h2 <= 'f') || (h2 >= 'A' && h2 <= 'F'))) {
+                    sanitized += "\\uFFFD";  // replace with replacement character
+                    i += UNICODE_ESCAPE_LEN;
+                    continue;
+                }
+            }
+            sanitized += sc;
+            i++;
+            if (i < strBuf.size()) {
+                sanitized += strBuf[i];
+                i++;
+            }
+            continue;
+        }
+        if (sc == '"') {
+            sanitized += sc;
+            i++;
+            break;  // end of string literal
+        }
+        // Escape control characters (except \t, \n, \r)
+        unsigned char uc = static_cast<unsigned char>(sc);
+        if (uc < 0x20 && uc != '\t' && uc != '\n' && uc != '\r') {
+            AppendCtrlCharEscape(sanitized, uc);
+            i++;
+        } else {
+            sanitized += sc;
+            i++;
+        }
+    }
+}
+
 static std::string SanitizeJsonStringArray(const std::string& strBuf)
 {
     std::string sanitized;
@@ -883,45 +950,9 @@ static std::string SanitizeJsonStringArray(const std::string& strBuf)
     while (i < strBuf.size()) {
         char c = strBuf[i];
         if (c == '"') {
-            // Inside a string literal — copy until closing quote
             sanitized += c;
             i++;
-            while (i < strBuf.size()) {
-                char sc = strBuf[i];
-                if (sc == '\\') {
-                    // Check for orphan surrogate: \uD[89AB]xx or \uD[CDEF]xx
-                    if (i + UNICODE_ESCAPE_TAIL_LEN < strBuf.size() && strBuf[i+1] == 'u') {
-                        char h1 = strBuf[i+2] | 0x20;  // lowercase
-                        char h2 = strBuf[i+3];
-                        if (h1 == 'd' && ((h2 >= '8' && h2 <= 'f') || (h2 >= 'A' && h2 <= 'F'))) {
-                            sanitized += "\\uFFFD";  // replace with replacement character
-                            i += UNICODE_ESCAPE_LEN;
-                            continue;
-                        }
-                    }
-                    sanitized += sc;
-                    i++;
-                    if (i < strBuf.size()) {
-                        sanitized += strBuf[i];
-                        i++;
-                    }
-                    continue;
-                }
-                if (sc == '"') {
-                    sanitized += sc;
-                    i++;
-                    break;  // end of string literal
-                }
-                // Escape control characters (except \t, \n, \r)
-                unsigned char uc = static_cast<unsigned char>(sc);
-                if (uc < 0x20 && uc != '\t' && uc != '\n' && uc != '\r') {
-                    AppendCtrlCharEscape(sanitized, uc);
-                    i++;
-                } else {
-                    sanitized += sc;
-                    i++;
-                }
-            }
+            SanitizeStringLiteral(strBuf, i, sanitized);
         } else {
             sanitized += c;
             i++;
