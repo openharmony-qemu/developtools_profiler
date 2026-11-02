@@ -390,19 +390,32 @@ static void BuildChainCache(
     }
 }
 
-namespace {
-size_t GetOrCreatePairIdx(std::unordered_map<int, size_t>& idxMap, std::vector<std::pair<int, InnerMap>>& vec, int key)
+static void AddApproxPair(ApproxPairMaps& maps, int deepIdx, int shallowIdx, long long leak)
 {
-    auto it = idxMap.find(key);
-    if (it != idxMap.end()) {
-        return it->second;
+    // contrib: insert deep in insertion order
+    auto cIt = maps.contribIdx.find(deepIdx);
+    size_t cIdx;
+    if (cIt != maps.contribIdx.end()) {
+        cIdx = cIt->second;
+    } else {
+        cIdx = maps.contrib.size();
+        maps.contrib.emplace_back(deepIdx, InnerMap());
+        maps.contribIdx[deepIdx] = cIdx;
     }
-    size_t newIdx = vec.size();
-    vec.emplace_back(key, InnerMap());
-    idxMap[key] = newIdx;
-    return newIdx;
+    maps.contrib[cIdx].second.Add(shallowIdx, leak);
+
+    // alloc: insert shallow in insertion order
+    auto aIt = maps.allocIdx.find(shallowIdx);
+    size_t aIdx;
+    if (aIt != maps.allocIdx.end()) {
+        aIdx = aIt->second;
+    } else {
+        aIdx = maps.alloc.size();
+        maps.alloc.emplace_back(shallowIdx, InnerMap());
+        maps.allocIdx[shallowIdx] = aIdx;
+    }
+    maps.alloc[aIdx].second.Add(deepIdx, leak);
 }
-} // namespace
 
 static void BuildApproxPairs(
     std::vector<std::pair<int, std::vector<std::pair<int, int>>>>& chainCacheVec,
@@ -436,13 +449,8 @@ static void BuildApproxPairs(
             for (size_t j = i + 1; j < chainSyms.size(); j++) {
                 int deepIdx = chainSyms[j].first;
 
-                // contrib: insert deep in insertion order
-                size_t cIdx = GetOrCreatePairIdx(maps.contribIdx, maps.contrib, deepIdx);
-                maps.contrib[cIdx].second.Add(shallowIdx, leak);
-
-                // alloc: insert shallow in insertion order
-                size_t aIdx = GetOrCreatePairIdx(maps.allocIdx, maps.alloc, shallowIdx);
-                maps.alloc[aIdx].second.Add(deepIdx, leak);
+                // contrib + alloc: insert pair entries
+                AddApproxPair(maps, deepIdx, shallowIdx, leak);
             }
         }
     }
