@@ -281,42 +281,22 @@ void LoadStatisticStacks(HtraceParseContext& ctx,
     }
 }
 
-// detail 模式：AllocEvent 且 end_ts IS NULL/0 为未释放（outstanding）；
-// 已释放(end_ts != 0)整体跳过，FreeEvent 无需处理。
-void LoadDetailStacks(HtraceParseContext& ctx,
-    const std::vector<HtraceEventType>& allowedTypes,
-    bool needAddrs,
-    CompressedCallStackList& stacks)
+struct AllocEntry {
+    long long heapSize;
+    int count;
+    int subTypeId = -1;
+};
+
+struct GroupEntry {
+    int callchainId;
+    long long heapSize;
+    int count;
+    HtraceEventType htraceType;
+    int subTypeId = -1;
+};
+
+std::pair<std::string, std::string> BuildDetailSql(const std::vector<EventTypeMapping>& configs)
 {
-    sqlite3* db = ctx.db;
-    TraceMeta& meta = ctx.meta;
-
-    struct AllocEntry {
-        long long heapSize;
-        int count;
-        int subTypeId = -1;
-    };
-
-    // One alloc_map per event type mapping (filtered to allowed types)
-    auto allConfigs = DefaultEventMappings();
-    std::vector<EventTypeMapping> configs;
-    for (auto& c : allConfigs) {
-        if (std::find(allowedTypes.begin(), allowedTypes.end(), c.htraceType) != allowedTypes.end()) {
-            configs.push_back(c);
-        }
-    }
-
-    // 聚合键扩展为 (callchain_id, sub_type_id)：同一 ccid 理论上可能 mmap 多文件。
-    std::vector<std::map<std::pair<int, int>, AllocEntry>> allocMaps(configs.size());
-
-    // Build lookup: alloc event_type string → list of mapping indices.
-    // The same event_type ("MmapEvent") may map to multiple HtraceEventTypes,
-    // disambiguated in-memory by sub_type_id (NULL → mmap-anon, NOT NULL → mmap-filepage).
-    std::map<std::string, std::vector<int>> allocEventLookup;
-    for (size_t i = 0; i < configs.size(); i++) {
-        allocEventLookup[configs[i].allocEvent].push_back(static_cast<int>(i));
-    }
-
     // Only process alloc events with end_ts IS NULL or 0 (outstanding, not freed).
     // Event_type whitelist is pushed down to SQL; sub_type dispatch is in-memory.
     std::set<std::string> eventTypesSeen;
@@ -336,7 +316,14 @@ void LoadDetailStacks(HtraceParseContext& ctx,
         "WHERE (end_ts IS NULL OR end_ts = 0) "
         "AND event_type IN (" + eventTypeIn + ")";
     sql += " ORDER BY start_ts ASC";
+    return {eventTypeIn, sql};
+}
 
+void QueryAndAggregateAllocs(sqlite3* db, const std::string& sql,
+    const std::vector<EventTypeMapping>& configs,
+    const std::map<std::string, std::vector<int>>& allocEventLookup,
+    std::vector<std::map<std::pair<int, int>, AllocEntry>>& allocMaps)
+{
     sqlite3_stmt* stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
         StmtGuard guard(stmt);
@@ -381,15 +368,72 @@ void LoadDetailStacks(HtraceParseContext& ctx,
             }
         }
     }
+}
+
+void ResolveDetailFrames(HtraceParseContext& ctx, const std::string& eventTypeIn,
+    std::vector<GroupEntry>& allGroups, bool needAddrs, CompressedCallStackList& stacks)
+{
+    sqlite3* db = ctx.db;
+    TraceMeta& meta = ctx.meta;
+
+    // Load frames for matching chains (reuse event_type/sub_type filter in a subquery)
+    std::string chainSelect =
+        "SELECT callchain_id FROM native_hook "
+        "WHERE (end_ts IS NULL OR end_ts = 0) AND event_type IN (" + eventTypeIn + ")";
+    auto framesByChain = ReadFrames(db, chainSelect);
+    // 隔离：仅 -l(need_addrs) 才查 native_hook.addr 聚合地址；非 -l 空 map，循环 find 返回 end 不填
+    std::unordered_map<int, std::vector<std::string>> addrsByChain;
+    if (needAddrs) {
+        addrsByChain = ReadCallchainAddrs(db, chainSelect);
+    }
+
+    for (auto& g : allGroups) {
+        if (HtraceIsCountSizeType(g.htraceType)) {
+            meta.typeSizes[g.htraceType] += g.heapSize;
+        }
+        auto cs = BuildCompressedCallStack(g.callchainId, g.heapSize, g.count,
+            g.htraceType, g.subTypeId, framesByChain);
+        auto aIt = addrsByChain.find(g.callchainId);
+        if (aIt != addrsByChain.end()) {
+            cs.existingAddrs = std::make_shared<std::vector<std::string>>(aIt->second);
+        }
+        stacks.stacks.push_back(std::move(cs));
+    }
+}
+
+// detail 模式：AllocEvent 且 end_ts IS NULL/0 为未释放（outstanding）；
+// 已释放(end_ts != 0)整体跳过，FreeEvent 无需处理。
+void LoadDetailStacks(HtraceParseContext& ctx,
+    const std::vector<HtraceEventType>& allowedTypes,
+    bool needAddrs,
+    CompressedCallStackList& stacks)
+{
+    sqlite3* db = ctx.db;
+
+    // One alloc_map per event type mapping (filtered to allowed types)
+    auto allConfigs = DefaultEventMappings();
+    std::vector<EventTypeMapping> configs;
+    for (auto& c : allConfigs) {
+        if (std::find(allowedTypes.begin(), allowedTypes.end(), c.htraceType) != allowedTypes.end()) {
+            configs.push_back(c);
+        }
+    }
+
+    // 聚合键扩展为 (callchain_id, sub_type_id)：同一 ccid 理论上可能 mmap 多文件。
+    std::vector<std::map<std::pair<int, int>, AllocEntry>> allocMaps(configs.size());
+
+    // Build lookup: alloc event_type string → list of mapping indices.
+    // The same event_type ("MmapEvent") may map to multiple HtraceEventTypes,
+    // disambiguated in-memory by sub_type_id (NULL → mmap-anon, NOT NULL → mmap-filepage).
+    std::map<std::string, std::vector<int>> allocEventLookup;
+    for (size_t i = 0; i < configs.size(); i++) {
+        allocEventLookup[configs[i].allocEvent].push_back(static_cast<int>(i));
+    }
+
+    auto [eventTypeIn, sql] = BuildDetailSql(configs);
+    QueryAndAggregateAllocs(db, sql, configs, allocEventLookup, allocMaps);
 
     // Collect results from all mappings
-    struct GroupEntry {
-        int callchainId;
-        long long heapSize;
-        int count;
-        HtraceEventType htraceType;
-        int subTypeId = -1;
-    };
     std::vector<GroupEntry> allGroups;
     for (size_t pi = 0; pi < configs.size(); pi++) {
         for (auto& [key, entry] : allocMaps[pi]) {
@@ -415,29 +459,7 @@ void LoadDetailStacks(HtraceParseContext& ctx,
 
     log::Logi("  Detail mode: ", allGroups.size(), " groups across ", configs.size(), " event type(s).");
 
-    // Load frames for matching chains (reuse event_type/sub_type filter in a subquery)
-    std::string chainSelect =
-        "SELECT callchain_id FROM native_hook "
-        "WHERE (end_ts IS NULL OR end_ts = 0) AND event_type IN (" + eventTypeIn + ")";
-    auto framesByChain = ReadFrames(db, chainSelect);
-    // 隔离：仅 -l(need_addrs) 才查 native_hook.addr 聚合地址；非 -l 空 map，循环 find 返回 end 不填
-    std::unordered_map<int, std::vector<std::string>> addrsByChain;
-    if (needAddrs) {
-        addrsByChain = ReadCallchainAddrs(db, chainSelect);
-    }
-
-    for (auto& g : allGroups) {
-        if (HtraceIsCountSizeType(g.htraceType)) {
-            meta.typeSizes[g.htraceType] += g.heapSize;
-        }
-        auto cs = BuildCompressedCallStack(g.callchainId, g.heapSize, g.count,
-            g.htraceType, g.subTypeId, framesByChain);
-        auto aIt = addrsByChain.find(g.callchainId);
-        if (aIt != addrsByChain.end()) {
-            cs.existingAddrs = std::make_shared<std::vector<std::string>>(aIt->second);
-        }
-        stacks.stacks.push_back(std::move(cs));
-    }
+    ResolveDetailFrames(ctx, eventTypeIn, allGroups, needAddrs, stacks);
 }
 
 } // namespace

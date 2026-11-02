@@ -32,6 +32,110 @@ constexpr size_t TS_JS_COLON_OFFSET = 3;
 constexpr size_t ETS_COLON_OFFSET = 4;
 constexpr size_t EXT_CHAR2_OFFSET = 2;
 constexpr size_t EXT_CHAR3_OFFSET = 3;
+
+void ParseAlgorithmConfig(const json& root, HtraceAlgorithmConfig& algo)
+{
+    // Algorithm
+    if (root.contains("algorithm") && root["algorithm"].is_object()) {
+        auto& a = root["algorithm"];
+        if (a.contains("low_threshold") && a["low_threshold"].is_number()) {
+            algo.lowThreshold = a["low_threshold"].get<long long>();
+        }
+        if (a.contains("appro_rel_ratio") && a["appro_rel_ratio"].is_number()) {
+            algo.approRelRatio = a["appro_rel_ratio"].get<int>();
+        }
+        if (a.contains("appro_rel_cap") && a["appro_rel_cap"].is_number()) {
+            algo.approRelCap = a["appro_rel_cap"].get<long long>();
+        }
+        if (a.contains("appro_ratio_threshold") && a["appro_ratio_threshold"].is_number()) {
+            algo.approRatioThreshold = a["appro_ratio_threshold"].get<int>();
+        }
+        if (a.contains("orphan_rel_ratio") && a["orphan_rel_ratio"].is_number()) {
+            algo.orphanRelRatio = a["orphan_rel_ratio"].get<int>();
+        }
+        if (a.contains("orphan_rel_cap") && a["orphan_rel_cap"].is_number()) {
+            algo.orphanRelCap = a["orphan_rel_cap"].get<long long>();
+        }
+    }
+}
+
+void ParseClassificationRules(const json& root, std::vector<ClassificationRule>& classRules)
+{
+    // Classification rules
+    if (root.contains("symbol_classification_rules") && root["symbol_classification_rules"].is_array()) {
+        classRules.clear();
+        for (const auto& item : root["symbol_classification_rules"]) {
+            ClassificationRule rule;
+            if (item.contains("type") && item["type"].is_string()) {
+                rule.type = item["type"].get<std::string>();
+            }
+            if (item.contains("lib_contains") && item["lib_contains"].is_array()) {
+                for (const auto& v : item["lib_contains"]) {
+                    if (v.is_string()) {
+                        rule.libContains.push_back(v.get<std::string>());
+                    }
+                }
+            }
+            if (item.contains("lib_ends_with") && item["lib_ends_with"].is_array()) {
+                for (const auto& v : item["lib_ends_with"]) {
+                    if (v.is_string()) {
+                        rule.libEndsWith.push_back(v.get<std::string>());
+                    }
+                }
+            }
+            if (item.contains("lib_ts_pattern") && item["lib_ts_pattern"].is_array()) {
+                for (const auto& v : item["lib_ts_pattern"]) {
+                    if (v.is_string()) {
+                        rule.libTsPattern.push_back(v.get<std::string>());
+                    }
+                }
+            }
+            if (item.contains("require_no_vaddr") && item["require_no_vaddr"].is_boolean()) {
+                rule.requireNoVaddr = item["require_no_vaddr"].get<bool>();
+            }
+            classRules.push_back(std::move(rule));
+        }
+    }
+}
+
+void ParseFilterRules(const json& root, std::vector<SymbolFilterRule>& filterRules)
+{
+    // Filter rules
+    if (root.contains("symbol_filter_rules") && root["symbol_filter_rules"].is_array()) {
+        filterRules.clear();
+        for (const auto& item : root["symbol_filter_rules"]) {
+            SymbolFilterRule rule;
+            if (item.contains("scope") && item["scope"].is_string()) {
+                rule.scope = item["scope"].get<std::string>();
+            }
+            if (item.contains("lib") && item["lib"].is_array()) {
+                for (const auto& v : item["lib"]) {
+                    if (v.is_string()) {
+                        rule.lib.push_back(v.get<std::string>());
+                    }
+                }
+            }
+            if (item.contains("symbol_contains") && item["symbol_contains"].is_array()) {
+                for (const auto& v : item["symbol_contains"]) {
+                    if (v.is_string()) {
+                        rule.symbolContains.push_back(v.get<std::string>());
+                    }
+                }
+            }
+            if (item.contains("symbol_equals") && item["symbol_equals"].is_array()) {
+                for (const auto& v : item["symbol_equals"]) {
+                    if (v.is_string()) {
+                        rule.symbolEquals.push_back(v.get<std::string>());
+                    }
+                }
+            }
+            if (item.contains("orphan_recoverable") && item["orphan_recoverable"].is_boolean()) {
+                rule.orphanRecoverable = item["orphan_recoverable"].get<bool>();
+            }
+            filterRules.push_back(std::move(rule));
+        }
+    }
+}
 } // namespace
 
 // ===== Singleton =====
@@ -98,103 +202,13 @@ bool HtraceConfigMgr::Load(const std::string& path, std::string& err)
         return false;
     }
 
-    // Algorithm
-    if (root.contains("algorithm") && root["algorithm"].is_object()) {
-        auto& a = root["algorithm"];
-        if (a.contains("low_threshold") && a["low_threshold"].is_number()) {
-            algo_.lowThreshold = a["low_threshold"].get<long long>();
-        }
-        if (a.contains("appro_rel_ratio") && a["appro_rel_ratio"].is_number()) {
-            algo_.approRelRatio = a["appro_rel_ratio"].get<int>();
-        }
-        if (a.contains("appro_rel_cap") && a["appro_rel_cap"].is_number()) {
-            algo_.approRelCap = a["appro_rel_cap"].get<long long>();
-        }
-        if (a.contains("appro_ratio_threshold") && a["appro_ratio_threshold"].is_number()) {
-            algo_.approRatioThreshold = a["appro_ratio_threshold"].get<int>();
-        }
-        if (a.contains("orphan_rel_ratio") && a["orphan_rel_ratio"].is_number()) {
-            algo_.orphanRelRatio = a["orphan_rel_ratio"].get<int>();
-        }
-        if (a.contains("orphan_rel_cap") && a["orphan_rel_cap"].is_number()) {
-            algo_.orphanRelCap = a["orphan_rel_cap"].get<long long>();
-        }
-    }
-
-    // Classification rules
-    if (root.contains("symbol_classification_rules") && root["symbol_classification_rules"].is_array()) {
-        classRules_.clear();
-        for (const auto& item : root["symbol_classification_rules"]) {
-            ClassificationRule rule;
-            if (item.contains("type") && item["type"].is_string()) {
-                rule.type = item["type"].get<std::string>();
-            }
-            if (item.contains("lib_contains") && item["lib_contains"].is_array()) {
-                for (const auto& v : item["lib_contains"]) {
-                    if (v.is_string()) {
-                        rule.libContains.push_back(v.get<std::string>());
-                    }
-                }
-            }
-            if (item.contains("lib_ends_with") && item["lib_ends_with"].is_array()) {
-                for (const auto& v : item["lib_ends_with"]) {
-                    if (v.is_string()) {
-                        rule.libEndsWith.push_back(v.get<std::string>());
-                    }
-                }
-            }
-            if (item.contains("lib_ts_pattern") && item["lib_ts_pattern"].is_array()) {
-                for (const auto& v : item["lib_ts_pattern"]) {
-                    if (v.is_string()) {
-                        rule.libTsPattern.push_back(v.get<std::string>());
-                    }
-                }
-            }
-            if (item.contains("require_no_vaddr") && item["require_no_vaddr"].is_boolean()) {
-                rule.requireNoVaddr = item["require_no_vaddr"].get<bool>();
-            }
-            classRules_.push_back(std::move(rule));
-        }
-    }
+    ParseAlgorithmConfig(root, algo_);
+    ParseClassificationRules(root, classRules_);
     if (classRules_.empty()) {
         classRules_ = DefaultClassificationRules();
     }
 
-    // Filter rules
-    if (root.contains("symbol_filter_rules") && root["symbol_filter_rules"].is_array()) {
-        filterRules_.clear();
-        for (const auto& item : root["symbol_filter_rules"]) {
-            SymbolFilterRule rule;
-            if (item.contains("scope") && item["scope"].is_string()) {
-                rule.scope = item["scope"].get<std::string>();
-            }
-            if (item.contains("lib") && item["lib"].is_array()) {
-                for (const auto& v : item["lib"]) {
-                    if (v.is_string()) {
-                        rule.lib.push_back(v.get<std::string>());
-                    }
-                }
-            }
-            if (item.contains("symbol_contains") && item["symbol_contains"].is_array()) {
-                for (const auto& v : item["symbol_contains"]) {
-                    if (v.is_string()) {
-                        rule.symbolContains.push_back(v.get<std::string>());
-                    }
-                }
-            }
-            if (item.contains("symbol_equals") && item["symbol_equals"].is_array()) {
-                for (const auto& v : item["symbol_equals"]) {
-                    if (v.is_string()) {
-                        rule.symbolEquals.push_back(v.get<std::string>());
-                    }
-                }
-            }
-            if (item.contains("orphan_recoverable") && item["orphan_recoverable"].is_boolean()) {
-                rule.orphanRecoverable = item["orphan_recoverable"].get<bool>();
-            }
-            filterRules_.push_back(std::move(rule));
-        }
-    }
+    ParseFilterRules(root, filterRules_);
     if (filterRules_.empty()) {
         filterRules_ = DefaultFilterRules();
     }

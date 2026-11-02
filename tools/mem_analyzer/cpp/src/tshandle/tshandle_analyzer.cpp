@@ -39,6 +39,91 @@ bool CallStackIsApp(const ResolvedCallStack& stack)
     return false;
 }
 
+struct ClassRefAggregate {
+    std::vector<long long> callStackRefs;
+    std::unordered_map<long long, double> chainSizeByCallStack;
+    std::unordered_map<long long, long long> chainCountByCallStack;
+    int count = 0;
+    double objectScopeSize = 0.0;
+};
+
+ClassRefAggregate AggregateClassRefs(HtraceEventType handleType,
+    const std::vector<ArkTsInstance>& instances,
+    const std::unordered_set<long long>& validStackIds)
+{
+    ClassRefAggregate agg;
+    std::unordered_set<long long> seenCallStackIds;
+
+    for (const auto& instance : instances) {
+        int totalAddrs = 0;
+        for (const auto& ref : instance.nativeRef) {
+            if (ref.handleType == handleType) {
+                totalAddrs += static_cast<int>(ref.addrs.size());
+            }
+        }
+        if (totalAddrs == 0) {
+            continue;
+        }
+        bool instanceHasRef = false;
+        for (const auto& ref : instance.nativeRef) {
+            if (ref.handleType != handleType||
+                ref.callStackId == 0 ||
+                validStackIds.find(ref.callStackId) == validStackIds.end()) {
+                continue;
+            }
+            long long id = ref.callStackId;
+            instanceHasRef = true;
+            if (seenCallStackIds.insert(id).second) {
+                agg.callStackRefs.push_back(id);
+            }
+            if (instance.retainedSize > 0) {
+                agg.chainSizeByCallStack[id] +=
+                    (static_cast<double>(instance.retainedSize) * ref.addrs.size() / totalAddrs);
+            }
+            agg.chainCountByCallStack[id] += static_cast<long long>(ref.addrs.size());
+        }
+        if (instanceHasRef) {
+            ++agg.count;
+        }
+    }
+
+    for (const auto& [id, sz] : agg.chainSizeByCallStack) {
+        agg.objectScopeSize += sz;
+    }
+
+    return agg;
+}
+
+std::vector<TshandleCallChain> FormatCallChains(
+    std::vector<long long>& callStackRefs,
+    const std::unordered_map<long long, const ResolvedCallStack*>& stacksById,
+    HtraceEventType handleType,
+    const std::unordered_map<long long, double>& chainSizeByCallStack,
+    const std::unordered_map<long long, long long>& chainCountByCallStack)
+{
+    std::vector<TshandleCallChain> callChains;
+    std::stable_sort(callStackRefs.begin(), callStackRefs.end());
+    for (const auto& id : callStackRefs) {
+        const auto stackIt = stacksById.find(id);
+        if (stackIt == stacksById.end()) {
+            continue;
+        }
+        const ResolvedCallStack* stack = stackIt->second;
+        if (stack->type != handleType || stack->frames.empty()) {
+            continue;
+        }
+        const auto csIt = chainSizeByCallStack.find(id);
+        const double csSize = (csIt != chainSizeByCallStack.end()) ? csIt->second : 0.0;
+        const auto countIt = chainCountByCallStack.find(id);
+        const long long csCount = (countIt != chainCountByCallStack.end()) ? countIt->second : 0LL;
+        if (csSize <= 0.0 && csCount == 0) {
+            continue;
+        }
+        callChains.push_back({stack->id, stack->frames, csSize, csCount, 0.0});
+    }
+    return callChains;
+}
+
 /**
  * 构建一个 section，只纳入 id 在 valid_stack_ids 中的调用栈。
  * object.existing_size = 该对象这些调用链分摊到的 retained size（链 size 之和），
@@ -69,72 +154,14 @@ TshandleTypeSection buildSectionWithStacks(
         TshandleTopObject object;
         object.objectName = cls.name;
         object.type = handleType;
-        std::vector<long long> callStackRefs;
-        std::unordered_set<long long> seenCallStackIds;
-        std::unordered_map<long long, double> chainSizeByCallStack;
-        std::unordered_map<long long, long long> chainCountByCallStack;
-
-        for (const auto& instance : cls.instances) {
-            int totalAddrs = 0;
-            for (const auto& ref : instance.nativeRef) {
-                if (ref.handleType == handleType) {
-                    totalAddrs += static_cast<int>(ref.addrs.size());
-                }
-            }
-            if (totalAddrs == 0) {
-                continue;
-            }
-            bool instanceHasRef = false;
-            for (const auto& ref : instance.nativeRef) {
-                if (ref.handleType != handleType||
-                    ref.callStackId == 0 ||
-                    validStackIds.find(ref.callStackId) == validStackIds.end()) {
-                    continue;
-                }
-                long long id = ref.callStackId;
-                instanceHasRef = true;
-                if (seenCallStackIds.insert(id).second) {
-                    callStackRefs.push_back(id);
-                }
-                if (instance.retainedSize > 0) {
-                    chainSizeByCallStack[id] +=
-                        (static_cast<double>(instance.retainedSize) * ref.addrs.size() / totalAddrs);
-                }
-                chainCountByCallStack[id] += static_cast<long long>(ref.addrs.size());
-            }
-            if (instanceHasRef) {
-                ++object.count;
-            }
-        }
-
-        double objectScopeSize = 0.0;
-        for (const auto& [id, sz] : chainSizeByCallStack) {
-            objectScopeSize += sz;
-        }
-
-        std::stable_sort(callStackRefs.begin(), callStackRefs.end());
-        for (const auto& id : callStackRefs) {
-            const auto stackIt = stacksById.find(id);
-            if (stackIt == stacksById.end()) {
-                continue;
-            }
-            const ResolvedCallStack* stack = stackIt->second;
-            if (stack->type != handleType || stack->frames.empty()) {
-                continue;
-            }
-            const auto csIt = chainSizeByCallStack.find(id);
-            const double csSize = (csIt != chainSizeByCallStack.end()) ? csIt->second : 0.0;
-            const auto countIt = chainCountByCallStack.find(id);
-            const long long csCount = (countIt != chainCountByCallStack.end()) ? countIt->second : 0LL;
-            if (csSize <= 0.0 && csCount == 0) {
-                continue;
-            }
-            object.callChains.push_back({stack->id, stack->frames, csSize, csCount, 0.0});
-        }
+        auto agg = AggregateClassRefs(handleType, cls.instances, validStackIds);
+        object.count = agg.count;
+        object.existingSize = agg.objectScopeSize;
+        object.callChains = FormatCallChains(agg.callStackRefs, stacksById, handleType,
+            agg.chainSizeByCallStack, agg.chainCountByCallStack);
         if (object.callChains.empty()) {
             continue;
         }
-        object.existingSize = objectScopeSize;
         objects.push_back(std::move(object));
     }
 
