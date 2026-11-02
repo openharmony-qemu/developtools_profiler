@@ -398,6 +398,46 @@ struct LogicalGrowthResult {
     json groups = json::array();
 };
 
+static std::string ResolveLogicalRootKey(
+    const json& rows,
+    size_t index,
+    const std::unordered_map<std::string, size_t>& rowByKey,
+    const SnapshotIndex& baseline,
+    const SnapshotIndex& target)
+{
+    const auto& row = rows[index];
+    const std::string key = row["key"].get<std::string>();
+    if (row["sourceLocated"].get<bool>()) {
+        return key;
+    }
+    const bool existsInTarget = row["target"]["count"].get<uint64_t>() > 0;
+    const auto& groups = existsInTarget ? target.groups : baseline.groups;
+    const auto aggregateIt = groups.find(key);
+    if (aggregateIt == groups.end()) {
+        return key;
+    }
+    std::string nearestSource;
+    std::string outermostChanged;
+    for (const auto& ancestorKey : aggregateIt->second.dominatorAncestors) {
+        const auto rowIt = rowByKey.find(ancestorKey);
+        if (rowIt == rowByKey.end()) {
+            continue;
+        }
+        outermostChanged = ancestorKey;
+        if (rows[rowIt->second]["sourceLocated"].get<bool>()) {
+            nearestSource = ancestorKey;
+            break;
+        }
+    }
+    if (!nearestSource.empty()) {
+        return nearestSource;
+    }
+    if (!outermostChanged.empty()) {
+        return outermostChanged;
+    }
+    return key;
+}
+
 static void AssignInitialLogicalGroups(
     json& rows,
     const std::unordered_map<std::string, size_t>& rowByKey,
@@ -405,50 +445,18 @@ static void AssignInitialLogicalGroups(
     const SnapshotIndex& target)
 {
     for (size_t i = 0; i < rows.size(); ++i) {
-        auto& row = rows[i];
-        const std::string key = row["key"].get<std::string>();
-        std::string rootKey = key;
-        if (!row["sourceLocated"].get<bool>()) {
-            const bool existsInTarget = row["target"]["count"].get<uint64_t>() > 0;
-            const auto& groups = existsInTarget ? target.groups : baseline.groups;
-            const auto aggregateIt = groups.find(key);
-            std::string nearestSource;
-            std::string outermostChanged;
-            if (aggregateIt != groups.end()) {
-                for (const auto& ancestorKey : aggregateIt->second.dominatorAncestors) {
-                    const auto rowIt = rowByKey.find(ancestorKey);
-                    if (rowIt == rowByKey.end()) {
-                        continue;
-                    }
-                    outermostChanged = ancestorKey;
-                    if (rows[rowIt->second]["sourceLocated"].get<bool>()) {
-                        nearestSource = ancestorKey;
-                        break;
-                    }
-                }
-            }
-            if (!nearestSource.empty()) {
-                rootKey = nearestSource;
-            } else if (!outermostChanged.empty()) {
-                rootKey = outermostChanged;
-            }
-        }
-        row["logicalGroupId"] = rootKey;
-        row["includedIn"] = rootKey == key ? json(nullptr) : json(rootKey);
+        const std::string key = rows[i]["key"].get<std::string>();
+        const std::string rootKey = ResolveLogicalRootKey(rows, i, rowByKey, baseline, target);
+        rows[i]["logicalGroupId"] = rootKey;
+        rows[i]["includedIn"] = rootKey == key ? json(nullptr) : json(rootKey);
     }
 }
 
-static void ResolveCarrierDescendants(
-    json& rows,
+static std::unordered_map<std::string, std::vector<size_t>> IndexChangedCandidatesByAncestor(
+    const json& rows,
     const SnapshotIndex& baseline,
     const SnapshotIndex& target)
 {
-    // A stable container can gain retained size solely because a changed
-    // descendant now owns more memory. Treat such zero-count/zero-self rows as
-    // carriers of the descendant growth instead of separate logical growths.
-    // Prefer the descendant whose retained delta explains the largest share.
-    // Candidates are pre-indexed by their dominator-ancestor keys so each
-    // carrier looks up its descendants instead of rescanning every row.
     std::unordered_map<std::string, std::vector<size_t>> candidatesByAncestor;
     for (size_t ci = 0; ci < rows.size(); ++ci) {
         const auto& candidate = rows[ci];
@@ -468,6 +476,21 @@ static void ResolveCarrierDescendants(
             candidatesByAncestor[ancestorKey].push_back(ci);
         }
     }
+    return candidatesByAncestor;
+}
+
+static void ResolveCarrierDescendants(
+    json& rows,
+    const SnapshotIndex& baseline,
+    const SnapshotIndex& target)
+{
+    // A stable container can gain retained size solely because a changed
+    // descendant now owns more memory. Treat such zero-count/zero-self rows as
+    // carriers of the descendant growth instead of separate logical growths.
+    // Prefer the descendant whose retained delta explains the largest share.
+    // Candidates are pre-indexed by their dominator-ancestor keys so each
+    // carrier looks up its descendants instead of rescanning every row.
+    auto candidatesByAncestor = IndexChangedCandidatesByAncestor(rows, baseline, target);
     for (size_t i = 0; i < rows.size(); ++i) {
         auto& carrier = rows[i];
         const auto& carrierDelta = carrier["delta"];

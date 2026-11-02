@@ -138,9 +138,7 @@ static std::vector<ChainGroup> QueryCallStackGroups(sqlite3* db, bool isStatisti
                 g.callchainId = sqlite3_column_int(stmt, 0);
                 g.type = sqlite3_column_int(stmt, 1);
                 auto existingAddrsStr = (const char*)sqlite3_column_text(stmt, 2);
-                if (existingAddrsStr) {
-                    g.existingAddrs = split(existingAddrsStr, ',');
-                }
+                g.existingAddrs = existingAddrsStr ? split(existingAddrsStr, ',') : std::vector<std::string>{};
                 g.existingSize = sqlite3_column_int64(stmt, COL_EXISTING_SIZE);
                 groups.push_back(g);
             }

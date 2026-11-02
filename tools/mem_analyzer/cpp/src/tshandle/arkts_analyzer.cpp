@@ -316,10 +316,7 @@ static std::vector<std::string> BuildAnomalyLines(
             ss << parseResult.dupKeys[i] << "\t" <<
                parseResult.dupOriginalAddrs[i] << "\tduplicate\t";
             for (size_t j = 0; j < parseResult.dupNodeIds[i].size(); j++) {
-                if (j > 0) {
-                    ss << ",";
-                }
-                ss << parseResult.dupNodeIds[i][j];
+                ss << (j > 0 ? "," : "") << parseResult.dupNodeIds[i][j];
             }
             lines.push_back(ss.str());
         }
