@@ -1049,8 +1049,11 @@ def print_summary(results: List[TestResult], report_path: Path):
 DEFAULT_BUNDLE = "抖音"
 DEFAULT_DURATION = 10
 DEFAULT_TIMEOUT_CAPTURE = 300  # 单次采集默认超时（秒）
+DEFAULT_COOLDOWN = 5  # 采集间冷却秒数（等 hiprofilerd 清理上一个会话）
 
 ALL_SUITE_NAMES = ["help", "negative", "list_apps", "capture", "alias", "combo"]
+# 涉及设备采集的套件——这些测试之间需要冷却
+CAPTURE_SUITES = {"capture", "alias", "combo"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -1087,6 +1090,9 @@ def parse_args() -> argparse.Namespace:
                         help=f"要运行的测试套件（逗号分隔）：{','.join(ALL_SUITE_NAMES)} / all，默认 all")
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_CAPTURE,
                         help=f"单次采集超时秒数（默认: {DEFAULT_TIMEOUT_CAPTURE}）")
+    parser.add_argument("--capture-cooldown", type=int, default=DEFAULT_COOLDOWN,
+                        help=f"采集间冷却秒数：连续采集间等待 hiprofilerd 清理上一个会话"
+                             f"（默认: {DEFAULT_COOLDOWN}，设 0 禁用）")
     return parser.parse_args()
 
 
@@ -1261,6 +1267,9 @@ def main():
 
     # Phase 3: 执行测试（串行——设备采集不能并行）
     log_header("PHASE 3: Running tests (sequential)")
+    if args.capture_cooldown > 0:
+        log(f"  Capture cooldown: {args.capture_cooldown}s between capture tests")
+        log(f"  (lets hiprofilerd clean up the previous session's shared memory/plugins)")
 
     results: List[TestResult] = []
     for idx, tc in enumerate(all_tests, 1):
@@ -1268,15 +1277,29 @@ def main():
         result = run_test_case(tc)
         results.append(result)
 
+        # 采集测试之间冷却：等 hiprofilerd 异步清理上一个会话的共享内存/插件/临时文件，
+        # 避免下一个 CreateSession 因资源未释放而概率性失败。
+        if (args.capture_cooldown > 0
+                and tc.suite in CAPTURE_SUITES
+                and idx < len(all_tests)):
+            log(f"  [COOLDOWN] Waiting {args.capture_cooldown}s for hiprofilerd cleanup...")
+            time.sleep(args.capture_cooldown)
+
     # Phase 4: 汇总报告
     log_header("PHASE 4: Summary")
     report_path = out_base / "test_profiler_report.json"
     print_summary(results, report_path)
 
-    # 退出码：有失败则返回 1
-    failed_count = sum(1 for r in results if not r.passed and not r.skipped)
-    if failed_count > 0:
-        log(f"\n  {failed_count} test(s) FAILED. Review output above.")
+    # 退出码：有失败则输出失败用例详情并返回 1
+    failed_results = [r for r in results if not r.passed and not r.skipped]
+    if failed_results:
+        log_header(f"FAILED CASES ({len(failed_results)})")
+        for idx, r in enumerate(failed_results, 1):
+            log(f"  [{idx}/{len(failed_results)}] [{r.suite}] {r.name}")
+            log(f"    CMD: {' '.join(r.cmd)}")
+            log(f"    EXIT: {r.exit_code}")
+            log(f"    JUDGE: FAIL — {r.detail}")
+        log(f"\n  {len(failed_results)} test(s) FAILED. Review output above.")
         sys.exit(1)
     else:
         log(f"\n  All tests PASSED.")

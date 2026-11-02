@@ -34,8 +34,8 @@ struct RetainedSizeResult {
 /**
  * Compute dominator-based retained sizes.
  * Algorithm: Lengauer-Tarjan dominator + post-order prefix sum.
- * exclude_weak_edges: if true, skip 'weak' edges (matching Chrome devtools).
- * exclude_shortcut_edges: if true, skip 'shortcut' edges from non-root nodes (matching Chrome devtools).
+ * exclude_weak_edges: if true, skip 'weak' edges (matching Browser devtools).
+ * exclude_shortcut_edges: if true, skip 'shortcut' edges from non-root nodes (matching Browser devtools).
  */
 RetainedSizeResult ComputeNodeSizes(const HeapSnapshot& snapshot,
     bool excludeWeakEdges = true,

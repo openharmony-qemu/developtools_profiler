@@ -841,7 +841,7 @@ V8 heapsnapshot 以 JSON 格式组织，包含 `nodes`、`edges`、`strings` 三
 5. 最短路径 BFS — 分层 BFS（支持 LIFO 处理 + 低优先级边推迟队列）
 
 关键参数：
-- `exclude_weak_edges` — 排除 weak 边（默认开启，匹配 Chrome DevTools）
+- `exclude_weak_edges` — 排除 weak 边（默认开启，匹配 Browser DevTools）
 - `exclude_shortcut_edges` — 排除 shortcut 边（默认开启）
 - `exclude_hidden_edges` — 排除 hidden 边（默认开启）
 
