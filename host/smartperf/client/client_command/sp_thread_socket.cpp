@@ -1237,7 +1237,9 @@ bool SpThreadSocket::RecvOneFile(int connFd, const std::string& dirName, int fil
         }
         totalRecv += bytesRecv;
     }
-    fclose(fp);
+    if (fclose(fp) != 0) {
+        LOGE("StartRecvFiles fclose failed: %s", savePath.c_str());
+    }
     LOGI("StartRecvFiles: saved to %s", savePath.c_str());
     return true;
 }
