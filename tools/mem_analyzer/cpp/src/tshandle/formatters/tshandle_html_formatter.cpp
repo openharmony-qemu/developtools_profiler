@@ -170,23 +170,16 @@ void WriteTopTable(std::ostringstream& out,
     out << "</table>\n";
 }
 
-void WriteDetailItem(std::ostringstream& out, const TshandleTopObject& object,
-    double denominator, json& allData, size_t& graphIndex)
+static void AppendDetailItemJson(const TshandleTopObject& object,
+    const TshandleRenderNode& tree, const std::vector<TshandleCallChain>& chains, json& allData)
 {
-    const std::string& objectName = object.objectName;
-    const auto allChains = parseChains(object, denominator, 0);
-    const auto tree = BuildTshandleDownstreamGraph(objectName, allChains, object.existingSize);
-    const auto chains = parseChains(object, denominator, 3);
-    const auto chainEntries = displayChains(chains);
-    const std::string chainHtml = BuildCallChainHTML(chainEntries, denominator);
-
     json encodedChains = json::array();
     for (const auto& chain : chains) {
         encodedChains.push_back(ChainJson(chain));
     }
     json info = {
         {"rank", object.rank},
-        {"objectName", objectName},
+        {"objectName", object.objectName},
         {"existingSize", object.existingSize},
         {"count", object.count},
         {"percentage", std::min(PERCENTAGE_SCALE, object.percentage)},
@@ -197,6 +190,18 @@ void WriteDetailItem(std::ostringstream& out, const TshandleTopObject& object,
         {"downstreamTree", tree.ToJson()},
         {"callChains", std::move(encodedChains)}
     });
+}
+
+void WriteDetailItem(std::ostringstream& out, const TshandleTopObject& object,
+    double denominator, json& allData, size_t& graphIndex)
+{
+    const std::string& objectName = object.objectName;
+    const auto allChains = parseChains(object, denominator, 0);
+    const auto tree = BuildTshandleDownstreamGraph(objectName, allChains, object.existingSize);
+    const auto chains = parseChains(object, denominator, 3);
+    const std::string chainHtml = BuildCallChainHTML(displayChains(chains), denominator);
+
+    AppendDetailItemJson(object, tree, chains, allData);
 
     out << "<div class=\"top-item\" id=\"topItem" << graphIndex << "\">\n"
         "  <div class=\"top-item-header expanded\" id=\"topItemHeader" << graphIndex <<
