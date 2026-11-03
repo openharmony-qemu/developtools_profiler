@@ -73,7 +73,7 @@
 .\build-win.ps1
 
 # macOS（自动检测 arm64/x86_64）
-chmod +x build-mac.sh && ./build-mac.sh
+chmod +x release-mac.sh && ./release-mac.sh
 
 # Linux 跨平台编译（原生 + MinGW Windows）
 chmod +x release-cross.sh && ./release-cross.sh
@@ -134,7 +134,7 @@ mem-analyzer/
 │   └── compare_commits.py        # 跨 commit 对比工具
 ├── cpp/                          # C++ 分析引擎
 │   ├── CMakeLists.txt
-│   ├── build-win.ps1 / build-mac.sh / release-cross.sh
+│   ├── build-win.ps1 / release-mac.sh / release-cross.sh
 │   ├── config/                   # 运行期配置
 │   │   ├── htrace/               #   分类规则 / 过滤规则 / 算法阈值
 │   │   ├── jsleak/
@@ -176,7 +176,7 @@ mem-analyzer/
 | 脚本 | 平台 | 说明 |
 |------|------|------|
 | `build-win.ps1` | Windows | MinGW 静态链接构建，打包为 ZIP |
-| `build-mac.sh` | macOS | 原生构建，自动检测 arm64/x86_64 |
+| `release-mac.sh` | macOS | 原生构建，自动检测 arm64/x86_64 |
 | `release-cross.sh` | Linux | 跨平台交叉编译（Linux + MinGW Windows） |
 
 ### macOS 构建注意事项
@@ -232,7 +232,7 @@ cd cpp && ./release-cross.sh
 2. **Analyze** — htrace：等价符号检测 / up-down approximation / 火焰图冰柱图；tshandle：dominator tree / retained size / nativeRef 关联；snapshot：属性标签 / 最短引用链
 3. **Render** — 按格式关键词调用域内 writer 自由函数直接写文件：JSON 为 `{ meta, content }`，HTML 为自包含交互式报告
 
-管道层 `process_file` 只做三件事：按扩展名选模块 → 派生 `RunContext` → 调 `module.run()`；它不认识任何具体数据域。
+管道层 `ProcessFile` 只做三件事：按扩展名选模块 → 派生 `RunContext` → 调 `module.run()`；它不认识任何具体数据域。
 
 ---
 
@@ -295,11 +295,11 @@ HTML 报告特性：内嵌 Canvas 火焰图/冰柱图，支持搜索、缩放、
 
 ## 接口层次结构
 
-L0 与数据域之间只有一个接口：`AnalysisModule`（`cpp/include/core/module.hpp`）。
+L0 与数据域之间只有一个接口：`AnalysisModule`（`cpp/include/core/module.h`）。
 各模块在 `main()` 之前用静态初始化器注册进 `ModuleRegistry`：
 
-- **`AnalysisModule`** — `name()` / `supports_extension()` / `capability()` / `run(req, ctx)`
-- **`ModuleRegistry`** — 按名 / 扩展名 / 文件路径选模块；`self_check()` 校验能力表一致性（正常应为空）
+- **`AnalysisModule`** — `name()` / `SupportsExtension()` / `capability()` / `run(req, ctx)`
+- **`ModuleRegistry`** — 按名 / 扩展名 / 文件路径选模块；`SelfCheck()` 校验能力表一致性（正常应为空）
 - **`ModuleCapability`** — `{ ModeCapability parse; ModeCapability analysis; }`，每个模式声明 `formats` 与 `default_format`
 
 **扩展设计**：格式关键词**直接就是路由键** —— 模块在 `run()` 里按 `(parse_only, keyword)` 分支调用域内 writer。
@@ -309,16 +309,16 @@ L0 与数据域之间只有一个接口：`AnalysisModule`（`cpp/include/core/m
 
 ## Htrace日志泄漏分析算法
 
-完整算法实现在 `analyze_call_stacks()` 中，共 9 步：
+完整算法实现在 `AnalyzeCallStacks()` 中，共 9 步：
 
 | 步骤 | 操作 | 说明 |
 |------|------|------|
-| 1 | `build_symbol_data` | 提取符号特征（uid、lib、chain_ids、总泄漏量） |
-| 2 | `split_by_scope` | 按 app/system 分割符号集 |
-| 3 | `find_equivalent_groups` | 相同 chain ID 集合的符号视为等价 |
+| 1 | `BuildSymbolData` | 提取符号特征（uid、lib、chain_ids、总泄漏量） |
+| 2 | `ProcessAppAndSystem` | 按 app/system 分割符号集 |
+| 3 | `findEquivalentGroups` | 相同 chain ID 集合的符号视为等价 |
 | 4 | 低阈值过滤 | 移除 < 1024 bytes 的符号和噪音 |
 | 5 | 等价合并 | 等价组内保留最大深度符号为代表 |
-| 6 | `calc_approximations` | 分析浅层/深层符号近似关系 |
+| 6 | `CalcApproximations` | 分析浅层/深层符号近似关系 |
 | 7 | 不动点过滤 | 反复移除被近似的符号 |
 | 8 | 代表性检查 | 被移除的符号若无代表则重新加入 |
 | 9 | 排序输出 | 按泄漏量降序取 Top-N，构建火焰图/冰柱图 |
@@ -336,11 +336,11 @@ L0 与数据域之间只有一个接口：`AnalysisModule`（`cpp/include/core/m
 
 ## ArkTS Handler日志分析流水线
 
-`analyze_arkts_classes()` 分 6 步：
+`AnalyzeArktsClasses()` 分 6 步：
 
 1. 解析地址映射文件（`<address> <nodeId>`）
 2. 加载 V8 Heap Snapshot（流式解析器）
-3. retained size（Lengauer-Tarjan，`from_file` 内已计算）
+3. retained size（Lengauer-Tarjan，`FromFile` 内已计算）
 4. 构建 nativeRef 关联（existingAddrs → nodeId）
 5. 按类名聚合实例
 6. 返回结果
@@ -378,7 +378,7 @@ V8 heapsnapshot 以 JSON 格式组织，包含 `nodes`、`edges`、`strings` 三
 | 16 | `OTHER` | — | 其他（已禁用） |
 | 19-21 | `VMA_ARKWEB` / `DART_HEAP` / `ARKTS_STATIC_HEAP` | — | 其他（已禁用） |
 
-> 禁用类型在 `htrace_processor.hpp` 的 `htrace_enabled_types()` 中注释掉，取消注释即可启用。
+> 禁用类型在 `htrace_processor.h` 的 `HtraceEnabledTypes()` 中注释掉，取消注释即可启用。
 
 ---
 
