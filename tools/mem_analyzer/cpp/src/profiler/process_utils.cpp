@@ -51,6 +51,9 @@ namespace {
 [[maybe_unused]] constexpr int KILL_GRACE_RETRIES = 20;
 [[maybe_unused]] constexpr int KILL_GRACE_SLEEP_US = 100000;
 [[maybe_unused]] constexpr size_t SHELL_QUOTE_RESERVE = 16;
+// CommandLineToArgvW 2N 规则：紧跟在 `"` 前的 N 个反斜杠需写成 2N 个，
+// 解析端才会还原成 N 个。此即 ShellQuote Windows 分支里的反斜杠翻倍因子。
+[[maybe_unused]] constexpr int WIN_ARGV_BACKSLASH_DOUBLING = 2;
 } // namespace
 
 #if defined(_WIN32)
@@ -560,7 +563,7 @@ std::string ShellQuote(const std::string& s)
         if (c == '\\') {
             ++backslashes;
         } else if (c == '"') {
-            out.append(backslashes * 2, '\\');
+            out.append(backslashes * WIN_ARGV_BACKSLASH_DOUBLING, '\\');
             out += "\\\"";
             backslashes = 0;
         } else {
@@ -569,7 +572,7 @@ std::string ShellQuote(const std::string& s)
             backslashes = 0;
         }
     }
-    out.append(backslashes * 2, '\\');
+    out.append(backslashes * WIN_ARGV_BACKSLASH_DOUBLING, '\\');
     out += '"';
 #else
     out += '\'';

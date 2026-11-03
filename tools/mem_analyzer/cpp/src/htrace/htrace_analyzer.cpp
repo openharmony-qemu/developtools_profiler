@@ -262,7 +262,7 @@ struct BucketKeyHash {
     size_t operator()(const BucketKey& k) const { return k.size ^ (k.hash << 1); }
 };
 
-static std::vector<std::vector<SymbolData*>> findEquivalentGroups(const std::vector<SymbolData*>& symbols)
+static std::vector<std::vector<SymbolData*>> FindEquivalentGroups(const std::vector<SymbolData*>& symbols)
 {
     // symbols is already sorted by total_leak_size descending by caller
 
@@ -739,7 +739,7 @@ static AlgorithmResult RunAlgorithm(
 
     // 4.3: Equivalent symbols
     timer.Stage("Finding equivalent groups");
-    auto equivGroups = findEquivalentGroups(filtered);
+    auto equivGroups = FindEquivalentGroups(filtered);
     auto equivRefs = FindEquivRefs(equivGroups, removedUids);
     timer.Tick("equiv");
 
