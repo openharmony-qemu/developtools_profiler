@@ -347,11 +347,10 @@ CapturedCmd CaptureCommandWindows(const std::string& cmd, long long timeoutMs)
 // Strip trailing " 2>&1" (redundant: SpawnPiped already dup2's stderr to the pipe).
 static std::string StripRedirect(const std::string& cmd)
 {
-    constexpr const char* REDIRECT_SUFFIX = " 2>&1";
-    constexpr size_t REDIRECT_LEN = 5;
-    if (cmd.size() > REDIRECT_LEN &&
-        cmd.compare(cmd.size() - REDIRECT_LEN, REDIRECT_LEN, REDIRECT_SUFFIX) == 0) {
-        return cmd.substr(0, cmd.size() - REDIRECT_LEN);
+    constexpr const char* redirectSuffix = " 2>&1";
+    constexpr size_t redirectLen = 5;
+    if (cmd.size() > redirectLen && cmd.compare(cmd.size() - redirectLen, redirectLen, redirectSuffix) == 0) {
+        return cmd.substr(0, cmd.size() - redirectLen);
     }
     return cmd;
 }
