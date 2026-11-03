@@ -69,6 +69,117 @@ json BuildSummary(const HtraceAnalysisOutput& full, const RunContext& ctx)
     return summary;
 }
 
+// 单个符号（不含数组包裹，供多条流式复用）
+void WriteSymbol(const HtraceAnalysisOutput& full, JsonStreamWriter& writer,
+    long long totalExistingSize, const TopSymbolInfo& ts, int64_t& rank)
+{
+    long long existingSize = ts.totalLeakSize;
+    double percentage = totalExistingSize > 0 ?
+        std::round(static_cast<double>(existingSize) /
+            static_cast<double>(totalExistingSize) *
+            PERCENT_PRECISION_SCALE) /
+            static_cast<double>(PERCENT_SCALE) :
+        0.0;
+
+    std::string lib = ts.libs.empty() ? "" : ts.libs[0];
+    std::string buildId = (!ts.buildIdNull && ts.buildId != 0) ?
+        full.dataDict.at(ts.buildId) : "";
+
+    writer.BeginObject();
+    writer.WriteKeyValue("rank", rank++);
+    writer.WriteKeyValue("existingSize", (int64_t)existingSize);
+    writer.WriteKeyValue("existingCount", (int64_t)ts.totalExistingCount);
+    writer.WriteKeyValue("percentage", percentage);
+    writer.WriteKeyValue("type", ts.type);
+    writer.WriteKeyValue("name", ts.symbol);
+    writer.WriteKeyValue("lib", lib);
+    writer.WriteKeyValue("libOffset", ts.libOffset);
+    writer.WriteKeyValue("buildId", buildId);
+
+    // Always write flamegraph and icicle (even when empty, for base compatibility)
+    json flameArr = json::array();
+    for (const auto& c : ts.flameGraph.children) {
+        flameArr.push_back(c.ToFlameJson(full.dataDict));
+    }
+    writer.WriteKey("flamegraph");
+    writer.WriteRaw(flameArr.dump(JSON_INDENT_SPACES));
+
+    json icicleArr = json::array();
+    for (const auto& c : ts.icicleGraph.children) {
+        icicleArr.push_back(c.ToIcicleJson(full.dataDict));
+    }
+    writer.WriteKey("icicle");
+    writer.WriteRaw(icicleArr.dump(JSON_INDENT_SPACES));
+
+    writer.EndObject();
+}
+
+// 单个 filepage 文件（callStacks 展开，对齐 parse JSON 的调用栈结构）
+void WriteFilepage(JsonStreamWriter& writer, const HtraceAnalysisOutput& full,
+    const FilepageInfo& fp)
+{
+    writer.BeginObject();
+    writer.WriteKeyValue("fileName", fp.filename);
+    writer.WriteKeyValue("size", (int64_t)fp.size);
+    writer.WriteKeyValue("count", (int64_t)fp.count);
+    writer.WriteKeyValue("percentage", fp.percentage);
+
+    writer.WriteKey("callStacks");
+    writer.BeginArray();
+    for (const auto& cs : fp.callStacks) {
+        writer.BeginObject();
+        writer.WriteKeyValue("id", std::to_string(cs.id));
+        writer.WriteKeyValue("existingSize", std::to_string(cs.existingSize));
+        writer.WriteKeyValue("existingCount", std::to_string(cs.existingCount));
+
+        writer.WriteKey("frames");
+        writer.BeginArray();
+        for (const auto& f : cs.frames) {
+            HtraceWriteCallstackFrame(writer, f, full.dataDict);
+        }
+        writer.EndArray();
+
+        writer.EndObject();
+    }
+    writer.EndArray();
+
+    writer.EndObject();
+}
+
+// N 轨：每轨独立 rank（filepage 无 rank），std::get_if 按行分发
+void WriteSection(const HtraceAnalysisOutput& full, JsonStreamWriter& writer,
+    long long totalExistingSize, const HtraceSection& sec)
+{
+    int64_t rank = 1;
+    for (const auto& row : sec.rows) {
+        if (const auto* ts = std::get_if<TopSymbolInfo>(&row)) {
+            WriteSymbol(full, writer, totalExistingSize, *ts, rank);
+        } else if (const auto* fp = std::get_if<FilepageInfo>(&row)) {
+            WriteFilepage(writer, full, *fp);
+        }
+    }
+}
+
+// N 轨写器路由：每个 scope 恒按 json_key 嵌套成对象（单轨一个 key、多轨多个 key），
+// 且每个键恒写（该轨为空也输出空数组）。scope 全空（所有轨均无行）才跳过。
+// mmap → {mmapAnons, mmapFilepages}；非 mmap → {nativeHeaps} / {dmas} / …（键来自描述符表 tracks[].json_key）。
+void WriteScope(JsonStreamWriter& writer, const HtraceAnalysisOutput& full,
+    long long totalExistingSize, const std::string& key, const ScopeResult& scope)
+{
+    if (scope.Empty()) {
+        return;
+    }
+    writer.WriteKey(key);
+    writer.BeginObject();
+    for (const auto& sec : scope.sections) {
+        writer.WriteKey(sec.key);
+        writer.BeginArray();
+        WriteSection(full, writer, totalExistingSize, sec);
+        writer.EndArray();
+    }
+    writer.EndObject();
+}
+
 } // namespace
 
 std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
@@ -115,111 +226,9 @@ std::string HtraceWriteAnalysisJson(const HtraceAnalysisOutput& full,
     writer.BeginObject();
     writer.WriteKeyValue("mode", topSyms.mode);
 
-    // 单个符号（不含数组包裹，供多条流式复用）
-    auto writeSymbol = [&totalExistingSize, &full, &writer](const TopSymbolInfo& ts, int64_t& rank) {
-        long long existingSize = ts.totalLeakSize;
-        double percentage = totalExistingSize > 0 ?
-            std::round(static_cast<double>(existingSize) /
-                static_cast<double>(totalExistingSize) *
-                PERCENT_PRECISION_SCALE) /
-                static_cast<double>(PERCENT_SCALE) :
-            0.0;
-
-        std::string lib = ts.libs.empty() ? "" : ts.libs[0];
-        std::string buildId = (!ts.buildIdNull && ts.buildId != 0) ?
-            full.dataDict.at(ts.buildId) : "";
-
-        writer.BeginObject();
-        writer.WriteKeyValue("rank", rank++);
-        writer.WriteKeyValue("existingSize", (int64_t)existingSize);
-        writer.WriteKeyValue("existingCount", (int64_t)ts.totalExistingCount);
-        writer.WriteKeyValue("percentage", percentage);
-        writer.WriteKeyValue("type", ts.type);
-        writer.WriteKeyValue("name", ts.symbol);
-        writer.WriteKeyValue("lib", lib);
-        writer.WriteKeyValue("libOffset", ts.libOffset);
-        writer.WriteKeyValue("buildId", buildId);
-
-        // Always write flamegraph and icicle (even when empty, for base compatibility)
-        json flameArr = json::array();
-        for (const auto& c : ts.flameGraph.children) {
-            flameArr.push_back(c.ToFlameJson(full.dataDict));
-        }
-        writer.WriteKey("flamegraph");
-        writer.WriteRaw(flameArr.dump(JSON_INDENT_SPACES));
-
-        json icicleArr = json::array();
-        for (const auto& c : ts.icicleGraph.children) {
-            icicleArr.push_back(c.ToIcicleJson(full.dataDict));
-        }
-        writer.WriteKey("icicle");
-        writer.WriteRaw(icicleArr.dump(JSON_INDENT_SPACES));
-
-        writer.EndObject();
-    };
-
-    // 单个 filepage 文件（callStacks 展开，对齐 parse JSON 的调用栈结构）
-    auto writeFilepage = [&writer, &full](const FilepageInfo& fp) {
-        writer.BeginObject();
-        writer.WriteKeyValue("fileName", fp.filename);
-        writer.WriteKeyValue("size", (int64_t)fp.size);
-        writer.WriteKeyValue("count", (int64_t)fp.count);
-        writer.WriteKeyValue("percentage", fp.percentage);
-
-        writer.WriteKey("callStacks");
-        writer.BeginArray();
-        for (const auto& cs : fp.callStacks) {
-            writer.BeginObject();
-            writer.WriteKeyValue("id", std::to_string(cs.id));
-            writer.WriteKeyValue("existingSize", std::to_string(cs.existingSize));
-            writer.WriteKeyValue("existingCount", std::to_string(cs.existingCount));
-
-            writer.WriteKey("frames");
-            writer.BeginArray();
-            for (const auto& f : cs.frames) {
-                HtraceWriteCallstackFrame(writer, f, full.dataDict);
-            }
-            writer.EndArray();
-
-            writer.EndObject();
-        }
-        writer.EndArray();
-
-        writer.EndObject();
-    };
-
-    // N 轨：每轨独立 rank（filepage 无 rank），std::get_if 按行分发
-    auto writeSection = [&writeSymbol, &writeFilepage](const HtraceSection& sec) {
-        int64_t rank = 1;
-        for (const auto& row : sec.rows) {
-            if (const auto* ts = std::get_if<TopSymbolInfo>(&row)) {
-                writeSymbol(*ts, rank);
-            } else if (const auto* fp = std::get_if<FilepageInfo>(&row)) {
-                writeFilepage(*fp);
-            }
-        }
-    };
-
-    // N 轨写器路由：每个 scope 恒按 json_key 嵌套成对象（单轨一个 key、多轨多个 key），
-    // 且每个键恒写（该轨为空也输出空数组）。scope 全空（所有轨均无行）才跳过。
-    // mmap → {mmapAnons, mmapFilepages}；非 mmap → {nativeHeaps} / {dmas} / …（键来自描述符表 tracks[].json_key）。
-    auto writeScope = [&writer, &writeSection](const std::string& key, const ScopeResult& scope) {
-        if (scope.Empty()) {
-            return;
-        }
-        writer.WriteKey(key);
-        writer.BeginObject();
-        for (const auto& sec : scope.sections) {
-            writer.WriteKey(sec.key);
-            writer.BeginArray();
-            writeSection(sec);
-            writer.EndArray();
-        }
-        writer.EndObject();
-    };
-    writeScope("app", topSyms.app);
-    writeScope("system", topSyms.system);
-    writeScope("mixed", topSyms.mixed);
+    WriteScope(writer, full, totalExistingSize, "app", topSyms.app);
+    WriteScope(writer, full, totalExistingSize, "system", topSyms.system);
+    WriteScope(writer, full, totalExistingSize, "mixed", topSyms.mixed);
 
     writer.EndObject();
 

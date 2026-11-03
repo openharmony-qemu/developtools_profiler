@@ -150,6 +150,89 @@ struct SectionResult {
     std::string content;
 };
 
+void WriteTopTable(std::ostringstream& out,
+    const std::vector<TshandleTopObject>& objects, size_t graphIndex)
+{
+    out << "<table class=\"top-table\">\n"
+        "  <tr><th>详情</th><th>大小</th><th>数量</th><th>占比</th><th>TOP 对象名</th></tr>\n";
+    size_t rowIndex = graphIndex;
+    for (const auto& object : objects) {
+        out << "  <tr>\n"
+            "    <td><a onclick=\"showDetail(" << rowIndex <<
+            "); return false;\" class=\"detail-link\">详情</a></td>\n"
+            "    <td class=\"top-size-val\">" << FormatBytes(object.existingSize) << "</td>\n"
+            "    <td>" << object.count << "</td>\n"
+            "    <td class=\"top-pct-val\">" << ToFixed(std::min(PERCENTAGE_SCALE, object.percentage), PERCENTAGE_DECIMAL_PLACES) << "%</td>\n"
+            "    <td class=\"top-func\">" << EscapeHtml(object.objectName) << "</td>\n"
+            "  </tr>\n";
+        ++rowIndex;
+    }
+    out << "</table>\n";
+}
+
+void WriteDetailItem(std::ostringstream& out, const TshandleTopObject& object,
+    double denominator, json& allData, size_t& graphIndex)
+{
+    const std::string& objectName = object.objectName;
+    const auto allChains = parseChains(object, denominator, 0);
+    const auto tree = BuildTshandleDownstreamGraph(objectName, allChains, object.existingSize);
+    const auto chains = parseChains(object, denominator, 3);
+    const auto chainEntries = displayChains(chains);
+    const std::string chainHtml = BuildCallChainHTML(chainEntries, denominator);
+
+    json encodedChains = json::array();
+    for (const auto& chain : chains) {
+        encodedChains.push_back(ChainJson(chain));
+    }
+    json info = {
+        {"rank", object.rank},
+        {"objectName", objectName},
+        {"existingSize", object.existingSize},
+        {"count", object.count},
+        {"percentage", std::min(PERCENTAGE_SCALE, object.percentage)},
+        {"type", HtraceEventTypeName(object.type)}
+    };
+    allData.push_back({
+        {"info", std::move(info)},
+        {"downstreamTree", tree.ToJson()},
+        {"callChains", std::move(encodedChains)}
+    });
+
+    out << "<div class=\"top-item\" id=\"topItem" << graphIndex << "\">\n"
+        "  <div class=\"top-item-header expanded\" id=\"topItemHeader" << graphIndex <<
+        "\" onclick=\"toggleDetail(" << graphIndex << ")\">\n"
+        "    <span class=\"arrow\">&#9654;</span>\n"
+        "    <span class=\"header-rank\">TOP" << object.rank <<
+        "对象：</span><span class=\"header-func\">" << EscapeHtml(objectName) << "</span>\n"
+        "    <div class=\"header-stats\">大小 " << FormatBytes(object.existingSize) <<
+        "，数量" << object.count << "，占比" <<
+        ToFixed(std::min(PERCENTAGE_SCALE, object.percentage), PERCENTAGE_DECIMAL_PLACES) << "%</div>\n"
+        "  </div>\n"
+        "  <div class=\"top-item-body expanded\" id=\"topItemBody" << graphIndex << "\">\n"
+        "    <div class=\"call-chains-section\">\n      " <<
+        (chainHtml.empty() ?
+            "<div class=\"call-chain-line\" style=\"color:#a0a0b0;\">无调用链数据</div>" :
+            chainHtml) <<
+        "\n    </div>\n"
+        "    <div class=\"graphToolbar\">\n"
+        "      <button onclick=\"resetZoom(" << graphIndex << ")\" class=\"reset-btn\">Reset Zoom</button>\n"
+        "      <input id=\"searchInput" << graphIndex <<
+        "\" type=\"text\" placeholder=\"搜索对象名...\" class=\"graph-search-input\">\n"
+        "      <span class=\"search-match-count\" id=\"searchCount" << graphIndex << "\">0个匹配</span>\n"
+        "      <span class=\"shortcut-hint\">w/s：放大/缩小&emsp;&emsp;a/d：左/右移动</span>\n"
+        "    </div>\n"
+        "    <div class=\"dual-graph-container\">\n"
+        "      <div class=\"graph-panel\">\n"
+        "        <div class=\"graph-side-label\">下游调用链</div>\n"
+        "        <div class=\"graph-canvas-area\"><canvas tabindex=\"0\" id=\"downstreamCanvas" <<
+        graphIndex << "\"></canvas></div>\n"
+        "      </div>\n"
+        "    </div>\n"
+        "  </div>\n"
+        "</div>\n";
+    ++graphIndex;
+}
+
 SectionResult BuildSection(const char* tabId, const char* label,
     HtraceEventType handleType, const TshandleTypeSection& section,
     double denominator,
@@ -173,82 +256,11 @@ SectionResult BuildSection(const char* tabId, const char* label,
     const char summarySuffix[] = " \xE4\xB8\xAA\xEF\xBC\x8C\xE6\x80\xBB\xE5\xA4\xA7\xE5\xB0\x8F\xEF\xBC\x9A";
 
     std::ostringstream out;
-    
-    out << "<table class=\"top-table\">\n"
-        "  <tr><th>详情</th><th>大小</th><th>数量</th><th>占比</th><th>TOP 对象名</th></tr>\n";
-    size_t rowIndex = graphIndex;
-    for (const auto& object : objects) {
-        out << "  <tr>\n"
-            "    <td><a onclick=\"showDetail(" << rowIndex <<
-            "); return false;\" class=\"detail-link\">详情</a></td>\n"
-            "    <td class=\"top-size-val\">" << FormatBytes(object.existingSize) << "</td>\n"
-            "    <td>" << object.count << "</td>\n"
-            "    <td class=\"top-pct-val\">" << ToFixed(std::min(PERCENTAGE_SCALE, object.percentage), PERCENTAGE_DECIMAL_PLACES) << "%</td>\n"
-            "    <td class=\"top-func\">" << EscapeHtml(object.objectName) << "</td>\n"
-            "  </tr>\n";
-        ++rowIndex;
-    }
-    out << "</table>\n";
+
+    WriteTopTable(out, objects, graphIndex);
 
     for (const auto& object : objects) {
-        const std::string& objectName = object.objectName;
-        const auto allChains = parseChains(object, denominator, 0);
-        const auto tree = BuildTshandleDownstreamGraph(objectName, allChains, object.existingSize);
-        const auto chains = parseChains(object, denominator, 3);
-        const auto chainEntries = displayChains(chains);
-        const std::string chainHtml = BuildCallChainHTML(chainEntries, denominator);
-
-        json encodedChains = json::array();
-        for (const auto& chain : chains) {
-            encodedChains.push_back(ChainJson(chain));
-        }
-        json info = {
-            {"rank", object.rank},
-            {"objectName", objectName},
-            {"existingSize", object.existingSize},
-            {"count", object.count},
-            {"percentage", std::min(PERCENTAGE_SCALE, object.percentage)},
-            {"type", HtraceEventTypeName(object.type)}
-        };
-        allData.push_back({
-            {"info", std::move(info)},
-            {"downstreamTree", tree.ToJson()},
-            {"callChains", std::move(encodedChains)}
-        });
-
-        out << "<div class=\"top-item\" id=\"topItem" << graphIndex << "\">\n"
-            "  <div class=\"top-item-header expanded\" id=\"topItemHeader" << graphIndex <<
-            "\" onclick=\"toggleDetail(" << graphIndex << ")\">\n"
-            "    <span class=\"arrow\">&#9654;</span>\n"
-            "    <span class=\"header-rank\">TOP" << object.rank <<
-            "对象：</span><span class=\"header-func\">" << EscapeHtml(objectName) << "</span>\n"
-            "    <div class=\"header-stats\">大小 " << FormatBytes(object.existingSize) <<
-            "，数量" << object.count << "，占比" <<
-            ToFixed(std::min(PERCENTAGE_SCALE, object.percentage), PERCENTAGE_DECIMAL_PLACES) << "%</div>\n"
-            "  </div>\n"
-            "  <div class=\"top-item-body expanded\" id=\"topItemBody" << graphIndex << "\">\n"
-            "    <div class=\"call-chains-section\">\n      " <<
-            (chainHtml.empty() ?
-                "<div class=\"call-chain-line\" style=\"color:#a0a0b0;\">无调用链数据</div>" :
-                chainHtml) <<
-            "\n    </div>\n"
-            "    <div class=\"graphToolbar\">\n"
-            "      <button onclick=\"resetZoom(" << graphIndex << ")\" class=\"reset-btn\">Reset Zoom</button>\n"
-            "      <input id=\"searchInput" << graphIndex <<
-            "\" type=\"text\" placeholder=\"搜索对象名...\" class=\"graph-search-input\">\n"
-            "      <span class=\"search-match-count\" id=\"searchCount" << graphIndex << "\">0个匹配</span>\n"
-            "      <span class=\"shortcut-hint\">w/s：放大/缩小&emsp;&emsp;a/d：左/右移动</span>\n"
-            "    </div>\n"
-            "    <div class=\"dual-graph-container\">\n"
-            "      <div class=\"graph-panel\">\n"
-            "        <div class=\"graph-side-label\">下游调用链</div>\n"
-            "        <div class=\"graph-canvas-area\"><canvas tabindex=\"0\" id=\"downstreamCanvas" <<
-            graphIndex << "\"></canvas></div>\n"
-            "      </div>\n"
-            "    </div>\n"
-            "  </div>\n"
-            "</div>\n";
-        ++graphIndex;
+        WriteDetailItem(out, object, denominator, allData, graphIndex);
     }
     result.content = out.str();
     return result;

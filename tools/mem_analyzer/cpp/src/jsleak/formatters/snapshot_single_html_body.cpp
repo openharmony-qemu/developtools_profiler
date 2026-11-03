@@ -269,34 +269,12 @@ std::string BuildTopChainTableRow(const json& chainData,
 
 // ========== 详情条目（头部 + 主体） ==========
 
-std::string BuildPropertyTagEntryHtml(const std::string& objName,
-    const json& objData,
+std::string BuildReferenceChainsHtml(const json& objData,
     int idx,
-    const std::string& prefix)
+    const std::string& prefix,
+    bool& hasChain)
 {
-    int64_t retainedSize = objData.value("totalRetainedSize", 0);
-    int nodeCount = objData.value("totalNodeCount", 0);
-
-    auto makeId = [&idx, &prefix](const std::string& type) {
-        return NormPrefix(prefix) + type + "_" + std::to_string(idx);
-    };
-    std::string headerId = makeId("Header");
-    std::string bodyId   = makeId("Body");
-
     std::string html;
-    html += "<div class=\"top-item\" id=\"" + makeId("Detail") + "\">";
-    html += "<div class=\"top-item-header expanded\" id=\"" + headerId +
-            "\" onclick=\"toggleDetail('" + NormPrefix(prefix) + "', " + std::to_string(idx) + ")\">";
-    html += "<span class=\"arrow\">&#9654;</span>";
-    html += "<span class=\"header-rank\">泄漏对象" + std::to_string(idx + 1) +
-            "：</span><span class=\"header-func\">" + EscapeHtml(objName) + "</span>";
-    html += "<div class=\"header-stats\">总大小 " + FormatBytes(retainedSize) +
-            "，节点数" + std::to_string(nodeCount) + "</div>";
-    html += "</div>";
-    html += "<div class=\"top-item-body expanded leak-detail-body\" id=\"" + bodyId + "\">";
-    html += "<div class=\"call-chains-section\">";
-
-    bool hasChain = false;
     if (objData.contains("referenceChains")) {
         // referenceChains 为数组，每项含 chain/nodeIds/totalRetainedSize
         const auto& refChains = objData["referenceChains"];
@@ -334,6 +312,38 @@ std::string BuildPropertyTagEntryHtml(const std::string& objName,
             chainIdx++;
         }
     }
+    return html;
+}
+
+std::string BuildPropertyTagEntryHtml(const std::string& objName,
+    const json& objData,
+    int idx,
+    const std::string& prefix)
+{
+    int64_t retainedSize = objData.value("totalRetainedSize", 0);
+    int nodeCount = objData.value("totalNodeCount", 0);
+
+    auto makeId = [&idx, &prefix](const std::string& type) {
+        return NormPrefix(prefix) + type + "_" + std::to_string(idx);
+    };
+    std::string headerId = makeId("Header");
+    std::string bodyId   = makeId("Body");
+
+    std::string html;
+    html += "<div class=\"top-item\" id=\"" + makeId("Detail") + "\">";
+    html += "<div class=\"top-item-header expanded\" id=\"" + headerId +
+            "\" onclick=\"toggleDetail('" + NormPrefix(prefix) + "', " + std::to_string(idx) + ")\">";
+    html += "<span class=\"arrow\">&#9654;</span>";
+    html += "<span class=\"header-rank\">泄漏对象" + std::to_string(idx + 1) +
+            "：</span><span class=\"header-func\">" + EscapeHtml(objName) + "</span>";
+    html += "<div class=\"header-stats\">总大小 " + FormatBytes(retainedSize) +
+            "，节点数" + std::to_string(nodeCount) + "</div>";
+    html += "</div>";
+    html += "<div class=\"top-item-body expanded leak-detail-body\" id=\"" + bodyId + "\">";
+    html += "<div class=\"call-chains-section\">";
+
+    bool hasChain = false;
+    html += BuildReferenceChainsHtml(objData, idx, prefix, hasChain);
     if (!hasChain) {
         html += "<div class=\"call-chain-line\" style=\"color:#a0a0b0;\">无引用链数据</div>";
     }

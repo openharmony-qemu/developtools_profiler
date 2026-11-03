@@ -73,6 +73,24 @@ void AccumulateHandleCounts(const std::vector<ResolvedCallStack>& callStacks,
     }
 }
 
+void AccumulateInstanceTotals(const ArkTsInstance& instance,
+    Totals& globalTotals, Totals& localTotals)
+{
+    std::unordered_set<HtraceEventType> types;
+    for (const auto& ref : instance.nativeRef) {
+        types.insert(ref.handleType);
+    }
+    for (const auto& type : types) {
+        if (type == HtraceEventType::ARK_GLOBAL_HANDLE) {
+            globalTotals.shallow += instance.shallowSize;
+            globalTotals.retained += instance.retainedSize;
+        } else if (type == HtraceEventType::ARK_LOCAL_HANDLE) {
+            localTotals.shallow += instance.shallowSize;
+            localTotals.retained += instance.retainedSize;
+        }
+    }
+}
+
 json TraceMetaToJson(const TshandleAnalysisOutput& analysis)
 {
     Totals globalTotals;
@@ -82,19 +100,7 @@ json TraceMetaToJson(const TshandleAnalysisOutput& analysis)
 
     for (const auto& cls : analysis.arktsClasses) {
         for (const auto& instance : cls.instances) {
-            std::unordered_set<HtraceEventType> types;
-            for (const auto& ref : instance.nativeRef) {
-                types.insert(ref.handleType);
-            }
-            for (const auto& type : types) {
-                if (type == HtraceEventType::ARK_GLOBAL_HANDLE) {
-                    globalTotals.shallow += instance.shallowSize;
-                    globalTotals.retained += instance.retainedSize;
-                } else if (type == HtraceEventType::ARK_LOCAL_HANDLE) {
-                    localTotals.shallow += instance.shallowSize;
-                    localTotals.retained += instance.retainedSize;
-                }
-            }
+            AccumulateInstanceTotals(instance, globalTotals, localTotals);
         }
     }
 

@@ -60,32 +60,26 @@ std::string SnapshotHtmlCss()
 )CSS";
 }
 
-std::string GenerateSnapshotHTML(const json& data, const std::string& sourceFile, const std::string& jsleakMode)
-{
-    std::string escapedSourceFile = EscapeHtml(platform::Basename(sourceFile));
-    std::string fileType = EndsWithIgnoreCase(sourceFile, "rawheap") ? "rawheap" : "heapsnapshot";
-    std::string parsedAt = data.value("parsedAt", "");
-    int64_t totalHeapSize = data.value("totalHeapSize", (int64_t)0);
-    std::string totalMem = FormatBytes(static_cast<double>(totalHeapSize));
+struct TabDesc {
+    std::string id;
+    std::string label;
+    std::string content;
+    bool active;
+    std::string tooltip; // 可选：tab 标题末尾的 ? 帮助图标说明
+};
 
+// tab 列表驱动渲染：新增报告类型时在列表中追加一项即可，
+// 不再用 if-else 铺组合、也不再用字符串 find 打补丁。
+std::vector<TabDesc> CollectSnapshotTabs(const json& data, const std::string& jsleakMode,
+    json& icicleCharts)
+{
     const bool hasPropertyTag = data.contains("propertyTagObjects") && !data["propertyTagObjects"].empty();
     const bool hasTop  = data.contains("topRefChains") && !data["topRefChains"].empty();
     const bool hasNapiWrap = data.contains("napiWrapRefChains") && !data["napiWrapRefChains"].empty();
     // top-chain 模式下不渲染最短引用链报告（与原行为一致）
     const bool showTopTab = hasTop && jsleakMode != "top-chain";
 
-    // tab 列表驱动渲染：新增报告类型时在列表中追加一项即可，
-    // 不再用 if-else 铺组合、也不再用字符串 find 打补丁。
-    struct TabDesc {
-        std::string id;
-        std::string label;
-        std::string content;
-        bool active;
-        std::string tooltip; // 可选：tab 标题末尾的 ? 帮助图标说明
-    };
     std::vector<TabDesc> tabs;
-    // 收集各 tab 的冰柱图数据（id + 前缀合并后的引用链树），最后统一注入页面脚本
-    json icicleCharts = json::array();
 
     // ArkUI组件/ArkTS对象泄漏报告：有泄漏数据时渲染并激活；
     // 无泄漏、但有最短引用链时补一个空 tab 作为入口（此时非激活）。
@@ -118,7 +112,11 @@ std::string GenerateSnapshotHTML(const json& data, const std::string& sourceFile
                 icicleCharts, false),
             active});
     }
+    return tabs;
+}
 
+std::pair<std::string, std::string> BuildTabMarkup(const std::vector<TabDesc>& tabs)
+{
     std::string tabItems;
     std::string tabContents;
 
@@ -141,6 +139,17 @@ std::string GenerateSnapshotHTML(const json& data, const std::string& sourceFile
             tabContents += t.content;
         }
     }
+    return {tabItems, tabContents};
+}
+
+std::string AssembleSnapshotHtml(const std::string& sourceFile, const json& data,
+    const std::string& tabItems, const std::string& tabContents, const json& icicleCharts)
+{
+    std::string escapedSourceFile = EscapeHtml(platform::Basename(sourceFile));
+    std::string fileType = EndsWithIgnoreCase(sourceFile, "rawheap") ? "rawheap" : "heapsnapshot";
+    std::string parsedAt = data.value("parsedAt", "");
+    int64_t totalHeapSize = data.value("totalHeapSize", (int64_t)0);
+    std::string totalMem = FormatBytes(static_cast<double>(totalHeapSize));
 
     // ========== 用 report_skeleton 组装页面 ==========
     std::ostringstream html;
@@ -174,6 +183,16 @@ std::string GenerateSnapshotHTML(const json& data, const std::string& sourceFile
     html << HtmlReportScript(ReportCommonChartInitJs());
     html << HtmlReportEnd();
     return html.str();
+}
+
+std::string GenerateSnapshotHTML(const json& data, const std::string& sourceFile,
+    const std::string& jsleakMode)
+{
+    // 收集各 tab 的冰柱图数据（id + 前缀合并后的引用链树），最后统一注入页面脚本
+    json icicleCharts = json::array();
+    auto tabs = CollectSnapshotTabs(data, jsleakMode, icicleCharts);
+    auto [tabItems, tabContents] = BuildTabMarkup(tabs);
+    return AssembleSnapshotHtml(sourceFile, data, tabItems, tabContents, icicleCharts);
 }
 
 } // namespace

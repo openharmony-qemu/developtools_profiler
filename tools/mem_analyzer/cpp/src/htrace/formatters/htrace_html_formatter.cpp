@@ -267,146 +267,130 @@ struct StreamGroupMeta {
     const HtraceSection* section;
 };
 
-void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
-    const std::string& filePath, const RunContext& ctx)
+// Build SymbolDataEntry directly from HtraceAnalysisOutput (no JSON round-trip)
+std::vector<SymbolDataEntry> BuildSymbolEntries(const ScopeResult& scope, const HtraceAnalysisOutput& full)
 {
-    StageTimer timer("HTML gen");
-
-    std::string processName = full.processName;
-    if (processName.empty()) {
-        processName = "未知";
+    std::vector<SymbolDataEntry> entries;
+    entries.reserve(scope.SymbolCount());
+    int rank = 1;
+    for (const auto& section : scope.sections) {
+        for (const auto& row : section.rows) {
+            if (const auto* ts = std::get_if<TopSymbolInfo>(&row)) {
+                auto entry = BuildSymbolDataEntryFromContextLight(*ts, full.totalLeakSize, full.dataDict);
+                entry.info["rank"] = rank++;
+                entries.push_back(std::move(entry));
+            }
+        }
     }
+    return entries;
+}
 
-    long long durationNs = full.traceMeta.durationNs;
-    long long startMs = full.traceMeta.startTimeMs;
-    double durationSeconds = std::round(durationNs / 1e6) / 1e3;
+// 流式写入前奏：从 full 派生进程名、时长串、总量与三 scope 符号条目。
+struct StreamPreamble {
+    std::string processName;
     std::string duration;
-    {
-        std::ostringstream durSs;
-        durSs << std::fixed << std::setprecision(DURATION_PRECISION) << durationSeconds;
-        duration = durSs.str();
-    }
-    long long totalExistingSize = full.totalLeakSize;
-
+    long long totalExistingSize;
     std::vector<SymbolDataEntry> appSymbolData;
     std::vector<SymbolDataEntry> systemSymbolData;
     std::vector<SymbolDataEntry> mixedSymbolData;
+};
 
-    // Build SymbolDataEntry directly from HtraceAnalysisOutput (no JSON round-trip)
-    auto buildEntries = [&totalExistingSize, &full](const ScopeResult& scope) -> std::vector<SymbolDataEntry> {
-        std::vector<SymbolDataEntry> entries;
-        entries.reserve(scope.SymbolCount());
-        int rank = 1;
-        for (const auto& section : scope.sections) {
-            for (const auto& row : section.rows)
-                if (const auto* ts = std::get_if<TopSymbolInfo>(&row)) {
-                    auto entry = BuildSymbolDataEntryFromContextLight(*ts, totalExistingSize, full.dataDict);
-                    entry.info["rank"] = rank++;
-                    entries.push_back(std::move(entry));
-                }
-        }
-        return entries;
-    };
-
-    appSymbolData = buildEntries(full.topSymbols.app);
-    systemSymbolData = buildEntries(full.topSymbols.system);
-    mixedSymbolData = buildEntries(full.topSymbols.mixed);
-
-    const HtraceCategorySpec& categorySpec = HtraceCategory(ctx.htrace.category);
-    const bool multipart = categorySpec.IsMultipart();
-
-    // Build TabGroups（一级 tab：合并视图，用于 tab bar 的"是否有数据"判断）
-    std::vector<TabGroup> groups;
-    groups.push_back({"tabApp", "TOP应用函数分析报告", appSymbolData, 0});
-    groups.push_back({"tabSystem", "TOP系统函数分析报告", systemSymbolData, appSymbolData.size()});
-    groups.push_back({"tabMixed", "TOP应用与系统函数分析报告", mixedSymbolData, appSymbolData.size() + systemSymbolData.size()});
-
-    // 流式组 + 每组轨道元数据：fillTree 据此按行种分派（Symbol→符号树 / Filepage→文件冰柱图），
-    // 替代 isMmap && groupIdx>=3 / filepageLists[groupIdx-3] 魔法下标。
-    // 非 mmap = 3 组（每 scope 一条 Symbol 轨）；mmap = 6 组（3 scope × [Symbol 轨, Filepage 轨]）。
-    std::vector<TabGroup> streamGroups;
-    std::vector<StreamGroupMeta> streamMeta;
-    std::vector<const HtraceSection*> filepageLists;  // [3] = app/system/mixed 的 filepage 轨（sections[1]）
-    if (multipart) {
-        auto anonApp = buildEntries(full.topSymbols.app);
-        auto anonSystem = buildEntries(full.topSymbols.system);
-        auto anonMixed = buildEntries(full.topSymbols.mixed);
-
-        // filepage 轨：三个 scope 的 sections[1]（analyzer 已按 app/system/mixed 预处理，mixed 已合并排序）
-        const HtraceSection* appFp = &full.topSymbols.app.sections[1];
-        const HtraceSection* systemFp = &full.topSymbols.system.sections[1];
-        const HtraceSection* mixedFp = &full.topSymbols.mixed.sections[1];
-
-        auto appFilepageEntries = buildFilepageEntries(*appFp);
-        auto systemFilepageEntries = buildFilepageEntries(*systemFp);
-        auto mixedFilepageEntries = buildFilepageEntries(*mixedFp);
-
-        // 子 tab 标签单一来源：analyzer 已把 tracks[].label 写进 section.label
-        const std::string& anonLabel = full.topSymbols.app.sections[0].label;
-        const std::string& filepageLabel = appFp->label;
-
-        size_t o = 0;
-        streamGroups.push_back({"appMmapAnon", anonLabel, anonApp, o});
-        o += anonApp.size();
-        streamGroups.push_back({"systemMmapAnon", anonLabel, anonSystem, o});
-        o += anonSystem.size();
-        streamGroups.push_back({"mixedMmapAnon", anonLabel, anonMixed, o});
-        o += anonMixed.size();
-
-        size_t fpAppStart = o;
-        streamGroups.push_back({"appMmapFilepage", filepageLabel, appFilepageEntries, fpAppStart});
-        size_t fpSystemStart = fpAppStart + appFilepageEntries.size();
-        streamGroups.push_back({"systemMmapFilepage", filepageLabel, systemFilepageEntries, fpSystemStart});
-        size_t fpMixedStart = fpSystemStart + systemFilepageEntries.size();
-        streamGroups.push_back({"mixedMmapFilepage", filepageLabel, mixedFilepageEntries, fpMixedStart});
-
-        filepageLists.push_back(appFp);
-        filepageLists.push_back(systemFp);
-        filepageLists.push_back(mixedFp);
-
-        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.app.sections[0]});
-        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.system.sections[0]});
-        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.mixed.sections[0]});
-        streamMeta.push_back({TrackRender::FILEPAGE, appFp});
-        streamMeta.push_back({TrackRender::FILEPAGE, systemFp});
-        streamMeta.push_back({TrackRender::FILEPAGE, mixedFp});
-
-        // mmap：一级 tab 的「是否有数据」判断要同时反映 anon（groups）和 filepage（filepageLists）。
-        // 但只对当前 scope 模式的活动 scope 生效——AppAndSystem 时 mixed 非活动（不能因为
-        // mixed 合并 filepage 非空就显示 mixed tab，那是 AppAndSystem 下本就该隐藏的 tab）。
-        // 只有当活动 scope 的 anon 为空、但其 filepage 有数据时，塞一个占位 entry 保住该 tab。
-        auto scopeActive = [&ctx](size_t idx) -> bool {
-            switch (ctx.htrace.scope) {
-                case Scope::APP_ONLY:
-                    return idx == 0;
-                case Scope::SYSTEM_ONLY:
-                    return idx == 1;
-                case Scope::MIXED:
-                    return idx == SCOPE_INDEX_MIXED;
-                case Scope::APP_AND_SYSTEM:
-                default:
-                    return idx == 0 || idx == 1;
-            }
-        };
-        for (size_t scope = 0; scope < SCOPE_COUNT && scope < groups.size(); ++scope) {
-            if (scopeActive(scope) && groups[scope].symbols.empty() && !filepageLists[scope]->rows.empty()) {
-                SymbolDataEntry placeholder;
-                placeholder.info = json{{"name", ""}};
-                groups[scope].symbols.push_back(std::move(placeholder));
-            }
-        }
-    } else {
-        // 单轨：流式组 = groups 本身（3 个 scope，各一条 Symbol 轨）
-        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.app.sections[0]});
-        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.system.sections[0]});
-        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.mixed.sections[0]});
+StreamPreamble BuildStreamPreamble(const HtraceAnalysisOutput& full)
+{
+    StreamPreamble p;
+    p.processName = full.processName;
+    if (p.processName.empty()) {
+        p.processName = "未知";
     }
+    double durationSeconds = std::round(full.traceMeta.durationNs / 1e6) / 1e3;
+    std::ostringstream durSs;
+    durSs << std::fixed << std::setprecision(DURATION_PRECISION) << durationSeconds;
+    p.duration = durSs.str();
+    p.totalExistingSize = full.totalLeakSize;
+    p.appSymbolData = BuildSymbolEntries(full.topSymbols.app, full);
+    p.systemSymbolData = BuildSymbolEntries(full.topSymbols.system, full);
+    p.mixedSymbolData = BuildSymbolEntries(full.topSymbols.mixed, full);
+    return p;
+}
 
-    // Build htrace-specific meta items
-    std::string formattedDuration = FormatDuration(duration);
-    std::string escapedSourceFile = EscapeHtml(platform::Basename(filePath));
+// 流式组 + 每组轨道元数据构建（mmap 多轨）：3 scope × [Symbol 轨, Filepage 轨]。
+void BuildMultipartStreamSetup(const HtraceAnalysisOutput& full,
+    std::vector<TabGroup>& streamGroups, std::vector<StreamGroupMeta>& streamMeta,
+    std::vector<const HtraceSection*>& filepageLists)
+{
+    auto anonApp = BuildSymbolEntries(full.topSymbols.app, full);
+    auto anonSystem = BuildSymbolEntries(full.topSymbols.system, full);
+    auto anonMixed = BuildSymbolEntries(full.topSymbols.mixed, full);
 
-    // Generate timestamp from trace_range
+    // filepage 轨：三个 scope 的 sections[1]（analyzer 已按 app/system/mixed 预处理，mixed 已合并排序）
+    const HtraceSection* appFp = &full.topSymbols.app.sections[1];
+    const HtraceSection* systemFp = &full.topSymbols.system.sections[1];
+    const HtraceSection* mixedFp = &full.topSymbols.mixed.sections[1];
+
+    auto appFilepageEntries = buildFilepageEntries(*appFp);
+    auto systemFilepageEntries = buildFilepageEntries(*systemFp);
+    auto mixedFilepageEntries = buildFilepageEntries(*mixedFp);
+
+    // 子 tab 标签单一来源：analyzer 已把 tracks[].label 写进 section.label
+    const std::string& anonLabel = full.topSymbols.app.sections[0].label;
+    const std::string& filepageLabel = appFp->label;
+
+    size_t o = 0;
+    streamGroups.push_back({"appMmapAnon", anonLabel, anonApp, o});
+    o += anonApp.size();
+    streamGroups.push_back({"systemMmapAnon", anonLabel, anonSystem, o});
+    o += anonSystem.size();
+    streamGroups.push_back({"mixedMmapAnon", anonLabel, anonMixed, o});
+    o += anonMixed.size();
+
+    size_t fpAppStart = o;
+    streamGroups.push_back({"appMmapFilepage", filepageLabel, appFilepageEntries, fpAppStart});
+    size_t fpSystemStart = fpAppStart + appFilepageEntries.size();
+    streamGroups.push_back({"systemMmapFilepage", filepageLabel, systemFilepageEntries, fpSystemStart});
+    size_t fpMixedStart = fpSystemStart + systemFilepageEntries.size();
+    streamGroups.push_back({"mixedMmapFilepage", filepageLabel, mixedFilepageEntries, fpMixedStart});
+
+    filepageLists.push_back(appFp);
+    filepageLists.push_back(systemFp);
+    filepageLists.push_back(mixedFp);
+
+    streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.app.sections[0]});
+    streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.system.sections[0]});
+    streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.mixed.sections[0]});
+    streamMeta.push_back({TrackRender::FILEPAGE, appFp});
+    streamMeta.push_back({TrackRender::FILEPAGE, systemFp});
+    streamMeta.push_back({TrackRender::FILEPAGE, mixedFp});
+}
+
+// mmap 占位 entry 注入：活动 scope 的 anon 为空但 filepage 有数据时塞占位保住一级 tab。
+void InjectPlaceholderEntries(std::vector<TabGroup>& groups,
+    const std::vector<const HtraceSection*>& filepageLists, const RunContext& ctx)
+{
+    auto scopeActive = [&ctx](size_t idx) -> bool {
+        switch (ctx.htrace.scope) {
+            case Scope::APP_ONLY:
+                return idx == 0;
+            case Scope::SYSTEM_ONLY:
+                return idx == 1;
+            case Scope::MIXED:
+                return idx == SCOPE_INDEX_MIXED;
+            case Scope::APP_AND_SYSTEM:
+            default:
+                return idx == 0 || idx == 1;
+        }
+    };
+    for (size_t scope = 0; scope < SCOPE_COUNT && scope < groups.size(); ++scope) {
+        if (scopeActive(scope) && groups[scope].symbols.empty() && !filepageLists[scope]->rows.empty()) {
+            SymbolDataEntry placeholder;
+            placeholder.info = json{{"name", ""}};
+            groups[scope].symbols.push_back(std::move(placeholder));
+        }
+    }
+}
+
+// Generate timestamp from trace_range
+std::string FormatTraceTimestamp(long long startMs)
+{
     std::string timestamp;
     if (startMs > 0) {
         time_t t = static_cast<time_t>(startMs / 1000);
@@ -431,42 +415,41 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
         std::regex tzRe("[+-]\\d{2}:\\d{2}$");
         formattedTimestamp = std::regex_replace(formattedTimestamp, tzRe, "");
     }
-    std::string escapedTimestamp = EscapeHtml(formattedTimestamp);
-    std::string escapedProcessName = EscapeHtml(processName);
+    return EscapeHtml(formattedTimestamp);
+}
 
-    // Resource type display: htrace-<type>（描述符表单一来源，-l 泄漏报告固定 htrace-leaks）
-    std::string typeDisplay = categorySpec.htmlTypeClass;
-    if (!ctx.htrace.leakAddrs.empty()) {
-        typeDisplay = "htrace-leaks";
-    }
-    // fd/thread 的大小语义是个数（计数），不以字节格式化
-    bool countMode = categorySpec.countMode;
+// meta 卡片展示字段（escapedSourceFile/typeDisplay/escapedTimestamp 等已转义/格式化）
+struct MetaCardFields {
+    std::string escapedSourceFile;
+    std::string typeDisplay;
+    std::string escapedTimestamp;
+    bool countMode;
+    long long totalExistingSize;
+    std::string formattedDuration;
+    std::string escapedProcessName;
+};
 
-    std::string metaDataItemsHTML = "<div class=\"meta-card\">\n"
+std::string BuildMetaItemsHTML(const MetaCardFields& f)
+{
+    return "<div class=\"meta-card\">\n"
         "  <div class=\"meta-grid\">\n"
         "    <div class=\"meta-item\"><span class=\"meta-label\"><b>日志名：</b></span><span class=\"meta-value\">" +
-            escapedSourceFile +
+            f.escapedSourceFile +
             "</span></div>\n"
-        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>类型：</b></span><span class=\"meta-value\">" + typeDisplay + "</span></div>\n"
-        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>时间：</b></span><span class=\"meta-value\">" + escapedTimestamp + "</span></div>\n"
-        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>" + (countMode ? "\u603b\u4e2a\u6570\uff1a" : "\u603b\u5185\u5b58\uff1a") + "</b></span><span class=\"meta-value\">" + (countMode ? std::to_string(totalExistingSize) : FormatBytes(static_cast<double>(totalExistingSize))) + "</span></div>\n"
-        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>Trace时长：</b></span><span class=\"meta-value\">" + formattedDuration + "</span></div>\n"
-        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>进程：</b></span><span class=\"meta-value\">" + escapedProcessName + "</span></div>\n"
+        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>类型：</b></span><span class=\"meta-value\">" + f.typeDisplay + "</span></div>\n"
+        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>时间：</b></span><span class=\"meta-value\">" + f.escapedTimestamp + "</span></div>\n"
+        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>" + (f.countMode ? "\u603b\u4e2a\u6570\uff1a" : "\u603b\u5185\u5b58\uff1a") + "</b></span><span class=\"meta-value\">" + (f.countMode ? std::to_string(f.totalExistingSize) : FormatBytes(static_cast<double>(f.totalExistingSize))) + "</span></div>\n"
+        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>Trace时长：</b></span><span class=\"meta-value\">" + f.formattedDuration + "</span></div>\n"
+        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>进程：</b></span><span class=\"meta-value\">" + f.escapedProcessName + "</span></div>\n"
         "  </div>\n"
         "</div>";
+}
 
-    std::string title = "资源泄漏日志分析报告";
-
-    // Use direct streaming: outputs each SymbolDataEntry individually and releases
-    // flameTree/icicleTree after streaming, reducing peak memory
-    std::string tabBarHTML = AnalysisHtmlFormatterBase::BuildTabBarHTML(groups);
-    std::string tabContentHTML = multipart ?
-        BuildMmapTabContentHTML(groups, streamGroups, filepageLists, totalExistingSize, countMode) :
-        AnalysisHtmlFormatterBase::BuildTabContentHTML(groups, totalExistingSize, countMode);
-
-    // 延迟构建回调：在流式写入时按需构建flameTree/icicleTree
-    // 避免所有entry的flameTree/icicleTree同时驻留内存，峰值内存从O(N)降至O(1)
-    FillTreeCallback fillTree = [&streamMeta, &full](SymbolDataEntry& entry, size_t groupIdx, size_t entryIdx) {
+// 延迟构建回调工厂：按 render 分派行种（Symbol→符号树 / Filepage→文件冰柱图）。
+FillTreeCallback BuildStreamFillTree(const std::vector<StreamGroupMeta>& streamMeta,
+    const HtraceAnalysisOutput& full)
+{
+    return [&streamMeta, &full](SymbolDataEntry& entry, size_t groupIdx, size_t entryIdx) {
         const StreamGroupMeta& meta = streamMeta[groupIdx];
         if (meta.render == TrackRender::FILEPAGE) {
             // 文件轨：文件名为根冰柱图（无调用链列表）
@@ -502,9 +485,73 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
             entry.names = st.ToArray();
         }
     };
+}
+
+void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
+    const std::string& filePath, const RunContext& ctx)
+{
+    StageTimer timer("HTML gen");
+
+    StreamPreamble preamble = BuildStreamPreamble(full);
+
+    const HtraceCategorySpec& categorySpec = HtraceCategory(ctx.htrace.category);
+    const bool multipart = categorySpec.IsMultipart();
+
+    // Build TabGroups（一级 tab：合并视图，用于 tab bar 的"是否有数据"判断）
+    std::vector<TabGroup> groups;
+    groups.push_back({"tabApp", "TOP应用函数分析报告", preamble.appSymbolData, 0});
+    groups.push_back({"tabSystem", "TOP系统函数分析报告", preamble.systemSymbolData, preamble.appSymbolData.size()});
+    groups.push_back({"tabMixed", "TOP应用与系统函数分析报告", preamble.mixedSymbolData, preamble.appSymbolData.size() + preamble.systemSymbolData.size()});
+
+    // 流式组 + 每组轨道元数据：fillTree 据此按行种分派（Symbol→符号树 / Filepage→文件冰柱图），
+    // 替代 isMmap && groupIdx>=3 / filepageLists[groupIdx-3] 魔法下标。
+    // 非 mmap = 3 组（每 scope 一条 Symbol 轨）；mmap = 6 组（3 scope × [Symbol 轨, Filepage 轨]）。
+    std::vector<TabGroup> streamGroups;
+    std::vector<StreamGroupMeta> streamMeta;
+    std::vector<const HtraceSection*> filepageLists;  // [3] = app/system/mixed 的 filepage 轨（sections[1]）
+    if (multipart) {
+        BuildMultipartStreamSetup(full, streamGroups, streamMeta, filepageLists);
+        InjectPlaceholderEntries(groups, filepageLists, ctx);
+    } else {
+        // 单轨：流式组 = groups 本身（3 个 scope，各一条 Symbol 轨）
+        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.app.sections[0]});
+        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.system.sections[0]});
+        streamMeta.push_back({TrackRender::SYMBOL, &full.topSymbols.mixed.sections[0]});
+    }
+
+    // Build htrace-specific meta items
+    std::string formattedDuration = FormatDuration(preamble.duration);
+    std::string escapedSourceFile = EscapeHtml(platform::Basename(filePath));
+    std::string escapedTimestamp = FormatTraceTimestamp(full.traceMeta.startTimeMs);
+    std::string escapedProcessName = EscapeHtml(preamble.processName);
+
+    // Resource type display: htrace-<type>（描述符表单一来源，-l 泄漏报告固定 htrace-leaks）
+    std::string typeDisplay = categorySpec.htmlTypeClass;
+    if (!ctx.htrace.leakAddrs.empty()) {
+        typeDisplay = "htrace-leaks";
+    }
+    // fd/thread 的大小语义是个数（计数），不以字节格式化
+    bool countMode = categorySpec.countMode;
+
+    MetaCardFields metaFields{escapedSourceFile, typeDisplay, escapedTimestamp,
+        countMode, preamble.totalExistingSize, formattedDuration, escapedProcessName};
+    std::string metaDataItemsHTML = BuildMetaItemsHTML(metaFields);
+
+    std::string title = "资源泄漏日志分析报告";
+
+    // Use direct streaming: outputs each SymbolDataEntry individually and releases
+    // flameTree/icicleTree after streaming, reducing peak memory
+    std::string tabBarHTML = AnalysisHtmlFormatterBase::BuildTabBarHTML(groups);
+    std::string tabContentHTML = multipart ?
+        BuildMmapTabContentHTML(groups, streamGroups, filepageLists, preamble.totalExistingSize, countMode) :
+        AnalysisHtmlFormatterBase::BuildTabContentHTML(groups, preamble.totalExistingSize, countMode);
+
+    // 延迟构建回调：在流式写入时按需构建flameTree/icicleTree
+    // 避免所有entry的flameTree/icicleTree同时驻留内存，峰值内存从O(N)降至O(1)
+    FillTreeCallback fillTree = BuildStreamFillTree(streamMeta, full);
 
     std::vector<TabGroup>& streamTarget = multipart ? streamGroups : groups;
-    AnalysisHtmlFormatterBase::FillHTMLTemplateStreamedDirect(out, streamTarget, totalExistingSize, tabBarHTML,
+    AnalysisHtmlFormatterBase::FillHTMLTemplateStreamedDirect(out, streamTarget, preamble.totalExistingSize, tabBarHTML,
         tabContentHTML, metaDataItemsHTML, title, fillTree, countMode);
 
     timer.Tick("total");

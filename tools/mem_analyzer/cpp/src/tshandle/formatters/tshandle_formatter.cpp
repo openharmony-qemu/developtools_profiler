@@ -46,23 +46,29 @@ static double Round2(double v)
     return std::round(v * PERCENTAGE_SCALE) / PERCENTAGE_SCALE;
 }
 
+static void AccumulateInstanceHandles(const ArkTsInstance& instance,
+    std::unordered_map<HtraceEventType, SummaryTotals>& byType)
+{
+    std::unordered_set<HtraceEventType> types;
+    for (const auto& ref : instance.nativeRef) {
+        types.insert(ref.handleType);
+    }
+    for (const auto& type : types) {
+        const auto found = byType.find(type);
+        if (found == byType.end()) {
+            continue;
+        }
+        found->second.shallow += instance.shallowSize;
+        found->second.retained += instance.retainedSize;
+    }
+}
+
 static void AccumulateClassHandles(const std::vector<ArkTsClass>& arktsClasses,
     std::unordered_map<HtraceEventType, SummaryTotals>& byType)
 {
     for (const auto& cls : arktsClasses) {
         for (const auto& instance : cls.instances) {
-            std::unordered_set<HtraceEventType> types;
-            for (const auto& ref : instance.nativeRef) {
-                types.insert(ref.handleType);
-            }
-            for (const auto& type : types) {
-                const auto found = byType.find(type);
-                if (found == byType.end()) {
-                    continue;
-                }
-                found->second.shallow += instance.shallowSize;
-                found->second.retained += instance.retainedSize;
-            }
+            AccumulateInstanceHandles(instance, byType);
         }
     }
 }
@@ -172,6 +178,37 @@ static void MergeArktsClasses(const std::vector<ArkTsClass>& classes,
     }
 }
 
+static json InstanceToJson(const ArkTsInstance& inst)
+{
+    json ij;
+    ij["id"] = inst.id;
+    ij["shallowSize"] = inst.shallowSize;
+    ij["retainedSize"] = inst.retainedSize;
+    json refs = json::array();
+    // 排序：先按 handleType（global handle 优先），再按 callStackId 从大到小
+    auto sortedRefs = inst.nativeRef;
+    std::sort(sortedRefs.begin(), sortedRefs.end(),
+        [](const NativeRefEntry& a, const NativeRefEntry& b) {
+            if (a.handleType != b.handleType) {
+                return a.handleType < b.handleType;
+            }
+            return a.callStackId > b.callStackId;
+        });
+    for (const auto& ref : sortedRefs) {
+        json rj;
+        rj["handleType"] = HtraceEventTypeName(ref.handleType);
+        rj["callStackId"] = ref.callStackId;
+        json raddrs = json::array();
+        for (const auto& addr : ref.addrs) {
+            raddrs.push_back(addr);
+        }
+        rj["addrs"] = raddrs;
+        refs.push_back(rj);
+    }
+    ij["nativeRef"] = refs;
+    return ij;
+}
+
 // Convert ArkTsClass vector to JSON
 static json ArktsClassesToJson(const std::vector<ArkTsClass>& classes)
 {
@@ -193,33 +230,7 @@ static json ArktsClassesToJson(const std::vector<ArkTsClass>& classes)
         cj["retainedSize"] = cls.retainedSize;
         json instances = json::array();
         for (const auto& inst : cls.instances) {
-            json ij;
-            ij["id"] = inst.id;
-            ij["shallowSize"] = inst.shallowSize;
-            ij["retainedSize"] = inst.retainedSize;
-            json refs = json::array();
-            // 排序：先按 handleType（global handle 优先），再按 callStackId 从大到小
-            auto sortedRefs = inst.nativeRef;
-            std::sort(sortedRefs.begin(), sortedRefs.end(),
-                [](const NativeRefEntry& a, const NativeRefEntry& b) {
-                    if (a.handleType != b.handleType) {
-                        return a.handleType < b.handleType;
-                    }
-                    return a.callStackId > b.callStackId;
-                });
-            for (const auto& ref : sortedRefs) {
-                json rj;
-                rj["handleType"] = HtraceEventTypeName(ref.handleType);
-                rj["callStackId"] = ref.callStackId;
-                json raddrs = json::array();
-                for (const auto& addr : ref.addrs) {
-                    raddrs.push_back(addr);
-                }
-                rj["addrs"] = raddrs;
-                refs.push_back(rj);
-            }
-            ij["nativeRef"] = refs;
-            instances.push_back(ij);
+            instances.push_back(InstanceToJson(inst));
         }
         cj["instances"] = instances;
         arr.push_back(cj);
