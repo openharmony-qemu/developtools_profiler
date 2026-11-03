@@ -40,7 +40,7 @@ struct ModeCapability {
  * 格式关键词**直接就是路由键** —— 模块自己按 `(parse_only, keyword)` 选 writer，
  * 不存在「关键词 → formatter 名」的中间映射（P4-e 删掉 `IFormatter` / `FormatterFactory`
  * 之后，那种映射已无任何消费者）。
- * 形式化约定（启动期由 `ModuleRegistry::self_check()` 兜底校验）：
+ * 形式化约定（启动期由 `ModuleRegistry::SelfCheck()` 兜底校验）：
  *   - 某模式声明了格式列表时，其 `default_format` 必须非空且是列表成员；
  *   - 某模式格式列表为空（不支持该模式）时，`default_format` 必须留空。
  */

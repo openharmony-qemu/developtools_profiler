@@ -41,7 +41,7 @@ void ModuleRegistry::Add(std::shared_ptr<AnalysisModule> module)
     modules().push_back(std::move(module));
 }
 
-AnalysisModule* ModuleRegistry::find(const std::string& name)
+AnalysisModule* ModuleRegistry::FindByName(const std::string& name)
 {
     for (auto& m : modules()) {
         if (m->Name() == name) {

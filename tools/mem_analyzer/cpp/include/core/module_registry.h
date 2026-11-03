@@ -31,7 +31,7 @@ public:
     /**
      * 按模块名查找。
      */
-    static AnalysisModule* find(const std::string& name);
+    static AnalysisModule* FindByName(const std::string& name);
 
     /**
      * 按扩展名查找（大小写不敏感，允许带前导点）。
