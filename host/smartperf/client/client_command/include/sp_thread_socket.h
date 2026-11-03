@@ -92,19 +92,22 @@ public:
     void ConnectAndSendFile(SpServerSocket &spSocket, const std::string filePath);
     int FileSocketConnect();
     int SendFile(const std::string& filePath);
-    void StartRecvFile(SpServerSocket &spSocket, const std::string &fileName);
     void StartHapCollecting(SpServerSocket &spSocket);
     void RemoveToken(std::string &recvMessage);
     void HandleMsgTrace(std::string& recvMessage);
     void SendTraceFile(const std::string& recvBuf, SpServerSocket &spSocket);
 private:
     int CreateRecvFileListenSocket(int &outPort);
-    ssize_t RecvFileToDisk(int connFd, const std::string &savePath);
     void HandleStartDubaiDb();
     void HandleSetDubaiDb(SpServerSocket &spSocket, std::string &retCode, const std::string &recvBuf);
     void HandleSaveGpuCounter(SpServerSocket &spSocket, const std::string &recvBuf);
-    static std::string ParseRecvFileName(const std::string &recvBuf);
     void HandleAppStopCollect(SpServerSocket &spSocket, std::string &retCode);
+    void HandleRecvFiles(SpServerSocket &spSocket, const std::string& recvBuf);
+    bool HandleDeleteReport(SpServerSocket &spSocket, const std::string& recvBuf);
+    static bool RecvExact(int connFd, char* buf, size_t expectedBytes);
+    bool RecvFileHeader(int connFd, std::string& fileName, uint64_t& fileSize, int fileIndex);
+    bool RecvOneFile(int connFd, const std::string& dirName, int fileIndex, int fileCount);
+    void StartRecvFiles(SpServerSocket &spSocket, const std::string& dirName, int fileCount);
     bool flagRunning = false;
     bool socketConnect = true;
     std::string checkToken = "";    // 拉起测试时校验
@@ -123,13 +126,15 @@ private:
     int sendFileSocket = -1;
     int sendFileSocketPort = -1;
     static const int fileSocketBufferSize = 8192;
-    static const long long maxRecvFileSize = 512LL * 1024 * 1024; //512MB
+    static const int msgFieldDelimLen = 2;
+    static const int maxFileNameLen = 4096;
+    static const long long maxFileTransferSize = 512LL * 1024 * 1024;
     char fileSocketBuffer[fileSocketBufferSize] = {};
     const std::string recvFileDir = "/data/local/tmp/smartperf/recv/";
+    const std::string reportDir = "/data/local/tmp/sp_report/";
     bool isSetPid = false;
     SPTask &spTask = SPTask::GetInstance();
     std::thread udpStartCollect;
-    std::string BuildSpReportPath(const std::string &fileName);
 
     ~SpThreadSocket()
     {

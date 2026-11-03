@@ -756,30 +756,13 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         case MessageType::SAVE_GPU_COUNTER:
             HandleSaveGpuCounter(spSocket, recvBuf);
             break;
-        case MessageType::RECV_FILES: {
-            std::string fileName;
-            int fileCount = 0;   // UDP 消息格式：recv_files::<dirName>::<fileCount>
-            if (recvBuf.find("::") != std::string::npos) {
-                std::string param = recvBuf.substr(recvBuf.find("::") + separatorLen);
-                if (param.find(":::") != std::string::npos) {
-                    fileName = param.substr(0, param.find(":::"));
-                }
-                if (param.find("::") != std::string::npos) {
-                    fileName = param.substr(0, param.find("::"));
-                    std::string countStr = param.substr(param.find("::") + separatorLen);
-                    fileCount = std::atoi(countStr.c_str());
-                } else {
-                    fileName = param;
-                }
-            }
-            if (SPUtils::IsPathTraversal(fileName) || !SPUtils::IsValidPath(fileName)) {
-                LOGE("RECV_FILES fileName is invalid: %s", fileName.c_str());
+        case MessageType::RECV_FILES:
+            HandleRecvFiles(spSocket, recvBuf);
+            break;
+        case MessageType::DELETE_REPORT:
+            if (!HandleDeleteReport(spSocket, recvBuf)) {
                 return;
             }
-            LOGI("RECV FILS request, fileName %s, fileCount %d", fileName.c_str(), fileCount);
-            StartRecvFile(spSocket, fileName, fileCount);
-            break;
-        }
         case MessageType::APP_STOP_COLLECT:
             HandleAppStopCollect(spSocket, retCode);
             break;
@@ -897,7 +880,7 @@ std::string SpThreadSocket::SocketErrorTypeToString(SocketErrorType errorType) c
 void SpThreadSocket::GetSocketPort(const std::string& buffer)
 {
     if (buffer.find("::") != std::string::npos) {
-        std::string portStr = buffer.substr(buffer.find("::") + 2);
+        std::string portStr = buffer.substr(buffer.find("::") + msgFieldDelimLen);
         std::string fileName = "";
         if (portStr.find(":::") != std::string::npos) {
             portStr = portStr.substr(0, portStr.find(":::"));
@@ -1048,6 +1031,8 @@ void SpThreadSocket::GetTraceStartPoint(std::string &recvBuf)
         return;
     }
 
+    constexpr int beginTagLen = 11;
+    constexpr int overTagLen = 10;
     std::vector<std::string> parts = split(recvBuf, "&&&");
     for (size_t i = 0; i < parts.size(); ++i) {
         if (parts[i].find("***") != std::string::npos) {
@@ -1065,12 +1050,12 @@ void SpThreadSocket::GetTraceStartPoint(std::string &recvBuf)
         }
 
         if (parts[i].find("begin$$$$$$") != std::string::npos) {
-            std::string result = parts[i].substr(11);
+            std::string result = parts[i].substr(beginTagLen);
             VisualEffectAnalysis::GetInstance().SetTraceBegin(result);
         }
 
         if (parts[i].find("over$$$$$$") != std::string::npos) {
-            std::string result = parts[i].substr(10);
+            std::string result = parts[i].substr(overTagLen);
             VisualEffectAnalysis::GetInstance().SetTraceEnd(result);
         }
     }
@@ -1080,7 +1065,7 @@ int SpThreadSocket::CreateRecvFileListenSocket(int &outPort)
 {
     int listenFd = socket(AF_INET, SOCK_STREAM, 0);
     if (listenFd < 0) {
-        WLOGE("StartRecvFile create socket failed, errno: %d", errno);
+        LOGE("StartRecvFile create socket failed, errno: %d", errno);
         return -1;
     }
 
@@ -1100,15 +1085,16 @@ int SpThreadSocket::CreateRecvFileListenSocket(int &outPort)
             actualPort = port;
             break;
         }
-        LOGE("StartRecvFile port %d bind failed (error: %d), trying next....", port, error);
     }
 
     if (actualPort < 0) {
         LOGE("StartRecvFile bind failed for all ports %d-%d", portStart, portEnd);
+        close(listenFd);
+        return -1;
     }
 
     if (listen(listenFd, 1) < 0) {
-        WLOGE("StartRecvFile listen failed, errno: %d", errno);
+        LOGE("StartRecvFile listen failed, errno: %d", errno);
         close(listenFd);
         return -1;
     }
@@ -1117,82 +1103,143 @@ int SpThreadSocket::CreateRecvFileListenSocket(int &outPort)
     return listenFd;
 }
 
-ssize_t SpThreadSocket::RecvFileToDisk(int connFd, const std::string &savePath)
+void SpThreadSocket::StartRecvFiles(SpServerSocket &spSocket, const std::string& dirName, int fileCount)
 {
-    FILE *fp = fopen(savePath.c_str(), "wb");
-    if (fp == nullptr) {
-        WLOGE("StartRecvFile fopen failed: %s", savePath.c_str());
-        return -1;
-    }
-
-    ssize_t totalRecv = 0;
-    while (totalRecv < maxRecvFileSize) {
-        ssize_t bytesRecv = recv(connFd, fileSocketBuffer, fileSocketBufferSize, 0);
-        if (bytesRecv <= 0) {
-            break;
-        }
-        size_t written = fwrite(fileSocketBuffer, 1, static_cast<size_t>(bytesRecv), fp);
-        if (written != static_cast<size_t>(bytesRecv)) {
-            WLOGE("StartRecvFile fwrite incomplete");
-            totalRecv = -1;
-            break;
-        }
-        totalRecv += bytesRecv;
-    }
-    if (totalRecv >= maxRecvFileSize) {
-        LOGE("StartRecvFile exceeded max size %lld, connection closed", maxRecvFileSize);
-        totalRecv = -1;
-    }
-
-    (void)fclose(fp);
-    return totalRecv;
-}
-
-void SpThreadSocket::StartRecvFile(SpServerSocket &spSocket, const std::string& fileName)
-{
-    if (!SPUtils::IsValidPath(fileName) || SPUtils::IsPathTraversal(fileName)) {
-        LOGE("StartRecvFile fileName is invalid: %s", fileName.c_str());
+    if (SPUtils::IsPathTraversal(dirName) || !SPUtils::IsValidPath(dirName)) {
+        LOGE("StartRecvFiles dirName is invalid: %s", dirName.c_str());
         return;
     }
+    SPUtils::CreateDir(recvFileDir);
 
-    // 传输的数据直接写入 /data/local/tmp/sp_report/
-    std::string savePath = BuildSpReportPath(fileName);
+    int actualPort = -1;
+    int listenFd = CreateRecvFileListenSocket(actualPort);
+    if (listenFd < 0) {
+        return;
+    }
+    LOGI("StartRecvFiles listening on port %d, fileCount=%d", actualPort, fileCount);
+    // UDP 回复格式: recv_file_ready:::<port>
+    std::string ackMsg = "recv_file_ready:::" + std::to_string(actualPort);
+    spSocket.Sendto(ackMsg);
 
-    std::thread recvFileThread([this, savePath, &spSocket]() {
-        int actualPort = 0;
-        int listenFd = CreateRecvFileListenSocket(actualPort);
-        if (listenFd < 0) {
-            return;
-        }
-        WLOGI("StartRecvFile listening on port %d, waiting for App to connect...", actualPort);
-
-        // 通过 UDP 回复 App，告知端口号
-        std::string ackMsg = "recv_file_ready:::" + std::to_string(actualPort);
-        spSocket.Sendto(ackMsg);
-        WLOGI("StartRecvFile ack sent to App, port: %d", actualPort);
-
+    std::thread recvFilesThread([this, listenFd, dirName, fileCount]() {
         struct sockaddr_in clientAddr = {0};
         socklen_t clientLen = sizeof(clientAddr);
         int connFd = accept(listenFd, reinterpret_cast<struct sockaddr *>(&clientAddr), &clientLen);
         if (connFd < 0) {
-            WLOGE("StartRecvFile accept failed, errno: %d", errno);
+            LOGE("StartRecvFiles accept failed, errno: %d", errno);
             close(listenFd);
             return;
         }
-        WLOGI("StartRecvFile App connected, start receiving file to %s", savePath.c_str());
-
-        ssize_t totalRecv = RecvFileToDisk(connFd, savePath);
-
+        LOGI("StartRecvFiles App connected, start receiving %d files", fileCount);
+        for (int fi = 0; fi < fileCount; fi++) {
+            if (!RecvOneFile(connFd, dirName, fi, fileCount)) {
+                close(connFd);
+                close(listenFd);
+                return;
+            }
+        }
         close(connFd);
         close(listenFd);
-
-        if (totalRecv > 0) {
-            WLOGI("StartRecvFile success, received %zd bytes, saved to %s", totalRecv, savePath.c_str());
-        } else if (totalRecv == 0) {
-            WLOGE("StartRecvFile received 0 bytes");
-        }
+        LOGI("StartRecvFiles all %d files received", fileCount);
     });
-    recvFileThread.detach();
+    recvFilesThread.detach();
+}
+
+bool SpThreadSocket::RecvExact(int connFd, char* buf, size_t expectedBytes)
+{
+    size_t received = 0;
+    while (received < expectedBytes) {
+        ssize_t r = recv(connFd, buf + received, expectedBytes - received, 0);
+        if (r <= 0) {
+            return false;
+        }
+        received += static_cast<size_t>(r);
+    }
+    return true;
+}
+
+// TCP 文件传输协议(每个文件): [4字节网络序 nameLen][nameLen字节 fileName][8字节网络序 fileSize]
+bool SpThreadSocket::RecvFileHeader(int connFd, std::string& fileName, uint64_t& fileSize, int fileIndex)
+{
+    constexpr int nameLenBytes = sizeof(uint32_t);
+    constexpr int fileSizeBytes = sizeof(uint64_t);
+
+    uint32_t nameLen = 0;
+    if (!RecvExact(connFd, reinterpret_cast<char*>(&nameLen), nameLenBytes)) {
+        LOGE("StartRecvFiles recv nameLen failed, file %d", fileIndex);
+        return false;
+    }
+    nameLen = ntohl(nameLen);
+    if (nameLen == 0 || nameLen > maxFileNameLen) {
+        LOGE("StartRecvFiles invalid nameLen %u, file %d", nameLen, fileIndex);
+        return false;
+    }
+
+    fileName.resize(nameLen);
+    if (!RecvExact(connFd, &fileName[0], nameLen)) {
+        LOGE("StartRecvFiles recv fileName failed, file %d", fileIndex);
+        return false;
+    }
+    if (SPUtils::IsPathTraversal(fileName) || !SPUtils::IsValidPath(fileName)) {
+        LOGE("StartRecvFiles invalid fileName, file %d", fileIndex);
+        return false;
+    }
+
+    fileSize = 0;
+    if (!RecvExact(connFd, reinterpret_cast<char*>(&fileSize), fileSizeBytes)) {
+        LOGE("StartRecvFiles recv fileSize failed, file %d", fileIndex);
+        return false;
+    }
+    // 网络序(大端)转主机序(小端)
+    fileSize = __builtin_bswap64(fileSize);
+    if (fileSize == 0 || fileSize > maxFileTransferSize) {
+        LOGE("StartRecvFiles invalid fileSize %llu, file %d", fileSize, fileIndex);
+        return false;
+    }
+    return true;
+}
+
+bool SpThreadSocket::RecvOneFile(int connFd, const std::string& dirName, int fileIndex, int fileCount)
+{
+    std::string fileName;
+    uint64_t fileSize = 0;
+    if (!RecvFileHeader(connFd, fileName, fileSize, fileIndex)) {
+        return false;
+    }
+
+    LOGI("StartRecvFiles file %d/%d: %s, size=%llu", fileIndex + 1, fileCount, fileName.c_str(), fileSize);
+
+    std::string dstDir = reportDir + dirName;
+    SPUtils::CreateDir(dstDir);
+    std::string savePath = dstDir + "/" + fileName;
+
+    char buffer[fileSocketBufferSize] = {0};
+    FILE *fp = fopen(savePath.c_str(), "wb");
+    if (fp == nullptr) {
+        LOGE("StartRecvFiles fopen failed: %s", savePath.c_str());
+        return false;
+    }
+    uint64_t totalRecv = 0;
+    while (totalRecv < fileSize) {
+        size_t toRecv = static_cast<size_t>(fileSize - totalRecv);
+        if (toRecv > static_cast<size_t>(fileSocketBufferSize)) {
+            toRecv = static_cast<size_t>(fileSocketBufferSize);
+        }
+        ssize_t bytesRecv = recv(connFd, buffer, toRecv, 0);
+        if (bytesRecv <= 0) {
+            LOGE("StartRecvFiles recv data failed at %llu/%llu", totalRecv, fileSize);
+            break;
+        }
+        size_t written = fwrite(buffer, 1, static_cast<size_t>(bytesRecv), fp);
+        if (written != static_cast<size_t>(bytesRecv)) {
+            LOGE("StartRecvFiles fwrite incomplete, disk may be full");
+            break;
+        }
+        totalRecv += bytesRecv;
+    }
+    fclose(fp);
+    LOGI("StartRecvFiles: saved to %s", savePath.c_str());
+    return true;
 }
 
 void SpThreadSocket::HandleStartDubaiDb()
@@ -1223,23 +1270,6 @@ void SpThreadSocket::HandleSaveGpuCounter(SpServerSocket &spSocket, const std::s
     ConnectAndSendFile(spSocket, gpuCounterfilePath + "/gpu_counter.csv");
 }
 
-std::string SpThreadSocket::ParseRecvFileName(const std::string& recvBuf)
-{
-    // UDP 消息格式: recv_file::文件名 (可选尾部 :::...)
-    std::string fileName = "recv_file.zip";
-    if (recvBuf.find("::") == std::string::npos) {
-        return fileName;
-    }
-    std::string param = recvBuf.substr(recvBuf.find("::") + 2);
-    if (param.find(":::") != std::string::npos) {
-        param = param.substr(0, param.find(":::"));
-    }
-    if (!param.empty()) {
-        fileName = param;
-    }
-    return fileName;
-}
-
 void SpThreadSocket::HandleAppStopCollect(SpServerSocket &spSocket, std::string& retCode)
 {
     if (taskMgr_ != nullptr) {
@@ -1258,16 +1288,54 @@ void SpThreadSocket::HandleAppStopCollect(SpServerSocket &spSocket, std::string&
     spTask.ClearStopFlag();
 }
 
-std::string SpThreadSocket::BuildSpReportPath(const std::string &fileName)
+// UDP 消息格式: recv_files::<dirName>::<fileCount>
+void SpThreadSocket::HandleRecvFiles(SpServerSocket &spSocket, const std::string& recvBuf)
 {
-    const std::string dstDir = "/data/local/tmp/sp_report/";
-    SPUtils::CreateDir(dstDir);
-    std::string savePath = dstDir + fileName;
-    size_t lastSlash = savePath.find_last_not_of('/');
-    if (lastSlash != std::string::npos && lastSlash > dstDir.length() - 1) {
-        SPUtils::CreateDir(savePath.substr()0, lastSlash);
+    std::string dirName;
+    int fileCount = 0;
+    if (recvBuf.find("::") != std::string::npos) {
+        std::string param = recvBuf.substr(recvBuf.find("::") + msgFieldDelimLen);
+        if (param.find(":::") != std::string::npos) {
+            param = param.substr(0, param.find(":::"));
+        }
+        if (param.find("::") != std::string::npos) {
+            dirName = param.substr(0, param.find("::"));
+            std::string countStr = param.substr(param.find("::") + msgFieldDelimLen);
+            fileCount = std::atoi(countStr.c_str());
+        } else {
+            dirName = param;
+        }
     }
-    return savePath;
+    if (SPUtils::IsPathTraversal(dirName) || !SPUtils::IsValidPath(dirName)) {
+        LOGE("RECV_FILES dirName is invalid: %s", dirName.c_str());
+        return;
+    }
+    LOGI("RECV FILS request, dirName %s, fileCount %d", dirName.c_str(), fileCount);
+    StartRecvFiles(spSocket, dirName, fileCount);
+}
+
+// UDP 消息格式: delete_report::<dirName>
+// UDP 回复格式: delete_report::success / delete_report::failed
+bool SpThreadSocket::HandleDeleteReport(SpServerSocket &spSocket, const std::string& recvBuf)
+{
+    std::string dirName;
+    if (recvBuf.find("::") != std::string::npos) {
+        std::string param = recvBuf.substr(recvBuf.find("::") + msgFieldDelimLen);
+        if (param.find(":::") != std::string::npos) {
+            param = param.substr(0, param.find(":::"));
+        }
+        dirName = param;
+    }
+    if (SPUtils::IsPathTraversal(dirName) || !SPUtils::IsValidPath(dirName)) {
+        LOGE("DELETE_REPORT dirName is invalid: %s", dirName.c_str());
+        spSocket.Sendto("delete_report::failed");
+        return false;
+    }
+    std::string reportPath = reportDir + dirName;
+    LOGI("DELETE_REPORT: removing %s", reportPath.c_str());
+    SPUtils::RemoveDirOrFile(reportPath);
+    spSocket.Sendto("delete_report::success");
+    return true;
 }
 }
 }
