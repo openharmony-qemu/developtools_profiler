@@ -59,7 +59,7 @@ struct SpawnedProc {
     bool Ok() const { return pid > 0; }
 };
 
-// POSIX only: fork + execl("/bin/sh","-c",cmd) with stdout+stderr piped.
+// POSIX only: fork + pipe + execvp (direct, no /bin/sh) with stdout+stderr piped.
 // On success returns {pid>0, read_fd}; on failure {-1,-1} (nothing to close).
 // Caller owns read_fd (close after consuming) and must waitpid(pid).
 SpawnedProc SpawnPiped(const std::string& cmd);

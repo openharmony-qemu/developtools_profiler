@@ -20,6 +20,7 @@
 #include <chrono>
 #include <cstring>
 #include <filesystem>
+#include <vector>
 
 #include "utils/file_utils.h"
 #include "utils/platform.h"
@@ -340,7 +341,51 @@ CapturedCmd CaptureCommandWindows(const std::string& cmd, long long timeoutMs)
 #endif
 
 #if !defined(_WIN32)
-// Common fork + pipe + execl("/bin/sh","-c",cmd): stdout+stderr merged into pipe.
+// Split a shell-quoted command string into argv, reversing ShellQuote escaping.
+// Strips trailing " 2>&1" (redundant: SpawnPiped already dup2's stderr to the pipe).
+// Handles ShellQuote's '\'' escape sequence for embedded single quotes.
+static std::vector<std::string> ShellSplitArgs(const std::string& cmd)
+{
+    std::string s = cmd;
+    constexpr const char* REDIRECT_SUFFIX = " 2>&1";
+    constexpr size_t REDIRECT_LEN = 5;
+    if (s.size() > REDIRECT_LEN &&
+        s.compare(s.size() - REDIRECT_LEN, REDIRECT_LEN, REDIRECT_SUFFIX) == 0) {
+        s.erase(s.size() - REDIRECT_LEN);
+    }
+
+    std::vector<std::string> args;
+    size_t i = 0;
+    while (i < s.size()) {
+        while (i < s.size() && (s[i] == ' ' || s[i] == '\t')) {
+            ++i;
+        }
+        if (i >= s.size()) {
+            break;
+        }
+        std::string token;
+        while (i < s.size() && s[i] != ' ' && s[i] != '\t') {
+            if (s[i] == '\'') {
+                ++i;
+                while (i < s.size() && s[i] != '\'') {
+                    token += s[i++];
+                }
+                if (i < s.size()) {
+                    ++i;
+                }
+            } else if (s[i] == '\\' && i + 1 < s.size()) {
+                ++i;
+                token += s[i++];
+            } else {
+                token += s[i++];
+            }
+        }
+        args.push_back(token);
+    }
+    return args;
+}
+
+// Common fork + pipe + execvp: stdout+stderr merged into pipe.
 // Used by capture_command, run_command_streaming, and spawn_hdc_worker.
 SpawnedProc SpawnPiped(const std::string& cmd)
 {
@@ -359,7 +404,17 @@ SpawnedProc SpawnPiped(const std::string& cmd)
         dup2(fds[1], STDERR_FILENO);
         close(fds[0]);
         close(fds[1]);
-        execl("/bin/sh", "sh", "-c", cmd.c_str(), (char*)nullptr);
+        auto argStrings = ShellSplitArgs(cmd);
+        if (argStrings.empty()) {
+            _exit(EXIT_COMMAND_NOT_FOUND);
+        }
+        std::vector<char*> argv;
+        argv.reserve(argStrings.size() + 1);
+        for (auto& a : argStrings) {
+            argv.push_back(a.data());
+        }
+        argv.push_back(nullptr);
+        execvp(argv[0], argv.data());
         _exit(EXIT_COMMAND_NOT_FOUND);
     }
     close(fds[1]);
@@ -551,7 +606,36 @@ CapturedCmd FindInPath(const std::string& name)
 #if defined(_WIN32)
     return CaptureCommand("where " + ShellQuote(name) + " 2>&1");
 #else
-    return CaptureCommand("command -v " + ShellQuote(name) + " 2>&1");
+    // Direct PATH search — avoids shell builtins (command -v) that can't
+    // be used with execvp (SpawnPiped no longer invokes /bin/sh).
+    CapturedCmd cap;
+    cap.spawned = true;
+    cap.exitCode = 1;
+    const char* pathEnv = std::getenv("PATH");
+    if (pathEnv == nullptr) {
+        return cap;
+    }
+    std::string pathStr(pathEnv);
+    size_t start = 0;
+    while (start <= pathStr.size()) {
+        size_t end = pathStr.find(':', start);
+        if (end == std::string::npos) {
+            end = pathStr.size();
+        }
+        std::string dir = pathStr.substr(start, end - start);
+        start = end + 1;
+        if (dir.empty()) {
+            continue;
+        }
+        fs::path candidate = fs::path(dir) / name;
+        std::error_code ec;
+        if (fs::exists(candidate, ec) && !fs::is_directory(candidate, ec)) {
+            cap.output = candidate.string() + "\n";
+            cap.exitCode = 0;
+            break;
+        }
+    }
+    return cap;
 #endif
 }
 
