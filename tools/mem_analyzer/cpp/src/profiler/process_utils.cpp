@@ -344,19 +344,46 @@ CapturedCmd CaptureCommandWindows(const std::string& cmd, long long timeoutMs)
 #endif
 
 #if !defined(_WIN32)
-// Split a shell-quoted command string into argv, reversing ShellQuote escaping.
-// Strips trailing " 2>&1" (redundant: SpawnPiped already dup2's stderr to the pipe).
-// Handles ShellQuote's '\'' escape sequence for embedded single quotes.
-static std::vector<std::string> ShellSplitArgs(const std::string& cmd)
+// Strip trailing " 2>&1" (redundant: SpawnPiped already dup2's stderr to the pipe).
+static std::string StripRedirect(const std::string& cmd)
 {
-    std::string s = cmd;
     constexpr const char* REDIRECT_SUFFIX = " 2>&1";
     constexpr size_t REDIRECT_LEN = 5;
-    if (s.size() > REDIRECT_LEN &&
-        s.compare(s.size() - REDIRECT_LEN, REDIRECT_LEN, REDIRECT_SUFFIX) == 0) {
-        s.erase(s.size() - REDIRECT_LEN);
+    if (cmd.size() > REDIRECT_LEN &&
+        cmd.compare(cmd.size() - REDIRECT_LEN, REDIRECT_LEN, REDIRECT_SUFFIX) == 0) {
+        return cmd.substr(0, cmd.size() - REDIRECT_LEN);
     }
+    return cmd;
+}
 
+// Parse one shell-quoted token starting at position i, advancing i past the token.
+// Handles ShellQuote's '\'' escape sequence for embedded single quotes.
+static std::string ParseNextToken(const std::string& s, size_t& i)
+{
+    std::string token;
+    while (i < s.size() && s[i] != ' ' && s[i] != '\t') {
+        if (s[i] == '\'') {
+            ++i;
+            while (i < s.size() && s[i] != '\'') {
+                token += s[i++];
+            }
+            if (i < s.size()) {
+                ++i;
+            }
+        } else if (s[i] == '\\' && i + 1 < s.size()) {
+            ++i;
+            token += s[i++];
+        } else {
+            token += s[i++];
+        }
+    }
+    return token;
+}
+
+// Split a shell-quoted command string into argv, reversing ShellQuote escaping.
+static std::vector<std::string> ShellSplitArgs(const std::string& cmd)
+{
+    std::string s = StripRedirect(cmd);
     std::vector<std::string> args;
     size_t i = 0;
     while (i < s.size()) {
@@ -366,24 +393,7 @@ static std::vector<std::string> ShellSplitArgs(const std::string& cmd)
         if (i >= s.size()) {
             break;
         }
-        std::string token;
-        while (i < s.size() && s[i] != ' ' && s[i] != '\t') {
-            if (s[i] == '\'') {
-                ++i;
-                while (i < s.size() && s[i] != '\'') {
-                    token += s[i++];
-                }
-                if (i < s.size()) {
-                    ++i;
-                }
-            } else if (s[i] == '\\' && i + 1 < s.size()) {
-                ++i;
-                token += s[i++];
-            } else {
-                token += s[i++];
-            }
-        }
-        args.push_back(token);
+        args.push_back(ParseNextToken(s, i));
     }
     return args;
 }
