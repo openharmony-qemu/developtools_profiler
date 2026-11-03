@@ -87,8 +87,8 @@ void WriteSymbol(const HtraceAnalysisOutput& full, JsonStreamWriter& writer,
 
     writer.BeginObject();
     writer.WriteKeyValue("rank", rank++);
-    writer.WriteKeyValue("existingSize", (int64_t)existingSize);
-    writer.WriteKeyValue("existingCount", (int64_t)ts.totalExistingCount);
+    writer.WriteKeyValue("existingSize", static_cast<int64_t>(existingSize));
+    writer.WriteKeyValue("existingCount", static_cast<int64_t>(ts.totalExistingCount));
     writer.WriteKeyValue("percentage", percentage);
     writer.WriteKeyValue("type", ts.type);
     writer.WriteKeyValue("name", ts.symbol);
@@ -120,8 +120,8 @@ void WriteFilepage(JsonStreamWriter& writer, const HtraceAnalysisOutput& full,
 {
     writer.BeginObject();
     writer.WriteKeyValue("fileName", fp.filename);
-    writer.WriteKeyValue("size", (int64_t)fp.size);
-    writer.WriteKeyValue("count", (int64_t)fp.count);
+    writer.WriteKeyValue("size", static_cast<int64_t>(fp.size));
+    writer.WriteKeyValue("count", static_cast<int64_t>(fp.count));
     writer.WriteKeyValue("percentage", fp.percentage);
 
     writer.WriteKey("callStacks");

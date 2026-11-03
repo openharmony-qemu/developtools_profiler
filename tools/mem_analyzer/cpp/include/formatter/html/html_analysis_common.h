@@ -42,7 +42,7 @@ public:
         if (it != indexMap_.end()) {
             return it->second;
         }
-        int idx = (int)strings_.size();
+        int idx = static_cast<int>(strings_.size());
         strings_.push_back(s);
         indexMap_[s] = idx;
         return idx;

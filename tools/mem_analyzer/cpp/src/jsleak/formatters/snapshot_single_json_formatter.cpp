@@ -54,7 +54,7 @@ std::string JsleakWriteAnalysisJson(const json& data, const std::string& filePat
     content["summary"] = json::object();
     content["summary"]["snapshot"] = json::object();
     content["summary"]["snapshot"]["totalHeapSize"] =
-        data.value("totalHeapSize", (uint64_t)0);
+        data.value("totalHeapSize", static_cast<uint64_t>(0));
 
     // 属性标签对象（内部 key 已与输出 key 一致）
     content["propertyTagObjects"] = data.value("propertyTagObjects", json::object());

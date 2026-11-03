@@ -175,7 +175,7 @@ void DrainAvailable(HANDLE hRead, std::string& output)
         }
         char buf[4096];
         DWORD n = 0;
-        if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
+        if (!ReadFile(hRead, buf, static_cast<DWORD>(std::min<size_t>(avail, sizeof(buf))),
             &n, nullptr) || n == 0) {
             break;
         }
@@ -245,7 +245,7 @@ void ReadUnboundedWindows(HANDLE hRead, PROCESS_INFORMATION pi, CapturedCmd& cap
         }
         char buf[4096];
         DWORD n = 0;
-        if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
+        if (!ReadFile(hRead, buf, static_cast<DWORD>(std::min<size_t>(avail, sizeof(buf))),
             &n, nullptr) || n == 0) {
             break;
         }

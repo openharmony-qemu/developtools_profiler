@@ -66,7 +66,7 @@ static void DrainPipeOutput(HANDLE hRead)
         }
         char buf[4096];
         DWORD n = 0;
-        if (!ReadFile(hRead, buf, (DWORD)std::min<size_t>(avail, sizeof(buf)),
+        if (!ReadFile(hRead, buf, static_cast<DWORD>(std::min<size_t>(avail, sizeof(buf))),
             &n, nullptr) || n == 0) break;
         std::cout.write(buf, n);
         std::cout.flush();

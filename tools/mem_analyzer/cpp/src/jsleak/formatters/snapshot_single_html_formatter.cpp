@@ -148,7 +148,7 @@ std::string AssembleSnapshotHtml(const std::string& sourceFile, const json& data
     std::string escapedSourceFile = EscapeHtml(platform::Basename(sourceFile));
     std::string fileType = EndsWithIgnoreCase(sourceFile, "rawheap") ? "rawheap" : "heapsnapshot";
     std::string parsedAt = data.value("parsedAt", "");
-    int64_t totalHeapSize = data.value("totalHeapSize", (int64_t)0);
+    int64_t totalHeapSize = data.value("totalHeapSize", static_cast<int64_t>(0));
     std::string totalMem = FormatBytes(static_cast<double>(totalHeapSize));
 
     // ========== 用 report_skeleton 组装页面 ==========
