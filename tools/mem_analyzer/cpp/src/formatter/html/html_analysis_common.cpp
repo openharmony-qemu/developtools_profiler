@@ -413,7 +413,9 @@ std::string BuildDetailSectionContent(
         "    <span class=\"header-rank\">TOP" + std::to_string(rank) + "\u51fd\u6570\uff1a</span><span class=\"header-func\">" + EscapeHtml(shortName) + "</span>\n"
         "    <div class=\"header-stats\">" + (countMode ?
             "\u6b21\u6570" + std::to_string(existingCount) + "\uff0c\u5360\u6bd4" + pctStr + "%" :
-            "\u5927\u5c0f " + FormatSizeText(static_cast<double>(existingSize), false) + "\uff0c\u6b21\u6570" + std::to_string(existingCount) + "\uff0c\u5360\u6bd4" + pctStr + "%") + "</div>\n"
+            "\u5927\u5c0f " + FormatSizeText(static_cast<double>(existingSize), false) +
+            "\uff0c\u6b21\u6570" + std::to_string(existingCount) +
+            "\uff0c\u5360\u6bd4" + pctStr + "%") + "</div>\n"
         "  </div>\n"
         "  <div class=\"top-item-body\" id=\"topItemBody" + std::to_string(idx) + "\">\n"
         "    <div class=\"call-chains-section\">\n"
@@ -422,7 +424,8 @@ std::string BuildDetailSectionContent(
         "    </div>\n"
         "    <div class=\"graphToolbar\">\n"
         "      <button onclick=\"resetZoom(" + std::to_string(idx) + ")\" class=\"reset-btn\">Reset Zoom</button>\n"
-        "      <input id=\"searchInput" + std::to_string(idx) + "\" type=\"text\" placeholder=\"\u641c\u7d22\u51fd\u6570\u540d...\" class=\"graph-search-input\">\n"
+        "      <input id=\"searchInput" + std::to_string(idx) +
+            "\" type=\"text\" placeholder=\"\u641c\u7d22\u51fd\u6570\u540d...\" class=\"graph-search-input\">\n"
         "      <span class=\"search-match-count\" id=\"searchCount" + std::to_string(idx) + "\">0\u4e2a\u5339\u914d</span>\n"
         "      <span class=\"shortcut-hint\">w/s\uff1a\u653e\u5927/\u7f29\u5c0f&emsp;&emsp;a/d\uff1a\u5de6/\u53f3\u79fb\u52a8</span>\n"
         "    </div>\n";

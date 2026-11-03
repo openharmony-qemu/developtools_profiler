@@ -88,7 +88,10 @@ std::string BuildFilepageTableRows(const HtraceSection& section, size_t startInd
         pctSS << std::fixed << std::setprecision(DECIMAL_PRECISION) << fp->percentage;
         rows.push_back("<tr>\n"
             "  <td><a onclick=\"showDetail(" + std::to_string(idx) + "); return false;\" class=\"detail-link\">\u8be6\u60c5</a></td>\n" +
-            std::string(countMode ? "" : "  <td class=\"top-size-val\">" + FormatSizeText(static_cast<double>(fp->size), false) + "</td>\n") +
+            std::string(countMode ? "" :
+                "  <td class=\"top-size-val\">" +
+                FormatSizeText(static_cast<double>(fp->size), false) +
+                "</td>\n") +
             "  <td class=\"top-count-val\">" + std::to_string(fp->count) + "</td>\n"
             "  <td class=\"top-pct-val\">" + pctSS.str() + "%</td>\n"
             "  <td class=\"top-func\"><b>" + EscapeHtml(fp->filename) + "</b></td>\n"
@@ -122,7 +125,8 @@ std::string BuildFilepageDetailSectionContent(const FilepageInfo& fp, size_t idx
         "  <div class=\"top-item-body\" id=\"topItemBody" + std::to_string(idx) + "\">\n"
         "    <div class=\"graphToolbar\">\n"
         "      <button onclick=\"resetZoom(" + std::to_string(idx) + ")\" class=\"reset-btn\">Reset Zoom</button>\n"
-        "      <input id=\"searchInput" + std::to_string(idx) + "\" type=\"text\" placeholder=\"\u641c\u7d22\u51fd\u6570\u540d...\" class=\"graph-search-input\">\n"
+        "      <input id=\"searchInput" + std::to_string(idx) +
+            "\" type=\"text\" placeholder=\"\u641c\u7d22\u51fd\u6570\u540d...\" class=\"graph-search-input\">\n"
         "      <span class=\"search-match-count\" id=\"searchCount" + std::to_string(idx) + "\">0\u4e2a\u5339\u914d</span>\n"
         "      <span class=\"shortcut-hint\">w/s\uff1a\u653e\u5927/\u7f29\u5c0f&emsp;&emsp;a/d\uff1a\u5de6/\u53f3\u79fb\u52a8</span>\n"
         "    </div>\n"
@@ -440,7 +444,9 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
 
     std::string metaDataItemsHTML = "<div class=\"meta-card\">\n"
         "  <div class=\"meta-grid\">\n"
-        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>日志名：</b></span><span class=\"meta-value\">" + escapedSourceFile + "</span></div>\n"
+        "    <div class=\"meta-item\"><span class=\"meta-label\"><b>日志名：</b></span><span class=\"meta-value\">" +
+            escapedSourceFile +
+            "</span></div>\n"
         "    <div class=\"meta-item\"><span class=\"meta-label\"><b>类型：</b></span><span class=\"meta-value\">" + typeDisplay + "</span></div>\n"
         "    <div class=\"meta-item\"><span class=\"meta-label\"><b>时间：</b></span><span class=\"meta-value\">" + escapedTimestamp + "</span></div>\n"
         "    <div class=\"meta-item\"><span class=\"meta-label\"><b>" + (countMode ? "\u603b\u4e2a\u6570\uff1a" : "\u603b\u5185\u5b58\uff1a") + "</b></span><span class=\"meta-value\">" + (countMode ? std::to_string(totalExistingSize) : FormatBytes(static_cast<double>(totalExistingSize))) + "</span></div>\n"

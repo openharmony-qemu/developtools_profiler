@@ -132,6 +132,7 @@ set(SOURCES
     src/profiler/hdc_runner.cpp
     src/profiler/hdc_target.cpp
     src/profiler/profiler_cmd.cpp
+    src/profiler/string_utils.cpp
     src/config_mgr/htrace_config_mgr.cpp
     src/config_mgr/preview_features_mgr.cpp
     src/utils/zip_utils.cpp

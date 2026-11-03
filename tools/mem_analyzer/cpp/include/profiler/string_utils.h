@@ -23,28 +23,7 @@ namespace mem_analyzer {
 // Case-insensitive substring search (ASCII): true when `needle` occurs in
 // `haystack`. Used e.g. to match user input against device app names/packages
 // and to detect permission-related error markers in hdc output.
-inline bool ContainsCi(const std::string& haystack, const std::string& needle)
-{
-    if (needle.empty()) {
-        return true;
-    }
-    if (needle.size() > haystack.size()) {
-        return false;
-    }
-    auto lower = [](char c) -> char {
-        return static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    };
-    for (size_t i = 0; i + needle.size() <= haystack.size(); ++i) {
-        size_t j = 0;
-        while (j < needle.size() && lower(haystack[i + j]) == lower(needle[j])) {
-            ++j;
-        }
-        if (j == needle.size()) {
-            return true;
-        }
-    }
-    return false;
-}
+bool ContainsCi(const std::string& haystack, const std::string& needle);
 
 // Current local time formatted as YYYYMMDD_HHMMSS, used for naming exported
 // snapshot files (e.g. smaps_20260809_212310.txt).
