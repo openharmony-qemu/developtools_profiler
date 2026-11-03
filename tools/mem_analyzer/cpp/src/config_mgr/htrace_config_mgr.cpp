@@ -38,22 +38,22 @@ void ParseAlgorithmConfig(const json& root, HtraceAlgorithmConfig& algo)
     // Algorithm
     if (root.contains("algorithm") && root["algorithm"].is_object()) {
         auto& a = root["algorithm"];
-        if (a.contains("low_threshold") && a["low_threshold"].is_number()) {
+        if (a.contains("low_threshold") && a["low_threshold"].is_number_integer()) {
             algo.lowThreshold = a["low_threshold"].get<long long>();
         }
-        if (a.contains("appro_rel_ratio") && a["appro_rel_ratio"].is_number()) {
+        if (a.contains("appro_rel_ratio") && a["appro_rel_ratio"].is_number_integer()) {
             algo.approRelRatio = a["appro_rel_ratio"].get<int>();
         }
-        if (a.contains("appro_rel_cap") && a["appro_rel_cap"].is_number()) {
+        if (a.contains("appro_rel_cap") && a["appro_rel_cap"].is_number_integer()) {
             algo.approRelCap = a["appro_rel_cap"].get<long long>();
         }
-        if (a.contains("appro_ratio_threshold") && a["appro_ratio_threshold"].is_number()) {
+        if (a.contains("appro_ratio_threshold") && a["appro_ratio_threshold"].is_number_integer()) {
             algo.approRatioThreshold = a["appro_ratio_threshold"].get<int>();
         }
-        if (a.contains("orphan_rel_ratio") && a["orphan_rel_ratio"].is_number()) {
+        if (a.contains("orphan_rel_ratio") && a["orphan_rel_ratio"].is_number_integer()) {
             algo.orphanRelRatio = a["orphan_rel_ratio"].get<int>();
         }
-        if (a.contains("orphan_rel_cap") && a["orphan_rel_cap"].is_number()) {
+        if (a.contains("orphan_rel_cap") && a["orphan_rel_cap"].is_number_integer()) {
             algo.orphanRelCap = a["orphan_rel_cap"].get<long long>();
         }
     }
