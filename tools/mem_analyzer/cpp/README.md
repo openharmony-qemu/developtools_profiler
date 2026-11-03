@@ -1003,7 +1003,7 @@ void set_sink(std::shared_ptr<Sink> sink);   // 默认 console：stderr
 | SQLite3 | `sqlite3_open16`（UTF-16） | `sqlite3_open`（UTF-8） |
 | ZIP 解压 | 内置 minizip（`fill_win32_filefunc64W` + `unzOpen2_64`，无外部命令） | 内置 minizip（`unzOpen64`，无外部命令） |
 | 可执行文件路径 | `GetModuleFileNameW` | `/proc/self/exe` / `_NSGetExecutablePath` |
-| 外部工具 | `trace_streamer_windows.exe` | `trace_streamer_linux` / `trace_streamer_mac` |
+| 外部工具 | `trace_streamer_windows.exe` | `trace_streamer_linux_static` / `trace_streamer_mac` |
 
 ### 路径编码设计
 

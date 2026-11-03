@@ -489,14 +489,32 @@ std::string ShellQuote(const std::string& s)
     std::string out;
     out.reserve(s.size() + SHELL_QUOTE_RESERVE);
 #if defined(_WIN32)
+    // CommandLineToArgvW tokenization (the rules CreateProcessW applies to
+    // lpCommandLine): a backslash is special ONLY when it immediately precedes a
+    // `"`. N backslashes + `"` -> N/2 backslashes + a quote toggle (N even), or
+    // (N-1)/2 backslashes + a literal `"` that does NOT toggle (N odd). So a bare
+    // `\"` emits a literal `"` instead of closing the quote. To embed a literal
+    // `"` inside a quoted argument, double the run of backslashes preceding it,
+    // then emit `\"`; trailing backslashes before the closing `"` must also be
+    // doubled. Escaping only `"` (the former behaviour) left paths ending in `\`
+    // (e.g. `C:\dir\`) with an effectively unclosed quote, which merged following
+    // arguments.
     out += '"';
+    size_t backslashes = 0;
     for (char c : s) {
-        if (c == '"') {
+        if (c == '\\') {
+            ++backslashes;
+        } else if (c == '"') {
+            out.append(backslashes * 2, '\\');
             out += "\\\"";
+            backslashes = 0;
         } else {
+            out.append(backslashes, '\\');
             out += c;
+            backslashes = 0;
         }
     }
+    out.append(backslashes * 2, '\\');
     out += '"';
 #else
     out += '\'';

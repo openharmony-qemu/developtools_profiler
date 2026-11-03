@@ -375,7 +375,7 @@ def extract_rawheap_from_sdk(url: str, dst_dir: Path, platform_map: list[tuple[s
 # ============================================================================
 
 TRACE_STREAMER_BINARIES = {
-    "linux": TRACE_STREAMER_DIR / "trace_streamer_linux",
+    "linux": TRACE_STREAMER_DIR / "trace_streamer_linux_static",
     "darwin": TRACE_STREAMER_DIR / "trace_streamer_mac",
     "windows": TRACE_STREAMER_DIR / "trace_streamer_windows.exe",
 }
