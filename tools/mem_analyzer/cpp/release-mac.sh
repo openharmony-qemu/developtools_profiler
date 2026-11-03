@@ -133,8 +133,8 @@ check_env() {
         local cmake_ver
         cmake_ver=$("$CMAKE_EXE" --version | head -1 | grep -oE '\d+\.\d+' | head -1)
         info "cmake: $CMAKE_EXE (version $("$CMAKE_EXE" --version | head -1))"
-        if awk "BEGIN {exit !($cmake_ver < 3.16)}" 2>/dev/null; then
-            warn "  cmake version < 3.16, may not support C++17 properly"
+        if awk "BEGIN {exit !($cmake_ver < 3.19)}" 2>/dev/null; then
+            warn "  cmake version < 3.19, may not support C++17 properly"
         fi
     fi
 

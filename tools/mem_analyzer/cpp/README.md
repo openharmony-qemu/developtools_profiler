@@ -37,7 +37,7 @@ C++17 实现的内存分析引擎，覆盖 htrace 原生内存泄漏分析、tsh
 
 ### 构建系统说明
 
-- **CMake >= 3.16**，C++17 标准
+- **CMake >= 3.19**，C++17 标准
 - Linux 下优先使用 Clang（clang18 → clang11 降序查找），未找到则回退 GCC
 - 全静态链接：Linux `-static`，MinGW `-static-libstdc++ -static-libgcc`
 - MinGW 交叉编译需要 **posix 线程模型**（`x86_64-w64-mingw32-g++-posix`），win32 线程模型不支持 `<thread>`/`<mutex>`。`release-cross.sh` 自动优先选择 posix 变体

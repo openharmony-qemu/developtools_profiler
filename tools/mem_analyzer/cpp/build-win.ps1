@@ -75,7 +75,7 @@ if (-not $cmake) { $cmake = Find-ExeInPath "cmake.exe" }
 if (-not $cmake) {
     Write-Host ""
     Write-Host "  [ERROR] cmake not found!"
-    Write-Host "  Please install CMake 3.16+ from: https://cmake.org/download/"
+    Write-Host "  Please install CMake 3.19+ from: https://cmake.org/download/"
     Write-Host "  Or add cmake.exe to your PATH and re-run."
     Write-Host "----------------------------------------"; exit 1
 }

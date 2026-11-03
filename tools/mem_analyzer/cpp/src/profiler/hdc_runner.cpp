@@ -336,8 +336,7 @@ ProcessMetrics SampleProcessMetrics(const std::string& pid, long long timeoutMs 
     if (pid.empty()) {
         return metrics;
     }
-    CapturedCmd memCap = CaptureCommand(
-        HdcShell("hidumper --mem " + proc::ShellQuoteDevice(pid)) + " 2>&1", timeoutMs);
+    CapturedCmd memCap = CaptureCommand(HdcShell("hidumper --mem " + proc::ShellQuoteDevice(pid)) + " 2>&1", timeoutMs);
     // Pinned target: on a device-level failure the sample would merely come out
     // empty; note_device_failure() flags it so the caller aborts the countdown
     // instead of polling a device that is no longer reachable. This helper is a
@@ -347,8 +346,7 @@ ProcessMetrics SampleProcessMetrics(const std::string& pid, long long timeoutMs 
         return metrics;
     }
     metrics = ParseHidumperMem(memCap.output);
-    CapturedCmd lsofCap = CaptureCommand(
-        HdcShell("lsof -p " + proc::ShellQuoteDevice(pid)) + " 2>&1", timeoutMs);
+    CapturedCmd lsofCap = CaptureCommand(HdcShell("lsof -p " + proc::ShellQuoteDevice(pid)) + " 2>&1", timeoutMs);
     // Same gate as above: a device-level failure must stop the polling here too,
     // otherwise fd_count would silently be reported as 0.
     if (NoteDeviceFailure(lsofCap.output)) {
@@ -397,15 +395,13 @@ std::string DetectPermissionError(const std::string& output)
             }
             std::string blk = lines[j];
             // Strip trailing \r (hdc pty output may be \r\n) and whitespace.
-            while (!blk.empty() &&
-                   (blk.back() == '\r' || blk.back() == ' ' || blk.back() == '\t')) {
+            while (!blk.empty() && (blk.back() == '\r' || blk.back() == ' ' || blk.back() == '\t')) {
                 blk.pop_back();
             }
             block += blk;
             block += '\n';
         }
-        while (!block.empty() &&
-               (block.back() == '\n' || block.back() == ' ' || block.back() == '\t')) {
+        while (!block.empty() && (block.back() == '\n' || block.back() == ' ' || block.back() == '\t')) {
             block.pop_back();
         }
         if (!block.empty()) {
@@ -677,10 +673,8 @@ static void ParseLsLineSize(const std::string& line,
     if (name.rfind(namePrefix, 0) != 0) {
         return;
     }
-    if (!nameSuffix.empty() &&
-        (name.size() < nameSuffix.size() ||
-            name.compare(name.size() - nameSuffix.size(), nameSuffix.size(),
-                nameSuffix) != 0)) {
+    if (!nameSuffix.empty() && (name.size() < nameSuffix.size() ||
+        name.compare(name.size() - nameSuffix.size(), nameSuffix.size(), nameSuffix) != 0)) {
         return;
     }
     files[name] = size;
@@ -700,8 +694,7 @@ static void ParseLsLineSize(const std::string& line,
 // traditional 3-field form follows. Only the 5 leading fields (perm, links,
 // owner, group, size) are structurally required.
 std::map<std::string, long long> listDirFileSizes(const std::string& dir,
-    const std::string& namePrefix,
-    const std::string& nameSuffix = "")
+    const std::string& namePrefix, const std::string& nameSuffix = "")
 {
     std::map<std::string, long long> files;
     std::string cmd = HdcShell("ls -l " + proc::ShellQuoteDevice(dir)) + " 2>&1";
@@ -745,8 +738,7 @@ static bool CheckFileStability(const std::string& name, long long currentSize,
     return stable;
 }
 
-static void PollForStableSnapshots(const std::string& resultDir,
-    const std::map<std::string, long long>& baseline,
+static void PollForStableSnapshots(const std::string& resultDir, const std::map<std::string, long long>& baseline,
     long long timeoutS, std::map<std::string, long long>& stable)
 {
     const int intervalS = 2;
@@ -922,14 +914,14 @@ bool StartDeviceApp(const std::string& packageName)
 
     for (const auto& ability : abilities) {
         const std::string deviceCmd = "aa start -a " + proc::ShellQuoteDevice(ability) +
-                                     " -b " + proc::ShellQuoteDevice(packageName);
+            " -b " + proc::ShellQuoteDevice(packageName);
         CapturedCmd cap = CaptureCommand(
             HdcShell(deviceCmd) + " 2>&1", 15000);
         if (!cap.spawned) {
             return false;
         }
         const bool ok = cap.output.find("start ability successfully") != std::string::npos &&
-                        cap.output.find("error: failed") == std::string::npos;
+            cap.output.find("error: failed") == std::string::npos;
         std::cout << "  " << deviceCmd << "\n" << cap.output << std::flush;
         if (ok) {
             return true;
@@ -943,8 +935,7 @@ bool StartDeviceApp(const std::string& packageName)
 void ForceStopDeviceApp(const std::string& packageName)
 {
     const std::string deviceCmd = "aa force-stop " + proc::ShellQuoteDevice(packageName);
-    CapturedCmd cap = CaptureCommand(
-        HdcShell(deviceCmd) + " 2>&1", 15000);
+    CapturedCmd cap = CaptureCommand(HdcShell(deviceCmd) + " 2>&1", 15000);
     if (cap.spawned && !cap.output.empty()) {
         std::cout << "  " << deviceCmd << "\n" << cap.output << std::flush;
     }
@@ -1003,9 +994,7 @@ bool PushDeviceConfig(const std::string& deviceConfigContent, std::string& local
     if (deviceConfigContent.empty()) {
         return true;
     }
-    localConfigFile = PathToUtf8(
-        fs::temp_directory_path() /
-        ("mem_analyzer_config_" + CurrentTimestamp() + ".cfg"));
+    localConfigFile = PathToUtf8(fs::temp_directory_path() / ("mem_analyzer_config_" + CurrentTimestamp() + ".cfg"));
     std::ofstream cfgOfs(PathFromUtf8(localConfigFile), std::ios::binary);
     if (!cfgOfs.is_open()) {
         result.ok = false;
@@ -1019,8 +1008,7 @@ bool PushDeviceConfig(const std::string& deviceConfigContent, std::string& local
     CapturedCmd sendCap = CaptureCommand(sendCmd);
     if (!sendCap.spawned || sendCap.exitCode != 0) {
         result.ok = false;
-        result.error = "failed to push config file to device (exit code " +
-                       std::to_string(sendCap.exitCode) + ")";
+        result.error = "failed to push config file to device (exit code " + std::to_string(sendCap.exitCode) + ")";
         if (!sendCap.output.empty()) {
             result.error += ": " + sendCap.output;
         }
@@ -1050,8 +1038,7 @@ void StopHiprofiler()
         const long long wait = ElapsedSince(stopStart);
         // Only show progress once the wait becomes non-trivial.
         if (wait >= PROGRESS_INTERVAL_S) {
-            std::cout << "Waiting for hiprofiler to stop... (" << wait << "s)\n" <<
-                      std::flush;
+            std::cout << "Waiting for hiprofiler to stop... (" << wait << "s)\n" << std::flush;
         }
         // Sleep up to 5s, waking every 100ms so we react to completion.
         SleepTicks(PROGRESS_INTERVAL_TICKS, [&stopDone]() { return stopDone.load(); });
@@ -1080,8 +1067,7 @@ void StopHiprofiler()
  * with the largest embedded timestamp (most likely produced by this
  * run).
  */
-static std::string FindNewZipCandidate(
-    const std::map<std::string, long long>& currentZips,
+static std::string FindNewZipCandidate(const std::map<std::string, long long>& currentZips,
     const std::map<std::string, long long>& baseline)
 {
     std::string candidate;
@@ -1114,8 +1100,7 @@ static void PrintZipPollStatus(int pollIdx, long long elapsedPoll,
 std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baseline,
     const std::string& dir, long long timeoutS)
 {
-    std::cout << "Waiting for hiprofiler_data zip (up to " << timeoutS << "s)...\n" <<
-              std::flush;
+    std::cout << "Waiting for hiprofiler_data zip (up to " << timeoutS << "s)...\n" << std::flush;
 
     long long prevSize = -1;
     int stableCount = 0;
@@ -1194,7 +1179,7 @@ std::string WaitForNativeleaksFile(const std::string& pid, const std::string& di
     }
     const std::string filename = "memleak-native-orphansnapshot-" + pid + ".txt";
     std::cout << "Waiting for nativeleaks orphan-snapshot file (" << filename <<
-              ", up to " << timeoutS << "s)...\n" << std::flush;
+        ", up to " << timeoutS << "s)...\n" << std::flush;
 
     long long prevSize = -1;
     int stableCount = 0;
@@ -1223,7 +1208,7 @@ std::string WaitForNativeleaksFile(const std::string& pid, const std::string& di
             prevSize = -1;
             stableCount = 0;
             std::cout << "[nativeleaks wait] #" << i << " (" << elapsedPoll <<
-                      "s): " << filename << " not ready yet\n" << std::flush;
+                "s): " << filename << " not ready yet\n" << std::flush;
         } else {
             if (curSize == prevSize) {
                 ++stableCount;

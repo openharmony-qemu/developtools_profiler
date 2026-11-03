@@ -1325,6 +1325,23 @@ static void ParseStringsTable(HeapSnapshot& snapshot, std::ifstream& file,
     }
 }
 
+static void BuildIdMap(HeapSnapshot& snapshot)
+{
+    for (int i = 0; i < snapshot.nodeCount; i++) {
+        if (snapshot.nodeIdOffset >= 0) {
+            const size_t nodeIdx = static_cast<size_t>(i) * static_cast<size_t>(snapshot.nodeFieldsCount) +
+                static_cast<size_t>(snapshot.nodeIdOffset);
+            if (nodeIdx >= snapshot.nodes.size()) {
+                throw std::runtime_error("invalid snapshot: nodes index " + std::to_string(nodeIdx) +
+                    " out of bounds (nodes size=" + std::to_string(snapshot.nodes.size()) +
+                    ", node=" + std::to_string(i) + ")");
+            }
+            uint32_t id = snapshot.nodes[nodeIdx];
+            snapshot.nodeIdToIdx[id] = static_cast<uint32_t>(i);
+        }
+    }
+}
+
 /**
  * Phase 5: build CSR indices + node_id map.
  * Builds two indexing structures:
@@ -1340,21 +1357,40 @@ static void BuildCsrAndIdMap(HeapSnapshot& snapshot)
     // The total number of edge fields is the sum of edge_count * edge_fields_count
     // for each node.  We iterate nodes and accumulate the edge pointer.
     snapshot.firstEdgePointers.resize(snapshot.nodeCount + 1, 0);
+    // 前置越界防护：nodes/edges 下标由 i*nodeFieldsCount+offset、ptr+edgeToNodeOffset
+    // 计算得来。解析阶段已保证偏移非负、字段计数非零，此处闭合「偏移须落在记录范围内」，
+    // 使后续计算下标不会因偏移越界而读越界。
+    if (snapshot.nodeEdgeCountOffset >= snapshot.nodeFieldsCount || snapshot.nodeIdOffset >= snapshot.nodeFieldsCount) {
+        throw std::runtime_error(
+            "invalid snapshot: node field offset out of node record range "
+            "(node_fields_count=" + std::to_string(snapshot.nodeFieldsCount) +
+            ", edge_count_offset=" + std::to_string(snapshot.nodeEdgeCountOffset) +
+            ", id_offset=" + std::to_string(snapshot.nodeIdOffset) + ")");
+    }
+    if (snapshot.edgeToNodeOffset >= snapshot.edgeFieldsCount) {
+        throw std::runtime_error("invalid snapshot: edge to_node offset out of edge record range "
+            "(edge_fields_count=" + std::to_string(snapshot.edgeFieldsCount) +
+            ", to_node_offset=" + std::to_string(snapshot.edgeToNodeOffset) + ")");
+    }
     // 用 64 位累加，避免 4G 个字段以上的无符号回绕；累加结果必须与解析到的
     // edges 数组完全一致 —— 截断的文件或 edge_count 与实际数组不符的生成器，
     // 否则会让所有消费方越界读 edges，把垃圾当成图结构、静默产出错误报告。
     uint64_t totalEdgeFields = 0;
     for (int i = 0; i < snapshot.nodeCount; i++) {
         snapshot.firstEdgePointers[i] = static_cast<uint32_t>(totalEdgeFields);
-        totalEdgeFields +=
-            static_cast<uint64_t>(
-                snapshot.nodes[i * snapshot.nodeFieldsCount + snapshot.nodeEdgeCountOffset]) *
+        const size_t nodeIdx = static_cast<size_t>(i) * static_cast<size_t>(snapshot.nodeFieldsCount) +
+            static_cast<size_t>(snapshot.nodeEdgeCountOffset);
+        if (nodeIdx >= snapshot.nodes.size()) {
+            throw std::runtime_error("invalid snapshot: nodes index " + std::to_string(nodeIdx) +
+                " out of bounds (nodes size=" + std::to_string(snapshot.nodes.size()) +
+                ", node=" + std::to_string(i) + ")");
+        }
+        totalEdgeFields += static_cast<uint64_t>(snapshot.nodes[nodeIdx]) *
             static_cast<uint64_t>(snapshot.edgeFieldsCount);
     }
     snapshot.firstEdgePointers[snapshot.nodeCount] = static_cast<uint32_t>(totalEdgeFields);
     if (totalEdgeFields != static_cast<uint64_t>(snapshot.edges.size())) {
-        throw std::runtime_error(
-            "invalid snapshot: edges array size (" + std::to_string(snapshot.edges.size()) +
+        throw std::runtime_error("invalid snapshot: edges array size (" + std::to_string(snapshot.edges.size()) +
             ") does not match the sum of per-node edge counts (" +
             std::to_string(totalEdgeFields) + ")");
     }
@@ -1362,22 +1398,20 @@ static void BuildCsrAndIdMap(HeapSnapshot& snapshot)
     // （边数千万级，逐边检查会拖慢分析）。
     for (size_t ptr = 0; ptr < snapshot.edges.size();
          ptr += static_cast<size_t>(snapshot.edgeFieldsCount)) {
-        const uint32_t toNode =
-            snapshot.edges[ptr + static_cast<size_t>(snapshot.edgeToNodeOffset)] /
-            static_cast<uint32_t>(snapshot.nodeFieldsCount);
+        const size_t edgeIdx = ptr + static_cast<size_t>(snapshot.edgeToNodeOffset);
+        if (edgeIdx >= snapshot.edges.size()) {
+            throw std::runtime_error("invalid snapshot: edges index " + std::to_string(edgeIdx) +
+                " out of bounds (edges size=" + std::to_string(snapshot.edges.size()) +
+                ", ptr=" + std::to_string(ptr) + ")");
+        }
+        const uint32_t toNode = snapshot.edges[edgeIdx] / static_cast<uint32_t>(snapshot.nodeFieldsCount);
         if (toNode >= static_cast<uint32_t>(snapshot.nodeCount)) {
             throw std::runtime_error("invalid snapshot: edge target " + std::to_string(toNode) +
-                                     " exceeds node count " + std::to_string(snapshot.nodeCount));
+                " exceeds node count " + std::to_string(snapshot.nodeCount));
         }
     }
-
     // ---- Build node_id_to_idx map ----
-    for (int i = 0; i < snapshot.nodeCount; i++) {
-        if (snapshot.nodeIdOffset >= 0) {
-            uint32_t id = snapshot.nodes[i * snapshot.nodeFieldsCount + snapshot.nodeIdOffset];
-            snapshot.nodeIdToIdx[id] = static_cast<uint32_t>(i);
-        }
-    }
+    BuildIdMap(snapshot);
 }
 
 // ============================================================================

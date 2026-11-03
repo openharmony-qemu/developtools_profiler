@@ -4,7 +4,7 @@
 #   Linux平台:    release-cross.sh
 #   macOS平台:    release-mac.sh
 # ══════════════════════════════════════════════════════════════════
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.19)
 
 # ── Prefer Clang on Linux ──────────────────────────────────────
 # CMake selects the compiler during project() using CC/CXX env vars or

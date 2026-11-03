@@ -49,7 +49,7 @@ check_env() {
     # cmake
     if ! command -v cmake &>/dev/null; then
         error "cmake not found!"
-        echo "  Install CMake 3.16+:"
+        echo "  Install CMake 3.19+:"
         echo "    sudo apt install cmake        # Debian/Ubuntu"
         echo "    sudo dnf install cmake        # Fedora"
         echo "    sudo pacman -S cmake          # Arch"
@@ -57,8 +57,8 @@ check_env() {
     else
         local cmake_ver=$(cmake --version | head -1 | grep -oP '\d+\.\d+')
         info "cmake: $(command -v cmake) (version $(cmake --version | head -1))"
-        if awk "BEGIN {exit !($cmake_ver < 3.16)}"; then
-            warn "  cmake version < 3.16, may not support C++17 properly"
+        if awk "BEGIN {exit !($cmake_ver < 3.19)}"; then
+            warn "  cmake version < 3.19, may not support C++17 properly"
         fi
     fi
 
