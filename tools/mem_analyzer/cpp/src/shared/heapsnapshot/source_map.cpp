@@ -177,12 +177,15 @@ SourceMapIndex::DecodedMappings SourceMapIndex::DecodeVlqMappings(const std::str
     // 相对值累加器（generatedColumn 换行重置，其余跨行保持）。
     // 用 64 位累加：单个 VLQ 值可达 ~2^30，连续累加会越过 INT_MAX 触发
     // 有符号溢出 UB（表现为行/列号变负、位置还原全乱）。
+    // 收敛上界留 1 余量（INT32_MAX - 1 / INT32_MIN + 1）：originalLine /
+    // originalColumn 存 0-based，消费端（AssignBestPosition 等）会做 +1 转
+    // 1-based；若 clamp 到 INT32_MAX，该 +1 即 INT32_MAX+1 符号溢出 UB。
     auto clampInt = [](int64_t v) -> int {
-        if (v > INT32_MAX) {
-            return INT32_MAX;
+        if (v > INT32_MAX - 1) {
+            return INT32_MAX - 1;
         }
-        if (v < INT32_MIN) {
-            return INT32_MIN;
+        if (v < INT32_MIN + 1) {
+            return INT32_MIN + 1;
         }
         return static_cast<int>(v);
     };
