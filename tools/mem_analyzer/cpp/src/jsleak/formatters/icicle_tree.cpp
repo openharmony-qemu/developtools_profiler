@@ -74,6 +74,35 @@ json RefChainTrieToJson(const RefChainTrieNode& node, int depth)
 }
 
 // 把引用链数组按前缀合并成前缀树。chainItems 元素含 chain/nodeIds/totalRetainedSize。
+// 将单条引用链插入前缀树：沿 chainFrames 路径下降，在链尾节点累加 size/count。
+static void InsertChainIntoTrie(RefChainTrieNode& root, const json& chainFrames, int64_t size, int64_t count)
+{
+    RefChainTrieNode* cur = &root;
+    for (const auto& frame : chainFrames) {
+        if (!frame.is_string()) {
+            continue;
+        }
+        const std::string part = frame.get<std::string>();
+        if (part.empty()) {
+            continue;
+        }
+        auto it = cur->childIndex.find(part);
+        RefChainTrieNode* child = nullptr;
+        if (it == cur->childIndex.end()) {
+            cur->children.push_back(std::make_unique<RefChainTrieNode>());
+            child = cur->children.back().get();
+            child->name = part;
+            cur->childIndex[part] = cur->children.size() - 1;
+        } else {
+            child = cur->children[it->second].get();
+        }
+        cur = child;
+    }
+    cur->hasOwn = true;
+    cur->ownSize += size;
+    cur->ownCount += count;
+}
+
 json BuildRefChainIcicleTree(const json& chainItems, const std::string& rootName)
 {
     RefChainTrieNode root;
@@ -91,31 +120,7 @@ json BuildRefChainIcicleTree(const json& chainItems, const std::string& rootName
             if (item.contains("nodeIds") && item["nodeIds"].is_array()) {
                 count = static_cast<int64_t>(item["nodeIds"].size());
             }
-            RefChainTrieNode* cur = &root;
-            for (const auto& frame : chainFrames) {
-                if (!frame.is_string()) {
-                    continue;
-                }
-                const std::string part = frame.get<std::string>();
-                if (part.empty()) {
-                    continue;
-                }
-                auto it = cur->childIndex.find(part);
-                RefChainTrieNode* child = nullptr;
-                if (it == cur->childIndex.end()) {
-                    cur->children.push_back(std::make_unique<RefChainTrieNode>());
-                    child = cur->children.back().get();
-                    child->name = part;
-                    cur->childIndex[part] = cur->children.size() - 1;
-                } else {
-                    child = cur->children[it->second].get();
-                }
-                cur = child;
-            }
-            // 只归属到链尾节点：该节点的值就是这条链在表格中那一行的值
-            cur->hasOwn = true;
-            cur->ownSize += size;
-            cur->ownCount += count;
+            InsertChainIntoTrie(root, chainFrames, size, count);
         }
     }
 

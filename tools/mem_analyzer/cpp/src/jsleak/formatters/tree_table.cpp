@@ -92,6 +92,61 @@ int64_t IttSubtreeMaxSize(const json& node)
     return maxSize;
 }
 
+struct IcicleRowHtmlCtx {
+    const std::string& rowId;
+    const std::string& anc;
+    const std::string& name;
+    int64_t size;
+    int64_t count;
+    int64_t rootSize;
+    int depth;
+    bool hasChildren;
+    bool collapsed;
+    bool ancCollapsed;
+};
+
+void EmitIcicleTreeRowHtml(const IcicleRowHtmlCtx& ctx, std::string& out)
+{
+    // 折叠态的唯一来源是 itt-collapsed 类，初始渲染就必须打上：
+    // 否则首次点击时 classList.toggle 反而会「加上」该类，表现为点了仍是 "+"，
+    // 且重新计算显隐时中间层没有折叠标记，会把整棵子树一次性放出来。
+    out += "<tr id=\"" + EscapeHtml(ctx.rowId) + "\" data-anc=\"" + EscapeHtml(ctx.anc) + "\"";
+    if (ctx.collapsed) {
+        out += " class=\"itt-collapsed\"";
+    }
+    if (ctx.ancCollapsed) {
+        out += " style=\"display:none\"";
+    }
+    out += ">";
+    // 列顺序：大小 / 占比 / 节点数 / 节点名称（名称放最后，见 tree_table_html）
+    out += "<td class=\"itt-num\">" + FormatBytes(static_cast<double>(ctx.size)) + "</td>";
+    out += "<td class=\"itt-num itt-pct\">" + FormatTreePct(ctx.size, ctx.rootSize) + "</td>";
+    out += "<td class=\"itt-num\">" + std::to_string(ctx.count) + "</td>";
+    // 名称列允许换行，超长节点名完整展示（因此不再需要 title / 省略号）
+    out += "<td class=\"itt-name" + std::string(ctx.depth == 0 ? " itt-root" : "") +
+           "\" style=\"padding-left:" + std::to_string(TREE_INDENT_BASE_PX + ctx.depth * TREE_INDENT_STEP_PX) + "px\">";
+    // 垂直引导线：每个祖先层级一条，位置对准该层展开/折叠开关的中心（18 + 16k），
+    // 把同一祖先下的各级子节点串起来，避免层级多时看串行。
+    // 颜色取该线所代表的层的颜色，与本层节点的 +/- 同色。
+    // 绝对定位铺满整行高度，名称换行导致行变高时线也不会断开。
+    for (int k = 0; k < ctx.depth; ++k) {
+        out += "<span class=\"itt-guide\" style=\"left:" + std::to_string(TREE_GUIDE_LEFT_PX + k * TREE_INDENT_STEP_PX) +
+               "px;background:" + IttLevelColor(k) + "\"></span>";
+    }
+    if (ctx.hasChildren) {
+        // 颜色通过 CSS 变量传入，同时作用于 +/- 字形与方框边框
+        out += "<span class=\"itt-toggle\" style=\"--itt-c:" + IttLevelColor(ctx.depth) +
+               "\" onclick=\"toggleIcicleTreeRow(this)\">" +
+               std::string(ctx.collapsed ? "+" : "-") + "</span>";
+    } else {
+        // 叶子节点没有展开开关，放一个同层颜色的小圆点占位：
+        // 避免该列空白导致与上方带方框的 +/- 对不齐，且保持层级配色连续。
+        out += "<span class=\"itt-leaf\" style=\"--itt-c:" + IttLevelColor(ctx.depth) + "\">•</span>";
+    }
+    out += "<span class=\"itt-name-text\">" + EscapeHtml(ctx.name) + "</span></td>";
+    out += "</tr>";
+}
+
 // 递归输出树表行（前序）。path 为该行在排序后兄弟序列中的路径，用于生成行 id 与父子关系；
 // anc 为所有祖先行 id 的逗号列表，前端据此判断该行是否应随某个折叠的祖先一起隐藏；
 // anc_collapsed 表示是否存在处于折叠态的祖先（决定本行初始是否隐藏）。
@@ -115,44 +170,8 @@ void EmitIcicleTreeRows(const json& node, const std::string& tableId,
     const bool collapsed =
         hasChildren && depth >= 1 && (pct <= ITT_DEFAULT_EXPAND_PCT || depth >= ITT_MAX_EXPAND_DEPTH);
 
-    // 折叠态的唯一来源是 itt-collapsed 类，初始渲染就必须打上：
-    // 否则首次点击时 classList.toggle 反而会「加上」该类，表现为点了仍是 "+"，
-    // 且重新计算显隐时中间层没有折叠标记，会把整棵子树一次性放出来。
-    out += "<tr id=\"" + EscapeHtml(rowId) + "\" data-anc=\"" + EscapeHtml(anc) + "\"";
-    if (collapsed) {
-        out += " class=\"itt-collapsed\"";
-    }
-    if (ancCollapsed) {
-        out += " style=\"display:none\"";
-    }
-    out += ">";
-    // 列顺序：大小 / 占比 / 节点数 / 节点名称（名称放最后，见 tree_table_html）
-    out += "<td class=\"itt-num\">" + FormatBytes(static_cast<double>(size)) + "</td>";
-    out += "<td class=\"itt-num itt-pct\">" + FormatTreePct(size, rootSize) + "</td>";
-    out += "<td class=\"itt-num\">" + std::to_string(count) + "</td>";
-    // 名称列允许换行，超长节点名完整展示（因此不再需要 title / 省略号）
-    out += "<td class=\"itt-name" + std::string(depth == 0 ? " itt-root" : "") +
-           "\" style=\"padding-left:" + std::to_string(TREE_INDENT_BASE_PX + depth * TREE_INDENT_STEP_PX) + "px\">";
-    // 垂直引导线：每个祖先层级一条，位置对准该层展开/折叠开关的中心（18 + 16k），
-    // 把同一祖先下的各级子节点串起来，避免层级多时看串行。
-    // 颜色取该线所代表的层的颜色，与本层节点的 +/- 同色。
-    // 绝对定位铺满整行高度，名称换行导致行变高时线也不会断开。
-    for (int k = 0; k < depth; ++k) {
-        out += "<span class=\"itt-guide\" style=\"left:" + std::to_string(TREE_GUIDE_LEFT_PX + k * TREE_INDENT_STEP_PX) +
-               "px;background:" + IttLevelColor(k) + "\"></span>";
-    }
-    if (hasChildren) {
-        // 颜色通过 CSS 变量传入，同时作用于 +/- 字形与方框边框
-        out += "<span class=\"itt-toggle\" style=\"--itt-c:" + IttLevelColor(depth) +
-               "\" onclick=\"toggleIcicleTreeRow(this)\">" +
-               std::string(collapsed ? "+" : "-") + "</span>";
-    } else {
-        // 叶子节点没有展开开关，放一个同层颜色的小圆点占位：
-        // 避免该列空白导致与上方带方框的 +/- 对不齐，且保持层级配色连续。
-        out += "<span class=\"itt-leaf\" style=\"--itt-c:" + IttLevelColor(depth) + "\">•</span>";
-    }
-    out += "<span class=\"itt-name-text\">" + EscapeHtml(name) + "</span></td>";
-    out += "</tr>";
+    EmitIcicleTreeRowHtml(
+        {rowId, anc, name, size, count, rootSize, depth, hasChildren, collapsed, ancCollapsed}, out);
 
     if (hasChildren) {
         const json& children = node["c"];

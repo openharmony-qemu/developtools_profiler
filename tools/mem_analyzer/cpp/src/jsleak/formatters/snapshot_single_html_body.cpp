@@ -389,17 +389,19 @@ std::string BuildTopChainEntryHtml(const json& chainData, int idx, const std::st
     return html;
 }
 
-// ========== 构建完整 Tab 内容 ==========
-std::string BuildPropertyTagTabHtmlImpl(const json& propertyTagObjects, const std::string& prefix,
-    const std::string& tabId, bool active, json& icicleCharts)
-{
+struct PropertyTagRows {
     std::string tableRows;
     std::string detailSections;
     std::string emptyMsg;
+};
 
+PropertyTagRows BuildPropertyTagRows(const json& propertyTagObjects, const std::string& prefix,
+    const std::string& tabId)
+{
+    PropertyTagRows rows;
     if (propertyTagObjects.empty()) {
-        emptyMsg = "<div class=\"empty-msg\">无泄漏对象</div>";
-        tableRows = "<tr><td colspan=\"8\" style=\"text-align:center;color:#888;\">无数据</td></tr>";
+        rows.emptyMsg = "<div class=\"empty-msg\">无泄漏对象</div>";
+        rows.tableRows = "<tr><td colspan=\"8\" style=\"text-align:center;color:#888;\">无数据</td></tr>";
     } else {
         std::vector<std::pair<std::string, json>> sortedItems;
         sortedItems.reserve(propertyTagObjects.size());
@@ -415,13 +417,18 @@ std::string BuildPropertyTagTabHtmlImpl(const json& propertyTagObjects, const st
 
         int idx = 0;
         for (const auto& item : sortedItems) {
-            tableRows += BuildPropertyTagTableRow(item.first, item.second, idx, prefix,
-                                                  "subtabChart_" + tabId);
-            detailSections += BuildPropertyTagEntryHtml(item.first, item.second, idx, prefix);
+            rows.tableRows += BuildPropertyTagTableRow(item.first, item.second, idx, prefix,
+                "subtabChart_" + tabId);
+            rows.detailSections += BuildPropertyTagEntryHtml(item.first, item.second, idx, prefix);
             ++idx;
         }
     }
+    return rows;
+}
 
+std::string BuildPropertyTagChartBody(const json& propertyTagObjects, const std::string& tabId,
+    json& icicleCharts)
+{
     // 汇总所有泄漏对象的引用链，按前缀合并成一张冰柱图
     json mergedChains = json::array();
     for (auto it = propertyTagObjects.begin(); it != propertyTagObjects.end(); ++it) {
@@ -443,8 +450,15 @@ std::string BuildPropertyTagTabHtmlImpl(const json& propertyTagObjects, const st
             icicleHtml = BuildIcicleChartBody(canvasId, treeTableHtml);
         }
     }
-    const std::string chartBody =
-        icicleHtml.empty() ? "<div class=\"empty-msg\">无引用链数据</div>" : icicleHtml;
+    return icicleHtml.empty() ? "<div class=\"empty-msg\">无引用链数据</div>" : icicleHtml;
+}
+
+// ========== 构建完整 Tab 内容 ==========
+std::string BuildPropertyTagTabHtmlImpl(const json& propertyTagObjects, const std::string& prefix,
+    const std::string& tabId, bool active, json& icicleCharts)
+{
+    PropertyTagRows rows = BuildPropertyTagRows(propertyTagObjects, prefix, tabId);
+    const std::string chartBody = BuildPropertyTagChartBody(propertyTagObjects, tabId, icicleCharts);
 
     std::string detailList;
     detailList += "<table class=\"top-table\" id=\"table" + EscapeHtml(tabId) + "\">";
@@ -454,10 +468,10 @@ std::string BuildPropertyTagTabHtmlImpl(const json& propertyTagObjects, const st
                   "<th>属性名称<span class=\"help-icon\" data-tooltip=\"ArkUI组件生命周期结束后，其对象上特定名称的属性会被置为TRUE，用来标记此状态。属性名和组件类型的对应关系为：\nisDeleting_对应Component类组件；_isDisposed对应NodeContainer和XComponent类组件；isDestroyed对应Ability和Window类组件。\">?</span></th>"
                   "<th>类型<span class=\"help-icon\" data-tooltip=\"检测到的有属性标签的组件或者对象类型。\n如果值为Others，说明该对象非泄漏标签方案命中的组件或者对象，可能是开发者自行添加的属性。\">?</span></th>"
                   "<th>对象名称</th></tr>";
-    detailList += tableRows;
+    detailList += rows.tableRows;
     detailList += "</table>";
-    detailList += emptyMsg;
-    detailList += detailSections;
+    detailList += rows.emptyMsg;
+    detailList += rows.detailSections;
 
     std::string content;
     content += "<div class=\"tab-content\" id=\"" + EscapeHtml(tabId) +

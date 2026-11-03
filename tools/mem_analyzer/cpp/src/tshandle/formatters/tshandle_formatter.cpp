@@ -33,34 +33,22 @@ namespace {
 constexpr double PERCENTAGE_SCALE = 100.0;
 constexpr int JSON_INDENT_SPACES = 4;
 
+struct SummaryTotals {
+    long long count = 0;
+    long long memory = 0;
+    long long shallow = 0;
+    long long retained = 0;
+};
+
 // Round double to 2 decimal places for JSON output
 static double Round2(double v)
 {
     return std::round(v * PERCENTAGE_SCALE) / PERCENTAGE_SCALE;
 }
 
-json BuildSummary(const std::vector<ResolvedCallStack>& callStacks, const std::vector<ArkTsClass>& arktsClasses)
+static void AccumulateClassHandles(const std::vector<ArkTsClass>& arktsClasses,
+    std::unordered_map<HtraceEventType, SummaryTotals>& byType)
 {
-    struct Totals {
-        long long count = 0;
-        long long memory = 0;
-        long long shallow = 0;
-        long long retained = 0;
-    };
-    std::unordered_map<HtraceEventType, Totals> byType = {
-        {HtraceEventType::ARK_GLOBAL_HANDLE, {}},
-        {HtraceEventType::ARK_LOCAL_HANDLE, {}}
-    };
-
-    for (const auto& stack : callStacks) {
-        const auto found = byType.find(stack.type);
-        if (found == byType.end()) {
-            continue;
-        }
-        ++found->second.count;
-        found->second.memory += stack.existingSize;
-    }
-
     for (const auto& cls : arktsClasses) {
         for (const auto& instance : cls.instances) {
             std::unordered_set<HtraceEventType> types;
@@ -77,6 +65,25 @@ json BuildSummary(const std::vector<ResolvedCallStack>& callStacks, const std::v
             }
         }
     }
+}
+
+json BuildSummary(const std::vector<ResolvedCallStack>& callStacks, const std::vector<ArkTsClass>& arktsClasses)
+{
+    std::unordered_map<HtraceEventType, SummaryTotals> byType = {
+        {HtraceEventType::ARK_GLOBAL_HANDLE, {}},
+        {HtraceEventType::ARK_LOCAL_HANDLE, {}}
+    };
+
+    for (const auto& stack : callStacks) {
+        const auto found = byType.find(stack.type);
+        if (found == byType.end()) {
+            continue;
+        }
+        ++found->second.count;
+        found->second.memory += stack.existingSize;
+    }
+
+    AccumulateClassHandles(arktsClasses, byType);
 
     json handles = json::array();
     for (auto htype : {HtraceEventType::ARK_GLOBAL_HANDLE, HtraceEventType::ARK_LOCAL_HANDLE}) {

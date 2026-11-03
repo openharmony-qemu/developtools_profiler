@@ -244,6 +244,65 @@ json BuildSymbolDataEntryJSON(SymbolDataEntry& entry)
     return j;
 }
 
+namespace {
+
+std::vector<int> SelectKeptFrameIndices(const std::vector<CallChainFrame>& frames)
+{
+    std::vector<int> keptIndices;
+    if (static_cast<int>(frames.size()) <= SIMPLE_CALL_CHAIN_THRESHOLD) {
+        for (int fi = 0; fi < static_cast<int>(frames.size()); fi++) {
+            keptIndices.push_back(fi);
+        }
+    } else {
+        // 1. 顶层函数
+        keptIndices.push_back(0);
+        // 2. 底层函数
+        keptIndices.push_back(static_cast<int>(frames.size()) - 1);
+        for (int fi = 1; fi < static_cast<int>(frames.size()) - 1; fi++) {
+            bool curIsTs = HtraceConfigMgr::Instance().IsTsSymbol(frames[fi].lib, true);
+            bool nextIsTs = (fi + 1 < static_cast<int>(frames.size())) &&
+                HtraceConfigMgr::Instance().IsTsSymbol(frames[fi + 1].lib, true);
+            bool curIsApp = HtraceConfigMgr::Instance().IsAppSymbol(frames[fi].lib, true);
+            bool nextIsApp = (fi + 1 < static_cast<int>(frames.size())) &&
+                HtraceConfigMgr::Instance().IsAppSymbol(frames[fi + 1].lib, true);
+            // 3. JS函数调用Native函数时的JS函数
+            if (curIsTs && !nextIsTs) {
+                keptIndices.push_back(fi);
+            }
+            // 4. 应用Native函数调用系统so时应用Native函数
+            if (curIsApp && !curIsTs && !nextIsApp) {
+                keptIndices.push_back(fi);
+            }
+        }
+    }
+
+    // Deduplicate and sort
+    std::set<int> uniqueSet(keptIndices.begin(), keptIndices.end());
+    keptIndices.assign(uniqueSet.begin(), uniqueSet.end());
+    std::sort(keptIndices.begin(), keptIndices.end());
+    return keptIndices;
+}
+
+// Build plain text for full call chain (all frames, no ellipsis)
+std::string BuildChainPlainText(const std::vector<CallChainFrame>& frames, size_t chainIdx,
+    double chainSize, double pct, bool countMode)
+{
+    std::string plainText;
+    plainText += "\u8c03\u7528\u94fe" + std::to_string(chainIdx + 1) + "\uff1a\n";
+    for (size_t fi = 0; fi < frames.size(); fi++) {
+        if (fi > 0) {
+            plainText += "\n";
+        }
+        plainText += FormatShortFuncName(frames[fi].name, frames[fi].lib, frames[fi].libOffset);
+    }
+    plainText += std::string("\n") + (countMode ? "\u6b21\u6570" : "\u5927\u5c0f") + " " +
+        FormatSizeText(chainSize, countMode) + "\n\u5360\u6bd4" +
+        ToFixed(pct, DECIMAL_PRECISION) + "%";
+    return plainText;
+}
+
+} // namespace
+
 std::string BuildCallChainHTML(const std::vector<CallChainResult>& callChains, double totalExistingSize, bool countMode)
 {
     std::string result;
@@ -256,39 +315,7 @@ std::string BuildCallChainHTML(const std::vector<CallChainResult>& callChains, d
         double pct = totalExistingSize > 0 ? (chainSize / totalExistingSize * 100.0) : 0.0;
 
         const auto& frames = chain.frames;
-        std::vector<int> keptIndices;
-
-        if (static_cast<int>(frames.size()) <= SIMPLE_CALL_CHAIN_THRESHOLD) {
-            for (int fi = 0; fi < static_cast<int>(frames.size()); fi++) {
-                keptIndices.push_back(fi);
-            }
-        } else {
-            // 1. 顶层函数
-            keptIndices.push_back(0);
-            // 2. 底层函数
-            keptIndices.push_back(static_cast<int>(frames.size()) - 1);
-            for (int fi = 1; fi < static_cast<int>(frames.size()) - 1; fi++) {
-                bool curIsTs = HtraceConfigMgr::Instance().IsTsSymbol(frames[fi].lib, true);
-                bool nextIsTs = (fi + 1 < static_cast<int>(frames.size())) &&
-                    HtraceConfigMgr::Instance().IsTsSymbol(frames[fi + 1].lib, true);
-                bool curIsApp = HtraceConfigMgr::Instance().IsAppSymbol(frames[fi].lib, true);
-                bool nextIsApp = (fi + 1 < static_cast<int>(frames.size())) &&
-                    HtraceConfigMgr::Instance().IsAppSymbol(frames[fi + 1].lib, true);
-                // 3. JS函数调用Native函数时的JS函数
-                if (curIsTs && !nextIsTs) {
-                    keptIndices.push_back(fi);
-                }
-                // 4. 应用Native函数调用系统so时应用Native函数
-                if (curIsApp && !curIsTs && !nextIsApp) {
-                    keptIndices.push_back(fi);
-                }
-            }
-        }
-
-        // Deduplicate and sort
-        std::set<int> uniqueSet(keptIndices.begin(), keptIndices.end());
-        keptIndices.assign(uniqueSet.begin(), uniqueSet.end());
-        std::sort(keptIndices.begin(), keptIndices.end());
+        std::vector<int> keptIndices = SelectKeptFrameIndices(frames);
 
         std::vector<std::string> parts;
         for (size_t k = 0; k < keptIndices.size(); k++) {
@@ -312,18 +339,7 @@ std::string BuildCallChainHTML(const std::vector<CallChainResult>& callChains, d
             joinedParts += parts[p];
         }
 
-        // Build plain text for full call chain (all frames, no ellipsis)
-        std::string plainText;
-        plainText += "\u8c03\u7528\u94fe" + std::to_string(ci + 1) + "\uff1a\n";
-        for (size_t fi = 0; fi < frames.size(); fi++) {
-            if (fi > 0) {
-                plainText += "\n";
-            }
-            plainText += FormatShortFuncName(frames[fi].name, frames[fi].lib, frames[fi].libOffset);
-        }
-        plainText += std::string("\n") + (countMode ? "\u6b21\u6570" : "\u5927\u5c0f") + " " +
-            FormatSizeText(chainSize, countMode) + "\n\u5360\u6bd4" +
-            ToFixed(pct, DECIMAL_PRECISION) + "%";
+        std::string plainText = BuildChainPlainText(frames, ci, chainSize, pct, countMode);
 
         result += "<div class=\"call-chain-line\">\u8c03\u7528\u94fe" +
             std::to_string(ci + 1) +
@@ -383,8 +399,8 @@ std::string BuildTopTableRows(const std::vector<SymbolDataEntry>& symbols, size_
     return rows;
 }
 
-std::string BuildDetailSectionContent(
-    const SymbolDataEntry& entry, size_t idx, long long totalExistingSize, bool addBlankLine, bool countMode)
+std::string BuildDetailHeaderHtml(const SymbolDataEntry& entry, size_t idx,
+    long long totalExistingSize, bool countMode)
 {
     const auto& s = entry.info;
     std::string shortName = FormatShortFuncName(
@@ -429,8 +445,13 @@ std::string BuildDetailSectionContent(
         "      <span class=\"search-match-count\" id=\"searchCount" + std::to_string(idx) + "\">0\u4e2a\u5339\u914d</span>\n"
         "      <span class=\"shortcut-hint\">w/s\uff1a\u653e\u5927/\u7f29\u5c0f&emsp;&emsp;a/d\uff1a\u5de6/\u53f3\u79fb\u52a8</span>\n"
         "    </div>\n";
+    return result;
+}
+
+std::string BuildGraphContainerHtml(size_t idx, bool isOther)
+{
+    std::string result;
     // other: 只一个火焰图（整栈合并），无上下游之分；其余 top 函数保持上游+下游双 panel
-    bool isOther = (s.value("name", "") == OTHER_SYMBOL);
     if (isOther) {
         result += "    <div class=\"dual-graph-container\">\n"
             "      <div class=\"graph-panel\">\n"
@@ -456,6 +477,15 @@ std::string BuildDetailSectionContent(
             "      </div>\n"
             "    </div>\n";
     }
+    return result;
+}
+
+std::string BuildDetailSectionContent(
+    const SymbolDataEntry& entry, size_t idx, long long totalExistingSize, bool addBlankLine, bool countMode)
+{
+    std::string result = BuildDetailHeaderHtml(entry, idx, totalExistingSize, countMode);
+    bool isOther = (entry.info.value("name", "") == OTHER_SYMBOL);
+    result += BuildGraphContainerHtml(idx, isOther);
     if (addBlankLine) {
         result += "\n"
             "  </div>\n"
