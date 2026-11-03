@@ -302,7 +302,7 @@ void StartUpDelay::KillTestSpdaemon(const std::string &line, const std::string &
         }
         count++;
     }
-    if (pid != curPid) {
+    if (pid != curPid && SPUtils::IsValidPid(pid)) {
         cmd = "kill " + pid;
         SPUtils::LoadCmd(cmd, cmdResult);
     }

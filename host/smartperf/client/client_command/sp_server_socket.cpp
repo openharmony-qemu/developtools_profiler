@@ -95,13 +95,13 @@ int SpServerSocket::Send(const std::string &sendBuf) const
 
 void SpServerSocket::Close()
 {
-    int optval = 1;
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-    local.sin_family = AF_INET;
-    local.sin_port = htons(sockPort);
-    local.sin_addr.s_addr = inet_addr("127.0.0.1");
-    if (::bind(sock, reinterpret_cast<struct sockaddr *>(&local), sizeof(local)) < 0) {
-        LOGE("SpServerSocket::Init Socket Bind failed");
+    if (sock >= 0) {
+        close(sock);
+        sock = -1;
+    }
+    if (connFd >= 0) {
+        close(connFd);
+        connFd = -1;
     }
 }
 

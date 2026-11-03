@@ -624,7 +624,9 @@ std::string TaskManager::MapToString(std::map<std::string, std::string>& myMap)
             str += "\"" + it->first + "\": " + it->second + ", ";
         }
         const int subLen = 2;
-        str.erase(str.end() - subLen, str.end());
+        if (str.size() >= subLen) {
+            str.erase(str.end() - subLen, str.end());
+        }
         str += " }";
         return str;
     }

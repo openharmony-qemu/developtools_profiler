@@ -453,8 +453,10 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
         });
         calcDrawFrameThread.join();
         calcScanoutThread.join();
-        fpsInfo.avgDrawCall = static_cast<double>(totalDrawCal) / fpsInfo.flushTimeStamps.size();
-        fpsInfo.avgScanout = static_cast<double>(totalScanout) / fpsInfo.flushTimeStamps.size();
+        if (!fpsInfo.flushTimeStamps.empty()) {
+            fpsInfo.avgDrawCall = static_cast<double>(totalDrawCal) / fpsInfo.flushTimeStamps.size();
+            fpsInfo.avgScanout = static_cast<double>(totalScanout) / fpsInfo.flushTimeStamps.size();
+        }
         totalDrawCal = 0;
         totalScanout = 0;
     } else {
@@ -805,6 +807,7 @@ void FPS::GetTimeDiff()
     long long clockRealTime = 0;
     long long clockMonotonicRaw = 0;
     const int two = 2;
+    const int minParamSize = 3;
     std::string strRealTime;
     const std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::TIMESTAMPS);
     FILE *fd = popen(cmd.c_str(), "r");
@@ -816,6 +819,9 @@ void FPS::GetTimeDiff()
         std::string line(buf);
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
+        if (params.size() < static_cast<size_t>(minParamSize)) {
+            continue;
+        }
         if (params[0].find("CLOCK_REALTIME") != std::string::npos && clockRealTime == 0) {
             strRealTime = params[two];
             strRealTime.erase(strRealTime.find('.'), 1);
@@ -1018,19 +1024,25 @@ void FPS::GetDistr()
         }
         GetDistrTimes(line, tamps);
     }
-    avgDistr = totalDistr / distrNum;
+    if (distrNum > 0) {
+        avgDistr = totalDistr / distrNum;
+    }
 }
 
 void FPS::GetDistrTimes(std::string &line, long long &tamps)
 {
     if (line.find(" ns") != std::string::npos) {
         int inDex = 5;
+        const int minTokenSize = inDex + 1;
         std::istringstream iss(line);
         std::vector<std::string> tokens;
         std::string token;
         long long diStr = 0;
         while (iss >> token) {
             tokens.push_back(token);
+        }
+        if (tokens.size() < static_cast<size_t>(minTokenSize)) {
+            return;
         }
         std::string tokensOne = tokens[1];
         if (SPUtilesTye::StringToSometype<long long>(tokensOne) / mod == tamps) {

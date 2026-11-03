@@ -118,6 +118,40 @@ bool SPUtils::LoadFile(const std::string &filePath, std::string &content)
     return true;
 }
 
+static const char *g_safeExecPaths[] = {"/system/bin", "/system/xbin", "/vendor/bin", "/usr/bin", "/bin"};
+
+static std::string ResolveExecPath(const std::string &cmd)
+{
+    if (cmd.empty() || cmd.find('/') != std::string::npos) {
+        return cmd;
+    }
+    for (const char *dir : g_safeExecPaths) {
+        std::string resolved = std::string(dir) + "/" + cmd;
+        if (access(resolved.c_str(), X_OK) == 0) {
+            return resolved;
+        }
+    }
+    return "";
+}
+
+static void PrepareChildStdio(int pipefd[2])
+{
+    close(pipefd[0]);
+    int maxFd = static_cast<int>(sysconf(_SC_OPEN_MAX));
+    for (int fd = STDERR_FILENO + 1; fd < maxFd; ++fd) {
+        if (fd != pipefd[1]) {
+            close(fd);
+        }
+    }
+    if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
+        _exit(EXEC_FAILURE_EXIT_CODE);
+    }
+    if (dup2(pipefd[1], STDERR_FILENO) == -1) {
+        _exit(EXEC_FAILURE_EXIT_CODE);
+    }
+    close(pipefd[1]);
+}
+
 bool SPUtils::SafeLoadExec(const std::vector<std::string> &args, std::string &result)
 {
     if (args.empty()) {
@@ -134,26 +168,17 @@ bool SPUtils::SafeLoadExec(const std::vector<std::string> &args, std::string &re
         return false;
     }
     if (pid == 0) {
-        close(pipefd[0]);
-        int maxFd = static_cast<int>(sysconf(_SC_OPEN_MAX));
-        for (int fd = STDERR_FILENO + 1; fd < maxFd; ++fd) {
-            if (fd != pipefd[1]) {
-                close(fd);
-            }
-        }
-        if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
+        PrepareChildStdio(pipefd);
+        std::string resolvedPath = ResolveExecPath(args[0]);
+        if (resolvedPath.empty()) {
             _exit(EXEC_FAILURE_EXIT_CODE);
         }
-        if (dup2(pipefd[1], STDERR_FILENO) == -1) {
-            _exit(EXEC_FAILURE_EXIT_CODE);
-        }
-        close(pipefd[1]);
         std::vector<char *> argv;
         for (const auto &arg : args) {
             argv.push_back(const_cast<char *>(arg.c_str()));
         }
         argv.push_back(nullptr);
-        execvp(argv[0], argv.data());
+        execv(resolvedPath.c_str(), argv.data());
         _exit(EXEC_FAILURE_EXIT_CODE);
     }
     close(pipefd[1]);
@@ -337,12 +362,16 @@ void SPUtils::StrSplit(const std::string &content, const std::string &sp, std::v
     size_t index = 0;
     while (index != std::string::npos) {
         size_t tEnd = content.find_first_of(sp, index);
+        if (tEnd == std::string::npos) {
+            std::string tmp = content.substr(index);
+            if (tmp != "" && tmp != " ") {
+                out.push_back(tmp);
+            }
+            break;
+        }
         std::string tmp = content.substr(index, tEnd - index);
         if (tmp != "" && tmp != " ") {
             out.push_back(tmp);
-        }
-        if (tEnd == std::string::npos) {
-            break;
         }
         index = tEnd + 1;
     }
@@ -486,7 +515,10 @@ std::string SPUtils::GetDeviceInfoMap()
     size_t pos = screenInfos.find(": ");
     size_t pos1 = screenInfos.find(",");
     size_t len = 2;
-    std::string screenSize = screenInfos.substr(pos + len, pos1 - pos - len);
+    std::string screenSize = "";
+    if (pos != std::string::npos && pos1 != std::string::npos && pos1 > pos) {
+        screenSize = screenInfos.substr(pos + len, pos1 - pos - len);
+    }
     deviceInfoMap["activeMode"] = screenSize;
     for (auto iter = deviceInfoMap.cbegin(); iter != deviceInfoMap.cend(); ++iter) {
         printf("%s: %s\n", iter->first.c_str(), iter->second.c_str());
@@ -1196,6 +1228,10 @@ std::string SPUtils::GetSurface()
     size_t positionLeft = cmdResult.find("[");
     size_t positionRight = cmdResult.find("]");
     size_t positionNum = 1;
+    if (positionLeft == std::string::npos || positionRight == std::string::npos ||
+        positionRight <= positionLeft) {
+        return "";
+    }
     return cmdResult.substr(positionLeft + positionNum, positionRight - positionLeft - positionNum);
 }
 

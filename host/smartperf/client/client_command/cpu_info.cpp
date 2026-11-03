@@ -103,6 +103,10 @@ void CPUInfo::StartExecutionOnce(bool isPause)
         while (running_) {
             buffer_.clear();
             std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(hiperfCmd_.c_str(), "r"), pclose);
+            if (pipe == nullptr) {
+                LOGE("CPUInfo::StartExecutionOnce popen failed");
+                return;
+            }
             constexpr int lineSize = 1024;
             std::array<char, lineSize> chunk;
             while (fgets(chunk.data(), chunk.size(), pipe.get()) != nullptr) {

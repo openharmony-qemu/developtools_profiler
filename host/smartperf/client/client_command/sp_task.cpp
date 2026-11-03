@@ -62,6 +62,23 @@ void PushCommandArgs(std::vector<std::string>& configVec, std::vector<std::strin
     }
 }
 
+static ExceptionMsg ValidateTaskConfig(const std::string &sessionId,
+    const std::vector<std::string> &configs, bool isFPS, const StuckNotification &snf)
+{
+    if (snf.isEffective && (!isFPS)) {
+        return ExceptionMsg::TASK_CONFIG_NULL;
+    }
+    if (!SPUtils::IsValidWinId(sessionId)) {
+        LOGE("ParseToTask sessionId is invalid: %s", sessionId.c_str());
+        return ExceptionMsg::SESSION_ID_NULL;
+    }
+    if (configs.size() == 0) {
+        LOGE("ParseToTask configs size is 0");
+        return ExceptionMsg::TASK_CONFIG_NULL;
+    }
+    return ExceptionMsg::NO_ERR;
+}
+
 // init::-SESSIONID 12345678 -INTERVAL 1000 -PKG ohos.samples.ecg -c -g -t -p -f -r -fl 30
 static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
 {
@@ -77,19 +94,25 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
     std::vector<std::string> args = ParseCommandArgs(command);
     for (size_t i = 0; i < args.size(); i++) {
         if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_SESSIONID)) {
+            if (i + 1 >= args.size()) return ExceptionMsg::TASK_CONFIG_NULL;
             sessionId = args[++i];
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_INTERVAL)) {
+            if (i + 1 >= args.size()) return ExceptionMsg::TASK_CONFIG_NULL;
             interval = SPUtilesTye::StringToSometype<long long>(args[++i]);
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_PKG)) {
+            if (i + 1 >= args.size()) return ExceptionMsg::TASK_CONFIG_NULL;
             pkg = args[++i];
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_PID)) {
+            if (i + 1 >= args.size()) return ExceptionMsg::TASK_CONFIG_NULL;
             pid = args[++i];
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_PRINT)) {
             isPrint = true;
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_FL)) { // 获取用户fps的值，并赋给snf.   CT_FL
+            if (i + 1 >= args.size()) return ExceptionMsg::TASK_CONFIG_NULL;
             snf.fps = SPUtilesTye::StringToSometype<int>(args[++i]);
             snf.isEffective = true;
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_FTL)) { // 获取frameTime的值      CT_FTL
+            if (i + 1 >= args.size()) return ExceptionMsg::TASK_CONFIG_NULL;
             snf.frameTime = SPUtilesTye::StringToSometype<int>(args[++i]);
             snf.isEffective = true;
         } else {
@@ -99,15 +122,9 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
             PushCommandArgs(configs, args, i);
         }
     }
-    if (snf.isEffective && (!isFPS)) {
-        return ExceptionMsg::TASK_CONFIG_NULL;
-    }
-    if (!SPUtils::IsValidWinId(sessionId)) {
-        LOGE("ExceptionMsg ParseToTask sessionId is invalid: %s", sessionId.c_str());
-        return ExceptionMsg::SESSION_ID_NULL;
-    } else if (configs.size() == 0) {
-        LOGE("ExceptionMsg ParseToTask configs size is 0");
-        return ExceptionMsg::TASK_CONFIG_NULL;
+    ExceptionMsg err = ValidateTaskConfig(sessionId, configs, isFPS, snf);
+    if (err != ExceptionMsg::NO_ERR) {
+        return err;
     }
     taskInfo = { sessionId, pkg, pid, configs, interval, snf, isPrint };
     return ExceptionMsg::NO_ERR;
@@ -384,6 +401,10 @@ void SPTask::KillHiperfCmd()
     LOGD("pidof hiprofiler_cmd size(%d)", out.size());
     for (auto it = out.begin(); out.end() != it; ++it) {
         result.clear();
+        if (!SPUtils::IsValidPid(*it)) {
+            LOGE("KillHiperfCmd invalid pid: %s", (*it).c_str());
+            continue;
+        }
         SPUtils::LoadCmd(killCmd + (*it), result);
     }
 

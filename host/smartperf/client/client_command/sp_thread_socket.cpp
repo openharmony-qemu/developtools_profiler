@@ -52,6 +52,26 @@
 #define SMARTPERF "smartperf"
 namespace OHOS {
 namespace SmartPerf {
+static std::string LogSanitize(const std::string& s)
+{
+    std::string result;
+    result.reserve(s.size());
+    for (char c : s) {
+        switch (c) {
+            case '\n': result += "\\n"; break;
+            case '\r': result += "\\r"; break;
+            case '\t': result += "\\t"; break;
+            default:
+                if (static_cast<unsigned char>(c) < 0x20 || c == 0x7F) {
+                    result += ' ';
+                } else {
+                    result += c;
+                }
+                break;
+        }
+    }
+    return result;
+}
 std::string g_pkgName = "";
 std::string g_pkgAndPid = "";
 std::string SpThreadSocket::MapToString(std::map<std::string, std::string>& dataMap) const
@@ -114,7 +134,7 @@ SocketErrorType SpThreadSocket::CheckTcpToken(const std::string& recvStr,
             LOGI("Received string contains 'SP_daemon -editor', token check passed.");
             return SocketErrorType::OK;
         } else {
-            LOGE("Token check failed: %s", recvStrNoToken.c_str());
+            LOGE("Token check failed: %s", LogSanitize(recvStrNoToken).c_str());
             return SocketErrorType::TOKEN_CHECK_FAILED;
         }
     }
@@ -149,8 +169,8 @@ void SpThreadSocket::TypeTcp(SpServerSocket &spSocket)
             }
             std::string recvStr = spSocket.RecvBuf();
             std::string recvStrNoToken = recvStr.substr(0, recvStr.find("::"));
-            LOGD("TCP recv data:%s", recvStr.c_str());
-            WLOGD("Received data: %s", recvStrNoToken.c_str());
+            LOGD("TCP recv data:%s", LogSanitize(recvStr).c_str());
+            WLOGD("Received data: %s", LogSanitize(recvStrNoToken).c_str());
             // 解析消息 分发处理
             const SocketErrorType tokenStatus = CheckTcpToken(recvStr, spSocket, recvStrNoToken);
             WLOGI("Token check status: %d", tokenStatus);
@@ -165,7 +185,7 @@ void SpThreadSocket::InitRecv(const std::string& recvStr, SpServerSocket &spSock
     std::string checkStr = recvStr.substr(std::string("init::").length());
     if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo) &&
         checkStr.find(SpThreadSocket::GetInstance().GetToken()) == std::string::npos) {
-        WLOGE("Init error(%s)", errorInfo.c_str());
+        WLOGE("Init error(%s)", LogSanitize(errorInfo).c_str());
         if (type == SocketConnectType::CMD_SOCKET) {
             spSocket.Send("init::False,\"error\":" + errorInfo);
         } else {
@@ -282,7 +302,7 @@ void SpThreadSocket::SendTokenFailedMessage(SpServerSocket &socket, const std::s
             return;
         }
     }
-    WLOGW("No matching command found for token check failure in message: %s", message.c_str());
+    WLOGW("No matching command found for token check failure in message: %s", LogSanitize(message).c_str());
 }
 SocketErrorType SpThreadSocket::CheckUdpToken(const std::string& recvStr) const
 {
@@ -296,7 +316,7 @@ SocketErrorType SpThreadSocket::CheckUdpToken(const std::string& recvStr) const
     }
     // command:::token
     if (recvStr.find_last_of(":::") == std::string::npos) {
-        WLOGE("Token check failed: %s", recvStr.c_str());
+        WLOGE("Token check failed: %s", LogSanitize(recvStr).c_str());
         return SocketErrorType::TOKEN_CHECK_FAILED;
     }
     // 提取 token
@@ -350,7 +370,7 @@ void SpThreadSocket::DealMsg(const std::string& recvStr, SpServerSocket &spSocke
         SpProfilerFactory::editorFlag = false;
         StopRecvRecord(spSocket);
     } else {
-        WLOGW("Received unknown command: %s", recvStr.c_str());
+        WLOGW("Received unknown command: %s", LogSanitize(recvStr).c_str());
     }
 }
 void SpThreadSocket::BackDesktop() const
@@ -456,7 +476,7 @@ void SpThreadSocket::UdpStartInitFunc(const std::string& recvBuf, SpServerSocket
 
     std::string fileDir = "/data/local/tmp/smartperf/" + spTask.GetCurTaskInfo().sessionId;
     if (spTask.GetCurTaskInfo().sessionId.empty() || !SPUtils::IsValidWinId(spTask.GetCurTaskInfo().sessionId)) {
-        WLOGE("UdpStartInitFunc sessionId is invalid: %s", spTask.GetCurTaskInfo().sessionId.c_str());
+        WLOGE("UdpStartInitFunc sessionId is invalid: %s", LogSanitize(spTask.GetCurTaskInfo().sessionId).c_str());
         return;
     }
     spTask.CreatPath(fileDir);
@@ -476,6 +496,8 @@ int SpThreadSocket::FileSocketConnect()
     socketAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
     if (connect(sendFileSocket, reinterpret_cast<struct sockaddr *>(&socketAddr), sizeof(socketAddr)) < 0) {
         WLOGE("Connect log file socket failed, errno: %d", errno);
+        close(sendFileSocket);
+        sendFileSocket = -1;
         return -1;
     }
     WLOGI("Connect log file socket success, socket: %d", sendFileSocket);
@@ -486,7 +508,7 @@ int SpThreadSocket::SendFile(const std::string& filePath)
 {
     char filePathChar[PATH_MAX] = {0x00};
     if ((realpath(filePath.c_str(), filePathChar) == nullptr)) {
-        WLOGE("%s is not exist.", filePath.c_str());
+        WLOGE("%s is not exist.", LogSanitize(filePath).c_str());
         return -1;
     }
     std::ifstream logFile(filePathChar, std::ios::binary);
@@ -603,7 +625,7 @@ void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string
     } else {
         retCode = MapToString(data);
         spSocket.Sendto(retCode);
-        LOGD("UDP send retCode = %s", retCode.c_str());
+        LOGD("UDP send retCode = %s", LogSanitize(retCode).c_str());
     }
 }
 void SpThreadSocket::SocketHeartbeat() const
@@ -651,10 +673,10 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
         retCode = SplitMsg(recvBuf);
         if (recvBuf.find(SMARTPERF) != std::string::npos && retCode.find(SMARTPERF) != std::string::npos) {
             if (!SPUtils::IsValidPkgName(retCode)) {
-                LOGE("Dubai pkgName is invalid: (%s)", retCode.c_str());
+                LOGE("Dubai pkgName is invalid: (%s)", LogSanitize(retCode).c_str());
             } else {
                 Dubai::dubaiPkgName = retCode;
-                LOGD("UDP send smartperf: (%s)", Dubai::dubaiPkgName.c_str());
+                LOGD("UDP send smartperf: (%s)", LogSanitize(Dubai::dubaiPkgName).c_str());
             }
         } else {
             if (retCode.find("$") != std::string::npos) {
@@ -664,10 +686,10 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
                 g_pkgName = retCode;
             }
             std::thread([this]() { this->ResetValue(g_pkgName); }).detach();
-            LOGD("HandleNullMsg pkgName: (%s)", g_pkgName.c_str());
+            LOGD("HandleNullMsg pkgName: (%s)", LogSanitize(g_pkgName).c_str());
         }
         spSocket.Sendto(retCode);
-        LOGD("UDP send PkgName = %s", retCode.c_str());
+        LOGD("UDP send PkgName = %s", LogSanitize(retCode).c_str());
     } else if (profiler == nullptr && (iterator->first == MessageType::GET_APP_TYPE)) {
         retCode = SplitMsg(recvBuf);
         std::thread([this, retCode]() { this->ResetValue(retCode); }).detach();
@@ -715,7 +737,7 @@ void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::
             FPS::GetInstance().isHistoryHap = true;
             std::string pkgName = g_pkgName;
             std::string pkgAndPid = g_pkgAndPid;
-            LOGD("SpProfilerFactory::g_pkgName(%s)", g_pkgName.c_str());
+            LOGD("SpProfilerFactory::g_pkgName(%s)", LogSanitize(g_pkgName).c_str());
             std::string processId = "";
             std::string processIds = "";
             FPS::GetInstance().isPreset = IsPreset(pkgAndPid);
@@ -840,7 +862,7 @@ void SpThreadSocket::GetCatchTraceResult(std::string& retCode, SpServerSocket &s
     } else {
         retCode = iterator->second;
         spSocket.Sendto(retCode);
-        LOGD("UDP send Data:(%s)", retCode.c_str());
+        LOGD("UDP send Data:(%s)", LogSanitize(retCode).c_str());
     }
 }
 
@@ -900,7 +922,7 @@ void SpThreadSocket::GetSocketPort(const std::string& buffer)
             fileName = portStr.substr(portStr.find("$") + 1);
             portStr = portStr.substr(0, portStr.find("$"));
             if (SPUtils::IsPathTraversal(fileName)) {
-                LOGE("GetSocketPort path tracersal datected in fileName: %s", fileName.c_str());
+                LOGE("GetSocketPort path tracersal datected in fileName: %s", LogSanitize(fileName).c_str());
                 sendFileSocketPort = -1;
                 return;
             }
