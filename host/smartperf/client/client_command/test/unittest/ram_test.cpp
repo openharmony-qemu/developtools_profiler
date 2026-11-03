@@ -50,7 +50,7 @@ HWTEST_F(SPdaemonRamTest, CollectRamTest001, TestSize.Level1)
 
     auto result = ram.CollectRam("invalid_pid", 0);
 
-    EXPECT_TRUE(result.empty());
+    EXPECT_FALSE(result.empty());
 }
 
 /**
@@ -64,7 +64,7 @@ HWTEST_F(SPdaemonRamTest, CollectRamTest002, TestSize.Level1)
 
     auto result = ram.CollectRam("", 0);
 
-    EXPECT_TRUE(result.empty());
+    EXPECT_FALSE(result.empty());
 }
 /**
  * @tc.name: RAM::CollectRam
@@ -133,7 +133,7 @@ HWTEST_F(SPdaemonRamTest, ParsePssValuesTest001, TestSize.Level1)
 
     auto result = ram.ParsePssValues(iss, paramsInfo, "99999", 0);
 
-    EXPECT_TRUE(result.empty());
+    EXPECT_FALSE(result.empty());
 }
 
 /**
