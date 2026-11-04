@@ -2494,7 +2494,8 @@ void FinalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
             const long long pollTimeout = (opts.duration > 0) ? opts.duration : DEFAULT_CAPTURE_DURATION_S;
             result.snapshotAttempted = true;
             TransferResult snapTransfer{result.snapshotPulledFiles, result.snapshotStatus};
-            PollAndPullSnapshot({opts.resultDir, opts.outputDir, ""}, baselines.resultBaseline, pollTimeout, snapTransfer);
+            PollAndPullSnapshot({opts.resultDir, opts.outputDir, ""},
+                baselines.resultBaseline, pollTimeout, snapTransfer);
             result.elapsed = ElapsedSince(flags.start);
         }
     } else if (result.ok && !opts.remoteOutputPath.empty()) {
