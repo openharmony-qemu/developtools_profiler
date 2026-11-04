@@ -288,8 +288,7 @@ static std::vector<std::string> BuildAnomalyLines(
         lines.push_back("# [noNode] existing addr has no nodeid mapping in addr file");
         for (size_t i = 0; i < nativeResult.noNodeAddrs.size(); i++) {
             std::ostringstream ss;
-            ss << nativeResult.noNodeAddrs[i] << "\tnoNode\t" <<
-               nativeResult.noNodeCallstackIds[i];
+            ss << nativeResult.noNodeAddrs[i] << "\tnoNode\t" << nativeResult.noNodeCallstackIds[i];
             lines.push_back(ss.str());
         }
     }
@@ -309,8 +308,7 @@ static std::vector<std::string> BuildAnomalyLines(
         lines.push_back("# [invalid] existing addr not valid hex");
         for (size_t i = 0; i < nativeResult.invalidDetailAddrs.size(); i++) {
             std::ostringstream ss;
-            ss << nativeResult.invalidDetailAddrs[i] << "\tinvalid\t" <<
-               nativeResult.invalidDetailCallstackIds[i];
+            ss << nativeResult.invalidDetailAddrs[i] << "\tinvalid\t" << nativeResult.invalidDetailCallstackIds[i];
             lines.push_back(ss.str());
         }
     }
@@ -320,8 +318,7 @@ static std::vector<std::string> BuildAnomalyLines(
         lines.push_back("# [duplicate] addr file: same address different nodeid (kept first)");
         for (size_t i = 0; i < parseResult.dupKeys.size(); i++) {
             std::ostringstream ss;
-            ss << parseResult.dupKeys[i] << "\t" <<
-               parseResult.dupOriginalAddrs[i] << "\tduplicate\t";
+            ss << parseResult.dupKeys[i] << "\t" << parseResult.dupOriginalAddrs[i] << "\tduplicate\t";
             for (size_t j = 0; j < parseResult.dupNodeIds[i].size(); j++) {
                 ss << (j > 0 ? "," : "") << parseResult.dupNodeIds[i][j];
             }
