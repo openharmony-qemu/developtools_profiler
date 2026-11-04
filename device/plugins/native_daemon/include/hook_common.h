@@ -235,6 +235,11 @@ inline bool IsAllocRecord(const BaseStackRawData* data)
     return data->type == MALLOC_MSG || data->type == MEMORY_USING_MSG;
 }
 
+inline bool IsShouldDiscardRecord(const BaseStackRawData* data)
+{
+    return IsArkGlobalHandleRecord(data) || IsAllocRecord(data);
+}
+
 inline bool IsFreeRecord(const BaseStackRawData* data)
 {
     return data->type == FREE_MSG || data->type == MEMORY_UNUSING_MSG;
