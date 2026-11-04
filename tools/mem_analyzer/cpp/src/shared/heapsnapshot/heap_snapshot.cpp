@@ -1751,19 +1751,22 @@ RefChainKey FnvContinue(const RefChainKey& prev, const std::string& name)
     return RefChainKey{h1, h2};
 }
 
-void ResolveChainHashForNode(uint32_t u, uint32_t p, int n,
-    std::vector<RefChainKey>& chainHash,
-    const std::vector<std::string>& extNames,
-    const std::vector<uint8_t>& chainHashComputed)
+struct ChainHashState {
+    std::vector<RefChainKey>& chainHash;
+    const std::vector<std::string>& extNames;
+    const std::vector<uint8_t>& chainHashComputed;
+};
+
+void ResolveChainHashForNode(uint32_t u, uint32_t p, int n, ChainHashState& state)
 {
     if (p == INVALID_NODE || p >= static_cast<uint32_t>(n)) {
-        chainHash[u] = RefChainKey{};  // 不可达 => {0,0}
+        state.chainHash[u] = RefChainKey{};  // 不可达 => {0,0}
     } else if (p == u) {
-        chainHash[u] = FnvSeed(extNames[u]);  // root：种子
-    } else if (chainHashComputed[p]) {
-        chainHash[u] = FnvContinue(chainHash[p], extNames[u]);
+        state.chainHash[u] = FnvSeed(state.extNames[u]);  // root：种子
+    } else if (state.chainHashComputed[p]) {
+        state.chainHash[u] = FnvContinue(state.chainHash[p], state.extNames[u]);
     } else {
-        chainHash[u] = RefChainKey{};  // p 未算（环/异常）兜底
+        state.chainHash[u] = RefChainKey{};  // p 未算（环/异常）兜底
     }
 }
 } // anonymous namespace
@@ -1806,10 +1809,11 @@ void HeapSnapshot::BuildChainHashTable() const
             log::Logw("[ref_chain] WARN cycle in path_parent_index at node_index=", node);
         }
 
+        ChainHashState state{chainHash_, extNames_, chainHashComputed_};
         for (auto it = path.rbegin(); it != path.rend(); ++it) {
             const uint32_t u = *it;
             const uint32_t p = pathParentIndex[u];
-            ResolveChainHashForNode(u, p, N, chainHash_, extNames_, chainHashComputed_);
+            ResolveChainHashForNode(u, p, N, state);
             chainHashComputed_[u] = 1;
         }
     }

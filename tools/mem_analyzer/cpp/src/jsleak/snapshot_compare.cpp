@@ -1034,47 +1034,42 @@ static json BuildCompareReport(const CompareAnalysisInput& input,
     };
 }
 
-json JsleakCompareAnalyzeImpl(const HeapSnapshot& baseline,
-    const HeapSnapshot& target,
-    const std::string& baselineFile,
-    const std::string& targetFile,
-    size_t topN,
-    const std::string& mode)
+json JsleakCompareAnalyzeImpl(const CompareAnalysisInput& input)
 {
     // -m 选择输出维度：property-tag 跳过引用链聚合，top-chain 跳过泄漏规则。
-    const bool wantChains = mode != "property-tag";
-    const bool wantLeaks = mode != "top-chain";
+    const bool wantChains = input.mode != "property-tag";
+    const bool wantLeaks = input.mode != "top-chain";
 
     json pathDeltas = json::array();
     json changedLeakObjects = json::object();
     if (wantChains) {
         // Comparison indexes are built from the symmetric node-ID difference;
         // surviving objects never enter object/path aggregation.
-        const SnapshotIndex a = BuildIndex(baseline, target);
-        const SnapshotIndex b = BuildIndex(target, baseline);
+        const SnapshotIndex a = BuildIndex(input.baseline, input.target);
+        const SnapshotIndex b = BuildIndex(input.target, input.baseline);
         json completeObjectDeltas = CompareAggregatesComplete(a.groups, b.groups);
         LogicalGrowthResult logical = BuildLogicalGrowthGroups(
             std::move(completeObjectDeltas), a, b);
-        pathDeltas = CompactPathDeltas(SelectLogicalGroups(logical.groups, topN));
+        pathDeltas = CompactPathDeltas(SelectLogicalGroups(logical.groups, input.topN));
     }
     if (wantLeaks) {
         // Leak rules run on the node-ID diff only: survivors are excluded on
         // both sides, matching the object-diff scope above.
         PropertyTagStage LeakProcessor("");
         const json baselineLeakObjects = LeakProcessor.Analyze(
-            baseline, [&baseline, &target](uint32_t nodeIndex) {
-                const uint32_t nodeId = baseline.GetNodeId(nodeIndex);
+            input.baseline, [&input](uint32_t nodeIndex) {
+                const uint32_t nodeId = input.baseline.GetNodeId(nodeIndex);
                 return nodeId != UINT32_MAX &&
-                    target.nodeIdToIdx.find(nodeId) == target.nodeIdToIdx.end();
+                    input.target.nodeIdToIdx.find(nodeId) == input.target.nodeIdToIdx.end();
             });
         const json targetLeakObjects = LeakProcessor.Analyze(
-            target, [&baseline, &target](uint32_t nodeIndex) {
-                const uint32_t nodeId = target.GetNodeId(nodeIndex);
+            input.target, [&input](uint32_t nodeIndex) {
+                const uint32_t nodeId = input.target.GetNodeId(nodeIndex);
                 return nodeId != UINT32_MAX &&
-                    baseline.nodeIdToIdx.find(nodeId) == baseline.nodeIdToIdx.end();
+                    input.baseline.nodeIdToIdx.find(nodeId) == input.baseline.nodeIdToIdx.end();
             });
         changedLeakObjects = BuildChangedLeakObjects(
-            baselineLeakObjects, targetLeakObjects, topN);
+            baselineLeakObjects, targetLeakObjects, input.topN);
     }
 
     // Build icicle chart trees for both sections (same pattern as single-snapshot report):
@@ -1083,7 +1078,7 @@ json JsleakCompareAnalyzeImpl(const HeapSnapshot& baseline,
         pathDeltas, changedLeakObjects);
 
     return BuildCompareReport(
-        CompareAnalysisInput{baseline, target, baselineFile, targetFile, topN, mode},
+        input,
         CompareAnalysisResult{std::move(pathDeltas), changedLeakObjects,
             std::move(icicleCharts)});
 }
@@ -1097,8 +1092,9 @@ json JsleakCompareAnalyze(const HeapSnapshot& baseline,
     int topN,
     const std::string& mode)
 {
-    return JsleakCompareAnalyzeImpl(baseline, target, baselineFile, targetFile,
-        static_cast<size_t>(std::max(1, topN)), mode);
+    return JsleakCompareAnalyzeImpl(
+        CompareAnalysisInput{baseline, target, baselineFile, targetFile,
+            static_cast<size_t>(std::max(1, topN)), mode});
 }
 
 } // namespace mem_analyzer

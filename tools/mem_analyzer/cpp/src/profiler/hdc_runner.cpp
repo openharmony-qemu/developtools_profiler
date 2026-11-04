@@ -791,6 +791,11 @@ static void PollForStableSnapshots(const std::string& resultDir, const std::map<
     }
 }
 
+struct TransferResult {
+    std::vector<std::string>& files;
+    std::string& status;
+};
+
 /// Pull completed snapshot files into the capture's own directory.
 // Pull the completed snapshot file(s) into the capture's own directory so
 // results don't land flat in the top-level output dir (mirrors the analysis
@@ -798,7 +803,7 @@ static void PollForStableSnapshots(const std::string& resultDir, const std::map<
 static void PullCompletedSnapshots(const std::string& resultDir,
     const std::string& targetDir, const std::string& role,
     const std::map<std::string, long long>& stable,
-    std::vector<std::string>& files, std::string& status)
+    TransferResult& result)
 {
     std::error_code ecMkdir;
     fs::create_directories(PathFromUtf8(targetDir), ecMkdir);
@@ -808,17 +813,17 @@ static void PullCompletedSnapshots(const std::string& resultDir,
     if (!dir.empty() && dir.back() != '/') {
         dir += "/";
     }
-    const size_t pulledBefore = files.size();
+    const size_t pulledBefore = result.files.size();
     for (const auto& kv : stable) {
         const std::string remote = dir + kv.first;
         PullOutcome po = PullFile(remote, targetDir);
         if (po.ok) {
-            files.push_back(MarkSnapshotRole(LocalRecvPath(targetDir, remote), role));
+            result.files.push_back(MarkSnapshotRole(LocalRecvPath(targetDir, remote), role));
         } else {
             log::Loge("Snapshot file export failed: ", remote, " (exit code ", po.exitCode, ")\n", po.output);
         }
     }
-    status = files.size() > pulledBefore ? "complete" : "snapshot file export failed";
+    result.status = result.files.size() > pulledBefore ? "complete" : "snapshot file export failed";
 }
 
 void PollAndPullSnapshot(const std::string& resultDir,
@@ -837,7 +842,8 @@ void PollAndPullSnapshot(const std::string& resultDir,
         return;
     }
 
-    PullCompletedSnapshots(resultDir, targetDir, role, stable, files, status);
+    TransferResult transfer{files, status};
+    PullCompletedSnapshots(resultDir, targetDir, role, stable, transfer);
 }
 
 // ── Automated app launch / fresh-restart via the `aa` tool ─────────────
@@ -2535,7 +2541,7 @@ struct SnapshotExportResult {
     std::string err;
 };
 
-bool exportSnapshotOnce(const HdcRunOptions& opts,
+bool ExportSnapshotOnce(const HdcRunOptions& opts,
     const std::string& command,
     const std::string& role,
     SnapshotExportResult& result)
@@ -2591,7 +2597,7 @@ static bool ExportStartSnapshot(const HdcRunOptions& opts, const std::string& co
     SnapshotExportResult snap;
     // ── start-of-session snapshot ──────────────────────────
     log::Logi("Exporting the start-of-session snapshot...");
-    if (!exportSnapshotOnce(opts, command, "start", snap)) {
+    if (!ExportSnapshotOnce(opts, command, "start", snap)) {
         result.ok = false;
         result.error = snap.err.empty() ? snap.status : snap.err;
         result.snapshotStatus = snap.status.empty() ? snap.err : snap.status;
@@ -2636,7 +2642,7 @@ static void ExportEndSnapshot(const HdcRunOptions& opts, const std::string& comm
     }
     log::Logi("Exporting the end-of-session snapshot...");
     SnapshotExportResult snap;
-    if (exportSnapshotOnce(opts, command, "end", snap)) {
+    if (ExportSnapshotOnce(opts, command, "end", snap)) {
         transcript += snap.output;
         endFiles = std::move(snap.files);
         log::Logok("Snapshot exported: ", endFiles.front(), " (end)");
@@ -2664,7 +2670,7 @@ static void TryExportPeakSnapshot(const HdcRunOptions& opts, const std::string& 
     // even if the export itself fails.
     arktsPeakKb = metrics.arktsHeapKb;
     SnapshotExportResult snap;
-    if (exportSnapshotOnce(opts, command, "peak", snap)) {
+    if (ExportSnapshotOnce(opts, command, "peak", snap)) {
         // Only one peak snapshot is kept: the new export is
         // complete, so the previous one can be dropped now.
         RemoveSnapshotArtifacts(peakFiles);
@@ -2677,9 +2683,14 @@ static void TryExportPeakSnapshot(const HdcRunOptions& opts, const std::string& 
     samplesAbovePeak = 0;
 }
 
+struct MonitoringResult {
+    std::vector<std::string>& peakFiles;
+    std::string& transcript;
+};
+
 static void RunSnapshotMonitoringLoop(const HdcRunOptions& opts, const std::string& command,
     ClockType::time_point start, const std::string& initialPid,
-    std::vector<std::string>& peakFiles, std::string& transcript)
+    MonitoringResult& result)
 {
     // The recorded peak (the "previous max" the trigger compares against) is
     // seeded from the first valid sample of the monitoring loop below, i.e.
@@ -2747,7 +2758,7 @@ static void RunSnapshotMonitoringLoop(const HdcRunOptions& opts, const std::stri
         }
 
         TryExportPeakSnapshot(opts, command, metrics, arktsPeakKb, samplesAbovePeak,
-            peakSeeded, peakFiles, transcript);
+            peakSeeded, result.peakFiles, result.transcript);
 
         // Also wake up when the device is lost, so the check above runs at the
         // next tick instead of sleeping out the remaining interval (pinned target).
@@ -2791,7 +2802,8 @@ void RunContinuousSnapshot(const HdcRunOptions& opts,
         return;
     }
 
-    RunSnapshotMonitoringLoop(opts, command, start, pre.initialPid, peakFiles, transcript);
+    MonitoringResult monitor{peakFiles, transcript};
+    RunSnapshotMonitoringLoop(opts, command, start, pre.initialPid, monitor);
 
     ExportEndSnapshot(opts, command, result, endFiles, transcript);
 

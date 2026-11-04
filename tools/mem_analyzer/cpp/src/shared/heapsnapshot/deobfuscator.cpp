@@ -577,13 +577,18 @@ static bool ParseStringsArray(std::ifstream& in, size_t openBracket, size_t clos
     return true;
 }
 
+struct FileByteRange {
+    size_t openBracket;
+    size_t closeBracket;
+    size_t fileSize;
+};
+
 /**
  * Write deobfuscated output: header + new strings + tail.
  * Step 7: write output file.
  */
 static bool WriteDeobfuscatedOutput(std::ifstream& in, const std::string& outputPath,
-    size_t openBracket, size_t closeBracket, size_t fileSize,
-    const std::string& newArr)
+    const FileByteRange& range, const std::string& newArr)
 {
     // 7. 写出输出文件：[0, open_bracket) + 新 strings 数组 + (close_bracket, end)
     std::ofstream out(mem_analyzer::PathFromUtf8(outputPath), std::ios::binary);
@@ -591,7 +596,7 @@ static bool WriteDeobfuscatedOutput(std::ifstream& in, const std::string& output
         log::Loge("Error: Failed to open output file for writing: ", outputPath);
         return false;
     }
-    if (!CopyByteRange(in, out, 0, openBracket)) {
+    if (!CopyByteRange(in, out, 0, range.openBracket)) {
         log::Loge("Error: Failed to copy snapshot header to output: ", outputPath);
         return false;
     }
@@ -600,7 +605,7 @@ static bool WriteDeobfuscatedOutput(std::ifstream& in, const std::string& output
         log::Loge("Error: Failed to write deobfuscated strings to output: ", outputPath);
         return false;
     }
-    if (!CopyByteRange(in, out, closeBracket + 1, fileSize)) {
+    if (!CopyByteRange(in, out, range.closeBracket + 1, range.fileSize)) {
         log::Loge("Error: Failed to copy snapshot tail to output: ", outputPath);
         return false;
     }
@@ -681,7 +686,8 @@ bool DeobfuscateHeapsnapshot(const std::string& inputPath, const std::string& ou
 
     // 6. 重新序列化 strings 数组（紧凑格式）
     std::string newArr = stringsArr.dump();
-    if (!WriteDeobfuscatedOutput(in, outputPath, openBracket, closeBracket, fileSize, newArr)) {
+    FileByteRange range{openBracket, closeBracket, fileSize};
+    if (!WriteDeobfuscatedOutput(in, outputPath, range, newArr)) {
         return false;
     }
 

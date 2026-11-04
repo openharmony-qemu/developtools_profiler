@@ -493,13 +493,21 @@ std::string BuildPropertyTagTabHtmlImpl(const json& propertyTagObjects, const st
     return content;
 }
 
+struct TabDisplayConfig {
+    std::string prefix;
+    std::string tabId;
+    bool active;
+    bool searchOnOverview;
+};
+
 std::string BuildTopChainTabHtmlImpl(const json& topRefChains,
-    const std::string& prefix,
-    const std::string& tabId,
-    bool active,
-    json& icicleCharts,
-    bool searchOnOverview)
+    const TabDisplayConfig& config,
+    json& icicleCharts)
 {
+    const std::string& prefix = config.prefix;
+    const std::string& tabId = config.tabId;
+    const bool active = config.active;
+    const bool searchOnOverview = config.searchOnOverview;
     std::string tableRows;
     std::string detailSections;
     std::string emptyMsg;
@@ -572,7 +580,8 @@ std::string BuildTopChainTabHtml(const json& chains, const std::string& prefix,
     const std::string& tabId, bool active,
     json& icicleCharts, bool searchOnOverview)
 {
-    return BuildTopChainTabHtmlImpl(chains, prefix, tabId, active, icicleCharts, searchOnOverview);
+    TabDisplayConfig config{prefix, tabId, active, searchOnOverview};
+    return BuildTopChainTabHtmlImpl(chains, config, icicleCharts);
 }
 
 } // namespace mem_analyzer

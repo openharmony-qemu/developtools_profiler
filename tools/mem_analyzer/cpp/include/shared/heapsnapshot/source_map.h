@@ -31,6 +31,12 @@ struct SourceMapEntry {
     std::string mappings;            // source map v3 "mappings" 原始串（用于行号还原）
 };
 
+struct ResolvedPosition {
+    int& originalLine;
+    int& originalColumn;
+    int* outSourceIndex;
+};
+
 /**
  * sourceMap 索引：加载工程编译产物归档目录（sourceMaps.map 及 *.map）并建立
  * 混淆 key → 源码信息 的反查索引，供 heapsnapshot 反混淆使用。
@@ -95,8 +101,7 @@ public:
      * 非空且命中段含 sourceIndex，同时填充其指向 sources 数组的索引。
      */
     bool ResolveOriginalPosition(const std::string& mappings, int generatedLine,
-        int generatedColumn, int& originalLine,
-        int& originalColumn, int* outSourceIndex = nullptr) const;
+        int generatedColumn, ResolvedPosition& out) const;
 
 private:
     /**

@@ -300,8 +300,7 @@ static bool FindFallbackPosition(const SourceMapIndex::DecodedMappings& decoded,
 }
 
 bool SourceMapIndex::ResolveOriginalPosition(const std::string& mappings, int generatedLine,
-    int generatedColumn, int& originalLine,
-    int& originalColumn, int* outSourceIndex) const
+    int generatedColumn, ResolvedPosition& out) const
 {
     if (generatedLine < 1 || mappings.empty()) {
         return false;
@@ -333,12 +332,12 @@ bool SourceMapIndex::ResolveOriginalPosition(const std::string& mappings, int ge
     }
     // 目标行无覆盖段：向前回退到最近一个有映射的行，取该行最末覆盖段
     if (best == nullptr) {
-        return FindFallbackPosition(decoded, line - 1, originalLine, originalColumn, outSourceIndex);
+        return FindFallbackPosition(decoded, line - 1, out.originalLine, out.originalColumn, out.outSourceIndex);
     }
 
-    AssignBestPosition(*best, originalLine, originalColumn);
-    if (outSourceIndex != nullptr) { // sourceIndex
-        *outSourceIndex = (*best)[1];
+    AssignBestPosition(*best, out.originalLine, out.originalColumn);
+    if (out.outSourceIndex != nullptr) { // sourceIndex
+        *out.outSourceIndex = (*best)[1];
     }
     return true;
 }
