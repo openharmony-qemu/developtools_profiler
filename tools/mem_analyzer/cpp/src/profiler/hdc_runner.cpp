@@ -1985,7 +1985,7 @@ void PrintMetricsLine(const ProcessMetrics& metrics)
 // The thread outlives this function, so it captures output_dir / smaps_prefix
 // / pid by value; it only references `result` (alive until the caller joins
 // the thread) and the heap-allocated `state`.
-void maybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
+void MaybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
     const std::string& outputDir,
     const std::string& smapsPrefix,
     bool requireFreshStart,
@@ -2178,7 +2178,7 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
                 PrintCountdownStatus(++roundNo, remain, pid, running, state);
             }
             if (!freshStartWarning && running) {
-                maybeStartSnapshotExport(state, opts.outputDir, opts.smapsPrefix, opts.requireFreshStart, pid,
+                MaybeStartSnapshotExport(state, opts.outputDir, opts.smapsPrefix, opts.requireFreshStart, pid,
                     startExported, startExportThread, result);
             }
         }
