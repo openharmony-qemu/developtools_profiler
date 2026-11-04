@@ -185,7 +185,7 @@ void OpenHtraceContext(HtraceParseContext& ctx, const std::string& dbPath, Stage
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             VerifyDataDictColumnType(stmt, typeChecked);
             int id = sqlite3_column_int(stmt, 0);
-            auto data = (const char*)sqlite3_column_text(stmt, 1);
+            auto data = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
             if (data) {
                 ctx.dataDict[id] = platform::SanitizeUtf8(data);
             }
@@ -246,7 +246,7 @@ void LoadStatisticStacks(HtraceParseContext& ctx,
             }
             long long totalSize = sqlite3_column_int64(stmt, 4);
             long long totalCount = sqlite3_column_int64(stmt, 5);
-            auto addrsStr = (const char*)sqlite3_column_text(stmt, 6);
+            auto addrsStr = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
             statisticGroups.emplace_back(ccid, typeVal, maxTs, subTypeId, totalSize, totalCount,
                 addrsStr ? addrsStr : "");
     }
@@ -344,7 +344,7 @@ void QueryAndAggregateAllocs(sqlite3* db, const std::string& sql,
     }
     StmtGuard guard(stmt);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        auto eventTypeStr = (const char*)sqlite3_column_text(stmt, 0);
+        auto eventTypeStr = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
         if (!eventTypeStr) {
             continue;
         }

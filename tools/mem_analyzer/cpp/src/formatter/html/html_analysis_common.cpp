@@ -408,8 +408,8 @@ std::string BuildDetailHeaderHtml(const SymbolDataEntry& entry, size_t idx,
         s.value("lib", ""),
         s.value("libOffset", "")
     );
-    long long existingSize = s.value("existingSize", (long long)0);
-    long long existingCount = s.value("existingCount", (long long)0);
+    long long existingSize = s.value("existingSize", static_cast<long long>(0));
+    long long existingCount = s.value("existingCount", static_cast<long long>(0));
     double percentage = s.value("percentage", 0.0);
     int rank = s.value("rank", static_cast<int>(idx + 1));
 

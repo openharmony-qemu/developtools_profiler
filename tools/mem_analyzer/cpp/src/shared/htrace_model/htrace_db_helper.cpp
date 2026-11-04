@@ -247,7 +247,7 @@ std::unordered_map<int, std::vector<std::string>> ReadCallchainAddrs(sqlite3* db
     StmtGuard guard(stmt);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int ccid = sqlite3_column_int(stmt, 0);
-        auto addrStr = (const char*)sqlite3_column_text(stmt, 1);
+        auto addrStr = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
         if (addrStr) {
             result[ccid].push_back(addrStr);
         }

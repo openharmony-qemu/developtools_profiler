@@ -790,8 +790,7 @@ static void ResolveTopSymbolMeta(const SymbolData& s,
     // Resolve lib_offset from stored vaddr
     if (!s.vaddrNull) {
         char buf[HEX_BUF_SIZE];
-        int ret = snprintf(buf, sizeof(buf), "0x%llx",
-                           static_cast<unsigned long long>(s.vaddr));
+        int ret = snprintf(buf, sizeof(buf), "0x%llx", static_cast<unsigned long long>(s.vaddr));
         if (ret < 0) {
             buf[0] = '\0';
         }

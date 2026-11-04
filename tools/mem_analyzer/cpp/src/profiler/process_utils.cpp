@@ -463,6 +463,7 @@ void ReadUnboundedPosix(const SpawnedProc& sp, CapturedCmd& cap)
         output.append(buf, static_cast<size_t>(n));
     }
     close(sp.readFd);
+    sp.readFd = -1;
     int st = 0;
     waitpid(sp.pid, &st, 0);
     cap.output = std::move(output);
@@ -509,7 +510,7 @@ void ReadBoundedPosix(const SpawnedProc& sp, long long timeoutMs, CapturedCmd& c
         }
     }
     close(sp.readFd);
-
+    sp.readFd = -1;
     if (timedOut) {
         KillChildPosix(sp.pid, cap);
     } else {
