@@ -2528,42 +2528,46 @@ constexpr long long SNAPSHOT_POLL_TIMEOUT_S = 120;
 // `err` is set on a fatal failure (permission / command failure); `status`
 // always carries a human-readable outcome and `output` the device-side command
 // transcript.
+struct SnapshotExportResult {
+    std::vector<std::string> files;
+    std::string status;
+    std::string output;
+    std::string err;
+};
+
 bool exportSnapshotOnce(const HdcRunOptions& opts,
     const std::string& command,
     const std::string& role,
-    std::vector<std::string>& files,
-    std::string& status,
-    std::string& output,
-    std::string& err)
+    SnapshotExportResult& result)
 {
-    files.clear();
-    status.clear();
-    err.clear();
+    result.files.clear();
+    result.status.clear();
+    result.err.clear();
     // Re-baseline right before the command so this call only picks up the
     // file(s) its own command generates.
     const auto baseline = ListDirFileSizes(opts.resultDir, "hidumper-jsheap");
     CapturedCmd cap = CaptureCommand(command, SNAPSHOT_COMMAND_TIMEOUT_MS);
-    output = cap.output;
+    result.output = cap.output;
     const std::string perr = DetectPermissionError(cap.output);
     if (!perr.empty()) {
-        status = "permission check failed: " + perr;
-        err = "permission check failed: the target app cannot be tuned on this "
+        result.status = "permission check failed: " + perr;
+        result.err = "permission check failed: the target app cannot be tuned on this "
               "device (release-signed app on a non-root phone)";
         return false;
     }
     if (cap.timedOut) {
-        err = "snapshot export command timed out";
-        status = err;
+        result.err = "snapshot export command timed out";
+        result.status = result.err;
         return false;
     }
     if (cap.exitCode != 0) {
-        err = "snapshot export command failed (exit code " + std::to_string(cap.exitCode) + ")";
-        status = err;
+        result.err = "snapshot export command failed (exit code " + std::to_string(cap.exitCode) + ")";
+        result.status = result.err;
         return false;
     }
     PollAndPullSnapshot(opts.resultDir, opts.outputDir, baseline,
-        SNAPSHOT_POLL_TIMEOUT_S, files, status, role);
-    return !files.empty();
+        SNAPSHOT_POLL_TIMEOUT_S, result.files, result.status, role);
+    return !result.files.empty();
 }
 
 // Delete a snapshot's local artifacts. Used to keep only one peak snapshot on
@@ -2584,19 +2588,18 @@ void RemoveSnapshotArtifacts(const std::vector<std::string>& files)
 static bool ExportStartSnapshot(const HdcRunOptions& opts, const std::string& command,
     RunResult& result, std::vector<std::string>& startFiles, std::string& transcript)
 {
-    std::string status;
-    std::string output;
-    std::string err;
+    SnapshotExportResult snap;
     // ── start-of-session snapshot ──────────────────────────
     log::Logi("Exporting the start-of-session snapshot...");
-    if (!exportSnapshotOnce(opts, command, "start", startFiles, status, output, err)) {
+    if (!exportSnapshotOnce(opts, command, "start", snap)) {
         result.ok = false;
-        result.error = err.empty() ? status : err;
-        result.snapshotStatus = status.empty() ? err : status;
-        result.output = output;
+        result.error = snap.err.empty() ? snap.status : snap.err;
+        result.snapshotStatus = snap.status.empty() ? snap.err : snap.status;
+        result.output = snap.output;
         return false;
     }
-    transcript += output;
+    transcript += snap.output;
+    startFiles = std::move(snap.files);
     log::Logok("Snapshot exported: ", startFiles.front(), " (start)");
     return true;
 }
@@ -2632,15 +2635,14 @@ static void ExportEndSnapshot(const HdcRunOptions& opts, const std::string& comm
         return;
     }
     log::Logi("Exporting the end-of-session snapshot...");
-    std::string status;
-    std::string output;
-    std::string err;
-    if (exportSnapshotOnce(opts, command, "end", endFiles, status, output, err)) {
-        transcript += output;
+    SnapshotExportResult snap;
+    if (exportSnapshotOnce(opts, command, "end", snap)) {
+        transcript += snap.output;
+        endFiles = std::move(snap.files);
         log::Logok("Snapshot exported: ", endFiles.front(), " (end)");
         result.snapshotStatus = "complete";
     } else {
-        const std::string reason = err.empty() ? status : err;
+        const std::string reason = snap.err.empty() ? snap.status : snap.err;
         log::Logw("Warning: end-of-session snapshot export failed: ", reason);
         result.snapshotStatus = "complete (end-of-session snapshot failed: " + reason + ")";
     }
@@ -2661,20 +2663,16 @@ static void TryExportPeakSnapshot(const HdcRunOptions& opts, const std::string& 
     // that later samples are compared against this new value
     // even if the export itself fails.
     arktsPeakKb = metrics.arktsHeapKb;
-    std::vector<std::string> newPeak;
-    std::string peakStatus;
-    std::string peakOutput;
-    std::string peakErr;
-    if (exportSnapshotOnce(opts, command, "peak", newPeak, peakStatus,
-        peakOutput, peakErr)) {
+    SnapshotExportResult snap;
+    if (exportSnapshotOnce(opts, command, "peak", snap)) {
         // Only one peak snapshot is kept: the new export is
         // complete, so the previous one can be dropped now.
         RemoveSnapshotArtifacts(peakFiles);
-        peakFiles = newPeak;
-        transcript += peakOutput;
+        peakFiles = std::move(snap.files);
+        transcript += snap.output;
         log::Logok("Snapshot exported: ", peakFiles.front(), " (peak)");
     } else {
-        log::Logw("Warning: snapshot export failed: ", (peakErr.empty() ? peakStatus : peakErr));
+        log::Logw("Warning: snapshot export failed: ", (snap.err.empty() ? snap.status : snap.err));
     }
     samplesAbovePeak = 0;
 }

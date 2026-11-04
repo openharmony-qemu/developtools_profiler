@@ -460,7 +460,8 @@ FillTreeCallback BuildStreamFillTree(const std::vector<StreamGroupMeta>& streamM
                 ids[k] = static_cast<int>(k);
             }
             FlameNode merged = BuildMergedIcicle(fp.callStacks, ids, full.dataDict);
-            entry.icicleTree = BuildIcicleTreeJsonFromFlameNode(merged, fp.filename, "", "", full.dataDict, st);
+            entry.icicleTree = BuildIcicleTreeJsonFromFlameNode(
+                merged, RootSymbolInfo{fp.filename, "", ""}, full.dataDict, st);
             entry.names = st.ToArray();
             return;
         }
@@ -475,12 +476,13 @@ FillTreeCallback BuildStreamFillTree(const std::vector<StreamGroupMeta>& streamM
             bool isOther = (ts.symbol == OTHER_SYMBOL);
             if (isOther) {
                 entry.icicleTree = BuildIcicleTreeJsonFromFlameNode(
-                    ts.icicleGraph, OTHER_SYMBOL, lib, std::string(), full.dataDict, st);
+                    ts.icicleGraph, RootSymbolInfo{OTHER_SYMBOL, lib, std::string()},
+                    full.dataDict, st);
             } else {
-                entry.flameTree = BuildFlameTreeJsonFromFlameNode(ts.flameGraph, ts.symbol, lib,
-                    ts.libOffset, full.dataDict, st);
-                entry.icicleTree = BuildIcicleTreeJsonFromFlameNode(ts.icicleGraph, ts.symbol, lib,
-                    ts.libOffset, full.dataDict, st);
+                entry.flameTree = BuildFlameTreeJsonFromFlameNode(ts.flameGraph,
+                    RootSymbolInfo{ts.symbol, lib, ts.libOffset}, full.dataDict, st);
+                entry.icicleTree = BuildIcicleTreeJsonFromFlameNode(ts.icicleGraph,
+                    RootSymbolInfo{ts.symbol, lib, ts.libOffset}, full.dataDict, st);
             }
             entry.names = st.ToArray();
         }
@@ -551,8 +553,8 @@ void FormatWithStream(std::ostream& out, const HtraceAnalysisOutput& full,
     FillTreeCallback fillTree = BuildStreamFillTree(streamMeta, full);
 
     std::vector<TabGroup>& streamTarget = multipart ? streamGroups : groups;
-    AnalysisHtmlFormatterBase::FillHTMLTemplateStreamedDirect(out, streamTarget, preamble.totalExistingSize, tabBarHTML,
-        tabContentHTML, metaDataItemsHTML, title, fillTree, countMode);
+    AnalysisHtmlFormatterBase::FillHTMLTemplateStreamedDirect(out, streamTarget, preamble.totalExistingSize,
+        {tabBarHTML, tabContentHTML, metaDataItemsHTML, title}, fillTree, countMode);
 
     timer.Tick("total");
 }

@@ -454,7 +454,7 @@ void KillChildPosix(pid_t pid, CapturedCmd& cap)
     cap.exitCode = -1;
 }
 
-void ReadUnboundedPosix(const SpawnedProc& sp, CapturedCmd& cap)
+void ReadUnboundedPosix(SpawnedProc& sp, CapturedCmd& cap)
 {
     std::string output;
     char buf[4096];
@@ -471,7 +471,7 @@ void ReadUnboundedPosix(const SpawnedProc& sp, CapturedCmd& cap)
 }
 
 // Bounded read: poll for readability until EOF or the deadline passes.
-void ReadBoundedPosix(const SpawnedProc& sp, long long timeoutMs, CapturedCmd& cap)
+void ReadBoundedPosix(SpawnedProc& sp, long long timeoutMs, CapturedCmd& cap)
 {
     std::string output;
     char buf[4096];

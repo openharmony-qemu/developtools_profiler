@@ -29,20 +29,24 @@
 
 namespace mem_analyzer {
 
+struct RootSymbolInfo {
+    std::string name;
+    std::string lib;
+    std::string libOffset;
+};
+
 /**
  * 从 FlameNode 直接构建火焰图 JSON 树（跳过 to_json → buildFlameTreeJson 的中间步骤）。
  * 根节点使用 TopSymbolInfo 的符号信息（FlameNode 根节点是合成节点，symbol_id/file_id 为空）。
  */
-json BuildFlameTreeJsonFromFlameNode(const FlameNode& node, const std::string& rootName,
-    const std::string& rootLib, const std::string& rootLibOffset,
+json BuildFlameTreeJsonFromFlameNode(const FlameNode& node, const RootSymbolInfo& rootSym,
     const std::unordered_map<int, std::string>& dataDict,
     htmlAnalysis::StringTable& st);
 
 /**
  * 从 FlameNode 直接构建冰柱图 JSON 树（跳过中间 JSON）。
  */
-json BuildIcicleTreeJsonFromFlameNode(const FlameNode& node, const std::string& rootName,
-    const std::string& rootLib, const std::string& rootLibOffset,
+json BuildIcicleTreeJsonFromFlameNode(const FlameNode& node, const RootSymbolInfo& rootSym,
     const std::unordered_map<int, std::string>& dataDict,
     htmlAnalysis::StringTable& st);
 

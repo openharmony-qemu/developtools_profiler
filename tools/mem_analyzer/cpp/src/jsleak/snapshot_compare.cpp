@@ -986,14 +986,27 @@ static json BuildCompareMethodology()
     };
 }
 
-static json BuildCompareReport(const std::string& mode,
-    const std::string& baselineFile, const std::string& targetFile,
-    const HeapSnapshot& baseline, const HeapSnapshot& target,
-    json pathDeltas, const json& changedLeakObjects, json icicleCharts, size_t topN)
+struct CompareAnalysisInput {
+    const HeapSnapshot& baseline;
+    const HeapSnapshot& target;
+    const std::string& baselineFile;
+    const std::string& targetFile;
+    size_t topN = 0;
+    const std::string& mode;
+};
+
+struct CompareAnalysisResult {
+    json pathDeltas;
+    json changedLeakObjects;
+    json icicleCharts;
+};
+
+static json BuildCompareReport(const CompareAnalysisInput& input,
+    const CompareAnalysisResult& result)
 {
     const std::string interpretation =
-        mode == "property-tag" ? "difference-with-property-tag-leak-analysis" :
-        mode == "top-chain"  ? "difference-with-shortest-reference-chain-analysis" :
+        input.mode == "property-tag" ? "difference-with-property-tag-leak-analysis" :
+        input.mode == "top-chain"  ? "difference-with-shortest-reference-chain-analysis" :
                                "difference-with-changed-object-leak-analysis";
     return {
         {"schemaVersion", 6},
@@ -1003,20 +1016,20 @@ static json BuildCompareReport(const std::string& mode,
                 std::chrono::system_clock::now().time_since_epoch()).count())},
         {"duration", "未知（快照对比不采集运行时长）"},
         {"process", "未知（快照文件不含进程信息）"},
-        {"mode", mode},
-        {"inputFormat", SnapshotInputFormat(baselineFile)},
-        {"analysisType", SnapshotInputFormat(baselineFile) + " comparison"},
+        {"mode", input.mode},
+        {"inputFormat", SnapshotInputFormat(input.baselineFile)},
+        {"analysisType", SnapshotInputFormat(input.baselineFile) + " comparison"},
         {"interpretation", interpretation},
-        {"baseline", {{"role", "baseline/control"}, {"file", platform::Basename(baselineFile)},
-                       {"heapSize", HeapSizeOf(baseline)}}},
-        {"target", {{"role", "target/treatment"}, {"file", platform::Basename(targetFile)},
-                     {"heapSize", HeapSizeOf(target)}}},
-        {"summary", {{"deltaHeapSize", static_cast<int64_t>(HeapSizeOf(target)) -
-                                        static_cast<int64_t>(HeapSizeOf(baseline))}}},
-        {"pathDeltas", std::move(pathDeltas)},
-        {"leakObjInfo", changedLeakObjects},
-        {"icicleCharts", std::move(icicleCharts)},
-        {"limits", {{"topNPerDirection", topN}}},
+        {"baseline", {{"role", "baseline/control"}, {"file", platform::Basename(input.baselineFile)},
+                       {"heapSize", HeapSizeOf(input.baseline)}}},
+        {"target", {{"role", "target/treatment"}, {"file", platform::Basename(input.targetFile)},
+                     {"heapSize", HeapSizeOf(input.target)}}},
+        {"summary", {{"deltaHeapSize", static_cast<int64_t>(HeapSizeOf(input.target)) -
+                                        static_cast<int64_t>(HeapSizeOf(input.baseline))}}},
+        {"pathDeltas", result.pathDeltas},
+        {"leakObjInfo", result.changedLeakObjects},
+        {"icicleCharts", result.icicleCharts},
+        {"limits", {{"topNPerDirection", input.topN}}},
         {"methodology", BuildCompareMethodology()}
     };
 }
@@ -1069,9 +1082,10 @@ json JsleakCompareAnalyzeImpl(const HeapSnapshot& baseline,
     json icicleCharts = BuildCompareIcicleCharts(wantChains, wantLeaks,
         pathDeltas, changedLeakObjects);
 
-    return BuildCompareReport(mode, baselineFile, targetFile,
-        baseline, target, std::move(pathDeltas), changedLeakObjects,
-        std::move(icicleCharts), topN);
+    return BuildCompareReport(
+        CompareAnalysisInput{baseline, target, baselineFile, targetFile, topN, mode},
+        CompareAnalysisResult{std::move(pathDeltas), changedLeakObjects,
+            std::move(icicleCharts)});
 }
 
 } // namespace

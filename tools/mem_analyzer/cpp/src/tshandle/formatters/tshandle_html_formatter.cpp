@@ -366,9 +366,10 @@ void FormatWithStream(std::ostream& out, const TshandleAnalysisOutput& analysis,
 
     std::ostringstream page;
     AnalysisHtmlFormatterBase::FillHTMLTemplateStreamed(
-        page, allData, totalForTemplate, BuildTabBar(sections), BuildTabContent(sections),
-        BuildMetaHtml(filePath, analysis.parsedAt, analysis.traceMeta, analysis.global, analysis.local),
-            EscapeHtml(title));
+        page, allData, totalForTemplate,
+        {BuildTabBar(sections), BuildTabContent(sections),
+         BuildMetaHtml(filePath, analysis.parsedAt, analysis.traceMeta, analysis.global, analysis.local),
+         EscapeHtml(title)});
     std::string html = page.str();
 
     html = ReplaceAll(html,

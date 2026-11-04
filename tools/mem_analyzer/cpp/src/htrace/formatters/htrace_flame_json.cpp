@@ -65,16 +65,16 @@ static json BuildFlameTreeNodeFromFlameNode(const FlameNode& node,
 }
 
 json BuildFlameTreeJsonFromFlameNode(const FlameNode& node,
-    const std::string& rootName, const std::string& rootLib, const std::string& rootLibOffset,
+    const RootSymbolInfo& rootSym,
     const std::unordered_map<int, std::string>& dataDict, StringTable& st)
 {
     // 根节点使用TopSymbolInfo的符号信息（FlameNode根节点是合成节点，symbol_id/file_id为空）
     json j;
-    j["n"] = st.Intern(FormatFuncName(rootName, rootLib, rootLibOffset));
+    j["n"] = st.Intern(FormatFuncName(rootSym.name, rootSym.lib, rootSym.libOffset));
     j["t"] = node.leakSize;
     j["d"] = 0;
     j["cnt"] = node.existingCount;
-    j["ts"] = HtraceConfigMgr::Instance().IsTsSymbol(rootLib, rootLibOffset.empty());
+    j["ts"] = HtraceConfigMgr::Instance().IsTsSymbol(rootSym.lib, rootSym.libOffset.empty());
 
     long long childrenTotal = 0;
     json childrenArr = json::array();
@@ -120,16 +120,16 @@ static json BuildIcicleTreeNodeFromFlameNode(const FlameNode& node,
 }
 
 json BuildIcicleTreeJsonFromFlameNode(const FlameNode& node,
-    const std::string& rootName, const std::string& rootLib, const std::string& rootLibOffset,
+    const RootSymbolInfo& rootSym,
     const std::unordered_map<int, std::string>& dataDict, StringTable& st)
 {
     // 根节点使用TopSymbolInfo的符号信息
     json j;
-    j["n"] = st.Intern(FormatFuncName(rootName, rootLib, rootLibOffset));
+    j["n"] = st.Intern(FormatFuncName(rootSym.name, rootSym.lib, rootSym.libOffset));
     j["t"] = node.leakSize;
     j["d"] = 0;
     j["cnt"] = node.existingCount;
-    j["ts"] = HtraceConfigMgr::Instance().IsTsSymbol(rootLib, rootLibOffset.empty());
+    j["ts"] = HtraceConfigMgr::Instance().IsTsSymbol(rootSym.lib, rootSym.libOffset.empty());
 
     long long childrenTotal = 0;
     json childrenArr = json::array();

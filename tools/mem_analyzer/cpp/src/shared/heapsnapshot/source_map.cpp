@@ -132,30 +132,36 @@ static std::vector<int> DecodeSegmentValues(const std::string& seg)
     return raw;
 }
 
+struct VlqState {
+    int64_t generatedColumn = 0;
+    int64_t sourceIndex = 0;
+    int64_t originalLine = 0;
+    int64_t originalColumn = 0;
+    int64_t nameIndex = 0;
+};
+
 /// Accumulate relative VLQ values into absolute segment fields.
 static std::vector<int> AccumulateSegment(const std::vector<int>& raw,
-    int64_t& generatedColumn, int64_t& sourceIndex,
-    int64_t& originalLine, int64_t& originalColumn,
-    int64_t& nameIndex, int (*clamp)(int64_t))
+    VlqState& state, int (*clamp)(int64_t))
 {
     std::vector<int> segment;
-    generatedColumn += raw[0];
-    segment.push_back(clamp(generatedColumn));
+    state.generatedColumn += raw[0];
+    segment.push_back(clamp(state.generatedColumn));
     if (raw.size() > 1) {
-        sourceIndex += raw[1];
-        segment.push_back(clamp(sourceIndex));
+        state.sourceIndex += raw[1];
+        segment.push_back(clamp(state.sourceIndex));
     }
     if (raw.size() > SEG_IDX_ORIGINAL_LINE) {
-        originalLine += raw[SEG_IDX_ORIGINAL_LINE];
-        segment.push_back(clamp(originalLine));
+        state.originalLine += raw[SEG_IDX_ORIGINAL_LINE];
+        segment.push_back(clamp(state.originalLine));
     }
     if (raw.size() > SEG_IDX_ORIGINAL_COLUMN) {
-        originalColumn += raw[SEG_IDX_ORIGINAL_COLUMN];
-        segment.push_back(clamp(originalColumn));
+        state.originalColumn += raw[SEG_IDX_ORIGINAL_COLUMN];
+        segment.push_back(clamp(state.originalColumn));
     }
     if (raw.size() > SEG_IDX_NAME_INDEX) {
-        nameIndex += raw[SEG_IDX_NAME_INDEX];
-        segment.push_back(clamp(nameIndex));
+        state.nameIndex += raw[SEG_IDX_NAME_INDEX];
+        segment.push_back(clamp(state.nameIndex));
     }
     return segment;
 }
@@ -189,11 +195,7 @@ SourceMapIndex::DecodedMappings SourceMapIndex::DecodeVlqMappings(const std::str
         }
         return static_cast<int>(v);
     };
-    int64_t generatedColumn = 0;
-    int64_t sourceIndex = 0;
-    int64_t originalLine = 0;
-    int64_t originalColumn = 0;
-    int64_t nameIndex = 0;
+    VlqState state;
 
     size_t pos = 0;
     size_t line = 0;
@@ -206,8 +208,7 @@ SourceMapIndex::DecodedMappings SourceMapIndex::DecodeVlqMappings(const std::str
             auto raw = DecodeSegmentValues(mappings.substr(pos, segEnd - pos));
             if (!raw.empty()) {
                 // 将相对值累加为绝对值（64 位累加，输出时收敛到 int 范围）
-                auto segment = AccumulateSegment(raw, generatedColumn, sourceIndex,
-                    originalLine, originalColumn, nameIndex, clampInt);
+                auto segment = AccumulateSegment(raw, state, clampInt);
                 decoded[line].push_back(std::move(segment));
             }
         }
@@ -220,7 +221,7 @@ SourceMapIndex::DecodedMappings SourceMapIndex::DecodeVlqMappings(const std::str
             // 行结束：行号 +1，generatedColumn 重置
             decoded.emplace_back();
             line++;
-            generatedColumn = 0;
+            state.generatedColumn = 0;
         }
     }
     return decoded;

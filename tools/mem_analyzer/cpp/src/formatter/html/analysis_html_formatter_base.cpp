@@ -113,10 +113,7 @@ void AnalysisHtmlFormatterBase::FillHTMLTemplateStreamedDirect(
     std::ostream& out,
     std::vector<TabGroup>& groups,
     long long totalSize,
-    const std::string& tabBarHTML,
-    const std::string& tabContentHTML,
-    const std::string& metaDataItemsHTML,
-    const std::string& title,
+    const HtmlFragments& frags,
     FillTreeCallback fillTree,
     bool countMode)
 {
@@ -129,10 +126,10 @@ void AnalysisHtmlFormatterBase::FillHTMLTemplateStreamedDirect(
 
     // Replace placeholders in before part
     beforeJson = ReplaceAll(beforeJson, "__DATA_JSON__", "");
-    beforeJson = ReplaceAll(beforeJson, "__TAB_BAR_HTML__", tabBarHTML);
-    beforeJson = ReplaceAll(beforeJson, "__TAB_CONTENT_HTML__", tabContentHTML);
-    beforeJson = ReplaceAll(beforeJson, "__TITLE__", title);
-    beforeJson = ReplaceAll(beforeJson, "__META_ITEMS_HTML__", metaDataItemsHTML);
+    beforeJson = ReplaceAll(beforeJson, "__TAB_BAR_HTML__", frags.tabBarHTML);
+    beforeJson = ReplaceAll(beforeJson, "__TAB_CONTENT_HTML__", frags.tabContentHTML);
+    beforeJson = ReplaceAll(beforeJson, "__TITLE__", frags.title);
+    beforeJson = ReplaceAll(beforeJson, "__META_ITEMS_HTML__", frags.metaDataItemsHTML);
     ApplyCommonPlaceholders(beforeJson, totalSize, countMode);
     ApplyCommonPlaceholders(afterJson, totalSize, countMode);
 
@@ -166,10 +163,7 @@ void AnalysisHtmlFormatterBase::FillHTMLTemplateStreamed(
     std::ostream& out,
     const json& dataJSONArr,
     long long totalSize,
-    const std::string& tabBarHTML,
-    const std::string& tabContentHTML,
-    const std::string& metaDataItemsHTML,
-    const std::string& title,
+    const HtmlFragments& frags,
     bool countMode)
 {
     std::string html = HTML_TEMPLATE;
@@ -177,10 +171,10 @@ void AnalysisHtmlFormatterBase::FillHTMLTemplateStreamed(
     std::string beforeJson = html.substr(0, jsonPos);
     std::string afterJson = html.substr(jsonPos + DATA_JSON_PLACEHOLDER_LEN);
 
-    beforeJson = ReplaceAll(beforeJson, "__TAB_BAR_HTML__", tabBarHTML);
-    beforeJson = ReplaceAll(beforeJson, "__TAB_CONTENT_HTML__", tabContentHTML);
-    beforeJson = ReplaceAll(beforeJson, "__TITLE__", title);
-    beforeJson = ReplaceAll(beforeJson, "__META_ITEMS_HTML__", metaDataItemsHTML);
+    beforeJson = ReplaceAll(beforeJson, "__TAB_BAR_HTML__", frags.tabBarHTML);
+    beforeJson = ReplaceAll(beforeJson, "__TAB_CONTENT_HTML__", frags.tabContentHTML);
+    beforeJson = ReplaceAll(beforeJson, "__TITLE__", frags.title);
+    beforeJson = ReplaceAll(beforeJson, "__META_ITEMS_HTML__", frags.metaDataItemsHTML);
     ApplyCommonPlaceholders(beforeJson, totalSize, countMode);
     ApplyCommonPlaceholders(afterJson, totalSize, countMode);
 

@@ -41,6 +41,14 @@ struct TabGroup {
     size_t startIndex;                                  // 全局序号起始值（用于表格行号）
 };
 
+// HTML模板片段集合：Tab栏/内容区/Meta/标题，两个FillHTMLTemplate函数共用
+struct HtmlFragments {
+    std::string tabBarHTML;
+    std::string tabContentHTML;
+    std::string metaDataItemsHTML;
+    std::string title;
+};
+
 // HTML分析报告公共工具集，无状态、无多态。
 class AnalysisHtmlFormatterBase {
 public:
@@ -62,10 +70,7 @@ public:
         std::ostream& out,
         std::vector<TabGroup>& groups,
         long long totalSize,
-        const std::string& tabBarHTML,
-        const std::string& tabContentHTML,
-        const std::string& metaDataItemsHTML,
-        const std::string& title,
+        const HtmlFragments& frags,
         FillTreeCallback fillTree = nullptr,
         bool countMode = false);
 
@@ -75,10 +80,7 @@ public:
         std::ostream& out,
         const json& dataJSONArr,
         long long totalSize,
-        const std::string& tabBarHTML,
-        const std::string& tabContentHTML,
-        const std::string& metaDataItemsHTML,
-        const std::string& title,
+        const HtmlFragments& frags,
         bool countMode = false);
 
     // 模板中与具体数据无关的公共占位符（共享图表模块 CSS/JS、导航栏、页脚版本、全局开关）
