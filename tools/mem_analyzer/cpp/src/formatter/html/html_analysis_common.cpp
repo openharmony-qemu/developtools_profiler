@@ -144,7 +144,7 @@ std::string FormatSizeText(double val, bool countMode)
 {
     if (countMode) {
         // fd/thread 等类型的“大小”实际是个数，直接显示整数
-        return std::to_string(static_cast<long long>(std::llround(val)));
+        return std::to_string((long long)(std::llround(val)));
     }
     return FormatBytes(val);
 }
@@ -177,7 +177,7 @@ std::string FormatDuration(const std::string& durationStr)
         return oss.str();
     }
     std::ostringstream oss;
-    oss << static_cast<long long>(d * 1e9) << "ns";
+    oss << (long long)(d * 1e9) << "ns";
     return oss.str();
 }
 
@@ -237,7 +237,7 @@ json BuildSymbolDataEntryJSON(SymbolDataEntry& entry)
             framesArr.push_back(f);
         }
         ChainJson["frames"] = framesArr;
-        ChainJson["size"] = (long long)chain.size;
+        ChainJson["size"] = static_cast<long long>(chain.size);
         chainsArr.push_back(ChainJson);
     }
     j["callChains"] = chainsArr;
@@ -369,8 +369,8 @@ std::string BuildTopTableRows(const std::vector<SymbolDataEntry>& symbols, size_
         std::string shortFuncName = FormatShortFuncName(sym, lib, libOffset);
         std::string fullFuncName = FormatFuncName(sym, lib, libOffset);
         std::string libDisplay = GetLibForDisplay(lib, sym);
-        long long existingSize = s.value("existingSize", (long long)0);
-        long long existingCount = s.value("existingCount", (long long)0);
+        long long existingSize = s.value("existingSize", static_cast<long long>(0));
+        long long existingCount = s.value("existingCount", static_cast<long long>(0));
         double percentage = s.value("percentage", 0.0);
         std::ostringstream pctSS;
         pctSS << percentage;

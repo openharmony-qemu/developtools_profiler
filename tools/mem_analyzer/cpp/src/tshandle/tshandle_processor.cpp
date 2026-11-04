@@ -65,7 +65,7 @@ static std::unordered_map<int, std::string> LoadDataDict(sqlite3* db)
         StmtGuard guard(stmt);
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             int id = sqlite3_column_int(stmt, 0);
-            auto data = (const char*)sqlite3_column_text(stmt, 1);
+            auto data = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
             if (data) {
                 dataDict[id] = platform::SanitizeUtf8(data);
             }
@@ -100,7 +100,7 @@ static void QueryStatisticGroups(sqlite3* db, std::vector<ChainGroup>& groups)
             ChainGroup g;
             g.callchainId = sqlite3_column_int(stmt, 0);
             g.type = sqlite3_column_int(stmt, 1);
-            auto existingAddrsStr = (const char*)sqlite3_column_text(stmt, 2);
+            auto existingAddrsStr = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
             if (existingAddrsStr) {
                 g.existingAddrs = split(existingAddrsStr, ',');
             }
@@ -137,7 +137,7 @@ static void QueryDetailGroups(sqlite3* db, std::vector<ChainGroup>& groups)
             ChainGroup g;
             g.callchainId = sqlite3_column_int(stmt, 0);
             g.type = sqlite3_column_int(stmt, 1);
-            auto existingAddrsStr = (const char*)sqlite3_column_text(stmt, 2);
+            auto existingAddrsStr = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
             g.existingAddrs = existingAddrsStr ? split(existingAddrsStr, ',') : std::vector<std::string>{};
             g.existingSize = sqlite3_column_int64(stmt, COL_EXISTING_SIZE);
             groups.push_back(g);

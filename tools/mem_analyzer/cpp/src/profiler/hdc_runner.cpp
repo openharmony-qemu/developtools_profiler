@@ -575,7 +575,7 @@ long long ParseHiprofilerDataTs(const std::string& filename)
 // (extracted from the filename) is the actual time when hiprofiler generated
 // the zip on the device, so it is a reliable indicator that hiprofiler has
 // finished writing the file.
-std::map<std::string, long long> listHiprofilerZips(const std::string& dir)
+std::map<std::string, long long> ListHiprofilerZips(const std::string& dir)
 {
     std::map<std::string, long long> result;
     std::string cmd = HdcShell("ls " + proc::ShellQuoteDevice(dir)) + " 2>&1";
@@ -693,7 +693,7 @@ static void ParseLsLineSize(const std::string& line,
 // A '-' in the first field after `size` signals the ISO form; otherwise the
 // traditional 3-field form follows. Only the 5 leading fields (perm, links,
 // owner, group, size) are structurally required.
-std::map<std::string, long long> listDirFileSizes(const std::string& dir,
+std::map<std::string, long long> ListDirFileSizes(const std::string& dir,
     const std::string& namePrefix, const std::string& nameSuffix = "")
 {
     std::map<std::string, long long> files;
@@ -756,7 +756,7 @@ static void PollForStableSnapshots(const std::string& resultDir, const std::map<
             break;
         }
 
-        const auto current = listDirFileSizes(resultDir, "hidumper-jsheap");
+        const auto current = ListDirFileSizes(resultDir, "hidumper-jsheap");
         std::map<std::string, long long> candidates;
         for (const auto& kv : current) {
             auto it = baseline.find(kv.first);
@@ -821,7 +821,7 @@ static void PullCompletedSnapshots(const std::string& resultDir,
     status = files.size() > pulledBefore ? "complete" : "snapshot file export failed";
 }
 
-void pollAndPullSnapshot(const std::string& resultDir,
+void PollAndPullSnapshot(const std::string& resultDir,
     const std::string& targetDir,
     const std::map<std::string, long long>& baseline,
     long long timeoutS,
@@ -1116,7 +1116,7 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
         }
 
         // Re-scan the directory for any hiprofiler_data_*.zip files.
-        const auto currentZips = listHiprofilerZips(dir);
+        const auto currentZips = ListHiprofilerZips(dir);
         std::string candidate = FindNewZipCandidate(currentZips, baseline);
         if (candidate.empty()) {
             prevSize = -1;
@@ -1125,7 +1125,7 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
                       " (" << elapsedPoll << "s): no new hiprofiler_data zip yet\n" <<
                       std::flush;
         } else {
-            const auto sizes = listDirFileSizes(dir, "hiprofiler_data_", ".zip");
+            const auto sizes = ListDirFileSizes(dir, "hiprofiler_data_", ".zip");
             long long curSize = 0;
             auto sit = sizes.find(candidate);
             if (sit != sizes.end()) {
@@ -1196,7 +1196,7 @@ std::string WaitForNativeleaksFile(const std::string& pid, const std::string& di
 
         // Pass the full filename as the prefix so list_dir_fileSizes matches
         // only that one file (rfind(prefix, 0) == 0), ignoring other pids'.
-        const auto current = listDirFileSizes(dir, filename);
+        const auto current = ListDirFileSizes(dir, filename);
         long long curSize = 0;
         const auto it = current.find(filename);
         const bool found = (it != current.end());
@@ -1620,7 +1620,7 @@ bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode, PreCaptur
             log::Logi("Target process '", opts.processName, "' is running, pid:", pid);
             pre.initialPid = pid;
         }
-        pre.resultBaseline = listDirFileSizes(opts.resultDir, "hidumper-jsheap");
+        pre.resultBaseline = ListDirFileSizes(opts.resultDir, "hidumper-jsheap");
         return true;
     }
 
@@ -1633,7 +1633,7 @@ bool PrepareCaptureStart(const HdcRunOptions& opts, bool snapshotMode, PreCaptur
     // hiprofiler completion). Other capture types (-n/-f/-d) don't produce a
     // hiprofiler_data_*.zip, so they skip this and just pull the -o file.
     if (!opts.remoteOutputPath.empty() && opts.waitForZip) {
-        pre.hiprofilerZipBaseline = listHiprofilerZips(HIPROFILER_ZIP_DIR);
+        pre.hiprofilerZipBaseline = ListHiprofilerZips(HIPROFILER_ZIP_DIR);
     }
 
     // hiprofiler mode: do the initial process check BEFORE starting the worker
@@ -2490,7 +2490,7 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
         if (!HandleSnapshotCommandFailure(result)) {
             const long long pollTimeout = (opts.duration > 0) ? opts.duration : DEFAULT_CAPTURE_DURATION_S;
             result.snapshotAttempted = true;
-            pollAndPullSnapshot(opts.resultDir, opts.outputDir, resultBaseline,
+            PollAndPullSnapshot(opts.resultDir, opts.outputDir, resultBaseline,
                 pollTimeout, result.snapshotPulledFiles,
                 result.snapshotStatus);
             result.elapsed = ElapsedSince(start);
@@ -2541,7 +2541,7 @@ bool exportSnapshotOnce(const HdcRunOptions& opts,
     err.clear();
     // Re-baseline right before the command so this call only picks up the
     // file(s) its own command generates.
-    const auto baseline = listDirFileSizes(opts.resultDir, "hidumper-jsheap");
+    const auto baseline = ListDirFileSizes(opts.resultDir, "hidumper-jsheap");
     CapturedCmd cap = CaptureCommand(command, SNAPSHOT_COMMAND_TIMEOUT_MS);
     output = cap.output;
     const std::string perr = DetectPermissionError(cap.output);
@@ -2561,7 +2561,7 @@ bool exportSnapshotOnce(const HdcRunOptions& opts,
         status = err;
         return false;
     }
-    pollAndPullSnapshot(opts.resultDir, opts.outputDir, baseline,
+    PollAndPullSnapshot(opts.resultDir, opts.outputDir, baseline,
         SNAPSHOT_POLL_TIMEOUT_S, files, status, role);
     return !files.empty();
 }

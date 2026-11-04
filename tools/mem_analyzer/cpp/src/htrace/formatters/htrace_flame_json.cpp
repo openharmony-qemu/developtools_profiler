@@ -59,7 +59,7 @@ static json BuildFlameTreeNodeFromFlameNode(const FlameNode& node,
     }
 
     long long selfSize = node.leakSize - childrenTotal;
-    j["v"] = selfSize < 0 ? (long long)0 : selfSize;
+    j["v"] = selfSize < 0 ? static_cast<long long>(0) : selfSize;
     j["c"] = std::move(childrenArr);
     return j;
 }
@@ -85,7 +85,7 @@ json BuildFlameTreeJsonFromFlameNode(const FlameNode& node,
     }
 
     long long selfSize = node.leakSize - childrenTotal;
-    j["v"] = selfSize < 0 ? (long long)0 : selfSize;
+    j["v"] = selfSize < 0 ? static_cast<long long>(0) : selfSize;
     j["c"] = std::move(childrenArr);
     return j;
 }
@@ -114,7 +114,7 @@ static json BuildIcicleTreeNodeFromFlameNode(const FlameNode& node,
     }
 
     long long selfSize = node.leakSize - childrenTotal;
-    j["v"] = selfSize < 0 ? (long long)0 : selfSize;
+    j["v"] = selfSize < 0 ? static_cast<long long>(0) : selfSize;
     j["c"] = std::move(childrenArr);
     return j;
 }
@@ -140,7 +140,7 @@ json BuildIcicleTreeJsonFromFlameNode(const FlameNode& node,
     }
 
     long long selfSize = node.leakSize - childrenTotal;
-    j["v"] = selfSize < 0 ? (long long)0 : selfSize;
+    j["v"] = selfSize < 0 ? static_cast<long long>(0) : selfSize;
     j["c"] = std::move(childrenArr);
     return j;
 }
