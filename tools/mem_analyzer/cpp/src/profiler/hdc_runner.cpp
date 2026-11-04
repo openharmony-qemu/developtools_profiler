@@ -798,10 +798,8 @@ struct TransferResult {
 // Pull the completed snapshot file(s) into the capture's own directory so
 // results don't land flat in the top-level output dir (mirrors the analysis
 // subcommands).
-static void PullCompletedSnapshots(const std::string& resultDir,
-    const std::string& targetDir, const std::string& role,
-    const std::map<std::string, long long>& stable,
-    TransferResult& result)
+static void PullCompletedSnapshots(const std::string& resultDir, const std::string& targetDir, const std::string& role,
+    const std::map<std::string, long long>& stable, TransferResult& result)
 {
     std::error_code ecMkdir;
     fs::create_directories(PathFromUtf8(targetDir), ecMkdir);
@@ -823,22 +821,25 @@ static void PullCompletedSnapshots(const std::string& resultDir,
     }
     result.status = result.files.size() > pulledBefore ? "complete" : "snapshot file export failed";
 }
+struct PullRequest {
+    std::string resultDir;
+    std::string targetDir;
+    std::string role;
+};
 
-void PollAndPullSnapshot(const std::string& resultDir, const std::string& targetDir,
-    const std::map<std::string, long long>& baseline, long long timeoutS, TransferResult& transfer,
-    const std::string& role = "")
+void PollAndPullSnapshot(const PullRequest& req, const std::map<std::string, long long>& baseline,
+    long long timeoutS, TransferResult& transfer)
 {
     std::map<std::string, long long> stable;
-    PollForStableSnapshots(resultDir, baseline, timeoutS, stable);
+    PollForStableSnapshots(req.resultDir, baseline, timeoutS, stable);
 
     if (stable.empty()) {
-        transfer.status = "Timeout: snapshot file generation not detected as complete (" + resultDir + ")";
+        transfer.status = "Timeout: snapshot file generation not detected as complete (" + req.resultDir + ")";
         return;
     }
 
-    PullCompletedSnapshots(resultDir, targetDir, role, stable, transfer);
+    PullCompletedSnapshots(req.resultDir, req.targetDir, req.role, stable, transfer);
 }
-
 // ── Automated app launch / fresh-restart via the `aa` tool ─────────────
 
 // Parse the entry ability name of an app from `bm dump -n <package>` output.
@@ -1849,9 +1850,7 @@ std::thread SpawnPidChecker(const std::shared_ptr<CaptureState>& state, const st
     state->latestPid = initialPid;
     state->latestMetrics = initialMetrics;
     return std::thread([state, processName, ignoreDone]() {
-        while (!state->stopPidCheck.load() &&
-               !DeviceLost() &&
-               (!state->done.load() || ignoreDone)) {
+        while (!state->stopPidCheck.load() && !DeviceLost() && (!state->done.load() || ignoreDone)) {
             // Use pidof (get_process_pid_fast), NOT ps -ef: the full ps
             // output stalls (no EOF) on a second hdc connection while the
             // foregrounded hiprofiler_cmd capture is running, leaving the
@@ -1945,7 +1944,7 @@ bool CaptureStartFailed(const std::shared_ptr<CaptureState>& state)
 {
     std::lock_guard<std::mutex> lock(state->mtx);
     return state->output.find("Failed to start profiling session") != std::string::npos ||
-           state->output.find("MakeCreateRequest failed") != std::string::npos;
+        state->output.find("MakeCreateRequest failed") != std::string::npos;
 }
 
 // Print the live memory/fd metrics line for the countdown. kB values are
@@ -1999,27 +1998,33 @@ struct ResultBaselines {
     std::string localConfigFile;
 };
 
+struct ExportContext {
+    std::string outputDir;
+    std::string smapsPrefix;
+    bool requireFreshStart;
+    std::string pid;
+};
+
 // Export a start-of-capture smaps/lsof snapshot once the process is running
 // (immediately, or after a fresh start is detected via pid_changed). The
 // device query runs in a background thread so the countdown is never frozen.
 // The thread outlives this function, so it captures output_dir / smaps_prefix
 // / pid by value; it only references `result` (alive until the caller joins
 // the thread) and the heap-allocated `state`.
-void MaybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state, const std::string& outputDir,
-    const std::string& smapsPrefix, bool requireFreshStart, const std::string& pid, ExportStartState& exportState)
+void MaybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
+    const ExportContext& ctx, ExportStartState& exportState)
 {
     if (exportState.startExported) {
         return;
     }
-    if (requireFreshStart && !state->pidChanged.load()) {
+    if (ctx.requireFreshStart && !state->pidChanged.load()) {
         return;
     }
     exportState.startExported = true;
-    const std::string pidCopy = pid;
-    exportState.startExportThread = std::thread([state, pidCopy, outputDir, smapsPrefix, &exportState]() {
+    const std::string pidCopy = ctx.pid;
+    exportState.startExportThread = std::thread([state, pidCopy, ctx, &exportState]() {
         std::string perr;
-        const std::string path =
-            ExportProcessFile(pidCopy, outputDir, smapsPrefix, &perr);
+        const std::string path = ExportProcessFile(pidCopy, ctx.outputDir, ctx.smapsPrefix, &perr);
         if (!perr.empty()) {
             // First export already lacks permission: record the device-side
             // reason; once the countdown loop sees permission_failed it aborts
@@ -2034,9 +2039,9 @@ void MaybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state, const 
                 std::lock_guard<std::mutex> lock(state->mtx);
                 exportState.result.smapsExportedFiles.push_back(path);
             }
-            log::Logok(smapsPrefix == "fds" ? "FD snapshot exported" : "Smaps exported", ": ", path);
+            log::Logok(ctx.smapsPrefix == "fds" ? "FD snapshot exported" : "Smaps exported", ": ", path);
         } else {
-            log::Logw("Warning: failed to export ", smapsPrefix, " at capture start");
+            log::Logw("Warning: failed to export ", ctx.smapsPrefix, " at capture start");
         }
     });
 }
@@ -2151,8 +2156,7 @@ static bool ShouldStopCapture(const HdcRunOptions& opts, const std::shared_ptr<C
 //     Process status comes from the background pid_checker thread
 //     (non-blocking read of shared state).
 void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
-    const PreCaptureState& pre,
-    CaptureFlags& flags, ExportStartState& exportState)
+    const PreCaptureState& pre, CaptureFlags& flags, ExportStartState& exportState)
 {
     if (flags.snapshotMode) {
         WaitForSnapshotExport(state);
@@ -2190,8 +2194,8 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
                 PrintCountdownStatus(++roundNo, remain, pid, running, state);
             }
             if (!freshStartWarning && running) {
-                MaybeStartSnapshotExport(state, opts.outputDir, opts.smapsPrefix, opts.requireFreshStart, pid,
-                    exportState);
+                MaybeStartSnapshotExport(state,
+                    {opts.outputDir, opts.smapsPrefix, opts.requireFreshStart, pid}, exportState);
             }
         }
         // Sleep up to 5s, waking every 100ms to stop promptly when hdc
@@ -2257,11 +2261,9 @@ static void JoinOrDetachThreads(std::thread& worker, std::thread& pidChecker,
 // A permission failure is also unaffected: the capture was already aborted,
 // so there is nothing to finalize and we must not idle until the
 // device-side command runs out.
-static void WaitForFinalization(ClockType::time_point start,
-    const std::shared_ptr<CaptureState>& state)
+static void WaitForFinalization(ClockType::time_point start, const std::shared_ptr<CaptureState>& state)
 {
-    if (!state->done.load() && !g_interruptRequested &&
-        !state->permissionFailed.load()) {
+    if (!state->done.load() && !g_interruptRequested && !state->permissionFailed.load()) {
         log::Logi("Capture duration finished; hiprofiler is finalizing output (stopping session, flushing data)...");
         int finalizeWait = 0;
         while (!state->done.load() && !g_interruptRequested) {
@@ -2492,7 +2494,7 @@ void FinalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
             const long long pollTimeout = (opts.duration > 0) ? opts.duration : DEFAULT_CAPTURE_DURATION_S;
             result.snapshotAttempted = true;
             TransferResult snapTransfer{result.snapshotPulledFiles, result.snapshotStatus};
-            PollAndPullSnapshot(opts.resultDir, opts.outputDir, baselines.resultBaseline, pollTimeout, snapTransfer);
+            PollAndPullSnapshot({opts.resultDir, opts.outputDir, ""}, baselines.resultBaseline, pollTimeout, snapTransfer);
             result.elapsed = ElapsedSince(flags.start);
         }
     } else if (result.ok && !opts.remoteOutputPath.empty()) {
@@ -2564,7 +2566,7 @@ bool ExportSnapshotOnce(const HdcRunOptions& opts, const std::string& command, c
         return false;
     }
     TransferResult snapTransfer{result.files, result.status};
-    PollAndPullSnapshot(opts.resultDir, opts.outputDir, baseline, SNAPSHOT_POLL_TIMEOUT_S, snapTransfer, role);
+    PollAndPullSnapshot({opts.resultDir, opts.outputDir, role}, baseline, SNAPSHOT_POLL_TIMEOUT_S, snapTransfer);
     return !result.files.empty();
 }
 
