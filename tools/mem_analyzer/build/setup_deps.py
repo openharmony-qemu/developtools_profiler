@@ -183,6 +183,18 @@ def check_git_installed() -> None:
         fail("git not found. Install git and try again.")
 
 
+def _revert_local_modifications(dst: Path, name: str) -> None:
+    """Revert local modifications in a git repo, fail if unrevertable."""
+    status = run_git(["status", "--porcelain"], dst)
+    if status.stdout.strip():
+        info(f"{name}: detected local modifications, reverting ...")
+        run_git(["checkout", "."], dst)
+        run_git(["clean", "-fd"], dst)
+        remaining = run_git(["status", "--porcelain"], dst)
+        if remaining.stdout.strip():
+            fail(f"{name}: local changes could not be fully reverted: {remaining.stdout.strip()[:240]}")
+
+
 def ensure_git_repo(dst: Path, url: str, commit: str, check_file: Path, name: str) -> bool:
     """
     Ensure a git repo is present at `dst` and checked out to `commit`.
@@ -196,15 +208,7 @@ def ensure_git_repo(dst: Path, url: str, commit: str, check_file: Path, name: st
         # File already present — try to verify git repo state
         result = run_git(["rev-parse", "HEAD"], dst)
         if result.returncode == 0:
-            # Check for local modifications
-            status = run_git(["status", "--porcelain"], dst)
-            if status.stdout.strip():
-                info(f"{name}: detected local modifications, reverting ...")
-                run_git(["checkout", "."], dst)
-                run_git(["clean", "-fd"], dst)
-                remaining = run_git(["status", "--porcelain"], dst)
-                if remaining.stdout.strip():
-                    fail(f"{name}: local changes could not be fully reverted: {remaining.stdout.strip()[:240]}")
+            _revert_local_modifications(dst, name)
 
             # Check commit
             current = run_git(["rev-parse", "HEAD"], dst).stdout.strip()
@@ -296,6 +300,39 @@ def download_and_extract(url: str, dst_dir: Path, desc: str) -> None:
     ok(f"{desc}: extracted to {dst_dir}")
 
 
+def _extract_platform_from_sdk(tf, sdk_prefix: str, arch_subdir: str, dst_dir: Path) -> bool:
+    """Extract one platform's rawheap_translator from SDK tar.gz member. Returns True if extracted."""
+    zip_member = None
+    for m in tf.getmembers():
+        if m.name.startswith(sdk_prefix) and "toolchains" in m.name and m.name.endswith(".zip"):
+            zip_member = m
+            break
+    if not zip_member:
+        warn(f"rawheap_translator ({arch_subdir}): 在 SDK 中未找到 toolchains zip")
+        return False
+
+    zip_data = tf.extractfile(zip_member)
+    if not zip_data:
+        warn(f"rawheap_translator ({arch_subdir}): 无法读取 {zip_member.name}")
+        return False
+
+    bin_name = "rawheap_translator.exe" if "windows" in arch_subdir else "rawheap_translator"
+    platform_dir = dst_dir / arch_subdir
+    platform_dir.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(zip_data) as inner_zf:
+        target = f"toolchains/{bin_name}"
+        if target in inner_zf.namelist():
+            inner_zf.extract(target, dst_dir)
+            src = dst_dir / target
+            dst = platform_dir / bin_name
+            if src != dst:
+                shutil.move(str(src), str(dst))
+        else:
+            warn(f"rawheap_translator ({arch_subdir}): SDK 内未找到 {target}")
+            return False
+    return True
+
+
 def extract_rawheap_from_sdk(url: str, dst_dir: Path, platform_map: list[tuple[str, str]], desc: str, tmp_name: str = "_sdk_download.tar.gz") -> int:
     """
     从 OHOS SDK tar.gz 中提取 rawheap_translator（嵌套压缩：tar.gz → inner.zip → toolchains/）。
@@ -326,39 +363,9 @@ def extract_rawheap_from_sdk(url: str, dst_dir: Path, platform_map: list[tuple[s
     found = 0
     with tarfile.open(tmp_tar, "r:gz") as tf:
         for sdk_prefix, arch_subdir in platform_map:
-            # Find the toolchains zip inside SDK
-            zip_member = None
-            for m in tf.getmembers():
-                if m.name.startswith(sdk_prefix) and "toolchains" in m.name and m.name.endswith(".zip"):
-                    zip_member = m
-                    break
-            if not zip_member:
-                warn(f"rawheap_translator ({arch_subdir}): 在 SDK 中未找到 toolchains zip")
-                continue
-
-            # Extract the zip to memory
-            zip_data = tf.extractfile(zip_member)
-            if not zip_data:
-                warn(f"rawheap_translator ({arch_subdir}): 无法读取 {zip_member.name}")
-                continue
-
-            # Determine binary name by architecture
-            bin_name = "rawheap_translator.exe" if "windows" in arch_subdir else "rawheap_translator"
-            platform_dir = dst_dir / arch_subdir
-            platform_dir.mkdir(parents=True, exist_ok=True)
-            with zipfile.ZipFile(zip_data) as inner_zf:
-                target = f"toolchains/{bin_name}"
-                if target in inner_zf.namelist():
-                    inner_zf.extract(target, dst_dir)
-                    src = dst_dir / target
-                    dst = platform_dir / bin_name
-                    if src != dst:
-                        shutil.move(str(src), str(dst))
-                else:
-                    warn(f"rawheap_translator ({arch_subdir}): SDK 内未找到 {target}")
-                    continue
-            found += 1
-            ok(f"rawheap_translator ({arch_subdir}): extracted")
+            if _extract_platform_from_sdk(tf, sdk_prefix, arch_subdir, dst_dir):
+                found += 1
+                ok(f"rawheap_translator ({arch_subdir}): extracted")
 
     # Clean up SDK tar.gz
     tmp_tar.unlink(missing_ok=True)
@@ -390,6 +397,43 @@ RAW_HEAP_BINARIES = {
 # ============================================================================
 #  Main
 # ============================================================================
+
+
+def _process_binary_task_result(fut, name: str) -> None:
+    try:
+        results = fut.result()
+        for rtype, rmsg in results:
+            if rtype == "fail":
+                warn(rmsg)
+            elif rtype == "warn":
+                warn(rmsg)
+            elif rtype == "ok":
+                ok(rmsg)
+    except Exception as e:
+        warn(f"{name}: 任务异常: {e}")
+
+
+def _check_lfs_pointers(bin_dir: Path, lfs_signature: str) -> None:
+    lfs_fakes = []
+    for f in bin_dir.rglob("*"):
+        if not f.is_file():
+            continue
+        try:
+            with open(f, "rb") as fh:
+                head = fh.read(64)
+            try:
+                text = head.decode("utf-8", errors="strict")
+            except UnicodeDecodeError:
+                continue
+            if text.startswith(lfs_signature):
+                lfs_fakes.append(f.relative_to(REPO_ROOT))
+        except OSError:
+            pass
+    if lfs_fakes:
+        print()
+        fail("检测到 Git LFS 指针文件（未正确拉取 LFS 内容），请运行 git lfs pull 后重试：\n    " +
+             "\n    ".join(str(p) for p in lfs_fakes))
+    ok("binary files: 无 Git LFS 指针文件")
 
 
 def main() -> None:
@@ -548,18 +592,7 @@ def main() -> None:
         with concurrent.futures.ThreadPoolExecutor(max_workers=n) as executor:
             fut_map = {executor.submit(fn): name for name, fn in binary_tasks}
             for fut in concurrent.futures.as_completed(fut_map):
-                name = fut_map[fut]
-                try:
-                    results = fut.result()
-                    for rtype, rmsg in results:
-                        if rtype == "fail":
-                            warn(rmsg)
-                        elif rtype == "warn":
-                            warn(rmsg)
-                        elif rtype == "ok":
-                            ok(rmsg)
-                except Exception as e:
-                    warn(f"{name}: 任务异常: {e}")
+                _process_binary_task_result(fut, fut_map[fut])
         ok("全部二进制处理完毕")
 
     # --- Report trace_streamer status ---
@@ -615,26 +648,7 @@ def main() -> None:
     git_lfs_signature = "version https://git-lfs.github.com/spec/v1"
     bin_dir = THIRD_PARTY / "bin"
     if bin_dir.is_dir():
-        lfs_fakes = []
-        for f in bin_dir.rglob("*"):
-            if not f.is_file():
-                continue
-            try:
-                with open(f, "rb") as fh:
-                    head = fh.read(64)
-                try:
-                    text = head.decode("utf-8", errors="strict")
-                except UnicodeDecodeError:
-                    continue  # binary file, definitely not lfs pointer
-                if text.startswith(git_lfs_signature):
-                    lfs_fakes.append(f.relative_to(REPO_ROOT))
-            except OSError:
-                pass
-        if lfs_fakes:
-            print()
-            fail("检测到 Git LFS 指针文件（未正确拉取 LFS 内容），请运行 git lfs pull 后重试：\n    " +
-                 "\n    ".join(str(p) for p in lfs_fakes))
-        ok("binary files: 无 Git LFS 指针文件")
+        _check_lfs_pointers(bin_dir, git_lfs_signature)
     else:
         info("binary files: third_party/bin 不存在，跳过检查")
 

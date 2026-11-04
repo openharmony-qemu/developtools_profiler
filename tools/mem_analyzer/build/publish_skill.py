@@ -82,6 +82,18 @@ def derive_bin_subdir(name: str):
     return None
 
 
+def _scan_dir_for_archives(dp: Path) -> list[Path]:
+    out: list[Path] = []
+    for p in sorted(dp.iterdir()):
+        if (
+            p.is_file()
+            and p.name.startswith("mem-analyzer-")
+            and (p.name.endswith(".zip") or p.name.endswith(".tar.gz"))
+        ):
+            out.append(p)
+    return out
+
+
 def collect_archives(args):
     archives = []
 
@@ -91,13 +103,7 @@ def collect_archives(args):
     if args.archives_dir:
         for d in args.archives_dir:
             dp = Path(d).resolve()
-            for p in sorted(dp.iterdir()):
-                if (
-                    p.is_file()
-                    and p.name.startswith("mem-analyzer-")
-                    and (p.name.endswith(".zip") or p.name.endswith(".tar.gz"))
-                ):
-                    archives.append(p)
+            archives.extend(_scan_dir_for_archives(dp))
 
     if not archives:
         search_dir = SKILL_SRC.parent  # skills/mem-analysis-expert（相对仓库根目录）
@@ -142,6 +148,16 @@ def verify_versions(entries, version: str) -> None:
                 f"与目标版本 {version} 不一致"
             )
         print(f"  [核对] {sub:<12} 压缩包名版本 {file_ver} == {version}")
+
+
+def _create_skill_zip(zip_path: Path, skill_dir: Path) -> None:
+    if zip_path.exists():
+        zip_path.unlink()
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for p in sorted(skill_dir.rglob("*")):
+            if p.is_file():
+                # 归档内保留顶层目录名 mem-analysis-expert/
+                zf.write(p, p.relative_to(skill_dir.parent))
 
 
 def main() -> None:
@@ -204,13 +220,7 @@ def main() -> None:
         print(f"  + bin/{sub}/{a.name}")
 
     if not args.no_zip:
-        if zip_path.exists():
-            zip_path.unlink()
-        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-            for p in sorted(skill_dir.rglob("*")):
-                if p.is_file():
-                    # 归档内保留顶层目录名 mem-analysis-expert/
-                    zf.write(p, p.relative_to(skill_dir.parent))
+        _create_skill_zip(zip_path, skill_dir)
         size_kb = zip_path.stat().st_size / 1024
         print()
         print("=" * 56)

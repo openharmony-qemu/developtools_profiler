@@ -516,6 +516,16 @@ def run_tests_sequential(exe: Path, out_base: Path, test_files: Dict[str, List[P
     log(f"  {label} tests DONE.")
 
 
+def _log_test_result(label_t: str, rc: int, err: str, completed: int, total: int) -> bool:
+    if rc != 0:
+        log(f"  [{completed}/{total}] FAIL: {label_t}")
+        if err:
+            log(f"    {err}")
+        return True
+    log(f"  [{completed}/{total}] OK: {label_t}")
+    return False
+
+
 def run_tests_parallel(exe: Path, out_base: Path, test_files: Dict[str, List[Path]],
                        label: str, max_workers: int = 4):
     log_header(f"TEST: {label} (PARALLEL, {max_workers} workers)")
@@ -549,13 +559,8 @@ def run_tests_parallel(exe: Path, out_base: Path, test_files: Dict[str, List[Pat
         for future in as_completed(futures):
             label_t, rc, err = future.result()
             completed += 1
-            if rc != 0:
+            if _log_test_result(label_t, rc, err, completed, total):
                 failed += 1
-                log(f"  [{completed}/{total}] FAIL: {label_t}")
-                if err:
-                    log(f"    {err}")
-            else:
-                log(f"  [{completed}/{total}] OK: {label_t}")
 
     # 所有并行任务完成后，拷贝短路径结果到 out_base/cmp
     for _, cmd in sentinel_tasks:
@@ -687,6 +692,23 @@ def compare_json_files(base_path: Path, new_path: Path) -> Tuple[int, List[str]]
 # ============================================================
 # tshandle parse 专项对比
 # ============================================================
+def _compare_addr_keys(ba: dict, na: dict, i: int) -> list[str]:
+    diffs = []
+    for ak in sorted(set(ba.keys()) | set(na.keys())):
+        bav, nav = ba.get(ak), na.get(ak)
+        if ak not in ba:
+            diffs.append(f"  addr[{i}].{ak}: only in new")
+        elif ak not in na:
+            diffs.append(f"  addr[{i}].{ak}: only in base")
+        elif not isinstance(bav, type(nav)):
+            tag = "[EQUIVALENT]" if values_equivalent(bav, nav) else "[REAL DIFF]"
+            diffs.append(
+                f"  addr[{i}].{ak}: {type(bav).__name__}->{type(nav).__name__} {tag} base={bav!r} new={nav!r}")
+        elif bav != nav:
+            diffs.append(f"  addr[{i}].{ak}: value mismatch  base={bav!r}  new={nav!r}")
+    return diffs
+
+
 def compare_tshandle_parse(base_path: Path, new_path: Path) -> dict:
     base = load_json(base_path)
     new = load_json(new_path)
@@ -733,18 +755,7 @@ def compare_tshandle_parse(base_path: Path, new_path: Path) -> dict:
         for i in range(min(len(b_addrs), len(n_addrs))):
             ba, na = b_addrs[i], n_addrs[i]
             if isinstance(ba, dict) and isinstance(na, dict):
-                for ak in sorted(set(ba.keys()) | set(na.keys())):
-                    bav, nav = ba.get(ak), na.get(ak)
-                    if ak not in ba:
-                        report["addrs_diffs"].append(f"  addr[{i}].{ak}: only in new")
-                    elif ak not in na:
-                        report["addrs_diffs"].append(f"  addr[{i}].{ak}: only in base")
-                    elif not isinstance(bav, type(nav)):
-                        tag = "[EQUIVALENT]" if values_equivalent(bav, nav) else "[REAL DIFF]"
-                        report["addrs_diffs"].append(
-                            f"  addr[{i}].{ak}: {type(bav).__name__}->{type(nav).__name__} {tag} base={bav!r} new={nav!r}")
-                    elif bav != nav:
-                        report["addrs_diffs"].append(f"  addr[{i}].{ak}: value mismatch  base={bav!r}  new={nav!r}")
+                report["addrs_diffs"].extend(_compare_addr_keys(ba, na, i))
 
     exclude = {"tracemeta", "addrs"}
     for key in sorted(set(base_c.keys()) | set(new_c.keys())):
@@ -858,6 +869,19 @@ def categorize_diff_line(line: str) -> str:
     return "uncategorized"
 
 
+def _maybe_start_new_block(current: list, blocks: list, line: str) -> list:
+    last = current[-1]
+    if last.startswith(' ') and not any(
+        l.startswith(('+', '-')) for l in current[-3:]
+    ):
+        if len(current) > 1:
+            blocks.append(current)
+        return [line]
+    else:
+        current.append(line)
+        return current
+
+
 def merged_diff_blocks(diff_lines: list) -> list:
     """将相邻的 diff 行合并为块，每个块包含上下文行。"""
     blocks = []
@@ -868,15 +892,7 @@ def merged_diff_blocks(diff_lines: list) -> list:
                 current.append(line)
             else:
                 # 如果上一行是上下文行，开始新块
-                last = current[-1]
-                if last.startswith(' ') and not any(
-                    l.startswith(('+', '-')) for l in current[-3:]
-                ):
-                    if len(current) > 1:
-                        blocks.append(current)
-                    current = [line]
-                else:
-                    current.append(line)
+                current = _maybe_start_new_block(current, blocks, line)
         elif line.startswith(' '):
             if current:
                 current.append(line)
@@ -1078,6 +1094,27 @@ def run_comparison(base_out: Path, new_out: Path, compare_out: Path) -> dict:
     return all_reports
 
 
+def _report_json_diffs(r: dict) -> tuple[int, int]:
+    counts = classify_diffs(r.get("diffs", []))
+    log(f"\n    [{r['subdir']}] {r['file']}")
+    log(f"      -> {r['summary']}  (equiv:{counts['equivalent']} real:{counts['real_diff']} "
+        f"key:{counts['key_diff']} val:{counts['value_diff']})")
+    for d in r.get("diffs", []):
+        if "[REAL DIFF]" in d:
+            log(f"      [REAL] {d}")
+    for d in r.get("diffs", []):
+        if "[EQUIVALENT]" in d:
+            log(f"      [EQUIV] {d}")
+            break
+    real_and_val = [d for d in r.get("diffs", [])
+                   if "[REAL DIFF]" not in d and "[EQUIVALENT]" not in d]
+    for d in real_and_val[:5]:
+        log(f"      {d}")
+    if len(real_and_val) > 5:
+        log(f"      ... and {len(real_and_val) - 5} more")
+    return counts["equivalent"], counts["real_diff"]
+
+
 def print_comparison_report(all_reports: dict, compare_out: Path):
     log_header("COMPARISON REPORT")
 
@@ -1092,25 +1129,9 @@ def print_comparison_report(all_reports: dict, compare_out: Path):
             identical += 1
         else:
             with_diff += 1
-            counts = classify_diffs(r.get("diffs", []))
-            total_equiv += counts["equivalent"]
-            total_real += counts["real_diff"]
-            log(f"\n    [{r['subdir']}] {r['file']}")
-            log(f"      -> {r['summary']}  (equiv:{counts['equivalent']} real:{counts['real_diff']} "
-                f"key:{counts['key_diff']} val:{counts['value_diff']})")
-            for d in r.get("diffs", []):
-                if "[REAL DIFF]" in d:
-                    log(f"      [REAL] {d}")
-            for d in r.get("diffs", []):
-                if "[EQUIVALENT]" in d:
-                    log(f"      [EQUIV] {d}")
-                    break
-            real_and_val = [d for d in r.get("diffs", [])
-                           if "[REAL DIFF]" not in d and "[EQUIVALENT]" not in d]
-            for d in real_and_val[:5]:
-                log(f"      {d}")
-            if len(real_and_val) > 5:
-                log(f"      ... and {len(real_and_val) - 5} more")
+            equiv, real = _report_json_diffs(r)
+            total_equiv += equiv
+            total_real += real
     log(f"\n    JSON Summary: {identical} identical, {with_diff} with differences")
     if with_diff > 0:
         log(f"    Type changes: {total_equiv} equivalent, {total_real} real")

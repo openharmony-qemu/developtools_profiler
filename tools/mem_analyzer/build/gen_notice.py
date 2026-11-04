@@ -32,6 +32,23 @@ import sys
 from pathlib import Path
 
 
+def _read_license_files(comp: Path, lic_files: str) -> list[str]:
+    out: list[str] = []
+    for lic_name in lic_files.split(","):
+        lic_name = lic_name.strip()
+        lic_path = comp / lic_name
+        if not lic_path.is_file():
+            print(f"  [WARN] license file not found: {lic_path}", file=sys.stderr)
+            continue
+        out.append("")
+        out.append("    License Text:")
+        out.append("    ------------------------------------------------------------")
+        for ln in lic_path.read_text(encoding="utf-8", errors="replace").splitlines():
+            out.append("    " + ln)
+        out.append("    ------------------------------------------------------------")
+    return out
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Generate aggregated OSS NOTICE")
     ap.add_argument("--dest", required=True, help="output NOTICE file path")
@@ -80,18 +97,7 @@ def main() -> None:
                 lines.append(f"    Description:  {m.get('Description', '')}")
             lic_files = m.get("License File", "")
             if lic_files:
-                for lic_name in lic_files.split(","):
-                    lic_name = lic_name.strip()
-                    lic_path = comp / lic_name
-                    if not lic_path.is_file():
-                        print(f"  [WARN] license file not found: {lic_path}", file=sys.stderr)
-                        continue
-                    lines.append("")
-                    lines.append("    License Text:")
-                    lines.append("    ------------------------------------------------------------")
-                    for ln in lic_path.read_text(encoding="utf-8", errors="replace").splitlines():
-                        lines.append("    " + ln)
-                    lines.append("    ------------------------------------------------------------")
+                lines.extend(_read_license_files(comp, lic_files))
             lines.append("")
             sections.append("\n".join(lines))
 

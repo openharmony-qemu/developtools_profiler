@@ -655,9 +655,9 @@ def find_session_dir(out_dir: Path) -> Optional[Path]:
 def make_capture_verifier(category: str):
     """创建一个采集产出验证函数。"""
     ct_info = None
-    for ct in CAPTURE_TYPES:
-        if ct["category"] == category:
-            ct_info = ct
+    for capType in CAPTURE_TYPES:
+        if capType["category"] == category:
+            ct_info = capType
             break
     if not ct_info:
         return lambda out_dir: (True, "no verifier")
@@ -789,14 +789,14 @@ def suite_capture_type_tests(exe: Path, bundle: str, duration: int,
                              out_base: Path) -> List[TestCase]:
     """全量 10 种采集类型测试（全名）。"""
     tests = []
-    for ct in CAPTURE_TYPES:
-        category = ct["category"]
+    for capType in CAPTURE_TYPES:
+        category = capType["category"]
         out_dir = out_base / f"capture_{category}"
         out_dir.mkdir(parents=True, exist_ok=True)
 
         cmd = [str(exe), "profiler", "-c", category, "-d", str(out_dir)]
         # snapshot 无 -t 时为立即抓取模式；其他类型使用指定时长
-        if not ct["immediate"]:
+        if not capType["immediate"]:
             cmd.extend(["-t", str(duration)])
         cmd.append(bundle)
 
@@ -810,7 +810,7 @@ def suite_capture_type_tests(exe: Path, bundle: str, duration: int,
             out_dir=out_dir,
             verify_output=verifier,
             note=f"采集类型 {category}" +
-                 (f" (-t {duration}s)" if not ct["immediate"] else " (immediate)")))
+                 (f" (-t {duration}s)" if not capType["immediate"] else " (immediate)")))
     return tests
 
 
@@ -818,19 +818,19 @@ def suite_alias_tests(exe: Path, bundle: str, duration: int,
                       out_base: Path) -> List[TestCase]:
     """采集类型别名测试。"""
     tests = []
-    for alias, full_name in ALL_ALIASES:
-        ct = next(c for c in CAPTURE_TYPES if c["category"] == full_name)
-        out_dir = out_base / f"alias_{alias}"
+    for aliasName, full_name in ALL_ALIASES:
+        capType = next(c for c in CAPTURE_TYPES if c["category"] == full_name)
+        out_dir = out_base / f"alias_{aliasName}"
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        cmd = [str(exe), "profiler", "-c", alias, "-d", str(out_dir)]
-        if not ct["immediate"]:
+        cmd = [str(exe), "profiler", "-c", aliasName, "-d", str(out_dir)]
+        if not capType["immediate"]:
             cmd.extend(["-t", str(duration)])
         cmd.append(bundle)
 
         verifier = make_capture_verifier(full_name)
         tests.append(TestCase(
-            name=f"alias: {alias} -> {full_name}",
+            name=f"alias: {aliasName} -> {full_name}",
             suite="alias",
             cmd=cmd,
             expect_exit_zero=True,
@@ -838,7 +838,7 @@ def suite_alias_tests(exe: Path, bundle: str, duration: int,
             timeout=duration + 120,
             out_dir=out_dir,
             verify_output=verifier,
-            note=f"别名 {alias} 应解析为 {full_name}"))
+            note=f"别名 {aliasName} 应解析为 {full_name}"))
     return tests
 
 
@@ -983,7 +983,7 @@ def print_summary(results: List[TestResult], report_path: Path):
         suites.setdefault(r.suite, []).append(r)
 
     for suite_name in sorted(suites.keys()):
-        suite_results = suites[suite_name]
+        suite_results = suites.get(suite_name, [])
         s_passed = sum(1 for r in suite_results if r.passed)
         s_failed = sum(1 for r in suite_results if not r.passed and not r.skipped)
         s_skipped = sum(1 for r in suite_results if r.skipped)
