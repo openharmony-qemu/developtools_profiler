@@ -27,6 +27,15 @@ namespace mem_analyzer {
  */
 bool JsleakCompareInputsValid(const std::string& baselineFile, const std::string& targetFile, std::string& error);
 
+struct CompareAnalysisInput {
+    const HeapSnapshot& baseline;
+    const HeapSnapshot& target;
+    const std::string& baselineFile;
+    const std::string& targetFile;
+    int topN;
+    std::string mode;
+};
+
 /**
  * 快照对比分析：双端已解析的 HeapSnapshot → Schema v6 对比报告 json。
  * 渲染由 jsleak/formatters/snapshot_compare_formatter 的 writer 负责。
@@ -36,11 +45,6 @@ bool JsleakCompareInputsValid(const std::string& baselineFile, const std::string
  *   "top-chain"     —— 仅最短引用链对比（pathDeltas）
  * top_n 为每个方向（增长/缩减）的条数上限。
  */
-json JsleakCompareAnalyze(const HeapSnapshot& baseline,
-    const HeapSnapshot& target,
-    const std::string& baselineFile,
-    const std::string& targetFile,
-    int topN,
-    const std::string& mode);
+json JsleakCompareAnalyze(const CompareAnalysisInput& input);
 
 } // namespace mem_analyzer

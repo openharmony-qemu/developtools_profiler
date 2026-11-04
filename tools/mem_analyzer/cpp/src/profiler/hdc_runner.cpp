@@ -830,19 +830,17 @@ void PollAndPullSnapshot(const std::string& resultDir,
     const std::string& targetDir,
     const std::map<std::string, long long>& baseline,
     long long timeoutS,
-    std::vector<std::string>& files,
-    std::string& status,
+    TransferResult& transfer,
     const std::string& role = "")
 {
     std::map<std::string, long long> stable;
     PollForStableSnapshots(resultDir, baseline, timeoutS, stable);
 
     if (stable.empty()) {
-        status = "Timeout: snapshot file generation not detected as complete (" + resultDir + ")";
+        transfer.status = "Timeout: snapshot file generation not detected as complete (" + resultDir + ")";
         return;
     }
 
-    TransferResult transfer{files, status};
     PullCompletedSnapshots(resultDir, targetDir, role, stable, transfer);
 }
 
@@ -1985,6 +1983,33 @@ void PrintMetricsLine(const ProcessMetrics& metrics)
         (metrics.fdCount >= 0 ? std::to_string(metrics.fdCount) : "-") << "\n" << std::flush;
 }
 
+struct ExportStartState {
+    bool& startExported;
+    std::thread& startExportThread;
+    RunResult& result;
+};
+
+struct CaptureFlags {
+    ClockType::time_point start;
+    bool asyncStartMode;
+    bool snapshotMode;
+};
+
+struct ThreadBundle {
+    std::thread& worker;
+    std::thread& pidChecker;
+    std::thread& freshRestartThread;
+    std::thread& startExportThread;
+    RunResult& result;
+};
+
+struct ResultBaselines {
+    const std::map<std::string, long long>& resultBaseline;
+    const std::map<std::string, long long>& hiprofilerZipBaseline;
+    std::string nativeleaksPid;
+    std::string localConfigFile;
+};
+
 // Export a start-of-capture smaps/lsof snapshot once the process is running
 // (immediately, or after a fresh start is detected via pid_changed). The
 // device query runs in a background thread so the countdown is never frozen.
@@ -1996,19 +2021,17 @@ void MaybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
     const std::string& smapsPrefix,
     bool requireFreshStart,
     const std::string& pid,
-    bool& startExported,
-    std::thread& startExportThread,
-    RunResult& result)
+    ExportStartState& exportState)
 {
-    if (startExported) {
+    if (exportState.startExported) {
         return;
     }
     if (requireFreshStart && !state->pidChanged.load()) {
         return;
     }
-    startExported = true;
+    exportState.startExported = true;
     const std::string pidCopy = pid;
-    startExportThread = std::thread([state, pidCopy, outputDir, smapsPrefix, &result]() {
+    exportState.startExportThread = std::thread([state, pidCopy, outputDir, smapsPrefix, &exportState]() {
         std::string perr;
         const std::string path =
             ExportProcessFile(pidCopy, outputDir, smapsPrefix, &perr);
@@ -2024,7 +2047,7 @@ void MaybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
         } else if (!path.empty()) {
             {
                 std::lock_guard<std::mutex> lock(state->mtx);
-                result.smapsExportedFiles.push_back(path);
+                exportState.result.smapsExportedFiles.push_back(path);
             }
             log::Logok(smapsPrefix == "fds" ? "FD snapshot exported" : "Smaps exported", ": ", path);
         } else {
@@ -2143,12 +2166,10 @@ static bool ShouldStopCapture(const HdcRunOptions& opts, const std::shared_ptr<C
 //     Process status comes from the background pid_checker thread
 //     (non-blocking read of shared state).
 void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
-    ClockType::time_point start, const PreCaptureState& pre,
-    bool asyncStartMode, bool snapshotMode,
-    bool& startExported, std::thread& startExportThread,
-    RunResult& result)
+    const PreCaptureState& pre,
+    CaptureFlags& flags, ExportStartState& exportState)
 {
-    if (snapshotMode) {
+    if (flags.snapshotMode) {
         WaitForSnapshotExport(state);
         return;
     }
@@ -2159,7 +2180,7 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
     int roundNo = 0;  // monotonically increasing per-tick sequence number
     while (true) {
         long long remain = 0;
-        if (ShouldStopCapture(opts, state, start, asyncStartMode, remain)) {
+        if (ShouldStopCapture(opts, state, flags.start, flags.asyncStartMode, remain)) {
             break;
         }
         if (opts.processName.empty()) {
@@ -2185,15 +2206,15 @@ void WaitForCapture(const HdcRunOptions& opts, const std::shared_ptr<CaptureStat
             }
             if (!freshStartWarning && running) {
                 MaybeStartSnapshotExport(state, opts.outputDir, opts.smapsPrefix, opts.requireFreshStart, pid,
-                    startExported, startExportThread, result);
+                    exportState);
             }
         }
         // Sleep up to 5s, waking every 100ms to stop promptly when hdc
         // finishes mid-interval, when the start command fails, when the
         // first smaps/lsof export reports a permission failure, or when the
         // target device fails at the hdc level (pinned target).
-        SleepTicks(PROGRESS_INTERVAL_TICKS, [&state, &asyncStartMode]() {
-            return (state->done.load() && (!asyncStartMode || CaptureStartFailed(state))) ||
+        SleepTicks(PROGRESS_INTERVAL_TICKS, [&state, &flags]() {
+            return (state->done.load() && (!flags.asyncStartMode || CaptureStartFailed(state))) ||
             state->permissionFailed.load() || DeviceLost();
         });
     }
@@ -2274,9 +2295,7 @@ static void WaitForFinalization(ClockType::time_point start,
 
 void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
     ClockType::time_point start, bool asyncStartMode,
-    std::thread& worker, std::thread& pidChecker,
-    std::thread& freshRestartThread,
-    std::thread& startExportThread, RunResult& result)
+    ThreadBundle& threads)
 {
     // Signal the background pid checker and fresh-start automation to stop.
     state->stopPidCheck = true;
@@ -2286,8 +2305,8 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
     // (see above); join it here so the exported files list is complete and no
     // thread outlives run_hdc's locals. It finishes within a couple of seconds
     // (a single hdc query), so this never meaningfully delays the stop.
-    if (startExportThread.joinable()) {
-        startExportThread.join();
+    if (threads.startExportThread.joinable()) {
+        threads.startExportThread.join();
     }
 
     // Run `hiprofiler_cmd stop` on the device. In async start mode the
@@ -2300,7 +2319,7 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
     // cleanup it triggers would both delay the export and skew the sampled
     // state (the capture session is no longer the one the user profiled).
     // Skipped on a permission failure (the capture was already aborted).
-    auto exportEndSnapshotBeforeStop = [&state, &opts, &result]() {
+    auto exportEndSnapshotBeforeStop = [&state, &opts, &threads]() {
         if (state->permissionFailed.load()) {
             return;
         }
@@ -2309,7 +2328,7 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
             std::lock_guard<std::mutex> lock(state->pidMtx);
             pid = state->latestPid;
         }
-        ExportEndSnapshot(pid, opts.outputDir, opts.smapsPrefix, result);
+        ExportEndSnapshot(pid, opts.outputDir, opts.smapsPrefix, threads.result);
     };
     if (asyncStartMode) {
         if (!state->spawnFailed) {
@@ -2340,14 +2359,14 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
         // after. A permission failure aborts the capture early instead; the
         // background threads are detached and finish on their own (they only
         // reference the heap-allocated shared state, so this is safe).
-        JoinOrDetachThreads(worker, pidChecker, freshRestartThread,
+        JoinOrDetachThreads(threads.worker, threads.pidChecker, threads.freshRestartThread,
                             state->permissionFailed.load());
         return;
     }
 
     WaitForFinalization(start, state);
 
-    JoinOrDetachThreads(worker, pidChecker, freshRestartThread,
+    JoinOrDetachThreads(threads.worker, threads.pidChecker, threads.freshRestartThread,
                         state->permissionFailed.load());
 }
 
@@ -2444,15 +2463,10 @@ static void PullHiprofilerResult(const HdcRunOptions& opts,
     PullNativeleaksFile(opts, nativeleaksPid, result);
 }
 
-void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
-    ClockType::time_point start, bool snapshotMode,
-    bool asyncStartMode,
-    const std::map<std::string, long long>& resultBaseline,
-    const std::map<std::string, long long>& hiprofilerZipBaseline,
-    const std::string& nativeleaksPid,
-    const std::string& localConfigFile, RunResult& result)
+void FinalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
+    CaptureFlags& flags, ResultBaselines& baselines, RunResult& result)
 {
-    result.elapsed = ElapsedSince(start);
+    result.elapsed = ElapsedSince(flags.start);
 
     // fork/pipe failed to spawn hdc — report without writing a log.
     if (state->spawnFailed) {
@@ -2470,12 +2484,12 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
     // Async start: the transcript was already streamed to the console in real
     // time, so tell the caller not to print it a second time (it stays in the
     // log file).
-    result.outputStreamed = asyncStartMode && !state->spawnFailed;
+    result.outputStreamed = flags.asyncStartMode && !state->spawnFailed;
 
     // The first smaps/lsof export found a permission problem: the capture was
     // already aborted in the countdown loop. Mark this run as failed and skip
     // the end-of-capture export and the result-file pull.
-    const bool permissionAbort = !snapshotMode && state->permissionFailed.load();
+    const bool permissionAbort = !flags.snapshotMode && state->permissionFailed.load();
     if (permissionAbort) {
         result.ok = false;
         result.error = "permission check failed: the target app cannot be tuned on this "
@@ -2488,7 +2502,7 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
     //     default 120s. Recompute elapsed to cover polling + pull.
     //   hiprofiler: the result file is ready when the command finishes, so
     //     pull remote_output_path immediately.
-    if (snapshotMode) {
+    if (flags.snapshotMode) {
         // The hidumper command returns almost instantly. If its output clearly
         // reports insufficient permission (non-root phone + release-signed
         // app; "[Permission Check Failed] ..."), or the command exits with a
@@ -2496,19 +2510,19 @@ void finalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
         if (!HandleSnapshotCommandFailure(result)) {
             const long long pollTimeout = (opts.duration > 0) ? opts.duration : DEFAULT_CAPTURE_DURATION_S;
             result.snapshotAttempted = true;
-            PollAndPullSnapshot(opts.resultDir, opts.outputDir, resultBaseline,
-                pollTimeout, result.snapshotPulledFiles,
-                result.snapshotStatus);
-            result.elapsed = ElapsedSince(start);
+            TransferResult snapTransfer{result.snapshotPulledFiles, result.snapshotStatus};
+            PollAndPullSnapshot(opts.resultDir, opts.outputDir, baselines.resultBaseline,
+                pollTimeout, snapTransfer);
+            result.elapsed = ElapsedSince(flags.start);
         }
     } else if (result.ok && !opts.remoteOutputPath.empty()) {
-        PullHiprofilerResult(opts, hiprofilerZipBaseline, nativeleaksPid, result);
+        PullHiprofilerResult(opts, baselines.hiprofilerZipBaseline, baselines.nativeleaksPid, result);
     }
 
     // Clean up the local temp config file if it was created.
-    if (!localConfigFile.empty()) {
+    if (!baselines.localConfigFile.empty()) {
         std::error_code ecCleanup;
-        fs::remove(PathFromUtf8(localConfigFile), ecCleanup);
+        fs::remove(PathFromUtf8(baselines.localConfigFile), ecCleanup);
     }
 }
 
@@ -2571,8 +2585,9 @@ bool ExportSnapshotOnce(const HdcRunOptions& opts,
         result.status = result.err;
         return false;
     }
+    TransferResult snapTransfer{result.files, result.status};
     PollAndPullSnapshot(opts.resultDir, opts.outputDir, baseline,
-        SNAPSHOT_POLL_TIMEOUT_S, result.files, result.status, role);
+        SNAPSHOT_POLL_TIMEOUT_S, snapTransfer, role);
     return !result.files.empty();
 }
 
@@ -2654,33 +2669,40 @@ static void ExportEndSnapshot(const HdcRunOptions& opts, const std::string& comm
     }
 }
 
+struct PeakMonitoringState {
+    long long& arktsPeakKb;
+    int& samplesAbovePeak;
+    bool peakSeeded;
+    std::vector<std::string>& peakFiles;
+    std::string& transcript;
+};
+
 static void TryExportPeakSnapshot(const HdcRunOptions& opts, const std::string& command,
-    const ProcessMetrics& metrics, long long& arktsPeakKb, int& samplesAbovePeak,
-    bool peakSeeded, std::vector<std::string>& peakFiles, std::string& transcript)
+    const ProcessMetrics& metrics, PeakMonitoringState& state)
 {
-    if (!CheckPeakGrowth(metrics, arktsPeakKb, samplesAbovePeak, peakSeeded)) {
+    if (!CheckPeakGrowth(metrics, state.arktsPeakKb, state.samplesAbovePeak, state.peakSeeded)) {
         return;
     }
     log::Logi("ArkTS heap stayed above the recorded peak by more than ",
         (SNAPSHOT_PEAK_GROWTH_KB / KB_PER_MB), " MB for ",
-        samplesAbovePeak,
+        state.samplesAbovePeak,
         " consecutive samples; exporting a snapshot...");
     // The peak is lifted as soon as the export is decided, so
     // that later samples are compared against this new value
     // even if the export itself fails.
-    arktsPeakKb = metrics.arktsHeapKb;
+    state.arktsPeakKb = metrics.arktsHeapKb;
     SnapshotExportResult snap;
     if (ExportSnapshotOnce(opts, command, "peak", snap)) {
         // Only one peak snapshot is kept: the new export is
         // complete, so the previous one can be dropped now.
-        RemoveSnapshotArtifacts(peakFiles);
-        peakFiles = std::move(snap.files);
-        transcript += snap.output;
-        log::Logok("Snapshot exported: ", peakFiles.front(), " (peak)");
+        RemoveSnapshotArtifacts(state.peakFiles);
+        state.peakFiles = std::move(snap.files);
+        state.transcript += snap.output;
+        log::Logok("Snapshot exported: ", state.peakFiles.front(), " (peak)");
     } else {
         log::Logw("Warning: snapshot export failed: ", (snap.err.empty() ? snap.status : snap.err));
     }
-    samplesAbovePeak = 0;
+    state.samplesAbovePeak = 0;
 }
 
 struct MonitoringResult {
@@ -2757,8 +2779,9 @@ static void RunSnapshotMonitoringLoop(const HdcRunOptions& opts, const std::stri
             peakSeeded = true;
         }
 
-        TryExportPeakSnapshot(opts, command, metrics, arktsPeakKb, samplesAbovePeak,
-            peakSeeded, result.peakFiles, result.transcript);
+        PeakMonitoringState peakState{arktsPeakKb, samplesAbovePeak, peakSeeded,
+            result.peakFiles, result.transcript};
+        TryExportPeakSnapshot(opts, command, metrics, peakState);
 
         // Also wake up when the device is lost, so the check above runs at the
         // next tick instead of sleeping out the remaining interval (pinned target).
@@ -2877,23 +2900,21 @@ RunResult RunHdc(const HdcRunOptions& opts)
     // countdown. The start-of-capture snapshot export is triggered inside.
     bool startExported = false;
     std::thread startExportThread;
-    WaitForCapture(opts, state, start, pre, setup.asyncStartMode, snapshotMode,
-        startExported, startExportThread, result);
+    ExportStartState exportState{startExported, startExportThread, result};
+    CaptureFlags flags{start, setup.asyncStartMode, snapshotMode};
+    WaitForCapture(opts, state, pre, flags, exportState);
 
     // Signal the background threads, stop hiprofiler (async mode), wait out the
     // post-capture finalization and join/detach the threads.
-    StopAndJoinThreads(opts, state, start, setup.asyncStartMode, worker,
-        pidChecker, freshRestartThread, startExportThread,
-        result);
+    ThreadBundle threads{worker, pidChecker, freshRestartThread, startExportThread, result};
+    StopAndJoinThreads(opts, state, start, setup.asyncStartMode, threads);
 
     result.elapsed = ElapsedSince(start);
 
     // Assemble the result, export the end-of-capture snapshot, pull the result
     // file(s) and clean up the temp config.
-    finalizeResults(opts, state, start, snapshotMode, setup.asyncStartMode,
-        pre.resultBaseline, pre.hiprofilerZipBaseline,
-        pre.initialPid,
-        setup.localConfigFile, result);
+    ResultBaselines baselines{pre.resultBaseline, pre.hiprofilerZipBaseline, pre.initialPid, setup.localConfigFile};
+    FinalizeResults(opts, state, flags, baselines, result);
 
     return result;
 }

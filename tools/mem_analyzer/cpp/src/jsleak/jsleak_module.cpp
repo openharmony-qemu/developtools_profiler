@@ -49,8 +49,9 @@ std::string RunCompareMode(const FormatKeyword& kw, const ModuleRequest& req, co
 
     timer.Stage("Analyzing comparison");
     json report = JsleakCompareAnalyze(
-        baseline, target, ctx.snapshot.compare.baselineFile, req.filePath,
-        ctx.snapshot.topN, ctx.snapshot.mode);
+        CompareAnalysisInput{baseline, target,
+            ctx.snapshot.compare.baselineFile, req.filePath,
+            ctx.snapshot.topN, ctx.snapshot.mode});
     timer.Tick("analysis");
 
     timer.Stage("Writing output");

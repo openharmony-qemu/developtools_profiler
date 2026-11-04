@@ -986,15 +986,6 @@ static json BuildCompareMethodology()
     };
 }
 
-struct CompareAnalysisInput {
-    const HeapSnapshot& baseline;
-    const HeapSnapshot& target;
-    const std::string& baselineFile;
-    const std::string& targetFile;
-    size_t topN = 0;
-    const std::string& mode;
-};
-
 struct CompareAnalysisResult {
     json pathDeltas;
     json changedLeakObjects;
@@ -1085,16 +1076,12 @@ json JsleakCompareAnalyzeImpl(const CompareAnalysisInput& input)
 
 } // namespace
 
-json JsleakCompareAnalyze(const HeapSnapshot& baseline,
-    const HeapSnapshot& target,
-    const std::string& baselineFile,
-    const std::string& targetFile,
-    int topN,
-    const std::string& mode)
+json JsleakCompareAnalyze(const CompareAnalysisInput& input)
 {
     return JsleakCompareAnalyzeImpl(
-        CompareAnalysisInput{baseline, target, baselineFile, targetFile,
-            static_cast<size_t>(std::max(1, topN)), mode});
+        CompareAnalysisInput{input.baseline, input.target,
+            input.baselineFile, input.targetFile,
+            std::max(1, input.topN), input.mode});
 }
 
 } // namespace mem_analyzer

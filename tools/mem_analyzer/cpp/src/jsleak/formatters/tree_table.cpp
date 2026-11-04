@@ -150,12 +150,18 @@ void EmitIcicleTreeRowHtml(const IcicleRowHtmlCtx& ctx, std::string& out)
 // 递归输出树表行（前序）。path 为该行在排序后兄弟序列中的路径，用于生成行 id 与父子关系；
 // anc 为所有祖先行 id 的逗号列表，前端据此判断该行是否应随某个折叠的祖先一起隐藏；
 // anc_collapsed 表示是否存在处于折叠态的祖先（决定本行初始是否隐藏）。
-void EmitIcicleTreeRows(const json& node, const std::string& tableId,
-    const std::string& path, int depth, const std::string& anc,
-    bool ancCollapsed,
-    int64_t rootSize, std::string& out)
+struct TreeTraversal {
+    std::string tableId;
+    std::string path;
+    int depth;
+    std::string anc;
+    bool ancCollapsed;
+    int64_t rootSize;
+};
+
+void EmitIcicleTreeRows(const json& node, const TreeTraversal& trav, std::string& out)
 {
-    const std::string rowId = tableId + "_r" + (path.empty() ? "root" : path);
+    const std::string rowId = trav.tableId + "_r" + (trav.path.empty() ? "root" : trav.path);
     const std::string name = node.value("n", std::string());
     const int64_t size = node.value("t", static_cast<int64_t>(0));
     const int64_t count = node.value("cnt", static_cast<int64_t>(0));
@@ -163,15 +169,15 @@ void EmitIcicleTreeRows(const json& node, const std::string& tableId,
     // 默认：占比超过阈值的节点展开（根节点占比恒为 100%，自然也展开），其余有子节点的层级收起；
     // 同时限制默认展开的最大层数，超过 ITT_MAX_EXPAND_DEPTH 的节点即使占比达标也收起。
     // 占比按「子树内最大占比」判定，使超过阈值的子孙链不会被未达阈值的父级折叠隐藏。
-    const double pct = rootSize > 0 ?
+    const double pct = trav.rootSize > 0 ?
                            PERCENTAGE_SCALE * static_cast<double>(IttSubtreeMaxSize(node)) /
-                                 static_cast<double>(rootSize) :
+                                 static_cast<double>(trav.rootSize) :
                            0.0;
     const bool collapsed =
-        hasChildren && depth >= 1 && (pct <= ITT_DEFAULT_EXPAND_PCT || depth >= ITT_MAX_EXPAND_DEPTH);
+        hasChildren && trav.depth >= 1 && (pct <= ITT_DEFAULT_EXPAND_PCT || trav.depth >= ITT_MAX_EXPAND_DEPTH);
 
     EmitIcicleTreeRowHtml(
-        {rowId, anc, name, size, count, rootSize, depth, hasChildren, collapsed, ancCollapsed}, out);
+        {rowId, trav.anc, name, size, count, trav.rootSize, trav.depth, hasChildren, collapsed, trav.ancCollapsed}, out);
 
     if (hasChildren) {
         const json& children = node["c"];
@@ -189,12 +195,12 @@ void EmitIcicleTreeRows(const json& node, const std::string& tableId,
             }
             return children[a].value("n", std::string()) < children[b].value("n", std::string());
         });
-        const std::string childAnc = anc.empty() ? rowId : anc + "," + rowId;
+        const std::string childAnc = trav.anc.empty() ? rowId : trav.anc + "," + rowId;
         for (size_t k = 0; k < order.size(); ++k) {
             const std::string childPath =
-                path.empty() ? std::to_string(k) : path + "-" + std::to_string(k);
-            EmitIcicleTreeRows(children[order[k]], tableId, childPath, depth + 1, childAnc,
-                ancCollapsed || collapsed, rootSize, out);
+                trav.path.empty() ? std::to_string(k) : trav.path + "-" + std::to_string(k);
+            EmitIcicleTreeRows(children[order[k]], {trav.tableId, childPath, trav.depth + 1, childAnc,
+                trav.ancCollapsed || collapsed, trav.rootSize}, out);
         }
     }
 }
@@ -267,8 +273,8 @@ std::string TreeTableHtml(const json& tree, const std::string& canvasId)
 {
     const std::string tableId = "treeTable_" + canvasId;
     std::string rows;
-    EmitIcicleTreeRows(tree, tableId, "", 0, "", false,
-        tree.value("t", static_cast<int64_t>(0)), rows);
+    EmitIcicleTreeRows(tree, {tableId, "", 0, "", false,
+        tree.value("t", static_cast<int64_t>(0))}, rows);
     std::string html;
     html += "<div class=\"itt-actions\">";
     html += "<button class=\"itt-btn\" onclick=\"toggleIcicleTreeAll('" + EscapeHtml(tableId) +

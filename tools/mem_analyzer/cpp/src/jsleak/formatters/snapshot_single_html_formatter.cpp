@@ -97,8 +97,9 @@ std::vector<TabDesc> CollectSnapshotTabs(const json& data, const std::string& js
         tabs.push_back({"tabTopchain",
             "快照最短引用链分析报告",
             BuildTopChainTabHtml(data["topRefChains"],
-                (hasPropertyTag && hasTop) ? "tc" : "",
-                "tabTopchain", !hasPropertyTag, icicleCharts, true),
+                TabDisplayConfig{(hasPropertyTag && hasTop) ? "tc" : "",
+                    "tabTopchain", !hasPropertyTag, true},
+                icicleCharts),
             !hasPropertyTag});
     }
     // JSWrappedNapiObject 节点引用链 tab（仅 -m all 且开启 napi_wrap 预览时产出）
@@ -108,8 +109,9 @@ std::vector<TabDesc> CollectSnapshotTabs(const json& data, const std::string& js
         // 因此「查看」不带搜索词，直接跳到完整总览图（见 buildTopChainTableRow）
         tabs.push_back({"tabNapiWrap",
             "绑定了Native内存的ArkTS对象引用链分析报告",
-            BuildTopChainTabHtml(data["napiWrapRefChains"], "np", "tabNapiWrap", active,
-                icicleCharts, false),
+            BuildTopChainTabHtml(data["napiWrapRefChains"],
+                TabDisplayConfig{"np", "tabNapiWrap", active, false},
+                icicleCharts),
             active});
     }
     return tabs;

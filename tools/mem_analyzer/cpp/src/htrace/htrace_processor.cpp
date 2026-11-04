@@ -68,20 +68,26 @@ static std::vector<HtraceEventType> AllowedEventTypes(const std::string& categor
     return HtraceCategory(category).eventTypes;  // 描述符表内已升序
 }
 
-// ── Build CompressedCallStack from frames ──
+struct CallStackMeta {
+    int callchainId;
+    long long totalSize;
+    long long totalCount;
+    HtraceEventType typeVal;
+    int subTypeId;
+};
+
 static CompressedCallStack BuildCompressedCallStack(
-    int callchainId, long long totalSize, long long totalCount,
-    HtraceEventType typeVal, int subTypeId,
+    const CallStackMeta& meta,
     const std::unordered_map<int, std::vector<FrameRow>>& framesByChain)
 {
     CompressedCallStack cs;
-    cs.id = callchainId;
-    cs.type = typeVal;
-    cs.subTypeId = subTypeId;
-    cs.existingSize = totalSize;
-    cs.existingCount = totalCount;
+    cs.id = meta.callchainId;
+    cs.type = meta.typeVal;
+    cs.subTypeId = meta.subTypeId;
+    cs.existingSize = meta.totalSize;
+    cs.existingCount = meta.totalCount;
 
-    auto it = framesByChain.find(callchainId);
+    auto it = framesByChain.find(meta.callchainId);
     if (it != framesByChain.end()) {
         cs.frames.reserve(it->second.size());
         for (const auto& fr : it->second) {
@@ -270,8 +276,8 @@ void LoadStatisticStacks(HtraceParseContext& ctx,
         if (HtraceIsCountSizeType(evType)) {
             meta.typeSizes[evType] += totalSize;
         }
-        auto entry = BuildCompressedCallStack(ccid, totalSize, totalCount,
-            static_cast<HtraceEventType>(typeVal), subTypeId, framesByChain);
+        auto entry = BuildCompressedCallStack({ccid, totalSize, totalCount,
+            static_cast<HtraceEventType>(typeVal), subTypeId}, framesByChain);
         if (!addrsStr.empty()) {
             // b.data 是逗号分隔的地址串，split 后填入 existing_addrs
             entry.existingAddrs = std::make_shared<std::vector<std::string>>(
@@ -394,8 +400,8 @@ void ResolveDetailFrames(HtraceParseContext& ctx, const std::string& eventTypeIn
         if (HtraceIsCountSizeType(g.htraceType)) {
             meta.typeSizes[g.htraceType] += g.heapSize;
         }
-        auto cs = BuildCompressedCallStack(g.callchainId, g.heapSize, g.count,
-            g.htraceType, g.subTypeId, framesByChain);
+        auto cs = BuildCompressedCallStack({g.callchainId, g.heapSize, g.count,
+            g.htraceType, g.subTypeId}, framesByChain);
         auto aIt = addrsByChain.find(g.callchainId);
         if (aIt != addrsByChain.end()) {
             cs.existingAddrs = std::make_shared<std::vector<std::string>>(aIt->second);

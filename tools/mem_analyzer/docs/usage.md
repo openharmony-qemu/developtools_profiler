@@ -281,7 +281,7 @@ out/snapshot-<bundle>-<timestamp>/
 | `snapshot`         | `hidumper-jsheap-*` 堆快照                 | <br /> |
 | `nativeheap`       | `mem_analyzer_hiprofiler_data_*.htrace` | <br /> |
 | `nativeleaks`      | `mem_analyzer_hiprofiler_data_*.htrace` + `memleak-native-orphansnapshot-*.txt` | <br /> |
-| `global` / `local` | `hiprofiler_data_*.zip`                 | <br /> |
+| `global` / `local` | `mem_analyzer_hiprofiler_data_*.zip`    | <br /> |
 | `fd`               | `mem_analyzer_hiprofiler_data_*.htrace` | <br /> |
 | `dma`              | `mem_analyzer_hiprofiler_data_*.htrace` | <br /> |
 | `thread`           | `mem_analyzer_hiprofiler_data_*.htrace` | <br /> |

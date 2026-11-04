@@ -238,12 +238,21 @@ void WriteDetailItem(std::ostringstream& out, const TshandleTopObject& object,
     ++graphIndex;
 }
 
-SectionResult BuildSection(const char* tabId, const char* label,
-    HtraceEventType handleType, const TshandleTypeSection& section,
-    double denominator,
-    json& allData, size_t& graphIndex)
+struct SectionMeta {
+    const char* tabId;
+    const char* label;
+    HtraceEventType handleType;
+};
+
+struct SectionOutput {
+    json& allData;
+    size_t& graphIndex;
+};
+
+SectionResult BuildSection(const SectionMeta& meta, const TshandleTypeSection& section,
+    double denominator, SectionOutput& output)
 {
-    SectionResult result{tabId, label, handleType, ""};
+    SectionResult result{meta.tabId, meta.label, meta.handleType, ""};
     
     const auto& objects = section.topObjects;
     // 如果完全没有抓到该类型数据，或者没有在堆快照中关联到 ArkTS 对象
@@ -262,10 +271,10 @@ SectionResult BuildSection(const char* tabId, const char* label,
 
     std::ostringstream out;
 
-    WriteTopTable(out, objects, graphIndex);
+    WriteTopTable(out, objects, output.graphIndex);
 
     for (const auto& object : objects) {
-        WriteDetailItem(out, object, denominator, allData, graphIndex);
+        WriteDetailItem(out, object, denominator, output.allData, output.graphIndex);
     }
     result.content = out.str();
     return result;
@@ -347,15 +356,16 @@ void FormatWithStream(std::ostream& out, const TshandleAnalysisOutput& analysis,
     std::vector<SectionResult> sections;
 
     const double globalTotal = analysis.global.app.totalSize + analysis.global.sys.totalSize;
-    sections.push_back(BuildSection("tabGlobalApp", "TOP GlobalHandle（应用栈）引用ArkTS对象分析报告",
-        HtraceEventType::ARK_GLOBAL_HANDLE, analysis.global.app,
-        globalTotal, allData, graphIndex));
-    sections.push_back(BuildSection("tabGlobalSys", "TOP GlobalHandle（系统栈）引用ArkTS对象分析报告",
-        HtraceEventType::ARK_GLOBAL_HANDLE, analysis.global.sys,
-        globalTotal, allData, graphIndex));
-    sections.push_back(BuildSection("tabLocal", "TOP LocalHandle 引用 ArkTS 对象分析报告",
-        HtraceEventType::ARK_LOCAL_HANDLE, analysis.local,
-        analysis.local.totalSize, allData, graphIndex));
+    SectionOutput output{allData, graphIndex};
+    sections.push_back(BuildSection({"tabGlobalApp", "TOP GlobalHandle（应用栈）引用ArkTS对象分析报告",
+        HtraceEventType::ARK_GLOBAL_HANDLE}, analysis.global.app,
+        globalTotal, output));
+    sections.push_back(BuildSection({"tabGlobalSys", "TOP GlobalHandle（系统栈）引用ArkTS对象分析报告",
+        HtraceEventType::ARK_GLOBAL_HANDLE}, analysis.global.sys,
+        globalTotal, output));
+    sections.push_back(BuildSection({"tabLocal", "TOP LocalHandle 引用 ArkTS 对象分析报告",
+        HtraceEventType::ARK_LOCAL_HANDLE}, analysis.local,
+        analysis.local.totalSize, output));
 
     const double totalSize = analysis.global.app.totalSize + analysis.global.sys.totalSize +
                             analysis.local.totalSize;

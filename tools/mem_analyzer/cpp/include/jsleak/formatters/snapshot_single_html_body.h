@@ -23,9 +23,13 @@ std::string BuildPropertyTagTabHtml(const json& propertyTagObjects,
     const std::string& prefix,
     const std::string& tabId, bool active,
     json& icicleCharts);
+struct TabDisplayConfig {
+    std::string prefix;
+    std::string tabId;
+    bool active;
+    bool searchOnOverview;
+};
 std::string BuildTopChainTabHtml(const json& topRefChains,
-    const std::string& prefix,
-    const std::string& tabId, bool active,
-    json& icicleCharts, bool searchOnOverview = false);
+    const TabDisplayConfig& config, json& icicleCharts);
 
 } // namespace mem_analyzer
