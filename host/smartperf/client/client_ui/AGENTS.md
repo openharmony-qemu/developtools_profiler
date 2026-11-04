@@ -18,13 +18,13 @@ SmartPerf UI 是 OpenHarmony 性能测试应用，采集 CPU、GPU、FPS、DDR�
 - `entry/src/main/ets/Application/AbilityStage.ts`：应用级入口；设置 `globalThis.hapModuleName = 'entry'`
 - `entry/src/main/ets/MainAbility/MainAbility.ts`：UIAbility 入口；创建 worker 线程（`entry/ets/workers/worker.js`）、绑定 `MainWorker.onmessage -> WorkerHandler.socketHandler`、加载 `pages/LoginPage` 为初始页、前台时调用 `initDb()` + `FloatWindowFun.initAllFun()`、按屏宽计算 `globalThis.coefficient`（>1400→1，800-1400→1.8，其余→1，用于悬浮窗尺寸缩放）
 - `entry/src/main/ets/workers/worker.js`：worker 线程；UDP 绑定 `127.0.0.1:8282`，向 `127.0.0.1:8283`（SP_daemon 监听端口）发送消息；协议字符串：`set_pkgName::<pkg>`、`get_fps_and_jitters`、`get_ram_info::<pkg>`、`get_capture`、`catch_trace_start`/`catch_trace_end`、`set_dubai_db`；回传消息格式 `RAM$<data>`、`FPS$<fps>$<jitters>`、`UdpStatus$<n>`
-- `entry/src/main/ets/common/profiler/base/BaseProfiler.ets`：抽象基类；`init()`/`isSupport()`/`readData()` 是数据契约
-- `entry/src/main/ets/common/profiler/base/ProfilerFactory.ets`：`CollectorType` → 单例采集器映射；**新增采集器在此注册**
-- `entry/src/main/ets/common/profiler/base/ProfilerConstant.ts`：`CollectorType` 枚举（CPU/GPU/DDR/FPS/COUNTER/POWER/TEMP/RAM/NETWORK/UNKNOWN）、`TaskStatus`、`CatchTraceStatus`
-- `entry/src/main/ets/common/profiler/base/SocketProfiler.ets`：需从 worker 消息队列读取数据的采集器接口（`readMessageQueue()`）
-- `entry/src/main/ets/common/profiler/item/*.ets`：具体采集器（CPU/GPU/FPS/Power/RAM/Thermal/DDR/NetWork）—— 全部单例，继承 `BaseProfiler`；FPS/RAM 实现 `SocketProfiler`（数据来自 SP_daemon）
-- `entry/src/main/ets/common/profiler/ProfilerTask.ets`：单例编排器；`initModule()`/`taskInit()`/`taskStart()`（每 tick 读取循环）/`taskSingleItemStart()`/`taskStop()`（落库 + 生成 CSV）/`taskGetDubai()`（查询 dubai.db 功耗归因）/`taskDestroy()`
-- `entry/src/main/ets/common/profiler/WorkerHandler.ts`：解析 worker 消息（按 `$` 切分 RAM/FPS/UdpStatus），写入 `globalThis` 队列
+- `entry/src/main/ets/common/profiler/base/BaseProfiler.ets`（采集器抽象基类）：抽象基类；`init()`/`isSupport()`/`readData()` 是数据契约
+- `entry/src/main/ets/common/profiler/base/ProfilerFactory.ets`（采集器工厂）：`CollectorType` → 单例采集器映射；**新增采集器在此注册**
+- `entry/src/main/ets/common/profiler/base/ProfilerConstant.ts`（采集器常量定义）：`CollectorType` 枚举（CPU/GPU/DDR/FPS/COUNTER/POWER/TEMP/RAM/NETWORK/UNKNOWN）、`TaskStatus`、`CatchTraceStatus`
+- `entry/src/main/ets/common/profiler/base/SocketProfiler.ets`（采集器 socket 接口）：需从 worker 消息队列读取数据的采集器接口（`readMessageQueue()`）
+- `entry/src/main/ets/common/profiler/item/*.ets`（采集器实现目录）：具体采集器（CPU/GPU/FPS/Power/RAM/Thermal/DDR/NetWork）—— 全部单例，继承 `BaseProfiler`；FPS/RAM 实现 `SocketProfiler`（数据来自 SP_daemon）
+- `entry/src/main/ets/common/profiler/ProfilerTask.ets`（采集任务编排器）：单例编排器；`initModule()`/`taskInit()`/`taskStart()`（每 tick 读取循环）/`taskSingleItemStart()`/`taskStop()`（落库 + 生成 CSV）/`taskGetDubai()`（查询 dubai.db 功耗归因）/`taskDestroy()`
+- `entry/src/main/ets/common/profiler/WorkerHandler.ts`（采集器 worker 消息处理）：解析 worker 消息（按 `$` 切分 RAM/FPS/UdpStatus），写入 `globalThis` 队列
 - `entry/src/main/ets/common/database/DatabaseUtils.ts`：rdb（`@ohos.data.relationalStore`）操作；建表 `t_general_info`/`t_index_info`/`task_powersensor_info`/`task_powerapp_info`；查询外部 `dubai.db` 做功耗归因
 - `entry/src/main/ets/common/database/LocalRepository.ts`：`initDb()`（gp.db + t_general_info）、`initDbIndex()`（按会话时间戳建 `<dbTime>.db` + t_index_info）、`getReportListDb()`
 - `entry/src/main/ets/common/constant/ConstantSQL.ts`：全部建表 DDL + `dbName = 'gp.db'`；**`t_index_info` 列名是持久化输出契约**
@@ -37,20 +37,20 @@ SmartPerf UI 是 OpenHarmony 性能测试应用，采集 CPU、GPU、FPS、DDR�
 - `entry/src/main/ets/pages/*.ets`：19 个页面（含 MainPage、StartTestPage、AppSelectPage、ReportDetail、各折线图页、FloatBall、TitleWindowPage 等）
 
 任务导航：
-- 新增/修改采集器 -> `profiler/base/ProfilerFactory.ets`、`profiler/item/<Name>.ets`、`profiler/base/ProfilerConstant.ts`（如有新类型）、`profiler/ProfilerTask.ets`（编排逻辑）、`database/DatabaseUtils.ts`（`gpArray2Index` switch 与入库列）、`constant/ConstantSQL.ts`（`t_index_info` 列）
-- 修改 UDP 消息协议 -> `workers/worker.js`（发送/接收）、`profiler/WorkerHandler.ts`（解析）、对应 `item/` 采集器；**必须与 SP_daemon 端（`../client_command/`）保持一致**
+- 新增/修改采集器 -> `profiler/base/ProfilerFactory.ets`（采集器工厂）、`profiler/item/<Name>.ets`、`profiler/base/ProfilerConstant.ts`（采集器常量，如有新类型）、`profiler/ProfilerTask.ets`（采集任务编排逻辑）、`database/DatabaseUtils.ts`（`gpArray2Index` switch 与入库列）、`constant/ConstantSQL.ts`（`t_index_info` 列）
+- 修改 UDP 消息协议 -> `workers/worker.js`（发送/接收）、`profiler/WorkerHandler.ts`（采集器消息解析）、对应 `item/` 采集器；**必须与 SP_daemon 端（`../client_command/`）保持一致**
 - 修改页面路由 -> `pages/<Name>.ets`（新增 `@Entry` 页面）、`resources/base/profile/main_pages.json`（登记 src）
 - 修改权限 -> `entry/src/main/module.json` 的 `requestPermissions`
 - 修改 DB schema -> `constant/ConstantSQL.ts`（DDL）、`database/DatabaseUtils.ts`（插入/查询列）、`entity/DatabaseEntity.ets`（实体）
 - 修改悬浮窗 -> `common/ui/floatwindow/FloatWindowFun.ts` + `FloatWindowConstant.ets`
-- 修改构建/打包 -> `BUILD.gn`、`entry/build-profile.json`、`build/config.gni`（profiler 根）
+- 修改构建/打包 -> `BUILD.gn`、`entry/build-profile.json`、`build/config.gni`（采集模块根）
 
 ## 2. 知识路由
 
 在规划或编辑前，先对任务分类并读取匹配的文档。通过 `skill` 工具加载技能。
 
 ### 基于任务的路由
-- 新增采集器或修改采集逻辑 -> 先阅读 `profiler/ProfilerTask.ets`（生命周期）与 `profiler/base/BaseProfiler.ets`（契约），参考 `profiler/item/CPU.ets`（sysfs 直读型）或 `profiler/item/FPS.ets`（socket 型）
+- 新增采集器或修改采集逻辑 -> 先阅读 `profiler/ProfilerTask.ets`（采集任务生命周期）与 `profiler/base/BaseProfiler.ets`（采集器契约），参考 `profiler/item/CPU.ets`（sysfs 直读型）或 `profiler/item/FPS.ets`（socket 型）
 - 修改与 SP_daemon 的 UDP 通信 -> 必须对照 `../client_command/` 的 socket 协议实现（端口 8282/8283、消息字符串）
 - 修改持久化 schema 或 CSV 输出 -> 阅读 `constant/ConstantSQL.ts` 与 `database/DatabaseUtils.ts`，确认列名与 `gpArray2Index` 的 `moduleType` switch 一致
 - 新增页面 -> 阅读 `resources/base/profile/main_pages.json` 路由注册表与现有 `pages/` 页面的 `@Entry @Component struct` 模式
@@ -60,9 +60,9 @@ SmartPerf UI 是 OpenHarmony 性能测试应用，采集 CPU、GPU、FPS、DDR�
 ### 基于路径的路由
 - `entry/src/main/module.json` -> 权限与 Ability 配置的唯一事实来源；新增权限或 Ability 必须在此编辑
 - `entry/src/main/resources/base/profile/main_pages.json` -> 页面路由注册表；新增 `@Entry` 页面必须在此登记，否则路由找不到
-- `common/profiler/base/ProfilerFactory.ets` -> 新采集器必须在 `getProfilerByConfig` 的 if-else 链中注册
-- `common/profiler/ProfilerTask.ets` -> 采集生命周期编排；`taskStart` 的 `gpDataArr` 装配顺序与 `gpArray2Index` 的 switch 一一对应
-- `common/profiler/base/BaseProfilerUtils.ets` -> `fileOpen`/`travelFile`/`isAccess` 是 sysfs 节点读取的统一入口；采集器不应绕过它直接用 `fileio`
+- `common/profiler/base/ProfilerFactory.ets`（采集器工厂） -> 新采集器必须在 `getProfilerByConfig` 的 if-else 链中注册
+- `common/profiler/ProfilerTask.ets`（采集任务编排） -> 采集生命周期编排；`taskStart` 的 `gpDataArr` 装配顺序与 `gpArray2Index` 的 switch 一一对应
+- `common/profiler/base/BaseProfilerUtils.ets`（采集器工具基类） -> `fileOpen`/`travelFile`/`isAccess` 是 sysfs 节点读取的统一入口；采集器不应绕过它直接用 `fileio`
 - `workers/worker.js` -> UDP 协议字符串的 HAP 端实现；与 `../client_command/include/common.h` 的 `MESSAGE_MAP` 是契约对端
 - `BUILD.gn` -> 任何新增源文件路径变化通过 `ohos_js_assets`（source_dir = `entry/src/main/ets`，整目录打包）隐式包含；但 `signature/openharmony_smartperf.p7b` 签名文件路径若移动需同步更新
 
@@ -71,13 +71,13 @@ SmartPerf UI 是 OpenHarmony 性能测试应用，采集 CPU、GPU、FPS、DDR�
 | 术语 | 风险提示 | 阅读 |
 |---|---|---|
 | globalThis | 运行时共享状态总线；`dbTime`/`startTime`/`endTime`/`collectConfigs`/`collectPkg`/`fpsArr`/`ramArr`/`useDaemon`/`coefficient`/`abilityContext`/`MainWorker` 等散落各处，跨页面跨线程读写 —— 修改变量前需搜索全部引用 | 全仓库 |
-| CollectorType | 采集器类型枚举；字符串值（如 `'POWER'`、`'TEMP'`、`'NETWORK'`）是 `globalThis.collectConfigs` 的键和工厂分发依据，不得随意改名 | `profiler/base/ProfilerConstant.ts` |
+| CollectorType | 采集器类型枚举；字符串值（如 `'POWER'`、`'TEMP'`、`'NETWORK'`）是 `globalThis.collectConfigs` 的键和工厂分发依据，不得随意改名 | `profiler/base/ProfilerConstant.ts`（采集器常量定义） |
 | GPData.moduleType | `gpArray2Index` switch 的 case 值（`CPU`/`CPULoad`/`GPU`/`DDR`/`Temp`/`Power`/`RAM`/`FPS`/`NetWork`）；与采集器 `createGPData` 第一参数必须一致 | `database/DatabaseUtils.ts:471`、各 `item/*.ets` |
 | SP_daemon | HAP 依赖的后台采集进程（CLI 变体）；若未运行，`useDaemon=false`，FPS/RAM 等采集器返回空数据 | `../client_command/`、`README_zh.md` |
 | dubai.db | 外部功耗归因数据库；HAP 通过 relationalStore 查询 `detailed_applications_*` 表获取 display/cpu/gpu/audio/ddr/dss/system_idle/wifi_data/sensor/rom 维度功耗 | `database/DatabaseUtils.ts` |
-| dbTime | 会话级时间戳主键；每次 `taskInit` 生成 `<dbTime>.db` 与 `<dbTime>/` CSV 目录，贯穿采集/入库/报告全流程 | `profiler/ProfilerTask.ets` |
+| dbTime | 会话级时间戳主键；每次 `taskInit` 生成 `<dbTime>.db` 与 `<dbTime>/` CSV 目录，贯穿采集/入库/报告全流程 | `profiler/ProfilerTask.ets`（采集任务编排） |
 | coefficient | 屏宽驱动的 UI 缩放系数（1 或 1.8）；悬浮窗/标题窗尺寸均乘以此值 | `MainAbility/MainAbility.ts`、`floatwindow/FloatWindowFun.ts` |
-| CatchTraceStatus | trace 自动抓取状态机；帧 jitter > 100ms 触发 `catch_trace_start`，60 tick 冷却（`catch_trace_times = 60`） | `profiler/base/ProfilerConstant.ts`、`profiler/WorkerHandler.ts` |
+| CatchTraceStatus | trace 自动抓取状态机；帧 jitter > 100ms 触发 `catch_trace_start`，60 tick 冷却（`catch_trace_times = 60`） | `profiler/base/ProfilerConstant.ts`（采集器常量定义）、`profiler/WorkerHandler.ts`（采集器消息处理） |
 | HVigor | OpenHarmony 应用构建工具（非 npm/tsc/webpack）；`entry/hvigorfile.js` 使用 `hapTasks`，`ets2abc=true` 编译 ArkTS 字节码 | `entry/hvigorfile.js`、`entry/build-profile.json` |
 | AppFileRealDir | 沙箱存储真实路径 `/data/app/el2/100/base/com.ohos.smartperf/files/`；对应沙箱路径 `abilityContext.filesDir` | `constant/ConstantsPath.ts` |
 
@@ -112,7 +112,7 @@ SmartPerf UI 是 OpenHarmony 性能测试应用，采集 CPU、GPU、FPS、DDR�
 - 在 `module.json` 中新增或删除权限声明。
 - 修改 UDP 协议字符串或端口（需与 SP_daemon 团队协调）。
 - 修改 `t_index_info`/`t_general_info` 列名或 CSV 列顺序。
-- 修改 `build/config.gni`（影响整个 profiler 子系统）。
+- 修改 `build/config.gni`（影响整个 SmartPerf 采集子系统）。
 - 新增 `external_deps` 或第三方依赖（当前 `entry/package.json` 的 dependencies 为空，HAP 仅依赖 OHOS 系统能力）。
 - 在已连接设备上执行破坏性 hdc 操作（`hdc_std shell` kill 进程、`rm` 等）。
 
@@ -133,7 +133,7 @@ SmartPerf UI 作为 OpenHarmony 全源码树的一部分通过 GN + Ninja + HVig
 - DB schema 变更 -> 同步 DDL（`ConstantSQL.ts`）、插入列（`DatabaseUtils.ts`）、查询列、实体（`DatabaseEntity.ets`）、报告页消费处
 - 新增页面 -> 在 `main_pages.json` 登记；确认 `@Entry struct` 命名与路由路径一致
 - 权限变更 -> 确认对应能力在 `MainAbility`/采集器中实际使用；验证签名配置（`signature/openharmony_smartperf.p7b`）仍匹配
-- 悬浮窗/窗口变更 -> 在真机上验证多分辨率（>1400 / 800-1400 / 其他）下尺寸与拖拽边界
+- 悬浮窗/窗口变更 -> 在真机上验证多分辨率（>1400 / 800-1400 / 其它）下尺寸与拖拽边界
 - 仅 UI 变更 -> 至少验证初始页 `LoginPage` → `MainPage` → `StartTestPage` 流程
 
 ### 完成定义

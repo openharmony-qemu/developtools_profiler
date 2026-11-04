@@ -1,6 +1,6 @@
 # AGENTS.md
 
-## 1. 代码地图
+## 1. 代码结构
 
 本 AGENTS.md 适用于 `host/smartperf/client/client_command/` —— SP_daemon 命令行工具，即 OpenHarmony SmartPerf 的 CLI 变体。UI 变体位于 `../client_ui/`，不在本文件范围内。
 
@@ -12,8 +12,8 @@ SP_daemon 是一个单二进制性能采集器，从 OpenHarmony 设备采集 CP
 - `smartperf_main.cpp`：程序入口；参数校验、开发者模式门控，分发到 `SmartPerfCommand` 或特定命令（`-editor`、`-start/-stop`、`-profilerfps` 等）
 - `smartperf_command.cpp/.h`：CLI 命令解析与执行；启动 `-server`/`-editorServer`/`-deviceServer` socket 监听
 - `include/common.h`：**所有命令/消息枚举与字符串映射表** —— `COMMAND_MAP`、`COMMAND_SHELL_MAP`、`MESSAGE_MAP`、`CMD_COMMAND_MAP`、`HIDUMPER_CMD_MAP`、`HISYSEVENT_CMD_MAP`。修改 CLI 标志或 socket 消息字符串必须在此编辑。
-- `include/sp_profiler.h`：抽象基类；`ItemData()` 是数据契约
-- `sp_profiler_factory.cpp`：将 `CommandType`/`MessageType` 映射到具体采集器单例；**在此注册新采集器**
+- `include/sp_profiler.h`（采集器基类）：采集器抽象基类；`ItemData()` 是数据契约
+- `sp_profiler_factory.cpp`（采集器工厂）：将 `CommandType`/`MessageType` 映射到具体采集器单例；**在此注册新采集器**
 - `sp_thread_socket.cpp`：editor 和 device server 模式的 TCP/UDP socket 消息处理；实现 `init::`/`start::`/`stop::` 协议
 - `sp_server_socket.h`：底层 socket 封装（UDP 8283、TCP 8284、UDP-EX 8285）
 - `sp_task.cpp/.h`：editor 模式的任务生命周期（`InitTask`/`StartTask`/`StopTask`）
@@ -25,7 +25,7 @@ SP_daemon 是一个单二进制性能采集器，从 OpenHarmony 设备采集 CP
 - `test/unittest/`：HWTEST_F 单元测试；`test/fuzztest/`：libFuzzer 模糊测试
 
 任务导航：
-- 新增/修改采集器 -> `sp_profiler_factory.cpp`、采集器 `.cpp`/`.h`、`include/common.h`（如有新标志）、`BUILD.gn` 源文件列表、`test/unittest/`
+- 新增/修改采集器 -> `sp_profiler_factory.cpp`（采集器工厂）、采集器 `.cpp`/`.h`、`include/common.h`（如有新标志）、`BUILD.gn` 源文件列表、`test/unittest/`
 - 修改 CLI 标志或 socket 消息 -> `include/common.h`（映射表是唯一事实来源）
 - 修改 editor/device TCP 协议 -> `sp_thread_socket.cpp`、`client_control.cpp`
 - 修改 start/stop daemon 流程 -> `client_control.cpp`、`smartperf_main.cpp`
@@ -41,11 +41,11 @@ SP_daemon 是一个单二进制性能采集器，从 OpenHarmony 设备采集 CP
 - 新增基于插件的采集器（外部 .so、游戏引擎回调）-> 使用 skill `sp-daemon-plugin`
 - 修改 VisualEffectAnalysis（RS/FE trace 指标）-> 使用 skill `sp-daemon-visual-effect-analysis`
 - 生成或更新 HWTEST_F 单元测试 -> 使用 skill `oh-ut-generator`
-- C++ 变更的安全审查 -> 使用 skill `harmonyos-cpp-security-review-enhanced`
+- C++ 变更的安全审查 -> 使用 skill `ohos-cpp-security-review-enhanced`
 
 ### 基于路径的路由
 - `include/common.h` -> 此文件定义所有 CLI 标志、socket 消息和 shell 命令字符串；任何标志/消息变更必须在 `COMMAND_MAP`、`COMMAND_SHELL_MAP`、`MESSAGE_MAP` 和 `CMD_COMMAND_MAP` 之间保持一致
-- `sp_profiler_factory.cpp` -> 新采集器必须在对应的 switch 中注册（`GetCmdProfilerItem` / `GetCmdProfilerItemOption` / `GetCmdProfilerItemContinue` / `GetProfilerItem` / `GetProfilerItemContinue`）
+- `sp_profiler_factory.cpp`（采集器工厂） -> 新采集器必须在对应的 switch 中注册（`GetCmdProfilerItem` / `GetCmdProfilerItemOption` / `GetCmdProfilerItemContinue` / `GetProfilerItem` / `GetProfilerItemContinue`）
 - `sp_thread_socket.cpp` -> editor/device TCP 协议；`init::`/`start::`/`stop::` 响应必须与 SmartPerf Editor 端期望一致
 - `BUILD.gn` -> 任何新增 `.cpp` 源文件必须**同时**添加到 `BUILD.gn`（约第 43 行 sources）和 `test/BUILD.gn`（约第 24 行 sources）
 - `interface/` -> 插件契约；变更影响外部 .so 插件，必须保持 ABI
@@ -54,7 +54,7 @@ SP_daemon 是一个单二进制性能采集器，从 OpenHarmony 设备采集 CP
 
 | 术语 | 风险提示 | 阅读 |
 |---|---|---|
-| SpProfiler | 抽象基类；`ItemData()` 返回 `map<string,string>` —— 这是数据契约，非随意命名 | `include/sp_profiler.h` |
+| SpProfiler / sp_profiler_factory | 采集器抽象基类与工厂；`ItemData()` 返回 `map<string,string>` —— 这是数据契约，非随意命名 | `include/sp_profiler.h`、`sp_profiler_factory.cpp` |
 | MESSAGE_MAP | daemon <=1.0.6 UDP 通信的 socket 消息字符串；修改某个值会破坏 HAP 兼容性 | `include/common.h:66` |
 | COMMAND_MAP / COMMAND_SHELL_MAP | CLI 标志 → CommandType 映射；`COMMAND_MAP` 使用大写标志（-CPU），`COMMAND_SHELL_MAP` 使用小写（-c） | `include/common.h:158,224` |
 | CMD_COMMAND_MAP | shell 命令字符串（hitrace、kill、pidof 等）；通过 `SPUtils::LoadCmd` 在设备上执行 | `include/common.h:290` |
@@ -76,7 +76,7 @@ SP_daemon 是一个单二进制性能采集器，从 OpenHarmony 设备采集 CP
 ### 架构不变量
 - 所有采集器必须继承 `SpProfiler` 并实现 `ItemData()` 返回 `std::map<std::string, std::string>`。map 的键（如 `cpu0Frequency`、`gpuload`、`fps`）是 **公共输出契约**，被 SmartPerf Editor 和 CSV 导出消费 —— 不得重命名已有键。
 - 采集器必须是单例（私有构造函数 + `static Instance` 模式）。工厂返回单例实例的指针；禁止 `new`/`delete` 采集器。
-- `include/common.h` 中的映射表是定义在头文件中的 `const` 全局变量，被多个编译单元包含 —— 它们是 CLI 标志和 socket 消息的唯一事实来源。禁止在其他位置复制标志字符串。
+- `include/common.h` 中的映射表是定义在头文件中的 `const` 全局变量，被多个编译单元包含 —— 它们是 CLI 标志和 socket 消息的唯一事实来源。禁止在其它位置复制标志字符串。
 - socket 协议响应（`init::True`/`init::False`/`start::True`/`stop::True`）由 SmartPerf Editor 客户端解析 —— 修改格式会破坏互操作。
 - 整个代码库命名空间为 `OHOS::SmartPerf`。每个文件使用 Apache 2.0 许可证头。
 
@@ -94,7 +94,7 @@ SP_daemon 是一个单二进制性能采集器，从 OpenHarmony 设备采集 CP
 - 在 `BUILD.gn` 中新增 `external_deps` 条目。
 - 修改 socket 协议格式或端口。
 - 修改 `ItemData()` 键名或输出 CSV 列顺序。
-- 修改 `build/config.gni`（影响整个 profiler 子系统）。
+- 修改 `build/config.gni`（影响整个 SmartPerf 采集子系统）。
 - 新增设备特定分支（RK vs Hi3516）—— 需确认目标硬件上 sysfs 路径存在。
 - 在已连接的设备上运行任何 `CMD_COMMAND_MAP` 命令。
 
