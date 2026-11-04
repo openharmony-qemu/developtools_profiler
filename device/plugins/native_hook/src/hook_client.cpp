@@ -499,7 +499,7 @@ static void inline __attribute__((always_inline)) CollectNestedAsyncIds(
 
 static void inline __attribute__((always_inline)) CollectSyncStack(AsyncStackData& asyncData)
 {
-    asyncData.syncStackId = DfxCollectStackWithDepth(ASYNC_TYPE_PROFILER, g_clientConfig.maxStackDepth);
+    asyncData.syncStackId = DfxCollectStackWithDepth(ASYNC_TYPE_PROFILER | PROFILER_TYPE, g_clientConfig.maxStackDepth);
 }
 
 static void inline __attribute__((always_inline)) CollectNestedAsyncStack(AsyncStackData& asyncData)
