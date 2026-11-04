@@ -63,7 +63,7 @@ SQLITE_SRC_DIR = "src"            # subdirectory inside cloned repo with sqlite3
 
 # ── zlib（含 minizip，用于 tshandle 以 API 方式解压 ZIP）──────────────────
 # 源文件：根目录 zlib 核心（adler32/crc32/inflate/inffast/inftrees/zutil）
-#         contrib/minizip/{unzip.c, ioapi.c, iowin32.c(win)}
+# contrib/minizip 核心 {unzip.c, ioapi.c, iowin32.c(win)}
 ZLIB_REPO_URL = "https://gitcode.com/openharmony/third_party_zlib.git"
 ZLIB_COMMIT = "OpenHarmony-v7.0-Beta1"  # tag
 ZLIB_DST = THIRD_PARTY / "src" / "third_party_zlib"
