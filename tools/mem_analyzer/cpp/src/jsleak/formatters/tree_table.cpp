@@ -176,8 +176,8 @@ void EmitIcicleTreeRows(const json& node, const TreeTraversal& trav, std::string
     const bool collapsed =
         hasChildren && trav.depth >= 1 && (pct <= ITT_DEFAULT_EXPAND_PCT || trav.depth >= ITT_MAX_EXPAND_DEPTH);
 
-    EmitIcicleTreeRowHtml(
-        {rowId, trav.anc, name, size, count, trav.rootSize, trav.depth, hasChildren, collapsed, trav.ancCollapsed}, out);
+    EmitIcicleTreeRowHtml({rowId, trav.anc, name, size, count, trav.rootSize, trav.depth, hasChildren, collapsed,
+        trav.ancCollapsed}, out);
 
     if (hasChildren) {
         const json& children = node["c"];

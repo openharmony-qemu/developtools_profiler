@@ -624,8 +624,7 @@ std::string MakeDevicePath(const std::string& dir, const std::string& name)
     return full;
 }
 
-static void ParseLsLineSize(const std::string& line,
-    const std::string& namePrefix, const std::string& nameSuffix,
+static void ParseLsLineSize(const std::string& line, const std::string& namePrefix, const std::string& nameSuffix,
     std::map<std::string, long long>& files)
 {
     // Expected line (one of):
@@ -766,8 +765,7 @@ static void PollForStableSnapshots(const std::string& resultDir, const std::map<
         }
 
         if (candidates.empty()) {
-            std::cout << "[Snapshot check] #" << pollNum << " (" << elapsedS <<
-                      "s): no new files\n" << std::flush;
+            std::cout << "[Snapshot check] #" << pollNum << " (" << elapsedS << "s): no new files\n" << std::flush;
             prevSizes.clear();
         } else {
             bool allStable = true;
@@ -826,11 +824,8 @@ static void PullCompletedSnapshots(const std::string& resultDir,
     result.status = result.files.size() > pulledBefore ? "complete" : "snapshot file export failed";
 }
 
-void PollAndPullSnapshot(const std::string& resultDir,
-    const std::string& targetDir,
-    const std::map<std::string, long long>& baseline,
-    long long timeoutS,
-    TransferResult& transfer,
+void PollAndPullSnapshot(const std::string& resultDir, const std::string& targetDir,
+    const std::map<std::string, long long>& baseline, long long timeoutS, TransferResult& transfer,
     const std::string& role = "")
 {
     std::map<std::string, long long> stable;
@@ -919,8 +914,7 @@ bool StartDeviceApp(const std::string& packageName)
     for (const auto& ability : abilities) {
         const std::string deviceCmd = "aa start -a " + proc::ShellQuoteDevice(ability) +
             " -b " + proc::ShellQuoteDevice(packageName);
-        CapturedCmd cap = CaptureCommand(
-            HdcShell(deviceCmd) + " 2>&1", 15000);
+        CapturedCmd cap = CaptureCommand(HdcShell(deviceCmd) + " 2>&1", 15000);
         if (!cap.spawned) {
             return false;
         }
@@ -1097,8 +1091,7 @@ static void PrintZipPollStatus(int pollIdx, long long elapsedPoll,
     const char* state = stableCount >= STABLE_SAMPLE_THRESHOLD ? " stable" :
         (stableCount == 1 ? " stabilizing" : " generating");
     std::cout << "[hiprofiler wait] #" << pollIdx << " (" << elapsedPoll <<
-        "s): new zip candidate " << candidate << " size=" << curSizeKb <<
-        "KB" << state << "\n" << std::flush;
+        "s): new zip candidate " << candidate << " size=" << curSizeKb << "KB" << state << "\n" << std::flush;
 }
 
 std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baseline,
@@ -1126,8 +1119,7 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
             prevSize = -1;
             stableCount = 0;
             std::cout << "[hiprofiler wait] #" << i <<
-                      " (" << elapsedPoll << "s): no new hiprofiler_data zip yet\n" <<
-                      std::flush;
+                " (" << elapsedPoll << "s): no new hiprofiler_data zip yet\n" << std::flush;
         } else {
             const auto sizes = ListDirFileSizes(dir, "hiprofiler_data_", ".zip");
             long long curSize = 0;
@@ -1144,8 +1136,7 @@ std::string WaitForHiprofilerZip(const std::map<std::string, long long>& baselin
             PrintZipPollStatus(i, elapsedPoll, candidate, curSize / BYTES_PER_KB, stableCount);
             if (stableCount >= STABLE_SAMPLE_THRESHOLD) {
                 std::cout << "Detected new hiprofiler_data zip after " << i <<
-                          " polls: " << candidate <<
-                          " (will prefer this over -o file)\n" << std::flush;
+                    " polls: " << candidate << " (will prefer this over -o file)\n" << std::flush;
                 return MakeDevicePath(dir, candidate);
             }
         }
@@ -1223,7 +1214,7 @@ std::string WaitForNativeleaksFile(const std::string& pid, const std::string& di
             PrintNativeleaksPollStatus(i, elapsedPoll, filename, curSize / BYTES_PER_KB, stableCount);
             if (stableCount >= STABLE_SAMPLE_THRESHOLD) {
                 std::cout << "Detected nativeleaks orphan-snapshot file after " << i <<
-                          " polls: " << filename << "\n" << std::flush;
+                    " polls: " << filename << "\n" << std::flush;
                 return MakeDevicePath(dir, filename);
             }
         }
@@ -1584,7 +1575,7 @@ static void ManageAppState(const HdcRunOptions& opts, PreCaptureState& pre)
         }
     } else if (opts.requireFreshStart) {
         log::Logi("This capture type requires a FRESH START: the app will be force-stopped "
-                  "and relaunched automatically once the capture session is ready.");
+            "and relaunched automatically once the capture session is ready.");
     }
 
     pre.initialPid = GetProcessPid(opts.processName);
@@ -1714,8 +1705,7 @@ void ConsumeWindowsProcess(HANDLE hRead, PROCESS_INFORMATION pi,
 // 无 shell 执行：CreateProcessW 直接解析命令行（MSVCRT 规则，不经 cmd.exe），
 // 宽字符避免中文进程名的 ANSI 乱码；管道合并 stderr 到 stdout，
 // 消除 cmd.exe 对 `&|<>^` 等元字符的解释（主机命令注入）。
-void SpawnWorkerWindows(const std::shared_ptr<CaptureState>& state, const std::string& cmd,
-                        bool asyncStartMode)
+void SpawnWorkerWindows(const std::shared_ptr<CaptureState>& state, const std::string& cmd, bool asyncStartMode)
 {
     SECURITY_ATTRIBUTES sa{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
     HANDLE hRead = nullptr;
@@ -1746,8 +1736,7 @@ void SpawnWorkerWindows(const std::shared_ptr<CaptureState>& state, const std::s
         cleanCmd.resize(cleanCmd.size() - SHELL_REDIRECT_SUFFIX_LEN);
     }
     std::wstring wcmdline = WidenPath(cleanCmd);
-    if (!CreateProcessW(nullptr, wcmdline.data(), nullptr, nullptr, TRUE, 0,
-                        nullptr, nullptr, &si, &pi)) {
+    if (!CreateProcessW(nullptr, wcmdline.data(), nullptr, nullptr, TRUE, 0, nullptr, nullptr, &si, &pi)) {
         CloseHandle(hRead);
         CloseHandle(hWrite);
         state->spawnFailed = true;
@@ -1912,7 +1901,7 @@ std::thread SpawnFreshRestart(const std::shared_ptr<CaptureState>& state, const 
                 std::lock_guard<std::mutex> lock(state->mtx);
                 marker = state->output.find("Use 'hiprofiler_cmd stop'") != std::string::npos;
                 failed = state->output.find("Failed to start profiling session") != std::string::npos ||
-                         state->output.find("MakeCreateRequest failed") != std::string::npos;
+                    state->output.find("MakeCreateRequest failed") != std::string::npos;
             }
             if (marker) {
                 sessionUp = true;
@@ -2016,12 +2005,8 @@ struct ResultBaselines {
 // The thread outlives this function, so it captures output_dir / smaps_prefix
 // / pid by value; it only references `result` (alive until the caller joins
 // the thread) and the heap-allocated `state`.
-void MaybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state,
-    const std::string& outputDir,
-    const std::string& smapsPrefix,
-    bool requireFreshStart,
-    const std::string& pid,
-    ExportStartState& exportState)
+void MaybeStartSnapshotExport(const std::shared_ptr<CaptureState>& state, const std::string& outputDir,
+    const std::string& smapsPrefix, bool requireFreshStart, const std::string& pid, ExportStartState& exportState)
 {
     if (exportState.startExported) {
         return;
@@ -2277,8 +2262,7 @@ static void WaitForFinalization(ClockType::time_point start,
 {
     if (!state->done.load() && !g_interruptRequested &&
         !state->permissionFailed.load()) {
-        log::Logi("Capture duration finished; hiprofiler is finalizing output "
-                  "(stopping session, flushing data)...");
+        log::Logi("Capture duration finished; hiprofiler is finalizing output (stopping session, flushing data)...");
         int finalizeWait = 0;
         while (!state->done.load() && !g_interruptRequested) {
             const long long total = ElapsedSince(start);
@@ -2294,8 +2278,7 @@ static void WaitForFinalization(ClockType::time_point start,
 }
 
 void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<CaptureState>& state,
-    ClockType::time_point start, bool asyncStartMode,
-    ThreadBundle& threads)
+    ClockType::time_point start, bool asyncStartMode, ThreadBundle& threads)
 {
     // Signal the background pid checker and fresh-start automation to stop.
     state->stopPidCheck = true;
@@ -2372,8 +2355,7 @@ void StopAndJoinThreads(const HdcRunOptions& opts, const std::shared_ptr<Capture
 
 // ── result assembly: end snapshot, result-file pull, cleanup ─────────────────
 
-static void PullNativeleaksFile(const HdcRunOptions& opts,
-    const std::string& nativeleaksPid, RunResult& result)
+static void PullNativeleaksFile(const HdcRunOptions& opts, const std::string& nativeleaksPid, RunResult& result)
 {
     // nativeleaks: also pull the orphan-snapshot file written alongside
     // the .htrace. It may appear a few seconds after hiprofiler_cmd
@@ -2428,8 +2410,7 @@ static void PullNativeleaksFile(const HdcRunOptions& opts,
  * hiprofiler_data_*.zip, so we just pull the -o file directly.
  */
 static void PullHiprofilerResult(const HdcRunOptions& opts,
-    const std::map<std::string, long long>& hiprofilerZipBaseline,
-    const std::string& nativeleaksPid, RunResult& result)
+    const std::map<std::string, long long>& hiprofilerZipBaseline, const std::string& nativeleaksPid, RunResult& result)
 {
     std::string fileToPull = opts.remoteOutputPath;
 
@@ -2511,8 +2492,7 @@ void FinalizeResults(const HdcRunOptions& opts, const std::shared_ptr<CaptureSta
             const long long pollTimeout = (opts.duration > 0) ? opts.duration : DEFAULT_CAPTURE_DURATION_S;
             result.snapshotAttempted = true;
             TransferResult snapTransfer{result.snapshotPulledFiles, result.snapshotStatus};
-            PollAndPullSnapshot(opts.resultDir, opts.outputDir, baselines.resultBaseline,
-                pollTimeout, snapTransfer);
+            PollAndPullSnapshot(opts.resultDir, opts.outputDir, baselines.resultBaseline, pollTimeout, snapTransfer);
             result.elapsed = ElapsedSince(flags.start);
         }
     } else if (result.ok && !opts.remoteOutputPath.empty()) {
@@ -2555,9 +2535,7 @@ struct SnapshotExportResult {
     std::string err;
 };
 
-bool ExportSnapshotOnce(const HdcRunOptions& opts,
-    const std::string& command,
-    const std::string& role,
+bool ExportSnapshotOnce(const HdcRunOptions& opts, const std::string& command, const std::string& role,
     SnapshotExportResult& result)
 {
     result.files.clear();
@@ -2572,7 +2550,7 @@ bool ExportSnapshotOnce(const HdcRunOptions& opts,
     if (!perr.empty()) {
         result.status = "permission check failed: " + perr;
         result.err = "permission check failed: the target app cannot be tuned on this "
-              "device (release-signed app on a non-root phone)";
+            "device (release-signed app on a non-root phone)";
         return false;
     }
     if (cap.timedOut) {
@@ -2586,8 +2564,7 @@ bool ExportSnapshotOnce(const HdcRunOptions& opts,
         return false;
     }
     TransferResult snapTransfer{result.files, result.status};
-    PollAndPullSnapshot(opts.resultDir, opts.outputDir, baseline,
-        SNAPSHOT_POLL_TIMEOUT_S, snapTransfer, role);
+    PollAndPullSnapshot(opts.resultDir, opts.outputDir, baseline, SNAPSHOT_POLL_TIMEOUT_S, snapTransfer, role);
     return !result.files.empty();
 }
 
@@ -2711,8 +2688,7 @@ struct MonitoringResult {
 };
 
 static void RunSnapshotMonitoringLoop(const HdcRunOptions& opts, const std::string& command,
-    ClockType::time_point start, const std::string& initialPid,
-    MonitoringResult& result)
+    ClockType::time_point start, const std::string& initialPid, MonitoringResult& result)
 {
     // The recorded peak (the "previous max" the trigger compares against) is
     // seeded from the first valid sample of the monitoring loop below, i.e.
@@ -2801,11 +2777,8 @@ static void RunSnapshotMonitoringLoop(const HdcRunOptions& opts, const std::stri
 // it either), and the recorded peak never decreases, so the single peak
 // snapshot that is kept is always the one holding the session's highest ArkTS
 // heap.
-void RunContinuousSnapshot(const HdcRunOptions& opts,
-    const std::string& command,
-    const PreCaptureState& pre,
-    ClockType::time_point start,
-    RunResult& result)
+void RunContinuousSnapshot(const HdcRunOptions& opts, const std::string& command, const PreCaptureState& pre,
+    ClockType::time_point start, RunResult& result)
 {
     result.snapshotAttempted = true;
 
