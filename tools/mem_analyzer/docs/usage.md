@@ -695,38 +695,9 @@ cd ~/Documents/mem-analyzer/
 xattr -rd com.apple.quarantine ./
 ```
 
-### 方式2：授权运行mem-analyzer
+<b>注意：使用前要确认下载文件的sha值与releasenote里的值一致；针对单个二进制的授权是永久的；但每次重新下载后，运行新下载的二进制都需要重新授权。</b>
 
-1. 下载发布的[mem-analyzer二进制文件](https://gitcode.com/openharmony/developtools_profiler/tree/master/tools/mem_analyzer/releases)
-2. 解压二进制文件到任意目录，例如 `~/Documents/mem-analyzer/`
-3. 打开“终端”，切换到解压目录，运行mem-analyzer
-```bash 
-cd ~/Documents/mem-analyzer/
-./mem-analyzer
-```
-
-4. 首次运行时，会弹出如下提示，点击右上的<b>问号</b>，进入手册页面
-   
-   <img src="images/mac_authorize/1.png" width="400" alt="首次运行提示">
-5. 进入手册页面后，可以看到   <b>“为我打开“隐私与安全性”设置”</b> , 点击此链接，前往系统设置中的“隐私与安全性”设置页面。
-   
-   <img src="images/mac_authorize/2.png" width="400" alt="手册页面">
-6. 在系统隐私与安全性设置中的“安全性”设置页面下，可看到  <b>已阻止“mem-analyzer”以保护Mac</b>，点击后面的<b>“仍然允许”</b>。
-   
-   <img src="images/mac_authorize/3.png" width="400" alt="授权运行">
-7. 回到终端，重新运行mem-analyzer，会弹出如下提示，选择<b>“仍要打开”</b>
-   
-   <img src="images/mac_authorize/4.png" width="400" alt="仍然允许">
-8. 弹出如下提示，授权通过后，即可运行
-   
-   <img src="images/mac_authorize/5.png" width="400" alt="重新运行提示">
-9. 由于mem-analyzer在运行时，会调用<b>trace\_streamer\_mac</b>和<b>rawheap\_translator</b>，因此同样需要用户进行上诉的授权流程。
-
-<br />
-
-<b>注意：针对单个二进制的授权是永久的；但每次重新下载后，运行新下载的二进制都需要重新授权。</b>
-
-### 方式3：自行编译运行mem-analyzer，无需授权
+### 方式2：自行编译运行mem-analyzer，无需授权
 
 1. 下载代码到本地目录，例如 `~/Documents/mem-analyzer/`
 2. 进入代码目录，例如 `~/Documents/mem-analyzer/cpp`
