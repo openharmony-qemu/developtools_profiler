@@ -160,6 +160,39 @@ static std::vector<ChainGroup> QueryCallStackGroups(sqlite3* db, bool isStatisti
     return groups;
 }
 
+static ResolvedStackFrame ResolveFrameRow(const FrameRow& fr,
+    const std::unordered_map<int, std::string>& dataDict)
+{
+    ResolvedStackFrame tf;
+    tf.depth = fr.depth;
+
+    auto symIt = dataDict.find(fr.symbolId);
+    tf.symbol = (symIt != dataDict.end()) ? symIt->second : "unknown";
+
+    if (fr.fileIdNull) {
+        tf.lib = "unknown";
+    } else {
+        auto libIt = dataDict.find(fr.fileId);
+        tf.lib = (libIt != dataDict.end()) ? libIt->second : "unknown";
+    }
+
+    if (fr.buildIdNull) {
+        tf.buildId = "";
+    } else {
+        auto buildIt = dataDict.find(fr.buildId);
+        tf.buildId = (buildIt != dataDict.end()) ? buildIt->second : "";
+    }
+
+    // TS: frame.vaddr != null ? `0x${Number(frame.vaddr).toString(16)}` : ''
+    if (!fr.vaddrNull) {
+        std::stringstream ss;
+        ss << "0x" << std::hex << fr.vaddr;
+        tf.libOffset = ss.str();
+    }
+
+    return tf;
+}
+
 static std::vector<ResolvedCallStack> BuildCallStackEntries(
     const std::vector<ChainGroup>& groups,
     const std::unordered_map<int, std::string>& dataDict,
@@ -183,34 +216,7 @@ static std::vector<ResolvedCallStack> BuildCallStackEntries(
         auto it = framesByChain.find(g.callchainId);
         if (it != framesByChain.end()) {
             for (const auto& fr : it->second) {
-                ResolvedStackFrame tf;
-                tf.depth = fr.depth;
-
-                auto symIt = dataDict.find(fr.symbolId);
-                tf.symbol = (symIt != dataDict.end()) ? symIt->second : "unknown";
-
-                if (fr.fileIdNull) {
-                    tf.lib = "unknown";
-                } else {
-                    auto libIt = dataDict.find(fr.fileId);
-                    tf.lib = (libIt != dataDict.end()) ? libIt->second : "unknown";
-                }
-
-                if (fr.buildIdNull) {
-                    tf.buildId = "";
-                } else {
-                    auto buildIt = dataDict.find(fr.buildId);
-                    tf.buildId = (buildIt != dataDict.end()) ? buildIt->second : "";
-                }
-
-                // TS: frame.vaddr != null ? `0x${Number(frame.vaddr).toString(16)}` : ''
-                if (!fr.vaddrNull) {
-                    std::stringstream ss;
-                    ss << "0x" << std::hex << fr.vaddr;
-                    tf.libOffset = ss.str();
-                }
-
-                cs.frames.push_back(std::move(tf));
+                cs.frames.push_back(ResolveFrameRow(fr, dataDict));
             }
         }
 
