@@ -16,6 +16,7 @@
 
 #include "call_stack.h"
 #include "dfx_ark.h"
+#include "dfx_jit_debug.h"
 
 #include <string>
 #if defined(HAVE_LIBUNWIND) && HAVE_LIBUNWIND
@@ -508,7 +509,13 @@ bool CallStack::DoUnwind2(const VirtualThread &thread, std::vector<CallFrame> &c
     };
 
     if (pidUnwinder_.count(thread.pid_) == 0) {
-        pidUnwinder_.emplace(thread.pid_, std::make_shared<Unwinder>(accessor_));
+        auto unwinder = std::make_shared<Unwinder>(accessor_);
+        if (thread.IsContainer()) {
+            unwinder->SetMaps(OHOS::HiviewDFX::DfxMaps::Create(thread.pid_, true, true, true));
+            unwinder->SetPid(thread.pid_);
+            unwinder->SetIsContainerPid(true);
+        }
+        pidUnwinder_.emplace(thread.pid_, unwinder);
     }
     auto unwinder = pidUnwinder_[thread.pid_];
 

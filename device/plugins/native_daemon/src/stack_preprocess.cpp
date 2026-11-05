@@ -613,7 +613,8 @@ bool StackPreprocess::HandleNoStackEvent(HookRecordPtr& hookRecord)
     if (hookRecord->GetType() == MMAP_FILE_TYPE) {
         BaseStackRawData* mmapRawData = rawData->stackContext;
         std::string filePath(reinterpret_cast<char *>(rawData->data));
-        COMMON::AdaptSandboxPath(filePath, rawData->stackContext->pid);
+        std::string processName = COMMON::GetBundleNameByPid(rawData->stackContext->pid);
+        NeedAdaptHMBundlePath(filePath, processName);
         std::lock_guard<std::mutex> guard(mtx_);
         runtime_instance->HandleMapInfo({reinterpret_cast<uint64_t>(mmapRawData->addr),
             mmapRawData->mallocSize, mmapRawData->mmapArgs.flags, mmapRawData->mmapArgs.offset}, filePath,
@@ -1395,7 +1396,7 @@ bool StackPreprocess::ProcessSingleRecord(HookRecordPtr& hookRecord)
     }
 
     auto rawData = hookRecord->GetRawStack();
-    if (rawData->stackContext == nullptr) {
+    if (rawData == nullptr || rawData->stackContext == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "StackPreprocess take results rawData->stackContext is nullptr");
         return true;
     }
@@ -2534,7 +2535,7 @@ void StackPreprocess::SetMapsInfo()
         ElfSymbolTable symbolInfo;
         if (needBasicData) {
             GetSymbols(curMemMaps->name_, symbolInfo);
-            if (symbolInfo.symEntSize == 0) {
+            if (symbolInfo.symEntSize == 0 && !isContainer_) {
                 runtime_instance->ResetOfflineFileReported(curMemMaps->filePathId_);
                 continue;
             }
@@ -2581,7 +2582,7 @@ void StackPreprocess::SetMapsInfo()
 template <typename T>
 void StackPreprocess::SetSymbolInfo(uint32_t filePathId, ElfSymbolTable& symbolInfo, T& batchNativeHookData)
 {
-    if (symbolInfo.symEntSize == 0) {
+    if (symbolInfo.symEntSize == 0 && !isContainer_) {
         PROFILER_LOG_ERROR(LOG_CORE, "SetSymbolInfo get symbolInfo failed");
         return;
     }
@@ -3037,7 +3038,9 @@ std::string StackPreprocess::GetBuildId(const std::string& soName)
     OHOS::HiviewDFX::RegularElfFactory elfFactory(soName);
     auto elf = elfFactory.Create();
     if (elf == nullptr || !elf->IsValid()) {
-        PROFILER_LOG_WARN(LOG_CORE, "GetBuildId Failed to create valid DfxElf for: %s", soName.c_str());
+        if (!isContainer_) {
+            PROFILER_LOG_WARN(LOG_CORE, "GetBuildId Failed to create valid DfxElf for: %s", soName.c_str());
+        }
         return "";
     }
     std::string buildId = elf->GetBuildId();

@@ -110,12 +110,15 @@ public:
 #ifdef HIPERF_DEBUG
     void ReportVaddrMapMiss(uint64_t vaddr) const;
 #endif
+    bool IsContainer() const;
 public:
 
 private:
 #ifdef DEBUG_TIME
     bool IsSorted() const;
 #endif
+    void RegulateMapPath(std::shared_ptr<DfxMap>& map, const std::string& processName);
+    std::atomic<bool> isContainer_{false};
     const std::unordered_map<std::string, std::unique_ptr<SymbolsFile>>& symbolsFiles_;
 
     // thread must use ref from process

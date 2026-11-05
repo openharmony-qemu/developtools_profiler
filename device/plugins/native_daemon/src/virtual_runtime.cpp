@@ -399,6 +399,9 @@ void VirtualRuntime::UpdateSymbols(std::string fileName, std::shared_ptr<DfxMap>
     // found it by name
     auto symbolsFile = SymbolsFile::CreateSymbolsFile(fileName, pid_);
     symbolsFile->SetMapsInfo(map);
+    if (symbolsFile->symbolFileType_ == SymbolsFileType::SYMBOL_ELF_FILE && isContainer_) {
+        symbolsFile->EnableMiniDebugInfo();
+    }
     // set sybol path If it exists
     if (symbolsPaths_.size() > 0) {
         symbolsFile->setSymbolsFilePath(symbolsPaths_); // also load from search path
@@ -510,7 +513,7 @@ const DfxSymbol VirtualRuntime::GetUserSymbol(uint64_t ip, std::shared_ptr<DfxMa
             }
 
             DfxSymbol foundSymbols;
-            if (symbolsFile->IsAbc() || symbolsFile->IsArkwebV8()) {
+            if (symbolsFile->IsAbc() || symbolsFile->IsArkwebV8() || IsJitFile(map->name)) {
                 HLOGD("ABC or V8 file, symbolsFile: %s", symbolsFile->filePath_.c_str());
                 foundSymbols = symbolsFile->GetSymbolWithPcAndMap(ip, map);
             } else {
@@ -647,6 +650,9 @@ void VirtualRuntime::FillMapsCache(std::string& currentFileName, std::shared_ptr
         auto memMaps = std::make_shared<MemMaps>(GetOrCreateFilePathId(mapItem->name));
         memMaps->AddMap(mapItem, true);
         mapsCache_[mapItem->begin] = memMaps;
+        if (isContainer_ && (mapItem->prots & PROT_EXEC)) {
+            QueueOfflineMap(soBegin_);
+        }
     } else {
         if (auto curMapsIter = mapsCache_.find(soBegin_);
                 curMapsIter != mapsCache_.end()) {

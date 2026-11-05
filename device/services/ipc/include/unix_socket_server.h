@@ -31,7 +31,8 @@ public:
     ~UnixSocketServer();
 
     int socketHandle_;
-    bool StartServer(const std::string& addrname, ServiceEntry& p, void (*callback)(int) = nullptr);
+    bool StartServer(const std::string& addrname, ServiceEntry& p, void (*callback)(int) = nullptr,
+        bool isCustomized = false);
     void RemoveContext(int fd);
     std::shared_ptr<ClientConnection> GetClientConnection(int fd);
     std::string sAddrName_;
@@ -40,6 +41,7 @@ public:
 
 private:
     void UnixSocketAccept(void (*callback)(int) = nullptr);
+    bool isCustomized_ = false;
     std::map<int, std::shared_ptr<ClientConnection>> socketClients_;
     std::thread acceptThread_;
     std::mutex mtx_;

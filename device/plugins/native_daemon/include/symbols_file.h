@@ -60,8 +60,11 @@ enum SymbolsFileType {
     SYMBOL_JS_FILE,
     SYMBOL_HAP_FILE,
     SYMBOL_ARKWEB_V8_FILE,
+    SYMBOL_JIT_FILE,
     SYMBOL_UNKNOW_FILE,
 };
+
+bool IsJitFile(const std::string& filepath);
 
 class SymbolsFile {
 public:
@@ -127,6 +130,7 @@ public:
     // get the build if from symbols
     const std::string GetBuildId() const;
 
+    virtual void EnableMiniDebugInfo() {}
     // get the symbols vector
     const std::vector<DfxSymbol> &GetSymbols();
     const std::vector<DfxSymbol *> &GetMatchedSymbols();

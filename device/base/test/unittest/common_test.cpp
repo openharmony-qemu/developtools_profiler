@@ -713,6 +713,22 @@ HWTEST_F(CommonTest, DeleteFilesInvalidParam, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetNSpid
+ * @tc.desc: GetNSpid with invalid pid (file not open) and valid pid (current process).
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, GetNSpid, TestSize.Level1)
+{
+    // invalid pid: /proc/<pid>/status does not exist, file cannot be opened
+    EXPECT_EQ(COMMON::GetNSpid(999999999), -1);
+
+    // valid pid: not container process
+    int32_t pid = static_cast<int32_t>(getpid());
+    int32_t nspid = COMMON::GetNSpid(pid);
+    EXPECT_EQ(nspid, -1);
+}
+
+/**
  * @tc.name: StringMatch
  * @tc.desc: StringMatch
  * @tc.type: FUNC

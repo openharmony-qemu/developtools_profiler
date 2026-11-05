@@ -1022,4 +1022,174 @@ HWTEST_F(HookManagerTest, ScanFileForLiveData_InvalidData, TestSize.Level0)
     hookManager.ScanFileForLiveData(hookCtx, ctx);
     close(fd);
 }
+
+/*
+ * @tc.name: SetContainerSceneFlag
+ * @tc.desc: test SetContainerSceneFlag with empty hookCtx_, non-container pid, and container scene.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, SetContainerSceneFlag, TestSize.Level0)
+{
+    HookManager hookManager;
+    hookManager.hookConfig_.set_fp_unwind(true);
+    hookManager.hookConfig_.set_async_stack_enable(true);
+    // empty hookCtx_: no container scene
+    hookManager.SetContainerSceneFlag();
+    EXPECT_FALSE(hookManager.isContainerScene_);
+    EXPECT_TRUE(hookManager.hookConfig_.fp_unwind());
+
+    // non-container pid: GetNSpid returns -1
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(getpid());
+    hookManager.hookCtx_.push_back(ctx);
+    hookManager.SetContainerSceneFlag();
+    EXPECT_FALSE(hookManager.isContainerScene_);
+    EXPECT_FALSE(ctx->isContainer);
+    EXPECT_TRUE(hookManager.hookConfig_.fp_unwind());
+    EXPECT_TRUE(hookManager.hookConfig_.async_stack_enable());
+
+    // container scene: pre-set isContainerScene_ to cover config-change branch
+    hookManager.isContainerScene_ = true;
+    hookManager.hookConfig_.set_fp_unwind(true);
+    hookManager.hookConfig_.set_async_stack_enable(true);
+    hookManager.hookConfig_.set_use_file_cache_mode(false);
+    hookManager.SetContainerSceneFlag();
+    EXPECT_TRUE(hookManager.isContainerScene_);
+    EXPECT_FALSE(hookManager.hookConfig_.fp_unwind());
+    EXPECT_FALSE(hookManager.hookConfig_.async_stack_enable());
+    EXPECT_TRUE(hookManager.hookConfig_.use_file_cache_mode());
+}
+
+/*
+ * @tc.name: GetContainerClientConfig
+ * @tc.desc: test GetContainerClientConfig populates fields from hookConfig_.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, GetContainerClientConfig, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    config.set_filter_size(1024);
+    config.set_max_stack_depth(32);
+    config.set_malloc_disable(true);
+    config.set_free_stack_report(true);
+    config.set_fp_unwind(true);
+    config.set_blocked(true);
+    config.set_async_stack_enable(true);
+    config.set_statistics_interval(100);
+    config.set_sample_interval(200);
+    config.set_offline_symbolization(true);
+    config.set_use_file_cache_mode(true);
+    config.set_file_cache_buffer_size(4096);
+    config.set_clock("mono");
+    hookManager.SetHookConfig(config);
+    hookManager.largestSize_ = 100;
+    hookManager.secondLargestSize_ = 50;
+    hookManager.maxGrowthSize_ = 200;
+
+    Container::ClientConfig containerConfig;
+    hookManager.GetContainerClientConfig(containerConfig);
+
+    EXPECT_EQ(containerConfig.filterSize, 1024);
+    EXPECT_EQ(containerConfig.maxStackDepth, 32);
+    EXPECT_TRUE(containerConfig.mallocDisable);
+    EXPECT_TRUE(containerConfig.freeStackData);
+    EXPECT_TRUE(containerConfig.fpunwind);
+    EXPECT_TRUE(containerConfig.isBlocked);
+    EXPECT_TRUE(containerConfig.asyncStackEnable);
+    EXPECT_EQ(containerConfig.statisticsInterval, 100u);
+    EXPECT_EQ(containerConfig.sampleInterval, 200u);
+    EXPECT_TRUE(containerConfig.offlineSymbolization);
+    EXPECT_EQ(containerConfig.largestSize, 100u);
+    EXPECT_EQ(containerConfig.secondLargestSize, 50u);
+    EXPECT_EQ(containerConfig.maxGrowthSize, 200u);
+    EXPECT_TRUE(containerConfig.enableFileCacheMode);
+    EXPECT_EQ(containerConfig.fileCacheBufferSize, 4096u);
+    EXPECT_EQ(containerConfig.clockId, CLOCK_MONOTONIC);
+}
+
+/*
+ * @tc.name: ResetStartupParamNoStartupMode
+ * @tc.desc: test ResetStartupParam with startup_mode false (early return).
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ResetStartupParamNoStartupMode, TestSize.Level0)
+{
+    HookManager hookManager;
+    hookManager.ResetStartupParam(100);
+}
+
+/*
+ * @tc.name: ResetStartupParamContainerMode
+ * @tc.desc: test ResetStartupParam with startup_mode true, container_mode true, pid > 0.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ResetStartupParamContainerMode, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    config.set_startup_mode(true);
+    config.set_container_mode(true);
+    hookManager.SetHookConfig(config);
+    hookManager.ResetStartupParam(100);
+    EXPECT_TRUE(hookManager.hookConfig_.startup_mode());
+}
+
+/*
+ * @tc.name: SetHookInfo
+ * @tc.desc: test SetHookInfo with non-container pid (nspid == -1).
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, SetHookInfo, TestSize.Level0)
+{
+    std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
+    ClientConfig clientConfig;
+    hookManager->hookService_ = std::make_shared<HookService>(clientConfig, hookManager, false);
+    hookManager->SetHookInfo(getpid(), 1000, 1000);
+}
+
+/*
+ * @tc.name: SetHookpidAndNSpid
+ * @tc.desc: test SetHookpidAndNSpid with non-container pid (nspid == -1, early return).
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, SetHookpidAndNSpid, TestSize.Level0)
+{
+    HookManager hookManager;
+    hookManager.SetHookpidAndNSpid(getpid());
+    EXPECT_TRUE(hookManager.nspidMap_.empty());
+}
+
+/*
+ * @tc.name: GetHookpidByNSpid
+ * @tc.desc: test GetHookpidByNSpid with not-found and found cases.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, GetHookpidByNSpid, TestSize.Level0)
+{
+    HookManager hookManager;
+    EXPECT_EQ(hookManager.GetHookpidByNSpid(99999), -1);
+    hookManager.nspidMap_[12345] = 67890;
+    EXPECT_EQ(hookManager.GetHookpidByNSpid(12345), 67890);
+}
+
+/*
+ * @tc.name: SendStartHookSignal
+ * @tc.desc: test SendStartHookSignal with valid pid (success) and invalid pid (failure).
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, SendStartHookSignal, TestSize.Level0)
+{
+    HookManager hookManager;
+    // success: kill to self, signal 36 ignored
+    std::signal(36, SIG_IGN);
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(getpid());
+    hookManager.SendStartHookSignal(ctx);
+
+    // failure: invalid pid, kill fails, SetStopTakeData called
+    NativeHookConfig config;
+    auto stackPreprocess = std::make_shared<StackPreprocess>(nullptr, config, CLOCK_REALTIME);
+    auto ctx2 = std::make_shared<HookManager::HookManagerCtx>(999999999);
+    ctx2->stackPreprocess = stackPreprocess;
+    hookManager.SendStartHookSignal(ctx2);
+}
 } // namespace

@@ -71,4 +71,100 @@ HWTEST_F(HookServiceTest, ProtocolProc, TestSize.Level0)
     ASSERT_TRUE(hookService != nullptr);
     ASSERT_FALSE(hookService->ProtocolProc(socketContext, 0, pidPtr, sizeof(pid)));
 }
+
+/*
+ * @tc.name: ConvertPeerPidToHookpidByInt
+ * @tc.desc: test ConvertPeerPidToHookpid(int32_t&) with non-container, not-found, and found.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookServiceTest, ConvertPeerPidToHookpidByInt, TestSize.Level0)
+{
+    std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
+    ClientConfig clientConfig;
+    auto hookService = std::make_shared<HookService>(clientConfig, hookManager);
+    ASSERT_TRUE(hookService != nullptr);
+
+    // Branch A: not container scene → early return, peerPid unchanged
+    hookService->isContainerScene_ = false;
+    int32_t peerPid = 100;
+    hookService->ConvertPeerPidToHookpid(peerPid);
+    EXPECT_EQ(peerPid, 100);
+
+    // Branch C: container scene, nspid not found → peerPid unchanged
+    hookService->isContainerScene_ = true;
+    peerPid = 200;
+    hookService->ConvertPeerPidToHookpid(peerPid);
+    EXPECT_EQ(peerPid, 200);
+
+    // Branch B: container scene, nspid found → peerPid updated
+    hookManager->nspidMap_[200] = 999;
+    hookService->ConvertPeerPidToHookpid(peerPid);
+    EXPECT_EQ(peerPid, 999);
+}
+
+/*
+ * @tc.name: ConvertPeerPidToHookpidByContext
+ * @tc.desc: test ConvertPeerPidToHookpid(SocketContext&, int32_t&) with non-container, startup, and non-startup.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookServiceTest, ConvertPeerPidToHookpidByContext, TestSize.Level0)
+{
+    std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
+    ClientConfig clientConfig;
+    auto hookService = std::make_shared<HookService>(clientConfig, hookManager);
+    ASSERT_TRUE(hookService != nullptr);
+    SocketContext socketContext;
+
+    // Branch A: not container scene → early return
+    hookService->isContainerScene_ = false;
+    int32_t peerPid = 100;
+    hookService->ConvertPeerPidToHookpid(socketContext, peerPid);
+    EXPECT_EQ(peerPid, 100);
+
+    // Branch B: container scene + startup_mode → GetPeerUcred, peerPid = cred.pid (0 on unconnected socket)
+    hookService->isContainerScene_ = true;
+    hookManager->hookConfig_.set_startup_mode(true);
+    peerPid = 100;
+    hookService->ConvertPeerPidToHookpid(socketContext, peerPid);
+    EXPECT_EQ(peerPid, 0);
+
+    // Branch C: container scene + !startup_mode → delegates to ConvertPeerPidToHookpid(int32_t&)
+    hookManager->hookConfig_.set_startup_mode(false);
+    hookManager->nspidMap_[100] = 555;
+    peerPid = 100;
+    hookService->ConvertPeerPidToHookpid(socketContext, peerPid);
+    EXPECT_EQ(peerPid, 555);
+}
+
+/*
+ * @tc.name: CheckContainerClientOnStartupMode
+ * @tc.desc: test CheckContainerClientOnStartupMode with guard, invalid procName, and valid procName.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookServiceTest, CheckContainerClientOnStartupModeTest, TestSize.Level0)
+{
+    std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
+    ClientConfig clientConfig;
+    auto hookService = std::make_shared<HookService>(clientConfig, hookManager);
+    ASSERT_TRUE(hookService != nullptr);
+
+    // Branch A: not container scene → return false
+    hookService->isContainerScene_ = false;
+    hookManager->hookConfig_.set_startup_mode(true);
+    EXPECT_FALSE(hookService->CheckContainerClientOnStartupMode(100, "test_proc"));
+
+    // Branch A: container scene but !startup_mode → return false
+    hookService->isContainerScene_ = true;
+    hookManager->hookConfig_.set_startup_mode(false);
+    EXPECT_FALSE(hookService->CheckContainerClientOnStartupMode(100, "test_proc"));
+
+    // Branch B: container + startup but procName not found → return false
+    hookManager->hookConfig_.set_startup_mode(true);
+    EXPECT_FALSE(hookService->CheckContainerClientOnStartupMode(100, "nonexistent_proc"));
+
+    // Branch C: container + startup + valid procName → return true
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>("test_proc");
+    hookManager->hookCtx_.push_back(ctx);
+    EXPECT_TRUE(hookService->CheckContainerClientOnStartupMode(100, "test_proc"));
+}
 } // namespace

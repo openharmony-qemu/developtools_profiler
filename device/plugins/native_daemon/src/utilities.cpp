@@ -348,6 +348,34 @@ std::string PlatformPathConvert(const std::string &path)
 #endif
 }
 
+bool NeedAdaptHMBundlePath(std::string& filename, const std::string& processName)
+{
+    static bool needCheck = true;
+    if (!needCheck) {
+        return false;
+    }
+    const std::string path = "/data/storage/el1/bundle";
+    std::string newFileName = filename;
+    size_t pos = newFileName.find(path);
+    if (pos != std::string::npos) {
+        if (access(filename.c_str(), F_OK) != 0) {
+            const std::string newpath = "/data/app/el1/bundle/public/";
+            // /data/storage/el1/bundle/libs/arm64/libentry.so
+            newFileName.replace(pos, path.length(), newpath + processName);
+            if (access(newFileName.c_str(), F_OK) != 0) {
+                return false;
+            }
+            // /data/app/el1/bundle/public/<procname>/libs/arm64/libentry.so
+            filename = newFileName;
+            HLOGD("Fix hm bundle path to %s", filename.c_str());
+            return true;
+        } else {
+            needCheck = false;
+        }
+    }
+    return false;
+}
+
 std::string ReadFileToString(const std::string &fileName)
 {
     std::ifstream inputString(fileName, std::ios::in);

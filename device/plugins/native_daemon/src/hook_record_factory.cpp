@@ -322,7 +322,7 @@ uint32_t HookRecordFactory::GetOriginStackDataSize(const int8_t sharedMemData[],
     return originDataSize;
 }
 
-void HookRecordFactory::InitRawStack(RawStackPtr rawStack, const int8_t sharedMemData[], uint32_t& size,
+bool HookRecordFactory::InitRawStack(RawStackPtr rawStack, const int8_t sharedMemData[], uint32_t& size,
     bool storeData, const SaveMemTagCallBack& callback)
 {
     if (storeData) {
@@ -330,7 +330,7 @@ void HookRecordFactory::InitRawStack(RawStackPtr rawStack, const int8_t sharedMe
         rawStack->baseStackData.resize(originDataSize);
         if (memcpy_s(rawStack->baseStackData.data(), originDataSize, sharedMemData, originDataSize) != EOK) {
             PROFILER_LOG_ERROR(LOG_CORE, "HookRecordFactory memcpy_s raw data failed!");
-            return;
+            return false;
         }
         rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(rawStack->baseStackData.data());
         rawStack->data = rawStack->baseStackData.data() + sizeof(BaseStackRawData);
@@ -339,6 +339,7 @@ void HookRecordFactory::InitRawStack(RawStackPtr rawStack, const int8_t sharedMe
         rawStack->data = reinterpret_cast<uint8_t*>(const_cast<int8_t*>(sharedMemData)) + sizeof(BaseStackRawData);
     }
     ProcessDynamicTagInfo(rawStack, sharedMemData, size, callback);
+    return true;
 }
 
 bool HookRecordFactory::CheckSizeByType(uint16_t type, uint32_t size)
@@ -370,7 +371,9 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
         return freeRecord;
     }
     auto rawStack = GetRawStackFromCache();
-    InitRawStack(rawStack, sharedMemData, size, storeData, callback);
+    if (!InitRawStack(rawStack, sharedMemData, size, storeData, callback) || rawStack->stackContext == nullptr) {
+        return nullptr;
+    }
     uint16_t type = rawStack->stackContext->type;
     if (!CheckSizeByType(type, size)) {
         return nullptr;
