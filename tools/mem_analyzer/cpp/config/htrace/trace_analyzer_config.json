@@ -1,0 +1,59 @@
+{
+  "version": "1.0",
+
+  "algorithm": {
+    "low_threshold": 1024,
+    "appro_rel_ratio": 10,
+    "appro_rel_cap": 10485760,
+    "appro_ratio_threshold": 30,
+    "orphan_rel_ratio": 1,
+    "orphan_rel_cap": 10485760
+  },
+
+  "symbol_classification_rules": [
+    {
+      "type": "system",
+      "lib_contains": [
+        "libc++.so",
+        "libc++_shared.so",
+        "/data/storage/el1/bundle/arkwebcore/libs/arm64/libarkweb_engine.so"
+      ]
+    },
+    {
+      "type": "app",
+      "lib_contains": [
+        "/system/app/",
+        "/sys_prod/app/",
+        "/data/storage/el1/bundle"
+      ]
+    },
+    {
+      "type": "app",
+      "require_no_vaddr": true,
+      "lib_ends_with": [".hap", ".hsp", ".har"]
+    },
+    {
+      "type": "app",
+      "require_no_vaddr": true,
+      "lib_ts_pattern": [".ts", ".js", ".ets"]
+    }
+  ],
+
+  "symbol_filter_rules": [
+    {
+      "scope": "global",
+      "lib": ["unknown", ""],
+      "symbol_contains": ["alloc size("]
+    },
+    {
+      "scope": "global",
+      "lib": ["libc++.so", "libc++_shared.so"],
+      "symbol_contains": ["operator new"]
+    },
+    {
+      "scope": "global",
+      "lib": ["stub.an", "libuv.so", "libipc_single.z.so", "ld-musl-aarch64.so.1", "stateMgmt.js"],
+      "orphan_recoverable": true
+    }
+  ]
+}

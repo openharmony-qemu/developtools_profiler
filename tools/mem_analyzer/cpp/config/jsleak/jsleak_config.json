@@ -1,0 +1,31 @@
+{
+  "version": "2.0",
+  "propertyTag": {
+    "tags": [
+      {
+        "propertyName": "isDeleting_",
+        "baseClasses": [
+          { "name": "stateMgmt.js#ViewBuildNodeBase", "displayType": "Component" }
+        ]
+      },
+      {
+        "propertyName": "_isDisposed",
+        "baseClasses": [
+          { "name": "jsXNode.js#ComponentContentCommonBase", "displayType": "Content" },
+          { "name": "jsXNode.js#BuilderNodeCommonBase", "displayType": "BuilderNode" },
+          { "name": "jsXNode.js#JSBuilderNode", "displayType": "BuilderNode" },
+          { "name": "jsXNode.js#RenderNode", "displayType": "RenderNode" },
+          { "name": "jsXNode.js#FrameNode", "displayType": "FrameNode" }
+        ]
+      },
+      {
+        "propertyName": "isDestroyed",
+        "baseClasses": [
+          { "name": "ability.js#Ability", "displayType": "Ability" },
+          { "name": "Window", "displayType": "Window" }
+        ]
+      }
+    ],
+    "defaultDisplayType": "Others"
+  }
+}

@@ -1,0 +1,83 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#pragma once
+#include <string>
+#include <vector>
+#include <unordered_map>
+
+namespace mem_analyzer {
+
+/**
+ * 一个混淆名候选：原始名及对应的源码行号范围。
+ */
+struct NameCacheCandidate {
+    std::string original;  // 原始名（还原后的名字）
+    int startLine = -1;   // 原始起始行号，无行号信息为 -1
+    int endLine = -1;     // 原始结束行号，无行号信息为 -1
+    std::string filePath; // 该候选所属的原始文件路径（nameCache 顶层 key）
+};
+
+/**
+ * nameCache 索引：解析工程 nameCache.json（IdentifierCache / MemberMethodCache /
+ * PropertyCache / obfName），建立 混淆名 → 原始名 与 obfName 混淆路径 → 原始文件路径
+ * 的反查索引，供 heapsnapshot 反混淆使用。
+ */
+class NameCacheIndex {
+public:
+    /**
+     * 读取目录内 "nameCache.json"（递归扫描子目录，文件名包含 "nameCache" 的
+     * *.json 全部加载合并，兼容多模块产物）。顶层键为文件原始路径，
+     * 值为含 IdentifierCache/MemberMethodCache/PropertyCache/obfName 的对象。
+     * 找不到文件或解析失败返回 false。
+     */
+    bool LoadFromDir(const std::string& dir);
+
+    /**
+     * 按混淆名反查所有候选（同名方法可能对应多个原始名）。
+     */
+    bool LookupObfuscatedName(const std::string& obf, std::vector<NameCacheCandidate>& out) const;
+
+    /**
+     * 按原始名反查所有候选（未开启属性混淆时快照中的方法名即为原始名）。
+     */
+    bool LookupOriginalName(const std::string& original, std::vector<NameCacheCandidate>& out) const;
+
+    /**
+     * 按 obfName 混淆路径反查原始文件路径。
+     */
+    bool LookupObfNamePath(const std::string& obfPath, std::string& originalPath) const;
+
+    /**
+     * 仅当候选唯一时返回 true 并填充 original。
+     */
+    bool LookupUnique(const std::string& obf, std::string& original) const;
+
+    /**
+     * 索引是否为空（未加载到任何条目）。
+     */
+    bool Empty() const;
+
+private:
+    /**
+     * 加载单个 nameCache.json 文件并合并进索引，成功返回 true。
+     */
+    bool IndexNameCacheFile(const std::string& filePath);
+
+    std::unordered_map<std::string, std::vector<NameCacheCandidate>> byObfuscated;
+    std::unordered_map<std::string, std::vector<NameCacheCandidate>> byOriginal;
+    std::unordered_map<std::string, std::string> obfNameToPath;
+};
+
+} // namespace mem_analyzer

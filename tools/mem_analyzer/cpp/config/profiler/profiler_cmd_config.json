@@ -1,0 +1,57 @@
+{
+  "option_path_map": [
+    {
+      "option": "snapshot",
+      "path": "snapshot_hidumper_cmd.txt",
+      "result_dir": "/data/log/reliability/resource_leak/memory_leak",
+      "min_api_version": 24
+    },
+    {
+      "option": "nativeheap",
+      "path": "nativeheap_hiprofiler_cmd.txt",
+      "min_api_version": 26
+    },
+    {
+      "option": "nativeleaks",
+      "path": "nativeleaks_hiprofiler_cmd.txt",
+      "min_api_version": 26
+    },
+    {
+      "option": "globalhandle",
+      "path": "globalhandle_hiprofiler_cmd.txt",
+      "min_api_version": 26
+    },
+    {
+      "option": "allhandle",
+      "path": "allhandle_hiprofiler_cmd.txt",
+      "require_fresh_start": true,
+      "min_api_version": 26
+    },
+    {
+      "option": "localhandle",
+      "path": "localhandle_hiprofiler_cmd.txt",
+      "require_fresh_start": true,
+      "min_api_version": 26
+    },
+    {
+      "option": "fd",
+      "path": "fd_hiprofiler_cmd.txt",
+      "min_api_version": 26
+    },
+    {
+      "option": "dma",
+      "path": "dma_hiprofiler_cmd.txt",
+      "min_api_version": 26
+    },
+    {
+      "option": "thread",
+      "path": "thread_hiprofiler_cmd.txt",
+      "min_api_version": 26
+    },
+    {
+      "option": "ashmem",
+      "path": "ashmem_hiprofiler_cmd.txt",
+      "min_api_version": 26
+    }
+  ]
+}

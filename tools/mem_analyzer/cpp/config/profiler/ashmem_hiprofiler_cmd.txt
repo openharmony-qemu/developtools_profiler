@@ -1,0 +1,32 @@
+hiprofiler_cmd  start -c /data/local/tmp/memory_analyzer_hiprofiler.config    -o /data/local/tmp/mem_analyzer_hiprofiler_data_$(ts:).htrace   -s  -k 
+request_id: 1
+session_config {
+  buffers {
+  pages: 16384
+  }
+}
+plugin_configs {
+  plugin_name: "nativehook"
+  sample_interval: 5000
+  config_data {
+  smb_pages: 16384
+  max_stack_depth: 30
+  process_name: "$(p:com.test.example)"
+  fp_unwind: true
+  blocked: true
+  offline_symbolization: true
+  startup_mode: false
+  statistics_interval: 30
+  malloc_disable: true
+  memtrace_enable: true
+  restrace_tag: "RES_ASHMEM_MASK"
+  js_stack_report: 1
+  max_js_stack_depth: 10
+  async_type: ALL_ASYNC_TYPE
+  async_nesting_depth:1
+  async_task_stack_depth:16
+  unique_stack_table_size:256
+  use_file_cache_mode:true
+  discard_destroyed_traces:true
+  }
+}

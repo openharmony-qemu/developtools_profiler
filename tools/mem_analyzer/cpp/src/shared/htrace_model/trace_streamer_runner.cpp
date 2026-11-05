@@ -1,0 +1,60 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "shared/htrace_model/trace_streamer_runner.h"
+
+#include "utils/logger.h"
+#include "utils/platform.h"
+
+#include <string>
+#include <vector>
+
+namespace mem_analyzer {
+
+bool RunTraceStreamer(const std::string& htracePath,
+    const std::string& dbPath,
+    const std::string& soDir,
+    std::string* error)
+{
+    const std::string streamer = platform::GetTraceStreamerPath();
+    if (streamer.empty() || !platform::FileExists(streamer)) {
+        if (error) {
+            *error = "trace_streamer not found at: " + streamer;
+        }
+        return false;
+    }
+
+    std::vector<std::string> args = {"-e",
+                                     platform::AbsolutePath(dbPath),
+                                     platform::AbsolutePath(htracePath)};
+    if (!soDir.empty()) {
+        args.push_back("--So_dir");
+        args.push_back(platform::AbsolutePath(soDir));
+    }
+
+    log::Logd("[trace_streamer] ", streamer, " ", platform::AbsolutePath(dbPath), " ",
+        platform::AbsolutePath(htracePath),
+        (soDir.empty() ? std::string() : " --So_dir " + platform::AbsolutePath(soDir)));
+
+    const int result = platform::RunProcessWithSpinner(streamer, args, "Running trace_streamer");
+    if (result != 0) {
+        if (error) {
+            *error = "trace_streamer conversion failed with code: " + std::to_string(result);
+        }
+        return false;
+    }
+    return true;
+}
+
+} // namespace mem_analyzer

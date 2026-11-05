@@ -1,0 +1,1 @@
+hidumper --mem-jsheap $(pidof $(p:com.test.example)) -T $(pidof $(p:com.test.example)) --raw
