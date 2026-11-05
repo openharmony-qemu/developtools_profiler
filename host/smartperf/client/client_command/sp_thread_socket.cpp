@@ -759,48 +759,38 @@ void SpThreadSocket::ResetValue(std::string retCode) const
     FPS::GetInstance().isGameApp = SPUtils::GetIsGameApp(retCode);
     RAM::GetInstance().SetHapFirstFlag();
 }
+
 void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
     const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
-    Dubai &db = Dubai::GetInstance();
-    if (iterator->first == MessageType::START_DUBAI_DB) {
-        std::thread dStart([&db]() { db.CallBeginAndFinish(); });
-        dStart.detach();
-    } else if (iterator->first == MessageType::SET_DUBAI_DB) {
-        GetSocketPort(recvBuf);
-        db.CallBeginAndFinish();
-        FPS::GetInstance().isLowCurFps = false;
-        db.MoveDubaiDb(dubaiXpower);
-        ConnectAndSendFile(spSocket, dubaiFilePath);
-        retCode = "get_dubai_db";
-        LOGD("UDP send GetDubaiDb Message: (%s)", retCode.c_str());
-        spSocket.Sendto(retCode);
-        LOGD("UDP send DuBai get finish");
-    } else if (iterator->first == MessageType::CHECK_UDP_STATUS) {
-        retCode = "UDP status is normal";
-        spSocket.Sendto(retCode);
-        LOGD("UDP status is normal");
-    } else if (iterator->first == MessageType::SAVE_GPU_COUNTER) {
-        GetSocketPort(recvBuf);
-        std::unique_lock<std::mutex> lock(GpuCounter::GetInstance().GetGpuCounterLock());
-        ConnectAndSendFile(spSocket, gpuCounterfilePath + "/gpu_counter.csv");
-    } else if (iterator->first == MessageType::APP_STOP_COLLECT) {
-        if (taskMgr_ != nullptr) {
-            // UDP (device) 停止时，设置GPU_COUNTER保存路径
-            firstFlag = true;
-            SPUtils::CreateDir(gpuCounterfilePath);
-            GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
-            taskMgr_->ClearShaderFile();
-            taskMgr_->SetHapFlag(false);
-            taskMgr_->Stop();
-            SPUtils::OverDumpFun();
-            retCode = Hiperf::GetInstance().ReturnHiperfData();
+    switch (iterator->first) {
+        case MessageType::START_DUBAI_DB:
+            HandleStartDubaiDb();
+            break;
+        case MessageType::SET_DUBAI_DB:
+            HandleSetDubaiDb(spSocket, retCode, recvBuf);
+            break;
+        case MessageType::CHECK_UDP_STATUS:
+            retCode = "UDP status is normal";
             spSocket.Sendto(retCode);
-            taskMgr_->WriteToCSV();
-        }
-        spTask.ClearStopFlag();
-    } else {
-        UdpStartMessProcess(spSocket, profiler, retCode, recvBuf, iterator);
+            LOGD("UDP status is normal");
+            break;
+        case MessageType::SAVE_GPU_COUNTER:
+            HandleSaveGpuCounter(spSocket, recvBuf);
+            break;
+        case MessageType::RECV_FILES:
+            HandleRecvFiles(spSocket, recvBuf);
+            break;
+        case MessageType::DELETE_REPORT:
+            if (!HandleDeleteReport(spSocket, recvBuf)) {
+                return;
+            }
+        case MessageType::APP_STOP_COLLECT:
+            HandleAppStopCollect(spSocket, retCode);
+            break;
+        default:
+            UdpStartMessProcess(spSocket, profiler, retCode, recvBuf, iterator);
+            break;
     }
 }
 
@@ -912,7 +902,7 @@ std::string SpThreadSocket::SocketErrorTypeToString(SocketErrorType errorType) c
 void SpThreadSocket::GetSocketPort(const std::string& buffer)
 {
     if (buffer.find("::") != std::string::npos) {
-        std::string portStr = buffer.substr(buffer.find("::") + 2);
+        std::string portStr = buffer.substr(buffer.find("::") + msgFieldDelimLen);
         std::string fileName = "";
         if (portStr.find(":::") != std::string::npos) {
             portStr = portStr.substr(0, portStr.find(":::"));
@@ -1063,6 +1053,8 @@ void SpThreadSocket::GetTraceStartPoint(std::string &recvBuf)
         return;
     }
 
+    constexpr int beginTagLen = 11;
+    constexpr int overTagLen = 10;
     std::vector<std::string> parts = split(recvBuf, "&&&");
     for (size_t i = 0; i < parts.size(); ++i) {
         if (parts[i].find("***") != std::string::npos) {
@@ -1080,15 +1072,294 @@ void SpThreadSocket::GetTraceStartPoint(std::string &recvBuf)
         }
 
         if (parts[i].find("begin$$$$$$") != std::string::npos) {
-            std::string result = parts[i].substr(11);
+            std::string result = parts[i].substr(beginTagLen);
             VisualEffectAnalysis::GetInstance().SetTraceBegin(result);
         }
 
         if (parts[i].find("over$$$$$$") != std::string::npos) {
-            std::string result = parts[i].substr(10);
+            std::string result = parts[i].substr(overTagLen);
             VisualEffectAnalysis::GetInstance().SetTraceEnd(result);
         }
     }
+}
+
+int SpThreadSocket::CreateRecvFileListenSocket(int &outPort)
+{
+    int listenFd = socket(AF_INET, SOCK_STREAM, 0);
+    if (listenFd < 0) {
+        LOGE("StartRecvFile create socket failed, errno: %d", errno);
+        return -1;
+    }
+
+    int opt = 1;
+    setsockopt(listenFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+    // 在固定端口范围内尝试bind， 避免使用getsockname（该进程SElinux权限管控）
+    constexpr int portStart = 9300;
+    constexpr int portEnd = 9399;
+    struct sockaddr_in serverAddr = {0};
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    int actualPort = -1;
+    for (int port = portStart; port <= portEnd; port++) {
+        serverAddr.sin_port = htons(port);
+        if (bind(listenFd, reinterpret_cast<struct sockaddr *>(&serverAddr), sizeof(serverAddr)) == 0) {
+            actualPort = port;
+            break;
+        }
+    }
+
+    if (actualPort < 0) {
+        LOGE("StartRecvFile bind failed for all ports %d-%d", portStart, portEnd);
+        close(listenFd);
+        return -1;
+    }
+
+    if (listen(listenFd, 1) < 0) {
+        LOGE("StartRecvFile listen failed, errno: %d", errno);
+        close(listenFd);
+        return -1;
+    }
+
+    outPort = actualPort;
+    return listenFd;
+}
+
+void SpThreadSocket::StartRecvFiles(SpServerSocket &spSocket, const std::string& dirName, int fileCount)
+{
+    if (SPUtils::IsPathTraversal(dirName) || !SPUtils::IsValidPath(dirName)) {
+        LOGE("StartRecvFiles dirName is invalid: %s", dirName.c_str());
+        return;
+    }
+    SPUtils::CreateDir(recvFileDir);
+
+    int actualPort = -1;
+    int listenFd = CreateRecvFileListenSocket(actualPort);
+    if (listenFd < 0) {
+        return;
+    }
+    LOGI("StartRecvFiles listening on port %d, fileCount=%d", actualPort, fileCount);
+    // UDP 回复格式: recv_file_ready:::<port>
+    std::string ackMsg = "recv_file_ready:::" + std::to_string(actualPort);
+    spSocket.Sendto(ackMsg);
+
+    std::thread recvFilesThread([this, listenFd, dirName, fileCount]() {
+        struct sockaddr_in clientAddr = {0};
+        socklen_t clientLen = sizeof(clientAddr);
+        int connFd = accept(listenFd, reinterpret_cast<struct sockaddr *>(&clientAddr), &clientLen);
+        if (connFd < 0) {
+            LOGE("StartRecvFiles accept failed, errno: %d", errno);
+            close(listenFd);
+            return;
+        }
+        LOGI("StartRecvFiles App connected, start receiving %d files", fileCount);
+        for (int fi = 0; fi < fileCount; fi++) {
+            if (!RecvOneFile(connFd, dirName, fi, fileCount)) {
+                close(connFd);
+                close(listenFd);
+                return;
+            }
+        }
+        close(connFd);
+        close(listenFd);
+        LOGI("StartRecvFiles all %d files received", fileCount);
+    });
+    recvFilesThread.detach();
+}
+
+bool SpThreadSocket::RecvExact(int connFd, char* buf, size_t expectedBytes)
+{
+    size_t received = 0;
+    while (received < expectedBytes) {
+        ssize_t r = recv(connFd, buf + received, expectedBytes - received, 0);
+        if (r <= 0) {
+            return false;
+        }
+        received += static_cast<size_t>(r);
+    }
+    return true;
+}
+
+// TCP 文件传输协议(每个文件): [4字节网络序 nameLen][nameLen字节 fileName][8字节网络序 fileSize]
+bool SpThreadSocket::RecvFileHeader(int connFd, std::string& fileName, uint64_t& fileSize, int fileIndex)
+{
+    constexpr int nameLenBytes = sizeof(uint32_t);
+    constexpr int fileSizeBytes = sizeof(uint64_t);
+
+    uint32_t nameLen = 0;
+    if (!RecvExact(connFd, reinterpret_cast<char*>(&nameLen), nameLenBytes)) {
+        LOGE("StartRecvFiles recv nameLen failed, file %d", fileIndex);
+        return false;
+    }
+    nameLen = ntohl(nameLen);
+    if (nameLen == 0 || nameLen > maxFileNameLen) {
+        LOGE("StartRecvFiles invalid nameLen %u, file %d", nameLen, fileIndex);
+        return false;
+    }
+
+    fileName.resize(nameLen);
+    if (!RecvExact(connFd, &fileName[0], nameLen)) {
+        LOGE("StartRecvFiles recv fileName failed, file %d", fileIndex);
+        return false;
+    }
+    if (SPUtils::IsPathTraversal(fileName) || !SPUtils::IsValidPath(fileName)) {
+        LOGE("StartRecvFiles invalid fileName, file %d", fileIndex);
+        return false;
+    }
+
+    fileSize = 0;
+    if (!RecvExact(connFd, reinterpret_cast<char*>(&fileSize), fileSizeBytes)) {
+        LOGE("StartRecvFiles recv fileSize failed, file %d", fileIndex);
+        return false;
+    }
+    // 网络序(大端)转主机序(小端)
+    fileSize = __builtin_bswap64(fileSize);
+    if (fileSize == 0 || fileSize > maxFileTransferSize) {
+        LOGE("StartRecvFiles invalid fileSize %llu, file %d", fileSize, fileIndex);
+        return false;
+    }
+    return true;
+}
+
+bool SpThreadSocket::RecvOneFile(int connFd, const std::string& dirName, int fileIndex, int fileCount)
+{
+    std::string fileName;
+    uint64_t fileSize = 0;
+    if (!RecvFileHeader(connFd, fileName, fileSize, fileIndex)) {
+        return false;
+    }
+
+    LOGI("StartRecvFiles file %d/%d: %s, size=%llu", fileIndex + 1, fileCount, fileName.c_str(), fileSize);
+
+    std::string dstDir = reportDir + dirName;
+    SPUtils::CreateDir(dstDir);
+    std::string savePath = dstDir + "/" + fileName;
+
+    char buffer[fileSocketBufferSize] = {0};
+    FILE *fp = fopen(savePath.c_str(), "wb");
+    if (fp == nullptr) {
+        LOGE("StartRecvFiles fopen failed: %s", savePath.c_str());
+        return false;
+    }
+    uint64_t totalRecv = 0;
+    while (totalRecv < fileSize) {
+        size_t toRecv = static_cast<size_t>(fileSize - totalRecv);
+        if (toRecv > static_cast<size_t>(fileSocketBufferSize)) {
+            toRecv = static_cast<size_t>(fileSocketBufferSize);
+        }
+        ssize_t bytesRecv = recv(connFd, buffer, toRecv, 0);
+        if (bytesRecv <= 0) {
+            LOGE("StartRecvFiles recv data failed at %llu/%llu", totalRecv, fileSize);
+            break;
+        }
+        size_t written = fwrite(buffer, 1, static_cast<size_t>(bytesRecv), fp);
+        if (written != static_cast<size_t>(bytesRecv)) {
+            LOGE("StartRecvFiles fwrite incomplete, disk may be full");
+            break;
+        }
+        totalRecv += bytesRecv;
+    }
+    if (fclose(fp) != 0) {
+        LOGE("StartRecvFiles fclose failed: %s", savePath.c_str());
+    }
+    LOGI("StartRecvFiles: saved to %s", savePath.c_str());
+    return true;
+}
+
+void SpThreadSocket::HandleStartDubaiDb()
+{
+    Dubai &db = Dubai::GetInstance();
+    std::thread dStart([&db]() { db.CallBeginAndFinish(); });
+    dStart.detach();
+}
+
+void SpThreadSocket::HandleSetDubaiDb(SpServerSocket &spSocket, std::string& retCode, const std::string& recvBuf)
+{
+    Dubai &db = Dubai::GetInstance();
+    GetSocketPort(recvBuf);
+    db.CallBeginAndFinish();
+    FPS::GetInstance().isLowCurFps = false;
+    db.MoveDubaiDb(dubaiXpower);
+    ConnectAndSendFile(spSocket, dubaiFilePath);
+    retCode = "get_dubai_db";
+    LOGD("UDP send GetDubaiDb Message: (%s)", retCode.c_str());
+    spSocket.Sendto(retCode);
+    LOGD("UDP send DuBai get finish");
+}
+
+void SpThreadSocket::HandleSaveGpuCounter(SpServerSocket &spSocket, const std::string& recvBuf)
+{
+    GetSocketPort(recvBuf);
+    std::unique_lock<std::mutex> lock(GpuCounter::GetInstance().GetGpuCounterLock());
+    ConnectAndSendFile(spSocket, gpuCounterfilePath + "/gpu_counter.csv");
+}
+
+void SpThreadSocket::HandleAppStopCollect(SpServerSocket &spSocket, std::string& retCode)
+{
+    if (taskMgr_ != nullptr) {
+        // UDP (device) 停止时，设置GPU_COUNTER保存路径
+        firstFlag = true;
+        SPUtils::CreateDir(gpuCounterfilePath);
+        GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
+        taskMgr_->ClearShaderFile();
+        taskMgr_->SetHapFlag(false);
+        taskMgr_->Stop();
+        SPUtils::OverDumpFun();
+        retCode = Hiperf::GetInstance().ReturnHiperfData();
+        spSocket.Sendto(retCode);
+        taskMgr_->WriteToCSV();
+    }
+    spTask.ClearStopFlag();
+}
+
+// UDP 消息格式: recv_files::<dirName>::<fileCount>
+void SpThreadSocket::HandleRecvFiles(SpServerSocket &spSocket, const std::string& recvBuf)
+{
+    std::string dirName;
+    int fileCount = 0;
+    if (recvBuf.find("::") != std::string::npos) {
+        std::string param = recvBuf.substr(recvBuf.find("::") + msgFieldDelimLen);
+        if (param.find(":::") != std::string::npos) {
+            param = param.substr(0, param.find(":::"));
+        }
+        if (param.find("::") != std::string::npos) {
+            dirName = param.substr(0, param.find("::"));
+            std::string countStr = param.substr(param.find("::") + msgFieldDelimLen);
+            fileCount = std::atoi(countStr.c_str());
+        } else {
+            dirName = param;
+        }
+    }
+    if (SPUtils::IsPathTraversal(dirName) || !SPUtils::IsValidPath(dirName)) {
+        LOGE("RECV_FILES dirName is invalid: %s", dirName.c_str());
+        return;
+    }
+    LOGI("RECV FILS request, dirName %s, fileCount %d", dirName.c_str(), fileCount);
+    StartRecvFiles(spSocket, dirName, fileCount);
+}
+
+// UDP 消息格式: delete_report::<dirName>
+// UDP 回复格式: delete_report::success / delete_report::failed
+bool SpThreadSocket::HandleDeleteReport(SpServerSocket &spSocket, const std::string& recvBuf)
+{
+    std::string dirName;
+    if (recvBuf.find("::") != std::string::npos) {
+        std::string param = recvBuf.substr(recvBuf.find("::") + msgFieldDelimLen);
+        if (param.find(":::") != std::string::npos) {
+            param = param.substr(0, param.find(":::"));
+        }
+        dirName = param;
+    }
+    if (SPUtils::IsPathTraversal(dirName) || !SPUtils::IsValidPath(dirName)) {
+        LOGE("DELETE_REPORT dirName is invalid: %s", dirName.c_str());
+        spSocket.Sendto("delete_report::failed");
+        return false;
+    }
+    std::string reportPath = reportDir + dirName;
+    LOGI("DELETE_REPORT: removing %s", reportPath.c_str());
+    SPUtils::RemoveDirOrFile(reportPath);
+    spSocket.Sendto("delete_report::success");
+    return true;
 }
 }
 }
