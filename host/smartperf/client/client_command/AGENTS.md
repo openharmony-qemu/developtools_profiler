@@ -25,7 +25,6 @@ SP_daemon 是一个单二进制性能采集器，从 OpenHarmony 设备采集 CP
 - `test/unittest/`：HWTEST_F 单元测试；`test/fuzztest/`：libFuzzer 模糊测试
 
 任务导航：
-- 新增/修改采集器 -> `sp_profiler_factory.cpp`（采集器工厂）、采集器 `.cpp`/`.h`、`include/common.h`（如有新标志）、`BUILD.gn` 源文件列表、`test/unittest/`
 - 修改 CLI 标志或 socket 消息 -> `include/common.h`（映射表是唯一事实来源）
 - 修改 editor/device TCP 协议 -> `sp_thread_socket.cpp`、`client_control.cpp`
 - 修改 start/stop daemon 流程 -> `client_control.cpp`、`smartperf_main.cpp`
@@ -46,7 +45,6 @@ SP_daemon 是一个单二进制性能采集器，从 OpenHarmony 设备采集 CP
 ### 基于路径的路由
 - `include/common.h` -> 此文件定义所有 CLI 标志、socket 消息和 shell 命令字符串；任何标志/消息变更必须在 `COMMAND_MAP`、`COMMAND_SHELL_MAP`、`MESSAGE_MAP` 和 `CMD_COMMAND_MAP` 之间保持一致
 - `sp_profiler_factory.cpp`（采集器工厂） -> 新采集器必须在对应的 switch 中注册（`GetCmdProfilerItem` / `GetCmdProfilerItemOption` / `GetCmdProfilerItemContinue` / `GetProfilerItem` / `GetProfilerItemContinue`）
-- `sp_thread_socket.cpp` -> editor/device TCP 协议；`init::`/`start::`/`stop::` 响应必须与 SmartPerf Editor 端期望一致
 - `BUILD.gn` -> 任何新增 `.cpp` 源文件必须**同时**添加到 `BUILD.gn`（约第 43 行 sources）和 `test/BUILD.gn`（约第 24 行 sources）
 - `interface/` -> 插件契约；变更影响外部 .so 插件，必须保持 ABI
 
