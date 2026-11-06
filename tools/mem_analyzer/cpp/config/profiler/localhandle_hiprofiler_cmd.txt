@@ -23,7 +23,9 @@ plugin_configs {
   restrace_tag: "RES_ARK_LOCAL_HANDLE"
   js_stack_report: 1
   max_js_stack_depth: 10
-  async_type: ALL_ASYNC_TYPE
+  async_stack_enable:true
+  nested_async_stack_enable:true
+  async_type: ALL_ASYNC_NESTED_TYPE
   async_nesting_depth:1
   async_task_stack_depth:16
   unique_stack_table_size:256

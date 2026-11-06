@@ -27,11 +27,23 @@ bool RunTraceStreamer(const std::string& htracePath,
     const std::string& soDir,
     std::string* error)
 {
-    const std::string streamer = platform::GetTraceStreamerPath();
-    if (streamer.empty() || !platform::FileExists(streamer)) {
-        if (error) {
-            *error = "trace_streamer not found at: " + streamer;
+    // const std::string streamer = platform::GetTraceStreamerPath();
+    // if (streamer.empty() || !platform::FileExists(streamer)) {
+    //     if (error) {
+    //         *error = "trace_streamer not found at: " + streamer;
+    //     }
+    //     return false;
+    // }
+
+    const platform::HelperBinary streamerBin = platform::GetTraceStreamerHelper();
+    const std::string& streamer = streamerBin.path;
+    if (streamer.empty()) {
+        std::string tried;
+        for (const auto& candidate : streamerBin.candidates) {
+            if (!tried.empty()) tried += ", ";
+            tried += candidate;
         }
+        if (error) *error = "trace_streamer not found. Tried: " + tried;
         return false;
     }
 
