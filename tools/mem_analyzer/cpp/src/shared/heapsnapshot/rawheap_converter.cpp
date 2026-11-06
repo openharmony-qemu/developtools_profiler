@@ -27,14 +27,6 @@ namespace mem_analyzer {
 
 bool RawheapToHeapsnapshot(const std::string& rawheapPath, const std::string& outputHeapsnapshot, std::string* error)
 {
-    // const std::string translator = platform::GetRawheapTranslatorPath();
-    // if (translator.empty() || !platform::FileExists(translator)) {
-    //     if (error) {
-    //         *error = "rawheap_translator not found at: " + translator;
-    //     }
-    //     return false;
-    // }
-
     const platform::HelperBinary translatorBin = platform::GetRawheapTranslatorHelper();
     const std::string& translator = translatorBin.path;
     if (translator.empty()) {
