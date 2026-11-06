@@ -693,7 +693,7 @@ bool StackPreprocess::ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvai
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + ctx.offset);
         if (validLiveDataPtr_ != nullptr && IsBaseStackRawDataRecord(dataPtr, totalSize)) {
             auto* tmpRawData = reinterpret_cast<const BaseStackRawData*>(dataPtr);
-            if (IsArkGlobalHandleRecord(tmpRawData) && ShouldSkipRecord(tmpRawData, *validLiveDataPtr_) &&
+            if (IsShouldDiscardRecord(tmpRawData) && ShouldSkipRecord(tmpRawData, *validLiveDataPtr_) &&
                 !(IsFreeRecord(tmpRawData) && orphanFreeWhitelistPtr_ != nullptr &&
                   InOrphanFreeWhitelist(tmpRawData, *orphanFreeWhitelistPtr_))) {
                 ctx.offset += totalSize;

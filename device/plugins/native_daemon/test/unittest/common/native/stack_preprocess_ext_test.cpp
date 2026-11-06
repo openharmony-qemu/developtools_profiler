@@ -2627,4 +2627,40 @@ HWTEST_F(StackPreprocessExtTest, SetHookDataMunmapMatchesResTraceAddrAsTraceFree
     EXPECT_EQ(munmapData.events(0).has_munmap_event(), false);
     EXPECT_EQ(preprocess.resTraceAddrMap_.count(0x6000), 0u);
 }
+
+/*
+@tc.name: ParseRecordsFromBufferDiscardsAllocRecordWithValidLiveData
+@tc.desc: test ParseRecordsFromBuffer discards MALLOC_MSG record when validLiveData indicates it should be skipped.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ParseRecordsFromBufferDiscardsAllocRecordWithValidLiveData, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_use_file_cache_mode(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetFactory(std::make_shared<HookRecordFactory>(hookConfig));
+
+    std::unordered_map<void*, struct timespec> liveData;
+    liveData[reinterpret_cast<void*>(0x1000)] = {10, 0};
+    preprocess.SetValidLiveData(&liveData, nullptr);
+
+    constexpr uint32_t payloadSize = sizeof(BaseStackRawData);
+    std::array<uint8_t, sizeof(uint32_t) + payloadSize> buffer = {};
+    uint32_t totalSize = payloadSize;
+    ASSERT_EQ(memcpy_s(buffer.data(), sizeof(totalSize), &totalSize, sizeof(totalSize)), EOK);
+
+    auto* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data() + sizeof(uint32_t));
+    baseData->type = MALLOC_MSG;
+    baseData->addr = reinterpret_cast<void*>(0x1000);
+    baseData->ts = {5, 0};
+
+    StackPreprocess::ParseContext ctx = {0, 0};
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+
+    EXPECT_TRUE(preprocess.ParseRecordsFromBuffer(buffer.data(),
+        static_cast<uint32_t>(buffer.size()), ctx, rawData, hookRecord, false));
+    EXPECT_EQ(ctx.offset, static_cast<uint32_t>(buffer.size()));
+    EXPECT_EQ(hookRecord, nullptr);
+}
 }
