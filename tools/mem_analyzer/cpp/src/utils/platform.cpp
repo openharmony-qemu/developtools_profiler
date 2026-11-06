@@ -125,6 +125,10 @@ std::vector<std::string> HelperArchSubdirs() {
 
 #if defined(__APPLE__)
 namespace {
+constexpr int MAC_ARCH_ARM = 1;
+constexpr int MAC_ARCH_X86 = 2;
+constexpr uint32_t MAC_ARCH_ARM_CPU_VALUE = 12;
+constexpr uint32_t MAC_ARCH_X86_CPU_VALUE = 7;
 // 读 thin Mach-O 头判断架构：1 = arm64/arm，2 = x86_64/i386，0 = 非 thin Mach-O 或无法识别。
 int MachoArchOf(const std::string& path) {
     std::ifstream in(PathFromUtf8(path), std::ios::binary);
@@ -144,20 +148,20 @@ int MachoArchOf(const std::string& path) {
     }
     const uint32_t cpu = (static_cast<uint32_t>(hdr[7]) << 24) | (static_cast<uint32_t>(hdr[6]) << 16) |
         (static_cast<uint32_t>(hdr[5]) << 8) | hdr[4];
-    if (cpu == 0x0100000C || cpu == 12) {
-        return 1;  // arm64 / arm
+    if (cpu == 0x0100000C || cpu == MAC_ARCH_ARM_CPU_VALUE) {
+        return MAC_ARCH_ARM;  // arm64 / arm
     }
-    if (cpu == 0x01000007 || cpu == 7) {
-        return 2;   // x86_64 / i386
+    if (cpu == 0x01000007 || cpu == MAC_ARCH_X86_CPU_VALUE) {
+        return MAC_ARCH_X86;   // x86_64 / i386
     }
     return 0;
 }
 
 int NativeMachoArch() {
 #  if defined(__aarch64__) || defined(__arm64__)
-    return 1;
+    return MAC_ARCH_ARM;
 #  else
-    return 2;
+    return MAC_ARCH_X86;
 #  endif
 }
 }  // namespace
