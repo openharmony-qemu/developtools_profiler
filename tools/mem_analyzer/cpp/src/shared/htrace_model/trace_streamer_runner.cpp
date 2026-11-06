@@ -32,10 +32,14 @@ bool RunTraceStreamer(const std::string& htracePath,
     if (streamer.empty()) {
         std::string tried;
         for (const auto& candidate : streamerBin.candidates) {
-            if (!tried.empty()) tried += ", ";
+            if (!tried.empty()) {
+                tried += ", ";
+            }
             tried += candidate;
         }
-        if (error) *error = "trace_streamer not found. Tried: " + tried;
+        if (error) {
+            *error = "trace_streamer not found. Tried: " + tried;
+        }
         return false;
     }
 

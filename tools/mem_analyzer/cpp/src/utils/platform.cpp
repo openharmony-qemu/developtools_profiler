@@ -208,34 +208,9 @@ HelperBinary GetRawheapTranslatorHelper() {
 #endif
 }
 
-std::string get_trace_streamer_path() { return GetTraceStreamerHelper().path; }
+std::string GetTraceStreamerPath() { return GetTraceStreamerHelper().path; }
 
-std::string get_rawheap_translator_path() { return GetRawheapTranslatorHelper().path; }
-
-// std::string GetTraceStreamerPath()
-// {
-//     auto base = PathFromUtf8(GetBasePath()) / "third_party" / "bin" / "trace_streamer_binary";
-// #if defined(_WIN32)
-//     auto p = PathToUtf8(base / "trace_streamer_windows.exe");
-//     return p;
-// #elif defined(__APPLE__)
-//     return PathToUtf8(base / "trace_streamer_mac");
-// #else
-//     return PathToUtf8(base / "trace_streamer_linux_static");
-// #endif
-// }
-
-// std::string GetRawheapTranslatorPath()
-// {
-//     auto base = PathFromUtf8(GetBasePath()) / "third_party" / "bin" / "rawheaptranslator";
-// #if defined(_WIN32)
-//     return PathToUtf8(base / "windows-x64" / "rawheap_translator.exe");
-// #elif defined(__APPLE__)
-//     return PathToUtf8(base / "mac-arm64" / "rawheap_translator");
-// #else
-//     return PathToUtf8(base / "linux-x64" / "rawheap_translator");
-// #endif
-// }
+std::string GetRawheapTranslatorPath() { return GetRawheapTranslatorHelper().path; }
 
 bool FileExists(const std::string& path)
 {
