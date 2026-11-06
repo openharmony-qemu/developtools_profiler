@@ -68,6 +68,9 @@ ZLIB_REPO_URL = "https://gitcode.com/openharmony/third_party_zlib.git"
 ZLIB_COMMIT = "OpenHarmony-v7.0-Beta1"  # tag
 ZLIB_DST = THIRD_PARTY / "src" / "third_party_zlib"
 
+DOWNLOAD_USER_AGENT = "Mozilla/5.0 (compatible; mem-analyzer-setup-deps/1.0)"
+DOWNLOAD_BLOCK_SIZE = 64 * 1024  # 单次读写块大小（字节）
+
 # ── trace_streamer binary ─────────────────────────────────────────────────
 TRACE_STREAMER_VERSION = "HiSmartPerf_20260730"
 TRACE_STREAMER_ZIP_URL = "https://gitcode.com/openharmony/developtools_smartperf_host/releases/download/HiSmartPerf_20260730/trace_streamer_binary.zip"
@@ -258,13 +261,41 @@ def ensure_git_repo(dst: Path, url: str, commit: str, check_file: Path, name: st
 #  Binary download helpers
 # ============================================================================
 
+def _urlretrieve_with_ua(url: str, dst: Path, reporthook=None) -> None:
+    hook = reporthook if reporthook is not None else _noop_reporthook
+    req = urllib.request.Request(url)
+    req.add_header("User-Agent", DOWNLOAD_USER_AGENT)
+    with urllib.request.urlopen(req, timeout=300) as resp:
+        total_size = int(resp.headers.get("Content-Length", 0))
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        hook(0, DOWNLOAD_BLOCK_SIZE, total_size)
+        _write_response_body(resp, dst, total_size, hook)
+
+
+def _noop_reporthook(*_args) -> None:
+    """No-op progress callback used when caller passes reporthook=None."""
+    pass
+
+
+def _write_response_body(resp, dst: Path, total_size: int, reporthook) -> None:
+    """Stream urlopen response body to dst in fixed-size blocks, calling reporthook per block."""
+    block_count = 0
+    with open(dst, "wb") as fh:
+        while True:
+            chunk = resp.read(DOWNLOAD_BLOCK_SIZE)
+            if not chunk:
+                break
+            fh.write(chunk)
+            block_count += 1
+            reporthook(block_count, DOWNLOAD_BLOCK_SIZE, total_size)
+
 
 def download_file(url: str, dst: Path, desc: str) -> None:
     """Download a file from `url` to `dst`."""
     dst.parent.mkdir(parents=True, exist_ok=True)
     progress = DownloadProgress(desc)
     try:
-        urllib.request.urlretrieve(url, dst, reporthook=progress)
+        _urlretrieve_with_ua(url, dst, reporthook=progress)
     except Exception as e:
         print()
         fail(f"{desc}: download failed: {e}")
@@ -277,7 +308,7 @@ def download_and_extract(url: str, dst_dir: Path, desc: str) -> None:
     tmp = dst_dir / "_download_tmp"
     progress = DownloadProgress(desc)
     try:
-        urllib.request.urlretrieve(url, tmp, reporthook=progress)
+        _urlretrieve_with_ua(url, tmp, reporthook=progress)
     except Exception as e:
         print()
         fail(f"{desc}: download failed: {e}")
@@ -353,7 +384,7 @@ def extract_rawheap_from_sdk(url: str, dst_dir: Path, platform_map: list[tuple[s
     tmp_tar = dst_dir / tmp_name
     progress = DownloadProgress(desc)
     try:
-        urllib.request.urlretrieve(url, tmp_tar, reporthook=progress)
+        _urlretrieve_with_ua(url, tmp_tar, reporthook=progress)
     except Exception as e:
         print()
         fail(f"{desc}: SDK download failed: {e}")
