@@ -69,6 +69,7 @@ ZLIB_COMMIT = "OpenHarmony-v7.0-Beta1"  # tag
 ZLIB_DST = THIRD_PARTY / "src" / "third_party_zlib"
 
 DOWNLOAD_USER_AGENT = "Mozilla/5.0 (compatible; mem-analyzer-setup-deps/1.0)"
+DOWNLOAD_BLOCK_SIZE = 64 * 1024  # 单次读写块大小（字节）
 
 # ── trace_streamer binary ─────────────────────────────────────────────────
 TRACE_STREAMER_VERSION = "HiSmartPerf_20260730"
@@ -261,24 +262,32 @@ def ensure_git_repo(dst: Path, url: str, commit: str, check_file: Path, name: st
 # ============================================================================
 
 def _urlretrieve_with_ua(url: str, dst: Path, reporthook=None) -> None:
+    hook = reporthook if reporthook is not None else _noop_reporthook
     req = urllib.request.Request(url)
     req.add_header("User-Agent", DOWNLOAD_USER_AGENT)
     with urllib.request.urlopen(req, timeout=300) as resp:
         total_size = int(resp.headers.get("Content-Length", 0))
         dst.parent.mkdir(parents=True, exist_ok=True)
-        block_size = 64 * 1024
-        if reporthook is not None:
-            reporthook(0, block_size, total_size)
-        block_count = 0
-        with open(dst, "wb") as fh:
-            while True:
-                chunk = resp.read(block_size)
-                if not chunk:
-                    break
-                fh.write(chunk)
-                block_count += 1
-                if reporthook is not None:
-                    reporthook(block_count, block_size, total_size)
+        hook(0, DOWNLOAD_BLOCK_SIZE, total_size)
+        _write_response_body(resp, dst, total_size, hook)
+
+
+def _noop_reporthook(*_args) -> None:
+    """No-op progress callback used when caller passes reporthook=None."""
+    pass
+
+
+def _write_response_body(resp, dst: Path, total_size: int, reporthook) -> None:
+    """Stream urlopen response body to dst in fixed-size blocks, calling reporthook per block."""
+    block_count = 0
+    with open(dst, "wb") as fh:
+        while True:
+            chunk = resp.read(DOWNLOAD_BLOCK_SIZE)
+            if not chunk:
+                break
+            fh.write(chunk)
+            block_count += 1
+            reporthook(block_count, DOWNLOAD_BLOCK_SIZE, total_size)
 
 
 def download_file(url: str, dst: Path, desc: str) -> None:
