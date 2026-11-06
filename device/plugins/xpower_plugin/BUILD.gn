@@ -73,7 +73,8 @@ ohos_executable("xpowerdecoder") {
       "cJSON:cjson_static",
       "c_utils:utils",
       "grpc:gpr",
-      "openssl:libcrypto_shared",
+      "openhitls:openhitls_bsl",
+      "openhitls:openhitls_crypto",
       "protobuf:protobuf_lite",
     ]
   }

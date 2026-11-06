@@ -15,9 +15,13 @@
 #define LOG_TAG "ProfilerService"
 #include "profiler_service.h"
 #include <algorithm>
+#include <memory>
 #include <sys/stat.h>
 #include <unistd.h>
 #include "common.h"
+#include "crypt_algid.h"
+#include "crypt_eal_md.h"
+#include "crypt_errno.h"
 #include "logging.h"
 #include "plugin_service.h"
 #include "plugin_session.h"
@@ -216,8 +220,8 @@ bool ProfilerService::SessionContext::StopPluginSessions(bool timerTask)
         service->pluginService_->FlushAllData(name);
     }
     if (sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
-        // update file header.
-        traceFileWriter->Finish();
+        // update file header; a failed digest means the htrace would carry an invalid sha256
+        CHECK_TRUE(traceFileWriter->Finish(), false, "StopPluginSessions: Finish failed, digest error!");
     }
     // make sure FetchData thread exit
     if (dataRepeater) {
@@ -613,68 +617,73 @@ std::string ProfilerService::ResolveStandaloneMergePath(const std::string& fileP
     return COMMON::CanonicalizeSpecPath(filePath.c_str());
 }
 
-void ProfilerService::MergeStandaloneFile(const std::string& resultFile, const std::string& pluginName,
-    const std::string& outputFile, const std::string& pluginVersion)
+bool ProfilerService::OpenStandaloneMergeStreams(const std::string& resultFile, const std::string& outputFile,
+    std::ifstream& fsFile, std::ofstream& fsTarget, int& posFile) const
 {
-    if (pluginName.empty() || outputFile.empty()) {
-        PROFILER_LOG_ERROR(LOG_CORE, "pluginName(%s) didn't set output file(%s)",
-                           pluginName.c_str(), outputFile.c_str());
-        return;
-    }
     std::string resolvedOutput = ResolveStandaloneMergePath(outputFile);
     if (resolvedOutput.empty()) {
         PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, outputFile.c_str());
-        return;
+        return false;
     }
-    std::ifstream fsFile {}; // read from output file
     fsFile.open(resolvedOutput, std::ios_base::in | std::ios_base::binary);
     if (!fsFile.good()) {
         PROFILER_LOG_ERROR(LOG_CORE, "open file(%s) failed: %d", outputFile.c_str(), fsFile.rdstate());
-        return;
+        return false;
     }
     std::string resolvedTarget = ResolveStandaloneMergePath(resultFile);
     if (resolvedTarget.empty()) {
         PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, resultFile.c_str());
-        return;
+        return false;
     }
-    std::ofstream fsTarget {}; // write to profiler ouput file
     fsTarget.open(resolvedTarget, std::ios_base::in | std::ios_base::out | std::ios_base::binary);
     if (!fsTarget.good()) {
         PROFILER_LOG_ERROR(LOG_CORE, "open file(%s) failed: %d", resultFile.c_str(), fsTarget.rdstate());
-        return;
+        return false;
     }
     fsTarget.seekp(0, std::ios_base::end);
-    int posFile = fsTarget.tellp(); // for update sha256
+    posFile = fsTarget.tellp(); // for update sha256
+    return true;
+}
 
-    TraceFileHeader header {};
+namespace {
+bool BuildStandaloneHeader(TraceFileHeader& header, const std::string& pluginName,
+    const std::string& pluginVersion, uint64_t fileSize)
+{
     if (pluginName == HIPERF_PLUGIN_NAME) {
         header.data_.dataType = DataType::HIPERF_DATA;
     } else {
         header.data_.dataType = DataType::STANDALONE_DATA;
     }
-    fsFile.seekg(0, std::ios_base::end);
-    uint64_t fileSize = (uint64_t)(fsFile.tellg());
     header.data_.length += fileSize;
     size_t pluginSize = sizeof(header.data_.standalonePluginName);
     int ret = strncpy_s(header.data_.standalonePluginName, pluginSize, pluginName.c_str(), pluginSize - 1);
     if (ret != EOK) {
         PROFILER_LOG_ERROR(LOG_CORE, "strncpy_s error! pluginName is %s", pluginName.c_str());
-        return;
+        return false;
     }
     pluginSize = sizeof(header.data_.pluginVersion);
     ret = strncpy_s(header.data_.pluginVersion, pluginSize, pluginVersion.c_str(), pluginSize - 1);
     if (ret != EOK) {
         PROFILER_LOG_ERROR(LOG_CORE, "strncpy_s error! pluginVersion is %s", pluginVersion.c_str());
-        return;
+        return false;
     }
-    fsTarget.write(reinterpret_cast<char*>(&header), sizeof(header));
-    if (!fsTarget.good()) {
-        PROFILER_LOG_ERROR(LOG_CORE, "write file(%s) header failed: %d\n", resultFile.c_str(), fsTarget.rdstate());
-        return;
-    }
+    return true;
+}
 
-    SHA256_CTX sha256Ctx;
-    SHA256_Init(&sha256Ctx);
+bool AppendFileWithSha256(std::ifstream& fsFile, std::ofstream& fsTarget, uint64_t fileSize,
+    const std::string& resultFile, uint8_t sha256[TraceFileHeader::SHA256_SIZE])
+{
+    // OpenHiTLS EAL allocates the digest context: pair every NewCtx with FreeCtx via RAII
+    std::unique_ptr<CRYPT_EAL_MdCtx, decltype(&CRYPT_EAL_MdFreeCtx)> sha256Ctx(
+        CRYPT_EAL_MdNewCtx(CRYPT_MD_SHA256), CRYPT_EAL_MdFreeCtx);
+    if (sha256Ctx == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "MdNewCtx failed for standalone merge");
+        return false;
+    }
+    if (CRYPT_EAL_MdInit(sha256Ctx.get()) != CRYPT_SUCCESS) {
+        PROFILER_LOG_ERROR(LOG_CORE, "MdInit failed for standalone merge");
+        return false;
+    }
     constexpr uint64_t bufSize = 4 * 1024 * 1024;
     std::vector<char> buf(bufSize);
     uint64_t readSize = 0;
@@ -684,13 +693,57 @@ void ProfilerService::MergeStandaloneFile(const std::string& resultFile, const s
         fsTarget.write(buf.data(), readSize);
         if (!fsTarget.good()) {
             PROFILER_LOG_ERROR(LOG_CORE, "write file(%s) failed: %d\n", resultFile.c_str(), fsTarget.rdstate());
-            return;
+            return false;
         }
         fileSize -= readSize;
-
-        SHA256_Update(&sha256Ctx, buf.data(), readSize);
+        if (CRYPT_EAL_MdUpdate(sha256Ctx.get(), reinterpret_cast<const uint8_t*>(buf.data()),
+            static_cast<uint32_t>(readSize)) != CRYPT_SUCCESS) {
+            PROFILER_LOG_ERROR(LOG_CORE, "MdUpdate failed for standalone(%s)", resultFile.c_str());
+            return false;
+        }
     }
-    SHA256_Final(header.data_.sha256, &sha256Ctx);
+    // in/out len: capacity must be declared on entry (see EAL FinalParamIsValid)
+    uint32_t digestLen = TraceFileHeader::SHA256_SIZE;
+    int retval = CRYPT_EAL_MdFinal(sha256Ctx.get(), sha256, &digestLen);
+    if (retval != CRYPT_SUCCESS || digestLen != TraceFileHeader::SHA256_SIZE) {
+        PROFILER_LOG_ERROR(LOG_CORE, "MdFinal failed for standalone(%s), ret=%d digestLen=%u",
+            resultFile.c_str(), retval, digestLen);
+        return false;
+    }
+    return true;
+}
+} // namespace
+
+void ProfilerService::MergeStandaloneFile(const std::string& resultFile, const std::string& pluginName,
+    const std::string& outputFile, const std::string& pluginVersion)
+{
+    if (pluginName.empty() || outputFile.empty()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "pluginName(%s) didn't set output file(%s)",
+                           pluginName.c_str(), outputFile.c_str());
+        return;
+    }
+    std::ifstream fsFile {}; // read from output file
+    std::ofstream fsTarget {}; // write to profiler ouput file
+    int posFile = 0;
+    if (!OpenStandaloneMergeStreams(resultFile, outputFile, fsFile, fsTarget, posFile)) {
+        return;
+    }
+
+    fsFile.seekg(0, std::ios_base::end);
+    uint64_t fileSize = static_cast<uint64_t>(fsFile.tellg());
+    TraceFileHeader header {};
+    if (!BuildStandaloneHeader(header, pluginName, pluginVersion, fileSize)) {
+        return;
+    }
+    fsTarget.write(reinterpret_cast<char*>(&header), sizeof(header));
+    if (!fsTarget.good()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "write file(%s) header failed: %d\n", resultFile.c_str(), fsTarget.rdstate());
+        return;
+    }
+
+    if (!AppendFileWithSha256(fsFile, fsTarget, fileSize, resultFile, header.data_.sha256)) {
+        return;
+    }
     fsTarget.seekp(posFile, std::ios_base::beg);
     fsTarget.write(reinterpret_cast<char*>(&header), sizeof(header));
 

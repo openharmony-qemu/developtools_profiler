@@ -14,6 +14,7 @@
  */
 
 #define LOG_TAG "TraceFileWriterTest"
+#include <cstring>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -769,5 +770,49 @@ HWTEST_F(TraceFileWriterTest, WriteStandalonePluginFileEmpty, TestSize.Level1)
     std::string str;
     google::protobuf::TextFormat::PrintToString(pluginData, &str);
     EXPECT_FALSE(writer->WriteStandalonePluginFile(str, "aa", "bb", DataType::STANDALONE_DATA));
+}
+
+/**
+ * @tc.name: TraceFileHelperSha256EalVectorConsistency
+ * @tc.desc: verify SHA256 digests under OpenHiTLS EAL match FIPS 180-4 vectors.
+ * @tc.type: FUNC
+ */
+HWTEST_F(TraceFileWriterTest, TraceFileHelperSha256EalVectorConsistency, TestSize.Level0)
+{
+    // SHA256("abc"), FIPS 180-4 standard test vector
+    static constexpr uint8_t sha256Abc[TraceFileHeader::SHA256_SIZE] = {
+        0xba, 0x78, 0x16, 0xbf, 0x8f, 0x01, 0xcf, 0xea, 0x41, 0x41, 0x40, 0xde, 0x5d, 0xae, 0x22, 0x23,
+        0xb0, 0x03, 0x61, 0xa3, 0x96, 0x17, 0x7a, 0x9c, 0xb4, 0x10, 0xff, 0x61, 0xf2, 0x00, 0x15, 0xad};
+    // SHA256(""), FIPS 180-4 standard test vector
+    static constexpr uint8_t sha256Empty[TraceFileHeader::SHA256_SIZE] = {
+        0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14, 0x9a, 0xfb, 0xf4, 0xc8, 0x99, 0x6f, 0xb9, 0x24,
+        0x27, 0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c, 0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55};
+    const uint8_t abc[] = "abc";
+
+    // streaming form: "abc" hashed in three separate segments (trace write path)
+    {
+        TraceFileHelper helper;
+        EXPECT_TRUE(helper.AddSegment(abc, 1));
+        EXPECT_TRUE(helper.AddSegment(abc + 1, 1));
+        EXPECT_TRUE(helper.AddSegment(abc + 2, 1));
+        TraceFileHeader header = {};
+        EXPECT_TRUE(helper.Update(header));
+        EXPECT_EQ(memcmp(header.data_.sha256, sha256Abc, TraceFileHeader::SHA256_SIZE), 0);
+    }
+    // one-shot form: "abc" hashed in a single segment (plugin file path)
+    {
+        TraceFileHelper helper;
+        EXPECT_TRUE(helper.AddSegment(abc, 3));
+        TraceFileHeader header = {};
+        EXPECT_TRUE(helper.Update(header));
+        EXPECT_EQ(memcmp(header.data_.sha256, sha256Abc, TraceFileHeader::SHA256_SIZE), 0);
+    }
+    // empty payload: digest of the empty string
+    {
+        TraceFileHelper helper;
+        TraceFileHeader header = {};
+        EXPECT_TRUE(helper.Update(header));
+        EXPECT_EQ(memcmp(header.data_.sha256, sha256Empty, TraceFileHeader::SHA256_SIZE), 0);
+    }
 }
 } // namespace

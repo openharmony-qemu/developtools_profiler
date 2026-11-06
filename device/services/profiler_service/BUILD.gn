@@ -63,7 +63,8 @@ ohos_source_set("profiler_service") {
     "c_utils:utils",
     "grpc:grpc",
     "grpc:grpcxx",
-    "openssl:libcrypto_shared",
+    "openhitls:openhitls_bsl",
+    "openhitls:openhitls_crypto",
     "protobuf:protobuf_lite",
     "safwk:system_ability_fwk",
     "ipc:ipc_core",
@@ -71,7 +72,7 @@ ohos_source_set("profiler_service") {
     "ability_runtime:app_manager",
     "zlib:libz",
   ]
-  defines = [ "OPENSSL_SUPPRESS_DEPRECATED" ]
+  defines = []
   if (hiprofiler_sandbox_log_path_mapping) {
     defines += [ "is_sandbox=${hiprofiler_sandbox_log_path_mapping}" ]
   }
@@ -124,7 +125,8 @@ ohos_executable("hiprofilerd") {
       "grpc:gpr",
       "grpc:grpc",
       "grpc:grpcxx",
-      "openssl:libcrypto_shared",
+      "openhitls:openhitls_bsl",
+      "openhitls:openhitls_crypto",
       "protobuf:protobuf_lite",
       "safwk:system_ability_fwk",
       "ipc:ipc_core",

@@ -18,7 +18,8 @@
 #include <cstdint>
 #include <memory>
 #if !is_mingw
-#include "openssl/sha.h"
+#include "crypt_algid.h"
+#include "crypt_eal_md.h"
 #endif
 #include "trace_file_header.h"
 
@@ -26,6 +27,10 @@ class TraceFileHelper {
 public:
     TraceFileHelper();
     ~TraceFileHelper();
+    // the user-declared dtor suppresses implicit move members; default them explicitly so
+    // `helper_ = {}` (reset to a fresh ctx, trace_file_writer.cpp split path) keeps compiling
+    TraceFileHelper(TraceFileHelper&&) = default;
+    TraceFileHelper& operator=(TraceFileHelper&&) = default;
 
     bool AddSegment(const uint8_t data[], uint32_t size);
 
@@ -39,7 +44,9 @@ private:
 private:
     TraceFileHeader header_ = {};
 #if !is_mingw
-    std::shared_ptr<SHA256_CTX> shaCtx_ = nullptr;
+    // no default initializer: unique_ptr(nullptr_t) is disabled for function-pointer deleters
+    // (libcxx: !is_pointer<D> requirement); the ctor always pairs NewCtx with MdFreeCtx below
+    std::unique_ptr<CRYPT_EAL_MdCtx, decltype(&CRYPT_EAL_MdFreeCtx)> shaCtx_;
 #endif
 };
 

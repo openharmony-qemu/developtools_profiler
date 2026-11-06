@@ -118,7 +118,8 @@ ohos_executable("hookDecoder") {
       "grpc:grpc",
       "grpc:grpcxx",
       "hilog:libhilog",
-      "openssl:libcrypto_shared",
+      "openhitls:openhitls_bsl",
+      "openhitls:openhitls_crypto",
       "protobuf:protobuf",
       "protobuf:protobuf_lite",
     ]
