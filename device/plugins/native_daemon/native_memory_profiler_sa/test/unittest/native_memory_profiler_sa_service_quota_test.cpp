@@ -295,12 +295,14 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, StartHookLockFilePathAndOpenBranches
     service->StartHookLock(config, fd, hook, args, nullptr);
     config = std::make_shared<NativeMemoryProfilerSaConfig>();
     config->extendProcesses_ = true;
+    config->processName_ = "test_filepath_err_proc";
     config->filePath_ = "/nonexistent_dir_xyz/x.htrace";
     fd = 0;
     args = service->GetCmdArgs(config);
     EXPECT_EQ(service->StartHookLock(config, fd, hook, args, nullptr), RET_ERR);
     config = std::make_shared<NativeMemoryProfilerSaConfig>();
     config->extendProcesses_ = true;
+    config->processName_ = "test_unlink_proc";
     config->filePath_ = "/data/local/tmp/test_unlink.htrace";
     config->startType_ = START_TYPE_API;
     config->shareMemorySize_ = 0;
@@ -322,6 +324,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, StartHookLockHookConfigFdBranches, T
     auto hook = std::make_shared<HookManager>();
     auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
     config->extendProcesses_ = true;
+    config->processName_ = "test_hookcfg_proc1";
     config->filePath_ = "/data/local/tmp/test_hookcfg.htrace";
     config->gwpAsanHoldTime_ = 1;
     config->printNmdOnly_ = false;
@@ -332,6 +335,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, StartHookLockHookConfigFdBranches, T
     service->StartHookLock(config, fd, hook, args, nullptr);
     config = std::make_shared<NativeMemoryProfilerSaConfig>();
     config->extendProcesses_ = true;
+    config->processName_ = "test_hookcfg_proc2";
     config->filePath_ = "/data/local/tmp/test_hookcfg2.htrace";
     config->nativeOrphanSnapshotsEnable_ = true;
     config->gwpAsanHoldTime_ = 0;
