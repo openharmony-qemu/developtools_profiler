@@ -35,6 +35,34 @@ std::string GetExecutableDir();
 
 std::string GetTraceStreamerPath();
 std::string GetRawheapTranslatorPath();
+
+/**
+ * 第三方辅助可执行文件（trace_streamer / rawheap_translator）的解析结果。
+ * path 为空表示所有候选路径都不存在；candidates 按优先级排列（用于错误信息）。
+ */
+struct HelperBinary {
+    std::string path;
+    std::vector<std::string> candidates;
+};
+
+/**
+ * 当前平台的辅助二进制目录候选。
+ * macOS 按编译期目标架构优先（arm64 → mac-arm64，其他 → mac-x64），另一个作为兜底；
+ * 其余平台只有一个固定目录。
+ */
+std::vector<std::string> HelperArchSubdirs();
+
+/**
+ * 在 third_party/bin/<family>/<subdir>/<exe> 中按候选顺序找第一个存在的文件。
+ * 命中的不是首个候选时会打一条 fallback 警告；macOS 上若 Mach-O 架构与本进程不一致，
+ * 会打 warning 提示可能需要 Rosetta 2。所有候选路径都会保留在返回值里。
+ */
+HelperBinary ResolveHelperBinary(const std::string& family, const std::vector<std::string>& subdirs,
+    const std::string& exeName);
+
+/** 带候选列表的辅助二进制解析（trace_streamer / rawheap_translator）。 */
+HelperBinary GetTraceStreamerHelper();
+HelperBinary GetRawheapTranslatorHelper();
 bool FileExists(const std::string& path);
 bool DirectoryExists(const std::string& path);
 bool CreateDirectories(const std::string& path);

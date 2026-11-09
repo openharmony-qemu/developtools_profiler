@@ -108,30 +108,113 @@ std::string GetExecutableDir()
     return dir;
 }
 
-std::string GetTraceStreamerPath()
-{
-    auto base = PathFromUtf8(GetBasePath()) / "third_party" / "bin" / "trace_streamer_binary";
+std::vector<std::string> HelperArchSubdirs() {
 #if defined(_WIN32)
-    auto p = PathToUtf8(base / "trace_streamer_windows.exe");
-    return p;
+    return {"windows-x64"};
 #elif defined(__APPLE__)
-    return PathToUtf8(base / "trace_streamer_mac");
+    // 按编译期目标架构优先；另一个架构作为兜底（打包错位时仍能启动）。
+#  if defined(__aarch64__) || defined(__arm64__)
+    return {"mac-arm64", "mac-x64"};
+#  else
+    return {"mac-x64", "mac-arm64"};
+#  endif
 #else
-    return PathToUtf8(base / "trace_streamer_linux_static");
+    return {"linux-x64"};
 #endif
 }
 
-std::string GetRawheapTranslatorPath()
-{
-    auto base = PathFromUtf8(GetBasePath()) / "third_party" / "bin" / "rawheaptranslator";
+#if defined(__APPLE__)
+namespace {
+constexpr int MAC_ARCH_ARM = 1;
+constexpr int MAC_ARCH_X86 = 2;
+constexpr uint32_t MAC_ARCH_ARM_CPU_VALUE = 12;
+constexpr uint32_t MAC_ARCH_X86_CPU_VALUE = 7;
+// 读 thin Mach-O 头判断架构：1 = arm64/arm，2 = x86_64/i386，0 = 非 thin Mach-O 或无法识别。
+int MachoArchOf(const std::string& path) {
+    std::ifstream in(PathFromUtf8(path), std::ios::binary);
+    if (!in) {
+        return 0;
+    }
+    unsigned char hdr[8] = {0};
+    in.read(reinterpret_cast<char*>(hdr), sizeof(hdr));
+    if (!in) {
+        return 0;
+    }
+    const uint32_t leMagic = (static_cast<uint32_t>(hdr[3]) << 24) | (static_cast<uint32_t>(hdr[2]) << 16) |
+        (static_cast<uint32_t>(hdr[1]) << 8) | hdr[0];
+    // 非 thin Mach-O（含 universal/fat）不做判断，交给系统加载器。
+    if (leMagic != 0xFEEDFACF && leMagic != 0xFEEDFACE)  {
+        return 0;
+    }
+    const uint32_t cpu = (static_cast<uint32_t>(hdr[7]) << 24) | (static_cast<uint32_t>(hdr[6]) << 16) |
+        (static_cast<uint32_t>(hdr[5]) << 8) | hdr[4];
+    if (cpu == 0x0100000C || cpu == MAC_ARCH_ARM_CPU_VALUE) {
+        return MAC_ARCH_ARM;  // arm64 / arm
+    }
+    if (cpu == 0x01000007 || cpu == MAC_ARCH_X86_CPU_VALUE) {
+        return MAC_ARCH_X86;   // x86_64 / i386
+    }
+    return 0;
+}
+
+int NativeMachoArch() {
+#  if defined(__aarch64__) || defined(__arm64__)
+    return MAC_ARCH_ARM;
+#  else
+    return MAC_ARCH_X86;
+#  endif
+}
+}  // namespace
+#endif
+
+HelperBinary ResolveHelperBinary(const std::string& family, const std::vector<std::string>& subdirs,
+    const std::string& exeName) {
+    HelperBinary result;
+    const fs::path base = PathFromUtf8(GetBasePath()) / "third_party" / "bin" / family;
+    for (size_t i = 0; i < subdirs.size(); ++i) {
+        const fs::path candidate = subdirs[i].empty() ? (base / exeName) : (base / subdirs[i] / exeName);
+        const std::string candidateStr = PathToUtf8(candidate);
+        result.candidates.push_back(candidateStr);
+        if (result.path.empty() && FileExists(candidateStr)) {
+            result.path = candidateStr;
+            if (i > 0) {
+                log::Logw("Warning: preferred helper binary missing, using fallback: ", candidateStr);
+            }
+        }
+    }
+#if defined(__APPLE__)
+    if (!result.path.empty()) {
+        const int arch = MachoArchOf(result.path);
+        if (arch != 0 && arch != NativeMachoArch()) {
+            log::Logw("Warning: ", result.path, " is not a native ", (NativeMachoArch() == 1 ? "arm64" : "x86_64"),
+                " binary; it may require Rosetta 2 to run");
+        }
+    }
+#endif
+    return result;
+}
+
+HelperBinary GetTraceStreamerHelper() {
 #if defined(_WIN32)
-    return PathToUtf8(base / "windows-x64" / "rawheap_translator.exe");
+    return ResolveHelperBinary("trace_streamer_binary", {""}, "trace_streamer_windows.exe");
 #elif defined(__APPLE__)
-    return PathToUtf8(base / "mac-arm64" / "rawheap_translator");
+    return ResolveHelperBinary("trace_streamer_binary", {""}, "trace_streamer_mac");
 #else
-    return PathToUtf8(base / "linux-x64" / "rawheap_translator");
+    return ResolveHelperBinary("trace_streamer_binary", {""}, "trace_streamer_linux_static");
 #endif
 }
+
+HelperBinary GetRawheapTranslatorHelper() {
+#if defined(_WIN32)
+    return ResolveHelperBinary("rawheaptranslator", HelperArchSubdirs(), "rawheap_translator.exe");
+#else
+    return ResolveHelperBinary("rawheaptranslator", HelperArchSubdirs(), "rawheap_translator");
+#endif
+}
+
+std::string GetTraceStreamerPath() { return GetTraceStreamerHelper().path; }
+
+std::string GetRawheapTranslatorPath() { return GetRawheapTranslatorHelper().path; }
 
 bool FileExists(const std::string& path)
 {
