@@ -67,6 +67,9 @@ constexpr auto SLASH_STR = "/";
 constexpr auto JSON_FILE = ".json";
 constexpr auto KEY_HIVIEW_DEVELOP_TYPE = "persist.hiview.leak_detector";
 constexpr int MAX_WAIT_TIME_SECOND = 30; // 30s
+#ifdef IS_EMULATOR
+constexpr auto EMULATOR_UNSUPPORTED_MSG = "The capability is not supported on the emulator at this time.";
+#endif
 
 struct GwpAsanParams {
     bool alwaysEnabled = false;
@@ -867,6 +870,11 @@ static bool GetAppResourceLimitParam(napi_env env, napi_callback_info info, std:
 napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("setAppResourceLimit");
+#ifdef IS_EMULATOR
+    apiInvokeRecorder.SetErrorCode(ErrorCode::EMULATOR_UNSUPPORTED);
+    napi_throw_error(env, std::to_string(ErrorCode::EMULATOR_UNSUPPORTED).c_str(), EMULATOR_UNSUPPORTED_MSG);
+    return CreateUndefined(env);
+#endif
     CreateResourceLimitDir();
     if (!IsBetaVersion() && !CheckVersionType("enable", KEY_HIVIEW_DEVELOP_TYPE)) {
         HILOG_ERROR(LOG_CORE, "SetAppResourceLimit failed. Not developer options or beta versions");
@@ -1102,6 +1110,11 @@ bool UpdateGwpAsanParams(napi_env env, napi_callback_info info, GwpAsanParams& g
 napi_value EnableGwpAsanGrayscale(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("enableGwpAsanGrayscale");
+#ifdef IS_EMULATOR
+    apiInvokeRecorder.SetErrorCode(ErrorCode::EMULATOR_UNSUPPORTED);
+    napi_throw_error(env, std::to_string(ErrorCode::EMULATOR_UNSUPPORTED).c_str(), EMULATOR_UNSUPPORTED_MSG);
+    return CreateUndefined(env);
+#endif
     GwpAsanParams gwpAsanParams;
     std::string paramErrorMessage;
     if (!UpdateGwpAsanParams(env, info, gwpAsanParams, paramErrorMessage)) {
@@ -1125,6 +1138,11 @@ napi_value EnableGwpAsanGrayscale(napi_env env, napi_callback_info info)
 napi_value DisableGwpAsanGrayscale(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("disableGwpAsanGrayscale");
+#ifdef IS_EMULATOR
+    apiInvokeRecorder.SetErrorCode(ErrorCode::EMULATOR_UNSUPPORTED);
+    napi_throw_error(env, std::to_string(ErrorCode::EMULATOR_UNSUPPORTED).c_str(), EMULATOR_UNSUPPORTED_MSG);
+    return CreateUndefined(env);
+#endif
     DisableGwpAsanGrayscale();
     return CreateUndefined(env);
 }
@@ -1132,6 +1150,11 @@ napi_value DisableGwpAsanGrayscale(napi_env env, napi_callback_info info)
 napi_value GetGwpAsanGrayscaleState(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getGwpAsanGrayscaleState");
+#ifdef IS_EMULATOR
+    apiInvokeRecorder.SetErrorCode(ErrorCode::EMULATOR_UNSUPPORTED);
+    napi_throw_error(env, std::to_string(ErrorCode::EMULATOR_UNSUPPORTED).c_str(), EMULATOR_UNSUPPORTED_MSG);
+    return CreateUndefined(env);
+#endif
     auto result = GetGwpAsanGrayscaleState();
     napi_value ret = nullptr;
     napi_create_uint32(env, result, &ret);

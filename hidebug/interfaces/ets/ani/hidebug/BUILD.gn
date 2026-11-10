@@ -52,8 +52,14 @@ ohos_shared_library("hidebug_ani") {
     "ability_base:configuration",
   ]
 
+  defines = []
+
+  if (is_emulator) {
+    defines += [ "IS_EMULATOR" ]
+  }
+
   if (hidebug_api_metrics_enable) {
-    defines = [ "ENABLE_API_METRICS" ]
+    defines += [ "ENABLE_API_METRICS" ]
     external_deps += [
       "api_metrics:histogrammanager"
     ]

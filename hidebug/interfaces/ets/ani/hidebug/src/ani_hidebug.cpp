@@ -73,6 +73,9 @@ constexpr int64_t MS_TO_NS = 1000 * 1000;
 constexpr int64_t S_TO_NS = MS_TO_NS * 1000;
 constexpr int QUOTA_VALUE_LENGTH = 256;
 constexpr int RAW_HEAP_RESULT_ARRAY_SIZE = 2;
+#ifdef IS_EMULATOR
+constexpr auto EMULATOR_UNSUPPORTED_MSG = "The capability is not supported on the emulator at this time.";
+#endif
 
 constexpr std::pair<TraceErrorCode, const char*> TraceErrorCodeMap[] = {
     {TraceErrorCode::TRACE_INVALID_ARGUMENT, "Invalid parameter."},
@@ -807,6 +810,11 @@ bool UpdateGwpAsanParams(ani_env *env, ani_object optionsObj, ani_object duratio
 void EnableGwpAsanGrayscaleAni(ani_env *env, ani_object optionsObj, ani_object durationObj)
 {
     ApiInvokeRecorder apiInvokeRecorder("enableGwpAsanGrayscale");
+#ifdef IS_EMULATOR
+    apiInvokeRecorder.SetErrorCode(ErrorCode::EMULATOR_UNSUPPORTED);
+    AniUtil::ThrowErrorMessage(env, EMULATOR_UNSUPPORTED_MSG, ErrorCode::EMULATOR_UNSUPPORTED);
+    return;
+#endif
     GwpAsanParams gwpAsanParams;
     std::string paramErrorMessage;
     if (!UpdateGwpAsanParams(env, optionsObj, durationObj, gwpAsanParams, paramErrorMessage)) {
@@ -829,6 +837,11 @@ void EnableGwpAsanGrayscaleAni(ani_env *env, ani_object optionsObj, ani_object d
 void DisableGwpAsanGrayscaleAni(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("disableGwpAsanGrayscale");
+#ifdef IS_EMULATOR
+    apiInvokeRecorder.SetErrorCode(ErrorCode::EMULATOR_UNSUPPORTED);
+    AniUtil::ThrowErrorMessage(env, EMULATOR_UNSUPPORTED_MSG, ErrorCode::EMULATOR_UNSUPPORTED);
+    return;
+#endif
     DisableGwpAsanGrayscale();
     return;
 }
@@ -836,6 +849,11 @@ void DisableGwpAsanGrayscaleAni(ani_env *env)
 ani_int GetGwpAsanGrayscaleStateAni(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getGwpAsanGrayscaleState");
+#ifdef IS_EMULATOR
+    apiInvokeRecorder.SetErrorCode(ErrorCode::EMULATOR_UNSUPPORTED);
+    AniUtil::ThrowErrorMessage(env, EMULATOR_UNSUPPORTED_MSG, ErrorCode::EMULATOR_UNSUPPORTED);
+    return 0;
+#endif
     auto result = GetGwpAsanGrayscaleState();
     ani_int ret = static_cast<ani_int>(result);
     return ret;
