@@ -65,16 +65,24 @@ float GPU::GetGpuLoad()
 int32_t GPU::GetRkGpuFreq()
 {
     const std::string gpuFreqPath = "/sys/class/devfreq/fde60000.gpu/cur_freq";
+    const std::string gpuFreqPathOther = "/sys/class/devfreq/fb000000.gpu/cur_freq";
     std::string rkFreq;
-    SPUtils::LoadFile(gpuFreqPath, rkFreq);
+    if (!SPUtils::LoadFile(gpuFreqPath, rkFreq)) {
+        LOGE("not such file %s", gpuFreqPath.c_str());
+        SPUtils::LoadFile(gpuFreqPathOther, rkFreq);
+    }
     return SPUtilesTye::StringToSometype<int32_t>(rkFreq);
 }
 
 float GPU::GetRkGpuLoad()
 {
     const std::string gpuLoadPath = "/sys/class/devfreq/fde60000.gpu/load";
+    const std::string gpuLoadPathOther = "/sys/class/devfreq/fb000000.gpu/load";
     std::string rkLoad;
-    SPUtils::LoadFile(gpuLoadPath, rkLoad);
+    if (!SPUtils::LoadFile(gpuLoadPath, rkLoad)) {
+        LOGE("not such file %s", gpuLoadPath.c_str());
+        SPUtils::LoadFile(gpuLoadPathOther, rkLoad);
+    }
     size_t len = rkLoad.length();
     if (len > 0) {
         rkLoad = rkLoad.substr(0, len - 1);
