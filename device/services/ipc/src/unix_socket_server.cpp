@@ -19,6 +19,7 @@
 #include <pthread.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <linux/un.h>
 
@@ -57,6 +58,9 @@ UnixSocketServer::~UnixSocketServer()
     if (epfd_ != -1) {
         fdsan_close_with_tag(epfd_, PROFILER_FD_TAG);
         epfd_ = -1;
+    }
+    if (isCustomized_) {
+        unlink(sAddrName_.c_str());
     }
     std::unique_lock<std::mutex> lock(mtx_);
     if (socketClients_.size() > 0) {
@@ -165,12 +169,41 @@ void UnixSocketServer::UnixSocketAccept(void (*callback)(int))
     }
 }
 
-bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p, void (*callback)(int))
+bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p, void (*callback)(int),
+    bool isCustomized)
 {
     CHECK_TRUE(socketHandle_ == -1, false, "StartServer FAIL socketHandle_ != -1");
-    int sock = GetControlSocket(addrname.c_str());
-    CHECK_TRUE(sock != -1, false, "StartServer FAIL GetControlSocket return : %d", sock);
-    fdsan_exchange_owner_tag(sock, 0, PROFILER_FD_TAG);
+    int sock = -1;
+    if (!isCustomized) {
+        sock = GetControlSocket(addrname.c_str());
+        CHECK_TRUE(sock != -1, false, "StartServer FAIL GetControlSocket return : %d", sock);
+        fdsan_exchange_owner_tag(sock, 0, PROFILER_FD_TAG);
+    } else {
+        sock = socket(AF_UNIX, SOCK_STREAM, 0);
+        CHECK_TRUE(sock != -1, false, "StartServer FAIL socket return : %d", sock);
+        fdsan_exchange_owner_tag(sock, 0, PROFILER_FD_TAG);
+        struct sockaddr_un address = {0};
+        address.sun_family = AF_UNIX;
+        if (strncpy_s(address.sun_path, sizeof(address.sun_path),
+            addrname.c_str(), sizeof(address.sun_path) - 1) != EOK) {
+            PROFILER_LOG_ERROR(LOG_CORE, "strncpy_s failed, Unix Socket(%s)", addrname.c_str());
+            fdsan_close_with_tag(sock, PROFILER_FD_TAG);
+            return false;
+        }
+        isCustomized_ = true;
+        unlink(addrname.c_str());
+        if (bind(sock, (struct sockaddr*)&address, sizeof(sockaddr_un)) != 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "bind failed, Unix Socket(%s), %d", addrname.c_str(), errno);
+            fdsan_close_with_tag(sock, PROFILER_FD_TAG);
+            return false;
+        }
+        if (chmod(addrname.c_str(), 0666) != 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "chmod failed, Unix Socket(%s), %d", addrname.c_str(), errno);
+            fdsan_close_with_tag(sock, PROFILER_FD_TAG);
+            unlink(addrname.c_str());
+            return false;
+        }
+    }
     if (listen(sock, UNIX_SOCKET_LISTEN_COUNT) == -1) {
         fdsan_close_with_tag(sock, PROFILER_FD_TAG);
         unlink(addrname.c_str());

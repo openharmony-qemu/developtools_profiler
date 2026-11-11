@@ -79,4 +79,5 @@ message NativeHookConfig {
     bool arkui_mem_trace_enable = 44;
     bool discard_destroyed_traces = 45;
     bool mmap_specific_addr_only = 46;
+    bool container_mode = 47;
 }

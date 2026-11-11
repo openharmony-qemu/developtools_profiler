@@ -97,6 +97,7 @@ constexpr uint32_t MS_PER_SEC = 1000;
 std::shared_ptr<Writer> g_buffWriter;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
+const std::string CONTAINER_STARTUP_PARAM_NAME = "hiviewdfx.hiprofiler.container_startup";
 const std::string PRELOAD_NAME = "hiviewdfx.hiprofiler.preload";
 const std::string ARKTS_DIAG_PATH = "const.ark.jsruntime.dfx_library";
 const std::string PRODUCT_CONFIG_PATH = "/sys_prod/etc/hiview/hiprofiler/hiprofiler_cfg.json";
@@ -201,6 +202,7 @@ HookManager::HookManager()
 HookManager::~HookManager()
 {
     hookService_ = nullptr;
+    containerHookService_ = nullptr;
     for (const auto& item : hookCtx_) {
         for (size_t i = 0; i < item->shareMemoryBlockList.size(); ++i) {
             item->shareMemoryBlockList[i] = nullptr;
@@ -221,6 +223,22 @@ HookManager::~HookManager()
     }
     if (inHookSimpNmdFd_ >= 0) {
         close(inHookSimpNmdFd_);
+    }
+}
+
+void HookManager::SetContainerSceneFlag()
+{
+    for (const auto& item : hookCtx_) {
+        int32_t nspid = COMMON::GetNSpid(item->pid);
+        if (nspid != -1) {
+            isContainerScene_ = true;
+            item->isContainer = true;
+        }
+    }
+    if (isContainerScene_) {
+        hookConfig_.set_fp_unwind(false);
+        hookConfig_.set_async_stack_enable(false);
+        hookConfig_.set_use_file_cache_mode(true);
     }
 }
 
@@ -270,7 +288,22 @@ bool HookManager::CheckProcess()
     if (hookCtx_.size() > 1) {
         isProtobufSerialize_ = true;
     }
+    SetContainerSceneFlag();
     return true;
+}
+
+int HookManager::SetStartupParam()
+{
+    PROFILER_LOG_INFO(LOG_CORE, "Wait process %s start or restart, set param", hookConfig_.process_name().c_str());
+    int ret = -1;
+    if (hookConfig_.container_mode()) {
+        std::string cmd = hookConfig_.process_name();
+        ret = SystemSetParameter(CONTAINER_STARTUP_PARAM_NAME.c_str(), cmd.c_str());
+    } else {
+        std::string cmd = STARTUP + hookConfig_.process_name();
+        ret = SystemSetParameter(PARAM_NAME.c_str(), cmd.c_str());
+    }
+    return ret;
 }
 
 bool HookManager::CheckProcessName()
@@ -279,17 +312,22 @@ bool HookManager::CheckProcessName()
     const std::string processName = hookConfig_.process_name();
     bool isExist = COMMON::IsProcessExist(processName, pidValue);
     if (hookConfig_.startup_mode() || !isExist) {
-        PROFILER_LOG_INFO(LOG_CORE, "Wait process %s start or restart, set param", hookConfig_.process_name().c_str());
-        std::string cmd = STARTUP + hookConfig_.process_name();
-        int ret = SystemSetParameter(PARAM_NAME.c_str(), cmd.c_str());
+        int ret = SetStartupParam();
         if (ret < 0) {
             PROFILER_LOG_ERROR(LOG_CORE, "set param failed, please manually set param and start process(%s)",
                                hookConfig_.process_name().c_str());
         } else {
             PROFILER_LOG_INFO(LOG_CORE, "set param success, please start process(%s)",
                               hookConfig_.process_name().c_str());
-            hookCtx_.emplace_back(std::make_shared<HookManagerCtx>(hookConfig_.process_name()));
+            auto managerCtx = std::make_shared<HookManagerCtx>(hookConfig_.process_name());
+            if (hookConfig_.startup_mode() && hookConfig_.container_mode()) {
+                managerCtx->isContainer = true;
+            }
+            hookCtx_.emplace_back(managerCtx);
             hookConfig_.set_startup_mode(true);
+        }
+        if (hookConfig_.startup_mode() && hookConfig_.container_mode()) {
+            isContainerScene_ = true;
         }
     } else if (pidValue != -1) {
         PROFILER_LOG_INFO(LOG_CORE, "Process %s exist, pid = %d", hookConfig_.process_name().c_str(), pidValue);
@@ -649,6 +687,27 @@ void HookManager::GetClientConfigExt(ClientConfig& clientConfig)
     }
 }
 
+void HookManager::GetContainerClientConfig(Container::ClientConfig& containerClientConfig)
+{
+    containerClientConfig.filterSize = static_cast<int32_t>(hookConfig_.filter_size());
+    containerClientConfig.clockId = COMMON::GetClockId(hookConfig_.clock());
+    containerClientConfig.maxStackDepth = hookConfig_.max_stack_depth();
+    containerClientConfig.mallocDisable = hookConfig_.malloc_disable();
+    containerClientConfig.freeStackData = hookConfig_.free_stack_report();
+    containerClientConfig.fpunwind = hookConfig_.fp_unwind();
+    containerClientConfig.isBlocked = hookConfig_.blocked();
+    containerClientConfig.asyncStackEnable = hookConfig_.async_stack_enable();
+    containerClientConfig.statisticsInterval = hookConfig_.statistics_interval();
+    containerClientConfig.sampleInterval = hookConfig_.sample_interval();
+    containerClientConfig.offlineSymbolization = hookConfig_.offline_symbolization();
+    containerClientConfig.largestSize = largestSize_;
+    containerClientConfig.secondLargestSize = secondLargestSize_;
+    containerClientConfig.maxGrowthSize = maxGrowthSize_;
+    // File cache mode configuration
+    containerClientConfig.enableFileCacheMode = hookConfig_.use_file_cache_mode();
+    containerClientConfig.fileCacheBufferSize = hookConfig_.file_cache_buffer_size();
+}
+
 bool HookManager::HandleFileCacheHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
 {
     // Initialize file cache mode
@@ -714,7 +773,9 @@ bool HookManager::HandleSharedMemoryHookContext(const std::shared_ptr<HookManage
 std::shared_ptr<HookManager::HookManagerCtx> HookManager::FindHookContext(int32_t pid, const std::string& name)
 {
     for (const auto& item : hookCtx_) {
-        if (item != nullptr && (item->pid == pid || (!name.empty() && item->processName == name))) {
+        bool isMatched = (item != nullptr) && ((item->pid != -1 && item->pid == pid) ||
+            (!item->processName.empty() && item->processName == name));
+        if (isMatched) {
             return item;
         }
     }
@@ -749,7 +810,8 @@ void HookManager::HandleReadyCacheFile(const std::shared_ptr<HookManagerCtx>& ct
         HandleBackpressure(ctx);
     }
     ctx->cacheFileParsing = false;
-    PROFILER_LOG_INFO(LOG_CORE, "HandleReadyCacheFile pop fd, queue size%zu", ctx->GetFdQueueSize());
+    PROFILER_LOG_INFO(LOG_CORE, "HandleReadyCacheFile pid %d pop fd, queue size %zu",
+        ctx->pid, ctx->GetFdQueueSize());
     FinishFileCacheStopIfDrained(ctx);
 }
 
@@ -762,6 +824,11 @@ void HookManager::WaitFinalSnapshotIfNeeded(const std::shared_ptr<HookManagerCtx
 
 void HookManager::StopSignalProcess(pid_t pid)
 {
+    int32_t nspid = COMMON::GetNSpid(pid);
+    if (nspid != -1) {
+        // Container Scene return
+        return;
+    }
     if (kill(pid, SIGNAL_STOP_HOOK) != -1) {
         return;
     }
@@ -772,12 +839,22 @@ void HookManager::StopSignalProcess(pid_t pid)
 
 bool HookManager::SendStopCommandIfConnected(pid_t pid)
 {
-    if (hookService_ == nullptr || !hookService_->HasSocketFd(pid)) {
+    uint32_t stopCmd = STOP_HOOK_CMD;
+    std::shared_ptr<HookService> hookService = nullptr;
+    int32_t nspid = COMMON::GetNSpid(pid);
+    if (nspid == -1) {
+        hookService = hookService_;
+    } else {
+        hookService = containerHookService_;
+        stopCmd = Container::STOP_HOOK_CMD;
+    }
+
+    if (hookService == nullptr || !hookService->HasSocketFd(pid)) {
         PROFILER_LOG_INFO(LOG_CORE, "SendStopCommandIfConnected: no control socket for pid %d", pid);
         return false;
     }
     PROFILER_LOG_INFO(LOG_CORE, "SendStopCommandIfConnected: send STOP_HOOK_CMD to pid %d", pid);
-    hookService_->SendCommand(pid, STOP_HOOK_CMD);
+    hookService->SendCommand(pid, stopCmd);
     return true;
 }
 
@@ -953,6 +1030,12 @@ void HookManager::CleanupHookServiceContext(pid_t pid)
         }
         hookService_->RemovePidInfo(pid);
     }
+    if (pid > 0 && containerHookService_ != nullptr) {
+        if (containerHookService_->HasSocketFd(pid)) {
+            containerHookService_->CloseSocketFd(pid);
+        }
+        containerHookService_->RemovePidInfo(pid);
+    }
 }
 
 void HookManager::CreateNoQueueDataHandler(const std::shared_ptr<HookManagerCtx>& ctx, int sharedMemCount)
@@ -1068,7 +1151,13 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     } else {
         ctx->stackPreprocess->SetWriter(const_cast<WriterStructPtr>(writerAdapter_->GetStruct()));
     }
-    ctx->stackPreprocess->SetFactory(factory_);
+    if (!ctx->isContainer) {
+        PROFILER_LOG_INFO(LOG_CORE, "HandleHookContext set factory");
+        ctx->stackPreprocess->SetFactory(factory_);
+    } else {
+        PROFILER_LOG_INFO(LOG_CORE, "HandleHookContext set containerFactory");
+        ctx->stackPreprocess->SetFactory(containerFactory_);
+    }
     if (hookConfig_.allocator_sampling_enable() && hookConfig_.statistics_interval() > 0) {
         std::weak_ptr<HookManager> weakSelf = shared_from_this();
         std::weak_ptr<HookManagerCtx> weakCtx = ctx;
@@ -1198,7 +1287,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     hookConfig_.set_fp_unwind(false); // if OS is 32-bit,set fp_unwind false.
     hookConfig_.set_response_library_mode(false);
 #endif
-    if (hookConfig_.response_library_mode()) {
+    if (!isContainerScene_ && hookConfig_.response_library_mode()) {
         hookConfig_.set_fp_unwind(true);
         hookConfig_.set_offline_symbolization(true);
         hookConfig_.set_js_stack_report(0);
@@ -1277,6 +1366,10 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         CreateWriter();
     }
     factory_ = std::make_shared<HookRecordFactory>(hookConfig_);
+    if (isContainerScene_) {
+        PROFILER_LOG_INFO(LOG_CORE, "make_shared containerFactory");
+        containerFactory_ = std::make_shared<HookRecordFactory>(hookConfig_);
+    }
     for (const auto& item : hookCtx_) {
         CHECK_TRUE(HandleHookContext(item), false, "handle hook context failed"); // Create the required resources.
     }
@@ -1290,10 +1383,17 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         std::string clientConfigStr = clientConfig.ToString();
         PROFILER_LOG_INFO(LOG_CORE, "send hook client config:%s\n", clientConfigStr.c_str());
         hookService_ = std::make_shared<HookService>(clientConfig, shared_from_this(), (hookCtx_.size() > 1));
+        if (isContainerScene_) {
+            Container::ClientConfig containerClientConfig;
+            GetContainerClientConfig(containerClientConfig);
+            containerHookService_ = std::make_shared<HookService>(containerClientConfig, shared_from_this(),
+                (hookCtx_.size() > 1), true);
+        }
     }
 
     return true;
 }
+
 // Clean up old orphan snapshot files from previous sessions
 void HookManager::CleanOldSnapshotFiles()
 {
@@ -1726,14 +1826,26 @@ bool HookManager::TakeDataHandler(const std::shared_ptr<HookManagerCtx>& hookCtx
     auto saveMemTagCallBack = [&hookCtx] (uint32_t tagId, const std::string& tagName) {
         hookCtx->stackPreprocess->SaveMemTag(tagId, tagName);
     };
-    hookRecord = factory_->GetHookRecord(data, size, true, saveMemTagCallBack);
+    if (!hookCtx->isContainer) {
+        hookRecord = factory_->GetHookRecord(data, size, true, saveMemTagCallBack);
+    } else {
+        hookRecord = containerFactory_->GetHookRecord(data, size, true, saveMemTagCallBack);
+    }
     CHECK_NOTNULL(hookRecord, false, "TakeDataHandler hookRecord invalid!");
     rawStack = hookRecord->GetRawStack();
     uint16_t type = hookRecord->GetType();
     if (type == FREE_MSG_SIMP) {
         return true;
     }
-
+    if (rawStack == nullptr) {
+        return false;
+    }
+    if (hookCtx->isContainer && rawStack->stackContext != nullptr) {
+        int convertNSpid = GetHookpidByNSpid(rawStack->stackContext->pid);
+        if (convertNSpid != -1) {
+            rawStack->stackContext->pid = convertNSpid;
+        }
+    }
     if (type == GWP_ASAN_MSG) {
         DumpGwpAsanInfo(rawStack->data);
         return true;
@@ -2279,6 +2391,7 @@ bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
 
 bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
 {
+    ResetStartupParam();
     if (hookCtx_.empty()) {
         return false;
     }
@@ -2304,14 +2417,25 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
 
 void HookManager::ResetStartupParam(pid_t pid)
 {
-    const std::string resetParam = "startup:disabled";
-    if (hookConfig_.startup_mode()) {
-        int ret = SystemSetParameter(PARAM_NAME.c_str(), resetParam.c_str());
-        if (ret < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "set param failed, please reset param(%s)", PARAM_NAME.c_str());
-        } else {
-            PROFILER_LOG_INFO(LOG_CORE, "reset param success");
-        }
+    if (!hookConfig_.startup_mode()) {
+        return;
+    }
+    int ret = -1;
+    std::string paramName;
+    if (hookConfig_.container_mode()) {
+        paramName = CONTAINER_STARTUP_PARAM_NAME;
+        ret = SystemSetParameter(CONTAINER_STARTUP_PARAM_NAME.c_str(), " ");
+    } else {
+        const std::string resetParam = "startup:disabled";
+        paramName = PARAM_NAME;
+        ret = SystemSetParameter(PARAM_NAME.c_str(), resetParam.c_str());
+    }
+    if (ret < 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "set param failed, please reset param(%s)", paramName.c_str());
+    } else {
+        PROFILER_LOG_INFO(LOG_CORE, "reset param success");
+    }
+    if (pid > 0) {
         UpdateFreezeExcludedPid(true, pid, getpid());
     }
 }
@@ -2467,6 +2591,61 @@ int32_t HookManager::CreatePluginSession()
     return RET_ERR;
 }
 
+void HookManager::SetHookInfo(int32_t pid, uid_t uid, gid_t gid)
+{
+    int32_t nspid = COMMON::GetNSpid(pid);
+    if (nspid == -1) {
+        hookService_->AddPidInfo(static_cast<pid_t>(pid), uid, gid);
+        return;
+    }
+    if (containerHookService_ != nullptr) {
+        containerHookService_->AddPidInfo(static_cast<pid_t>(pid), uid, gid);
+    }
+    std::lock_guard<std::mutex> lock(nspidMapMtx_);
+    nspidMap_[nspid] = pid;
+}
+
+void HookManager::SetHookpidAndNSpid(int32_t pid)
+{
+    int32_t nspid = COMMON::GetNSpid(pid);
+    if (nspid == -1) {
+        return;
+    }
+    std::lock_guard<std::mutex> lock(nspidMapMtx_);
+    nspidMap_[nspid] = pid;
+}
+
+int32_t HookManager::GetHookpidByNSpid(int32_t nspid)
+{
+    std::lock_guard<std::mutex> lock(nspidMapMtx_);
+    auto it = nspidMap_.find(nspid);
+    if (it == nspidMap_.end()) {
+        return -1;
+    }
+    return it->second;
+}
+
+void HookManager::SendStartHookSignal(const std::shared_ptr<HookManagerCtx>& item)
+{
+    int signalRet = -1;
+    int32_t nspid = COMMON::GetNSpid(item->pid);
+    if (nspid == -1) {
+        signalRet = kill(item->pid, SIGNAL_START_HOOK);
+    } else {
+        int hiprofilerSignalValue = 2;
+        union sigval value;
+        value.sival_int = hiprofilerSignalValue;
+        signalRet = sigqueue(item->pid, SIGNAL_START_HOOK, value);
+    }
+    if (signalRet != 0) {
+        item->stackPreprocess->SetStopTakeData();
+        const int bufSize = 256;
+        char buf[bufSize] = {0};
+        strerror_r(errno, buf, bufSize);
+        PROFILER_LOG_ERROR(LOG_CORE, "send 36 signal error = %s", buf);
+    }
+}
+
 void HookManager::StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, gid_t>>* pidInfo)
 {
     for (const auto& item : hookCtx_) {
@@ -2488,15 +2667,9 @@ void HookManager::StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, 
                 PROFILER_LOG_INFO(LOG_CORE, "get target process uid gid failed");
                 continue;
             }
-            if (kill(item->pid, SIGNAL_START_HOOK) == -1) {
-                item->stackPreprocess->SetStopTakeData();
-                const int bufSize = 256;
-                char buf[bufSize] = {0};
-                strerror_r(errno, buf, bufSize);
-                PROFILER_LOG_ERROR(LOG_CORE, "send 36 signal error = %s", buf);
-            }
+            SendStartHookSignal(item);
             if (!saMode_) {
-                hookService_->AddPidInfo(static_cast<pid_t>(item->pid), uid, gid);
+                SetHookInfo(item->pid, uid, gid);
             } else if (pidInfo != nullptr) {
                 (*pidInfo)[static_cast<pid_t>(item->pid)] = std::make_pair(uid, gid);
             }
@@ -2694,7 +2867,8 @@ bool HookManager::HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex)
         item->stackPreprocess->SetIsStartTakeData(true);
     }
     item->PushBackFdQueue(fd);
-    PROFILER_LOG_INFO(LOG_CORE, "HandleCachedFileFdByPid push fd, queue size %zu", item->GetFdQueueSize());
+    PROFILER_LOG_INFO(LOG_CORE, "HandleCachedFileFdByPid pid %d push fd, queue size %zu",
+        item->pid, item->GetFdQueueSize());
     
     if (!hookConfig_.offline_symbolization()) {
         // only for online_symbolization
@@ -2795,6 +2969,15 @@ void HookManager::RotateCacheFdOnReturn(pid_t pid, uint16_t returnedFileIndex, i
 bool HookManager::CheckHookPid(int32_t pid)
 {
     auto item = FindHookContext(pid, "");
+    if (item == nullptr) {
+        return false;
+    }
+    return true;
+}
+
+bool HookManager::CheckHookProcName(const std::string& procName)
+{
+    auto item = FindHookContext(-1, procName);
     if (item == nullptr) {
         return false;
     }

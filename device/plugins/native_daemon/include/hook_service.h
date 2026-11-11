@@ -20,6 +20,7 @@
 #include <string>
 #include <sys/socket.h>
 #include "hook_common.h"
+#include "hook_container_protocol.h"
 #include "service_entry.h"
 
 namespace OHOS::Developtools::NativeDaemon {
@@ -27,6 +28,8 @@ class HookManager;
 class HookService : public ServiceBase {
 public:
     HookService(const ClientConfig& clientConfig, std::shared_ptr<HookManager> hook, bool multipleProcesses = false);
+    HookService(const Container::ClientConfig& clientConfig, std::shared_ptr<HookManager> hook,
+        bool multipleProcesses = false, bool isContainerScene = true);
     ~HookService();
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
     void CloseSocketFd(pid_t pid);
@@ -37,11 +40,16 @@ public:
     bool HasSocketFd(pid_t pid);
     void ClientDisconnectCallback(int socketFd);
 private:
-    bool StartService(const std::string& unixSocketName);
+    bool StartService(const std::string& unixSocketName, bool isCustomized = false);
+    bool HandleClientMsg(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size);
+    bool HandleContainerClientMsg(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size);
     void GetPeerUcred(SocketContext &context, struct ucred &cred);
     bool HandlePeerMessage(SocketContext &context, const int8_t *buf, uint32_t size);
     bool ResolveProcessName(int32_t peerConfig, std::string& procName);
-    bool CheckConnectionPermission(SocketContext &context, pid_t pid);
+    void ConvertPeerPidToHookpid(int32_t &peerPid);
+    void ConvertPeerPidToHookpid(SocketContext &context, int32_t &peerPid);
+    bool CheckContainerClientOnStartupMode(int32_t peerPid, const std::string& procName);
+    bool CheckConnectionPermission(SocketContext &context, pid_t pid, const std::string& procName = "");
     bool SendPeerFds(SocketContext &context, int32_t peerConfig, const std::string& procName);
     bool SendSharedMemoryFds(SocketContext &context, int32_t peerConfig, const std::string& procName);
     bool SendAsyncStackFd(SocketContext &context, int32_t pid, const std::string& name);
@@ -55,6 +63,7 @@ private:
 private:
     std::shared_ptr<ServiceEntry> serviceEntry_{nullptr};
     ClientConfig clientConfig_;
+    Container::ClientConfig containerClientConfig_;
     std::shared_ptr<HookManager> hookMgr_{nullptr};
     std::mutex mtx_;
     std::mutex pidFdMtx_;
@@ -63,6 +72,7 @@ private:
     std::unordered_map<pid_t, int> pidFds_;
     bool firstProcess_ = true;
     bool multipleProcesses_ = false;
+    bool isContainerScene_ = false;
     std::unordered_map<pid_t, std::pair<uid_t, gid_t>> pidInfo_;
 };
 }

@@ -230,6 +230,8 @@ const char PATH_SEPARATOR = '/';
 
 std::string PlatformPathConvert(const std::string &path);
 
+bool NeedAdaptHMBundlePath(std::string& filename, const std::string& processName);
+
 // attribute
 #define PACKED __attribute__((packed))
 

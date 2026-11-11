@@ -86,6 +86,10 @@ inline bool StackPreprocess::IsDataSourceTerminated() const
 inline void StackPreprocess::SetPid(int32_t pid)
 {
     pid_ = pid;
+    if (COMMON::GetNSpid(pid) != -1) {
+        isContainer_ = true;
+        runtime_instance->SetContainerInfo(true);
+    }
 }
 
 inline void StackPreprocess::InitStatisticsTime()

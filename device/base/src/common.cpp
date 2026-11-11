@@ -202,6 +202,41 @@ bool IsProcessExist(const std::string& processName, int& pid)
     return pidValue != INVALID_PID;
 }
 
+// 获取指定PID的namespace pid (NSpid)
+// NSpid格式： NSpid: 19186 3485
+// 成功获取到返回第二个数字即NSpid，否则返回-1
+int32_t GetNSpid(int32_t pid)
+{
+    std::string statusPath = "/proc/" + std::to_string(pid) + "/status";
+    std::ifstream file(statusPath);
+    if (!file.is_open()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Failed to open %s.", statusPath.c_str());
+        return -1;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        // 查找以"NSpid:"开头的行
+        if (line.compare(0, 6, "NSpid:") == 0) {
+            std::string values = line.substr(6);
+            std::istringstream iss(values);
+            std::vector<pid_t> nspids;
+            pid_t num;
+            while (iss >> num) {
+                nspids.push_back(num);
+            }
+
+            // 成功获取到返回第二个数字即NSpid，否则返回-1
+            if (nspids.size() >= 2) {
+                return nspids[1];
+            }
+            return -1;
+        }
+    }
+
+    return -1;
+}
+
 static void CloseStdio()
 {
     close(STDIN_FILENO);

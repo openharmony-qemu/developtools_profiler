@@ -892,6 +892,54 @@ HWTEST_F(UtilitiesTest, StringPrintfHandlesInvalidFormat, TestSize.Level0)
     EXPECT_EQ(StringPrintf(nullptr), "");
     EXPECT_EQ(StringPrintf("%999999999999999999999999s", "value"), "");
 }
+
+/**
+ * @tc.name: NeedAdaptHMBundlePath
+ * @tc.desc: test NeedAdaptHMBundlePath covering all branches.
+ * @tc.type: FUNC
+ */
+HWTEST_F(UtilitiesTest, NeedAdaptHMBundlePath, TestSize.Level0)
+{
+    const std::string baseDir = "/data/local/tmp/hm_bundle_test";
+    const std::string storageDir = baseDir + "/data/storage/el1/bundle";
+    const std::string adaptDir = baseDir + "/data/app/el1/bundle/public/testproc";
+    const std::string processName = "testproc";
+
+    // create directory structure and files
+    system(("mkdir -p " + storageDir + " " + adaptDir).c_str());
+    // Branch 6: original file exists at storage path
+    FILE* f1 = fopen((storageDir + "/exist.so").c_str(), "w");
+    ASSERT_NE(f1, nullptr);
+    fclose(f1);
+    // Branch 5: adapted file exists (original does not)
+    FILE* f2 = fopen((adaptDir + "/adapted.so").c_str(), "w");
+    ASSERT_NE(f2, nullptr);
+    fclose(f2);
+
+    // Branch 7: filename doesn't contain the path → return false
+    std::string filename = "/system/lib/libtest.so";
+    EXPECT_FALSE(NeedAdaptHMBundlePath(filename, processName));
+
+    // Branch 4: filename contains path, original doesn't exist, adapted doesn't exist → return false
+    filename = storageDir + "/nonexistent.so";
+    EXPECT_FALSE(NeedAdaptHMBundlePath(filename, processName));
+
+    // Branch 5: filename contains path, original doesn't exist, adapted exists → return true, filename updated
+    filename = storageDir + "/adapted.so";
+    EXPECT_TRUE(NeedAdaptHMBundlePath(filename, processName));
+    EXPECT_EQ(filename, adaptDir + "/adapted.so");
+
+    // Branch 6: filename contains path, original exists → return false, needCheck set to false
+    filename = storageDir + "/exist.so";
+    EXPECT_FALSE(NeedAdaptHMBundlePath(filename, processName));
+
+    // Branch 1: needCheck is now false → return false immediately
+    filename = storageDir + "/nonexistent.so";
+    EXPECT_FALSE(NeedAdaptHMBundlePath(filename, processName));
+
+    // cleanup
+    system(("rm -rf " + baseDir).c_str());
+}
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

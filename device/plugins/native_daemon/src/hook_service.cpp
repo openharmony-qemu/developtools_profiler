@@ -83,6 +83,16 @@ HookService::HookService(const ClientConfig& clientConfig, std::shared_ptr<HookM
     StartService(DEFAULT_UNIX_SOCKET_HOOK_PATH);
 }
 
+HookService::HookService(const Container::ClientConfig& clientConfig, std::shared_ptr<HookManager> hook,
+    bool multipleProcesses, bool isContainerScene)
+    : containerClientConfig_(clientConfig), hookMgr_(hook), multipleProcesses_(multipleProcesses),
+      isContainerScene_(isContainerScene)
+{
+    serviceName_ = "HookService";
+    isContainerScene_ = true;
+    StartService("/data/virt_service/virt_comm/rgm_hmos/uds/hiprofiler/hook_unix_socket", true);
+}
+
 HookService::~HookService()
 {
     if (g_hookServiceInstance == this) {
@@ -91,23 +101,26 @@ HookService::~HookService()
     serviceEntry_ = nullptr;
 }
 
-bool HookService::StartService(const std::string& unixSocketName)
+bool HookService::StartService(const std::string& unixSocketName, bool isCustomized)
 {
     serviceEntry_ = std::make_shared<ServiceEntry>();
     g_hookServiceInstance = this;
-    if (!serviceEntry_->StartServer(unixSocketName, HookServiceDisconnectCallback)) {
+    if (!serviceEntry_->StartServer(unixSocketName, HookServiceDisconnectCallback, isCustomized)) {
         g_hookServiceInstance = nullptr;
         serviceEntry_ = nullptr;
         PROFILER_LOG_DEBUG(LOG_CORE, "Start IPC Service FAIL");
         return false;
     }
     serviceEntry_->RegisterService(*this);
+    PROFILER_LOG_INFO(LOG_CORE, "StartService[%d] finsh", isContainerScene_);
     return true;
 }
 
 bool HookService::HandlePeerMessage(SocketContext &context, const int8_t *buf, uint32_t size)
 {
-    if (clientConfig_.enableFileCacheMode && size == sizeof(HookCacheFileMsg)) {
+    bool isEnableFileCacheMode = isContainerScene_ ? containerClientConfig_.enableFileCacheMode :
+        clientConfig_.enableFileCacheMode;
+    if (isEnableFileCacheMode && size == sizeof(HookCacheFileMsg)) {
         ReceiveCacheFileMsg(context, buf);
         return true;
     }
@@ -163,6 +176,46 @@ bool HookService::ResolveProcessName(int32_t peerConfig, std::string& procName)
     return true;
 }
 
+void HookService::ConvertPeerPidToHookpid(int32_t &peerPid)
+{
+    if (!isContainerScene_) {
+        return;
+    }
+    int hookPid = hookMgr_->GetHookpidByNSpid(peerPid);
+    if (hookPid != -1) {
+        PROFILER_LOG_INFO(LOG_CORE, "ProtocolProc convert NSpid[%d] -> pid[%d]", peerPid, hookPid);
+        peerPid = hookPid;
+    }
+}
+
+void HookService::ConvertPeerPidToHookpid(SocketContext &context, int32_t &peerPid)
+{
+    if (!isContainerScene_) {
+        return;
+    }
+    if (hookMgr_->GetHookConfig().startup_mode()) {
+        struct ucred cred;
+        (void)memset_s(&cred, sizeof(cred), 0, sizeof(cred));
+        GetPeerUcred(context, cred);
+        peerPid = cred.pid;
+        return;
+    }
+    ConvertPeerPidToHookpid(peerPid);
+}
+
+bool HookService::CheckContainerClientOnStartupMode(int32_t peerPid, const std::string& procName)
+{
+    if (!isContainerScene_ || !hookMgr_->GetHookConfig().startup_mode()) {
+        return false;
+    }
+    if (!hookMgr_->CheckHookProcName(procName)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Check container client procName failed on startup mode");
+        return false;
+    }
+    hookMgr_->SetHookpidAndNSpid(peerPid);
+    return true;
+}
+
 void HookService::GetPeerUcred(SocketContext &context, struct ucred &cred)
 {
     int socketHandle = context.GetSocketHandle();
@@ -173,7 +226,7 @@ void HookService::GetPeerUcred(SocketContext &context, struct ucred &cred)
     }
 }
 
-bool HookService::CheckConnectionPermission(SocketContext &context, pid_t pid)
+bool HookService::CheckConnectionPermission(SocketContext &context, pid_t pid, const std::string& procName)
 {
     if ((!firstProcess_) && (!multipleProcesses_)) {
         return false;
@@ -188,6 +241,9 @@ bool HookService::CheckConnectionPermission(SocketContext &context, pid_t pid)
     }
 
     if (hookMgr_->GetHookConfig().startup_mode()) {
+        if (isContainerScene_) {
+            return CheckContainerClientOnStartupMode(pid, procName);
+        }
         return true;
     }
 
@@ -218,7 +274,9 @@ bool HookService::SendSharedMemoryFds(SocketContext &context, int32_t peerConfig
 
 bool HookService::SendPeerFds(SocketContext &context, int32_t peerConfig, const std::string& procName)
 {
-    if (clientConfig_.enableFileCacheMode) {
+    bool isEnableFileCacheMode = isContainerScene_ ? containerClientConfig_.enableFileCacheMode :
+        clientConfig_.enableFileCacheMode;
+    if (isEnableFileCacheMode) {
         if (!SendInitialFileCacheFds(context, peerConfig, procName)) {
             PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc send initial file cache fds failed");
             return false;
@@ -331,7 +389,15 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     if (hookMgr_ == nullptr) {
         return false;
     }
-    PROFILER_LOG_INFO(LOG_CORE, "ProtocolProc recv size[%u]", size);
+    PROFILER_LOG_INFO(LOG_CORE, "ProtocolProc[%d] recv size[%u]", isContainerScene_, size);
+    if (isContainerScene_) {
+        return HandleContainerClientMsg(context, pnum, buf, size);
+    }
+    return HandleClientMsg(context, pnum, buf, size);
+}
+
+bool HookService::HandleClientMsg(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size)
+{
     if (size != sizeof(int)) {
         return HandlePeerMessage(context, buf, size);
     }
@@ -352,9 +418,9 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
         return false;
     }
     SaveSocketFd(context, static_cast<pid_t>(peerConfig));
-    PROFILER_LOG_DEBUG(LOG_CORE, "ProtocolProc, receive message from hook client, and send hook config to process %d",
-                       peerConfig);
     ClientConfigIpc clientConfigIpc;
+    PROFILER_LOG_DEBUG(LOG_CORE, "ProtocolProc, receive client message, and send hook config[%zu] to process %d",
+        sizeof(clientConfigIpc), peerConfig);
     {
         std::unique_lock<std::mutex> sendLock(socketSendMtx_);
         if (!ConvertClientConfigToIpc(clientConfig_, clientConfigIpc) ||
@@ -375,6 +441,51 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     return true;
 }
 
+bool HookService::HandleContainerClientMsg(SocketContext &context, uint32_t pnum, const int8_t *buf,
+    const uint32_t size)
+{
+    if (size != sizeof(int)) {
+        return HandlePeerMessage(context, buf, size);
+    }
+    int peerConfig = *const_cast<int *>(reinterpret_cast<const int *>(buf));
+    if (peerConfig == -1) {
+        return false;
+    }
+    ConvertPeerPidToHookpid(context, peerConfig);
+    std::string procName;
+    if (!ResolveProcessName(peerConfig, procName)) {
+        return false;
+    }
+
+    std::lock_guard<std::mutex> lock(mtx_);
+    if (!CheckConnectionPermission(context, static_cast<pid_t>(peerConfig), procName)) {
+        return false;
+    }
+    SaveSocketFd(context, static_cast<pid_t>(peerConfig));
+    Container::ClientConfigIpc containerClientConfigIpc;
+    PROFILER_LOG_DEBUG(LOG_CORE, "ProtocolProc, receive client message, and send hook config[%zu] to process %d",
+        sizeof(containerClientConfigIpc), peerConfig);
+    {
+        std::unique_lock<std::mutex> sendLock(socketSendMtx_);
+        if (!Container::ConvertClientConfigToIpc(containerClientConfig_, containerClientConfigIpc) ||
+            !context.SendHookConfig(reinterpret_cast<const uint8_t *>(&containerClientConfigIpc),
+            sizeof(containerClientConfigIpc))) {
+            sendLock.unlock();
+            PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc send client config failed");
+            CloseSocketFd(static_cast<pid_t>(peerConfig));
+            return false;
+        }
+        if (!SendPeerFds(context, peerConfig, procName)) {
+            sendLock.unlock();
+            PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc send client fds failed");
+            CloseSocketFd(static_cast<pid_t>(peerConfig));
+            return false;
+        }
+    }
+    hookMgr_->ResetStartupParam(static_cast<pid_t>(peerConfig));
+    return true;
+}
+
 void HookService::ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf)
 {
     if (buf == nullptr) {
@@ -382,10 +493,12 @@ void HookService::ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf)
     }
 
     HookCacheFileMsg cacheFileMsg = *reinterpret_cast<HookCacheFileMsg *>(const_cast<int8_t*>(buf));
+    ConvertPeerPidToHookpid(cacheFileMsg.hookPid);
     struct ucred cred;
     GetPeerUcred(context, cred);
     if (cacheFileMsg.hookPid != cred.pid) {
-        PROFILER_LOG_ERROR(LOG_CORE, "ReceiveCacheFileMsg check client pid failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "ReceiveCacheFileMsg check client pid %d %d failed",
+            cacheFileMsg.hookPid, cred.pid);
         return;
     }
 
@@ -444,6 +557,9 @@ void HookService::SendCommand(pid_t pid, uint32_t cmd)
 
 void HookService::SendBackpressureState(pid_t pid, const BackpressureStateMsg& state)
 {
+    if (isContainerScene_) {
+        return;
+    }
     std::unique_lock<std::mutex> lock(pidFdMtx_);
     auto it = pidFds_.find(pid);
     if (it == pidFds_.end() || it->second <= 0) {

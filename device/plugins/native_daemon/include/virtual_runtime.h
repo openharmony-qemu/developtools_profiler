@@ -149,6 +149,14 @@ public:
     {
         return processMaps_;
     }
+    void SetContainerInfo(bool isContainer)
+    {
+        isContainer_ = isContainer;
+    }
+    bool IsContainer()
+    {
+        return isContainer_;
+    }
     bool EnsureSmoInfoForFile(const std::string& path);
     std::shared_ptr<DfxMap> FindMapByPath(const std::string& path);
     uint64_t GetAdltBase(const std::string& path) const;
@@ -235,6 +243,7 @@ private:
 #endif
     // pid map with user space thread
     pid_t pid_ = 0;
+    std::atomic_bool isContainer_{false};
     pthread_mutex_t threadMapsLock_;
     std::map<pid_t, VirtualThread> userSpaceThreadMap_;
     // not pid , just map

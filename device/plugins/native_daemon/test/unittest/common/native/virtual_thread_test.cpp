@@ -519,6 +519,44 @@ HWTEST_F(VirtualThreadTest, ParseMapUpdateAddsThenSkipsKnownMaps, TestSize.Level
     EXPECT_FALSE(changedAgain);
     EXPECT_FALSE(memMaps.empty());
 }
+
+/**
+ * @tc.name: RegulateMapPath
+ * @tc.desc: test RegulateMapPath with empty name, non-container, container prepend, and container already prefixed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(VirtualThreadTest, RegulateMapPath, TestSize.Level0)
+{
+    std::unordered_map<std::string, unique_ptr<SymbolsFile>> files;
+    std::shared_ptr<VirtualRuntime> runtime = std::make_shared<VirtualRuntime>();
+    std::shared_ptr<VirtualThread> thread = std::make_shared<VirtualThread>(getpid(), GetThreadId(),
+        files, runtime.get(), false);
+    const std::string processName = "testproc";
+    const std::string containerRoot = "/proc/" + std::to_string(getpid()) + "/root";
+
+    // Branch 1: empty map name → return
+    auto map = std::make_shared<DfxMap>();
+    map->name = "";
+    thread->RegulateMapPath(map, processName);
+    EXPECT_TRUE(map->name.empty());
+
+    // Branch 2: not container → NeedAdaptHMBundlePath called, return
+    thread->isContainer_ = false;
+    map->name = "/system/lib/libtest.so";
+    thread->RegulateMapPath(map, processName);
+    EXPECT_EQ(map->name, "/system/lib/libtest.so");
+
+    // Branch 3a: container, name doesn't start with containerRoot → prepend
+    thread->isContainer_ = true;
+    map->name = "/system/lib/libtest.so";
+    thread->RegulateMapPath(map, processName);
+    EXPECT_EQ(map->name, containerRoot + "/system/lib/libtest.so");
+
+    // Branch 3b: container, name already starts with containerRoot → no change
+    map->name = containerRoot + "/system/lib/libtest.so";
+    thread->RegulateMapPath(map, processName);
+    EXPECT_EQ(map->name, containerRoot + "/system/lib/libtest.so");
+}
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

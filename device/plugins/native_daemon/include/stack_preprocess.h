@@ -368,6 +368,7 @@ private:
     COMMON::SpinLock spinLock_;
     bool isSaService_{false};
     bool isProtobufSerialize_{true};
+    bool isContainer_{false};
     WriterStructPtr resultWriter_{nullptr};
     std::variant<BatchNativeHookData, OHOS::Developtools::Profiler::ProtoEncoder::BatchNativeHookData> stackData_;
     uint64_t flushSize_{0};

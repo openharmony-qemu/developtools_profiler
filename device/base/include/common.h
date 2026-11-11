@@ -30,6 +30,7 @@ const std::string DEFAULT_RW_DIR = "/data";
 bool IsProcessRunning(int& lockFileFd); // add file lock, only one process can run
 std::string CanonicalizeSpecPath(const char* src);
 bool IsProcessExist(const std::string& processName, int& pid); // Check if the process exists and get PID
+int32_t GetNSpid(int32_t pid);
 int StartProcess(const std::string& processBin, std::vector<char*>& argv);
 int KillProcess(int pid);
 bool CheckSubscribeVersion(const std::string& version);

@@ -39,6 +39,7 @@
 #include "stack_preprocess.h"
 #include "native_memory_profiler_sa_config.h"
 #include "writer_adapter.h"
+#include "hook_container_protocol.h"
 #include "app_mgr_interface.h"
 #include "app_mgr_proxy.h"
 #include "iservice_registry.h"
@@ -93,6 +94,7 @@ public:
         std::shared_ptr<StackDataRepeater> stackData = nullptr;
         std::shared_ptr<StackPreprocess> stackPreprocess = nullptr;
         bool isRecordAccurately = false;
+        bool isContainer = false;
         std::mutex fdQueueMtx;
         std::deque<int> cachedFileFdQueue;
         std::shared_ptr<EventNotifier> readyFileNotifier;
@@ -176,6 +178,7 @@ public:
     void SaveInitialCacheFds(pid_t pid, uint16_t fileIndex, int fd);
     void RotateCacheFdOnReturn(pid_t pid, uint16_t returnedFileIndex, int fd);
     bool CheckHookPid(int32_t pid);
+    bool CheckHookProcName(const std::string& procName);
     void SetHookConfig(const NativeHookConfig& hookConfig);
     void SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     void SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
@@ -187,6 +190,8 @@ public:
     void WriteHookConfig();
     void DumpNmdInfo(const char* nmdResult);
     void DumpGwpAsanInfo(uint8_t* data);
+    void SetHookpidAndNSpid(int32_t pid);
+    int32_t GetHookpidByNSpid(int32_t nspid);
     std::string GetCmdArgs(const NativeHookConfig& traceConfig);
     std::vector<int> GetFds(int32_t pid, const std::string& name, int sharedMemCount);
     // Returns a borrowed FD, or -1 if no matching async stack context exists.
@@ -198,6 +203,7 @@ public:
     }
     void GetClientConfig(ClientConfig& clientConfig);
     void GetClientConfigExt(ClientConfig& clientConfig);
+    void GetContainerClientConfig(Container::ClientConfig& containerClientConfig);
     bool GetNoDataQueueFlag()
     {
         return noDataQueue_;
@@ -247,6 +253,7 @@ private:
     void DumpMemLeakInfo();
     bool CheckProcess();
     unsigned long long ConvertTagToMask() const;
+    int SetStartupParam();
     bool CheckProcessName();
     void CheckHapEncryped();
     void UpdateAsyncFlagConfig();
@@ -297,6 +304,8 @@ private:
     std::string GetMemLeakFileName(MemLeakFormat format);
     void UpdateFreezeExcludedPid(bool isAdd, int32_t targetPid, int32_t profilerPid);
     bool CloseMemLeakTempFile();
+    void SendStartHookSignal(const std::shared_ptr<HookManagerCtx>& item);
+    void SetContainerSceneFlag();
     void SendBackpressureState(pid_t pid, const BackpressureStateMsg& state);
     void HandleBackpressure(const std::shared_ptr<HookManagerCtx>& ctx);
     uint32_t CalculateRecommendedDelay(uint32_t queueDepth);
@@ -304,6 +313,7 @@ private:
 
     const BackpressureConfig bpConfig_ = BackpressureConfig();
     std::shared_ptr<HookService> hookService_;
+    std::shared_ptr<HookService> containerHookService_ {nullptr};
     std::shared_ptr<CommandPoller> commandPoller_;
     int agentIndex_ = -1;
     std::string agentPluginName_;
@@ -316,6 +326,7 @@ private:
     bool noDataQueue_{false};
     std::shared_ptr<WriterAdapter> writerAdapter_{nullptr};
     bool isProtobufSerialize_{true};
+    bool isContainerScene_{false};
     std::shared_ptr<Writer> writer_{nullptr};
     constexpr static uint32_t MAX_BUFFER_SIZE = 100 * 1024 * 1024;
     uint64_t shareMemorySize_{MAX_BUFFER_SIZE};
@@ -327,6 +338,10 @@ private:
     int32_t maxProcessCount_ = 10000;
     uint32_t saFd_ = 0;
     std::shared_ptr<HookRecordFactory> factory_{nullptr};
+    std::shared_ptr<HookRecordFactory> containerFactory_{nullptr};
+    std::map<int32_t, int32_t> nspidMap_;
+    std::mutex nspidMapMtx_;
+    void SetHookInfo(int32_t pid, uid_t uid, gid_t gid);
     uint32_t gwpAsanHoldTime_ = 0;
     uint32_t gwpAsanMaxEntries_ = 0;
     uint32_t gwpAsanMaxStackDepth_ = 0;

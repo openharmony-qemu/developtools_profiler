@@ -75,6 +75,7 @@ VirtualThread::VirtualThread(pid_t pid,
     : pid_(pid), tid_(tid), symbolsFiles_(symbolsFiles), virtualruntime_(runtime)
 {
     maps_ = &virtualruntime_->processMaps_;
+    isContainer_ = virtualruntime_->IsContainer();
     if (parseFlag) {
         if (virtualruntime_->processMaps_.size() == 0) {
             this->ParseMap(virtualruntime_->processMaps_);
@@ -83,6 +84,11 @@ VirtualThread::VirtualThread(pid_t pid,
 
     this->name_ = ReadThreadName(pid);
     HLOGM("%d %d map from parent size is %zu", pid, tid, maps_->size());
+}
+
+bool VirtualThread::IsContainer() const
+{
+    return isContainer_.load();
 }
 
 std::string VirtualThread::ReadThreadName(pid_t tid)
@@ -195,6 +201,21 @@ bool VirtualThread::ReadRoMemory(uint64_t vaddr, uint8_t *data, size_t size) con
     return false;
 }
 
+void VirtualThread::RegulateMapPath(std::shared_ptr<DfxMap>& map, const std::string& processName)
+{
+    if (map->name.empty()) {
+        return;
+    }
+    if (!isContainer_) {
+        NeedAdaptHMBundlePath(map->name, processName);
+        return;
+    }
+    std::string containerRoot = StringPrintf("/proc/%d/root", pid_);
+    if (!StringStartsWith(map->name, containerRoot)) {
+        map->name = containerRoot + map->name;
+    }
+}
+
 bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool update)
 {
     std::string mapPath = StringPrintf("/proc/%d/maps", pid_);
@@ -209,7 +230,9 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
     std::vector<std::shared_ptr<DfxMap>> tempMap;
     std::string tempMapName;
     std::shared_ptr<DfxMap> prevMap = nullptr;
-    for (auto memMapItem : memMaps) {
+    std::string processName = COMMON::GetBundleNameByPid(pid_);
+    for (auto &memMapItem : memMaps) {
+        RegulateMapPath(memMapItem, processName);
         if (virtualruntime_->IsArktsMap(memMapItem)) {
             virtualruntime_->arktsMapTree_[memMapItem->begin] = {
                 memMapItem, virtualruntime_->GetOrCreateFilePathId(memMapItem->name)};
@@ -232,6 +255,10 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
             updateNormalSymbol = !virtualruntime_->UpdateHapSymbols(memMapItem);
         }
         if (updateNormalSymbol) {
+            if (IsJitFile(memMapItem->name)) {
+                PROFILER_LOG_INFO(LOG_CORE, "JIT: IsJitFile matched, creating JitFileSymbols for %s",
+                    memMapItem->name.c_str());
+            }
             virtualruntime_->UpdateSymbols(memMapItem->name, memMapItem);
         }
         prevMap = memMapItem;
@@ -271,12 +298,22 @@ void VirtualThread::SortMaps()
 void VirtualThread::CreateMapItem(const std::string filename, uint64_t begin, uint64_t len,
                                   uint64_t offset)
 {
-    if (!OHOS::HiviewDFX::DfxMaps::IsLegalMapItem(filename)) {
+    std::string adaptedFileName = filename;
+    if (isContainer_) {
+        std::string containerRoot = StringPrintf("/proc/%d/root", pid_);
+        if (!StringStartsWith(adaptedFileName, containerRoot)) {
+            adaptedFileName = containerRoot + adaptedFileName;
+        }
+    } else {
+        std::string processName = COMMON::GetBundleNameByPid(pid_);
+        NeedAdaptHMBundlePath(adaptedFileName, processName);
+    }
+    if (!OHOS::HiviewDFX::DfxMaps::IsLegalMapItem(adaptedFileName)) {
         return; // skip some memmap
     }
     uint32_t prots =  PROT_EXEC;
 
-    std::shared_ptr<DfxMap> map = std::make_shared<DfxMap>(begin, begin + len, offset, prots, filename);
+    std::shared_ptr<DfxMap> map = std::make_shared<DfxMap>(begin, begin + len, offset, prots, adaptedFileName);
     maps_->emplace_back(map);
     std::string tempMapName{" "};
     virtualruntime_->FillMapsCache(tempMapName, map);

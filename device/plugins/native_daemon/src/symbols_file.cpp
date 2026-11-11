@@ -36,9 +36,13 @@
 #include "dfx_ark.h"
 #include "dfx_extractor_utils.h"
 #include "dfx_jsvm.h"
+#include "dfx_memory.h"
+#include "dfx_maps.h"
+#include "dfx_mmap.h"
 #include "dfx_symbols.h"
 #include "dwarf_encoding.h"
 #include "elf_factory.h"
+#include "unwinder_config.h"
 #include "utilities.h"
 
 using namespace OHOS::HiviewDFX;
@@ -49,6 +53,12 @@ namespace Developtools {
 namespace NativeDaemon {
 const std::string PATH_SEPARATOR_STR = std::string(1, PATH_SEPARATOR);
 bool SymbolsFile::onRecording_ = true;
+
+bool IsJitFile(const std::string& filepath)
+{
+    return filepath.find("jit-cache") != std::string::npos;
+}
+
 const std::string SymbolsFile::GetBuildId() const
 {
     return buildId_;
@@ -185,6 +195,11 @@ public:
             return false;
         }
         return false;
+    }
+
+    void EnableMiniDebugInfo() override
+    {
+        UnwinderConfig::SetEnableMiniDebugInfo(true);
     }
 
     std::shared_ptr<DfxElf> GetElfFile() override
@@ -890,6 +905,258 @@ public:
     }
 };
 
+class JitFileSymbols : public ElfFileSymbols {
+private:
+    pid_t pid_ = 0;
+ 
+#if defined(is_ohos) && is_ohos
+    bool jitLoaded_ = false;
+    static constexpr const char* JIT_DEBUG_DESCRIPTOR = "__jit_debug_descriptor";
+    static constexpr size_t DESCRIPTOR_SIZE_V1 = 24;
+    static constexpr size_t DESCRIPTOR_SIZE_V2 = 56;
+    static constexpr size_t CODE_ENTRY_SIZE_V1 = 32; // next+prev+symfileAddr+symfileSize
+    static constexpr size_t CODE_ENTRY_SIZE_V2 = 48; // +timestamp+seqlock
+    static constexpr size_t MAX_JIT_ENTRIES = 100000;
+    static constexpr int MAX_RACE_RETRIES = 16;
+    static constexpr uint64_t MAX_SYMFILE_SIZE = 64ULL << 20;
+    static constexpr uint32_t FIRST_ENTRY_OFFSET = 16; // version(4)+actionFlag(4)+relevantEntry(8)
+    static constexpr uint32_t DESCRIPTOR_MAGIC_OFFSET = 24;
+    static constexpr uint32_t SEQLOCK_OFFSET_V2 = 40;
+    size_t jitEntrySize_ = CODE_ENTRY_SIZE_V1;
+    size_t seqlockOffset_ = 0;
+
+    static bool IsArtLib(const std::string& name)
+    {
+        if (name.empty()) {
+            return false;
+        }
+        std::string base = name.substr(name.find_last_of('/') + 1);
+        return base == "libart.so" || base == "libartd.so";
+    }
+
+    uint64_t FindDescriptorAddr()
+    {
+        bool isContainer = (COMMON::GetNSpid(pid_) != -1);
+        auto maps = DfxMaps::Create(pid_, true, true, isContainer);
+        if (maps == nullptr) {
+            HLOGW("JIT: DfxMaps::Create(%d) failed", pid_);
+            return 0;
+        }
+        for (const auto& map : maps->GetMaps()) {
+            if (map == nullptr || map->name.empty() || map->offset != 0) {
+                continue;
+            }
+            if (map->prots != PROT_READ || !IsArtLib(map->name)) {
+                continue;
+            }
+            auto elf = map->GetElf(pid_);
+            if (elf == nullptr || !elf->IsValid()) {
+                continue;
+            }
+            ElfSymbol symbol;
+            if (!elf->FindGlobalVariableByName(JIT_DEBUG_DESCRIPTOR, symbol)) {
+                continue;
+            }
+            uint64_t runtimeAddr = map->begin + symbol.value;
+            std::shared_ptr<DfxMap> containing;
+            if (maps->FindMapByAddr(static_cast<uintptr_t>(runtimeAddr), containing) &&
+                containing != nullptr) {
+                HLOGD("JIT: descriptor at 0x%" PRIx64 ", pid %d", runtimeAddr, pid_);
+                return runtimeAddr;
+            }
+        }
+        HLOGW("JIT: descriptor not found, pid %d", pid_);
+        return 0;
+    }
+
+    bool DetectEntryLayout(uint64_t descAddr)
+    {
+        uint8_t buf[DESCRIPTOR_SIZE_V2] = {0};
+        size_t readLen = DfxMemory::ReadProcMemByPid(pid_, descAddr, buf, DESCRIPTOR_SIZE_V2);
+        if (readLen < DESCRIPTOR_SIZE_V1) {
+            HLOGW("JIT: read descriptor failed, got %zu bytes, pid %d", readLen, pid_);
+            return false;
+        }
+        uint32_t version = *reinterpret_cast<uint32_t*>(buf);
+        if (version != 1) {
+            HLOGW("JIT: descriptor version %u != 1, pid %d", version, pid_);
+            return false;
+        }
+        static constexpr uint8_t jitMagic[] = {'A', 'n', 'd', 'r', 'o', 'i', 'd', '2'};
+        if (readLen >= DESCRIPTOR_SIZE_V2 &&
+            memcmp(buf + DESCRIPTOR_MAGIC_OFFSET, jitMagic, sizeof(jitMagic)) == 0) {
+            jitEntrySize_ = CODE_ENTRY_SIZE_V2;
+            seqlockOffset_ = SEQLOCK_OFFSET_V2;
+        } else {
+            jitEntrySize_ = CODE_ENTRY_SIZE_V1;
+            seqlockOffset_ = 0;
+        }
+        return true;
+    }
+
+    bool CheckSeqlock(uint64_t entryAddr, uint32_t& seenSeqlock)
+    {
+        if (seqlockOffset_ == 0) {
+            return true;
+        }
+        return DfxMemory::ReadProcMemByPid(pid_, entryAddr + seqlockOffset_,
+            &seenSeqlock, sizeof(seenSeqlock)) == sizeof(seenSeqlock);
+    }
+
+    bool ReadEntryAndLoadSymbols(uint64_t entryAddr)
+    {
+        uint8_t entryBuf[CODE_ENTRY_SIZE_V2] = {0};
+        if (DfxMemory::ReadProcMemByPid(pid_, entryAddr, entryBuf, jitEntrySize_) != jitEntrySize_) {
+            return false;
+        }
+        auto* fields = reinterpret_cast<uint64_t*>(entryBuf);
+        uint64_t next = fields[0];
+        uint64_t symfileAddr = fields[2];
+        uint64_t symfileSize = fields[3];
+        if (symfileAddr == 0 || symfileSize == 0 || symfileSize > MAX_SYMFILE_SIZE) {
+            return next != 0;
+        }
+        uint32_t seqlockBefore = 0;
+        uint32_t seqlockAfter = 0;
+        if (seqlockOffset_ != 0) {
+            if (!CheckSeqlock(entryAddr, seqlockBefore)) {
+                return false;
+            }
+        }
+        std::vector<uint8_t> data(static_cast<size_t>(symfileSize));
+        bool readOk = DfxMemory::ReadProcMemByPid(pid_, symfileAddr,
+            data.data(), data.size()) == data.size();
+        if (seqlockOffset_ != 0 && readOk) {
+            if (!CheckSeqlock(entryAddr, seqlockAfter) || seqlockBefore != seqlockAfter) {
+                HLOGW("JIT: seqlock race at entry 0x%" PRIx64 ", pid %d", entryAddr, pid_);
+                return false;
+            }
+        }
+        if (readOk) {
+            ParseJitElfSymbols(data);
+        }
+        return next != 0;
+    }
+
+    void ParseJitElfSymbols(std::vector<uint8_t>& data)
+    {
+        auto mmap = std::make_shared<DfxMmap>();
+        if (!mmap->Init(std::move(data))) {
+            return;
+        }
+        auto elf = std::make_shared<DfxElf>(mmap);
+        if (!elf->IsValid()) {
+            return;
+        }
+        for (const auto& sym : elf->GetFuncSymbols()) {
+            if (sym.value == 0 || sym.nameStr.empty()) {
+                continue;
+            }
+            symbols_.emplace_back(sym.value, sym.size, sym.nameStr, sym.nameStr, filePath_);
+        }
+    }
+
+    void LoadJitElfs()
+    {
+        uint64_t descAddr = FindDescriptorAddr();
+        if (descAddr == 0) {
+            return;
+        }
+        if (!DetectEntryLayout(descAddr)) {
+            return;
+        }
+        for (int attempt = 0; attempt < MAX_RACE_RETRIES; attempt++) {
+            symbols_.clear();
+            uint64_t firstEntry = 0;
+            if (DfxMemory::ReadProcMemByPid(pid_, descAddr + FIRST_ENTRY_OFFSET,
+                &firstEntry, sizeof(firstEntry)) != sizeof(firstEntry)) {
+                HLOGW("JIT: read firstEntry failed, pid %d", pid_);
+                return;
+            }
+            if (firstEntry == 0) {
+                HLOGW("JIT: firstEntry is null, pid %d", pid_);
+                return;
+            }
+            bool raced = false;
+            uint64_t entryAddr = firstEntry;
+            while (entryAddr != 0 && symbols_.size() < MAX_JIT_ENTRIES) {
+                if (!ReadEntryAndLoadSymbols(entryAddr)) {
+                    raced = true;
+                    break;
+                }
+                uint8_t nextBuf[sizeof(uint64_t)] = {0};
+                if (DfxMemory::ReadProcMemByPid(pid_, entryAddr, nextBuf,
+                    sizeof(nextBuf)) != sizeof(nextBuf)) {
+                    raced = true;
+                    break;
+                }
+                entryAddr = *reinterpret_cast<uint64_t*>(nextBuf);
+            }
+            if (!raced) {
+                break;
+            }
+            HLOGW("JIT: race detected, retry %d/%d, pid %d", attempt + 1, MAX_RACE_RETRIES, pid_);
+        }
+        AdjustSymbols();
+        HLOGD("JIT: loaded %zu symbols for pid %d", symbols_.size(), pid_);
+        if (symbols_.empty()) {
+            HLOGW("JIT: no JIT symbol loaded, pid %d", pid_);
+        }
+    }
+#endif
+
+public:
+    explicit JitFileSymbols(const std::string &symbolFilePath, pid_t pid)
+        : ElfFileSymbols(symbolFilePath, SYMBOL_JIT_FILE)
+    {
+        pid_ = pid;
+        HLOGD("JIT: JitFileSymbols created, path=%s pid=%d", symbolFilePath.c_str(), pid);
+    }
+
+    bool LoadDebugInfo(std::shared_ptr<DfxMap> map, const std::string &symbolFilePath) override
+    {
+        HLOGD("JIT: LoadDebugInfo called, returning true");
+        return true;
+    }
+
+    bool LoadSymbols(std::shared_ptr<DfxMap> map, const std::string&) override
+    {
+        HLOGD("JIT: LoadSymbols map %s", map->name.c_str());
+        if (symbolsLoaded_ || !onRecording_) {
+            return true;
+        }
+        symbolsLoaded_ = true;
+        return true;
+    }
+
+    DfxSymbol GetSymbolWithPcAndMap(const uint64_t ip, std::shared_ptr<DfxMap> map) override
+    {
+#if defined(is_ohos) && is_ohos
+        if (!jitLoaded_) {
+            jitLoaded_ = true;
+            LoadJitElfs();
+        }
+#endif
+        if (symbols_.empty()) {
+            return DfxSymbol(ip, map != nullptr ? map->name : filePath_);
+        }
+        auto found = std::upper_bound(symbols_.begin(), symbols_.end(), ip,
+            DfxSymbol::ValueLessThen);
+        if (found != symbols_.begin()) {
+            --found;
+            if (found->Contain(ip)) {
+                found->offsetToVaddr_ = ip - found->funcVaddr_;
+                if (!found->matched_) {
+                    found->matched_ = true;
+                    matchedSymbols_.push_back(&(*found));
+                }
+                return *found;
+            }
+        }
+        return DfxSymbol(ip, map != nullptr ? map->name : filePath_);
+    }
+};
+
 class ArkwebV8FileSymbols : public ElfFileSymbols {
 private:
     bool arkwebV8Extracted_ = false;
@@ -1055,6 +1322,8 @@ std::unique_ptr<SymbolsFile> SymbolsFile::CreateSymbolsFile(SymbolsFileType symb
             return std::make_unique<HapFileSymbols>(symbolFilePath, pid);
         case SYMBOL_ARKWEB_V8_FILE:
             return std::make_unique<ArkwebV8FileSymbols>(symbolFilePath, pid);
+        case SYMBOL_JIT_FILE:
+            return std::make_unique<JitFileSymbols>(symbolFilePath, pid);
         default:
             return std::make_unique<SymbolsFile>(SYMBOL_UNKNOW_FILE, symbolFilePath);
     }
@@ -1071,6 +1340,8 @@ std::unique_ptr<SymbolsFile> SymbolsFile::CreateSymbolsFile(const std::string &s
         return SymbolsFile::CreateSymbolsFile(SYMBOL_HAP_FILE, symbolFilePath, pid);
     } else if (IsArkwebV8File(symbolFilePath)) {
         return SymbolsFile::CreateSymbolsFile(SYMBOL_ARKWEB_V8_FILE, symbolFilePath, pid);
+    } else if (IsJitFile(symbolFilePath)) {
+        return SymbolsFile::CreateSymbolsFile(SYMBOL_JIT_FILE, symbolFilePath, pid);
     } else {
         // default is elf
         return SymbolsFile::CreateSymbolsFile(SYMBOL_ELF_FILE, symbolFilePath);
@@ -1200,6 +1471,11 @@ const DfxSymbol SymbolsFile::GetSymbolWithVaddr(uint64_t vaddrInFile)
 bool SymbolsFile::CheckPathReadable(const std::string &path) const
 {
     if (access(path.c_str(), R_OK) == 0) {
+        return true;
+    }
+    // access does not have the access permission in some scenarios
+    struct stat st;
+    if (stat(path.c_str(), &st) == 0) {
         return true;
     } else {
         HLOGM("'%s' is unable read", path.c_str());
