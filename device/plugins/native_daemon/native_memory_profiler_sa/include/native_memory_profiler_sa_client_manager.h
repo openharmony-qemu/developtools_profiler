@@ -33,6 +33,7 @@ struct MemSaConfig {
     std::map<std::string, std::pair<Range, Range>> hookSizes;
     bool asyncStackEnable = false;
     uint64_t asyncFlag = 0;
+    bool mmapAnonymousOnly = false;
 };
 
 struct MemLeakConfig {

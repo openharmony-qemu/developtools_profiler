@@ -213,6 +213,32 @@ HWTEST_F(SaModeAsyncStackTest, SaConfigFullAsyncStackMarshallingTest, TestSize.L
     EXPECT_EQ(unmarshalledConfig->offlineSymbolization_, false);
 }
 
+/**
+ * @tc.name: SaConfigMmapAnonymousOnlyMarshallingTest
+ * @tc.desc: Test mmapAnonymousOnly_ marshalling/unmarshalling
+ * @tc.type: FUNC
+ */
+HWTEST_F(SaModeAsyncStackTest, SaConfigMmapAnonymousOnlyMarshallingTest, TestSize.Level0)
+{
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    config->mmapAnonymousOnly_ = true;
+
+    Parcel parcel;
+    ASSERT_TRUE(config->Marshalling(parcel));
+
+    auto unmarshalledConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_TRUE(NativeMemoryProfilerSaConfig::Unmarshalling(parcel, unmarshalledConfig));
+    EXPECT_EQ(unmarshalledConfig->mmapAnonymousOnly_, true);
+
+    // default false
+    auto config2 = std::make_shared<NativeMemoryProfilerSaConfig>();
+    Parcel parcel2;
+    ASSERT_TRUE(config2->Marshalling(parcel2));
+    auto unmarshalled2 = std::make_shared<NativeMemoryProfilerSaConfig>();
+    ASSERT_TRUE(NativeMemoryProfilerSaConfig::Unmarshalling(parcel2, unmarshalled2));
+    EXPECT_EQ(unmarshalled2->mmapAnonymousOnly_, false);
+}
+
 #ifdef __aarch64__
 /**
  * @tc.name: DfxSetAsyncStackTypeIntegrationTest

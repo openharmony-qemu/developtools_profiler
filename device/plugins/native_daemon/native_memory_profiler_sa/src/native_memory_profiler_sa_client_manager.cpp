@@ -532,6 +532,36 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
     });
 }
 
+static std::shared_ptr<NativeMemoryProfilerSaConfig> BuildMemSaConfig(pid_t pid, uint32_t duration,
+    MemSaConfig& saConfig)
+{
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    config->pid_ = static_cast<int32_t>(pid);
+    config->duration_ = duration;
+    config->statisticsInterval_ = FIVE_MINUTES;
+    config->jsStackReport_ = true;
+    config->mallocDisable_ = true;
+    config->mmapAnonymousOnly_ = saConfig.mmapAnonymousOnly;
+    if (!saConfig.mmapAnonymousOnly) {
+        config->mmapDisable_ = true;
+        config->memtraceEnable_ = true;
+    }
+    config->asyncStackEnable_ = saConfig.asyncStackEnable;
+    config->asyncFlag_ = saConfig.asyncFlag;
+    config->traceMask_ = saConfig.mask;
+    config->shareMemorySize_ = CALL_STACK_SMS;
+    if (!saConfig.hookSizes.empty()) {
+        std::vector<std::vector<uint64_t>> gpuRange;
+        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_VK]));
+        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_GLES_IMAGE]));
+        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_GLES_BUFFER]));
+        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_CL_IMAGE]));
+        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_CL_BUFFER]));
+        std::swap(config->gpuRange_, gpuRange);
+    }
+    return config;
+}
+
 int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint32_t duration, MemSaConfig& saConfig,
     ProfilingDumpCallback callback)
 {
@@ -544,34 +574,13 @@ int32_t NativeMemoryProfilerSaClientManager::StartAsync(int fd, pid_t pid, uint3
     }
     CHECK_TRUE(g_profilerAsyncReqMgr.TryAddRequest(static_cast<int32_t>(pid), duration, callback, fd, ""), RET_ERR,
         "NativeMemoryProfilerSaClientManager: Started already with MemSaConfig for pid:%d", pid);
-    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    config->pid_ = static_cast<int32_t>(pid);
-    config->duration_ = duration;
-    config->statisticsInterval_ = FIVE_MINUTES;
-    config->jsStackReport_ = true;
-    config->mallocDisable_ = true;
-    config->mmapDisable_ = true;
-    config->memtraceEnable_ = true;
-    config->asyncStackEnable_ = saConfig.asyncStackEnable;
-    config->asyncFlag_ = saConfig.asyncFlag;
-    config->traceMask_ = saConfig.mask;
-    config->shareMemorySize_ = CALL_STACK_SMS;
-    std::vector<std::vector<uint64_t>> gpuRange;
-    if (!saConfig.hookSizes.empty()) {
-        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_VK]));
-        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_GLES_IMAGE]));
-        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_GLES_BUFFER]));
-        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_CL_IMAGE]));
-        gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_CL_BUFFER]));
-        std::swap(config->gpuRange_, gpuRange);
-    }
+    auto config = BuildMemSaConfig(pid, duration, saConfig);
     sptr<IRemoteObject> callbackObject = GetProfilingResultCallbackObject();
     if (callbackObject == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "get callback object FAIL");
         g_profilerAsyncReqMgr.DeleteRequest(config->pid_);
         return RET_ERR;
     }
-
     int32_t result = InvokeWithProxy([fd, &config, &callbackObject](NativeMemoryProfilerSaProxy& proxy) {
         return proxy.DumpDataAsync(fd, config, callbackObject);
     });

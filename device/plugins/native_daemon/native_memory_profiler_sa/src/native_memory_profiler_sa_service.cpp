@@ -970,6 +970,7 @@ std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemo
     args << "process_name: " << config->processName_ << ", ";
     args << "malloc_disable: " << (config->mallocDisable_ ? "true" : "false") << ", ";
     args << "mmap_disable: " << (config->mmapDisable_ ? "true" : "false") << ", ";
+    args << "mmap_anonymous_only: " << (config->mmapAnonymousOnly_ ? "true" : "false") << ", ";
     args << "free_stack_report: " << (config->freeStackData_ ? "true" : "false") << ", ";
     args << "munmap_stack_report: " << (config->munmapStackData_ ? "true" : "false") << ", ";
     args << "malloc_free_matching_interval: " << std::to_string(config->mallocFreeMatchingInterval_) << ", ";

@@ -345,6 +345,7 @@ private:
     uint32_t gwpAsanHoldTime_ = 0;
     uint32_t gwpAsanMaxEntries_ = 0;
     uint32_t gwpAsanMaxStackDepth_ = 0;
+    bool anonMmapOnly_ = false;
     uint32_t gwpFd_ = 0;
     MemLeakFormat memLeakFormat_ = MemLeakFormat::TYPE_DISABLE;
     int memLeakFd_ = -1;

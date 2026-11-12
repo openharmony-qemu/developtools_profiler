@@ -659,6 +659,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.arkuiMemTraceEnable = hookConfig_.arkui_mem_trace_enable();
     clientConfig.discardDestroyedTraces = hookConfig_.discard_destroyed_traces();
     clientConfig.mmapSpecificAddrOnly = hookConfig_.mmap_specific_addr_only();
+    clientConfig.anonMmapOnly = anonMmapOnly_;
     GetClientConfigExt(clientConfig);
 }
 
@@ -2562,6 +2563,7 @@ void HookManager::SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaC
     gwpAsanHoldTime_ = config->gwpAsanHoldTime_;
     gwpAsanMaxEntries_ = config->gwpAsanMaxEntries_;
     gwpAsanMaxStackDepth_ = config->gwpAsanMaxStackDepth_;
+    anonMmapOnly_ = config->mmapAnonymousOnly_;
 }
 
 void HookManager::SetSimplifiedMemConfig(const std::shared_ptr<SimplifiedMemConfig>& config)

@@ -674,3 +674,56 @@ HWTEST_F(HookClientExternTest, HookMunmapSpecificAddrOnlyTest, TestSize.Level0)
 }
 
 }
+
+/**
+ * @tc.name: HookMmapAnonOnlyAnonymousTest
+ * @tc.desc: Test hook_mmap with anonMmapOnly=true and anonymous mmap (MAP_ANONYMOUS) collects MMAP_MSG.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientExternTest, HookMmapAnonOnlyAnonymousTest, TestSize.Level0)
+{
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    std::vector<uint64_t> addrVec;
+    StartMock(typeVec, sizeVec, addrVec);
+    g_clientConfig.mmapDisable = false;
+    g_clientConfig.memtraceEnable = false;
+    g_clientConfig.sampleInterval = 0;
+    g_clientConfig.fpunwind = false;
+    g_clientConfig.asyncStackEnable = false;
+    g_clientConfig.anonMmapOnly = true;
+
+    void* addr = reinterpret_cast<void*>(0x2000);
+    void* result = hook_mmap(FakeMmapDifferentRet, addr, SIZE, PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    EXPECT_EQ(result, reinterpret_cast<void*>(0x5000));
+
+    auto mmapIt = std::find(typeVec.begin(), typeVec.end(), MMAP_MSG);
+    ASSERT_NE(mmapIt, typeVec.end());
+    g_clientConfig.anonMmapOnly = false;
+}
+
+/**
+ * @tc.name: HookMmapAnonOnlyNonAnonymousTest
+ * @tc.desc: Test hook_mmap with anonMmapOnly=true and non-anonymous mmap (no MAP_ANONYMOUS) skips MMAP_MSG.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientExternTest, HookMmapAnonOnlyNonAnonymousTest, TestSize.Level0)
+{
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    StartMock(typeVec, sizeVec);
+    g_clientConfig.mmapDisable = false;
+    g_clientConfig.memtraceEnable = false;
+    g_clientConfig.sampleInterval = 0;
+    g_clientConfig.fpunwind = false;
+    g_clientConfig.asyncStackEnable = false;
+    g_clientConfig.anonMmapOnly = true;
+
+    void* result = hook_mmap(FakeMmapDifferentRet, reinterpret_cast<void*>(0x2000), SIZE,
+                             PROT_READ, MAP_PRIVATE, -1, 0);
+    EXPECT_EQ(result, reinterpret_cast<void*>(0x5000));
+    // non-anonymous mmap (no MAP_ANONYMOUS, fd<0): main rawdata filtered, no MMAP_MSG
+    auto mmapIt = std::find(typeVec.begin(), typeVec.end(), MMAP_MSG);
+    EXPECT_EQ(mmapIt, typeVec.end());
+    g_clientConfig.anonMmapOnly = false;
+}

@@ -1115,7 +1115,8 @@ void* __attribute__((noinline)) hook_mmap(void*(*fn)(void*, size_t, int, int, in
     StackParam param;
     AsyncStackData asyncData {{{{0}}}};
     StackRawData rawdata = {{{{0}}}};
-    if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
+    bool skipStack = g_clientConfig.anonMmapOnly && (static_cast<uint32_t>(flags) & MAP_ANONYMOUS) == 0;
+    if (!skipStack && !CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
         return ret;
     }
     if (!g_clientConfig.mmapSpecificAddrOnly &&
@@ -1126,6 +1127,9 @@ void* __attribute__((noinline)) hook_mmap(void*(*fn)(void*, size_t, int, int, in
     SetStackRawData(rawdata, MMAP_MSG, g_clientConfig.mmapSpecificAddrOnly ? addr : ret, length);
     char fileName[MAX_HOOK_PATH + 1] = {0};
     if (!RefreshMmapRawData(rawdata, prot, flags, fd, offset, length, fileName, sizeof(fileName))) {
+        return ret;
+    }
+    if (g_clientConfig.anonMmapOnly && (static_cast<uint32_t>(flags) & MAP_ANONYMOUS) == 0) {
         return ret;
     }
     if (!client.UpdateThreadName()) {

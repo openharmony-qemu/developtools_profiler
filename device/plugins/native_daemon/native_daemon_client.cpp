@@ -114,6 +114,7 @@ int32_t main(int32_t argc, char* argv[])
             printf("    --maxStackDepth                     -msd : maxStackDepth, default: 30\n");
             printf("    --mallocDisable                     -mad : mallocDisable, default: false\n");
             printf("    --mmapDisable                       -mmd : mmapDisable, default: false\n");
+            printf("    --mmapAnonymousOnly                 -mao : mmapAnonymousOnly, default: false\n");
             printf("    --freeStackData                     -fsd : freeStackData, default: false\n");
             printf("    --munmapStackData                   -musd : munmapStackData, default: false\n");
             printf("    --mallocFreeMatchingInterval        -mfmi : mallocFreeMatchingInterval\n");
@@ -193,6 +194,8 @@ int32_t main(int32_t argc, char* argv[])
             config->mallocDisable_ = true;
         } else if ((arg == "--mmapDisable") || (arg == "-mmd")) {
             config->mmapDisable_ = true;
+        } else if ((arg == "--mmapAnonymousOnly") || (arg == "-mao")) {
+            config->mmapAnonymousOnly_ = true;
         } else if ((arg == "--freeStackData") || (arg == "-fsd")) {
             config->freeStackData_ = true;
         } else if ((arg == "--munmapStackData") || (arg == "-musd")) {

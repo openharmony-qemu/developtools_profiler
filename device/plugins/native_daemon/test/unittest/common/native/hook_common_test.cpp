@@ -166,3 +166,46 @@ HWTEST_F(HookCommonTest, HookCommonTest005, TestSize.Level3)
     EXPECT_FALSE(TsLess(e, f));
     EXPECT_FALSE(TsLess(f, e));
 }
+
+/**
+ * @tc.name: HookCommonTest009
+ * @tc.desc: Test anonMmapOnly propagation in IPC (ToIpc and FromIpc)
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookCommonTest, HookCommonTest009, TestSize.Level3)
+{
+    ClientConfig config;
+    config.anonMmapOnly = true;
+
+    ClientConfigIpc ipc;
+    EXPECT_TRUE(ConvertClientConfigToIpc(config, ipc));
+    EXPECT_EQ(ipc.anonMmapOnly, true);
+
+    ClientConfig resultConfig;
+    ConvertClientConfigFromIpc(ipc, resultConfig);
+    EXPECT_EQ(resultConfig.anonMmapOnly, true);
+}
+
+/**
+ * @tc.name: HookCommonTest010
+ * @tc.desc: Test default value of anonMmapOnly (should be false)
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookCommonTest, HookCommonTest010, TestSize.Level3)
+{
+    ClientConfig config;
+    EXPECT_EQ(config.anonMmapOnly, false);
+}
+
+/**
+ * @tc.name: HookCommonTest011
+ * @tc.desc: Test Reset() sets anonMmapOnly to false
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookCommonTest, HookCommonTest011, TestSize.Level3)
+{
+    ClientConfig config;
+    config.anonMmapOnly = true;
+    config.Reset();
+    EXPECT_EQ(config.anonMmapOnly, false);
+}
