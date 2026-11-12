@@ -24,6 +24,7 @@
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <netinet/in.h>
+#include <unistd.h>
 #include <cstring>
 #include <future>
 
@@ -440,7 +441,7 @@ uint32_t ProfilerSessionManager::CaptureLongRunning(const std::string& config,
     if (!StartSession(profilerStub, sessionId)) {
         keepSessionRunning_ = false;
         keepSessionCv_.notify_one();
-        if (keepSessionThread_->joinable()) {
+        if (keepSessionThread_ && keepSessionThread_->joinable()) {
             keepSessionThread_->join();
         }
         DestroySession(profilerStub, sessionId);
@@ -451,7 +452,7 @@ uint32_t ProfilerSessionManager::CaptureLongRunning(const std::string& config,
         PROFILER_LOG_ERROR(LOG_CORE, "ProfilerSessionManager::CaptureLongRunning fork process failed");
     } else if (pidval == 0) {
         CaptureChildProcessImpl();
-        return UINT32_MAX;
+        _exit(0);
     }
     return sessionId;
 }
