@@ -370,6 +370,16 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
         freeRecord->SetAddr(freeAddr);
         return freeRecord;
     }
+    size_t minSize = sizeof(BaseStackRawData);
+    if (!hookConfig_.fp_unwind()) {
+        // dwarf mode: the record additionally carries the register set after BaseStackRawData,
+        // otherwise 'size - rawRealSize' below would underflow.
+        minSize += MAX_REG_SIZE;
+    }
+    if (size < minSize) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetHookRecord size %u is less than minimum size %zu", size, minSize);
+        return nullptr;
+    }
     auto rawStack = GetRawStackFromCache();
     if (!InitRawStack(rawStack, sharedMemData, size, storeData, callback) || rawStack->stackContext == nullptr) {
         return nullptr;

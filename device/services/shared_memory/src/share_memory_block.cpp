@@ -502,47 +502,154 @@ bool ShareMemoryBlock::TakeData(const DataHandler& func, bool isProtobufSerializ
     CHECK_NOTNULL(header_, false, "header not ready!");
     CHECK_TRUE(static_cast<bool>(func), false, "func invalid!");
 
-    auto size = GetDataSize();
-    if (size == 0 || size > header_->info.memorySize_) {
+    uint32_t dataAreaSize = GetDataAreaSize();
+    uint32_t rp = header_->info.readOffset_.load();
+    uint32_t wp = header_->info.writeOffset_.load();
+    if (rp == wp) {
         return false;
     }
-    auto ptr = GetDataPoint();
+    if (dataAreaSize < PIECE_HEAD_LEN || rp >= dataAreaSize || wp > dataAreaSize ||
+        rp > dataAreaSize - PIECE_HEAD_LEN) {
+        PROFILER_LOG_ERROR(LOG_CORE, "TakeData invalid offsets, rp=%u wp=%u dataAreaSize=%u", rp, wp, dataAreaSize);
+        return false;
+    }
+    uint32_t size = 0;
+    if (!ReadChunkLength(rp, size)) {
+        return false;
+    }
+    uint32_t dataOffset = rp;
+    bool wrapped = false;
+    if (size == INVALID_LENGTH) {
+        // wrapped: the real chunk starts at the beginning of the data area.
+        dataOffset = 0;
+        wrapped = true;
+        if (!ReadChunkLength(0, size)) {
+            return false;
+        }
+    }
+    if (size == 0 || size > dataAreaSize - dataOffset - PIECE_HEAD_LEN) {
+        PROFILER_LOG_ERROR(LOG_CORE, "TakeData invalid chunk, rp=%u dataOffset=%u size=%u", rp, dataOffset, size);
+        return false;
+    }
+    const int8_t* ptr = &header_->data[dataOffset + PIECE_HEAD_LEN];
     CHECK_TRUE(func(ptr, size), false, "call func FAILED!");
-    CHECK_TRUE(Next(), false, "move read pointer FAILED!");
+    if (wrapped) {
+        // same advance semantics as legacy Next(): absolute store for the wrapped chunk.
+        header_->info.readOffset_ = size + PIECE_HEAD_LEN;
+    } else {
+        // atomic RMW advance: a plain load+store could lose a concurrent advance of readOffset_
+        // (e.g. writer-side DROP_OLD discards) and roll the pointer back.
+        header_->info.readOffset_ += size + PIECE_HEAD_LEN;
+    }
     --header_->info.chunkCount_;
     return true;
 }
 
-uint32_t ShareMemoryBlock::GetDataSize()
+uint32_t ShareMemoryBlock::GetDataAreaSize() const
 {
-    if (header_->info.readOffset_.load() == header_->info.writeOffset_.load()) {
+    // Trusted local copy: memorySize_ is the local mmap size captured at creation and cannot be
+    // modified through the shared mapping. For a benignly initialized block it always equals
+    // sizeof(BlockHeader) + header_->info.memorySize_, keeping reader/writer views consistent.
+    if (memorySize_ <= sizeof(BlockHeader)) {
         return 0;
     }
-    uint32_t ret = *((uint32_t*)(&header_->data[header_->info.readOffset_.load()]));
+    return memorySize_ - static_cast<uint32_t>(sizeof(BlockHeader));
+}
+
+bool ShareMemoryBlock::ReadChunkLength(uint32_t offset, uint32_t& value) const
+{
+    if (header_ == nullptr) {
+        return false;
+    }
+    uint32_t dataAreaSize = GetDataAreaSize();
+    if (dataAreaSize < PIECE_HEAD_LEN || offset > dataAreaSize - PIECE_HEAD_LEN) {
+        return false;
+    }
+    return memcpy_s(&value, sizeof(value), &header_->data[offset], sizeof(value)) == EOK;
+}
+
+uint32_t ShareMemoryBlock::GetDataSize()
+{
+    if (header_ == nullptr) {
+        return 0;
+    }
+    uint32_t dataAreaSize = GetDataAreaSize();
+    uint32_t rp = header_->info.readOffset_.load();
+    uint32_t wp = header_->info.writeOffset_.load();
+    if (rp == wp) {
+        return 0;
+    }
+    if (dataAreaSize < PIECE_HEAD_LEN || rp >= dataAreaSize || wp > dataAreaSize ||
+        rp > dataAreaSize - PIECE_HEAD_LEN) {
+        return 0;
+    }
+    uint32_t ret = 0;
+    if (!ReadChunkLength(rp, ret)) {
+        return 0;
+    }
     if (ret == INVALID_LENGTH) {
-        ret = *((uint32_t*)(&header_->data[0]));
+        if (!ReadChunkLength(0, ret)) {
+            return 0;
+        }
     }
     return ret;
 }
 
 const int8_t* ShareMemoryBlock::GetDataPoint()
 {
-    if (*((uint32_t*)(&header_->data[header_->info.readOffset_.load()])) == INVALID_LENGTH) {
+    if (header_ == nullptr) {
+        return nullptr;
+    }
+    uint32_t dataAreaSize = GetDataAreaSize();
+    uint32_t rp = header_->info.readOffset_.load();
+    if (dataAreaSize < PIECE_HEAD_LEN || rp >= dataAreaSize || rp > dataAreaSize - PIECE_HEAD_LEN) {
+        return nullptr;
+    }
+    uint32_t marker = 0;
+    if (!ReadChunkLength(rp, marker)) {
+        return nullptr;
+    }
+    if (marker == INVALID_LENGTH) {
         return &header_->data[PIECE_HEAD_LEN];
     }
-    return &header_->data[header_->info.readOffset_ .load()+ PIECE_HEAD_LEN];
+    return &header_->data[rp + PIECE_HEAD_LEN];
 }
 
 bool ShareMemoryBlock::Next()
 {
-    if (header_->info.readOffset_.load() == header_->info.writeOffset_.load()) {
+    CHECK_NOTNULL(header_, false, "header not ready!");
+    uint32_t dataAreaSize = GetDataAreaSize();
+    if (dataAreaSize < PIECE_HEAD_LEN) {
         return false;
     }
-    uint32_t size = *((uint32_t*)(&header_->data[header_->info.readOffset_.load()]));
+    uint32_t rp = header_->info.readOffset_.load();
+    uint32_t wp = header_->info.writeOffset_.load();
+    if (rp == wp) {
+        return false;
+    }
+    if (rp >= dataAreaSize || wp > dataAreaSize || rp > dataAreaSize - PIECE_HEAD_LEN) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Next invalid offsets, rp=%u wp=%u dataAreaSize=%u", rp, wp, dataAreaSize);
+        return false;
+    }
+    uint32_t size = 0;
+    if (!ReadChunkLength(rp, size)) {
+        return false;
+    }
     if (size == INVALID_LENGTH) {
-        size = *((uint32_t*)(&header_->data[0]));
+        if (!ReadChunkLength(0, size)) {
+            return false;
+        }
+        if (size == INVALID_LENGTH || size > dataAreaSize - PIECE_HEAD_LEN) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Next invalid wrapped chunk, size=%u", size);
+            return false;
+        }
         header_->info.readOffset_ = size + PIECE_HEAD_LEN;
     } else {
+        if (size > dataAreaSize - rp - PIECE_HEAD_LEN) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Next invalid chunk, rp=%u size=%u", rp, size);
+            return false;
+        }
+        // atomic RMW advance (legacy semantics): concurrent advances are accumulated, never lost.
         header_->info.readOffset_ += size + PIECE_HEAD_LEN;
     }
     return true;
@@ -726,17 +833,30 @@ bool ShareMemoryBlock::TakeDataOptimize(const DataHandler& func)
     CHECK_NOTNULL(header_, false, "header not ready!");
     CHECK_TRUE(static_cast<bool>(func), false, "func invalid!");
 
+    uint32_t dataAreaSize = GetDataAreaSize();
+    if (dataAreaSize < PIECE_HEAD_LEN) {
+        return false;
+    }
     uint32_t wp = header_->info.writeOffset_.load(std::memory_order_acquire);
     uint32_t rp = header_->info.readOffset_.load(std::memory_order_relaxed);
+    if (rp >= dataAreaSize || wp > dataAreaSize || rp > dataAreaSize - PIECE_HEAD_LEN) {
+        PROFILER_LOG_ERROR(LOG_CORE, "TakeDataOptimize invalid offsets, rp=%u wp=%u dataAreaSize=%u", rp, wp,
+                           dataAreaSize);
+        return false;
+    }
     int8_t* ptr = nullptr;
     uint32_t size = 0;
     if (rp < wp) {
         // |---rp<---data--->wp---|
-        size = *((uint32_t*)(&header_->data[rp]));
+        if (!ReadChunkLength(rp, size)) {
+            return false;
+        }
         ptr = &header_->data[rp + PIECE_HEAD_LEN];
     } else if (wp < rp) {
         // |<---data2--->wp---rp<---data1--->|
-        size = *((uint32_t*)(&header_->data[rp]));
+        if (!ReadChunkLength(rp, size)) {
+            return false;
+        }
         // Size is the end tag of the tail and needs to be retrieved from the header.
         if (size == INVALID_LENGTH) {
             if (wp == 0) {
@@ -744,7 +864,9 @@ bool ShareMemoryBlock::TakeDataOptimize(const DataHandler& func)
                 return false;
             }
             rp = 0;
-            size = *((uint32_t*)(&header_->data[rp]));
+            if (!ReadChunkLength(rp, size)) {
+                return false;
+            }
         }
         ptr = &header_->data[rp + PIECE_HEAD_LEN];
     } else {
@@ -752,6 +874,14 @@ bool ShareMemoryBlock::TakeDataOptimize(const DataHandler& func)
         return false;
     }
     CHECK_NOTNULL(ptr, false, "ptr is nullptr");
+
+    // The chunk must end before the write pointer (unwrapped) or the end of the data area
+    // (wrapped), so the reader never consumes a region the writer is still writing into.
+    uint32_t limit = (rp < wp) ? (wp - rp - PIECE_HEAD_LEN) : (dataAreaSize - rp - PIECE_HEAD_LEN);
+    if (size == 0 || size > limit) {
+        PROFILER_LOG_ERROR(LOG_CORE, "TakeDataOptimize invalid chunk, rp=%u size=%u", rp, size);
+        return false;
+    }
 
     // Start writing file.
     CHECK_TRUE(func(ptr, size), false, "call func FAILED!");

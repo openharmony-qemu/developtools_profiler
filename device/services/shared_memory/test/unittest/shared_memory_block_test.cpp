@@ -15,8 +15,10 @@
 
 #include <cstring>
 #include <gtest/gtest.h>
+#include <securec.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
+#include <vector>
 
 #include "plugin_service_types.pb.h"
 #include "share_memory_block.h"
@@ -1124,5 +1126,167 @@ HWTEST_F(SharedMemoryBlockTest, PutWithExtraDataSync_MultipleWrites, TestSize.Le
         header2, sizeof(header2), nullptr, 0,
         firstExtra, sizeof(firstExtra), nullptr, 0, callback);
     EXPECT_TRUE(result2);
+}
+
+namespace {
+constexpr uint32_t ATTACK_CHUNK_SIZE = 64;
+constexpr uint32_t INVALID_LEN_MARKER = 0xFFFFFFFF;
+constexpr uint32_t HEAD_LEN = 4;
+
+ShareMemoryBlock::BlockHeader* GetBlockHeader(ShareMemoryBlock& block)
+{
+    return reinterpret_cast<ShareMemoryBlock::BlockHeader*>(block.GetMMapBase());
+}
+
+void WriteChunkLength(ShareMemoryBlock::BlockHeader* header, uint32_t offset, uint32_t value)
+{
+    ASSERT_EQ(memcpy_s(&header->data[offset], sizeof(value), &value, sizeof(value)), EOK);
+}
+} // namespace
+
+/**
+ * @tc.name: TakeDataRejectsCorruptedOffsets
+ * @tc.desc: test TakeData rejects corrupted readOffset_ (out of data area / cannot read header).
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryBlockTest, TakeDataRejectsCorruptedOffsets, TestSize.Level1)
+{
+    ShareMemoryBlock shareMemoryBlock("testname", PAGE_SIZE);
+    ASSERT_TRUE(shareMemoryBlock.Valid());
+    int8_t data[ATTACK_CHUNK_SIZE] = {0};
+    ASSERT_TRUE(shareMemoryBlock.PutRaw(data, ATTACK_CHUNK_SIZE));
+
+    auto* header = GetBlockHeader(shareMemoryBlock);
+    uint32_t dataAreaSize = shareMemoryBlock.GetSize() - sizeof(ShareMemoryBlock::BlockHeader);
+
+    header->info.readOffset_.store(dataAreaSize); // corrupted: out of data area
+    EXPECT_FALSE(shareMemoryBlock.TakeData([](const int8_t*, uint32_t) { return true; }));
+
+    header->info.readOffset_.store(dataAreaSize - 1); // corrupted: header read would cross the end
+    EXPECT_FALSE(shareMemoryBlock.TakeData([](const int8_t*, uint32_t) { return true; }));
+
+    header->info.readOffset_.store(0); // restore: normal take succeeds
+    EXPECT_TRUE(shareMemoryBlock.TakeData([](const int8_t*, uint32_t) { return true; }));
+    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
+}
+
+/**
+ * @tc.name: TakeDataRejectsOversizedChunk
+ * @tc.desc: test TakeData rejects a chunk whose length was enlarged to the full data area size,
+ *           which passes the legacy 'size <= memorySize_' check but fails the combined check.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryBlockTest, TakeDataRejectsOversizedChunk, TestSize.Level1)
+{
+    ShareMemoryBlock shareMemoryBlock("testname", PAGE_SIZE);
+    ASSERT_TRUE(shareMemoryBlock.Valid());
+    int8_t data[ATTACK_CHUNK_SIZE] = {0};
+    ASSERT_TRUE(shareMemoryBlock.PutRaw(data, ATTACK_CHUNK_SIZE));
+
+    auto* header = GetBlockHeader(shareMemoryBlock);
+    uint32_t dataAreaSize = shareMemoryBlock.GetSize() - sizeof(ShareMemoryBlock::BlockHeader);
+    WriteChunkLength(header, 0, dataAreaSize); // legacy check passes, combined check must reject
+    EXPECT_FALSE(shareMemoryBlock.TakeData([](const int8_t*, uint32_t) { return true; }));
+
+    WriteChunkLength(header, 0, ATTACK_CHUNK_SIZE); // restore
+    EXPECT_TRUE(shareMemoryBlock.TakeData([](const int8_t*, uint32_t) { return true; }));
+    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
+}
+
+/**
+ * @tc.name: TakeDataRejectsDoubleInvalidLength
+ * @tc.desc: test TakeData rejects when both the wrap marker and the head chunk length are invalid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryBlockTest, TakeDataRejectsDoubleInvalidLength, TestSize.Level1)
+{
+    ShareMemoryBlock shareMemoryBlock("testname", PAGE_SIZE);
+    ASSERT_TRUE(shareMemoryBlock.Valid());
+    int8_t data[ATTACK_CHUNK_SIZE] = {0};
+    ASSERT_TRUE(shareMemoryBlock.PutRaw(data, ATTACK_CHUNK_SIZE));
+
+    auto* header = GetBlockHeader(shareMemoryBlock);
+    WriteChunkLength(header, 0, INVALID_LEN_MARKER);
+    EXPECT_FALSE(shareMemoryBlock.TakeData([](const int8_t*, uint32_t) { return true; }));
+    EXPECT_FALSE(shareMemoryBlock.Next());
+
+    WriteChunkLength(header, 0, ATTACK_CHUNK_SIZE); // restore
+    EXPECT_TRUE(shareMemoryBlock.TakeData([](const int8_t*, uint32_t) { return true; }));
+    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
+}
+
+/**
+ * @tc.name: NextRefusesCorruptedChunkSize
+ * @tc.desc: test Next refuses to advance readOffset_ with a corrupted chunk length.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryBlockTest, NextRefusesCorruptedChunkSize, TestSize.Level1)
+{
+    ShareMemoryBlock shareMemoryBlock("testname", PAGE_SIZE);
+    ASSERT_TRUE(shareMemoryBlock.Valid());
+    int8_t data[ATTACK_CHUNK_SIZE] = {0};
+    ASSERT_TRUE(shareMemoryBlock.PutRaw(data, ATTACK_CHUNK_SIZE));
+
+    auto* header = GetBlockHeader(shareMemoryBlock);
+    WriteChunkLength(header, 0, 0xFFFFFF00); // corrupted: not INVALID_LENGTH but oversized
+    EXPECT_FALSE(shareMemoryBlock.Next());
+    EXPECT_EQ(header->info.readOffset_.load(), 0u); // read pointer must not be polluted
+
+    WriteChunkLength(header, 0, ATTACK_CHUNK_SIZE); // restore
+    EXPECT_TRUE(shareMemoryBlock.Next());
+    EXPECT_EQ(header->info.readOffset_.load(), ATTACK_CHUNK_SIZE + HEAD_LEN);
+    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
+}
+
+/**
+ * @tc.name: TakeDataOptimizeRejectsSizeBeyondWp
+ * @tc.desc: test TakeDataOptimize rejects a chunk whose length exceeds the write pointer, so the
+ *           reader never consumes a region the writer is still writing into.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryBlockTest, TakeDataOptimizeRejectsSizeBeyondWp, TestSize.Level1)
+{
+    ShareMemoryBlock shareMemoryBlock("testname", PAGE_SIZE);
+    ASSERT_TRUE(shareMemoryBlock.Valid());
+    int8_t data[ATTACK_CHUNK_SIZE] = {0};
+    ASSERT_TRUE(shareMemoryBlock.PutRaw(data, ATTACK_CHUNK_SIZE)); // chunk [0, 68), wp = 68
+
+    auto* header = GetBlockHeader(shareMemoryBlock);
+    WriteChunkLength(header, 0, 128); // 0 + 4 + 128 = 132 > wp, but far below data area size
+    EXPECT_FALSE(shareMemoryBlock.TakeDataOptimize([](const int8_t*, uint32_t) { return true; }));
+
+    WriteChunkLength(header, 0, ATTACK_CHUNK_SIZE); // restore
+    EXPECT_TRUE(shareMemoryBlock.TakeDataOptimize([](const int8_t*, uint32_t) { return true; }));
+    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
+}
+
+/**
+ * @tc.name: TakeDataConsumesWrappedChunks
+ * @tc.desc: test TakeData still consumes tail chunk then wrapped head chunk on benign wrap.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryBlockTest, TakeDataConsumesWrappedChunks, TestSize.Level1)
+{
+    ShareMemoryBlock shareMemoryBlock("testname", PAGE_SIZE);
+    ASSERT_TRUE(shareMemoryBlock.Valid());
+    uint32_t dataAreaSize = shareMemoryBlock.GetSize() - sizeof(ShareMemoryBlock::BlockHeader);
+
+    int8_t first[128] = {0};
+    ASSERT_TRUE(shareMemoryBlock.PutRaw(first, sizeof(first))); // chunk [0, 132)
+    EXPECT_TRUE(shareMemoryBlock.TakeData([](const int8_t*, uint32_t) { return true; })); // rp -> 132
+
+    std::vector<int8_t> tail(dataAreaSize - 140); // occupies [132, dataAreaSize - 4)
+    ASSERT_TRUE(shareMemoryBlock.PutRaw(tail.data(), static_cast<uint32_t>(tail.size())));
+    int8_t wrapped[ATTACK_CHUNK_SIZE] = {0};
+    ASSERT_TRUE(shareMemoryBlock.PutRaw(wrapped, ATTACK_CHUNK_SIZE)); // wraps to head [0, 68)
+
+    uint32_t tailSize = static_cast<uint32_t>(tail.size());
+    int count = 0;
+    while (shareMemoryBlock.TakeData([&](const int8_t*, uint32_t size) {
+        ++count;
+        return size == tailSize || size == ATTACK_CHUNK_SIZE;
+    })) {}
+    EXPECT_EQ(count, 2); // tail chunk + wrapped head chunk, then rp == wp
+    ASSERT_TRUE(shareMemoryBlock.ReleaseBlock());
 }
 } // namespace
