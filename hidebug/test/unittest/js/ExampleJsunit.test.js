@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 import hidebug from '@ohos.hidebug'
+import deviceInfo from '@ohos.deviceInfo'
 import fs from '@ohos.file.fs'
 import process from '@ohos.process'
 import featureAbility from '@ohos.ability.featureAbility'
@@ -53,6 +54,10 @@ describe("HidebugJsTest", function () {
             setTimeout(() => resolve("done!"), time)
         });
         let result = await promise;
+    }
+
+    function isEmulator() {
+        return deviceInfo.productModel === "emulator";
     }
 
     /**
@@ -558,9 +563,17 @@ describe("HidebugJsTest", function () {
             let value = 85;
             let enabledDebugLog = false;
             hidebug.setAppResourceLimit(type, value, enabledDebugLog);
+            if (isEmulator()) {
+                expect(false).assertTrue();
+            }
         } catch (error) {
             console.info(error.code);
-            expect(error.code === "401").assertTrue();
+            if (isEmulator()) {
+                expect(error.code === "804").assertTrue();
+                expect(error.message === "The capability is not supported on the emulator at this time.").assertTrue();
+            } else {
+                expect(error.code === "401").assertTrue();
+            }
         }
     })
 
