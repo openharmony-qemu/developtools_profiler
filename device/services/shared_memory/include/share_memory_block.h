@@ -101,6 +101,8 @@ private:
     uint32_t GetDataSize();
     const int8_t* GetDataPoint();
     bool Next();
+    uint32_t GetDataAreaSize() const;
+    bool ReadChunkLength(uint32_t offset, uint32_t& value) const;
 
     struct BlockHeader {
         struct alignas(sizeof(uintptr_t)) {
