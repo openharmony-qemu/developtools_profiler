@@ -974,10 +974,10 @@ protected:
         }
         napi_create_object(env, &ret);
         napi_value gl = nullptr;
-        napi_create_int32(env, static_cast<int32_t>(result_->gl), &gl);
+        napi_create_uint32(env, result_->gl, &gl);
         napi_set_named_property(env, ret, "gl", gl);
         napi_value graph = nullptr;
-        napi_create_bigint_uint64(env, static_cast<uint64_t>(result_->graph), &graph);
+        napi_create_uint32(env, result_->graph, &graph);
         napi_set_named_property(env, ret, "graph", graph);
         return true;
     }
